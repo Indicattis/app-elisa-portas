@@ -1,11 +1,36 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
+      <div className="text-center space-y-6">
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold text-primary">Lead Control Center</h1>
+          <p className="text-xl text-muted-foreground">
+            Sistema de gerenciamento de leads para Elisaportas
+          </p>
+        </div>
+        
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            Faça login para acessar o dashboard e gerenciar seus leads
+          </p>
+          
+          <div className="flex gap-4 justify-center">
+            <Button asChild>
+              <Link to="/auth">Fazer Login</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/dashboard">Ir para Dashboard</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
