@@ -41,7 +41,7 @@ export function Sidebar() {
           <div className="flex items-center justify-between">
             {!collapsed && (
               <h1 className="text-lg font-semibold text-primary">
-                Lead Control
+                APP Elisa Portas
               </h1>
             )}
             <Button

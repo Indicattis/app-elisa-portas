@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
+import Users from "./pages/Users";
 import LeadDetails from "./pages/LeadDetails";
 import LeadEdit from "./pages/LeadEdit";
 import NotFound from "./pages/NotFound";
@@ -65,6 +66,16 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <LeadDetails />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/users"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <DashboardLayout>
+                      <Users />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
