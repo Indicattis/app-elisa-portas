@@ -201,12 +201,69 @@ export type Database = {
           },
         ]
       }
+      vendas: {
+        Row: {
+          atendente_id: string
+          created_at: string
+          data_venda: string
+          forma_pagamento: string | null
+          id: string
+          lead_id: string
+          observacoes_venda: string | null
+          updated_at: string
+          valor_venda: number
+        }
+        Insert: {
+          atendente_id: string
+          created_at?: string
+          data_venda?: string
+          forma_pagamento?: string | null
+          id?: string
+          lead_id: string
+          observacoes_venda?: string | null
+          updated_at?: string
+          valor_venda: number
+        }
+        Update: {
+          atendente_id?: string
+          created_at?: string
+          data_venda?: string
+          forma_pagamento?: string | null
+          id?: string
+          lead_id?: string
+          observacoes_venda?: string | null
+          updated_at?: string
+          valor_venda?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "elisaportas_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       cancel_lead_attendance: {
+        Args: { lead_uuid: string }
+        Returns: boolean
+      }
+      finalizar_venda: {
+        Args: {
+          lead_uuid: string
+          valor_venda: number
+          forma_pagamento?: string
+          observacoes_venda?: string
+        }
+        Returns: boolean
+      }
+      iniciar_atendimento: {
         Args: { lead_uuid: string }
         Returns: boolean
       }

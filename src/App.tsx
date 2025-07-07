@@ -14,6 +14,8 @@ import Leads from "./pages/Leads";
 import Users from "./pages/Users";
 import LeadDetails from "./pages/LeadDetails";
 import LeadEdit from "./pages/LeadEdit";
+import LeadVenda from "./pages/LeadVenda";
+import Faturamento from "./pages/Faturamento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,6 +88,26 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <LeadEdit />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leads/:id/venda"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <LeadVenda />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/faturamento"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Faturamento />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

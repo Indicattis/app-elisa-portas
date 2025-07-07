@@ -17,6 +17,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Leads", href: "/dashboard/leads", icon: FileText },
   { name: "Usuários", href: "/dashboard/users", icon: Users, adminOnly: true },
+  { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, adminOrManager: true },
 ];
 
 export function Sidebar() {
@@ -31,9 +32,11 @@ export function Sidebar() {
     return location.pathname.startsWith(path);
   };
 
-  const filteredNavigation = navigation.filter(item => 
-    !item.adminOnly || (item.adminOnly && isAdmin)
-  );
+  const filteredNavigation = navigation.filter(item => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.adminOrManager && !isAdmin && userRole !== 'gerente_comercial') return false;
+    return true;
+  });
 
   return (
     <div className={`bg-card border-r border-border transition-all duration-300 ${

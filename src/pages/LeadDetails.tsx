@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Edit } from "lucide-react";
+import { ArrowLeft, Edit, Play, Pause, X, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -41,13 +41,16 @@ const statusLabels = {
   2: { label: "Em Andamento", color: "bg-blue-100 text-blue-800" },
   3: { label: "Pausado", color: "bg-yellow-100 text-yellow-800" },
   4: { label: "Concluído", color: "bg-green-100 text-green-800" },
+  5: { label: "Vendido", color: "bg-purple-100 text-purple-800" },
 };
 
 export default function LeadDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [atendente, setAtendente] = useState<Atendente | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
 
@@ -95,6 +98,144 @@ export default function LeadDetails() {
   const canEdit = () => {
     if (!lead) return false;
     return isAdmin || lead.atendente_id === user?.id || lead.atendente_id === null;
+  };
+
+  const handleIniciarAtendimento = async () => {
+    if (!id || actionLoading) return;
+    
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('iniciar_atendimento', { 
+        lead_uuid: id 
+      });
+
+      if (error) throw error;
+      if (!data) {
+        throw new Error("Não foi possível iniciar o atendimento");
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Atendimento iniciado com sucesso",
+      });
+      
+      fetchLead(); // Recarregar dados
+    } catch (error) {
+      console.error("Erro ao iniciar atendimento:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao iniciar atendimento",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePausarAtendimento = async () => {
+    if (!id || actionLoading) return;
+    
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('pause_lead_attendance', { 
+        lead_uuid: id 
+      });
+
+      if (error) throw error;
+      if (!data) {
+        throw new Error("Não foi possível pausar o atendimento");
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Atendimento pausado com sucesso",
+      });
+      
+      fetchLead(); // Recarregar dados
+    } catch (error) {
+      console.error("Erro ao pausar atendimento:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao pausar atendimento",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelarAtendimento = async () => {
+    if (!id || actionLoading) return;
+    
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('cancel_lead_attendance', { 
+        lead_uuid: id 
+      });
+
+      if (error) throw error;
+      if (!data) {
+        throw new Error("Não foi possível cancelar o atendimento");
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Atendimento cancelado com sucesso",
+      });
+      
+      fetchLead(); // Recarregar dados
+    } catch (error) {
+      console.error("Erro ao cancelar atendimento:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao cancelar atendimento",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleVendido = () => {
+    navigate(`/dashboard/leads/${id}/venda`);
+  };
+
+  const renderActionButtons = () => {
+    if (!lead || actionLoading) return null;
+
+    const isAtendente = lead.atendente_id === user?.id;
+    
+    // Lead aguardando atendimento (status 1)
+    if (lead.status_atendimento === 1) {
+      return (
+        <Button onClick={handleIniciarAtendimento} disabled={actionLoading}>
+          <Play className="w-4 h-4 mr-2" />
+          Iniciar Atendimento
+        </Button>
+      );
+    }
+
+    // Lead em andamento (status 2) - só o atendente responsável pode ações
+    if (lead.status_atendimento === 2 && (isAdmin || isAtendente)) {
+      return (
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handlePausarAtendimento} disabled={actionLoading}>
+            <Pause className="w-4 h-4 mr-2" />
+            Pausar
+          </Button>
+          <Button variant="outline" onClick={handleCancelarAtendimento} disabled={actionLoading}>
+            <X className="w-4 h-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button onClick={handleVendido} disabled={actionLoading}>
+            <DollarSign className="w-4 h-4 mr-2" />
+            Vendido
+          </Button>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   if (loading) {
@@ -149,6 +290,21 @@ export default function LeadDetails() {
           </Button>
         )}
       </div>
+
+      {/* Seção de Ações */}
+      {renderActionButtons() && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ações do Lead</CardTitle>
+            <CardDescription>
+              Ações disponíveis para este lead
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {renderActionButtons()}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

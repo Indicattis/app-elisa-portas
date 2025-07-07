@@ -17,7 +17,7 @@ interface AdminUser {
   user_id: string;
   email: string;
   nome: string;
-  role: "administrador" | "atendente";
+  role: "administrador" | "atendente" | "gerente_comercial";
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -189,7 +189,7 @@ export default function Users() {
                       {editingUser === user.id ? (
                         <Select
                           value={editForm.role}
-                          onValueChange={(value) => setEditForm({ ...editForm, role: value as "administrador" | "atendente" })}
+                          onValueChange={(value) => setEditForm({ ...editForm, role: value as "administrador" | "atendente" | "gerente_comercial" })}
                         >
                           <SelectTrigger className="max-w-xs">
                             <SelectValue />
@@ -197,11 +197,13 @@ export default function Users() {
                           <SelectContent>
                             <SelectItem value="administrador">Administrador</SelectItem>
                             <SelectItem value="atendente">Atendente</SelectItem>
+                            <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
                         <Badge variant={user.role === "administrador" ? "default" : "secondary"}>
-                          {user.role === "administrador" ? "Administrador" : "Atendente"}
+                          {user.role === "administrador" ? "Administrador" : 
+                           user.role === "gerente_comercial" ? "Gerente Comercial" : "Atendente"}
                         </Badge>
                       )}
                     </TableCell>
