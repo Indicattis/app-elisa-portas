@@ -44,9 +44,16 @@ export function Sidebar() {
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
             {!collapsed && (
-              <h1 className="text-lg font-semibold text-primary">
-                APP Elisa Portas
-              </h1>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png" 
+                  alt="Elisa Portas" 
+                  className="h-8 w-auto"
+                />
+                <h1 className="text-lg font-semibold text-primary">
+                  Elisa Portas
+                </h1>
+              </div>
             )}
             <Button
               variant="ghost"
