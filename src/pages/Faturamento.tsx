@@ -13,17 +13,17 @@ import { ptBR } from "date-fns/locale";
 
 interface Venda {
   id: string;
-  numero_venda: number;
+  numero_venda?: number;
   lead_id: string;
   atendente_id: string;
   valor_venda: number;
   forma_pagamento: string | null;
   observacoes_venda: string | null;
   data_venda: string;
-  estado: string;
-  cidade: string;
-  bairro: string;
-  cep: string;
+  estado?: string;
+  cidade?: string;
+  bairro?: string;
+  cep?: string;
   lead_nome: string;
   atendente_nome: string;
 }
@@ -63,19 +63,15 @@ export default function Faturamento() {
         .from("vendas")
         .select(`
           id,
-          numero_venda,
           lead_id,
           atendente_id,
           valor_venda,
           forma_pagamento,
           observacoes_venda,
           data_venda,
-          estado,
-          cidade,
-          bairro,
-          cep
+          created_at
         `)
-        .order("numero_venda", { ascending: false });
+        .order("created_at", { ascending: false });
 
       // Filtrar por mês e ano
       const startDate = new Date(selectedYear, selectedMonth - 1, 1);
@@ -85,14 +81,12 @@ export default function Faturamento() {
         .gte("data_venda", startDate.toISOString())
         .lte("data_venda", endDate.toISOString());
 
-      // Filtrar por estado se selecionado
-      if (selectedState) {
-        query = query.eq("estado", selectedState);
-      }
-
       const { data: vendasData, error: vendasError } = await query;
 
-      if (vendasError) throw vendasError;
+      if (vendasError) {
+        console.error("Erro ao buscar vendas:", vendasError);
+        throw vendasError;
+      }
 
       if (!vendasData || vendasData.length === 0) {
         setVendas([]);
@@ -117,12 +111,16 @@ export default function Faturamento() {
       const leadMap = new Map(leadsData?.map(lead => [lead.id, lead.nome]) || []);
       const atendenteMap = new Map(atendentesData?.map(atendente => [atendente.user_id, atendente.nome]) || []);
 
-      // Combinar dados
-      const vendasCompletas = vendasData.map(venda => ({
-        ...venda,
-        lead_nome: leadMap.get(venda.lead_id) || "Lead não encontrado",
-        atendente_nome: atendenteMap.get(venda.atendente_id) || "Atendente não encontrado"
-      }));
+      // Combinar dados e adicionar número sequencial baseado na data
+      const vendasCompletas = vendasData
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map((venda, index) => ({
+          ...venda,
+          numero_venda: index + 1,
+          lead_nome: leadMap.get(venda.lead_id) || "Lead não encontrado",
+          atendente_nome: atendenteMap.get(venda.atendente_id) || "Atendente não encontrado"
+        }))
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setVendas(vendasCompletas);
     } catch (error) {
@@ -138,17 +136,11 @@ export default function Faturamento() {
       const startDate = new Date(selectedYear, selectedMonth - 1, 1);
       const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59);
 
-      let query = supabase
+      const { data: vendasMes, error: errorMes } = await supabase
         .from("vendas")
         .select("valor_venda, data_venda")
         .gte("data_venda", startDate.toISOString())
         .lte("data_venda", endDate.toISOString());
-
-      if (selectedState) {
-        query = query.eq("estado", selectedState);
-      }
-
-      const { data: vendasMes, error: errorMes } = await query;
 
       // Stats gerais (todos os dados)
       const { data: vendasTotais, error: errorTotal } = await supabase
@@ -177,13 +169,8 @@ export default function Faturamento() {
   const filteredVendas = vendas.filter(venda =>
     venda.lead_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     venda.atendente_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venda.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venda.bairro.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (venda.forma_pagamento && venda.forma_pagamento.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  // Obter lista única de estados para o filtro
-  const estados = [...new Set(vendas.map(venda => venda.estado))].sort();
 
   // Gerar opções de mês e ano
   const meses = [
@@ -293,7 +280,7 @@ export default function Faturamento() {
             <div className="flex items-center space-x-2">
               <Search className="w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por cliente, atendente, cidade..."
+                placeholder="Buscar por cliente, atendente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-sm"
@@ -325,20 +312,6 @@ export default function Faturamento() {
                 ))}
               </SelectContent>
             </Select>
-
-            <Select value={selectedState} onValueChange={setSelectedState}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Filtrar por Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos os Estados</SelectItem>
-                {estados.map((estado) => (
-                  <SelectItem key={estado} value={estado}>
-                    {estado}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </CardHeader>
         <CardContent>
@@ -350,7 +323,6 @@ export default function Faturamento() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Atendente</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Localização</TableHead>
                   <TableHead>Forma Pagamento</TableHead>
                   <TableHead>Data da Venda</TableHead>
                   <TableHead>Observações</TableHead>
@@ -359,7 +331,7 @@ export default function Faturamento() {
               <TableBody>
                 {filteredVendas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       Nenhuma venda encontrada no período selecionado
                     </TableCell>
                   </TableRow>
@@ -367,7 +339,7 @@ export default function Faturamento() {
                   filteredVendas.map((venda) => (
                     <TableRow key={venda.id}>
                       <TableCell className="font-bold text-primary">
-                        #{venda.numero_venda}
+                        #{venda.numero_venda || 'N/A'}
                       </TableCell>
                       <TableCell className="font-medium">
                         {venda.lead_nome}
@@ -375,13 +347,6 @@ export default function Faturamento() {
                       <TableCell>{venda.atendente_nome}</TableCell>
                       <TableCell className="font-semibold text-green-600">
                         R$ {venda.valor_venda.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">{venda.cidade} - {venda.estado}</div>
-                          <div className="text-muted-foreground">{venda.bairro}</div>
-                          <div className="text-muted-foreground">CEP: {venda.cep}</div>
-                        </div>
                       </TableCell>
                       <TableCell>
                         {venda.forma_pagamento ? (
