@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Lead {
   id: string;
@@ -69,7 +70,15 @@ export default function LeadEdit() {
 
   const canEdit = () => {
     if (!lead) return false;
-    return isAdmin || lead.atendente_id === user?.id || lead.atendente_id === null;
+    // Administradores podem editar qualquer lead
+    if (isAdmin) return true;
+    // Atendentes só podem editar leads sob seu atendimento
+    return lead.atendente_id === user?.id;
+  };
+
+  const canDelete = () => {
+    // Apenas administradores podem excluir leads
+    return isAdmin;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -136,6 +145,33 @@ export default function LeadEdit() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!lead || !canDelete()) return;
+
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Lead excluído com sucesso",
+      });
+
+      navigate("/dashboard/leads");
+    } catch (error) {
+      console.error("Erro ao excluir lead:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao excluir lead",
+      });
     }
   };
 
@@ -364,7 +400,31 @@ export default function LeadEdit() {
           </Card>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          {canDelete() && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" type="button">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir Lead
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir este lead? Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button type="submit" disabled={saving}>
             <Save className="w-4 h-4 mr-2" />
             {saving ? "Salvando..." : "Salvar Alterações"}
