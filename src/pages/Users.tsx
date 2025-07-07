@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,9 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { AddUserDialog } from "@/components/AddUserDialog";
 import { Search, Edit, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,6 +23,7 @@ interface AdminUser {
   nome: string;
   role: "administrador" | "atendente" | "gerente_comercial";
   ativo: boolean;
+  foto_perfil_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -104,6 +109,25 @@ export default function Users() {
     setEditForm({});
   };
 
+  const handleAvatarUpdate = (userId: string, newAvatarUrl: string | null) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.user_id === userId 
+          ? { ...user, foto_perfil_url: newAvatarUrl }
+          : user
+      )
+    );
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,6 +163,7 @@ export default function Users() {
           <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
           <p className="text-muted-foreground">Gerencie todos os usuários do sistema</p>
         </div>
+        <AddUserDialog onUserAdded={fetchUsers} />
       </div>
 
       <Card>
@@ -162,6 +187,7 @@ export default function Users() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Foto</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Função</TableHead>
@@ -173,6 +199,14 @@ export default function Users() {
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
+                    <TableCell>
+                      <AvatarUpload
+                        userId={user.user_id}
+                        currentAvatarUrl={user.foto_perfil_url}
+                        userName={user.nome}
+                        onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {editingUser === user.id ? (
                         <Input

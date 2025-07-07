@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { LeadFilters } from "@/components/LeadFilters";
+import { LeadIndicators } from "@/components/LeadIndicators";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -200,10 +201,11 @@ export default function Leads() {
     const matchesDataInicio = !filters.dataInicio || leadDate >= new Date(filters.dataInicio);
     const matchesDataFim = !filters.dataFim || leadDate <= new Date(filters.dataFim + "T23:59:59");
 
-    // Por padrão, não exibir leads vendidos (status 5) a menos que seja filtrado especificamente
+    // Por padrão, não exibir leads vendidos (status 5) e cancelados (status 6) a menos que seja filtrado especificamente
     const shouldHideVendidos = !filters.status && lead.status_atendimento === 5;
+    const shouldHideCancelados = !filters.status && lead.status_atendimento === 6;
 
-    return matchesSearch && matchesStatus && matchesAtendente && matchesCidade && matchesDataInicio && matchesDataFim && !shouldHideVendidos;
+    return matchesSearch && matchesStatus && matchesAtendente && matchesCidade && matchesDataInicio && matchesDataFim && !shouldHideVendidos && !shouldHideCancelados;
   });
 
   const canManageLead = (lead: Lead) => {
@@ -267,6 +269,8 @@ export default function Leads() {
           <p className="text-muted-foreground">Gerencie todos os leads do sistema</p>
         </div>
       </div>
+
+      <LeadIndicators />
 
       <LeadFilters 
         filters={filters} 

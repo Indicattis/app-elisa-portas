@@ -19,6 +19,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           email: string
+          foto_perfil_url: string | null
           id: string
           nome: string
           role: Database["public"]["Enums"]["user_role"] | null
@@ -29,6 +30,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           email: string
+          foto_perfil_url?: string | null
           id?: string
           nome: string
           role?: Database["public"]["Enums"]["user_role"] | null
@@ -39,6 +41,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           email?: string
+          foto_perfil_url?: string | null
           id?: string
           nome?: string
           role?: Database["public"]["Enums"]["user_role"] | null

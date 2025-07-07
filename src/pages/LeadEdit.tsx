@@ -1,16 +1,17 @@
+
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Save } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Lead {
   id: string;
@@ -19,20 +20,21 @@ interface Lead {
   telefone: string;
   cidade: string;
   status_atendimento: number;
+  data_envio: string;
   atendente_id: string | null;
   valor_orcamento: number | null;
   tipo_porta: string | null;
   altura_porta: string | null;
   largura_porta: string | null;
   cor_porta: string | null;
-  mensagem: string | null;
-  observacoes: string | null;
-  data_prevista_entrega: string | null;
   funcao_lead: string | null;
+  observacoes: string | null;
+  mensagem: string | null;
+  data_prevista_entrega: string | null;
 }
 
 export default function LeadEdit() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,71 +63,36 @@ export default function LeadEdit() {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao carregar dados do lead",
+        description: "Erro ao carregar lead",
       });
+      navigate("/dashboard/leads");
     } finally {
       setLoading(false);
     }
   };
 
-  const canEdit = () => {
-    if (!lead) return false;
-    // Administradores podem editar qualquer lead
-    if (isAdmin) return true;
-    // Atendentes só podem editar leads sob seu atendimento
-    return lead.atendente_id === user?.id;
-  };
-
-  const canDelete = () => {
-    // Apenas administradores podem excluir leads
-    return isAdmin;
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!lead || !canEdit()) return;
+  const handleSave = async () => {
+    if (!lead) return;
 
     setSaving(true);
-    const formData = new FormData(e.currentTarget);
-
     try {
-      const updateData: any = {
-        nome: formData.get("nome") as string,
-        email: formData.get("email") as string,
-        telefone: formData.get("telefone") as string,
-        cidade: formData.get("cidade") as string,
-        funcao_lead: formData.get("funcao_lead") as string,
-        tipo_porta: formData.get("tipo_porta") as string,
-        altura_porta: formData.get("altura_porta") as string,
-        largura_porta: formData.get("largura_porta") as string,
-        cor_porta: formData.get("cor_porta") as string,
-        observacoes: formData.get("observacoes") as string,
-        mensagem: formData.get("mensagem") as string,
-      };
-
-      const valorOrcamento = formData.get("valor_orcamento") as string;
-      if (valorOrcamento) {
-        updateData.valor_orcamento = parseFloat(valorOrcamento.replace(/[^\d,.-]/g, '').replace(',', '.'));
-      }
-
-      const dataPrevista = formData.get("data_prevista_entrega") as string;
-      if (dataPrevista) {
-        updateData.data_prevista_entrega = dataPrevista;
-      }
-
-      const statusAtendimento = formData.get("status_atendimento") as string;
-      if (statusAtendimento) {
-        updateData.status_atendimento = parseInt(statusAtendimento);
-        
-        // Se estiver marcando como concluído, adicionar data de conclusão
-        if (parseInt(statusAtendimento) === 4) {
-          updateData.data_conclusao_atendimento = new Date().toISOString();
-        }
-      }
-
       const { error } = await supabase
         .from("elisaportas_leads")
-        .update(updateData)
+        .update({
+          nome: lead.nome,
+          email: lead.email,
+          telefone: lead.telefone,
+          cidade: lead.cidade,
+          valor_orcamento: lead.valor_orcamento,
+          tipo_porta: lead.tipo_porta,
+          altura_porta: lead.altura_porta,
+          largura_porta: lead.largura_porta,
+          cor_porta: lead.cor_porta,
+          funcao_lead: lead.funcao_lead,
+          observacoes: lead.observacoes,
+          mensagem: lead.mensagem,
+          data_prevista_entrega: lead.data_prevista_entrega,
+        })
         .eq("id", id);
 
       if (error) throw error;
@@ -141,38 +108,15 @@ export default function LeadEdit() {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao salvar alterações",
+        description: "Erro ao salvar lead",
       });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!lead || !canDelete()) return;
-
-    try {
-      const { error } = await supabase
-        .from("elisaportas_leads")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: "Lead excluído com sucesso",
-      });
-
-      navigate("/dashboard/leads");
-    } catch (error) {
-      console.error("Erro ao excluir lead:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao excluir lead",
-      });
-    }
+  const canEdit = () => {
+    return isAdmin || lead?.atendente_id === user?.id;
   };
 
   if (loading) {
@@ -183,254 +127,212 @@ export default function LeadEdit() {
     );
   }
 
-  if (!lead) {
+  if (!lead || !canEdit()) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/dashboard/leads">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Link>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Acesso Restrito</h1>
+          <p className="text-muted-foreground mb-4">
+            Você não tem permissão para editar este lead.
+          </p>
+          <Button onClick={() => navigate("/dashboard/leads")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar para Leads
           </Button>
         </div>
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-muted-foreground">Lead não encontrado</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!canEdit()) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/dashboard/leads/${id}`}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Link>
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-muted-foreground">Você não tem permissão para editar este lead</p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" asChild>
-          <Link to={`/dashboard/leads/${id}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/dashboard/leads")}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Editar Lead</h1>
-          <p className="text-muted-foreground">{lead.nome}</p>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Editar Lead</h1>
+            <p className="text-muted-foreground">
+              Editando lead de {lead.nome}
+            </p>
+          </div>
         </div>
+        <Button onClick={handleSave} disabled={saving}>
+          <Save className="w-4 h-4 mr-2" />
+          {saving ? "Salvando..." : "Salvar"}
+        </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Pessoais</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nome">Nome *</Label>
-                <Input
-                  id="nome"
-                  name="nome"
-                  defaultValue={lead.nome}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  defaultValue={lead.email || ""}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone *</Label>
-                <Input
-                  id="telefone"
-                  name="telefone"
-                  defaultValue={lead.telefone}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade</Label>
-                <Input
-                  id="cidade"
-                  name="cidade"
-                  defaultValue={lead.cidade || ""}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="funcao_lead">Função</Label>
-                <Input
-                  id="funcao_lead"
-                  name="funcao_lead"
-                  defaultValue={lead.funcao_lead || ""}
-                />
-              </div>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações Básicas</CardTitle>
+            <CardDescription>
+              Dados principais do lead
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                value={lead.nome}
+                onChange={(e) => setLead({ ...lead, nome: e.target.value })}
+              />
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Status do Atendimento</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="status_atendimento">Status</Label>
-                <Select name="status_atendimento" defaultValue={lead.status_atendimento.toString()}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Aguardando</SelectItem>
-                    <SelectItem value="2">Em Andamento</SelectItem>
-                    <SelectItem value="3">Pausado</SelectItem>
-                    <SelectItem value="4">Concluído</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="valor_orcamento">Valor do Orçamento</Label>
-                <Input
-                  id="valor_orcamento"
-                  name="valor_orcamento"
-                  type="number"
-                  step="0.01"
-                  defaultValue={lead.valor_orcamento || ""}
-                  placeholder="0,00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="data_prevista_entrega">Data Prevista de Entrega</Label>
-                <Input
-                  id="data_prevista_entrega"
-                  name="data_prevista_entrega"
-                  type="date"
-                  defaultValue={lead.data_prevista_entrega || ""}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={lead.email || ""}
+                onChange={(e) => setLead({ ...lead, email: e.target.value })}
+              />
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Detalhes da Porta</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipo_porta">Tipo de Porta</Label>
-                <Input
-                  id="tipo_porta"
-                  name="tipo_porta"
-                  defaultValue={lead.tipo_porta || ""}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="telefone">Telefone</Label>
+              <Input
+                id="telefone"
+                value={lead.telefone}
+                onChange={(e) => setLead({ ...lead, telefone: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cidade">Cidade</Label>
+              <Input
+                id="cidade"
+                value={lead.cidade || ""}
+                onChange={(e) => setLead({ ...lead, cidade: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="funcao_lead">Função do Lead</Label>
+              <Input
+                id="funcao_lead"
+                value={lead.funcao_lead || ""}
+                onChange={(e) => setLead({ ...lead, funcao_lead: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data_envio">Data de Envio</Label>
+              <Input
+                id="data_envio"
+                value={format(new Date(lead.data_envio), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Detalhes do Produto</CardTitle>
+            <CardDescription>
+              Especificações da porta
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="tipo_porta">Tipo de Porta</Label>
+              <Input
+                id="tipo_porta"
+                value={lead.tipo_porta || ""}
+                onChange={(e) => setLead({ ...lead, tipo_porta: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="altura_porta">Altura</Label>
                 <Input
                   id="altura_porta"
-                  name="altura_porta"
-                  defaultValue={lead.altura_porta || ""}
+                  value={lead.altura_porta || ""}
+                  onChange={(e) => setLead({ ...lead, altura_porta: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="largura_porta">Largura</Label>
                 <Input
                   id="largura_porta"
-                  name="largura_porta"
-                  defaultValue={lead.largura_porta || ""}
+                  value={lead.largura_porta || ""}
+                  onChange={(e) => setLead({ ...lead, largura_porta: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cor_porta">Cor</Label>
-                <Input
-                  id="cor_porta"
-                  name="cor_porta"
-                  defaultValue={lead.cor_porta || ""}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Observações</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="mensagem">Mensagem Inicial</Label>
-                <Textarea
-                  id="mensagem"
-                  name="mensagem"
-                  defaultValue={lead.mensagem || ""}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações do Atendimento</Label>
-                <Textarea
-                  id="observacoes"
-                  name="observacoes"
-                  defaultValue={lead.observacoes || ""}
-                  rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="cor_porta">Cor da Porta</Label>
+              <Input
+                id="cor_porta"
+                value={lead.cor_porta || ""}
+                onChange={(e) => setLead({ ...lead, cor_porta: e.target.value })}
+              />
+            </div>
 
-        <div className="flex justify-between">
-          {canDelete() && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" type="button">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Excluir Lead
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir este lead? Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-          <Button type="submit" disabled={saving}>
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? "Salvando..." : "Salvar Alterações"}
-          </Button>
-        </div>
-      </form>
+            <div className="space-y-2">
+              <Label htmlFor="valor_orcamento">Valor do Orçamento</Label>
+              <Input
+                id="valor_orcamento"
+                type="number"
+                step="0.01"
+                value={lead.valor_orcamento || ""}
+                onChange={(e) => setLead({ ...lead, valor_orcamento: e.target.value ? parseFloat(e.target.value) : null })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data_prevista_entrega">Data Prevista de Entrega</Label>
+              <Input
+                id="data_prevista_entrega"
+                type="date"
+                value={lead.data_prevista_entrega || ""}
+                onChange={(e) => setLead({ ...lead, data_prevista_entrega: e.target.value })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Observações e Mensagem</CardTitle>
+            <CardDescription>
+              Informações adicionais sobre o lead
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mensagem">Mensagem Original</Label>
+              <Textarea
+                id="mensagem"
+                value={lead.mensagem || ""}
+                onChange={(e) => setLead({ ...lead, mensagem: e.target.value })}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea
+                id="observacoes"
+                value={lead.observacoes || ""}
+                onChange={(e) => setLead({ ...lead, observacoes: e.target.value })}
+                rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
