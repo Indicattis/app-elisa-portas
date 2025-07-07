@@ -23,6 +23,12 @@ interface Lead {
   atendente_id: string | null;
   valor_orcamento: number | null;
   tipo_porta: string | null;
+  data_inicio_atendimento: string | null;
+}
+
+interface Atendente {
+  user_id: string;
+  nome: string;
 }
 
 const statusLabels = {
@@ -34,6 +40,7 @@ const statusLabels = {
 
 export default function Leads() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [atendentes, setAtendentes] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { isAdmin, user } = useAuth();
@@ -52,6 +59,23 @@ export default function Leads() {
 
       if (error) throw error;
       setLeads(data || []);
+
+      // Buscar nomes dos atendentes
+      const atendenteIds = [...new Set(data?.filter(lead => lead.atendente_id).map(lead => lead.atendente_id))];
+      if (atendenteIds.length > 0) {
+        const { data: atendenteData, error: atendenteError } = await supabase
+          .from("admin_users")
+          .select("user_id, nome")
+          .in("user_id", atendenteIds);
+
+        if (!atendenteError && atendenteData) {
+          const atendenteMap = new Map();
+          atendenteData.forEach((atendente: any) => {
+            atendenteMap.set(atendente.user_id, atendente.nome);
+          });
+          setAtendentes(atendenteMap);
+        }
+      }
     } catch (error) {
       console.error("Erro ao buscar leads:", error);
       toast({
@@ -175,6 +199,20 @@ export default function Leads() {
     return isAdmin || lead.atendente_id === user?.id || lead.atendente_id === null;
   };
 
+  const getTempoAtendimento = (dataInicio: string) => {
+    const inicio = new Date(dataInicio);
+    const agora = new Date();
+    const diffMs = agora.getTime() - inicio.getTime();
+    const diffMinutos = Math.floor(diffMs / (1000 * 60));
+    const diffHoras = Math.floor(diffMinutos / 60);
+    const minutosRestantes = diffMinutos % 60;
+
+    if (diffHoras > 0) {
+      return `${diffHoras}h ${minutosRestantes}m`;
+    }
+    return `${diffMinutos}m`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -217,6 +255,8 @@ export default function Leads() {
                   <TableHead>Contato</TableHead>
                   <TableHead>Cidade</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Atendente</TableHead>
+                  <TableHead>Tempo</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -240,6 +280,14 @@ export default function Leads() {
                       >
                         {statusLabels[lead.status_atendimento as keyof typeof statusLabels]?.label}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {lead.atendente_id ? atendentes.get(lead.atendente_id) || "-" : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {lead.status_atendimento === 2 && lead.data_inicio_atendimento
+                        ? getTempoAtendimento(lead.data_inicio_atendimento)
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       {format(new Date(lead.data_envio), "dd/MM/yyyy", { locale: ptBR })}

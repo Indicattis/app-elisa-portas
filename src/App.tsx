@@ -11,6 +11,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
+import LeadDetails from "./pages/LeadDetails";
+import LeadEdit from "./pages/LeadEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +55,26 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <Leads />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leads/:id"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <LeadDetails />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leads/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <LeadEdit />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
