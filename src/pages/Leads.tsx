@@ -60,12 +60,12 @@ const getLeadStatus = (lead: Lead) => {
 };
 
 const statusConfig = {
-  novo: { label: "Novo", className: "bg-blue-500 text-white" },
-  aguardando: { label: "Aguardando", className: "bg-gray-500 text-white" },
-  em_andamento: { label: "Em Andamento", className: "bg-green-500 text-white" },
-  pausado: { label: "Pausado", className: "bg-yellow-500 text-black" },
-  vendido: { label: "Vendido", className: "bg-green-600 text-white" },
-  cancelado: { label: "Cancelado", className: "bg-red-500 text-white" },
+  novo: { label: "Novo", className: "bg-blue-500" },
+  aguardando: { label: "Aguardando", className: "bg-gray-500" },
+  em_andamento: { label: "Em Andamento", className: "bg-green-500" },
+  pausado: { label: "Pausado", className: "bg-yellow-500" },
+  vendido: { label: "Vendido", className: "bg-green-600" },
+  cancelado: { label: "Cancelado", className: "bg-red-500" },
 };
 
 export default function Leads() {
@@ -304,14 +304,12 @@ export default function Leads() {
                       className="cursor-pointer hover:bg-muted/50"
                       onDoubleClick={() => handleRowDoubleClick(lead.id)}
                     >
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={statusInfo.className}
-                        >
-                          {statusInfo.label}
-                        </Badge>
-                      </TableCell>
+                       <TableCell>
+                         <div 
+                           className={`w-3 h-3 rounded-full ${statusInfo.className}`}
+                           title={statusInfo.label}
+                         />
+                       </TableCell>
                       <TableCell className="font-medium">{lead.nome}</TableCell>
                       <TableCell>
                         <div className="space-y-1">

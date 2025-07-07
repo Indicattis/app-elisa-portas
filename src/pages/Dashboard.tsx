@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Users, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface DashboardStats {
   totalLeads: number;
@@ -9,6 +11,14 @@ interface DashboardStats {
   leadsEmAndamento: number;
   leadsConcluidos: number;
   totalUsuarios?: number;
+}
+
+interface LogAtividade {
+  id: string;
+  acao: string;
+  created_at: string;
+  lead_id: string;
+  atendente_nome?: string;
 }
 
 export default function Dashboard() {
@@ -19,9 +29,11 @@ export default function Dashboard() {
     leadsConcluidos: 0,
     totalUsuarios: 0,
   });
+  const [logs, setLogs] = useState<LogAtividade[]>([]);
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchLogs();
   }, []);
 
   const fetchDashboardStats = async () => {
@@ -54,6 +66,50 @@ export default function Dashboard() {
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const { data: logsData, error } = await supabase
+        .from("lead_atendimento_historico")
+        .select(`
+          id,
+          acao,
+          created_at,
+          lead_id,
+          atendente_id
+        `)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Buscar nomes dos atendentes
+      const atendenteIds = [...new Set(logsData?.map(log => log.atendente_id).filter(Boolean))];
+      let atendenteMap = new Map();
+      
+      if (atendenteIds.length > 0) {
+        const { data: atendenteData } = await supabase
+          .from("admin_users")
+          .select("user_id, nome")
+          .in("user_id", atendenteIds);
+
+        if (atendenteData) {
+          atendenteData.forEach((atendente: any) => {
+            atendenteMap.set(atendente.user_id, atendente.nome);
+          });
+        }
+      }
+
+      const logsComNomes = logsData?.map(log => ({
+        ...log,
+        atendente_nome: atendenteMap.get(log.atendente_id) || "Sistema"
+      })) || [];
+
+      setLogs(logsComNomes);
+    } catch (error) {
+      console.error("Erro ao buscar logs:", error);
     }
   };
 
@@ -138,18 +194,28 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>Atividade Recente</CardTitle>
             <CardDescription>
-              Últimas atualizações do sistema
+              Últimas alterações nos leads
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Sistema inicializado</p>
-                  <p className="text-xs text-muted-foreground">Dashboard pronto para uso</p>
-                </div>
-              </div>
+              {logs.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma atividade recente</p>
+              ) : (
+                logs.map((log) => (
+                  <div key={log.id} className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        {log.atendente_nome} {log.acao.replace('_', ' ')}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(log.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

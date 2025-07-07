@@ -17,7 +17,6 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Leads", href: "/dashboard/leads", icon: FileText },
   { name: "Usuários", href: "/dashboard/users", icon: Users, adminOnly: true },
-  { name: "Configurações", href: "/dashboard/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -25,7 +24,12 @@ export function Sidebar() {
   const location = useLocation();
   const { signOut, user, isAdmin, userRole } = useAuth();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === "/dashboard") {
+      return location.pathname === "/dashboard";
+    }
+    return location.pathname.startsWith(path);
+  };
 
   const filteredNavigation = navigation.filter(item => 
     !item.adminOnly || (item.adminOnly && isAdmin)
@@ -61,9 +65,9 @@ export function Sidebar() {
               <li key={item.name}>
                 <NavLink
                   to={item.href}
-                  className={({ isActive }) =>
+                  className={() =>
                     `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive
+                      isActive(item.href)
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`
