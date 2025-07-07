@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,19 +44,20 @@ const getLeadStatus = (lead: Lead) => {
   const dataEnvio = new Date(lead.data_envio);
   const isFromToday = isToday(dataEnvio);
   
-  // Se o status for 1 (aguardando) e for do dia atual, é "novo"
-  if (lead.status_atendimento === 1 && isFromToday) {
-    return "novo";
-  }
-  
-  // Mapear outros status
   switch (lead.status_atendimento) {
-    case 1: return "aguardando";
-    case 2: return "em_andamento";
-    case 3: return "pausado";
-    case 4: return "vendido";
-    case 5: return "cancelado";
-    default: return "aguardando";
+    case 1:
+      // Se é do dia atual, é "novo", senão é "aguardando"
+      return isFromToday ? "novo" : "aguardando";
+    case 2:
+      return "em_andamento";
+    case 3:
+      return "pausado";
+    case 5:
+      return "vendido";
+    case 6:
+      return "cancelado";
+    default:
+      return "aguardando";
   }
 };
 
@@ -198,7 +200,10 @@ export default function Leads() {
     const matchesDataInicio = !filters.dataInicio || leadDate >= new Date(filters.dataInicio);
     const matchesDataFim = !filters.dataFim || leadDate <= new Date(filters.dataFim + "T23:59:59");
 
-    return matchesSearch && matchesStatus && matchesAtendente && matchesCidade && matchesDataInicio && matchesDataFim;
+    // Por padrão, não exibir leads vendidos (status 5) a menos que seja filtrado especificamente
+    const shouldHideVendidos = !filters.status && lead.status_atendimento === 5;
+
+    return matchesSearch && matchesStatus && matchesAtendente && matchesCidade && matchesDataInicio && matchesDataFim && !shouldHideVendidos;
   });
 
   const canManageLead = (lead: Lead) => {

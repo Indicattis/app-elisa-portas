@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Edit, Play, Pause, X, DollarSign } from "lucide-react";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Lead {
@@ -36,12 +37,26 @@ interface Atendente {
   nome: string;
 }
 
-const statusLabels = {
-  1: { label: "Aguardando", color: "bg-orange-100 text-orange-800" },
-  2: { label: "Em Andamento", color: "bg-blue-100 text-blue-800" },
-  3: { label: "Pausado", color: "bg-yellow-100 text-yellow-800" },
-  4: { label: "Concluído", color: "bg-green-100 text-green-800" },
-  5: { label: "Vendido", color: "bg-purple-100 text-purple-800" },
+const getStatusInfo = (lead: Lead) => {
+  const dataEnvio = new Date(lead.data_envio);
+  const isFromToday = isToday(dataEnvio);
+  
+  switch (lead.status_atendimento) {
+    case 1:
+      return isFromToday 
+        ? { label: "Novo", color: "bg-blue-100 text-blue-800" }
+        : { label: "Aguardando", color: "bg-gray-100 text-gray-800" };
+    case 2:
+      return { label: "Em Andamento", color: "bg-green-100 text-green-800" };
+    case 3:
+      return { label: "Pausado", color: "bg-yellow-100 text-yellow-800" };
+    case 5:
+      return { label: "Vendido", color: "bg-green-100 text-green-800" };
+    case 6:
+      return { label: "Cancelado", color: "bg-red-100 text-red-800" };
+    default:
+      return { label: "Aguardando", color: "bg-gray-100 text-gray-800" };
+  }
 };
 
 export default function LeadDetails() {
@@ -215,7 +230,7 @@ export default function LeadDetails() {
       );
     }
 
-    // Lead em andamento (status 2) - só o atendente responsável pode ações
+    // Lead em andamento (status 2) - admin pode fazer qualquer ação, atendente só suas próprias
     if (lead.status_atendimento === 2 && (isAdmin || isAtendente)) {
       return (
         <div className="flex gap-2">
@@ -230,6 +245,22 @@ export default function LeadDetails() {
           <Button onClick={handleVendido} disabled={actionLoading}>
             <DollarSign className="w-4 h-4 mr-2" />
             Vendido
+          </Button>
+        </div>
+      );
+    }
+
+    // Lead pausado (status 3) - admin pode fazer qualquer ação, atendente só suas próprias
+    if (lead.status_atendimento === 3 && (isAdmin || isAtendente)) {
+      return (
+        <div className="flex gap-2">
+          <Button onClick={handleIniciarAtendimento} disabled={actionLoading}>
+            <Play className="w-4 h-4 mr-2" />
+            Retomar Atendimento
+          </Button>
+          <Button variant="outline" onClick={handleCancelarAtendimento} disabled={actionLoading}>
+            <X className="w-4 h-4 mr-2" />
+            Cancelar
           </Button>
         </div>
       );
@@ -265,6 +296,8 @@ export default function LeadDetails() {
       </div>
     );
   }
+
+  const statusInfo = getStatusInfo(lead);
 
   return (
     <div className="space-y-6">
@@ -345,9 +378,9 @@ export default function LeadDetails() {
               <div className="mt-1">
                 <Badge
                   variant="secondary"
-                  className={statusLabels[lead.status_atendimento as keyof typeof statusLabels]?.color}
+                  className={statusInfo.color}
                 >
-                  {statusLabels[lead.status_atendimento as keyof typeof statusLabels]?.label}
+                  {statusInfo.label}
                 </Badge>
               </div>
             </div>
