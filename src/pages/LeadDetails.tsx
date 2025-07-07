@@ -21,7 +21,13 @@ interface Lead {
   atendente_id: string | null;
   valor_orcamento: number | null;
   tipo_porta: string | null;
+  altura_porta: string | null;
+  largura_porta: string | null;
+  cor_porta: string | null;
   data_inicio_atendimento: string | null;
+  data_prevista_entrega: string | null;
+  mensagem: string | null;
+  observacoes: string | null;
 }
 
 // Função para calcular o status atual do lead
