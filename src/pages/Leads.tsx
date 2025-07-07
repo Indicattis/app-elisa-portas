@@ -11,7 +11,7 @@ import { LeadIndicators } from "@/components/LeadIndicators";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Play, MessageCircle } from "lucide-react";
+import { Play, MessageCircle, Plus } from "lucide-react";
 import { format, isToday, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -27,6 +27,7 @@ interface Lead {
   valor_orcamento: number | null;
   tipo_porta: string | null;
   data_inicio_atendimento: string | null;
+  canal_aquisicao: string;
 }
 
 interface FilterValues {
@@ -268,6 +269,10 @@ export default function Leads() {
           <h1 className="text-3xl font-bold text-foreground">Leads</h1>
           <p className="text-muted-foreground">Gerencie todos os leads do sistema</p>
         </div>
+        <Button onClick={() => navigate("/dashboard/vendas/nova")}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Venda
+        </Button>
       </div>
 
       <LeadIndicators />
@@ -295,6 +300,7 @@ export default function Leads() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead>Cidade</TableHead>
+                  <TableHead>Canal</TableHead>
                   <TableHead>Atendente</TableHead>
                   <TableHead>Tempo</TableHead>
                   <TableHead>Data</TableHead>
@@ -328,6 +334,9 @@ export default function Leads() {
                       </TableCell>
                       <TableCell>{lead.cidade}</TableCell>
                       <TableCell>
+                        <Badge variant="outline">{lead.canal_aquisicao}</Badge>
+                      </TableCell>
+                      <TableCell>
                         {lead.atendente_id ? atendentes.get(lead.atendente_id) || "-" : "-"}
                       </TableCell>
                       <TableCell>
@@ -357,6 +366,18 @@ export default function Leads() {
                             title="Iniciar conversa no WhatsApp"
                           >
                             <MessageCircle className="w-4 h-4" />
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/dashboard/vendas/nova?lead=${lead.id}`);
+                            }}
+                            title="Adicionar venda"
+                          >
+                            <Plus className="w-4 h-4" />
                           </Button>
                           
                           {canManageLead(lead) && lead.status_atendimento === 1 && (

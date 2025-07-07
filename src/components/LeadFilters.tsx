@@ -42,6 +42,15 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
 
   const hasActiveFilters = Object.values(filters).some(value => value !== "");
 
+  const statusOptions = [
+    { value: "novo", label: "Novo", variant: "default" as const },
+    { value: "aguardando", label: "Aguardando", variant: "secondary" as const },
+    { value: "em_andamento", label: "Em Andamento", variant: "default" as const },
+    { value: "pausado", label: "Pausado", variant: "outline" as const },
+    { value: "vendido", label: "Vendido", variant: "default" as const },
+    { value: "cancelado", label: "Cancelado", variant: "destructive" as const },
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -77,11 +86,35 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
         <div className="flex items-center space-x-2">
           <Search className="w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome, email, telefone ou cidade..."
+            placeholder="Buscar por nome ou telefone..."
             value={filters.search}
             onChange={(e) => handleFilterChange("search", e.target.value)}
             className="max-w-md"
           />
+        </div>
+
+        {/* Filtros de status com botões */}
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={filters.status === "" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleFilterChange("status", "")}
+            >
+              Todos
+            </Button>
+            {statusOptions.map((status) => (
+              <Button
+                key={status.value}
+                variant={filters.status === status.value ? status.variant : "outline"}
+                size="sm"
+                onClick={() => handleFilterChange("status", status.value)}
+              >
+                {status.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Filtros expandidos */}

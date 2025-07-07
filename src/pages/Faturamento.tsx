@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, DollarSign, TrendingUp, CalendarDays } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, DollarSign, TrendingUp, CalendarDays, Edit } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -24,6 +26,7 @@ interface Venda {
   cidade?: string;
   bairro?: string;
   cep?: string;
+  canal_aquisicao?: string;
   lead_nome: string;
   atendente_nome: string;
 }
@@ -49,6 +52,7 @@ export default function Faturamento() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedState, setSelectedState] = useState("");
   const { isAdmin, userRole } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isAdmin || userRole === 'gerente_comercial') {
@@ -69,7 +73,12 @@ export default function Faturamento() {
           forma_pagamento,
           observacoes_venda,
           data_venda,
-          created_at
+          created_at,
+          canal_aquisicao,
+          estado,
+          cidade,
+          bairro,
+          cep
         `)
         .order("created_at", { ascending: false });
 
@@ -94,14 +103,14 @@ export default function Faturamento() {
       }
 
       // Buscar nomes dos leads
-      const leadIds = [...new Set(vendasData.map(venda => venda.lead_id))];
+      const leadIds = [...new Set((vendasData as any[]).map(venda => venda.lead_id))];
       const { data: leadsData } = await supabase
         .from("elisaportas_leads")
         .select("id, nome")
         .in("id", leadIds);
 
       // Buscar nomes dos atendentes
-      const atendenteIds = [...new Set(vendasData.map(venda => venda.atendente_id))];
+      const atendenteIds = [...new Set((vendasData as any[]).map(venda => venda.atendente_id))];
       const { data: atendentesData } = await supabase
         .from("admin_users")
         .select("user_id, nome")
@@ -112,7 +121,7 @@ export default function Faturamento() {
       const atendenteMap = new Map(atendentesData?.map(atendente => [atendente.user_id, atendente.nome]) || []);
 
       // Combinar dados e adicionar número sequencial baseado na data
-      const vendasCompletas = vendasData
+      const vendasCompletas = (vendasData as any[])
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         .map((venda, index) => ({
           ...venda,
@@ -322,16 +331,18 @@ export default function Faturamento() {
                   <TableHead>Nº Venda</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Atendente</TableHead>
+                  <TableHead>Canal</TableHead>
+                  <TableHead>Localização</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Forma Pagamento</TableHead>
                   <TableHead>Data da Venda</TableHead>
-                  <TableHead>Observações</TableHead>
+                  {isAdmin && <TableHead className="text-right">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredVendas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={isAdmin ? 9 : 8} className="text-center text-muted-foreground">
                       Nenhuma venda encontrada no período selecionado
                     </TableCell>
                   </TableRow>
@@ -345,6 +356,25 @@ export default function Faturamento() {
                         {venda.lead_nome}
                       </TableCell>
                       <TableCell>{venda.atendente_nome}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {venda.canal_aquisicao || "Google"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {venda.cidade && venda.estado ? (
+                            <>
+                              <div>{venda.cidade}, {venda.estado}</div>
+                              <div className="text-muted-foreground">
+                                {venda.bairro} - {venda.cep}
+                              </div>
+                            </>
+                          ) : (
+                            "-"
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-semibold text-green-600">
                         R$ {venda.valor_venda.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </TableCell>
@@ -360,11 +390,18 @@ export default function Faturamento() {
                       <TableCell>
                         {format(new Date(venda.data_venda), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </TableCell>
-                      <TableCell>
-                        <div className="max-w-[200px] truncate">
-                          {venda.observacoes_venda || "-"}
-                        </div>
-                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                            title="Editar venda"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}

@@ -15,6 +15,8 @@ import Users from "./pages/Users";
 import LeadDetails from "./pages/LeadDetails";
 import LeadEdit from "./pages/LeadEdit";
 import LeadVenda from "./pages/LeadVenda";
+import VendaNova from "./pages/VendaNova";
+import VendaEdit from "./pages/VendaEdit";
 import Faturamento from "./pages/Faturamento";
 import NotFound from "./pages/NotFound";
 
@@ -108,6 +110,26 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <Faturamento />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/vendas/nova"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <VendaNova />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/vendas/:id/editar"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <DashboardLayout>
+                      <VendaEdit />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

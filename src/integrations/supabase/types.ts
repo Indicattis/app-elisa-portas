@@ -54,6 +54,7 @@ export type Database = {
         Row: {
           altura_porta: string | null
           atendente_id: string | null
+          canal_aquisicao: string
           cidade: string | null
           cor_porta: string | null
           created_at: string
@@ -77,6 +78,7 @@ export type Database = {
         Insert: {
           altura_porta?: string | null
           atendente_id?: string | null
+          canal_aquisicao?: string
           cidade?: string | null
           cor_porta?: string | null
           created_at?: string
@@ -100,6 +102,7 @@ export type Database = {
         Update: {
           altura_porta?: string | null
           atendente_id?: string | null
+          canal_aquisicao?: string
           cidade?: string | null
           cor_porta?: string | null
           created_at?: string
@@ -207,6 +210,7 @@ export type Database = {
       vendas: {
         Row: {
           atendente_id: string
+          canal_aquisicao: string
           created_at: string
           data_venda: string
           forma_pagamento: string | null
@@ -218,6 +222,7 @@ export type Database = {
         }
         Insert: {
           atendente_id: string
+          canal_aquisicao?: string
           created_at?: string
           data_venda?: string
           forma_pagamento?: string | null
@@ -229,6 +234,7 @@ export type Database = {
         }
         Update: {
           atendente_id?: string
+          canal_aquisicao?: string
           created_at?: string
           data_venda?: string
           forma_pagamento?: string | null
