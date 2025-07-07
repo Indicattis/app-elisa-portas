@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,10 @@ export default function LeadVenda() {
     valor_venda: "",
     forma_pagamento: "",
     observacoes_venda: "",
+    estado: "",
+    cidade: "",
+    bairro: "",
+    cep: "",
   });
 
   useEffect(() => {
@@ -62,7 +67,8 @@ export default function LeadVenda() {
       if (leadData.valor_orcamento) {
         setFormData(prev => ({
           ...prev,
-          valor_venda: leadData.valor_orcamento.toString()
+          valor_venda: leadData.valor_orcamento.toString(),
+          cidade: leadData.cidade || ""
         }));
       }
     } catch (error) {
@@ -91,19 +97,70 @@ export default function LeadVenda() {
       return;
     }
 
+    if (!formData.estado || !formData.cidade || !formData.bairro || !formData.cep) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Todos os campos de localização são obrigatórios",
+      });
+      return;
+    }
+
+    // Validar CEP (formato básico)
+    const cepRegex = /^\d{5}-?\d{3}$/;
+    if (!cepRegex.test(formData.cep)) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "CEP deve ter o formato 00000-000",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.rpc('finalizar_venda', {
-        lead_uuid: id,
-        valor_venda: parseFloat(formData.valor_venda),
-        forma_pagamento: formData.forma_pagamento || null,
-        observacoes_venda: formData.observacoes_venda || null
-      });
+      // Como a função finalizar_venda não foi atualizada, vamos fazer a operação manualmente
+      // Primeiro, atualizar o status do lead
+      const { error: leadError } = await supabase
+        .from("elisaportas_leads")
+        .update({
+          status_atendimento: 5,
+          data_conclusao_atendimento: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
 
-      if (error) throw error;
-      if (!data) {
-        throw new Error("Não foi possível finalizar a venda");
-      }
+      if (leadError) throw leadError;
+
+      // Criar registro de venda com os novos campos
+      const { error: vendaError } = await supabase
+        .from("vendas")
+        .insert({
+          lead_id: id,
+          atendente_id: user?.id,
+          valor_venda: parseFloat(formData.valor_venda),
+          forma_pagamento: formData.forma_pagamento || null,
+          observacoes_venda: formData.observacoes_venda || null,
+          estado: formData.estado,
+          cidade: formData.cidade,
+          bairro: formData.bairro,
+          cep: formData.cep.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, '$1-$2') // Formatar CEP
+        });
+
+      if (vendaError) throw vendaError;
+
+      // Registrar no histórico
+      const { error: historicoError } = await supabase
+        .from("lead_atendimento_historico")
+        .insert({
+          lead_id: id,
+          atendente_id: user?.id,
+          acao: 'finalizou_venda',
+          status_anterior: 2,
+          status_novo: 5
+        });
+
+      if (historicoError) throw historicoError;
 
       toast({
         title: "Sucesso",
@@ -121,6 +178,19 @@ export default function LeadVenda() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const formatCep = (value: string) => {
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length <= 5) {
+      return cleanValue;
+    }
+    return cleanValue.replace(/(\d{5})(\d{0,3})/, '$1-$2');
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedCep = formatCep(e.target.value);
+    setFormData({ ...formData, cep: formattedCep });
   };
 
   if (loading) {
@@ -166,7 +236,7 @@ export default function LeadVenda() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Informações do Lead</CardTitle>
@@ -220,79 +290,138 @@ export default function LeadVenda() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Dados da Venda</CardTitle>
-            <CardDescription>
-              Preencha os dados para formalizar a venda
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados da Venda</CardTitle>
+              <CardDescription>
+                Preencha os dados para formalizar a venda
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="valor_venda">Valor da Venda *</Label>
+                  <Input
+                    id="valor_venda"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0,00"
+                    value={formData.valor_venda}
+                    onChange={(e) => setFormData({ ...formData, valor_venda: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
+                  <Select
+                    value={formData.forma_pagamento}
+                    onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a forma de pagamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                      <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="boleto">Boleto</SelectItem>
+                      <SelectItem value="transferencia">Transferência Bancária</SelectItem>
+                      <SelectItem value="financiamento">Financiamento</SelectItem>
+                      <SelectItem value="parcelado">Parcelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="observacoes_venda">Observações da Venda</Label>
+                  <Textarea
+                    id="observacoes_venda"
+                    placeholder="Observações adicionais sobre a venda..."
+                    value={formData.observacoes_venda}
+                    onChange={(e) => setFormData({ ...formData, observacoes_venda: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate(`/dashboard/leads/${id}`)}
+                    disabled={submitting}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submitting} className="flex-1">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    {submitting ? "Finalizando..." : "Finalizar Venda"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Localização da Venda *</CardTitle>
+              <CardDescription>
+                Todos os campos são obrigatórios
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="estado">Estado *</Label>
+                  <Input
+                    id="estado"
+                    placeholder="Ex: SP"
+                    value={formData.estado}
+                    onChange={(e) => setFormData({ ...formData, estado: e.target.value.toUpperCase() })}
+                    maxLength={2}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cidade">Cidade *</Label>
+                  <Input
+                    id="cidade"
+                    placeholder="Ex: São Paulo"
+                    value={formData.cidade}
+                    onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              
               <div>
-                <Label htmlFor="valor_venda">Valor da Venda *</Label>
+                <Label htmlFor="bairro">Bairro *</Label>
                 <Input
-                  id="valor_venda"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0,00"
-                  value={formData.valor_venda}
-                  onChange={(e) => setFormData({ ...formData, valor_venda: e.target.value })}
+                  id="bairro"
+                  placeholder="Ex: Vila Madalena"
+                  value={formData.bairro}
+                  onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
                   required
                 />
               </div>
-
+              
               <div>
-                <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Select
-                  value={formData.forma_pagamento}
-                  onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a forma de pagamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                    <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                    <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="boleto">Boleto</SelectItem>
-                    <SelectItem value="transferencia">Transferência Bancária</SelectItem>
-                    <SelectItem value="financiamento">Financiamento</SelectItem>
-                    <SelectItem value="parcelado">Parcelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="observacoes_venda">Observações da Venda</Label>
-                <Textarea
-                  id="observacoes_venda"
-                  placeholder="Observações adicionais sobre a venda..."
-                  value={formData.observacoes_venda}
-                  onChange={(e) => setFormData({ ...formData, observacoes_venda: e.target.value })}
-                  rows={4}
+                <Label htmlFor="cep">CEP *</Label>
+                <Input
+                  id="cep"
+                  placeholder="00000-000"
+                  value={formData.cep}
+                  onChange={handleCepChange}
+                  maxLength={9}
+                  required
                 />
               </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate(`/dashboard/leads/${id}`)}
-                  disabled={submitting}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={submitting} className="flex-1">
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  {submitting ? "Finalizando..." : "Finalizar Venda"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

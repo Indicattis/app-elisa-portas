@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, DollarSign, TrendingUp, CalendarDays } from "lucide-react";
@@ -11,12 +13,17 @@ import { ptBR } from "date-fns/locale";
 
 interface Venda {
   id: string;
+  numero_venda: number;
   lead_id: string;
   atendente_id: string;
   valor_venda: number;
   forma_pagamento: string | null;
   observacoes_venda: string | null;
   data_venda: string;
+  estado: string;
+  cidade: string;
+  bairro: string;
+  cep: string;
   lead_nome: string;
   atendente_nome: string;
 }
@@ -38,6 +45,9 @@ export default function Faturamento() {
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedState, setSelectedState] = useState("");
   const { isAdmin, userRole } = useAuth();
 
   useEffect(() => {
@@ -45,22 +55,42 @@ export default function Faturamento() {
       fetchVendas();
       fetchStats();
     }
-  }, [isAdmin, userRole]);
+  }, [isAdmin, userRole, selectedMonth, selectedYear, selectedState]);
 
   const fetchVendas = async () => {
     try {
-      const { data: vendasData, error: vendasError } = await supabase
+      let query = supabase
         .from("vendas")
         .select(`
           id,
+          numero_venda,
           lead_id,
           atendente_id,
           valor_venda,
           forma_pagamento,
           observacoes_venda,
-          data_venda
+          data_venda,
+          estado,
+          cidade,
+          bairro,
+          cep
         `)
-        .order("data_venda", { ascending: false });
+        .order("numero_venda", { ascending: false });
+
+      // Filtrar por mês e ano
+      const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+      const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59);
+      
+      query = query
+        .gte("data_venda", startDate.toISOString())
+        .lte("data_venda", endDate.toISOString());
+
+      // Filtrar por estado se selecionado
+      if (selectedState) {
+        query = query.eq("estado", selectedState);
+      }
+
+      const { data: vendasData, error: vendasError } = await query;
 
       if (vendasError) throw vendasError;
 
@@ -104,31 +134,34 @@ export default function Faturamento() {
 
   const fetchStats = async () => {
     try {
-      const { data: vendasData, error } = await supabase
+      // Stats para o mês selecionado
+      const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+      const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59);
+
+      let query = supabase
+        .from("vendas")
+        .select("valor_venda, data_venda")
+        .gte("data_venda", startDate.toISOString())
+        .lte("data_venda", endDate.toISOString());
+
+      if (selectedState) {
+        query = query.eq("estado", selectedState);
+      }
+
+      const { data: vendasMes, error: errorMes } = await query;
+
+      // Stats gerais (todos os dados)
+      const { data: vendasTotais, error: errorTotal } = await supabase
         .from("vendas")
         .select("valor_venda, data_venda");
 
-      if (error) throw error;
+      if (errorMes || errorTotal) throw errorMes || errorTotal;
 
-      if (!vendasData || vendasData.length === 0) {
-        setStats({
-          totalVendas: 0,
-          valorTotal: 0,
-          vendasMes: 0,
-          valorMes: 0,
-        });
-        return;
-      }
+      const vendasMesCount = vendasMes?.length || 0;
+      const valorMes = vendasMes?.reduce((acc, venda) => acc + venda.valor_venda, 0) || 0;
 
-      const totalVendas = vendasData.length;
-      const valorTotal = vendasData.reduce((acc, venda) => acc + venda.valor_venda, 0);
-
-      // Vendas do mês atual
-      const mesAtual = new Date();
-      const inicioMes = new Date(mesAtual.getFullYear(), mesAtual.getMonth(), 1);
-      const vendasMes = vendasData.filter(venda => new Date(venda.data_venda) >= inicioMes);
-      const vendasMesCount = vendasMes.length;
-      const valorMes = vendasMes.reduce((acc, venda) => acc + venda.valor_venda, 0);
+      const totalVendas = vendasTotais?.length || 0;
+      const valorTotal = vendasTotais?.reduce((acc, venda) => acc + venda.valor_venda, 0) || 0;
 
       setStats({
         totalVendas,
@@ -144,8 +177,31 @@ export default function Faturamento() {
   const filteredVendas = vendas.filter(venda =>
     venda.lead_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     venda.atendente_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    venda.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    venda.bairro.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (venda.forma_pagamento && venda.forma_pagamento.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Obter lista única de estados para o filtro
+  const estados = [...new Set(vendas.map(venda => venda.estado))].sort();
+
+  // Gerar opções de mês e ano
+  const meses = [
+    { value: 1, label: "Janeiro" },
+    { value: 2, label: "Fevereiro" },
+    { value: 3, label: "Março" },
+    { value: 4, label: "Abril" },
+    { value: 5, label: "Maio" },
+    { value: 6, label: "Junho" },
+    { value: 7, label: "Julho" },
+    { value: 8, label: "Agosto" },
+    { value: 9, label: "Setembro" },
+    { value: 10, label: "Outubro" },
+    { value: 11, label: "Novembro" },
+    { value: 12, label: "Dezembro" },
+  ];
+
+  const anos = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
   if (!isAdmin && userRole !== 'gerente_comercial') {
     return (
@@ -170,30 +226,30 @@ export default function Faturamento() {
 
   const statCards = [
     {
-      title: "Total de Vendas",
+      title: "Total de Vendas (Geral)",
       value: stats.totalVendas,
-      description: "Vendas realizadas",
+      description: "Vendas realizadas (todos os períodos)",
       icon: CalendarDays,
       color: "text-blue-600",
     },
     {
-      title: "Faturamento Total",
+      title: "Faturamento Total (Geral)",
       value: `R$ ${stats.valorTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      description: "Valor total faturado",
+      description: "Valor total faturado (todos os períodos)",
       icon: DollarSign,
       color: "text-green-600",
     },
     {
-      title: "Vendas do Mês",
+      title: `Vendas - ${meses.find(m => m.value === selectedMonth)?.label}/${selectedYear}`,
       value: stats.vendasMes,
-      description: "Vendas realizadas este mês",
+      description: "Vendas do período selecionado",
       icon: TrendingUp,
       color: "text-orange-600",
     },
     {
-      title: "Faturamento do Mês",
+      title: `Faturamento - ${meses.find(m => m.value === selectedMonth)?.label}/${selectedYear}`,
       value: `R$ ${stats.valorMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      description: "Valor faturado este mês",
+      description: "Valor do período selecionado",
       icon: DollarSign,
       color: "text-purple-600",
     },
@@ -231,16 +287,58 @@ export default function Faturamento() {
         <CardHeader>
           <CardTitle>Histórico de Vendas</CardTitle>
           <CardDescription>
-            {filteredVendas.length} vendas encontradas
+            {filteredVendas.length} vendas encontradas no período selecionado
           </CardDescription>
-          <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por cliente, atendente ou forma de pagamento..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por cliente, atendente, cidade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            
+            <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                {meses.map((mes) => (
+                  <SelectItem key={mes.value} value={mes.value.toString()}>
+                    {mes.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                {anos.map((ano) => (
+                  <SelectItem key={ano} value={ano.toString()}>
+                    {ano}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedState} onValueChange={setSelectedState}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Filtrar por Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos os Estados</SelectItem>
+                {estados.map((estado) => (
+                  <SelectItem key={estado} value={estado}>
+                    {estado}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
@@ -248,9 +346,11 @@ export default function Faturamento() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Nº Venda</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Atendente</TableHead>
                   <TableHead>Valor</TableHead>
+                  <TableHead>Localização</TableHead>
                   <TableHead>Forma Pagamento</TableHead>
                   <TableHead>Data da Venda</TableHead>
                   <TableHead>Observações</TableHead>
@@ -259,19 +359,29 @@ export default function Faturamento() {
               <TableBody>
                 {filteredVendas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      Nenhuma venda encontrada
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      Nenhuma venda encontrada no período selecionado
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredVendas.map((venda) => (
                     <TableRow key={venda.id}>
+                      <TableCell className="font-bold text-primary">
+                        #{venda.numero_venda}
+                      </TableCell>
                       <TableCell className="font-medium">
                         {venda.lead_nome}
                       </TableCell>
                       <TableCell>{venda.atendente_nome}</TableCell>
                       <TableCell className="font-semibold text-green-600">
                         R$ {venda.valor_venda.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">{venda.cidade} - {venda.estado}</div>
+                          <div className="text-muted-foreground">{venda.bairro}</div>
+                          <div className="text-muted-foreground">CEP: {venda.cep}</div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         {venda.forma_pagamento ? (
