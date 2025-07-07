@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,12 +44,7 @@ export function LeadIndicators() {
       // Buscar vendas
       const { data: vendasData, error: vendasError } = await supabase
         .from("vendas")
-        .select(`
-          valor_venda,
-          data_venda,
-          atendente_id,
-          admin_users!inner(nome)
-        `);
+        .select("valor_venda, data_venda, atendente_id");
 
       if (vendasError) throw vendasError;
 
@@ -67,22 +61,32 @@ export function LeadIndicators() {
         });
         setVendasMes(vendasDoMes.length);
 
+        // Buscar nomes dos atendentes
+        const atendenteIds = [...new Set(vendasData.map(venda => venda.atendente_id))];
+        const { data: atendentesData } = await supabase
+          .from("admin_users")
+          .select("user_id, nome")
+          .in("user_id", atendenteIds);
+
+        // Criar map de atendentes
+        const atendenteMap = new Map(atendentesData?.map(atendente => [atendente.user_id, atendente.nome]) || []);
+
         // Placar de atendentes
-        const atendenteMap = new Map<string, AtendenteVenda>();
+        const placarMap = new Map<string, AtendenteVenda>();
         
-        vendasData.forEach((venda: any) => {
+        vendasData.forEach((venda) => {
           const atendenteId = venda.atendente_id;
-          const nomeAtendente = venda.admin_users?.nome || "Desconhecido";
+          const nomeAtendente = atendenteMap.get(atendenteId) || "Desconhecido";
           
-          if (atendenteMap.has(atendenteId)) {
-            const atual = atendenteMap.get(atendenteId)!;
-            atendenteMap.set(atendenteId, {
+          if (placarMap.has(atendenteId)) {
+            const atual = placarMap.get(atendenteId)!;
+            placarMap.set(atendenteId, {
               nome: nomeAtendente,
               total: atual.total + venda.valor_venda,
               quantidade: atual.quantidade + 1
             });
           } else {
-            atendenteMap.set(atendenteId, {
+            placarMap.set(atendenteId, {
               nome: nomeAtendente,
               total: venda.valor_venda,
               quantidade: 1
@@ -90,7 +94,7 @@ export function LeadIndicators() {
           }
         });
 
-        const placar = Array.from(atendenteMap.values())
+        const placar = Array.from(placarMap.values())
           .sort((a, b) => b.total - a.total)
           .slice(0, 5);
         
