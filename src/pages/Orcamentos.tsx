@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useOrcamentos } from "@/hooks/useOrcamentos";
@@ -9,6 +10,7 @@ import { OrcamentoTable } from "@/components/orcamentos/OrcamentoTable";
 import { OrcamentoApprovalModal } from "@/components/orcamentos/OrcamentoApprovalModal";
 
 export default function Orcamentos() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [selectedOrcamento, setSelectedOrcamento] = useState<any>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -62,10 +64,19 @@ export default function Orcamentos() {
           <h1 className="text-3xl font-bold text-foreground">Orçamentos</h1>
           <p className="text-muted-foreground">Gerencie orçamentos dos leads</p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Orçamento
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/dashboard/orcamentos/novo")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Orçamento
+          </Button>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Orçamento Rápido
+          </Button>
+        </div>
       </div>
 
       <OrcamentoFilters 

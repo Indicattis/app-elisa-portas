@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +21,7 @@ import VendaNova from "./pages/VendaNova";
 import VendaEdit from "./pages/VendaEdit";
 import Faturamento from "./pages/Faturamento";
 import Orcamentos from "./pages/Orcamentos";
+import NovoOrcamento from "./pages/NovoOrcamento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -92,6 +94,16 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <Orcamentos />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/orcamentos/novo"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <NovoOrcamento />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

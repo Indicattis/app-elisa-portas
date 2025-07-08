@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Users, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Users, Clock, CheckCircle, AlertCircle, DollarSign, TrendingUp, Target, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -11,6 +13,12 @@ interface DashboardStats {
   leadsEmAndamento: number;
   leadsConcluidos: number;
   totalUsuarios?: number;
+  faturamentoMes: number;
+  faturamentoAno: number;
+  metaAnual: number;
+  totalOrcamentos: number;
+  orcamentosPendentes: number;
+  ticketMedio: number;
 }
 
 interface LogAtividade {
@@ -28,6 +36,12 @@ export default function Dashboard() {
     leadsEmAndamento: 0,
     leadsConcluidos: 0,
     totalUsuarios: 0,
+    faturamentoMes: 0,
+    faturamentoAno: 0,
+    metaAnual: 1000000, // Meta de 1 milhão
+    totalOrcamentos: 0,
+    orcamentosPendentes: 0,
+    ticketMedio: 0,
   });
   const [logs, setLogs] = useState<LogAtividade[]>([]);
 
@@ -52,10 +66,41 @@ export default function Dashboard() {
 
       if (usersError) throw usersError;
 
+      // Buscar faturamento do mês atual
+      const currentDate = new Date();
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+
+      const { data: vendasMes, error: vendasMesError } = await supabase
+        .from("vendas")
+        .select("valor_venda")
+        .gte("data_venda", startOfMonth.toISOString());
+
+      const { data: vendasAno, error: vendasAnoError } = await supabase
+        .from("vendas")
+        .select("valor_venda")
+        .gte("data_venda", startOfYear.toISOString());
+
+      // Buscar orçamentos
+      const { data: orcamentos, error: orcamentosError } = await supabase
+        .from("orcamentos")
+        .select("status, valor_total");
+
+      if (vendasMesError || vendasAnoError || orcamentosError) {
+        console.error("Error fetching sales/budget data");
+      }
+
       const leadsAguardando = leads?.filter(lead => lead.status_atendimento === 1).length || 0;
       const leadsEmAndamento = leads?.filter(lead => lead.status_atendimento === 2).length || 0;
       const leadsPausados = leads?.filter(lead => lead.status_atendimento === 3).length || 0;
       const leadsConcluidos = leads?.filter(lead => lead.status_atendimento === 4).length || 0;
+
+      const faturamentoMes = vendasMes?.reduce((acc, venda) => acc + venda.valor_venda, 0) || 0;
+      const faturamentoAno = vendasAno?.reduce((acc, venda) => acc + venda.valor_venda, 0) || 0;
+      const ticketMedio = vendasAno?.length ? faturamentoAno / vendasAno.length : 0;
+
+      const totalOrcamentos = orcamentos?.length || 0;
+      const orcamentosPendentes = orcamentos?.filter(orc => orc.status === 'pendente').length || 0;
 
       setStats({
         totalLeads: leads?.length || 0,
@@ -63,6 +108,12 @@ export default function Dashboard() {
         leadsEmAndamento: leadsEmAndamento + leadsPausados,
         leadsConcluidos,
         totalUsuarios: totalUsuarios || 0,
+        faturamentoMes,
+        faturamentoAno,
+        metaAnual: 1000000,
+        totalOrcamentos,
+        orcamentosPendentes,
+        ticketMedio,
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
@@ -81,7 +132,7 @@ export default function Dashboard() {
           atendente_id
         `)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(15);
 
       if (error) throw error;
 
@@ -113,34 +164,64 @@ export default function Dashboard() {
     }
   };
 
+  const progressoMeta = (stats.faturamentoAno / stats.metaAnual) * 100;
+
   const statCards = [
+    {
+      title: "Faturamento Mensal",
+      value: `R$ ${stats.faturamentoMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      description: `Mês de ${format(new Date(), "MMMM", { locale: ptBR })}`,
+      icon: DollarSign,
+      color: "text-green-600",
+    },
+    {
+      title: "Faturamento Anual",
+      value: `R$ ${stats.faturamentoAno.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      description: `${progressoMeta.toFixed(1)}% da meta anual`,
+      icon: TrendingUp,
+      color: "text-blue-600",
+    },
+    {
+      title: "Ticket Médio",
+      value: `R$ ${stats.ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      description: "Valor médio por venda",
+      icon: Target,
+      color: "text-purple-600",
+    },
     {
       title: "Total de Leads",
       value: stats.totalLeads,
       description: "Leads cadastrados no sistema",
       icon: FileText,
-      color: "text-blue-600",
+      color: "text-orange-600",
     },
     {
       title: "Aguardando Atendimento",
       value: stats.leadsAguardando,
       description: "Leads aguardando atendimento",
       icon: Clock,
-      color: "text-orange-600",
+      color: "text-yellow-600",
     },
     {
       title: "Em Andamento",
       value: stats.leadsEmAndamento,
       description: "Leads sendo atendidos",
       icon: AlertCircle,
-      color: "text-yellow-600",
+      color: "text-blue-600",
     },
     {
-      title: "Concluídos",
-      value: stats.leadsConcluidos,
-      description: "Leads finalizados",
-      icon: CheckCircle,
-      color: "text-green-600",
+      title: "Orçamentos Pendentes",
+      value: stats.orcamentosPendentes,
+      description: `${stats.totalOrcamentos} orçamentos no total`,
+      icon: Calendar,
+      color: "text-red-600",
+    },
+    {
+      title: "Total de Usuários",
+      value: stats.totalUsuarios,
+      description: "Usuários cadastrados",
+      icon: Users,
+      color: "text-indigo-600",
     },
   ];
 
@@ -149,9 +230,34 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground">
-          Visão geral do sistema de leads
+          Visão geral do sistema de leads e faturamento
         </p>
       </div>
+
+      {/* Meta Anual */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-green-600" />
+            Meta Anual de Faturamento
+          </CardTitle>
+          <CardDescription>
+            Progresso em direção à meta de R$ 1.000.000,00
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span>R$ {stats.faturamentoAno.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+              <span>R$ 1.000.000,00</span>
+            </div>
+            <Progress value={progressoMeta} className="h-3" />
+            <p className="text-sm text-muted-foreground">
+              {progressoMeta >= 100 ? "🎉 Meta atingida!" : `Faltam R$ ${(stats.metaAnual - stats.faturamentoAno).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} para atingir a meta`}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
@@ -170,23 +276,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         ))}
-        
-        {stats.totalUsuarios !== undefined && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total de Usuários
-              </CardTitle>
-              <Users className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsuarios}</div>
-              <p className="text-xs text-muted-foreground">
-                Usuários cadastrados
-              </p>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -198,7 +287,7 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-96 overflow-y-auto">
               {logs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nenhuma atividade recente</p>
               ) : (
@@ -239,6 +328,16 @@ export default function Dashboard() {
                 <span className="text-sm">Autenticação</span>
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                   Ativo
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Orçamentos Pendentes</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  stats.orcamentosPendentes > 0 
+                    ? "bg-yellow-100 text-yellow-800" 
+                    : "bg-green-100 text-green-800"
+                }`}>
+                  {stats.orcamentosPendentes > 0 ? `${stats.orcamentosPendentes} pendentes` : "Em dia"}
                 </span>
               </div>
             </div>

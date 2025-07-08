@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, CalendarDays, Edit } from "lucide-react";
+import { Search, DollarSign, TrendingUp, CalendarDays, Edit, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,10 +24,6 @@ interface Venda {
   forma_pagamento: string | null;
   observacoes_venda: string | null;
   data_venda: string;
-  estado?: string;
-  cidade?: string;
-  bairro?: string;
-  cep?: string;
   canal_aquisicao?: string;
   lead_nome: string;
   atendente_nome: string;
@@ -38,21 +34,35 @@ interface FaturamentoStats {
   valorTotal: number;
   vendasMes: number;
   valorMes: number;
+  orcamentosPendentes: number;
+  requisicoesVendaPendentes: number;
+}
+
+interface OrcamentoRequisicao {
+  id: string;
+  status: string;
+  valor_total: number;
+  created_at: string;
+  lead_nome: string;
+  solicitante_nome: string;
+  requer_analise: boolean;
 }
 
 export default function Faturamento() {
   const [vendas, setVendas] = useState<Venda[]>([]);
+  const [orcamentosRequisicoes, setOrcamentosRequisicoes] = useState<OrcamentoRequisicao[]>([]);
   const [stats, setStats] = useState<FaturamentoStats>({
     totalVendas: 0,
     valorTotal: 0,
     vendasMes: 0,
     valorMes: 0,
+    orcamentosPendentes: 0,
+    requisicoesVendaPendentes: 0,
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedState, setSelectedState] = useState("");
   const { isAdmin, userRole } = useAuth();
   const navigate = useNavigate();
 
@@ -60,8 +70,9 @@ export default function Faturamento() {
     if (isAdmin || userRole === 'gerente_comercial') {
       fetchVendas();
       fetchStats();
+      fetchOrcamentosRequisicoes();
     }
-  }, [isAdmin, userRole, selectedMonth, selectedYear, selectedState]);
+  }, [isAdmin, userRole, selectedMonth, selectedYear]);
 
   const fetchVendas = async () => {
     try {
@@ -76,11 +87,7 @@ export default function Faturamento() {
           observacoes_venda,
           data_venda,
           created_at,
-          canal_aquisicao,
-          estado,
-          cidade,
-          bairro,
-          cep
+          canal_aquisicao
         `)
         .order("created_at", { ascending: false });
 
@@ -141,6 +148,46 @@ export default function Faturamento() {
     }
   };
 
+  const fetchOrcamentosRequisicoes = async () => {
+    try {
+      const { data: orcamentos, error } = await supabase
+        .from("orcamentos")
+        .select(`
+          id,
+          status,
+          valor_total,
+          created_at,
+          requer_analise,
+          usuario_id,
+          elisaportas_leads!inner(nome)
+        `)
+        .eq("status", "pendente")
+        .eq("requer_analise", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Buscar nomes dos solicitantes
+      const userIds = [...new Set(orcamentos?.map(orc => orc.usuario_id) || [])];
+      const { data: usersData } = await supabase
+        .from("admin_users")
+        .select("user_id, nome")
+        .in("user_id", userIds);
+
+      const userMap = new Map(usersData?.map(user => [user.user_id, user.nome]) || []);
+
+      const orcamentosCompletos = orcamentos?.map(orc => ({
+        ...orc,
+        lead_nome: (orc.elisaportas_leads as any).nome,
+        solicitante_nome: userMap.get(orc.usuario_id) || "Usuário não encontrado"
+      })) || [];
+
+      setOrcamentosRequisicoes(orcamentosCompletos);
+    } catch (error) {
+      console.error("Erro ao buscar orçamentos pendentes:", error);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       // Stats para o mês selecionado
@@ -158,6 +205,18 @@ export default function Faturamento() {
         .from("vendas")
         .select("valor_venda, data_venda");
 
+      // Contar orçamentos pendentes
+      const { count: orcamentosPendentes } = await supabase
+        .from("orcamentos")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pendente");
+
+      // Contar requisições de venda pendentes
+      const { count: requisicoesVendaPendentes } = await supabase
+        .from("requisicoes_venda")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pendente");
+
       if (errorMes || errorTotal) throw errorMes || errorTotal;
 
       const vendasMesCount = vendasMes?.length || 0;
@@ -171,6 +230,8 @@ export default function Faturamento() {
         valorTotal,
         vendasMes: vendasMesCount,
         valorMes,
+        orcamentosPendentes: orcamentosPendentes || 0,
+        requisicoesVendaPendentes: requisicoesVendaPendentes || 0,
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
@@ -251,6 +312,20 @@ export default function Faturamento() {
       icon: DollarSign,
       color: "text-purple-600",
     },
+    {
+      title: "Orçamentos Pendentes",
+      value: stats.orcamentosPendentes,
+      description: "Aguardando aprovação gerencial",
+      icon: Clock,
+      color: "text-yellow-600",
+    },
+    {
+      title: "Requisições de Venda",
+      value: stats.requisicoesVendaPendentes,
+      description: "Pendentes de aprovação",
+      icon: AlertTriangle,
+      color: "text-red-600",
+    },
   ];
 
   return (
@@ -263,163 +338,225 @@ export default function Faturamento() {
       </div>
 
       <Tabs defaultValue="faturamento" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
-          <TabsTrigger value="requisicoes">Requisições de Venda</TabsTrigger>
+          <TabsTrigger value="orcamentos-pendentes">
+            Orçamentos Pendentes
+            {stats.orcamentosPendentes > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {stats.orcamentosPendentes}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="requisicoes">
+            Requisições de Venda
+            {stats.requisicoesVendaPendentes > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {stats.requisicoesVendaPendentes}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="faturamento" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {statCards.slice(0, 4).map((stat) => (
+              <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {stat.title}
+                  </CardTitle>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stat.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Histórico de Vendas</CardTitle>
+              <CardDescription>
+                {filteredVendas.length} vendas encontradas no período selecionado
+              </CardDescription>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <Search className="w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por cliente, atendente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                
+                <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {meses.map((mes) => (
+                      <SelectItem key={mes.value} value={mes.value.toString()}>
+                        {mes.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {anos.map((ano) => (
+                      <SelectItem key={ano} value={ano.toString()}>
+                        {ano}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.description}
-              </p>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nº Venda</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Atendente</TableHead>
+                      <TableHead>Canal</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Forma Pagamento</TableHead>
+                      <TableHead>Data da Venda</TableHead>
+                      {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredVendas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={isAdmin ? 8 : 7} className="text-center text-muted-foreground">
+                          Nenhuma venda encontrada no período selecionado
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredVendas.map((venda) => (
+                        <TableRow key={venda.id}>
+                          <TableCell className="font-bold text-primary">
+                            #{venda.numero_venda || 'N/A'}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {venda.lead_nome}
+                          </TableCell>
+                          <TableCell>{venda.atendente_nome}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {venda.canal_aquisicao || "Google"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-semibold text-green-600">
+                            R$ {venda.valor_venda.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell>
+                            {venda.forma_pagamento ? (
+                              <Badge variant="outline">
+                                {venda.forma_pagamento.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </Badge>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(venda.data_venda), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          {isAdmin && (
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                                title="Editar venda"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Vendas</CardTitle>
-          <CardDescription>
-            {filteredVendas.length} vendas encontradas no período selecionado
-          </CardDescription>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center space-x-2">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por cliente, atendente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            
-            <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Mês" />
-              </SelectTrigger>
-              <SelectContent>
-                {meses.map((mes) => (
-                  <SelectItem key={mes.value} value={mes.value.toString()}>
-                    {mes.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {anos.map((ano) => (
-                  <SelectItem key={ano} value={ano.toString()}>
-                    {ano}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº Venda</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Atendente</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Localização</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Forma Pagamento</TableHead>
-                  <TableHead>Data da Venda</TableHead>
-                  {isAdmin && <TableHead className="text-right">Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredVendas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={isAdmin ? 9 : 8} className="text-center text-muted-foreground">
-                      Nenhuma venda encontrada no período selecionado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredVendas.map((venda) => (
-                    <TableRow key={venda.id}>
-                      <TableCell className="font-bold text-primary">
-                        #{venda.numero_venda || 'N/A'}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {venda.lead_nome}
-                      </TableCell>
-                      <TableCell>{venda.atendente_nome}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {venda.canal_aquisicao || "Google"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {venda.cidade && venda.estado ? (
-                            <>
-                              <div>{venda.cidade}, {venda.estado}</div>
-                              <div className="text-muted-foreground">
-                                {venda.bairro} - {venda.cep}
-                              </div>
-                            </>
-                          ) : (
-                            "-"
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-semibold text-green-600">
-                        R$ {venda.valor_venda.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell>
-                        {venda.forma_pagamento ? (
-                          <Badge variant="outline">
-                            {venda.forma_pagamento.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </Badge>
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(venda.data_venda), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      {isAdmin && (
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
-                            title="Editar venda"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      )}
+        <TabsContent value="orcamentos-pendentes" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-yellow-600" />
+                Orçamentos Pendentes de Aprovação
+              </CardTitle>
+              <CardDescription>
+                Orçamentos que requerem análise gerencial
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Lead</TableHead>
+                      <TableHead>Solicitante</TableHead>
+                      <TableHead>Valor Total</TableHead>
+                      <TableHead>Data da Solicitação</TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {orcamentosRequisicoes.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          Nenhum orçamento pendente
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      orcamentosRequisicoes.map((orcamento) => (
+                        <TableRow key={orcamento.id}>
+                          <TableCell className="font-medium">
+                            {orcamento.lead_nome}
+                          </TableCell>
+                          <TableCell>{orcamento.solicitante_nome}</TableCell>
+                          <TableCell className="font-semibold text-green-600">
+                            R$ {orcamento.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(orcamento.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => navigate("/dashboard/orcamentos")}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Analisar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="requisicoes" className="space-y-6">
