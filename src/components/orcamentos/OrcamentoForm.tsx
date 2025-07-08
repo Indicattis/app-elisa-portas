@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,8 @@ export function OrcamentoForm({
 }: OrcamentoFormProps) {
   const [calculatedTotal, setCalculatedTotal] = useState(0);
 
-  const calculateTotal = () => {
+  // Calcular total sempre que os valores mudarem
+  useEffect(() => {
     const produto = parseFloat(formData.valor_produto) || 0;
     const pintura = parseFloat(formData.valor_pintura) || 0;
     const frete = parseFloat(formData.valor_frete) || 0;
@@ -47,13 +48,18 @@ export function OrcamentoForm({
     const total = subtotal - desconto;
 
     setCalculatedTotal(total);
-    return total;
-  };
+  }, [
+    formData.valor_produto,
+    formData.valor_pintura,
+    formData.valor_frete,
+    formData.valor_instalacao,
+    formData.desconto_percentual,
+    camposPersonalizados
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const total = calculateTotal();
-    await onSubmit(total);
+    await onSubmit(calculatedTotal);
   };
 
   const addCampoPersonalizado = () => {
@@ -241,7 +247,7 @@ export function OrcamentoForm({
           <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <span className="text-lg font-semibold">Total do Orçamento:</span>
             <span className="text-2xl font-bold text-primary">
-              R$ {calculateTotal().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              R$ {calculatedTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </div>
 
