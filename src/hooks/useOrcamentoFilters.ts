@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import type { OrcamentoFilters } from "@/types/orcamento";
 
-export function useOrcamentoFilters(orcamentos: any[]) {
+export function useOrcamentoFilters(orcamentos: any[] = []) {
   const [filters, setFilters] = useState<OrcamentoFilters>({
     search: "",
     status: "",
@@ -10,6 +10,10 @@ export function useOrcamentoFilters(orcamentos: any[]) {
   });
 
   const filteredOrcamentos = useMemo(() => {
+    if (!Array.isArray(orcamentos) || orcamentos.length === 0) {
+      return [];
+    }
+
     let filtered = orcamentos;
 
     if (filters.search) {
