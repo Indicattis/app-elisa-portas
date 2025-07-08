@@ -1,4 +1,3 @@
-import { useToast } from "@/hooks/use-toast";
 
 export const calcularValorTotal = (
   valor_produto: string,
@@ -23,9 +22,7 @@ export const calcularValorTotal = (
   return subtotal - desconto;
 };
 
-export const generatePDF = async (orcamento: any) => {
-  const { toast } = useToast();
-  
+export const generatePDF = async (orcamento: any, toast: any) => {
   // Simular geração do PDF - aqui seria implementada a geração real
   toast({
     title: "PDF Gerado",

@@ -1,8 +1,8 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useOrcamentos } from "@/hooks/useOrcamentos";
-import { generatePDF } from "@/utils/orcamentoUtils";
 import { OrcamentoFilters } from "@/components/orcamentos/OrcamentoFilters";
 import { OrcamentoForm } from "@/components/orcamentos/OrcamentoForm";
 import { OrcamentoTable } from "@/components/orcamentos/OrcamentoTable";
@@ -32,11 +32,6 @@ export default function Orcamentos() {
   const handleCreateOrcamento = async (valorTotal: number) => {
     const data = await createOrcamento(valorTotal);
     setShowForm(false);
-    
-    // Gerar PDF automaticamente se aprovado
-    if (!formData.requer_analise) {
-      generatePDF(data);
-    }
   };
 
   const handleApproveOrcamento = async (orcamentoId: string, desconto_adicional: number, observacoes: string) => {

@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { generatePDF, getStatusBadgeProps } from "@/utils/orcamentoUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface OrcamentoTableProps {
   orcamentos: any[];
@@ -16,6 +18,7 @@ interface OrcamentoTableProps {
 
 export function OrcamentoTable({ orcamentos, onApprove, onReject }: OrcamentoTableProps) {
   const { isAdmin, isGerenteComercial } = useAuth();
+  const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
     const props = getStatusBadgeProps(status);
@@ -27,6 +30,10 @@ export function OrcamentoTable({ orcamentos, onApprove, onReject }: OrcamentoTab
         {props.text}
       </Badge>
     );
+  };
+
+  const handleGeneratePDF = (orcamento: any) => {
+    generatePDF(orcamento, toast);
   };
 
   return (
@@ -65,7 +72,7 @@ export function OrcamentoTable({ orcamentos, onApprove, onReject }: OrcamentoTab
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => generatePDF(orcamento)}>
+                    <Button size="sm" variant="outline" onClick={() => handleGeneratePDF(orcamento)}>
                       <Download className="w-3 h-3 mr-1" />
                       PDF
                     </Button>
