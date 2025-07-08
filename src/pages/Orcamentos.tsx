@@ -36,8 +36,8 @@ export default function Orcamentos() {
     setShowForm(false);
   };
 
-  const handleApproveOrcamento = async (orcamentoId: string, desconto_adicional: number, observacoes: string) => {
-    await approveOrcamento(orcamentoId, desconto_adicional, observacoes);
+  const handleApproveOrcamento = async (orcamentoId: string, desconto_adicional: number, tipo_desconto: string, observacoes: string) => {
+    await approveOrcamento(orcamentoId, desconto_adicional, tipo_desconto, observacoes);
     setShowApprovalModal(false);
     setSelectedOrcamento(null);
   };
