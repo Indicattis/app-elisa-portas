@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -23,11 +23,11 @@ export default function NovoOrcamento() {
   } = useOrcamentos();
 
   // Se um lead foi especificado, pre-selecionar
-  useState(() => {
+  useEffect(() => {
     if (leadId && formData.lead_id !== leadId) {
       setFormData({ ...formData, lead_id: leadId });
     }
-  }, [leadId]);
+  }, [leadId, formData, setFormData]);
 
   const handleCreateOrcamento = async (valorTotal: number) => {
     try {
