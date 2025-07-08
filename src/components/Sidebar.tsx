@@ -4,6 +4,7 @@ import {
   LayoutDashboard, 
   Users, 
   FileText, 
+  Calculator,
   Settings, 
   LogOut,
   Menu,
@@ -16,6 +17,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Leads", href: "/dashboard/leads", icon: FileText },
+  { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator },
   { name: "Usuários", href: "/dashboard/users", icon: Users, adminOnly: true },
   { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, adminOrManager: true },
 ];

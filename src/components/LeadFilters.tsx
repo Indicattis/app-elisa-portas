@@ -71,13 +71,6 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
                 Limpar
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? "Ocultar" : "Expandir"}
-            </Button>
           </div>
         </div>
       </CardHeader>

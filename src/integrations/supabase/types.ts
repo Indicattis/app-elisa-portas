@@ -239,6 +239,131 @@ export type Database = {
           },
         ]
       }
+      orcamentos: {
+        Row: {
+          campos_personalizados: Json | null
+          created_at: string
+          desconto_percentual: number | null
+          documento_url: string | null
+          forma_pagamento: string
+          id: string
+          lead_id: string
+          updated_at: string
+          usuario_id: string
+          valor_frete: number
+          valor_instalacao: number
+          valor_pintura: number
+          valor_produto: number
+          valor_total: number
+        }
+        Insert: {
+          campos_personalizados?: Json | null
+          created_at?: string
+          desconto_percentual?: number | null
+          documento_url?: string | null
+          forma_pagamento: string
+          id?: string
+          lead_id: string
+          updated_at?: string
+          usuario_id: string
+          valor_frete?: number
+          valor_instalacao?: number
+          valor_pintura?: number
+          valor_produto: number
+          valor_total: number
+        }
+        Update: {
+          campos_personalizados?: Json | null
+          created_at?: string
+          desconto_percentual?: number | null
+          documento_url?: string | null
+          forma_pagamento?: string
+          id?: string
+          lead_id?: string
+          updated_at?: string
+          usuario_id?: string
+          valor_frete?: number
+          valor_instalacao?: number
+          valor_pintura?: number
+          valor_produto?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamentos_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "elisaportas_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requisicoes_venda: {
+        Row: {
+          created_at: string
+          custo_frete: number | null
+          custo_instalacao: number | null
+          custo_material: number | null
+          custo_pintura: number | null
+          data_aprovacao: string | null
+          gerente_id: string | null
+          id: string
+          lead_id: string
+          observacoes: string | null
+          orcamento_id: string | null
+          solicitante_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custo_frete?: number | null
+          custo_instalacao?: number | null
+          custo_material?: number | null
+          custo_pintura?: number | null
+          data_aprovacao?: string | null
+          gerente_id?: string | null
+          id?: string
+          lead_id: string
+          observacoes?: string | null
+          orcamento_id?: string | null
+          solicitante_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custo_frete?: number | null
+          custo_instalacao?: number | null
+          custo_material?: number | null
+          custo_pintura?: number | null
+          data_aprovacao?: string | null
+          gerente_id?: string | null
+          id?: string
+          lead_id?: string
+          observacoes?: string | null
+          orcamento_id?: string | null
+          solicitante_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisicoes_venda_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "elisaportas_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisicoes_venda_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           atendente_id: string
@@ -294,6 +419,10 @@ export type Database = {
       cancel_lead_attendance: {
         Args: { lead_uuid: string }
         Returns: boolean
+      }
+      criar_requisicao_venda: {
+        Args: { lead_uuid: string; orcamento_uuid?: string }
+        Returns: string
       }
       finalizar_venda: {
         Args: {

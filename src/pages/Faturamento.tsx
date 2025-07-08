@@ -12,6 +12,8 @@ import { Search, DollarSign, TrendingUp, CalendarDays, Edit } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RequisicoesVenda } from "@/components/RequisicoesVenda";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Venda {
   id: string;
@@ -260,6 +262,14 @@ export default function Faturamento() {
         </p>
       </div>
 
+      <Tabs defaultValue="faturamento" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
+          <TabsTrigger value="requisicoes">Requisições de Venda</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="faturamento" className="space-y-6">
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
           <Card key={stat.title}>
@@ -410,6 +420,12 @@ export default function Faturamento() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="requisicoes" className="space-y-6">
+          <RequisicoesVenda />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

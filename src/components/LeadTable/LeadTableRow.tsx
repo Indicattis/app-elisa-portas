@@ -1,7 +1,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Plus, Play } from "lucide-react";
+import { MessageCircle, Play } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Lead } from "@/types/lead";
@@ -83,17 +83,6 @@ export function LeadTableRow({
             <MessageCircle className="w-4 h-4" />
           </Button>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigateToSale(lead.id);
-            }}
-            title="Adicionar venda"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
           
           {canManage && lead.status_atendimento === 1 && (
             <Button

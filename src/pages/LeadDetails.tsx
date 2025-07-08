@@ -151,6 +151,48 @@ export default function LeadDetails() {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleMarkAsSold = async () => {
+    if (!lead) return;
+
+    try {
+      // Verificar se existe orçamento para este lead
+      const { data: orcamentos } = await supabase
+        .from("orcamentos")
+        .select("id")
+        .eq("lead_id", lead.id)
+        .limit(1);
+
+      const orcamentoId = orcamentos && orcamentos.length > 0 ? orcamentos[0].id : null;
+
+      // Criar requisição de venda
+      const { error } = await supabase.rpc("criar_requisicao_venda", {
+        lead_uuid: lead.id,
+        orcamento_uuid: orcamentoId
+      });
+
+      if (error) throw error;
+
+      // Atualizar status do lead para "aguardando aprovação"
+      await supabase
+        .from("elisaportas_leads")
+        .update({ status_atendimento: 4 }) // 4 = aguardando aprovação
+        .eq("id", lead.id);
+
+      fetchLead();
+      toast({
+        title: "Sucesso",
+        description: "Requisição de venda criada com sucesso. Aguardando aprovação do gerente comercial.",
+      });
+    } catch (error: any) {
+      console.error("Erro ao criar requisição de venda:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Erro ao criar requisição de venda",
+      });
+    }
+  };
+
   const handleDeleteLead = async () => {
     if (!lead || !window.confirm('Tem certeza que deseja excluir este lead? Esta ação não pode ser desfeita.')) return;
 
@@ -280,7 +322,7 @@ export default function LeadDetails() {
 
             {canViewSalesButton() && (
               <Button
-                onClick={() => navigate(`/dashboard/leads/${lead.id}/venda`)}
+                onClick={handleMarkAsSold}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />

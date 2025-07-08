@@ -69,9 +69,9 @@ export default function Leads() {
           <h1 className="text-3xl font-bold text-foreground">Leads</h1>
           <p className="text-muted-foreground">Gerencie todos os leads do sistema</p>
         </div>
-        <Button onClick={() => navigate("/dashboard/vendas/nova")}>
+        <Button onClick={() => navigate("/dashboard/leads/novo")}>
           <Plus className="w-4 h-4 mr-2" />
-          Nova Venda
+          Adicionar Lead
         </Button>
       </div>
 

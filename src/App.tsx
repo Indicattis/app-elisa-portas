@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
+import LeadNovo from "./pages/LeadNovo";
 import Users from "./pages/Users";
 import LeadDetails from "./pages/LeadDetails";
 import LeadEdit from "./pages/LeadEdit";
@@ -18,6 +19,7 @@ import LeadVenda from "./pages/LeadVenda";
 import VendaNova from "./pages/VendaNova";
 import VendaEdit from "./pages/VendaEdit";
 import Faturamento from "./pages/Faturamento";
+import Orcamentos from "./pages/Orcamentos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,11 +67,31 @@ const App = () => (
                 }
               />
               <Route
+                path="/dashboard/leads/novo"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <LeadNovo />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboard/leads/:id"
                 element={
                   <ProtectedRoute>
                     <DashboardLayout>
                       <LeadDetails />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/orcamentos"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Orcamentos />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
