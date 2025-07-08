@@ -1,7 +1,13 @@
+
 import type { Lead, FilterValues } from "@/types/lead";
 import { getLeadStatus } from "./leadStatus";
 
-export function filterLeads(leads: Lead[], filters: FilterValues): Lead[] {
+// Atualizar interface para incluir etiqueta
+interface ExtendedFilterValues extends FilterValues {
+  etiqueta: string;
+}
+
+export function filterLeads(leads: Lead[], filters: ExtendedFilterValues): Lead[] {
   return leads.filter((lead) => {
     const matchesSearch = !filters.search || (
       lead.nome.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -25,10 +31,23 @@ export function filterLeads(leads: Lead[], filters: FilterValues): Lead[] {
     const matchesDataInicio = !filters.dataInicio || leadDate >= new Date(filters.dataInicio);
     const matchesDataFim = !filters.dataFim || leadDate <= new Date(filters.dataFim + "T23:59:59");
 
-    // Por padrão, não exibir leads vendidos (status 5) e cancelados (status 6) a menos que seja filtrado especificamente
-    const shouldHideVendidos = !filters.status && lead.status_atendimento === 5;
-    const shouldHideCancelados = !filters.status && lead.status_atendimento === 6;
+    // Filtro por etiqueta
+    let matchesEtiqueta = true;
+    if (filters.etiqueta) {
+      try {
+        if (lead.observacoes) {
+          const parsed = JSON.parse(lead.observacoes);
+          const leadTags = parsed.tags || [];
+          matchesEtiqueta = leadTags.includes(filters.etiqueta);
+        } else {
+          matchesEtiqueta = false;
+        }
+      } catch {
+        matchesEtiqueta = false;
+      }
+    }
 
-    return matchesSearch && matchesStatus && matchesAtendente && matchesCidade && matchesDataInicio && matchesDataFim && !shouldHideVendidos && !shouldHideCancelados;
+    return matchesSearch && matchesStatus && matchesAtendente && matchesCidade && 
+           matchesDataInicio && matchesDataFim && matchesEtiqueta;
   });
 }

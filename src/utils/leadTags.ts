@@ -77,6 +77,8 @@ export const getTagById = (id: string): LeadTag | undefined => {
   return leadTags.find(tag => tag.id === id);
 };
 
-export const getTagsByIds = (ids: string[]): LeadTag[] => {
-  return ids.map(id => getTagById(id)).filter(Boolean) as LeadTag[];
+// Função para obter apenas uma tag (primeira do array)
+export const getLeadTag = (tags: string[]): LeadTag | null => {
+  if (!tags || tags.length === 0) return null;
+  return getTagById(tags[0]) || null;
 };

@@ -1,4 +1,5 @@
 
+
 export interface Lead {
   id: string;
   nome: string;
@@ -22,6 +23,8 @@ export interface FilterValues {
   cidade: string;
   dataInicio: string;
   dataFim: string;
+  etiqueta: string;
 }
 
 export const LEADS_PER_PAGE = 22;
+

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, X } from "lucide-react";
+import { leadTags } from "@/utils/leadTags";
 
 interface FilterValues {
   search: string;
@@ -13,6 +15,7 @@ interface FilterValues {
   cidade: string;
   dataInicio: string;
   dataFim: string;
+  etiqueta: string;
 }
 
 interface LeadFiltersProps {
@@ -37,18 +40,20 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
       cidade: "",
       dataInicio: "",
       dataFim: "",
+      etiqueta: "",
     });
   };
 
   const hasActiveFilters = Object.values(filters).some(value => value !== "");
 
   const statusOptions = [
-    { value: "novo", label: "Novo", variant: "default" as const },
-    { value: "aguardando", label: "Aguardando", variant: "secondary" as const },
-    { value: "em_andamento", label: "Em Andamento", variant: "default" as const },
-    { value: "pausado", label: "Pausado", variant: "outline" as const },
+    { value: "aguardando_atendente", label: "Aguardando atendente", variant: "secondary" as const },
+    { value: "em_andamento", label: "Em andamento", variant: "default" as const },
+    { value: "aguardando_aprovacao_venda", label: "Aguardando aprovação de venda", variant: "outline" as const },
     { value: "vendido", label: "Vendido", variant: "default" as const },
-    { value: "cancelado", label: "Cancelado", variant: "destructive" as const },
+    { value: "venda_perdida", label: "Venda perdida", variant: "destructive" as const },
+    { value: "desqualificado", label: "Desqualificado", variant: "destructive" as const },
+    { value: "pausado", label: "Pausado", variant: "outline" as const },
   ];
 
   return (
@@ -71,6 +76,13 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
                 Limpar
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? "Menos filtros" : "Mais filtros"}
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -114,19 +126,21 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
         {isExpanded && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={filters.status} onValueChange={(value) => handleFilterChange("status", value)}>
+              <Label htmlFor="etiqueta">Etiqueta</Label>
+              <Select value={filters.etiqueta} onValueChange={(value) => handleFilterChange("etiqueta", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
+                  <SelectValue placeholder="Todas as etiquetas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
-                  <SelectItem value="novo">Novo</SelectItem>
-                  <SelectItem value="aguardando">Aguardando Atendimento</SelectItem>
-                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                  <SelectItem value="pausado">Pausado</SelectItem>
-                  <SelectItem value="vendido">Vendido</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                  <SelectItem value="">Todas as etiquetas</SelectItem>
+                  {leadTags.map((tag) => (
+                    <SelectItem key={tag.id} value={tag.id}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${tag.bgColor}`} />
+                        {tag.name}
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

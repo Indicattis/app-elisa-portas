@@ -39,7 +39,7 @@ export default function LeadDetails() {
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [orcamentos, setOrcamentos] = useState<any[]>([]);
-  const [leadTags, setLeadTags] = useState<string[]>([]);
+  const [leadTag, setLeadTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { isAdmin, isGerenteComercial, user } = useAuth();
   const { toast } = useToast();
@@ -62,13 +62,13 @@ export default function LeadDetails() {
       if (error) throw error;
       setLead(data);
 
-      // Extrair tags das observações
+      // Extrair etiqueta das observações (apenas uma)
       if (data.observacoes) {
         try {
           const parsed = JSON.parse(data.observacoes);
-          setLeadTags(parsed.tags || []);
+          setLeadTag(parsed.tags?.[0] || null);
         } catch {
-          setLeadTags([]);
+          setLeadTag(null);
         }
       }
     } catch (error) {
@@ -99,13 +99,13 @@ export default function LeadDetails() {
     }
   };
 
-  const handleTagsUpdate = (newTags: string[]) => {
-    setLeadTags(newTags);
+  const handleTagUpdate = (newTag: string | null) => {
+    setLeadTag(newTag);
     // Atualizar o lead local também
     if (lead) {
       setLead({
         ...lead,
-        observacoes: JSON.stringify({ tags: newTags })
+        observacoes: JSON.stringify({ tags: newTag ? [newTag] : [] })
       });
     }
   };
@@ -291,6 +291,16 @@ export default function LeadDetails() {
 
   const canManageLead = () => {
     return isAdmin || lead?.atendente_id === user?.id;
+  };
+
+  const canEditTags = () => {
+    if (!lead) return false;
+    
+    // Se não tem atendente, qualquer usuário pode alterar
+    if (!lead.atendente_id) return true;
+    
+    // Se tem atendente, apenas admin ou o próprio atendente pode alterar
+    return isAdmin || lead.atendente_id === user?.id;
   };
 
   const canViewSalesButton = () => {
@@ -608,9 +618,9 @@ export default function LeadDetails() {
       {/* Sistema de Etiquetas */}
       <LeadTagManager
         leadId={lead.id}
-        currentTags={leadTags}
-        onTagsUpdate={handleTagsUpdate}
-        canEdit={canManageLead()}
+        currentTag={leadTag}
+        onTagUpdate={handleTagUpdate}
+        canEdit={canEditTags()}
       />
 
       {/* Comentários */}

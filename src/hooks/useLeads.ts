@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -74,14 +75,49 @@ export function useLeads() {
       fetchLeads();
       toast({
         title: "Sucesso",
-        description: "Atendimento iniciado com sucesso",
+        description: "Lead capturado com sucesso",
       });
     } catch (error) {
-      console.error("Erro ao iniciar atendimento:", error);
+      console.error("Erro ao capturar lead:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao iniciar atendimento",
+        description: "Erro ao capturar lead",
+      });
+    }
+  };
+
+  const handleMarkAsLost = async (leadId: string) => {
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({
+          status_atendimento: 7, // Status perdido
+        })
+        .eq("id", leadId);
+
+      if (error) throw error;
+
+      // Registrar no histórico
+      await supabase.from("lead_atendimento_historico").insert({
+        lead_id: leadId,
+        atendente_id: user?.id,
+        acao: "marcou_como_perdido",
+        status_anterior: 2,
+        status_novo: 7,
+      });
+
+      fetchLeads();
+      toast({
+        title: "Sucesso",
+        description: "Lead marcado como perdido",
+      });
+    } catch (error) {
+      console.error("Erro ao marcar lead como perdido:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao marcar lead como perdido",
       });
     }
   };
@@ -96,5 +132,6 @@ export function useLeads() {
     loading,
     fetchLeads,
     handleStartAttendance,
+    handleMarkAsLost,
   };
 }

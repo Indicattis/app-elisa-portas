@@ -1,138 +1,93 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { leadTags, getTagsByIds, type LeadTag } from "@/utils/leadTags";
-import { X } from "lucide-react";
+import { leadTags, getLeadTag } from "@/utils/leadTags";
+import { Tag } from "lucide-react";
 
 interface LeadTagManagerProps {
   leadId: string;
-  currentTags: string[];
-  onTagsUpdate: (newTags: string[]) => void;
+  currentTag: string | null;
+  onTagUpdate: (newTag: string | null) => void;
   canEdit: boolean;
 }
 
-export function LeadTagManager({ leadId, currentTags, onTagsUpdate, canEdit }: LeadTagManagerProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedTag, setSelectedTag] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+export function LeadTagManager({ leadId, currentTag, onTagUpdate, canEdit }: LeadTagManagerProps) {
+  const [selectedTag, setSelectedTag] = useState<string>(currentTag || "atendimento_primeiro");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleAddTag = async () => {
-    if (!selectedTag || currentTags.includes(selectedTag)) return;
+  const currentTagObj = currentTag ? getLeadTag([currentTag]) : null;
 
-    setLoading(true);
+  const handleUpdateTag = async () => {
+    if (!canEdit) return;
+    
+    setIsLoading(true);
     try {
-      const newTags = [...currentTags, selectedTag];
+      const observacoes = JSON.stringify({ tags: [selectedTag] });
       
       const { error } = await supabase
         .from("elisaportas_leads")
-        .update({ observacoes: JSON.stringify({ tags: newTags }) })
+        .update({ observacoes })
         .eq("id", leadId);
 
       if (error) throw error;
 
-      onTagsUpdate(newTags);
-      setSelectedTag("");
-      
+      onTagUpdate(selectedTag);
       toast({
         title: "Sucesso",
-        description: "Etiqueta adicionada com sucesso",
+        description: "Etiqueta atualizada com sucesso",
       });
     } catch (error) {
-      console.error("Erro ao adicionar etiqueta:", error);
+      console.error("Erro ao atualizar etiqueta:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao adicionar etiqueta",
+        description: "Erro ao atualizar etiqueta",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
-  const handleRemoveTag = async (tagId: string) => {
-    setLoading(true);
-    try {
-      const newTags = currentTags.filter(tag => tag !== tagId);
-      
-      const { error } = await supabase
-        .from("elisaportas_leads")
-        .update({ observacoes: JSON.stringify({ tags: newTags }) })
-        .eq("id", leadId);
-
-      if (error) throw error;
-
-      onTagsUpdate(newTags);
-      
-      toast({
-        title: "Sucesso",
-        description: "Etiqueta removida com sucesso",
-      });
-    } catch (error) {
-      console.error("Erro ao remover etiqueta:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao remover etiqueta",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const currentTagObjects = getTagsByIds(currentTags);
-  const availableTags = leadTags.filter(tag => !currentTags.includes(tag.id));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Etiquetas do Lead</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Tag className="w-5 h-5" />
+          Etiqueta do Lead
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Tags Atuais */}
-        <div className="space-y-2">
-          <span className="text-sm font-medium text-muted-foreground">Etiquetas aplicadas:</span>
-          <div className="flex flex-wrap gap-2">
-            {currentTagObjects.length > 0 ? (
-              currentTagObjects.map((tag) => (
-                <Badge
-                  key={tag.id}
-                  className={`${tag.bgColor} ${tag.textColor} ${tag.color} border-2 flex items-center gap-2`}
-                >
-                  {tag.name}
-                  {canEdit && (
-                    <button
-                      onClick={() => handleRemoveTag(tag.id)}
-                      className="ml-1 hover:bg-black/20 rounded-full p-0.5"
-                      disabled={loading}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-sm text-muted-foreground">Nenhuma etiqueta aplicada</span>
-            )}
-          </div>
+        {/* Etiqueta atual */}
+        <div>
+          <span className="text-sm text-muted-foreground block mb-2">Etiqueta atual:</span>
+          {currentTagObj ? (
+            <Badge
+              className={`${currentTagObj.bgColor} ${currentTagObj.textColor}`}
+            >
+              {currentTagObj.name}
+            </Badge>
+          ) : (
+            <span className="text-muted-foreground">Nenhuma etiqueta</span>
+          )}
         </div>
 
-        {/* Adicionar Nova Tag */}
+        {/* Editor de etiqueta */}
         {canEdit && (
           <div className="space-y-3">
-            <span className="text-sm font-medium text-muted-foreground">Adicionar etiqueta:</span>
-            <div className="flex gap-2">
+            <div>
+              <span className="text-sm text-muted-foreground block mb-2">Alterar etiqueta:</span>
               <Select value={selectedTag} onValueChange={setSelectedTag}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger>
                   <SelectValue placeholder="Selecione uma etiqueta" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTags.map((tag) => (
+                  {leadTags.map((tag) => (
                     <SelectItem key={tag.id} value={tag.id}>
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${tag.bgColor}`} />
@@ -142,15 +97,22 @@ export function LeadTagManager({ leadId, currentTags, onTagsUpdate, canEdit }: L
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                onClick={handleAddTag}
-                disabled={!selectedTag || loading}
-                size="sm"
-              >
-                Adicionar
-              </Button>
             </div>
+
+            <Button 
+              onClick={handleUpdateTag} 
+              disabled={isLoading || selectedTag === currentTag}
+              className="w-full"
+            >
+              {isLoading ? "Atualizando..." : "Atualizar Etiqueta"}
+            </Button>
           </div>
+        )}
+
+        {!canEdit && (
+          <p className="text-sm text-muted-foreground">
+            Você não tem permissão para alterar a etiqueta deste lead.
+          </p>
         )}
       </CardContent>
     </Card>

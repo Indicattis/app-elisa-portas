@@ -21,9 +21,10 @@ export default function Leads() {
     cidade: "",
     dataInicio: "",
     dataFim: "",
+    etiqueta: "",
   });
   const { isAdmin, user } = useAuth();
-  const { leads, atendentes, loading, handleStartAttendance } = useLeads();
+  const { leads, atendentes, loading, handleStartAttendance, handleMarkAsLost } = useLeads();
   const navigate = useNavigate();
 
   // Aplicar filtros
@@ -94,6 +95,7 @@ export default function Leads() {
         onRowDoubleClick={handleRowDoubleClick}
         onStartAttendance={handleStartAttendance}
         onNavigateToSale={handleNavigateToSale}
+        onMarkAsLost={handleMarkAsLost}
       />
     </div>
   );

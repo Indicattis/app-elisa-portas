@@ -15,6 +15,7 @@ interface LeadTableProps {
   onRowDoubleClick: (leadId: string) => void;
   onStartAttendance: (leadId: string) => void;
   onNavigateToSale: (leadId: string) => void;
+  onMarkAsLost?: (leadId: string) => void;
 }
 
 export function LeadTable({
@@ -27,6 +28,7 @@ export function LeadTable({
   onRowDoubleClick,
   onStartAttendance,
   onNavigateToSale,
+  onMarkAsLost,
 }: LeadTableProps) {
   return (
     <Card>
@@ -41,13 +43,13 @@ export function LeadTable({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Etiqueta</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Contato</TableHead>
                 <TableHead>Cidade</TableHead>
                 <TableHead>Canal</TableHead>
                 <TableHead>Atendente</TableHead>
-                <TableHead>Etiquetas</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -63,6 +65,7 @@ export function LeadTable({
                   onRowDoubleClick={onRowDoubleClick}
                   onStartAttendance={onStartAttendance}
                   onNavigateToSale={onNavigateToSale}
+                  onMarkAsLost={onMarkAsLost}
                 />
               ))}
             </TableBody>
