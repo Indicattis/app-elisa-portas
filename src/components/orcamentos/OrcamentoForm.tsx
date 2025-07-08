@@ -1,32 +1,22 @@
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus } from "lucide-react";
-import { calcularValorTotal } from "@/utils/orcamentoUtils";
+import { Plus, Minus } from "lucide-react";
 import type { Lead } from "@/types/lead";
-
-interface OrcamentoFormData {
-  lead_id: string;
-  valor_produto: string;
-  valor_pintura: string;
-  valor_frete: string;
-  valor_instalacao: string;
-  campos_personalizados: { [key: string]: number };
-  forma_pagamento: string;
-  desconto_percentual: number;
-  requer_analise: boolean;
-}
 
 interface OrcamentoFormProps {
   leads: Lead[];
-  formData: OrcamentoFormData;
-  setFormData: (data: OrcamentoFormData) => void;
+  formData: any;
+  setFormData: (data: any) => void;
   camposPersonalizados: Array<{ nome: string; valor: string }>;
   setCamposPersonalizados: (campos: Array<{ nome: string; valor: string }>) => void;
-  onSubmit: (valorTotal: number) => Promise<any>;
+  onSubmit: (valorTotal: number) => Promise<void>;
   onCancel: () => void;
   loading: boolean;
 }
@@ -41,51 +31,61 @@ export function OrcamentoForm({
   onCancel,
   loading
 }: OrcamentoFormProps) {
-  const handleFormChange = (field: keyof OrcamentoFormData, value: string | number | boolean) => {
-    setFormData({ ...formData, [field]: value });
+  const [calculatedTotal, setCalculatedTotal] = useState(0);
+
+  const calculateTotal = () => {
+    const produto = parseFloat(formData.valor_produto) || 0;
+    const pintura = parseFloat(formData.valor_pintura) || 0;
+    const frete = parseFloat(formData.valor_frete) || 0;
+    const instalacao = parseFloat(formData.valor_instalacao) || 0;
+    const personalizados = camposPersonalizados.reduce((acc, campo) => {
+      return acc + (parseFloat(campo.valor) || 0);
+    }, 0);
+
+    const subtotal = produto + pintura + frete + instalacao + personalizados;
+    const desconto = (subtotal * formData.desconto_percentual) / 100;
+    const total = subtotal - desconto;
+
+    setCalculatedTotal(total);
+    return total;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const total = calculateTotal();
+    await onSubmit(total);
   };
 
   const addCampoPersonalizado = () => {
-    setCamposPersonalizados([...camposPersonalizados, { nome: "", valor: "0" }]);
-  };
-
-  const updateCampoPersonalizado = (index: number, field: "nome" | "valor", value: string) => {
-    setCamposPersonalizados(
-      camposPersonalizados.map((campo, i) => i === index ? { ...campo, [field]: value } : campo)
-    );
+    setCamposPersonalizados([...camposPersonalizados, { nome: "", valor: "" }]);
   };
 
   const removeCampoPersonalizado = (index: number) => {
     setCamposPersonalizados(camposPersonalizados.filter((_, i) => i !== index));
   };
 
-  const valorTotal = calcularValorTotal(
-    formData.valor_produto,
-    formData.valor_pintura,
-    formData.valor_frete,
-    formData.valor_instalacao,
-    camposPersonalizados,
-    formData.desconto_percentual
-  );
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(valorTotal);
+  const updateCampoPersonalizado = (index: number, field: string, value: string) => {
+    const updated = [...camposPersonalizados];
+    updated[index] = { ...updated[index], [field]: value };
+    setCamposPersonalizados(updated);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Novo Orçamento</CardTitle>
+        <CardTitle>Formulário de Orçamento</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="lead_id">Lead *</Label>
-              <Select value={formData.lead_id} onValueChange={(value) => handleFormChange("lead_id", value)} required>
+              <Label htmlFor="lead">Lead</Label>
+              <Select
+                value={formData.lead_id}
+                onValueChange={(value) => setFormData({ ...formData, lead_id: value })}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um lead" />
+                  <SelectValue placeholder="Selecione o lead" />
                 </SelectTrigger>
                 <SelectContent>
                   {leads.map((lead) => (
@@ -98,71 +98,77 @@ export function OrcamentoForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="forma_pagamento">Forma de Pagamento *</Label>
-              <Select value={formData.forma_pagamento} onValueChange={(value) => handleFormChange("forma_pagamento", value)} required>
+              <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
+              <Select
+                value={formData.forma_pagamento}
+                onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder="Selecione a forma de pagamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="À vista">À vista</SelectItem>
-                  <SelectItem value="Cartão de crédito">Cartão de crédito</SelectItem>
-                  <SelectItem value="Parcelado">Parcelado</SelectItem>
-                  <SelectItem value="PIX">PIX</SelectItem>
-                  <SelectItem value="Transferência">Transferência</SelectItem>
+                  <SelectItem value="a_vista">À Vista</SelectItem>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                  <SelectItem value="boleto">Boleto</SelectItem>
+                  <SelectItem value="financiamento">Financiamento</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="valor_produto">Valor do Produto *</Label>
+              <Label htmlFor="valor_produto">Valor do Produto (R$)</Label>
               <Input
                 id="valor_produto"
                 type="number"
                 step="0.01"
                 value={formData.valor_produto}
-                onChange={(e) => handleFormChange("valor_produto", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, valor_produto: e.target.value })}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="valor_pintura">Valor da Pintura</Label>
+              <Label htmlFor="valor_pintura">Valor da Pintura (R$)</Label>
               <Input
                 id="valor_pintura"
                 type="number"
                 step="0.01"
                 value={formData.valor_pintura}
-                onChange={(e) => handleFormChange("valor_pintura", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, valor_pintura: e.target.value })}
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="valor_frete">Frete</Label>
+              <Label htmlFor="valor_frete">Valor do Frete (R$)</Label>
               <Input
                 id="valor_frete"
                 type="number"
                 step="0.01"
                 value={formData.valor_frete}
-                onChange={(e) => handleFormChange("valor_frete", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, valor_frete: e.target.value })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="valor_instalacao">Instalação</Label>
+              <Label htmlFor="valor_instalacao">Valor da Instalação (R$)</Label>
               <Input
                 id="valor_instalacao"
                 type="number"
                 step="0.01"
                 value={formData.valor_instalacao}
-                onChange={(e) => handleFormChange("valor_instalacao", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, valor_instalacao: e.target.value })}
               />
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <Label>Campos Personalizados</Label>
               <Button type="button" variant="outline" size="sm" onClick={addCampoPersonalizado}>
                 <Plus className="w-4 h-4 mr-2" />
@@ -171,7 +177,7 @@ export function OrcamentoForm({
             </div>
 
             {camposPersonalizados.map((campo, index) => (
-              <div key={index} className="grid grid-cols-3 gap-2">
+              <div key={index} className="flex items-center space-x-2">
                 <Input
                   placeholder="Nome do campo"
                   value={campo.nome}
@@ -184,63 +190,62 @@ export function OrcamentoForm({
                   value={campo.valor}
                   onChange={(e) => updateCampoPersonalizado(index, "valor", e.target.value)}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={() => removeCampoPersonalizado(index)}>
-                  Remover
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removeCampoPersonalizado(index)}
+                >
+                  <Minus className="w-4 h-4" />
                 </Button>
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="desconto">Desconto no Produto</Label>
-              <Select 
-                value={formData.desconto_percentual.toString()} 
-                onValueChange={(value) => handleFormChange("desconto_percentual", parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Sem desconto</SelectItem>
-                  <SelectItem value="5">5% de desconto</SelectItem>
-                  <SelectItem value="10">10% de desconto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="requer_analise"
-                  checked={formData.requer_analise}
-                  onCheckedChange={(checked) => handleFormChange("requer_analise", checked)}
-                />
-                <Label htmlFor="requer_analise">Requer Análise da Gerência</Label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Marque esta opção se precisar de aprovação para desconto acima de 10%
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="desconto_percentual">Desconto (%)</Label>
+            <Input
+              id="desconto_percentual"
+              type="number"
+              min="0"
+              max="100"
+              value={formData.desconto_percentual}
+              onChange={(e) => setFormData({ ...formData, desconto_percentual: parseInt(e.target.value) || 0 })}
+            />
           </div>
 
-          <div className="bg-muted p-4 rounded-lg">
-            <div className="text-lg font-semibold">
-              Valor Total: R$ {valorTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="requer_analise"
+                checked={formData.requer_analise}
+                onCheckedChange={(checked) => setFormData({ ...formData, requer_analise: checked })}
+              />
+              <Label htmlFor="requer_analise">Requer análise da gerência</Label>
             </div>
-            {formData.desconto_percentual > 0 && (
-              <div className="text-sm text-muted-foreground">
-                Desconto de {formData.desconto_percentual}% aplicado no produto
-              </div>
-            )}
+
             {formData.requer_analise && (
-              <div className="text-sm text-yellow-600 mt-2">
-                ⚠️ Este orçamento será enviado para análise da gerência
+              <div className="space-y-2">
+                <Label htmlFor="motivo_analise">Motivo da Análise *</Label>
+                <Textarea
+                  id="motivo_analise"
+                  placeholder="Descreva o motivo pelo qual este orçamento requer análise..."
+                  value={formData.motivo_analise}
+                  onChange={(e) => setFormData({ ...formData, motivo_analise: e.target.value })}
+                  required={formData.requer_analise}
+                />
               </div>
             )}
           </div>
 
-          <div className="flex justify-end space-x-4">
+          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+            <span className="text-lg font-semibold">Total do Orçamento:</span>
+            <span className="text-2xl font-bold text-primary">
+              R$ {calculateTotal().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+
+          <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar
             </Button>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +14,7 @@ interface OrcamentoFormData {
   forma_pagamento: string;
   desconto_percentual: number;
   requer_analise: boolean;
+  motivo_analise: string;
 }
 
 interface Filters {
@@ -46,7 +46,8 @@ export function useOrcamentos() {
     campos_personalizados: {},
     forma_pagamento: "",
     desconto_percentual: 0,
-    requer_analise: false
+    requer_analise: false,
+    motivo_analise: ""
   });
 
   const [camposPersonalizados, setCamposPersonalizados] = useState<Array<{ nome: string; valor: string }>>([]);
@@ -132,7 +133,8 @@ export function useOrcamentos() {
       campos_personalizados: {},
       forma_pagamento: "",
       desconto_percentual: 0,
-      requer_analise: false
+      requer_analise: false,
+      motivo_analise: ""
     });
     setCamposPersonalizados([]);
   };
@@ -141,6 +143,11 @@ export function useOrcamentos() {
     setLoading(true);
 
     try {
+      // Validar motivo da análise se necessário
+      if (formData.requer_analise && !formData.motivo_analise.trim()) {
+        throw new Error("Motivo da análise é obrigatório quando necessário");
+      }
+
       const camposPersonalizadosObj = camposPersonalizados.reduce((acc, campo) => {
         if (campo.nome && campo.valor) {
           acc[campo.nome] = parseFloat(campo.valor);
@@ -160,6 +167,7 @@ export function useOrcamentos() {
         desconto_percentual: formData.desconto_percentual,
         valor_total: valorTotal,
         requer_analise: formData.requer_analise,
+        motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
         status: formData.requer_analise ? 'pendente' : 'aprovado'
       };
 
@@ -171,11 +179,13 @@ export function useOrcamentos() {
 
       if (error) throw error;
 
-      // Atualizar valor do orçamento no lead
-      await supabase
-        .from("elisaportas_leads")
-        .update({ valor_orcamento: valorTotal })
-        .eq("id", formData.lead_id);
+      // Só atualizar valor do orçamento no lead se for aprovado automaticamente
+      if (!formData.requer_analise) {
+        await supabase
+          .from("elisaportas_leads")
+          .update({ valor_orcamento: valorTotal })
+          .eq("id", formData.lead_id);
+      }
 
       toast({
         title: "Sucesso",
@@ -191,7 +201,7 @@ export function useOrcamentos() {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao criar orçamento",
+        description: error instanceof Error ? error.message : "Erro ao criar orçamento",
       });
       throw error;
     } finally {
@@ -199,11 +209,12 @@ export function useOrcamentos() {
     }
   };
 
-  const approveOrcamento = async (orcamentoId: string, desconto_adicional: number, observacoes: string) => {
+  const approveOrcamento = async (orcamentoId: string, desconto_adicional: number, tipo_desconto: string, observacoes: string) => {
     try {
       const { error } = await supabase.rpc("aprovar_orcamento", {
         orcamento_uuid: orcamentoId,
         desconto_adicional,
+        tipo_desconto,
         observacoes: observacoes || null
       });
 
@@ -251,6 +262,15 @@ export function useOrcamentos() {
       throw error;
     }
   };
+
+  useEffect(() => {
+    fetchLeads();
+    fetchOrcamentos();
+  }, []);
+
+  useEffect(() => {
+    filterOrcamentos();
+  }, [orcamentos, filters]);
 
   return {
     leads,

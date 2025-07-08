@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +31,13 @@ interface Lead {
   observacoes: string | null;
   mensagem: string | null;
   data_prevista_entrega: string | null;
+  endereco_rua: string | null;
+  endereco_numero: string | null;
+  endereco_complemento: string | null;
+  endereco_bairro: string | null;
+  endereco_cep: string | null;
+  endereco_cidade_completa: string | null;
+  endereco_estado: string | null;
 }
 
 export default function LeadEdit() {
@@ -84,13 +90,19 @@ export default function LeadEdit() {
           email: lead.email,
           telefone: lead.telefone,
           cidade: lead.cidade,
-          valor_orcamento: lead.valor_orcamento,
           tipo_porta: lead.tipo_porta,
           altura_porta: lead.altura_porta,
           largura_porta: lead.largura_porta,
           cor_porta: lead.cor_porta,
           funcao_lead: lead.funcao_lead,
           data_prevista_entrega: lead.data_prevista_entrega,
+          endereco_rua: lead.endereco_rua,
+          endereco_numero: lead.endereco_numero,
+          endereco_complemento: lead.endereco_complemento,
+          endereco_bairro: lead.endereco_bairro,
+          endereco_cep: lead.endereco_cep,
+          endereco_cidade_completa: lead.endereco_cidade_completa,
+          endereco_estado: lead.endereco_estado,
         })
         .eq("id", id);
 
@@ -176,6 +188,7 @@ export default function LeadEdit() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            
             <div className="space-y-2">
               <Label htmlFor="nome">Nome</Label>
               <Input
@@ -231,6 +244,93 @@ export default function LeadEdit() {
                 className="bg-muted"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="valor_orcamento">Valor do Orçamento</Label>
+              <Input
+                id="valor_orcamento"
+                value={lead.valor_orcamento ? `R$ ${lead.valor_orcamento.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "Não definido"}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">
+                O valor do orçamento é definido automaticamente por orçamentos aprovados
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Endereço Completo</CardTitle>
+            <CardDescription>
+              Informações de endereço do cliente
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="endereco_rua">Rua/Logradouro</Label>
+              <Input
+                id="endereco_rua"
+                value={lead.endereco_rua || ""}
+                onChange={(e) => setLead({ ...lead, endereco_rua: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="endereco_numero">Número</Label>
+                <Input
+                  id="endereco_numero"
+                  value={lead.endereco_numero || ""}
+                  onChange={(e) => setLead({ ...lead, endereco_numero: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endereco_complemento">Complemento</Label>
+                <Input
+                  id="endereco_complemento"
+                  value={lead.endereco_complemento || ""}
+                  onChange={(e) => setLead({ ...lead, endereco_complemento: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endereco_bairro">Bairro</Label>
+              <Input
+                id="endereco_bairro"
+                value={lead.endereco_bairro || ""}
+                onChange={(e) => setLead({ ...lead, endereco_bairro: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endereco_cep">CEP</Label>
+              <Input
+                id="endereco_cep"
+                value={lead.endereco_cep || ""}
+                onChange={(e) => setLead({ ...lead, endereco_cep: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endereco_cidade_completa">Cidade Completa</Label>
+              <Input
+                id="endereco_cidade_completa"
+                value={lead.endereco_cidade_completa || ""}
+                onChange={(e) => setLead({ ...lead, endereco_cidade_completa: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endereco_estado">Estado</Label>
+              <Input
+                id="endereco_estado"
+                value={lead.endereco_estado || ""}
+                onChange={(e) => setLead({ ...lead, endereco_estado: e.target.value })}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -242,6 +342,7 @@ export default function LeadEdit() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            
             <div className="space-y-2">
               <Label htmlFor="tipo_porta">Tipo de Porta</Label>
               <Input
@@ -280,17 +381,6 @@ export default function LeadEdit() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="valor_orcamento">Valor do Orçamento</Label>
-              <Input
-                id="valor_orcamento"
-                type="number"
-                step="0.01"
-                value={lead.valor_orcamento || ""}
-                onChange={(e) => setLead({ ...lead, valor_orcamento: e.target.value ? parseFloat(e.target.value) : null })}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="data_prevista_entrega">Data Prevista de Entrega</Label>
               <Input
                 id="data_prevista_entrega"
@@ -319,7 +409,6 @@ export default function LeadEdit() {
         </Card>
       </div>
 
-      {/* Sistema de Comentários */}
       <LeadComments leadId={lead.id} />
     </div>
   );

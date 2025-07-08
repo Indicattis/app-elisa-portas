@@ -2,7 +2,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Play, Edit, ShoppingCart } from "lucide-react";
+import { MessageCircle, Play, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Lead } from "@/types/lead";
@@ -24,11 +24,9 @@ export function LeadTableRow({
   canManage,
   onRowDoubleClick,
   onStartAttendance,
-  onNavigateToSale,
 }: LeadTableRowProps) {
   const status = getLeadStatus(lead);
   const statusInfo = statusConfig[status as keyof typeof statusConfig];
-  const isVendido = lead.status_atendimento === 5;
 
   return (
     <TableRow 
@@ -84,20 +82,6 @@ export function LeadTableRow({
           >
             <MessageCircle className="w-4 h-4" />
           </Button>
-          
-          {!isVendido && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNavigateToSale(lead.id);
-              }}
-              title="Marcar como vendido"
-            >
-              <ShoppingCart className="w-4 h-4" />
-            </Button>
-          )}
           
           {canManage && lead.status_atendimento === 1 && (
             <Button

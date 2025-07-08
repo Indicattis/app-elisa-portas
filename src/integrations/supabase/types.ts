@@ -63,6 +63,13 @@ export type Database = {
           data_inicio_atendimento: string | null
           data_prevista_entrega: string | null
           email: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade_completa: string | null
+          endereco_complemento: string | null
+          endereco_estado: string | null
+          endereco_numero: string | null
+          endereco_rua: string | null
           funcao_lead: string | null
           id: string
           largura_porta: string | null
@@ -87,6 +94,13 @@ export type Database = {
           data_inicio_atendimento?: string | null
           data_prevista_entrega?: string | null
           email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade_completa?: string | null
+          endereco_complemento?: string | null
+          endereco_estado?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
           funcao_lead?: string | null
           id?: string
           largura_porta?: string | null
@@ -111,6 +125,13 @@ export type Database = {
           data_inicio_atendimento?: string | null
           data_prevista_entrega?: string | null
           email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade_completa?: string | null
+          endereco_complemento?: string | null
+          endereco_estado?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
           funcao_lead?: string | null
           id?: string
           largura_porta?: string | null
@@ -246,14 +267,17 @@ export type Database = {
           created_at: string
           data_aprovacao: string | null
           desconto_adicional_percentual: number | null
+          desconto_adicional_valor: number | null
           desconto_percentual: number | null
           documento_url: string | null
           forma_pagamento: string
           id: string
           lead_id: string
+          motivo_analise: string | null
           observacoes_aprovacao: string | null
           requer_analise: boolean
           status: string
+          tipo_desconto_adicional: string | null
           updated_at: string
           usuario_id: string
           valor_frete: number
@@ -268,14 +292,17 @@ export type Database = {
           created_at?: string
           data_aprovacao?: string | null
           desconto_adicional_percentual?: number | null
+          desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
           documento_url?: string | null
           forma_pagamento: string
           id?: string
           lead_id: string
+          motivo_analise?: string | null
           observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
+          tipo_desconto_adicional?: string | null
           updated_at?: string
           usuario_id: string
           valor_frete?: number
@@ -290,14 +317,17 @@ export type Database = {
           created_at?: string
           data_aprovacao?: string | null
           desconto_adicional_percentual?: number | null
+          desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
           documento_url?: string | null
           forma_pagamento?: string
           id?: string
           lead_id?: string
+          motivo_analise?: string | null
           observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
+          tipo_desconto_adicional?: string | null
           updated_at?: string
           usuario_id?: string
           valor_frete?: number
@@ -435,11 +465,18 @@ export type Database = {
     }
     Functions: {
       aprovar_orcamento: {
-        Args: {
-          orcamento_uuid: string
-          desconto_adicional?: number
-          observacoes?: string
-        }
+        Args:
+          | {
+              orcamento_uuid: string
+              desconto_adicional?: number
+              observacoes?: string
+            }
+          | {
+              orcamento_uuid: string
+              desconto_adicional?: number
+              tipo_desconto?: string
+              observacoes?: string
+            }
         Returns: boolean
       }
       cancel_lead_attendance: {
