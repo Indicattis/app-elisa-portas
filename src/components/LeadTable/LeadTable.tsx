@@ -43,8 +43,7 @@ export function LeadTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Etiqueta</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Tag</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Contato</TableHead>
                 <TableHead>Cidade</TableHead>

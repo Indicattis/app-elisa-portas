@@ -2,7 +2,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Play, X, Trash2 } from "lucide-react";
+import { MessageCircle, Play, Flag, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Lead } from "@/types/lead";
@@ -53,29 +53,22 @@ export function LeadTableRow({
   return (
     <TableRow 
       key={lead.id} 
-      className="cursor-pointer hover:bg-muted/50"
+      className={`cursor-pointer ${statusInfo.rowClassName}`}
       onDoubleClick={() => onRowDoubleClick(lead.id)}
     >
-      {/* Etiqueta - primeira coluna */}
+      {/* Etiqueta como flag - primeira coluna */}
       <TableCell>
         {tagObject ? (
-          <Badge
-            className={`${tagObject.bgColor} ${tagObject.textColor} text-xs px-2 py-1`}
-            style={{ fontSize: '10px' }}
-          >
-            {tagObject.name.length > 12 ? `${tagObject.name.substring(0, 12)}...` : tagObject.name}
-          </Badge>
+          <div className="flex items-center">
+            <Flag 
+              className="w-4 h-4" 
+              style={{ color: tagObject.bgColor }}
+              title={tagObject.name}
+            />
+          </div>
         ) : (
-          <span className="text-muted-foreground text-xs">-</span>
+          <Flag className="w-4 h-4 text-gray-300" />
         )}
-      </TableCell>
-      
-      {/* Status */}
-      <TableCell>
-        <div 
-          className={`w-3 h-3 rounded-full ${statusInfo.className}`}
-          title={statusInfo.label}
-        />
       </TableCell>
       
       <TableCell className="font-medium">{lead.nome}</TableCell>

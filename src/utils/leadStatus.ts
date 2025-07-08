@@ -13,8 +13,6 @@ export const getLeadStatus = (lead: Lead) => {
     case 2:
       // Em andamento (capturado)
       return "em_andamento";
-    case 3:
-      return "pausado";
     case 4:
       // Aguardando aprovação de venda
       return "aguardando_aprovacao_venda";
@@ -33,11 +31,34 @@ export const getLeadStatus = (lead: Lead) => {
 };
 
 export const statusConfig = {
-  aguardando_atendente: { label: "Aguardando atendente", className: "bg-gray-500" },
-  em_andamento: { label: "Em andamento", className: "bg-blue-500" },
-  pausado: { label: "Pausado", className: "bg-yellow-500" },
-  aguardando_aprovacao_venda: { label: "Aguardando aprovação de venda", className: "bg-orange-500" },
-  vendido: { label: "Vendido", className: "bg-green-600" },
-  desqualificado: { label: "Desqualificado", className: "bg-red-500" },
-  venda_perdida: { label: "Venda perdida", className: "bg-red-700" },
+  aguardando_atendente: { 
+    label: "Aguardando atendente", 
+    className: "bg-gray-500",
+    rowClassName: "bg-blue-50 hover:bg-blue-100"
+  },
+  em_andamento: { 
+    label: "Em andamento", 
+    className: "bg-blue-500",
+    rowClassName: "bg-white hover:bg-gray-50"
+  },
+  aguardando_aprovacao_venda: { 
+    label: "Aguardando aprovação de venda", 
+    className: "bg-orange-500",
+    rowClassName: "bg-yellow-50 hover:bg-yellow-100"
+  },
+  vendido: { 
+    label: "Vendido", 
+    className: "bg-green-600",
+    rowClassName: "bg-green-50 hover:bg-green-100"
+  },
+  desqualificado: { 
+    label: "Desqualificado", 
+    className: "bg-red-500",
+    rowClassName: "bg-gray-100 hover:bg-gray-200 opacity-60"
+  },
+  venda_perdida: { 
+    label: "Venda perdida", 
+    className: "bg-red-700",
+    rowClassName: "bg-red-50 hover:bg-red-100"
+  },
 };
