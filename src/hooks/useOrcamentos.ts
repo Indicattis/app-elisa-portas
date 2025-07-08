@@ -17,10 +17,19 @@ export function useOrcamentos() {
   const { formData, setFormData, camposPersonalizados, setCamposPersonalizados, resetForm } = useOrcamentoForm();
 
   const handleCreateOrcamento = async (valorTotal: number) => {
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Usuário não autenticado",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const data = await createOrcamento(formData, camposPersonalizados, valorTotal, user?.id!);
+      const data = await createOrcamento(formData, camposPersonalizados, valorTotal, user.id);
 
       toast({
         title: "Sucesso",

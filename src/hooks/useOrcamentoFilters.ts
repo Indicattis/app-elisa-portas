@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import type { OrcamentoFilters } from "@/types/orcamento";
 
 export function useOrcamentoFilters(orcamentos: any[]) {
