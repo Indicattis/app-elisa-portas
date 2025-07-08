@@ -241,13 +241,19 @@ export type Database = {
       }
       orcamentos: {
         Row: {
+          aprovado_por: string | null
           campos_personalizados: Json | null
           created_at: string
+          data_aprovacao: string | null
+          desconto_adicional_percentual: number | null
           desconto_percentual: number | null
           documento_url: string | null
           forma_pagamento: string
           id: string
           lead_id: string
+          observacoes_aprovacao: string | null
+          requer_analise: boolean
+          status: string
           updated_at: string
           usuario_id: string
           valor_frete: number
@@ -257,13 +263,19 @@ export type Database = {
           valor_total: number
         }
         Insert: {
+          aprovado_por?: string | null
           campos_personalizados?: Json | null
           created_at?: string
+          data_aprovacao?: string | null
+          desconto_adicional_percentual?: number | null
           desconto_percentual?: number | null
           documento_url?: string | null
           forma_pagamento: string
           id?: string
           lead_id: string
+          observacoes_aprovacao?: string | null
+          requer_analise?: boolean
+          status?: string
           updated_at?: string
           usuario_id: string
           valor_frete?: number
@@ -273,13 +285,19 @@ export type Database = {
           valor_total: number
         }
         Update: {
+          aprovado_por?: string | null
           campos_personalizados?: Json | null
           created_at?: string
+          data_aprovacao?: string | null
+          desconto_adicional_percentual?: number | null
           desconto_percentual?: number | null
           documento_url?: string | null
           forma_pagamento?: string
           id?: string
           lead_id?: string
+          observacoes_aprovacao?: string | null
+          requer_analise?: boolean
+          status?: string
           updated_at?: string
           usuario_id?: string
           valor_frete?: number
@@ -416,6 +434,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aprovar_orcamento: {
+        Args: {
+          orcamento_uuid: string
+          desconto_adicional?: number
+          observacoes?: string
+        }
+        Returns: boolean
+      }
       cancel_lead_attendance: {
         Args: { lead_uuid: string }
         Returns: boolean
@@ -450,6 +476,10 @@ export type Database = {
         Returns: boolean
       }
       pause_lead_attendance: {
+        Args: { lead_uuid: string }
+        Returns: boolean
+      }
+      pode_marcar_venda: {
         Args: { lead_uuid: string }
         Returns: boolean
       }

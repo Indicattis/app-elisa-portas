@@ -37,6 +37,7 @@ export default function LeadDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
+  const [orcamentos, setOrcamentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAdmin, isGerenteComercial, user } = useAuth();
   const { toast } = useToast();
@@ -44,6 +45,7 @@ export default function LeadDetails() {
   useEffect(() => {
     if (id) {
       fetchLead();
+      fetchOrcamentos();
     }
   }, [id]);
 
@@ -67,6 +69,34 @@ export default function LeadDetails() {
       navigate("/dashboard/leads");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrcamentos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("orcamentos")
+        .select("*")
+        .eq("lead_id", id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setOrcamentos(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar orçamentos:", error);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pendente':
+        return <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pendente</Badge>;
+      case 'aprovado':
+        return <Badge variant="outline" className="text-green-600 border-green-600">Aprovado</Badge>;
+      case 'reprovado':
+        return <Badge variant="outline" className="text-red-600 border-red-600">Reprovado</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
     }
   };
 
@@ -155,11 +185,28 @@ export default function LeadDetails() {
     if (!lead) return;
 
     try {
-      // Verificar se existe orçamento para este lead
+      // Verificar se pode marcar como vendido
+      const { data: canSell, error: checkError } = await supabase.rpc("pode_marcar_venda", {
+        lead_uuid: lead.id
+      });
+
+      if (checkError) throw checkError;
+
+      if (!canSell) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não é possível marcar como vendido. Verifique se há orçamento aprovado e nenhuma requisição pendente.",
+        });
+        return;
+      }
+
+      // Verificar se existe orçamento aprovado para este lead
       const { data: orcamentos } = await supabase
         .from("orcamentos")
         .select("id")
         .eq("lead_id", lead.id)
+        .eq("status", "aprovado")
         .limit(1);
 
       const orcamentoId = orcamentos && orcamentos.length > 0 ? orcamentos[0].id : null;
@@ -463,6 +510,62 @@ export default function LeadDetails() {
               )}
             </div>
           </section>
+
+          {/* Orçamentos */}
+          {orcamentos.length > 0 && (
+            <section>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                Orçamentos
+              </h2>
+              <div className="space-y-4">
+                {orcamentos.map((orcamento) => (
+                  <div key={orcamento.id} className="bg-muted/30 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="text-sm text-muted-foreground block">
+                          Criado em {format(new Date(orcamento.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </span>
+                        <span className="font-medium text-lg">
+                          R$ {orcamento.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      {getStatusBadge(orcamento.status)}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground block">Produto</span>
+                        <span className="font-medium">R$ {orcamento.valor_produto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Pintura</span>
+                        <span className="font-medium">R$ {orcamento.valor_pintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Frete</span>
+                        <span className="font-medium">R$ {orcamento.valor_frete.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Instalação</span>
+                        <span className="font-medium">R$ {orcamento.valor_instalacao.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-muted">
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Pagamento: </span>
+                        <span className="font-medium">{orcamento.forma_pagamento}</span>
+                        {orcamento.desconto_percentual > 0 && (
+                          <span className="text-red-600 ml-2">
+                            (Desconto: {orcamento.desconto_percentual}%)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Mensagem Original */}
           {lead.mensagem && (
