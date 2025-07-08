@@ -59,11 +59,10 @@ export function LeadTableRow({
       {/* Etiqueta como flag - primeira coluna */}
       <TableCell>
         {tagObject ? (
-          <div className="flex items-center">
+          <div className="flex items-center" title={tagObject.name}>
             <Flag 
               className="w-4 h-4" 
               style={{ color: tagObject.bgColor }}
-              title={tagObject.name}
             />
           </div>
         ) : (
