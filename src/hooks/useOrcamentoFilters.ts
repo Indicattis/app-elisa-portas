@@ -10,17 +10,21 @@ export function useOrcamentoFilters(orcamentos: any[] = []) {
   });
 
   const filteredOrcamentos = useMemo(() => {
-    if (!Array.isArray(orcamentos) || orcamentos.length === 0) {
+    // Sempre retorne um array, mesmo se orcamentos não estiver pronto
+    if (!orcamentos || !Array.isArray(orcamentos)) {
       return [];
     }
 
-    let filtered = orcamentos;
+    let filtered = [...orcamentos]; // Crie uma cópia para evitar mutações
 
     if (filters.search) {
-      filtered = filtered.filter(orc => 
-        orc.elisaportas_leads?.nome.toLowerCase().includes(filters.search.toLowerCase()) ||
-        orc.elisaportas_leads?.telefone.includes(filters.search)
-      );
+      filtered = filtered.filter(orc => {
+        const lead = orc.elisaportas_leads;
+        if (!lead) return false;
+        
+        return lead.nome?.toLowerCase().includes(filters.search.toLowerCase()) ||
+               lead.telefone?.includes(filters.search);
+      });
     }
 
     if (filters.status && filters.status !== "todos") {

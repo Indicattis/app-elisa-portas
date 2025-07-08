@@ -12,9 +12,10 @@ export function useOrcamentos() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
+  // Sempre chame os hooks na mesma ordem, independente dos dados
   const { leads, orcamentos, fetchOrcamentos } = useOrcamentoData();
-  const { filters, setFilters, filteredOrcamentos } = useOrcamentoFilters(orcamentos);
   const { formData, setFormData, camposPersonalizados, setCamposPersonalizados, resetForm } = useOrcamentoForm();
+  const { filters, setFilters, filteredOrcamentos } = useOrcamentoFilters(orcamentos);
 
   const handleCreateOrcamento = async (valorTotal: number) => {
     if (!user?.id) {
