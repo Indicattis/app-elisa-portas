@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { canaisAquisicao } from "@/utils/canaisAquisicao";
 import type { Tables } from "@/integrations/supabase/types";
 
 interface Lead {
@@ -20,14 +21,6 @@ interface Lead {
   telefone: string;
   cidade: string;
 }
-
-const canaisAquisicao = [
-  "Google",
-  "Indicação", 
-  "Meta",
-  "LinkedIn",
-  "Cliente fidelizado"
-];
 
 export default function VendaEdit() {
   const { id } = useParams<{ id: string }>();
@@ -122,6 +115,9 @@ export default function VendaEdit() {
     setLoading(true);
 
     try {
+      console.log("Iniciando atualização da venda:", id);
+      console.log("Dados a serem atualizados:", formData);
+
       const updateData = {
         valor_venda: parseFloat(formData.valor_venda) / 100,
         forma_pagamento: formData.forma_pagamento || null,
@@ -134,12 +130,20 @@ export default function VendaEdit() {
         cep: formData.cep || null
       };
 
-      const { error } = await supabase
+      console.log("Update data processado:", updateData);
+
+      const { data, error } = await supabase
         .from("vendas")
         .update(updateData)
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro na atualização:", error);
+        throw error;
+      }
+
+      console.log("Venda atualizada com sucesso:", data);
 
       toast({
         title: "Sucesso",
@@ -152,7 +156,7 @@ export default function VendaEdit() {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao atualizar venda",
+        description: `Erro ao atualizar venda: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
       });
     } finally {
       setLoading(false);

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +22,7 @@ import Faturamento from "./pages/Faturamento";
 import Orcamentos from "./pages/Orcamentos";
 import NovoOrcamento from "./pages/NovoOrcamento";
 import NotFound from "./pages/NotFound";
+import VendaDetails from "./pages/VendaDetails";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +164,16 @@ const App = () => (
                   <ProtectedRoute requireAdmin={true}>
                     <DashboardLayout>
                       <VendaEdit />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/vendas/:id"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <VendaDetails />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
