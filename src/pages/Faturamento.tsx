@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,12 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, CalendarDays, Edit, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Search, DollarSign, TrendingUp, CalendarDays, Edit, CheckCircle, Clock, AlertTriangle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RequisicoesVenda } from "@/components/RequisicoesVenda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Venda {
   id: string;
@@ -64,6 +65,7 @@ export default function Faturamento() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const { isAdmin, userRole } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -235,6 +237,32 @@ export default function Faturamento() {
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
+    }
+  };
+
+  const handleDeleteVenda = async (vendaId: string) => {
+    try {
+      const { error } = await supabase
+        .from("vendas")
+        .delete()
+        .eq("id", vendaId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Venda excluída com sucesso",
+      });
+
+      fetchVendas();
+      fetchStats();
+    } catch (error) {
+      console.error("Erro ao excluir venda:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao excluir venda",
+      });
     }
   };
 
@@ -476,14 +504,44 @@ export default function Faturamento() {
                           </TableCell>
                           {isAdmin && (
                             <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
-                                title="Editar venda"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                                  title="Editar venda"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      title="Excluir venda"
+                                    >
+                                      <Trash2 className="w-4 h-4 text-destructive" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteVenda(venda.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Excluir
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             </TableCell>
                           )}
                         </TableRow>

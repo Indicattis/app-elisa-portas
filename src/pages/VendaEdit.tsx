@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,7 @@ export default function VendaEdit() {
     forma_pagamento: "",
     observacoes_venda: "",
     canal_aquisicao: "Google",
+    data_venda: "",
     estado: "",
     cidade: "",
     bairro: "",
@@ -83,6 +85,7 @@ export default function VendaEdit() {
         forma_pagamento: vendaData.forma_pagamento || "",
         observacoes_venda: vendaData.observacoes_venda || "",
         canal_aquisicao: vendaData.canal_aquisicao || "Google",
+        data_venda: new Date(vendaData.data_venda).toISOString().slice(0, 16),
         estado: (vendaData as any).estado || "",
         cidade: (vendaData as any).cidade || "",
         bairro: (vendaData as any).bairro || "",
@@ -124,10 +127,11 @@ export default function VendaEdit() {
         forma_pagamento: formData.forma_pagamento || null,
         observacoes_venda: formData.observacoes_venda || null,
         canal_aquisicao: formData.canal_aquisicao,
-        estado: formData.estado,
-        cidade: formData.cidade,
-        bairro: formData.bairro,
-        cep: formData.cep
+        data_venda: new Date(formData.data_venda).toISOString(),
+        estado: formData.estado || null,
+        cidade: formData.cidade || null,
+        bairro: formData.bairro || null,
+        cep: formData.cep || null
       };
 
       const { error } = await supabase
@@ -252,50 +256,57 @@ export default function VendaEdit() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="data_venda">Data da Venda *</Label>
+                <Input
+                  id="data_venda"
+                  type="datetime-local"
+                  value={formData.data_venda}
+                  onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
+                  required
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="estado">Estado *</Label>
+                <Label htmlFor="estado">Estado</Label>
                 <Input
                   id="estado"
                   placeholder="Ex: SP"
                   value={formData.estado}
                   onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value }))}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade *</Label>
+                <Label htmlFor="cidade">Cidade</Label>
                 <Input
                   id="cidade"
                   placeholder="Nome da cidade"
                   value={formData.cidade}
                   onChange={(e) => setFormData(prev => ({ ...prev, cidade: e.target.value }))}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro *</Label>
+                <Label htmlFor="bairro">Bairro</Label>
                 <Input
                   id="bairro"
                   placeholder="Nome do bairro"
                   value={formData.bairro}
                   onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cep">CEP *</Label>
+                <Label htmlFor="cep">CEP</Label>
                 <Input
                   id="cep"
                   placeholder="00000-000"
                   value={formData.cep}
                   onChange={(e) => setFormData(prev => ({ ...prev, cep: e.target.value }))}
-                  required
                 />
               </div>
             </div>
