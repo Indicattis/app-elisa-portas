@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -84,8 +85,7 @@ export function useOrcamentos() {
         .from("orcamentos")
         .select(`
           *,
-          elisaportas_leads (nome, telefone, email),
-          admin_users!orcamentos_aprovado_por_fkey (nome)
+          elisaportas_leads (nome, telefone, email)
         `)
         .order("created_at", { ascending: false });
 
@@ -111,11 +111,11 @@ export function useOrcamentos() {
       );
     }
 
-    if (filters.status) {
+    if (filters.status && filters.status !== "todos") {
       filtered = filtered.filter(orc => orc.status === filters.status);
     }
 
-    if (filters.lead) {
+    if (filters.lead && filters.lead !== "todos") {
       filtered = filtered.filter(orc => orc.lead_id === filters.lead);
     }
 

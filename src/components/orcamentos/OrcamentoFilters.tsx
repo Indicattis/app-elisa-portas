@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ export function OrcamentoFilters({ filters, setFilters, leads }: OrcamentoFilter
                 <SelectValue placeholder="Todos os status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="todos">Todos os status</SelectItem>
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="aprovado">Aprovado</SelectItem>
                 <SelectItem value="reprovado">Reprovado</SelectItem>
@@ -61,7 +62,7 @@ export function OrcamentoFilters({ filters, setFilters, leads }: OrcamentoFilter
                 <SelectValue placeholder="Todos os leads" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os leads</SelectItem>
+                <SelectItem value="todos">Todos os leads</SelectItem>
                 {leads.map((lead) => (
                   <SelectItem key={lead.id} value={lead.id}>
                     {lead.nome}
