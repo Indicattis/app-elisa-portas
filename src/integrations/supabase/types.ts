@@ -207,6 +207,38 @@ export type Database = {
           },
         ]
       }
+      lead_comentarios: {
+        Row: {
+          comentario: string
+          created_at: string
+          id: string
+          lead_id: string
+          usuario_id: string
+        }
+        Insert: {
+          comentario: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          usuario_id: string
+        }
+        Update: {
+          comentario?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_comentarios_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "elisaportas_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           atendente_id: string

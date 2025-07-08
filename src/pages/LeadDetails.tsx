@@ -6,9 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Edit, MessageCircle, Pause, Play, X, DollarSign } from "lucide-react";
+import { ArrowLeft, Edit, MessageCircle, Pause, Play, X, DollarSign, Trash2, CheckCircle, User, Calendar, MapPin, Phone, Mail, Package } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { LeadComments } from "@/components/LeadComments";
+import { getLeadStatus, statusConfig } from "@/utils/leadStatus";
 
 interface Lead {
   id: string;
@@ -28,45 +30,15 @@ interface Lead {
   data_prevista_entrega: string | null;
   mensagem: string | null;
   observacoes: string | null;
+  canal_aquisicao: string;
 }
-
-// Função para calcular o status atual do lead
-const getLeadStatus = (lead: Lead) => {
-  const dataEnvio = new Date(lead.data_envio);
-  const isFromToday = isToday(dataEnvio);
-  
-  switch (lead.status_atendimento) {
-    case 1:
-      // Se é do dia atual, é "novo", senão é "aguardando"
-      return isFromToday ? "novo" : "aguardando";
-    case 2:
-      return "em_andamento";
-    case 3:
-      return "pausado";
-    case 5:
-      return "vendido";
-    case 6:
-      return "cancelado";
-    default:
-      return "aguardando";
-  }
-};
-
-const statusConfig = {
-  novo: { label: "Novo", className: "bg-blue-500" },
-  aguardando: { label: "Aguardando", className: "bg-gray-500" },
-  em_andamento: { label: "Em Andamento", className: "bg-green-500" },
-  pausado: { label: "Pausado", className: "bg-yellow-500" },
-  vendido: { label: "Vendido", className: "bg-green-600" },
-  cancelado: { label: "Cancelado", className: "bg-red-500" },
-};
 
 export default function LeadDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, isGerenteComercial, user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -179,12 +151,54 @@ export default function LeadDetails() {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleDeleteLead = async () => {
+    if (!lead || !window.confirm('Tem certeza que deseja excluir este lead? Esta ação não pode ser desfeita.')) return;
+
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .delete()
+        .eq("id", lead.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Lead excluído com sucesso",
+      });
+      navigate("/dashboard/leads");
+    } catch (error) {
+      console.error("Erro ao excluir lead:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao excluir lead",
+      });
+    }
+  };
+
   const canManageLead = () => {
     return isAdmin || lead?.atendente_id === user?.id;
   };
 
   const canViewSalesButton = () => {
     return isAdmin || (lead?.atendente_id === user?.id && lead?.status_atendimento === 2);
+  };
+
+  const canDeleteLead = () => {
+    return isAdmin || isGerenteComercial;
+  };
+
+  const canStartAttendance = () => {
+    return lead?.status_atendimento === 1;
+  };
+
+  const canPauseAttendance = () => {
+    return lead?.status_atendimento === 2 && (isAdmin || lead?.atendente_id === user?.id);
+  };
+
+  const canCancelAttendance = () => {
+    return lead?.status_atendimento === 2 && (isAdmin || lead?.atendente_id === user?.id);
   };
 
   if (loading) {
@@ -216,139 +230,215 @@ export default function LeadDetails() {
   const statusInfo = statusConfig[status as keyof typeof statusConfig];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/dashboard/leads")}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <div className="flex items-center space-x-3">
-              <h1 className="text-3xl font-bold text-foreground">{lead.nome}</h1>
-              <div className="flex items-center space-x-2">
-                <div 
-                  className={`w-3 h-3 rounded-full ${statusInfo.className}`}
-                  title={statusInfo.label}
-                />
-                <span className="text-sm text-muted-foreground">{statusInfo.label}</span>
-              </div>
-            </div>
-            <p className="text-muted-foreground">
-              Lead enviado em {format(new Date(lead.data_envio), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex space-x-2">
-          {canViewSalesButton() && (
+    <div className="space-y-8">
+      {/* Header com navegação */}
+      <div className="bg-card border rounded-lg p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
             <Button
-              onClick={() => navigate(`/dashboard/leads/${lead.id}/venda`)}
-              className="bg-green-600 hover:bg-green-700"
+              variant="outline"
+              onClick={() => navigate("/dashboard/leads")}
             >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Finalizar Venda
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
             </Button>
-          )}
+          </div>
 
-          {canManageLead() && lead.status_atendimento === 1 && (
-            <Button onClick={handleStartAttendance}>
-              <Play className="w-4 h-4 mr-2" />
-              Iniciar Atendimento
-            </Button>
-          )}
+          {/* Ações do Lead */}
+          <div className="flex flex-wrap gap-2">
+            {canStartAttendance() && (
+              <Button 
+                onClick={handleStartAttendance}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Iniciar Atendimento
+              </Button>
+            )}
 
-          {canManageLead() && lead.status_atendimento === 2 && (
-            <>
+            {canPauseAttendance() && (
               <Button
                 variant="outline"
                 onClick={handlePauseAttendance}
+                className="border-orange-500 text-orange-600 hover:bg-orange-50"
               >
                 <Pause className="w-4 h-4 mr-2" />
                 Pausar
               </Button>
+            )}
+
+            {canCancelAttendance() && (
               <Button
-                variant="destructive"
+                variant="outline"
                 onClick={handleCancelAttendance}
+                className="border-red-500 text-red-600 hover:bg-red-50"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancelar
               </Button>
-            </>
-          )}
+            )}
 
-          {canManageLead() && (
+            {canViewSalesButton() && (
+              <Button
+                onClick={() => navigate(`/dashboard/leads/${lead.id}/venda`)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Vendido
+              </Button>
+            )}
+
             <Button
               variant="outline"
-              onClick={() => navigate(`/dashboard/leads/${lead.id}/edit`)}
+              onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
+              className="border-green-500 text-green-600 hover:bg-green-50"
             >
-              <Edit className="w-4 h-4 mr-2" />
-              Editar
+              <MessageCircle className="w-4 h-4 mr-2" />
+              WhatsApp
             </Button>
-          )}
 
-          <Button
-            variant="outline"
-            onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            WhatsApp
-          </Button>
+            {canManageLead() && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/dashboard/leads/${lead.id}/edit`)}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            )}
+
+            <Button
+              variant="destructive"
+              onClick={handleDeleteLead}
+              disabled={!canDeleteLead()}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações do Lead</CardTitle>
-            <CardDescription>
-              Detalhes sobre o lead
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Dados de Contato</h2>
-              <p><strong>Nome:</strong> {lead.nome}</p>
-              <p><strong>Email:</strong> {lead.email || "Não informado"}</p>
-              <p><strong>Telefone:</strong> {lead.telefone}</p>
-              <p><strong>Cidade:</strong> {lead.cidade || "Não informada"}</p>
+      {/* Informações principais em formato documento */}
+      <div className="bg-card border rounded-lg overflow-hidden">
+        {/* Cabeçalho do documento */}
+        <div className="bg-primary/5 border-b p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">{lead.nome}</h1>
+              <div className="flex items-center gap-4 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>Enviado em {format(new Date(lead.data_envio), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  <span>Canal: {lead.canal_aquisicao}</span>
+                </div>
+              </div>
             </div>
+            <div className="text-right">
+              <Badge 
+                className={`${statusInfo.className} text-white px-4 py-2`}
+              >
+                {statusInfo.label}
+              </Badge>
+            </div>
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Detalhes da Porta</h2>
-              <p><strong>Tipo:</strong> {lead.tipo_porta || "Não informado"}</p>
-              <p><strong>Altura:</strong> {lead.altura_porta || "Não informada"}</p>
-              <p><strong>Largura:</strong> {lead.largura_porta || "Não informada"}</p>
-              <p><strong>Cor:</strong> {lead.cor_porta || "Não informada"}</p>
-              <p><strong>Valor Estimado:</strong> {lead.valor_orcamento ? `R$ ${lead.valor_orcamento.toFixed(2)}` : "Não informado"}</p>
-              <p><strong>Data Prevista:</strong> {lead.data_prevista_entrega ? format(new Date(lead.data_prevista_entrega), "dd/MM/yyyy", { locale: ptBR }) : "Não informada"}</p>
+        {/* Corpo do documento */}
+        <div className="p-6 space-y-8">
+          {/* Informações de Contato */}
+          <section>
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              Informações de Contato
+            </h2>
+            <div className="bg-muted/30 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-sm text-muted-foreground block">Telefone</span>
+                  <span className="font-medium">{lead.telefone}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-sm text-muted-foreground block">Email</span>
+                  <span className="font-medium">{lead.email || "Não informado"}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-sm text-muted-foreground block">Cidade</span>
+                  <span className="font-medium">{lead.cidade || "Não informada"}</span>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações Adicionais</CardTitle>
-            <CardDescription>
-              Mensagem e observações do lead
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Mensagem</h2>
-              <p>{lead.mensagem || "Nenhuma mensagem"}</p>
+          {/* Especificações do Produto */}
+          <section>
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5 text-primary" />
+              Especificações da Porta
+            </h2>
+            <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <span className="text-sm text-muted-foreground block">Tipo</span>
+                  <span className="font-medium">{lead.tipo_porta || "Não especificado"}</span>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground block">Altura</span>
+                  <span className="font-medium">{lead.altura_porta || "Não especificada"}</span>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground block">Largura</span>
+                  <span className="font-medium">{lead.largura_porta || "Não especificada"}</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm text-muted-foreground block">Cor</span>
+                  <span className="font-medium">{lead.cor_porta || "Não especificada"}</span>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground block">Valor Estimado</span>
+                  <span className="font-medium text-green-600">
+                    {lead.valor_orcamento ? `R$ ${lead.valor_orcamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "Não informado"}
+                  </span>
+                </div>
+              </div>
+              {lead.data_prevista_entrega && (
+                <div>
+                  <span className="text-sm text-muted-foreground block">Data Prevista de Entrega</span>
+                  <span className="font-medium">{format(new Date(lead.data_prevista_entrega), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                </div>
+              )}
             </div>
+          </section>
 
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Observações</h2>
-              <p>{lead.observacoes || "Nenhuma observação"}</p>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Mensagem Original */}
+          {lead.mensagem && (
+            <section>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-primary" />
+                Mensagem Original
+              </h2>
+              <div className="bg-muted/30 rounded-lg p-4">
+                <p className="text-foreground whitespace-pre-wrap italic">"{lead.mensagem}"</p>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
+
+      {/* Comentários */}
+      <LeadComments leadId={lead.id} />
     </div>
   );
 }

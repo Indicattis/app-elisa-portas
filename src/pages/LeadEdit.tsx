@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { LeadComments } from "@/components/LeadComments";
 
 interface Lead {
   id: string;
@@ -89,8 +90,6 @@ export default function LeadEdit() {
           largura_porta: lead.largura_porta,
           cor_porta: lead.cor_porta,
           funcao_lead: lead.funcao_lead,
-          observacoes: lead.observacoes,
-          mensagem: lead.mensagem,
           data_prevista_entrega: lead.data_prevista_entrega,
         })
         .eq("id", id);
@@ -305,34 +304,23 @@ export default function LeadEdit() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Observações e Mensagem</CardTitle>
+            <CardTitle>Mensagem Original</CardTitle>
             <CardDescription>
-              Informações adicionais sobre o lead
+              Mensagem enviada pelo lead (somente leitura)
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="mensagem">Mensagem Original</Label>
-              <Textarea
-                id="mensagem"
-                value={lead.mensagem || ""}
-                onChange={(e) => setLead({ ...lead, mensagem: e.target.value })}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="observacoes">Observações</Label>
-              <Textarea
-                id="observacoes"
-                value={lead.observacoes || ""}
-                onChange={(e) => setLead({ ...lead, observacoes: e.target.value })}
-                rows={4}
-              />
+          <CardContent>
+            <div className="bg-muted/30 rounded-lg p-4">
+              <p className="text-foreground whitespace-pre-wrap italic">
+                {lead.mensagem || "Nenhuma mensagem"}
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Sistema de Comentários */}
+      <LeadComments leadId={lead.id} />
     </div>
   );
 }
