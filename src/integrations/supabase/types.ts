@@ -415,9 +415,13 @@ export type Database = {
       vendas: {
         Row: {
           atendente_id: string
+          bairro: string | null
           canal_aquisicao: string
+          cep: string | null
+          cidade: string | null
           created_at: string
           data_venda: string
+          estado: string | null
           forma_pagamento: string | null
           id: string
           lead_id: string
@@ -427,9 +431,13 @@ export type Database = {
         }
         Insert: {
           atendente_id: string
+          bairro?: string | null
           canal_aquisicao?: string
+          cep?: string | null
+          cidade?: string | null
           created_at?: string
           data_venda?: string
+          estado?: string | null
           forma_pagamento?: string | null
           id?: string
           lead_id: string
@@ -439,9 +447,13 @@ export type Database = {
         }
         Update: {
           atendente_id?: string
+          bairro?: string | null
           canal_aquisicao?: string
+          cep?: string | null
+          cidade?: string | null
           created_at?: string
           data_venda?: string
+          estado?: string | null
           forma_pagamento?: string | null
           id?: string
           lead_id?: string

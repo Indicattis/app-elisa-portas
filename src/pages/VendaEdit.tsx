@@ -86,10 +86,10 @@ export default function VendaEdit() {
         observacoes_venda: vendaData.observacoes_venda || "",
         canal_aquisicao: vendaData.canal_aquisicao || "Google",
         data_venda: new Date(vendaData.data_venda).toISOString().slice(0, 16),
-        estado: (vendaData as any).estado || "",
-        cidade: (vendaData as any).cidade || "",
-        bairro: (vendaData as any).bairro || "",
-        cep: (vendaData as any).cep || ""
+        estado: vendaData.estado || "",
+        cidade: vendaData.cidade || "",
+        bairro: vendaData.bairro || "",
+        cep: vendaData.cep || ""
       });
 
       // Buscar dados do lead
