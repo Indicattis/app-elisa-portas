@@ -7,7 +7,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Lead } from "@/types/lead";
 import { getLeadStatus, statusConfig } from "@/utils/leadStatus";
-import { getTempoAtendimento, handleWhatsAppClick } from "@/utils/timeUtils";
+import { handleWhatsAppClick } from "@/utils/timeUtils";
+import { getTagsByIds } from "@/utils/leadTags";
 
 interface LeadTableRowProps {
   lead: Lead;
@@ -27,6 +28,19 @@ export function LeadTableRow({
 }: LeadTableRowProps) {
   const status = getLeadStatus(lead);
   const statusInfo = statusConfig[status as keyof typeof statusConfig];
+
+  // Extrair tags das observações (se existirem)
+  let leadTags: string[] = [];
+  try {
+    if (lead.observacoes) {
+      const parsed = JSON.parse(lead.observacoes);
+      leadTags = parsed.tags || [];
+    }
+  } catch {
+    // Se não conseguir fazer parse, não há tags
+  }
+
+  const tagObjects = getTagsByIds(leadTags);
 
   return (
     <TableRow 
@@ -55,9 +69,22 @@ export function LeadTableRow({
         {lead.atendente_id ? atendentes.get(lead.atendente_id) || "-" : "-"}
       </TableCell>
       <TableCell>
-        {lead.status_atendimento === 2 && lead.data_inicio_atendimento
-          ? getTempoAtendimento(lead.data_inicio_atendimento)
-          : "-"}
+        <div className="flex flex-wrap gap-1">
+          {tagObjects.slice(0, 2).map((tag) => (
+            <Badge
+              key={tag.id}
+              className={`${tag.bgColor} ${tag.textColor} text-xs px-1 py-0.5`}
+              style={{ fontSize: '10px' }}
+            >
+              {tag.name.length > 15 ? `${tag.name.substring(0, 15)}...` : tag.name}
+            </Badge>
+          ))}
+          {tagObjects.length > 2 && (
+            <Badge variant="outline" className="text-xs px-1 py-0.5">
+              +{tagObjects.length - 2}
+            </Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         {format(new Date(lead.data_envio), "dd/MM/yyyy", { locale: ptBR })}
@@ -91,10 +118,10 @@ export function LeadTableRow({
                 e.stopPropagation();
                 onStartAttendance(lead.id);
               }}
-              title="Iniciar atendimento"
+              title="Capturar lead"
             >
               <Play className="w-4 h-4 mr-1" />
-              Iniciar
+              Capturar
             </Button>
           )}
         </div>

@@ -10,6 +10,7 @@ import { ArrowLeft, Edit, MessageCircle, Pause, Play, X, DollarSign, Trash2, Che
 import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LeadComments } from "@/components/LeadComments";
+import { LeadTagManager } from "@/components/LeadTags";
 import { getLeadStatus, statusConfig } from "@/utils/leadStatus";
 
 interface Lead {
@@ -38,6 +39,7 @@ export default function LeadDetails() {
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [orcamentos, setOrcamentos] = useState<any[]>([]);
+  const [leadTags, setLeadTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAdmin, isGerenteComercial, user } = useAuth();
   const { toast } = useToast();
@@ -59,6 +61,16 @@ export default function LeadDetails() {
 
       if (error) throw error;
       setLead(data);
+
+      // Extrair tags das observações
+      if (data.observacoes) {
+        try {
+          const parsed = JSON.parse(data.observacoes);
+          setLeadTags(parsed.tags || []);
+        } catch {
+          setLeadTags([]);
+        }
+      }
     } catch (error) {
       console.error("Erro ao buscar lead:", error);
       toast({
@@ -84,6 +96,17 @@ export default function LeadDetails() {
       setOrcamentos(data || []);
     } catch (error) {
       console.error("Erro ao buscar orçamentos:", error);
+    }
+  };
+
+  const handleTagsUpdate = (newTags: string[]) => {
+    setLeadTags(newTags);
+    // Atualizar o lead local também
+    if (lead) {
+      setLead({
+        ...lead,
+        observacoes: JSON.stringify({ tags: newTags })
+      });
     }
   };
 
@@ -113,14 +136,14 @@ export default function LeadDetails() {
       fetchLead();
       toast({
         title: "Sucesso",
-        description: "Atendimento iniciado com sucesso",
+        description: "Lead capturado com sucesso",
       });
     } catch (error: any) {
-      console.error("Erro ao iniciar atendimento:", error);
+      console.error("Erro ao capturar lead:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Erro ao iniciar atendimento",
+        description: error.message || "Erro ao capturar lead",
       });
     }
   };
@@ -341,7 +364,7 @@ export default function LeadDetails() {
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Iniciar Atendimento
+                Capturar Lead
               </Button>
             )}
 
@@ -581,6 +604,14 @@ export default function LeadDetails() {
           )}
         </div>
       </div>
+
+      {/* Sistema de Etiquetas */}
+      <LeadTagManager
+        leadId={lead.id}
+        currentTags={leadTags}
+        onTagsUpdate={handleTagsUpdate}
+        canEdit={canManageLead()}
+      />
 
       {/* Comentários */}
       <LeadComments leadId={lead.id} />

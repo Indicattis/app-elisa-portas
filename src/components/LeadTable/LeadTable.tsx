@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
@@ -46,7 +47,7 @@ export function LeadTable({
                 <TableHead>Cidade</TableHead>
                 <TableHead>Canal</TableHead>
                 <TableHead>Atendente</TableHead>
-                <TableHead>Tempo</TableHead>
+                <TableHead>Etiquetas</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
