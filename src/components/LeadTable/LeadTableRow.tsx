@@ -2,7 +2,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Play, Flag, Trash2 } from "lucide-react";
+import { MessageCircle, Play, Tag, Trash2, X, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Lead } from "@/types/lead";
@@ -18,6 +18,10 @@ interface LeadTableRowProps {
   onStartAttendance: (leadId: string) => void;
   onNavigateToSale: (leadId: string) => void;
   onMarkAsLost?: (leadId: string) => void;
+  onMarkAsDisqualified?: (leadId: string) => void;
+  onCancelAttendance?: (leadId: string) => void;
+  onMarkAsSold?: (leadId: string) => void;
+  hasApprovedBudget?: boolean;
 }
 
 export function LeadTableRow({
@@ -27,6 +31,10 @@ export function LeadTableRow({
   onRowDoubleClick,
   onStartAttendance,
   onMarkAsLost,
+  onMarkAsDisqualified,
+  onCancelAttendance,
+  onMarkAsSold,
+  hasApprovedBudget = false,
 }: LeadTableRowProps) {
   const status = getLeadStatus(lead);
   const statusInfo = statusConfig[status as keyof typeof statusConfig];
@@ -50,23 +58,44 @@ export function LeadTableRow({
     }
   };
 
+  const handleMarkAsDisqualifiedClick = () => {
+    if (onMarkAsDisqualified) {
+      onMarkAsDisqualified(lead.id);
+    }
+  };
+
+  const handleCancelAttendanceClick = () => {
+    if (onCancelAttendance) {
+      onCancelAttendance(lead.id);
+    }
+  };
+
+  const handleMarkAsSoldClick = () => {
+    if (onMarkAsSold) {
+      onMarkAsSold(lead.id);
+    }
+  };
+
+  // Lead vendido não pode ser alterado
+  const isReadOnly = lead.status_atendimento === 5;
+
   return (
     <TableRow 
       key={lead.id} 
       className={`cursor-pointer ${statusInfo.rowClassName}`}
-      onDoubleClick={() => onRowDoubleClick(lead.id)}
+      onDoubleClick={() => !isReadOnly && onRowDoubleClick(lead.id)}
     >
-      {/* Etiqueta como flag - primeira coluna */}
+      {/* Etiqueta como ícone de tag - primeira coluna */}
       <TableCell>
         {tagObject ? (
           <div className="flex items-center" title={tagObject.name}>
-            <Flag 
+            <Tag 
               className="w-4 h-4" 
               style={{ color: tagObject.bgColor }}
             />
           </div>
         ) : (
-          <Flag className="w-4 h-4 text-gray-300" />
+          <Tag className="w-4 h-4 text-gray-300" />
         )}
       </TableCell>
       
@@ -79,10 +108,13 @@ export function LeadTableRow({
       </TableCell>
       <TableCell>{lead.cidade}</TableCell>
       <TableCell>
-        <Badge variant="outline">{lead.canal_aquisicao}</Badge>
-      </TableCell>
-      <TableCell>
-        {lead.atendente_id ? atendentes.get(lead.atendente_id) || "-" : "-"}
+        {lead.atendente_id ? (
+          <Badge variant="default" className="bg-primary text-primary-foreground font-medium px-3 py-1">
+            {atendentes.get(lead.atendente_id) || "-"}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
       </TableCell>
       <TableCell>
         {format(new Date(lead.data_envio), "dd/MM/yyyy", { locale: ptBR })}
@@ -104,10 +136,12 @@ export function LeadTableRow({
               handleWhatsAppClick(lead.telefone, lead.nome);
             }}
             title="Iniciar conversa no WhatsApp"
+            disabled={isReadOnly}
           >
             <MessageCircle className="w-4 h-4" />
           </Button>
           
+          {/* Botão Capturar - apenas para leads aguardando atendente */}
           {canManage && lead.status_atendimento === 1 && (
             <Button
               size="sm"
@@ -122,7 +156,60 @@ export function LeadTableRow({
             </Button>
           )}
 
-          {canManage && lead.status_atendimento === 2 && onMarkAsLost && (
+          {/* Botões para leads em andamento (capturados) */}
+          {canManage && lead.status_atendimento === 2 && (
+            <>
+              {/* Botão Vendido - apenas se tiver orçamento aprovado */}
+              {hasApprovedBudget && onMarkAsSold && (
+                <Button
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-white px-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkAsSoldClick();
+                  }}
+                  title="Marcar como vendido"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                </Button>
+              )}
+
+              {/* Botão Desqualificar */}
+              {onMarkAsDisqualified && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-500 text-gray-600 hover:bg-gray-50 px-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkAsDisqualifiedClick();
+                  }}
+                  title="Desqualificar lead"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+
+              {/* Botão Cancelar */}
+              {onCancelAttendance && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500 text-red-600 hover:bg-red-50 px-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancelAttendanceClick();
+                  }}
+                  title="Cancelar atendimento"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </>
+          )}
+
+          {/* Botão Marcar como perdido - apenas para leads aguardando aprovação */}
+          {canManage && lead.status_atendimento === 4 && onMarkAsLost && (
             <Button
               variant="outline"
               size="sm"

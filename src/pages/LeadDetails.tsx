@@ -40,6 +40,7 @@ export default function LeadDetails() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [orcamentos, setOrcamentos] = useState<any[]>([]);
   const [leadTag, setLeadTag] = useState<string | null>(null);
+  const [attendantName, setAttendantName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const { isAdmin, isGerenteComercial, user } = useAuth();
   const { toast } = useToast();
@@ -61,6 +62,19 @@ export default function LeadDetails() {
 
       if (error) throw error;
       setLead(data);
+
+      // Buscar nome do atendente se houver
+      if (data.atendente_id) {
+        const { data: attendantData, error: attendantError } = await supabase
+          .from("admin_users")
+          .select("nome")
+          .eq("user_id", data.atendente_id)
+          .single();
+
+        if (!attendantError && attendantData) {
+          setAttendantName(attendantData.nome);
+        }
+      }
 
       // Extrair etiqueta das observações (apenas uma)
       if (data.observacoes) {
@@ -296,12 +310,18 @@ export default function LeadDetails() {
   const canEditTags = () => {
     if (!lead) return false;
     
+    // Lead vendido não pode ser alterado
+    if (lead.status_atendimento === 5) return false;
+    
     // Se não tem atendente, qualquer usuário pode alterar
     if (!lead.atendente_id) return true;
     
     // Se tem atendente, apenas admin ou o próprio atendente pode alterar
     return isAdmin || lead.atendente_id === user?.id;
   };
+
+  // Verificar se o lead está vendido (readonly)
+  const isReadOnly = lead?.status_atendimento === 5;
 
   const canViewSalesButton = () => {
     return isAdmin || (lead?.atendente_id === user?.id && lead?.status_atendimento === 2);
@@ -366,78 +386,80 @@ export default function LeadDetails() {
             </Button>
           </div>
 
-          {/* Ações do Lead */}
-          <div className="flex flex-wrap gap-2">
-            {canStartAttendance() && (
-              <Button 
-                onClick={handleStartAttendance}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Capturar Lead
-              </Button>
-            )}
+          {/* Ações do Lead - desabilitadas se vendido */}
+          {!isReadOnly && (
+            <div className="flex flex-wrap gap-2">
+              {canStartAttendance() && (
+                <Button 
+                  onClick={handleStartAttendance}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Capturar Lead
+                </Button>
+              )}
 
-            {canPauseAttendance() && (
+              {canPauseAttendance() && (
+                <Button
+                  variant="outline"
+                  onClick={handlePauseAttendance}
+                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  <Pause className="w-4 h-4 mr-2" />
+                  Pausar
+                </Button>
+              )}
+
+              {canCancelAttendance() && (
+                <Button
+                  variant="outline"
+                  onClick={handleCancelAttendance}
+                  className="border-red-500 text-red-600 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              )}
+
+              {canViewSalesButton() && (
+                <Button
+                  onClick={handleMarkAsSold}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Vendido
+                </Button>
+              )}
+
               <Button
                 variant="outline"
-                onClick={handlePauseAttendance}
-                className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
+                className="border-green-500 text-green-600 hover:bg-green-50"
               >
-                <Pause className="w-4 h-4 mr-2" />
-                Pausar
+                <MessageCircle className="w-4 h-4 mr-2" />
+                WhatsApp
               </Button>
-            )}
 
-            {canCancelAttendance() && (
+              {canManageLead() && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/dashboard/leads/${lead.id}/edit`)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+              )}
+
               <Button
-                variant="outline"
-                onClick={handleCancelAttendance}
-                className="border-red-500 text-red-600 hover:bg-red-50"
+                variant="destructive"
+                onClick={handleDeleteLead}
+                disabled={!canDeleteLead()}
               >
-                <X className="w-4 h-4 mr-2" />
-                Cancelar
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
               </Button>
-            )}
-
-            {canViewSalesButton() && (
-              <Button
-                onClick={handleMarkAsSold}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Vendido
-              </Button>
-            )}
-
-            <Button
-              variant="outline"
-              onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
-              className="border-green-500 text-green-600 hover:bg-green-50"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              WhatsApp
-            </Button>
-
-            {canManageLead() && (
-              <Button
-                variant="outline"
-                onClick={() => navigate(`/dashboard/leads/${lead.id}/edit`)}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Editar
-              </Button>
-            )}
-
-            <Button
-              variant="destructive"
-              onClick={handleDeleteLead}
-              disabled={!canDeleteLead()}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Excluir
-            </Button>
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -453,10 +475,12 @@ export default function LeadDetails() {
                   <Calendar className="w-4 h-4" />
                   <span>Enviado em {format(new Date(lead.data_envio), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4" />
-                  <span>Canal: {lead.canal_aquisicao}</span>
-                </div>
+                {attendantName && (
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span>Atendente: <strong>{attendantName}</strong></span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="text-right">
@@ -465,6 +489,13 @@ export default function LeadDetails() {
               >
                 {statusInfo.label}
               </Badge>
+              {isReadOnly && (
+                <div className="mt-2">
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    VENDIDO - Somente Leitura
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -615,7 +646,7 @@ export default function LeadDetails() {
         </div>
       </div>
 
-      {/* Sistema de Etiquetas */}
+      {/* Sistema de Etiquetas - desabilitado se vendido */}
       <LeadTagManager
         leadId={lead.id}
         currentTag={leadTag}

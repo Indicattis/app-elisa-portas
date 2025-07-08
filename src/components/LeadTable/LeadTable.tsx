@@ -16,6 +16,10 @@ interface LeadTableProps {
   onStartAttendance: (leadId: string) => void;
   onNavigateToSale: (leadId: string) => void;
   onMarkAsLost?: (leadId: string) => void;
+  onMarkAsDisqualified?: (leadId: string) => void;
+  onCancelAttendance?: (leadId: string) => void;
+  onMarkAsSold?: (leadId: string) => void;
+  leadsWithApprovedBudgets?: Set<string>;
 }
 
 export function LeadTable({
@@ -29,6 +33,10 @@ export function LeadTable({
   onStartAttendance,
   onNavigateToSale,
   onMarkAsLost,
+  onMarkAsDisqualified,
+  onCancelAttendance,
+  onMarkAsSold,
+  leadsWithApprovedBudgets = new Set(),
 }: LeadTableProps) {
   return (
     <Card>
@@ -47,7 +55,6 @@ export function LeadTable({
                 <TableHead>Nome</TableHead>
                 <TableHead>Contato</TableHead>
                 <TableHead>Cidade</TableHead>
-                <TableHead>Canal</TableHead>
                 <TableHead>Atendente</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Valor</TableHead>
@@ -65,6 +72,10 @@ export function LeadTable({
                   onStartAttendance={onStartAttendance}
                   onNavigateToSale={onNavigateToSale}
                   onMarkAsLost={onMarkAsLost}
+                  onMarkAsDisqualified={onMarkAsDisqualified}
+                  onCancelAttendance={onCancelAttendance}
+                  onMarkAsSold={onMarkAsSold}
+                  hasApprovedBudget={leadsWithApprovedBudgets.has(lead.id)}
                 />
               ))}
             </TableBody>

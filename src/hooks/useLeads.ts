@@ -8,6 +8,7 @@ import type { Lead } from "@/types/lead";
 export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [atendentes, setAtendentes] = useState<Map<string, string>>(new Map());
+  const [leadsWithApprovedBudgets, setLeadsWithApprovedBudgets] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -36,6 +37,21 @@ export function useLeads() {
             atendenteMap.set(atendente.user_id, atendente.nome);
           });
           setAtendentes(atendenteMap);
+        }
+      }
+
+      // Buscar leads com orçamentos aprovados
+      const leadIds = data?.map(lead => lead.id) || [];
+      if (leadIds.length > 0) {
+        const { data: orcamentosData, error: orcamentosError } = await supabase
+          .from("orcamentos")
+          .select("lead_id")
+          .in("lead_id", leadIds)
+          .eq("status", "aprovado");
+
+        if (!orcamentosError && orcamentosData) {
+          const leadsWithBudgets = new Set(orcamentosData.map(o => o.lead_id));
+          setLeadsWithApprovedBudgets(leadsWithBudgets);
         }
       }
     } catch (error) {
@@ -103,7 +119,7 @@ export function useLeads() {
         lead_id: leadId,
         atendente_id: user?.id,
         acao: "marcou_como_perdido",
-        status_anterior: 2,
+        status_anterior: 4,
         status_novo: 7,
       });
 
@@ -122,6 +138,113 @@ export function useLeads() {
     }
   };
 
+  const handleMarkAsDisqualified = async (leadId: string) => {
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({
+          status_atendimento: 6, // Status desqualificado
+        })
+        .eq("id", leadId);
+
+      if (error) throw error;
+
+      // Registrar no histórico
+      await supabase.from("lead_atendimento_historico").insert({
+        lead_id: leadId,
+        atendente_id: user?.id,
+        acao: "desqualificou_lead",
+        status_anterior: 2,
+        status_novo: 6,
+      });
+
+      fetchLeads();
+      toast({
+        title: "Sucesso",
+        description: "Lead desqualificado",
+      });
+    } catch (error) {
+      console.error("Erro ao desqualificar lead:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao desqualificar lead",
+      });
+    }
+  };
+
+  const handleCancelAttendance = async (leadId: string) => {
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({
+          status_atendimento: 1, // Volta para aguardando atendente
+          atendente_id: null,
+          data_inicio_atendimento: null,
+        })
+        .eq("id", leadId);
+
+      if (error) throw error;
+
+      // Registrar no histórico
+      await supabase.from("lead_atendimento_historico").insert({
+        lead_id: leadId,
+        atendente_id: user?.id,
+        acao: "cancelou_atendimento",
+        status_anterior: 2,
+        status_novo: 1,
+      });
+
+      fetchLeads();
+      toast({
+        title: "Sucesso",
+        description: "Atendimento cancelado",
+      });
+    } catch (error) {
+      console.error("Erro ao cancelar atendimento:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao cancelar atendimento",
+      });
+    }
+  };
+
+  const handleMarkAsSold = async (leadId: string) => {
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({
+          status_atendimento: 4, // Aguardando aprovação
+        })
+        .eq("id", leadId);
+
+      if (error) throw error;
+
+      // Registrar no histórico
+      await supabase.from("lead_atendimento_historico").insert({
+        lead_id: leadId,
+        atendente_id: user?.id,
+        acao: "solicitou_aprovacao_venda",
+        status_anterior: 2,
+        status_novo: 4,
+      });
+
+      fetchLeads();
+      toast({
+        title: "Sucesso",
+        description: "Solicitação de venda enviada para aprovação",
+      });
+    } catch (error) {
+      console.error("Erro ao solicitar aprovação de venda:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao solicitar aprovação de venda",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
   }, []);
@@ -129,9 +252,13 @@ export function useLeads() {
   return {
     leads,
     atendentes,
+    leadsWithApprovedBudgets,
     loading,
     fetchLeads,
     handleStartAttendance,
     handleMarkAsLost,
+    handleMarkAsDisqualified,
+    handleCancelAttendance,
+    handleMarkAsSold,
   };
 }
