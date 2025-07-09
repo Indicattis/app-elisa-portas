@@ -1,0 +1,130 @@
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { LEAD_TAGS, getLeadTag, canEditTag } from "@/utils/newLeadSystem";
+import type { LeadStatus } from "@/utils/newLeadSystem";
+
+interface LeadTagSelectorProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentTagId: number | null;
+  leadStatus: LeadStatus;
+  onTagChange: (tagId: number | null) => Promise<void>;
+  leadName: string;
+}
+
+export function LeadTagSelector({ 
+  open, 
+  onOpenChange, 
+  currentTagId, 
+  leadStatus,
+  onTagChange, 
+  leadName 
+}: LeadTagSelectorProps) {
+  const [loading, setLoading] = useState(false);
+  
+  const canEdit = canEditTag(leadStatus);
+  const availableTags = LEAD_TAGS.filter(tag => 
+    // Tags 1-6 podem ser selecionadas livremente quando status é 1 ou 2
+    canEdit && [1, 2, 3, 4, 5, 6].includes(tag.id)
+  );
+
+  const handleTagSelect = async (tagId: number) => {
+    try {
+      setLoading(true);
+      await onTagChange(tagId);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Erro ao alterar tag:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveTag = async () => {
+    try {
+      setLoading(true);
+      await onTagChange(null);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Erro ao remover tag:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Alterar Etiqueta do Lead</DialogTitle>
+          <DialogDescription>
+            Selecione uma nova etiqueta para o lead <strong>{leadName}</strong>
+          </DialogDescription>
+        </DialogHeader>
+
+        {!canEdit ? (
+          <div className="text-center py-6">
+            <p className="text-muted-foreground">
+              Não é possível alterar a etiqueta neste status do lead.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              {currentTagId && (
+                <div className="mb-3">
+                  <span>Etiqueta atual: </span>
+                  <Badge className={getLeadTag(currentTagId)?.color}>
+                    {getLeadTag(currentTagId)?.name}
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              {availableTags.map((tag) => (
+                <Button
+                  key={tag.id}
+                  variant="outline"
+                  className="justify-start h-auto p-3"
+                  onClick={() => handleTagSelect(tag.id)}
+                  disabled={loading || currentTagId === tag.id}
+                >
+                  <div className="flex items-center gap-3">
+                    <Badge className={tag.color}>
+                      {tag.name}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {tag.description}
+                    </span>
+                  </div>
+                </Button>
+              ))}
+            </div>
+
+            {currentTagId && (
+              <div className="pt-4 border-t">
+                <Button
+                  variant="ghost"
+                  onClick={handleRemoveTag}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  Remover Etiqueta
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

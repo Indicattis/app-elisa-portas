@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,12 +6,33 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Edit, MessageCircle, Play, X, DollarSign, Trash2, CheckCircle, User, Calendar, MapPin, Phone, Mail, Package, AlertTriangle } from "lucide-react";
-import { format, isToday } from "date-fns";
+import { 
+  ArrowLeft, 
+  Edit, 
+  MessageCircle, 
+  Play, 
+  X, 
+  DollarSign, 
+  Trash2, 
+  CheckCircle, 
+  User, 
+  Calendar, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Package, 
+  AlertTriangle,
+  Calculator,
+  Home,
+  RotateCcw
+} from "lucide-react";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LeadComments } from "@/components/LeadComments";
-import { LeadTagManager } from "@/components/LeadTags";
-import { getLeadStatus, statusConfig } from "@/utils/leadStatus";
+import { LeadLossModal } from "@/components/LeadLossModal";
+import { LeadTagSelector } from "@/components/LeadTagSelector";
+import { STATUS_CONFIG, getLeadTag, canEditTag } from "@/utils/newLeadSystem";
+import type { LeadStatus, MotivoPerda } from "@/utils/newLeadSystem";
 
 interface Lead {
   id: string;
@@ -21,6 +41,10 @@ interface Lead {
   telefone: string;
   cidade: string;
   status_atendimento: number;
+  novo_status: LeadStatus;
+  tag_id: number | null;
+  motivo_perda: MotivoPerda | null;
+  observacoes_perda: string | null;
   data_envio: string;
   atendente_id: string | null;
   valor_orcamento: number | null;
@@ -35,7 +59,7 @@ interface Lead {
   canal_aquisicao: string;
   endereco_rua: string | null;
   endereco_numero: string | null;
-  endereco_bairro: string | null;
+  endereco_bairro: string | null;  
   endereco_cep: string | null;
   endereco_cidade_completa: string | null;
   endereco_estado: string | null;
@@ -47,9 +71,11 @@ export default function LeadDetails() {
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [orcamentos, setOrcamentos] = useState<any[]>([]);
-  const [leadTag, setLeadTag] = useState<string | null>(null);
   const [attendantName, setAttendantName] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [showLossModal, setShowLossModal] = useState(false);
+  const [showTagSelector, setShowTagSelector] = useState(false);
+  const [hasActiveVisit, setHasActiveVisit] = useState(false);
   const { isAdmin, isGerenteComercial, user } = useAuth();
   const { toast } = useToast();
 
@@ -57,6 +83,7 @@ export default function LeadDetails() {
     if (id) {
       fetchLead();
       fetchOrcamentos();
+      checkActiveVisits();
     }
   }, [id]);
 
@@ -81,16 +108,6 @@ export default function LeadDetails() {
 
         if (!attendantError && attendantData) {
           setAttendantName(attendantData.nome);
-        }
-      }
-
-      // Extrair etiqueta das observações (apenas uma)
-      if (data.observacoes) {
-        try {
-          const parsed = JSON.parse(data.observacoes);
-          setLeadTag(parsed.tags?.[0] || null);
-        } catch {
-          setLeadTag(null);
         }
       }
     } catch (error) {
@@ -121,27 +138,19 @@ export default function LeadDetails() {
     }
   };
 
-  const handleTagUpdate = (newTag: string | null) => {
-    setLeadTag(newTag);
-    // Atualizar o lead local também
-    if (lead) {
-      setLead({
-        ...lead,
-        observacoes: JSON.stringify({ tags: newTag ? [newTag] : [] })
-      });
-    }
-  };
+  const checkActiveVisits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("visitas_tecnicas")
+        .select("id")
+        .eq("lead_id", id)
+        .eq("status", "agendada")
+        .limit(1);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pendente':
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pendente</Badge>;
-      case 'aprovado':
-        return <Badge variant="outline" className="text-green-600 border-green-600">Aprovado</Badge>;
-      case 'reprovado':
-        return <Badge variant="outline" className="text-red-600 border-red-600">Reprovado</Badge>;
-      default:
-        return <Badge variant="outline">Desconhecido</Badge>;
+      if (error) throw error;
+      setHasActiveVisit(data && data.length > 0);
+    } catch (error) {
+      console.error("Erro ao verificar visitas:", error);
     }
   };
 
@@ -149,83 +158,151 @@ export default function LeadDetails() {
     if (!lead) return;
 
     try {
-      const { error } = await supabase.rpc("iniciar_atendimento", {
-        lead_uuid: lead.id,
-      });
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ 
+          novo_status: 'em_andamento',
+          atendente_id: user?.id,
+          data_inicio_atendimento: new Date().toISOString()
+        })
+        .eq("id", lead.id);
 
       if (error) throw error;
 
       fetchLead();
       toast({
         title: "Sucesso",
-        description: "Lead capturado com sucesso",
+        description: "Atendimento iniciado com sucesso",
       });
     } catch (error: any) {
-      console.error("Erro ao capturar lead:", error);
+      console.error("Erro ao iniciar atendimento:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Erro ao capturar lead",
+        description: error.message || "Erro ao iniciar atendimento",
       });
     }
   };
 
-  const handleDisqualifyLead = async () => {
+  const handleMarkAsLost = async (data: { motivo_perda: MotivoPerda; observacoes_perda?: string }) => {
     if (!lead) return;
 
     try {
       const { error } = await supabase
         .from("elisaportas_leads")
-        .update({ status_atendimento: 6 }) // 6 = desqualificado
+        .update({ 
+          novo_status: 'perdido',
+          motivo_perda: data.motivo_perda,
+          observacoes_perda: data.observacoes_perda || null
+        })
         .eq("id", lead.id);
 
       if (error) throw error;
 
-      // Registrar no histórico
-      await supabase.from("lead_atendimento_historico").insert({
-        lead_id: lead.id,
-        atendente_id: user?.id,
-        acao: "desqualificou_lead",
-        status_anterior: lead.status_atendimento,
-        status_novo: 6,
-      });
-
       fetchLead();
       toast({
         title: "Sucesso",
-        description: "Lead desqualificado com sucesso",
+        description: "Lead marcado como perdido",
       });
     } catch (error: any) {
-      console.error("Erro ao desqualificar lead:", error);
+      console.error("Erro ao marcar como perdido:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Erro ao desqualificar lead",
+        description: error.message || "Erro ao marcar lead como perdido",
       });
     }
   };
 
-  const handleCancelAttendance = async () => {
+  const handleInitiateSale = async () => {
     if (!lead) return;
 
     try {
-      const { error } = await supabase.rpc("cancel_lead_attendance", {
-        lead_uuid: lead.id,
-      });
+      // Verificar se há orçamento aprovado
+      const approvedBudgets = orcamentos.filter(o => o.status === 'aprovado');
+      if (approvedBudgets.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Erro", 
+          description: "É necessário ter um orçamento aprovado antes de iniciar uma venda",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ novo_status: 'aguardando_aprovacao_venda' })
+        .eq("id", lead.id);
 
       if (error) throw error;
 
       fetchLead();
       toast({
         title: "Sucesso",
-        description: "Atendimento cancelado com sucesso",
+        description: "Requisição de venda enviada para aprovação",
       });
     } catch (error: any) {
-      console.error("Erro ao cancelar atendimento:", error);
+      console.error("Erro ao iniciar venda:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Erro ao cancelar atendimento",
+        description: error.message || "Erro ao iniciar processo de venda",
+      });
+    }
+  };
+
+  const handleResumeAttendance = async () => {
+    if (!lead) return;
+
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ 
+          novo_status: 'em_andamento',
+          motivo_perda: null,
+          observacoes_perda: null
+        })
+        .eq("id", lead.id);
+
+      if (error) throw error;
+
+      fetchLead();
+      toast({
+        title: "Sucesso",
+        description: "Atendimento retomado com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Erro ao retomar atendimento:", error);
+      toast({
+        variant: "destructive", 
+        title: "Erro",
+        description: error.message || "Erro ao retomar atendimento",
+      });
+    }
+  };
+
+  const handleTagChange = async (tagId: number | null) => {
+    if (!lead) return;
+
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ tag_id: tagId })
+        .eq("id", lead.id);
+
+      if (error) throw error;
+
+      fetchLead();
+      toast({
+        title: "Sucesso",
+        description: "Etiqueta alterada com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Erro ao alterar etiqueta:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro", 
+        description: error.message || "Erro ao alterar etiqueta",
       });
     }
   };
@@ -234,65 +311,6 @@ export default function LeadDetails() {
     const message = `Olá ${nome}, entramos em contato sobre seu interesse em portas. Como podemos ajudá-lo?`;
     const whatsappUrl = `https://wa.me/55${telefone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-  };
-
-  const handleMarkAsSold = async () => {
-    if (!lead) return;
-
-    try {
-      // Verificar se pode marcar como vendido
-      const { data: canSell, error: checkError } = await supabase.rpc("pode_marcar_venda", {
-        lead_uuid: lead.id
-      });
-
-      if (checkError) throw checkError;
-
-      if (!canSell) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não é possível marcar como vendido. Verifique se há orçamento aprovado e nenhuma requisição pendente.",
-        });
-        return;
-      }
-
-      // Verificar se existe orçamento aprovado para este lead
-      const { data: orcamentos } = await supabase
-        .from("orcamentos")
-        .select("id")
-        .eq("lead_id", lead.id)
-        .eq("status", "aprovado")
-        .limit(1);
-
-      const orcamentoId = orcamentos && orcamentos.length > 0 ? orcamentos[0].id : null;
-
-      // Criar requisição de venda
-      const { error } = await supabase.rpc("criar_requisicao_venda", {
-        lead_uuid: lead.id,
-        orcamento_uuid: orcamentoId
-      });
-
-      if (error) throw error;
-
-      // Atualizar status do lead para "aguardando aprovação"
-      await supabase
-        .from("elisaportas_leads")
-        .update({ status_atendimento: 4 }) // 4 = aguardando aprovação
-        .eq("id", lead.id);
-
-      fetchLead();
-      toast({
-        title: "Sucesso",
-        description: "Requisição de venda criada com sucesso. Aguardando aprovação do gerente comercial.",
-      });
-    } catch (error: any) {
-      console.error("Erro ao criar requisição de venda:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: error.message || "Erro ao criar requisição de venda",
-      });
-    }
   };
 
   const handleDeleteLead = async () => {
@@ -321,45 +339,24 @@ export default function LeadDetails() {
     }
   };
 
-  const canManageLead = () => {
-    return isAdmin || lead?.atendente_id === user?.id;
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pendente':
+        return <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pendente</Badge>;
+      case 'aprovado':
+        return <Badge variant="outline" className="text-green-600 border-green-600">Aprovado</Badge>;
+      case 'reprovado':
+        return <Badge variant="outline" className="text-red-600 border-red-600">Reprovado</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
+    }
   };
 
-  const canEditTags = () => {
-    if (!lead) return false;
-    
-    // Lead vendido não pode ser alterado
-    if (lead.status_atendimento === 5) return false;
-    
-    // Se não tem atendente, qualquer usuário pode alterar
-    if (!lead.atendente_id) return true;
-    
-    // Se tem atendente, apenas admin ou o próprio atendente pode alterar
-    return isAdmin || lead.atendente_id === user?.id;
-  };
-
-  // Verificar se o lead está vendido (readonly)
-  const isReadOnly = lead?.status_atendimento === 5;
-
-  const canViewSalesButton = () => {
-    return isAdmin || (lead?.atendente_id === user?.id && lead?.status_atendimento === 2);
-  };
-
-  const canDeleteLead = () => {
-    return isAdmin || isGerenteComercial;
-  };
-
-  const canStartAttendance = () => {
-    return lead?.status_atendimento === 1;
-  };
-
-  const canCancelAttendance = () => {
-    return lead?.status_atendimento === 2 && (isAdmin || lead?.atendente_id === user?.id);
-  };
-
-  const canDisqualifyLead = () => {
-    return (lead?.status_atendimento === 1 || lead?.status_atendimento === 2) && (isAdmin || lead?.atendente_id === user?.id);
-  };
+  // Verificar permissões baseadas no novo status
+  const canStartAttendance = () => lead?.novo_status === 'aguardando_atendimento';
+  const canManageInProgress = () => lead?.novo_status === 'em_andamento' && lead?.atendente_id === user?.id;
+  const canResumeAttendance = () => isAdmin && ['perdido', 'venda_reprovada'].includes(lead?.novo_status || '');
+  const hasApprovedBudget = () => orcamentos.some(o => o.status === 'aprovado');
 
   if (loading) {
     return (
@@ -386,8 +383,8 @@ export default function LeadDetails() {
     );
   }
 
-  const status = getLeadStatus(lead);
-  const statusInfo = statusConfig[status as keyof typeof statusConfig];
+  const statusInfo = STATUS_CONFIG[lead.novo_status];
+  const currentTag = getLeadTag(lead.tag_id);
 
   return (
     <div className="space-y-8">
@@ -404,107 +401,126 @@ export default function LeadDetails() {
             </Button>
           </div>
 
-          {/* Ações do Lead - desabilitadas se vendido */}
-          {!isReadOnly && (
-            <div className="flex flex-wrap gap-2">
-              {canStartAttendance() && (
+          {/* Botões baseados no status */}
+          <div className="flex flex-wrap gap-2">
+            {/* Status 1: Aguardando atendimento */}
+            {canStartAttendance() && (
+              <>
                 <Button 
                   onClick={handleStartAttendance}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  Capturar Lead
+                  Iniciar Atendimento
                 </Button>
-              )}
-
-              {canCancelAttendance() && (
                 <Button
                   variant="outline"
-                  onClick={handleCancelAttendance}
+                  onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
+                  className="border-green-500 text-green-600 hover:bg-green-50"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  WhatsApp
+                </Button>
+              </>
+            )}
+
+            {/* Status 2: Em andamento */}
+            {canManageInProgress() && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowLossModal(true)}
                   className="border-red-500 text-red-600 hover:bg-red-50"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Cancelar
+                  Perdido
                 </Button>
-              )}
-
-              {canDisqualifyLead() && (
                 <Button
                   variant="outline"
-                  onClick={handleDisqualifyLead}
-                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                  onClick={() => navigate(`/dashboard/orcamentos/novo?leadId=${lead.id}`)}
+                  className="border-blue-500 text-blue-600 hover:bg-blue-50"
                 >
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Desqualificar
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Criar Orçamento
                 </Button>
-              )}
-
-              {canViewSalesButton() && (
-                <Button
-                  onClick={handleMarkAsSold}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Vendido
-                </Button>
-              )}
-
-              <Button
-                variant="outline"
-                onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
-                className="border-green-500 text-green-600 hover:bg-green-50"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                WhatsApp
-              </Button>
-
-              {canManageLead() && (
                 <Button
                   variant="outline"
-                  onClick={() => navigate(`/dashboard/leads/${lead.id}/edit`)}
+                  onClick={() => {
+                    if (!lead.endereco_rua || !lead.endereco_numero || !lead.endereco_bairro || !lead.endereco_cep) {
+                      toast({
+                        title: "Endereço incompleto",
+                        description: "É necessário preencher o endereço completo do lead antes de criar uma visita técnica",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    navigate(`/dashboard/visitas/nova/${lead.id}`);
+                  }}
+                  className="border-purple-500 text-purple-600 hover:bg-purple-50"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar
+                  <Home className="w-4 h-4 mr-2" />
+                  Criar Visita Técnica
                 </Button>
-              )}
+                {hasApprovedBudget() && (
+                  <Button
+                    onClick={handleInitiateSale}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Iniciar Venda
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
+                  className="border-green-500 text-green-600 hover:bg-green-50"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  WhatsApp
+                </Button>
+              </>
+            )}
 
-              {/* Botão Criar Visita Técnica */}
+            {/* Status 3, 5: Perdido/Venda reprovada - apenas admin pode retomar */}
+            {canResumeAttendance() && (
               <Button
                 variant="outline"
-                onClick={() => {
-                  // Verificar se tem endereço completo
-                  if (!lead.endereco_rua || !lead.endereco_numero || !lead.endereco_bairro || !lead.endereco_cep) {
-                    toast({
-                      title: "Endereço incompleto",
-                      description: "É necessário preencher o endereço completo do lead antes de criar uma visita técnica",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  navigate(`/dashboard/visitas/nova/${lead.id}`);
-                }}
+                onClick={handleResumeAttendance}
                 className="border-blue-500 text-blue-600 hover:bg-blue-50"
               >
-                <Calendar className="w-4 h-4 mr-2" />
-                Criar Visita Técnica
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Retomar Atendimento
               </Button>
+            )}
 
-              <Button
-                variant="destructive"
-                onClick={handleDeleteLead}
-                disabled={!canDeleteLead()}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
-              </Button>
-            </div>
-          )}
+            {/* Botões administrativos */}
+            {(isAdmin || isGerenteComercial) && (
+              <>
+                {lead.novo_status !== 'venda_aprovada' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/dashboard/leads/${lead.id}/edit`)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteLead}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Informações principais em formato documento */}
+      {/* Informações principais */}
       <div className="bg-card border rounded-lg overflow-hidden">
-        {/* Cabeçalho do documento */}
+        {/* Cabeçalho */}
         <div className="bg-primary/5 border-b p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -522,24 +538,39 @@ export default function LeadDetails() {
                 )}
               </div>
             </div>
-            <div className="text-right">
-              <Badge 
-                className={`${statusInfo.className} text-white px-4 py-2`}
-              >
-                {statusInfo.label}
-              </Badge>
-              {isReadOnly && (
-                <div className="mt-2">
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    VENDIDO - Somente Leitura
+            <div className="text-right space-y-2">
+              <div>
+                <Badge 
+                  className={`${statusInfo.className} text-white px-4 py-2`}
+                >
+                  {statusInfo.label}
+                </Badge>
+              </div>
+              {currentTag && (
+                <div>
+                  <Badge 
+                    className={`${currentTag.color} cursor-pointer`}
+                    onClick={() => canEditTag(lead.novo_status) && setShowTagSelector(true)}
+                  >
+                    {currentTag.name}
                   </Badge>
+                </div>
+              )}
+              {!currentTag && canEditTag(lead.novo_status) && (
+                <div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTagSelector(true)}
+                  >
+                    Adicionar Etiqueta
+                  </Button>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Corpo do documento */}
         <div className="p-6 space-y-8">
           {/* Informações de Contato */}
           <section>
@@ -685,16 +716,25 @@ export default function LeadDetails() {
         </div>
       </div>
 
-      {/* Sistema de Etiquetas - desabilitado se vendido */}
-      <LeadTagManager
-        leadId={lead.id}
-        currentTag={leadTag}
-        onTagUpdate={handleTagUpdate}
-        canEdit={canEditTags()}
-      />
-
       {/* Comentários */}
       <LeadComments leadId={lead.id} />
+
+      {/* Modais */}
+      <LeadLossModal
+        open={showLossModal}
+        onOpenChange={setShowLossModal}
+        onConfirm={handleMarkAsLost}
+        leadName={lead.nome}
+      />
+
+      <LeadTagSelector
+        open={showTagSelector}
+        onOpenChange={setShowTagSelector}
+        currentTagId={lead.tag_id}
+        leadStatus={lead.novo_status}
+        onTagChange={handleTagChange}
+        leadName={lead.nome}
+      />
     </div>
   );
 }

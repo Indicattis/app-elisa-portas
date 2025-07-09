@@ -7,6 +7,10 @@ export interface Lead {
   telefone: string;
   cidade: string;
   status_atendimento: number;
+  novo_status: 'aguardando_atendimento' | 'em_andamento' | 'perdido' | 'aguardando_aprovacao_venda' | 'venda_reprovada' | 'venda_aprovada';
+  tag_id: number | null;
+  motivo_perda: 'desqualificado' | 'perdido_por_preco' | 'perdido_por_prazo' | 'outro' | null;
+  observacoes_perda: string | null;
   data_envio: string;
   atendente_id: string | null;
   valor_orcamento: number | null;
