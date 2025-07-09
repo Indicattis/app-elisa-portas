@@ -74,9 +74,13 @@ export type Database = {
           id: string
           largura_porta: string | null
           mensagem: string | null
+          motivo_perda: Database["public"]["Enums"]["motivo_perda"] | null
           nome: string
+          novo_status: Database["public"]["Enums"]["lead_status"] | null
           observacoes: string | null
+          observacoes_perda: string | null
           status_atendimento: number
+          tag_id: number | null
           telefone: string
           tipo_porta: string | null
           updated_at: string
@@ -105,9 +109,13 @@ export type Database = {
           id?: string
           largura_porta?: string | null
           mensagem?: string | null
+          motivo_perda?: Database["public"]["Enums"]["motivo_perda"] | null
           nome: string
+          novo_status?: Database["public"]["Enums"]["lead_status"] | null
           observacoes?: string | null
+          observacoes_perda?: string | null
           status_atendimento?: number
+          tag_id?: number | null
           telefone: string
           tipo_porta?: string | null
           updated_at?: string
@@ -136,9 +144,13 @@ export type Database = {
           id?: string
           largura_porta?: string | null
           mensagem?: string | null
+          motivo_perda?: Database["public"]["Enums"]["motivo_perda"] | null
           nome?: string
+          novo_status?: Database["public"]["Enums"]["lead_status"] | null
           observacoes?: string | null
+          observacoes_perda?: string | null
           status_atendimento?: number
+          tag_id?: number | null
           telefone?: string
           tipo_porta?: string | null
           updated_at?: string
@@ -581,6 +593,18 @@ export type Database = {
       }
     }
     Enums: {
+      lead_status:
+        | "aguardando_atendimento"
+        | "em_andamento"
+        | "perdido"
+        | "aguardando_aprovacao_venda"
+        | "venda_reprovada"
+        | "venda_aprovada"
+      motivo_perda:
+        | "desqualificado"
+        | "perdido_por_preco"
+        | "perdido_por_prazo"
+        | "outro"
       status_visita: "agendada" | "concluida" | "cancelada"
       turno_visita: "manha" | "tarde" | "noite"
       user_role: "administrador" | "atendente" | "gerente_comercial"
@@ -711,6 +735,20 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      lead_status: [
+        "aguardando_atendimento",
+        "em_andamento",
+        "perdido",
+        "aguardando_aprovacao_venda",
+        "venda_reprovada",
+        "venda_aprovada",
+      ],
+      motivo_perda: [
+        "desqualificado",
+        "perdido_por_preco",
+        "perdido_por_prazo",
+        "outro",
+      ],
       status_visita: ["agendada", "concluida", "cancelada"],
       turno_visita: ["manha", "tarde", "noite"],
       user_role: ["administrador", "atendente", "gerente_comercial"],
