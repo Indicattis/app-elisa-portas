@@ -23,6 +23,8 @@ import Orcamentos from "./pages/Orcamentos";
 import NovoOrcamento from "./pages/NovoOrcamento";
 import NotFound from "./pages/NotFound";
 import VendaDetails from "./pages/VendaDetails";
+import Visitas from "./pages/Visitas";
+import VisitaNova from "./pages/VisitaNova";
 
 const queryClient = new QueryClient();
 
@@ -174,6 +176,26 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <VendaDetails />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/visitas"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Visitas />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/visitas/nova/:leadId"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <VisitaNova />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

@@ -471,6 +471,53 @@ export type Database = {
           },
         ]
       }
+      visitas_tecnicas: {
+        Row: {
+          created_at: string
+          created_by: string
+          data_visita: string
+          id: string
+          lead_id: string
+          observacoes: string | null
+          responsavel_id: string
+          status: Database["public"]["Enums"]["status_visita"]
+          turno: Database["public"]["Enums"]["turno_visita"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data_visita: string
+          id?: string
+          lead_id: string
+          observacoes?: string | null
+          responsavel_id: string
+          status?: Database["public"]["Enums"]["status_visita"]
+          turno: Database["public"]["Enums"]["turno_visita"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data_visita?: string
+          id?: string
+          lead_id?: string
+          observacoes?: string | null
+          responsavel_id?: string
+          status?: Database["public"]["Enums"]["status_visita"]
+          turno?: Database["public"]["Enums"]["turno_visita"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_tecnicas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "elisaportas_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -534,6 +581,8 @@ export type Database = {
       }
     }
     Enums: {
+      status_visita: "agendada" | "concluida" | "cancelada"
+      turno_visita: "manha" | "tarde" | "noite"
       user_role: "administrador" | "atendente" | "gerente_comercial"
     }
     CompositeTypes: {
@@ -662,6 +711,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      status_visita: ["agendada", "concluida", "cancelada"],
+      turno_visita: ["manha", "tarde", "noite"],
       user_role: ["administrador", "atendente", "gerente_comercial"],
     },
   },

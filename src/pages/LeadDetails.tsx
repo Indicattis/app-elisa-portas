@@ -33,6 +33,13 @@ interface Lead {
   mensagem: string | null;
   observacoes: string | null;
   canal_aquisicao: string;
+  endereco_rua: string | null;
+  endereco_numero: string | null;
+  endereco_bairro: string | null;
+  endereco_cep: string | null;
+  endereco_cidade_completa: string | null;
+  endereco_estado: string | null;
+  endereco_complemento: string | null;
 }
 
 export default function LeadDetails() {
@@ -460,6 +467,27 @@ export default function LeadDetails() {
                   Editar
                 </Button>
               )}
+
+              {/* Botão Criar Visita Técnica */}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Verificar se tem endereço completo
+                  if (!lead.endereco_rua || !lead.endereco_numero || !lead.endereco_bairro || !lead.endereco_cep) {
+                    toast({
+                      title: "Endereço incompleto",
+                      description: "É necessário preencher o endereço completo do lead antes de criar uma visita técnica",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  navigate(`/dashboard/visitas/nova/${lead.id}`);
+                }}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Criar Visita Técnica
+              </Button>
 
               <Button
                 variant="destructive"

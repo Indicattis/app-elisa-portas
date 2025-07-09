@@ -5,6 +5,7 @@ import {
   Users, 
   FileText, 
   Calculator,
+  Calendar,
   Settings, 
   LogOut,
   Menu,
@@ -18,6 +19,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Leads", href: "/dashboard/leads", icon: FileText },
   { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator },
+  { name: "Visitas", href: "/dashboard/visitas", icon: Calendar },
   { name: "Usuários", href: "/dashboard/users", icon: Users, adminOnly: true },
   { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, adminOrManager: true },
 ];
