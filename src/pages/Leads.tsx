@@ -21,6 +21,7 @@ export default function Leads() {
     leadsWithApprovedBudgets,
     orcamentosInfo,
     loading, 
+    fetchLeads,
     handleStartAttendance, 
     handleMarkAsLost,
     handleMarkAsDisqualified,
@@ -60,6 +61,10 @@ export default function Leads() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleTagUpdate = () => {
+    fetchLeads();
   };
 
   useEffect(() => {
@@ -115,6 +120,7 @@ export default function Leads() {
         onMarkAsSold={handleMarkAsSold}
         leadsWithApprovedBudgets={leadsWithApprovedBudgets}
         orcamentosInfo={orcamentosInfo}
+        onTagUpdate={handleTagUpdate}
       />
     </div>
   );

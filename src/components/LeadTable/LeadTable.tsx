@@ -29,6 +29,7 @@ interface LeadTableProps {
   onMarkAsSold?: (leadId: string) => void;
   leadsWithApprovedBudgets: Set<string>;
   orcamentosInfo: Map<string, OrcamentoInfo>;
+  onTagUpdate?: () => void;
 }
 
 export function LeadTable({
@@ -47,6 +48,7 @@ export function LeadTable({
   onMarkAsSold,
   leadsWithApprovedBudgets,
   orcamentosInfo,
+  onTagUpdate,
 }: LeadTableProps) {
   return (
     <div className="space-y-4">
@@ -81,6 +83,7 @@ export function LeadTable({
                 onMarkAsSold={onMarkAsSold}
                 hasApprovedBudget={leadsWithApprovedBudgets.has(lead.id)}
                 orcamentoInfo={orcamentosInfo.get(lead.id)}
+                onTagUpdate={onTagUpdate}
               />
             ))}
           </TableBody>
