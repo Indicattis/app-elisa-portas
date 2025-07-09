@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,8 +8,9 @@ import { LeadFilters } from "@/components/LeadFilters";
 import { LeadIndicators } from "@/components/LeadIndicators";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import type { Lead, FilterValues, LEADS_PER_PAGE } from "@/types/lead";
-import { applyLeadFilters } from "@/utils/leadFilters";
+import type { Lead, FilterValues } from "@/types/lead";
+import { LEADS_PER_PAGE } from "@/types/lead";
+import { filterLeads } from "@/utils/leadFilters";
 
 export default function Leads() {
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ export default function Leads() {
     etiqueta: "",
   });
 
-  const filteredLeads = applyLeadFilters(leads, filters);
+  const filteredLeads = filterLeads(leads, filters);
   const totalPages = Math.ceil(filteredLeads.length / LEADS_PER_PAGE);
   const startIndex = (currentPage - 1) * LEADS_PER_PAGE;
   const paginatedLeads = filteredLeads.slice(startIndex, startIndex + LEADS_PER_PAGE);
@@ -62,6 +64,9 @@ export default function Leads() {
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
+
+  // Get unique cities from leads for filter
+  const cidades = [...new Set(leads.map(lead => lead.cidade).filter(Boolean))];
 
   if (loading) {
     return (
@@ -90,7 +95,7 @@ export default function Leads() {
         filters={filters}
         onFiltersChange={setFilters}
         atendentes={atendentes}
-        leads={leads}
+        cidades={cidades}
       />
 
       <LeadTable
