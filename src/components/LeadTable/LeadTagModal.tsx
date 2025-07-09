@@ -8,6 +8,7 @@ import { Tag } from "lucide-react";
 import { leadTags, getLeadTag } from "@/utils/leadTags";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LeadTagModalProps {
   isOpen: boolean;
@@ -29,9 +30,13 @@ export function LeadTagModal({
   const [selectedTag, setSelectedTag] = useState<string>(currentTag || "atendimento_primeiro");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { isAdmin, isGerenteComercial } = useAuth();
+
+  // Administradores e gerentes comerciais podem editar qualquer lead
+  const canEditTag = canEdit || isAdmin || isGerenteComercial;
 
   const handleUpdateTag = async () => {
-    if (!canEdit) {
+    if (!canEditTag) {
       toast({
         variant: "destructive",
         title: "Erro",
@@ -106,7 +111,7 @@ export function LeadTagModal({
           </div>
 
           {/* Seleção de nova etiqueta */}
-          {canEdit && (
+          {canEditTag && (
             <div>
               <span className="text-sm font-medium text-muted-foreground block mb-3">
                 Selecionar nova etiqueta:
@@ -140,7 +145,7 @@ export function LeadTagModal({
             </div>
           )}
 
-          {!canEdit && (
+          {!canEditTag && (
             <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
               Você não tem permissão para alterar a etiqueta deste lead.
             </p>
@@ -155,7 +160,7 @@ export function LeadTagModal({
             >
               Cancelar
             </Button>
-            {canEdit && (
+            {canEditTag && (
               <Button 
                 onClick={handleUpdateTag} 
                 disabled={isLoading || selectedTag === currentTag}

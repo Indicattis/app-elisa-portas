@@ -98,6 +98,30 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
           />
         </div>
 
+        {/* Filtro de etiqueta sempre visível */}
+        <div className="space-y-2">
+          <Label htmlFor="etiqueta">Etiqueta</Label>
+          <Select value={filters.etiqueta} onValueChange={(value) => handleFilterChange("etiqueta", value)}>
+            <SelectTrigger className="max-w-md">
+              <SelectValue placeholder="Todas as etiquetas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todas as etiquetas</SelectItem>
+              {leadTags.map((tag) => (
+                <SelectItem key={tag.id} value={tag.id}>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: tag.bgColor }}
+                    />
+                    {tag.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Filtros de status com botões */}
         <div className="space-y-2">
           <Label>Status</Label>
@@ -125,26 +149,6 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
         {/* Filtros expandidos */}
         {isExpanded && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="etiqueta">Etiqueta</Label>
-              <Select value={filters.etiqueta} onValueChange={(value) => handleFilterChange("etiqueta", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as etiquetas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas as etiquetas</SelectItem>
-                  {leadTags.map((tag) => (
-                    <SelectItem key={tag.id} value={tag.id}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${tag.bgColor}`} />
-                        {tag.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="atendente">Atendente</Label>
               <Select value={filters.atendente} onValueChange={(value) => handleFilterChange("atendente", value)}>
