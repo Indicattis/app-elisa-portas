@@ -8,8 +8,8 @@ import { ptBR } from "date-fns/locale";
 import type { Lead } from "@/types/lead";
 import { getLeadStatus, statusConfig } from "@/utils/leadStatus";
 import { handleWhatsAppClick } from "@/utils/timeUtils";
-import { getLeadTag } from "@/utils/leadTags";
-import { LeadTagModal } from "./LeadTagModal";
+import { getLeadTag, canEditTag } from "@/utils/newLeadSystem";
+import { LeadTagSelector } from "@/components/LeadTagSelector";
 
 interface OrcamentoInfo {
   leadId: string;
@@ -48,22 +48,12 @@ export function LeadTableRow({
   orcamentoInfo,
   onTagUpdate,
 }: LeadTableRowProps) {
-  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
   const status = getLeadStatus(lead);
   const statusInfo = statusConfig[status as keyof typeof statusConfig];
 
-  // Extrair etiqueta das observações (apenas uma)
-  let leadTag: string | null = null;
-  try {
-    if (lead.observacoes) {
-      const parsed = JSON.parse(lead.observacoes);
-      leadTag = parsed.tags?.[0] || null;
-    }
-  } catch {
-    // Se não conseguir fazer parse, não há tags
-  }
-
-  const tagObject = leadTag ? getLeadTag([leadTag]) : null;
+  const leadTag = getLeadTag(lead.tag_id);
+  const canEditTags = canEditTag(lead.novo_status || 'aguardando_atendimento');
 
   const handleMarkAsLostClick = () => {
     if (onMarkAsLost) {
@@ -94,10 +84,13 @@ export function LeadTableRow({
 
   const handleTagClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsTagModalOpen(true);
+    if (canEditTags && canManage) {
+      setIsTagSelectorOpen(true);
+    }
   };
 
-  const handleTagUpdate = () => {
+  const handleTagChange = async (tagId: number | null) => {
+    // A função já atualiza o banco, então só chamamos o callback
     if (onTagUpdate) {
       onTagUpdate();
     }
@@ -152,12 +145,13 @@ export function LeadTableRow({
       >
         {/* Etiqueta como ícone de tag preenchido - primeira coluna */}
         <TableCell className="w-12">
-          {tagObject ? (
+          {leadTag ? (
             <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-              style={{ backgroundColor: tagObject.bgColor }}
-              title={`${tagObject.name} - Clique para alterar`}
-              onClick={handleTagClick}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-opacity ${
+                canEditTags && canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+              } ${leadTag.color}`}
+              title={`${leadTag.name} ${canEditTags && canManage ? '- Clique para alterar' : ''}`}
+              onClick={canEditTags && canManage ? handleTagClick : undefined}
             >
               <Tag 
                 className="w-5 h-5 text-white" 
@@ -166,9 +160,11 @@ export function LeadTableRow({
             </div>
           ) : (
             <div 
-              className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
-              title="Sem etiqueta - Clique para definir"
-              onClick={handleTagClick}
+              className={`w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center transition-colors ${
+                canEditTags && canManage ? 'cursor-pointer hover:bg-gray-300' : 'cursor-default'
+              }`}
+              title={canEditTags && canManage ? "Sem etiqueta - Clique para definir" : "Sem etiqueta"}
+              onClick={canEditTags && canManage ? handleTagClick : undefined}
             >
               <Tag className="w-5 h-5 text-gray-400" />
             </div>
@@ -306,13 +302,14 @@ export function LeadTableRow({
         </TableCell>
       </TableRow>
 
-      <LeadTagModal
-        isOpen={isTagModalOpen}
-        onClose={() => setIsTagModalOpen(false)}
+      <LeadTagSelector
+        open={isTagSelectorOpen}
+        onOpenChange={setIsTagSelectorOpen}
+        currentTagId={lead.tag_id}
+        leadStatus={lead.novo_status || 'aguardando_atendimento'}
+        onTagChange={handleTagChange}
+        leadName={lead.nome}
         leadId={lead.id}
-        currentTag={leadTag}
-        onTagUpdate={handleTagUpdate}
-        canEdit={canManage && !isReadOnly}
       />
     </>
   );

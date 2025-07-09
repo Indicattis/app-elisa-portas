@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LEAD_TAGS, getLeadTag, canEditTag } from "@/utils/newLeadSystem";
 import type { LeadStatus } from "@/utils/newLeadSystem";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface LeadTagSelectorProps {
   open: boolean;
@@ -18,6 +20,7 @@ interface LeadTagSelectorProps {
   leadStatus: LeadStatus;
   onTagChange: (tagId: number | null) => Promise<void>;
   leadName: string;
+  leadId?: string;
 }
 
 export function LeadTagSelector({ 
@@ -26,9 +29,11 @@ export function LeadTagSelector({
   currentTagId, 
   leadStatus,
   onTagChange, 
-  leadName 
+  leadName,
+  leadId 
 }: LeadTagSelectorProps) {
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   
   const canEdit = canEditTag(leadStatus);
   const availableTags = LEAD_TAGS.filter(tag => 
@@ -37,24 +42,64 @@ export function LeadTagSelector({
   );
 
   const handleTagSelect = async (tagId: number) => {
+    if (!leadId) return;
+    
     try {
       setLoading(true);
+      
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ tag_id: tagId })
+        .eq("id", leadId);
+
+      if (error) throw error;
+
       await onTagChange(tagId);
       onOpenChange(false);
+      
+      toast({
+        title: "Sucesso",
+        description: "Etiqueta atualizada com sucesso",
+      });
     } catch (error) {
       console.error("Erro ao alterar tag:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao alterar etiqueta",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleRemoveTag = async () => {
+    if (!leadId) return;
+    
     try {
       setLoading(true);
+      
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ tag_id: null })
+        .eq("id", leadId);
+
+      if (error) throw error;
+
       await onTagChange(null);
       onOpenChange(false);
+      
+      toast({
+        title: "Sucesso",
+        description: "Etiqueta removida com sucesso",
+      });
     } catch (error) {
       console.error("Erro ao remover tag:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao remover etiqueta",
+      });
     } finally {
       setLoading(false);
     }
