@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Edit, MessageCircle, Pause, Play, X, DollarSign, Trash2, CheckCircle, User, Calendar, MapPin, Phone, Mail, Package } from "lucide-react";
+import { ArrowLeft, Edit, MessageCircle, Play, X, DollarSign, Trash2, CheckCircle, User, Calendar, MapPin, Phone, Mail, Package, AlertTriangle } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LeadComments } from "@/components/LeadComments";
@@ -162,27 +163,37 @@ export default function LeadDetails() {
     }
   };
 
-  const handlePauseAttendance = async () => {
+  const handleDisqualifyLead = async () => {
     if (!lead) return;
 
     try {
-      const { error } = await supabase.rpc("pause_lead_attendance", {
-        lead_uuid: lead.id,
-      });
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ status_atendimento: 6 }) // 6 = desqualificado
+        .eq("id", lead.id);
 
       if (error) throw error;
+
+      // Registrar no histórico
+      await supabase.from("lead_atendimento_historico").insert({
+        lead_id: lead.id,
+        atendente_id: user?.id,
+        acao: "desqualificou_lead",
+        status_anterior: lead.status_atendimento,
+        status_novo: 6,
+      });
 
       fetchLead();
       toast({
         title: "Sucesso",
-        description: "Atendimento pausado com sucesso",
+        description: "Lead desqualificado com sucesso",
       });
     } catch (error: any) {
-      console.error("Erro ao pausar atendimento:", error);
+      console.error("Erro ao desqualificar lead:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Erro ao pausar atendimento",
+        description: error.message || "Erro ao desqualificar lead",
       });
     }
   };
@@ -335,12 +346,12 @@ export default function LeadDetails() {
     return lead?.status_atendimento === 1;
   };
 
-  const canPauseAttendance = () => {
+  const canCancelAttendance = () => {
     return lead?.status_atendimento === 2 && (isAdmin || lead?.atendente_id === user?.id);
   };
 
-  const canCancelAttendance = () => {
-    return lead?.status_atendimento === 2 && (isAdmin || lead?.atendente_id === user?.id);
+  const canDisqualifyLead = () => {
+    return (lead?.status_atendimento === 1 || lead?.status_atendimento === 2) && (isAdmin || lead?.atendente_id === user?.id);
   };
 
   if (loading) {
@@ -399,17 +410,6 @@ export default function LeadDetails() {
                 </Button>
               )}
 
-              {canPauseAttendance() && (
-                <Button
-                  variant="outline"
-                  onClick={handlePauseAttendance}
-                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
-                >
-                  <Pause className="w-4 h-4 mr-2" />
-                  Pausar
-                </Button>
-              )}
-
               {canCancelAttendance() && (
                 <Button
                   variant="outline"
@@ -418,6 +418,17 @@ export default function LeadDetails() {
                 >
                   <X className="w-4 h-4 mr-2" />
                   Cancelar
+                </Button>
+              )}
+
+              {canDisqualifyLead() && (
+                <Button
+                  variant="outline"
+                  onClick={handleDisqualifyLead}
+                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Desqualificar
                 </Button>
               )}
 

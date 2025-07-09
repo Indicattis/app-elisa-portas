@@ -85,17 +85,23 @@ export function LeadTableRow({
       className={`cursor-pointer ${statusInfo.rowClassName}`}
       onDoubleClick={() => !isReadOnly && onRowDoubleClick(lead.id)}
     >
-      {/* Etiqueta como ícone de tag - primeira coluna */}
-      <TableCell>
+      {/* Etiqueta como ícone de tag preenchido - primeira coluna */}
+      <TableCell className="w-12">
         {tagObject ? (
-          <div className="flex items-center" title={tagObject.name}>
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: tagObject.bgColor }}
+            title={tagObject.name}
+          >
             <Tag 
-              className="w-4 h-4" 
-              style={{ color: tagObject.bgColor }}
+              className="w-5 h-5 text-white" 
+              fill="currentColor"
             />
           </div>
         ) : (
-          <Tag className="w-4 h-4 text-gray-300" />
+          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <Tag className="w-5 h-5 text-gray-400" />
+          </div>
         )}
       </TableCell>
       

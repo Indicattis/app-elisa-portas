@@ -3,9 +3,6 @@ import { isToday } from "date-fns";
 import type { Lead } from "@/types/lead";
 
 export const getLeadStatus = (lead: Lead) => {
-  // Verificar se tem requisição de venda pendente
-  const hasVendaRequest = lead.status_atendimento === 4; // Status específico para aguardando aprovação
-  
   switch (lead.status_atendimento) {
     case 1:
       // Aguardando atendente (sem atendente)
