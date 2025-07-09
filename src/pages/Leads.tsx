@@ -90,7 +90,7 @@ export default function Leads() {
         </Button>
       </div>
 
-      <LeadIndicators leads={leads} />
+      <LeadIndicators />
 
       <LeadFilters
         filters={filters}
