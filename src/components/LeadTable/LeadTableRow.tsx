@@ -2,13 +2,20 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Play, Tag, Trash2, X, CheckCircle } from "lucide-react";
+import { MessageCircle, Play, Tag, Trash2, X, CheckCircle, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Lead } from "@/types/lead";
 import { getLeadStatus, statusConfig } from "@/utils/leadStatus";
 import { handleWhatsAppClick } from "@/utils/timeUtils";
 import { getLeadTag } from "@/utils/leadTags";
+
+interface OrcamentoInfo {
+  leadId: string;
+  hasOrcamento: boolean;
+  status: string | null;
+  count: number;
+}
 
 interface LeadTableRowProps {
   lead: Lead;
@@ -22,6 +29,7 @@ interface LeadTableRowProps {
   onCancelAttendance?: (leadId: string) => void;
   onMarkAsSold?: (leadId: string) => void;
   hasApprovedBudget?: boolean;
+  orcamentoInfo?: OrcamentoInfo;
 }
 
 export function LeadTableRow({
@@ -35,6 +43,7 @@ export function LeadTableRow({
   onCancelAttendance,
   onMarkAsSold,
   hasApprovedBudget = false,
+  orcamentoInfo,
 }: LeadTableRowProps) {
   const status = getLeadStatus(lead);
   const statusInfo = statusConfig[status as keyof typeof statusConfig];
@@ -78,6 +87,46 @@ export function LeadTableRow({
 
   // Lead vendido não pode ser alterado
   const isReadOnly = lead.status_atendimento === 5;
+
+  const getOrcamentoStatusBadge = () => {
+    if (!orcamentoInfo?.hasOrcamento) {
+      return (
+        <span className="text-muted-foreground text-sm flex items-center gap-1">
+          <FileText className="w-3 h-3" />
+          Nenhum
+        </span>
+      );
+    }
+
+    const statusColors = {
+      aprovado: "bg-green-100 text-green-800 border-green-200",
+      pendente: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      rejeitado: "bg-red-100 text-red-800 border-red-200",
+    };
+
+    const statusLabels = {
+      aprovado: "Aprovado",
+      pendente: "Pendente",
+      rejeitado: "Rejeitado",
+    };
+
+    const badgeClass = statusColors[orcamentoInfo.status as keyof typeof statusColors] || "bg-gray-100 text-gray-800 border-gray-200";
+    const label = statusLabels[orcamentoInfo.status as keyof typeof statusLabels] || orcamentoInfo.status;
+
+    return (
+      <div className="flex items-center gap-1">
+        <FileText className="w-3 h-3" />
+        <Badge variant="outline" className={`text-xs ${badgeClass}`}>
+          {label}
+        </Badge>
+        {orcamentoInfo.count > 1 && (
+          <span className="text-xs text-muted-foreground">
+            ({orcamentoInfo.count})
+          </span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <TableRow 
@@ -126,6 +175,9 @@ export function LeadTableRow({
         {format(new Date(lead.data_envio), "dd/MM/yyyy", { locale: ptBR })}
       </TableCell>
       <TableCell>
+        {getOrcamentoStatusBadge()}
+      </TableCell>
+      <TableCell>
         {lead.valor_orcamento
           ? `R$ ${lead.valor_orcamento.toLocaleString("pt-BR", {
               minimumFractionDigits: 2,
@@ -172,7 +224,7 @@ export function LeadTableRow({
                   className="bg-green-600 hover:bg-green-700 text-white px-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMarkAsSoldClick();
+                    onMarkAsSold(lead.id);
                   }}
                   title="Marcar como vendido"
                 >
@@ -188,7 +240,7 @@ export function LeadTableRow({
                   className="border-gray-500 text-gray-600 hover:bg-gray-50 px-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMarkAsDisqualifiedClick();
+                    onMarkAsDisqualified(lead.id);
                   }}
                   title="Desqualificar lead"
                 >
@@ -204,7 +256,7 @@ export function LeadTableRow({
                   className="border-red-500 text-red-600 hover:bg-red-50 px-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleCancelAttendanceClick();
+                    onCancelAttendance(lead.id);
                   }}
                   title="Cancelar atendimento"
                 >
@@ -222,7 +274,7 @@ export function LeadTableRow({
               className="border-red-500 text-red-600 hover:bg-red-50 px-2"
               onClick={(e) => {
                 e.stopPropagation();
-                handleMarkAsLostClick();
+                onMarkAsLost(lead.id);
               }}
               title="Marcar como perdido"
             >

@@ -1,9 +1,17 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LeadTableRow } from "./LeadTableRow";
 import type { Lead } from "@/types/lead";
+
+interface OrcamentoInfo {
+  leadId: string;
+  hasOrcamento: boolean;
+  status: string | null;
+  count: number;
+}
 
 interface LeadTableProps {
   leads: Lead[];
@@ -19,7 +27,8 @@ interface LeadTableProps {
   onMarkAsDisqualified?: (leadId: string) => void;
   onCancelAttendance?: (leadId: string) => void;
   onMarkAsSold?: (leadId: string) => void;
-  leadsWithApprovedBudgets?: Set<string>;
+  leadsWithApprovedBudgets: Set<string>;
+  orcamentosInfo: Map<string, OrcamentoInfo>;
 }
 
 export function LeadTable({
@@ -36,97 +45,75 @@ export function LeadTable({
   onMarkAsDisqualified,
   onCancelAttendance,
   onMarkAsSold,
-  leadsWithApprovedBudgets = new Set(),
+  leadsWithApprovedBudgets,
+  orcamentosInfo,
 }: LeadTableProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Lista de Leads</CardTitle>
-        <CardDescription>
-          {leads.length} leads encontrados | Página {currentPage} de {totalPages}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tag</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Cidade</TableHead>
-                <TableHead>Atendente</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {leads.map((lead) => (
-                <LeadTableRow
-                  key={lead.id}
-                  lead={lead}
-                  atendentes={atendentes}
-                  canManage={canManageLead(lead)}
-                  onRowDoubleClick={onRowDoubleClick}
-                  onStartAttendance={onStartAttendance}
-                  onNavigateToSale={onNavigateToSale}
-                  onMarkAsLost={onMarkAsLost}
-                  onMarkAsDisqualified={onMarkAsDisqualified}
-                  onCancelAttendance={onCancelAttendance}
-                  onMarkAsSold={onMarkAsSold}
-                  hasApprovedBudget={leadsWithApprovedBudgets.has(lead.id)}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+    <div className="space-y-4">
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12">Tag</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Contato</TableHead>
+              <TableHead>Cidade</TableHead>
+              <TableHead>Atendente</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Orçamento</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => (
+              <LeadTableRow
+                key={lead.id}
+                lead={lead}
+                atendentes={atendentes}
+                canManage={canManageLead(lead)}
+                onRowDoubleClick={onRowDoubleClick}
+                onStartAttendance={onStartAttendance}
+                onNavigateToSale={onNavigateToSale}
+                onMarkAsLost={onMarkAsLost}
+                onMarkAsDisqualified={onMarkAsDisqualified}
+                onCancelAttendance={onCancelAttendance}
+                onMarkAsSold={onMarkAsSold}
+                hasApprovedBudget={leadsWithApprovedBudgets.has(lead.id)}
+                orcamentoInfo={orcamentosInfo.get(lead.id)}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-        {/* Paginação */}
-        {totalPages > 1 && (
-          <div className="mt-4">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                
-                {[...Array(totalPages)].map((_, index) => {
-                  const page = index + 1;
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 2 && page <= currentPage + 2)
-                  ) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => onPageChange(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Página {currentPage} de {totalPages}
+          </p>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Próximo
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }

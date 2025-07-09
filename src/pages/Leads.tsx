@@ -1,5 +1,4 @@
 
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +19,7 @@ export default function Leads() {
     leads, 
     atendentes, 
     leadsWithApprovedBudgets,
+    orcamentosInfo,
     loading, 
     handleStartAttendance, 
     handleMarkAsLost,
@@ -114,8 +114,8 @@ export default function Leads() {
         onCancelAttendance={handleCancelAttendance}
         onMarkAsSold={handleMarkAsSold}
         leadsWithApprovedBudgets={leadsWithApprovedBudgets}
+        orcamentosInfo={orcamentosInfo}
       />
     </div>
   );
 }
-

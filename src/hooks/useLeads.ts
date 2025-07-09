@@ -5,10 +5,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import type { Lead } from "@/types/lead";
 
+interface OrcamentoInfo {
+  leadId: string;
+  hasOrcamento: boolean;
+  status: string | null;
+  count: number;
+}
+
 export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [atendentes, setAtendentes] = useState<Map<string, string>>(new Map());
   const [leadsWithApprovedBudgets, setLeadsWithApprovedBudgets] = useState<Set<string>>(new Set());
+  const [orcamentosInfo, setOrcamentosInfo] = useState<Map<string, OrcamentoInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -52,6 +60,57 @@ export function useLeads() {
         if (!orcamentosError && orcamentosData) {
           const leadsWithBudgets = new Set(orcamentosData.map(o => o.lead_id));
           setLeadsWithApprovedBudgets(leadsWithBudgets);
+        }
+
+        // Buscar informações completas dos orçamentos
+        const { data: allOrcamentosData, error: allOrcamentosError } = await supabase
+          .from("orcamentos")
+          .select("lead_id, status")
+          .in("lead_id", leadIds);
+
+        if (!allOrcamentosError && allOrcamentosData) {
+          const orcamentosMap = new Map<string, OrcamentoInfo>();
+          
+          // Agrupar orçamentos por lead
+          const orcamentosPorLead = allOrcamentosData.reduce((acc, orcamento) => {
+            if (!acc[orcamento.lead_id]) {
+              acc[orcamento.lead_id] = [];
+            }
+            acc[orcamento.lead_id].push(orcamento.status);
+            return acc;
+          }, {} as Record<string, string[]>);
+
+          // Criar informações de orçamento para cada lead
+          Object.entries(orcamentosPorLead).forEach(([leadId, statuses]) => {
+            // Priorizar status: aprovado > pendente > outros
+            let status = statuses[0];
+            if (statuses.includes('aprovado')) {
+              status = 'aprovado';
+            } else if (statuses.includes('pendente')) {
+              status = 'pendente';
+            }
+
+            orcamentosMap.set(leadId, {
+              leadId,
+              hasOrcamento: true,
+              status,
+              count: statuses.length
+            });
+          });
+
+          // Adicionar leads sem orçamentos
+          leadIds.forEach(leadId => {
+            if (!orcamentosMap.has(leadId)) {
+              orcamentosMap.set(leadId, {
+                leadId,
+                hasOrcamento: false,
+                status: null,
+                count: 0
+              });
+            }
+          });
+
+          setOrcamentosInfo(orcamentosMap);
         }
       }
     } catch (error) {
@@ -253,6 +312,7 @@ export function useLeads() {
     leads,
     atendentes,
     leadsWithApprovedBudgets,
+    orcamentosInfo,
     loading,
     fetchLeads,
     handleStartAttendance,
