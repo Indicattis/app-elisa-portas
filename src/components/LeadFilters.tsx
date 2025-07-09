@@ -29,7 +29,9 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
-    onFiltersChange({ ...filters, [key]: value });
+    // Converter "all" de volta para string vazia para etiqueta
+    const finalValue = key === "etiqueta" && value === "all" ? "" : value;
+    onFiltersChange({ ...filters, [key]: finalValue });
   };
 
   const clearFilters = () => {
@@ -55,6 +57,9 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
     { value: "desqualificado", label: "Desqualificado", variant: "destructive" as const },
     { value: "pausado", label: "Pausado", variant: "outline" as const },
   ];
+
+  // Converter string vazia para "all" para o componente Select
+  const etiquetaValue = filters.etiqueta === "" ? "all" : filters.etiqueta;
 
   return (
     <Card>
@@ -101,12 +106,12 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
         {/* Filtro de etiqueta sempre visível */}
         <div className="space-y-2">
           <Label htmlFor="etiqueta">Etiqueta</Label>
-          <Select value={filters.etiqueta} onValueChange={(value) => handleFilterChange("etiqueta", value)}>
+          <Select value={etiquetaValue} onValueChange={(value) => handleFilterChange("etiqueta", value)}>
             <SelectTrigger className="max-w-md">
               <SelectValue placeholder="Todas as etiquetas" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as etiquetas</SelectItem>
+              <SelectItem value="all">Todas as etiquetas</SelectItem>
               {leadTags.map((tag) => (
                 <SelectItem key={tag.id} value={tag.id}>
                   <div className="flex items-center gap-2">
@@ -156,7 +161,7 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
                   <SelectValue placeholder="Todos os atendentes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os atendentes</SelectItem>
+                  <SelectItem value="all_attendants">Todos os atendentes</SelectItem>
                   <SelectItem value="sem_atendente">Sem atendente</SelectItem>
                   {Array.from(atendentes.entries()).map(([id, nome]) => (
                     <SelectItem key={id} value={id}>{nome}</SelectItem>
@@ -172,7 +177,7 @@ export function LeadFilters({ filters, onFiltersChange, atendentes, cidades }: L
                   <SelectValue placeholder="Todas as cidades" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as cidades</SelectItem>
+                  <SelectItem value="all_cities">Todas as cidades</SelectItem>
                   {cidades.map((cidade) => (
                     <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
                   ))}

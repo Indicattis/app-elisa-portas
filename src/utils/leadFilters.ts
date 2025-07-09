@@ -22,10 +22,12 @@ export function filterLeads(leads: Lead[], filters: ExtendedFilterValues): Lead[
     const matchesAtendente = !filters.atendente || (
       filters.atendente === "sem_atendente" 
         ? !lead.atendente_id 
+        : filters.atendente === "all_attendants"
+        ? true
         : lead.atendente_id === filters.atendente
     );
 
-    const matchesCidade = !filters.cidade || lead.cidade === filters.cidade;
+    const matchesCidade = !filters.cidade || filters.cidade === "all_cities" || lead.cidade === filters.cidade;
 
     const leadDate = new Date(lead.data_envio);
     const matchesDataInicio = !filters.dataInicio || leadDate >= new Date(filters.dataInicio);
