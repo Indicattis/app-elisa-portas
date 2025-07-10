@@ -400,6 +400,7 @@ export default function LeadDetails() {
   const canResumeAttendance = () => isAdmin && ['perdido', 'venda_reprovada'].includes(lead?.novo_status || '');
   const canStopAttendance = () => lead?.novo_status === 'em_andamento' && lead?.atendente_id === user?.id;
   const hasApprovedBudget = () => orcamentos.some(o => o.status === 'aprovado');
+  const canManageAwaitingApproval = () => lead?.novo_status === 'aguardando_aprovacao_venda' && (isAdmin || isGerenteComercial);
 
   if (loading) {
     return (
@@ -541,6 +542,18 @@ export default function LeadDetails() {
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Retomar Atendimento
+              </Button>
+            )}
+
+            {/* Status 4: Aguardando aprovação de venda - apenas admin e gerentes podem marcar como perdido */}
+            {canManageAwaitingApproval() && (
+              <Button
+                variant="outline"
+                onClick={() => setShowLossModal(true)}
+                className="border-red-500 text-red-600 hover:bg-red-50"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Perdido
               </Button>
             )}
 

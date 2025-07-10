@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -284,8 +285,8 @@ export function LeadTableRow({
               </>
             )}
 
-            {/* Botão Marcar como perdido - apenas para leads aguardando aprovação */}
-            {canManage && lead.status_atendimento === 4 && onMarkAsLost && (
+            {/* Botão Marcar como perdido - para leads aguardando aprovação (status 4) - apenas admin/gerente */}
+            {canManage && lead.novo_status === 'aguardando_aprovacao_venda' && onMarkAsLost && (
               <Button
                 variant="outline"
                 size="sm"
@@ -296,7 +297,7 @@ export function LeadTableRow({
                 }}
                 title="Marcar como perdido"
               >
-                <Trash2 className="w-4 h-4" />
+                <X className="w-4 h-4" />
               </Button>
             )}
           </div>

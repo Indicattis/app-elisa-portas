@@ -1,3 +1,4 @@
+
 // Novo sistema de status e tags para Leads
 
 export type LeadStatus = 
@@ -107,6 +108,8 @@ export function canChangeStatus(currentStatus: LeadStatus, newStatus: LeadStatus
       return false; // Apenas admins podem retomar
     case 'venda_reprovada':
       return false; // Apenas admins podem retomar
+    case 'aguardando_aprovacao_venda':
+      return ['perdido', 'venda_aprovada', 'venda_reprovada'].includes(newStatus);
     default:
       return false;
   }
