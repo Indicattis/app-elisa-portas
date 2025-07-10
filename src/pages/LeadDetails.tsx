@@ -229,6 +229,16 @@ export default function LeadDetails() {
         return;
       }
 
+      // Criar requisição de venda usando a função do Supabase
+      const { data: requisicaoId, error: requisicaoError } = await supabase
+        .rpc('criar_requisicao_venda', {
+          lead_uuid: lead.id,
+          orcamento_uuid: approvedBudgets[0].id
+        });
+
+      if (requisicaoError) throw requisicaoError;
+
+      // Atualizar status do lead para aguardando aprovação de venda (status 4)
       const { error } = await supabase
         .from("elisaportas_leads")
         .update({ novo_status: 'aguardando_aprovacao_venda' })
@@ -259,6 +269,8 @@ export default function LeadDetails() {
         .from("elisaportas_leads")
         .update({ 
           novo_status: 'em_andamento',
+          atendente_id: user?.id,
+          data_inicio_atendimento: new Date().toISOString(),
           motivo_perda: null,
           observacoes_perda: null
         })
@@ -277,6 +289,36 @@ export default function LeadDetails() {
         variant: "destructive", 
         title: "Erro",
         description: error.message || "Erro ao retomar atendimento",
+      });
+    }
+  };
+
+  const handleStopAttendance = async () => {
+    if (!lead) return;
+
+    try {
+      const { error } = await supabase
+        .from("elisaportas_leads")
+        .update({ 
+          novo_status: 'aguardando_atendimento',
+          atendente_id: null,
+          data_inicio_atendimento: null
+        })
+        .eq("id", lead.id);
+
+      if (error) throw error;
+
+      fetchLead();
+      toast({
+        title: "Sucesso",
+        description: "Atendimento pausado com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Erro ao pausar atendimento:", error);
+      toast({
+        variant: "destructive", 
+        title: "Erro",
+        description: error.message || "Erro ao pausar atendimento",
       });
     }
   };
@@ -356,6 +398,7 @@ export default function LeadDetails() {
   const canStartAttendance = () => lead?.novo_status === 'aguardando_atendimento';
   const canManageInProgress = () => lead?.novo_status === 'em_andamento' && lead?.atendente_id === user?.id;
   const canResumeAttendance = () => isAdmin && ['perdido', 'venda_reprovada'].includes(lead?.novo_status || '');
+  const canStopAttendance = () => lead?.novo_status === 'em_andamento' && lead?.atendente_id === user?.id;
   const hasApprovedBudget = () => orcamentos.some(o => o.status === 'aprovado');
 
   if (loading) {
@@ -394,7 +437,7 @@ export default function LeadDetails() {
           <div className="flex items-center space-x-4">
             <Button
               variant="outline"
-              onClick={() => navigate("/dashboard/leads")}
+              onClick={() => navigate("/dashboard/leads", { state: { focusLeadId: lead.id } })}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
@@ -470,6 +513,14 @@ export default function LeadDetails() {
                     Iniciar Venda
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  onClick={handleStopAttendance}
+                  className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Parar Atendimento
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}

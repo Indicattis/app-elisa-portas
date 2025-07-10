@@ -140,6 +140,7 @@ export function LeadTableRow({
     <>
       <TableRow 
         key={lead.id} 
+        data-lead-id={lead.id}
         className={`cursor-pointer ${statusInfo.rowClassName}`}
         onDoubleClick={() => !isReadOnly && onRowDoubleClick(lead.id)}
       >

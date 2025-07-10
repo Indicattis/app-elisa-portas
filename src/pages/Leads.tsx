@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeads } from "@/hooks/useLeads";
 import { LeadTable } from "@/components/LeadTable";
@@ -14,6 +14,7 @@ import { filterLeads } from "@/utils/leadFilters";
 
 export default function Leads() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAdmin, isAtendente, user } = useAuth();
   const { 
     leads, 
@@ -70,6 +71,33 @@ export default function Leads() {
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
+
+  // Efeito para focar no lead específico ao retornar da página de detalhes
+  useEffect(() => {
+    const focusLeadId = location.state?.focusLeadId;
+    if (focusLeadId && leads.length > 0) {
+      const leadIndex = filteredLeads.findIndex(lead => lead.id === focusLeadId);
+      if (leadIndex !== -1) {
+        const targetPage = Math.floor(leadIndex / LEADS_PER_PAGE) + 1;
+        setCurrentPage(targetPage);
+        
+        // Scroll para o lead após um pequeno delay para garantir que a página foi carregada
+        setTimeout(() => {
+          const leadElement = document.querySelector(`[data-lead-id="${focusLeadId}"]`);
+          if (leadElement) {
+            leadElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Adicionar destaque visual temporário
+            leadElement.classList.add('ring-2', 'ring-primary');
+            setTimeout(() => {
+              leadElement.classList.remove('ring-2', 'ring-primary');
+            }, 3000);
+          }
+        }, 100);
+      }
+      // Limpar o estado para evitar scroll desnecessário em futuras navegações
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [leads, filteredLeads, location.state, navigate, location.pathname]);
 
   // Get unique cities from leads for filter
   const cidades = [...new Set(leads.map(lead => lead.cidade).filter(Boolean))];
