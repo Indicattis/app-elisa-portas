@@ -9,7 +9,7 @@ import { OrcamentoForm } from "@/components/orcamentos/OrcamentoForm";
 export default function NovoOrcamento() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const leadId = searchParams.get("lead");
+  const leadId = searchParams.get("leadId");
 
   const {
     leads,
