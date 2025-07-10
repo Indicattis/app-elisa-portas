@@ -68,6 +68,11 @@ export default function Leads() {
     fetchLeads();
   };
 
+  // Recarregar dados quando retornar para a página
+  useEffect(() => {
+    fetchLeads();
+  }, [location.pathname]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);

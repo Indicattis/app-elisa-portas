@@ -80,8 +80,8 @@ export function LeadTableRow({
     }
   };
 
-  // Lead vendido não pode ser alterado
-  const isReadOnly = lead.status_atendimento === 5;
+  // Lead vendido ou venda aprovada não pode ser alterado
+  const isReadOnly = lead.novo_status === 'venda_aprovada';
 
   const handleTagClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -218,8 +218,8 @@ export function LeadTableRow({
               <MessageCircle className="w-4 h-4" />
             </Button>
             
-            {/* Botão Capturar - apenas para leads aguardando atendente */}
-            {canManage && lead.status_atendimento === 1 && (
+            {/* Botão Capturar - apenas para leads aguardando atendimento (status 1) */}
+            {canManage && lead.novo_status === 'aguardando_atendimento' && (
               <Button
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 px-2"
@@ -233,8 +233,8 @@ export function LeadTableRow({
               </Button>
             )}
 
-            {/* Botões para leads em andamento (capturados) */}
-            {canManage && lead.status_atendimento === 2 && (
+            {/* Botões para leads em andamento (status 2) - apenas o atendente responsável */}
+            {canManage && lead.novo_status === 'em_andamento' && lead.atendente_id && (
               <>
                 {/* Botão Vendido - apenas se tiver orçamento aprovado */}
                 {hasApprovedBudget && onMarkAsSold && (
@@ -251,33 +251,33 @@ export function LeadTableRow({
                   </Button>
                 )}
 
-                {/* Botão Desqualificar */}
-                {onMarkAsDisqualified && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-500 text-gray-600 hover:bg-gray-50 px-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onMarkAsDisqualified(lead.id);
-                    }}
-                    title="Desqualificar lead"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-
-                {/* Botão Cancelar */}
-                {onCancelAttendance && (
+                {/* Botão Perdido */}
+                {onMarkAsLost && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="border-red-500 text-red-600 hover:bg-red-50 px-2"
                     onClick={(e) => {
                       e.stopPropagation();
+                      onMarkAsLost(lead.id);
+                    }}
+                    title="Marcar como perdido"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {/* Botão Parar Atendimento */}
+                {onCancelAttendance && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-orange-500 text-orange-600 hover:bg-orange-50 px-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onCancelAttendance(lead.id);
                     }}
-                    title="Cancelar atendimento"
+                    title="Parar atendimento"
                   >
                     <X className="w-4 h-4" />
                   </Button>
