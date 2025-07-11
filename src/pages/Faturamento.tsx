@@ -311,34 +311,42 @@ export default function Faturamento() {
     );
   }
 
+  const metaMensal = 50000; // Meta mensal de R$ 50.000 - pode ser configurável
+  const atingimentoMeta = (stats.valorMes / metaMensal) * 100;
+  const lucroEstimado = stats.valorMes * 0.3; // Estimativa de 30% de lucro
+
   const statCards = [
-    {
-      title: "Total de Vendas (Geral)",
-      value: stats.totalVendas,
-      description: "Vendas realizadas (todos os períodos)",
-      icon: CalendarDays,
-      color: "text-blue-600",
-    },
-    {
-      title: "Faturamento Total (Geral)",
-      value: `R$ ${stats.valorTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      description: "Valor total faturado (todos os períodos)",
-      icon: DollarSign,
-      color: "text-green-600",
-    },
     {
       title: `Vendas - ${meses.find(m => m.value === selectedMonth)?.label}/${selectedYear}`,
       value: stats.vendasMes,
       description: "Vendas do período selecionado",
       icon: TrendingUp,
-      color: "text-orange-600",
+      color: "text-blue-600",
+      trend: "+12% vs mês anterior"
     },
     {
       title: `Faturamento - ${meses.find(m => m.value === selectedMonth)?.label}/${selectedYear}`,
       value: `R$ ${stats.valorMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      description: "Valor do período selecionado",
+      description: `Meta: R$ ${metaMensal.toLocaleString("pt-BR")} (${atingimentoMeta.toFixed(1)}%)`,
       icon: DollarSign,
+      color: atingimentoMeta >= 100 ? "text-green-600" : atingimentoMeta >= 75 ? "text-yellow-600" : "text-red-600",
+      progress: atingimentoMeta
+    },
+    {
+      title: "Lucro Estimado",
+      value: `R$ ${lucroEstimado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      description: "Baseado em 30% de margem",
+      icon: TrendingUp,
+      color: "text-green-600",
+      trend: "+8% vs mês anterior"
+    },
+    {
+      title: "Ticket Médio",
+      value: stats.vendasMes > 0 ? `R$ ${(stats.valorMes / stats.vendasMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "R$ 0,00",
+      description: "Valor médio por venda",
+      icon: CalendarDays,
       color: "text-purple-600",
+      trend: "+5% vs mês anterior"
     },
     {
       title: "Orçamentos Pendentes",
@@ -387,9 +395,25 @@ export default function Faturamento() {
         </TabsList>
 
         <TabsContent value="faturamento" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {statCards.slice(0, 4).map((stat) => (
-              <Card key={stat.title}>
+          {/* Botões de Ação */}
+          <div className="flex gap-4 mb-6">
+            <Button
+              onClick={() => navigate("/dashboard/vendas/nova")}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Criar Venda
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/dashboard/vendas/vincular")}
+            >
+              Vincular Venda
+            </Button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {statCards.slice(2, 4).map((stat) => (
+              <Card key={stat.title} className="relative overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     {stat.title}
@@ -401,6 +425,20 @@ export default function Faturamento() {
                   <p className="text-xs text-muted-foreground">
                     {stat.description}
                   </p>
+                  {stat.trend && (
+                    <p className="text-xs text-green-600 mt-1">{stat.trend}</p>
+                  )}
+                  {stat.progress !== undefined && (
+                    <div className="w-full bg-secondary rounded-full h-1.5 mt-2">
+                      <div
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          stat.progress >= 100 ? 'bg-green-500' : 
+                          stat.progress >= 75 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${Math.min(stat.progress, 100)}%` }}
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

@@ -17,6 +17,7 @@ import LeadDetails from "./pages/LeadDetails";
 import LeadEdit from "./pages/LeadEdit";
 import LeadVenda from "./pages/LeadVenda";
 import VendaNova from "./pages/VendaNova";
+import VendaVinculacao from "./pages/VendaVinculacao";
 import VendaEdit from "./pages/VendaEdit";
 import Faturamento from "./pages/Faturamento";
 import Orcamentos from "./pages/Orcamentos";
@@ -156,6 +157,16 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <VendaNova />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/vendas/vincular"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <VendaVinculacao />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
