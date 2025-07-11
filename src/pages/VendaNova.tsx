@@ -32,6 +32,9 @@ export default function VendaNova() {
     cidade: "",
     estado: "",
     bairro: "",
+    cliente_nome: "",
+    cliente_telefone: "",
+    cliente_email: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +56,9 @@ export default function VendaNova() {
           cidade: formData.cidade || null,
           estado: formData.estado || null,
           bairro: formData.bairro || null,
+          cliente_nome: formData.cliente_nome || null,
+          cliente_telefone: formData.cliente_telefone || null,
+          cliente_email: formData.cliente_email || null,
           lead_id: null, // Venda sem vinculação a lead
         });
 
@@ -103,8 +109,50 @@ export default function VendaNova() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Dados do Cliente */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Dados do Cliente</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cliente_nome">Nome do Cliente *</Label>
+                  <Input
+                    id="cliente_nome"
+                    placeholder="Nome completo"
+                    value={formData.cliente_nome}
+                    onChange={(e) => setFormData({ ...formData, cliente_nome: e.target.value })}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cliente_telefone">Telefone *</Label>
+                  <Input
+                    id="cliente_telefone"
+                    placeholder="(00) 00000-0000"
+                    value={formData.cliente_telefone}
+                    onChange={(e) => setFormData({ ...formData, cliente_telefone: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="cliente_email">Email</Label>
+                <Input
+                  id="cliente_email"
+                  type="email"
+                  placeholder="cliente@email.com"
+                  value={formData.cliente_email}
+                  onChange={(e) => setFormData({ ...formData, cliente_email: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Dados da Venda */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Dados da Venda</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="valor_venda">Valor da Venda *</Label>
                 <Input
@@ -240,6 +288,7 @@ export default function VendaNova() {
                 onChange={(e) => setFormData({ ...formData, observacoes_venda: e.target.value })}
                 rows={3}
               />
+            </div>
             </div>
 
             <div className="flex gap-4 pt-4">

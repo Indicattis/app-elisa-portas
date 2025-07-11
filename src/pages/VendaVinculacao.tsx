@@ -97,6 +97,9 @@ export default function VendaVinculacao() {
           data_venda: date.toISOString(),
           canal_aquisicao: selectedLead.canal_aquisicao,
           cidade: selectedLead.cidade || null,
+          cliente_nome: selectedLead.nome,
+          cliente_telefone: selectedLead.telefone,
+          cliente_email: selectedLead.email || null,
         });
 
       if (error) throw error;

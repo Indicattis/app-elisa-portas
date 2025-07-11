@@ -431,6 +431,9 @@ export type Database = {
           canal_aquisicao: string
           cep: string | null
           cidade: string | null
+          cliente_email: string | null
+          cliente_nome: string | null
+          cliente_telefone: string | null
           created_at: string
           data_venda: string
           estado: string | null
@@ -447,6 +450,9 @@ export type Database = {
           canal_aquisicao?: string
           cep?: string | null
           cidade?: string | null
+          cliente_email?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
           created_at?: string
           data_venda?: string
           estado?: string | null
@@ -463,6 +469,9 @@ export type Database = {
           canal_aquisicao?: string
           cep?: string | null
           cidade?: string | null
+          cliente_email?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
           created_at?: string
           data_venda?: string
           estado?: string | null
