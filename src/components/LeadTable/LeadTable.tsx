@@ -64,7 +64,6 @@ export function LeadTable({
               <TableHead>Data</TableHead>
               <TableHead>Orçamento</TableHead>
               <TableHead>Valor</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

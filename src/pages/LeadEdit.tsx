@@ -103,6 +103,7 @@ export default function LeadEdit() {
           endereco_cep: lead.endereco_cep,
           endereco_cidade_completa: lead.endereco_cidade_completa,
           endereco_estado: lead.endereco_estado,
+          observacoes: lead.observacoes,
         })
         .eq("id", id);
 
@@ -394,15 +395,32 @@ export default function LeadEdit() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Mensagem Original</CardTitle>
+            <CardTitle>Observações</CardTitle>
             <CardDescription>
-              Mensagem enviada pelo lead (somente leitura)
+              Observações internas sobre o lead
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="bg-muted/30 rounded-lg p-4">
-              <p className="text-foreground whitespace-pre-wrap italic">
-                {lead.mensagem || "Nenhuma mensagem"}
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea
+                id="observacoes"
+                value={lead.observacoes || ""}
+                onChange={(e) => setLead({ ...lead, observacoes: e.target.value })}
+                placeholder="Adicione observações sobre o lead..."
+                rows={4}
+              />
+            </div>
+
+            <div>
+              <Label>Mensagem Original</Label>
+              <div className="bg-muted/30 rounded-lg p-4 mt-2">
+                <p className="text-foreground whitespace-pre-wrap italic text-sm">
+                  {lead.mensagem || "Nenhuma mensagem"}
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                A mensagem original não pode ser editada
               </p>
             </div>
           </CardContent>
