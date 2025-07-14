@@ -435,14 +435,23 @@ export type Database = {
           cliente_nome: string | null
           cliente_telefone: string | null
           created_at: string
+          custo_pintura: number | null
+          custo_produto: number | null
           data_venda: string
           estado: string | null
           forma_pagamento: string | null
           id: string
           lead_id: string
+          lucro_total: number | null
           observacoes_venda: string | null
+          publico_alvo: string | null
+          resgate: boolean | null
           updated_at: string
-          valor_venda: number
+          valor_frete: number | null
+          valor_instalacao: number | null
+          valor_pintura: number | null
+          valor_produto: number | null
+          valor_venda: number | null
         }
         Insert: {
           atendente_id: string
@@ -454,14 +463,23 @@ export type Database = {
           cliente_nome?: string | null
           cliente_telefone?: string | null
           created_at?: string
+          custo_pintura?: number | null
+          custo_produto?: number | null
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
           lead_id: string
+          lucro_total?: number | null
           observacoes_venda?: string | null
+          publico_alvo?: string | null
+          resgate?: boolean | null
           updated_at?: string
-          valor_venda: number
+          valor_frete?: number | null
+          valor_instalacao?: number | null
+          valor_pintura?: number | null
+          valor_produto?: number | null
+          valor_venda?: number | null
         }
         Update: {
           atendente_id?: string
@@ -473,14 +491,23 @@ export type Database = {
           cliente_nome?: string | null
           cliente_telefone?: string | null
           created_at?: string
+          custo_pintura?: number | null
+          custo_produto?: number | null
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
           lead_id?: string
+          lucro_total?: number | null
           observacoes_venda?: string | null
+          publico_alvo?: string | null
+          resgate?: boolean | null
           updated_at?: string
-          valor_venda?: number
+          valor_frete?: number | null
+          valor_instalacao?: number | null
+          valor_pintura?: number | null
+          valor_produto?: number | null
+          valor_venda?: number | null
         }
         Relationships: [
           {

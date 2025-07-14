@@ -24,17 +24,23 @@ export default function VendaNova() {
   const [date, setDate] = useState<Date>(new Date());
 
   const [formData, setFormData] = useState({
-    valor_venda: "",
-    forma_pagamento: "",
-    observacoes_venda: "",
+    publico_alvo: "",
     canal_aquisicao: "Google",
-    cep: "",
-    cidade: "",
     estado: "",
-    bairro: "",
+    cidade: "",
+    cep: "",
     cliente_nome: "",
     cliente_telefone: "",
     cliente_email: "",
+    valor_produto: "",
+    custo_produto: "",
+    valor_pintura: "",
+    custo_pintura: "",
+    valor_instalacao: "",
+    valor_frete: "",
+    resgate: false,
+    forma_pagamento: "",
+    observacoes_venda: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,22 +49,35 @@ export default function VendaNova() {
 
     setLoading(true);
     try {
+      const valorTotal = 
+        (parseFloat(formData.valor_produto) || 0) +
+        (parseFloat(formData.valor_pintura) || 0) +
+        (parseFloat(formData.valor_instalacao) || 0) +
+        (parseFloat(formData.valor_frete) || 0);
+
       const { error } = await supabase
         .from("vendas")
         .insert({
           atendente_id: user.id,
-          valor_venda: parseFloat(formData.valor_venda),
-          forma_pagamento: formData.forma_pagamento || null,
-          observacoes_venda: formData.observacoes_venda || null,
-          data_venda: date.toISOString(),
+          publico_alvo: formData.publico_alvo || null,
           canal_aquisicao: formData.canal_aquisicao,
-          cep: formData.cep || null,
-          cidade: formData.cidade || null,
           estado: formData.estado || null,
-          bairro: formData.bairro || null,
+          cidade: formData.cidade || null,
+          cep: formData.cep || null,
           cliente_nome: formData.cliente_nome || null,
           cliente_telefone: formData.cliente_telefone || null,
           cliente_email: formData.cliente_email || null,
+          valor_produto: parseFloat(formData.valor_produto) || 0,
+          custo_produto: parseFloat(formData.custo_produto) || 0,
+          valor_pintura: parseFloat(formData.valor_pintura) || 0,
+          custo_pintura: parseFloat(formData.custo_pintura) || 0,
+          valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
+          valor_frete: parseFloat(formData.valor_frete) || 0,
+          valor_venda: valorTotal,
+          resgate: formData.resgate,
+          forma_pagamento: formData.forma_pagamento || null,
+          observacoes_venda: formData.observacoes_venda || null,
+          data_venda: date.toISOString(),
           lead_id: null, // Venda sem vinculação a lead
         });
 
@@ -152,18 +171,44 @@ export default function VendaNova() {
             {/* Dados da Venda */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Dados da Venda</h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="valor_venda">Valor da Venda *</Label>
-                <Input
-                  id="valor_venda"
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={formData.valor_venda}
-                  onChange={(e) => setFormData({ ...formData, valor_venda: e.target.value })}
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="publico_alvo">Público Alvo *</Label>
+                  <Select 
+                    value={formData.publico_alvo}
+                    onValueChange={(value) => setFormData({ ...formData, publico_alvo: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o público" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                      <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="canal_aquisicao">Canal de Aquisição *</Label>
+                  <Select 
+                    value={formData.canal_aquisicao}
+                    onValueChange={(value) => setFormData({ ...formData, canal_aquisicao: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Google">Google</SelectItem>
+                      <SelectItem value="Facebook">Facebook</SelectItem>
+                      <SelectItem value="Instagram">Instagram</SelectItem>
+                      <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                      <SelectItem value="Indicação">Indicação</SelectItem>
+                      <SelectItem value="Site">Site</SelectItem>
+                      <SelectItem value="Outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -194,10 +239,148 @@ export default function VendaNova() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Localização */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Localização</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="estado">Estado *</Label>
+                  <Input
+                    id="estado"
+                    placeholder="Estado"
+                    value={formData.estado}
+                    onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cidade">Cidade *</Label>
+                  <Input
+                    id="cidade"
+                    placeholder="Cidade"
+                    value={formData.cidade}
+                    onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    placeholder="00000-000"
+                    value={formData.cep}
+                    onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Valores e Custos */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Valores e Custos</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valor_produto">Valor do Produto *</Label>
+                  <Input
+                    id="valor_produto"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_produto}
+                    onChange={(e) => setFormData({ ...formData, valor_produto: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_produto">Custo do Produto *</Label>
+                  <Input
+                    id="custo_produto"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.custo_produto}
+                    onChange={(e) => setFormData({ ...formData, custo_produto: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_pintura">Valor da Pintura *</Label>
+                  <Input
+                    id="valor_pintura"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_pintura}
+                    onChange={(e) => setFormData({ ...formData, valor_pintura: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_pintura">Custo da Pintura *</Label>
+                  <Input
+                    id="custo_pintura"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.custo_pintura}
+                    onChange={(e) => setFormData({ ...formData, custo_pintura: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_instalacao">Valor da Instalação *</Label>
+                  <Input
+                    id="valor_instalacao"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_instalacao}
+                    onChange={(e) => setFormData({ ...formData, valor_instalacao: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_frete">Valor do Frete *</Label>
+                  <Input
+                    id="valor_frete"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_frete}
+                    onChange={(e) => setFormData({ ...formData, valor_frete: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="resgate"
+                  checked={formData.resgate}
+                  onChange={(e) => setFormData({ ...formData, resgate: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="resgate">Marcar como resgate</Label>
+              </div>
+            </div>
+
+            {/* Dados Adicionais */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Dados Adicionais</h3>
               <div className="space-y-2">
                 <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}>
+                <Select 
+                  value={formData.forma_pagamento}
+                  onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a forma de pagamento" />
                   </SelectTrigger>
@@ -214,81 +397,15 @@ export default function VendaNova() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="canal_aquisicao">Canal de Aquisição</Label>
-                <Select 
-                  value={formData.canal_aquisicao}
-                  onValueChange={(value) => setFormData({ ...formData, canal_aquisicao: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Google">Google</SelectItem>
-                    <SelectItem value="Facebook">Facebook</SelectItem>
-                    <SelectItem value="Instagram">Instagram</SelectItem>
-                    <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                    <SelectItem value="Indicação">Indicação</SelectItem>
-                    <SelectItem value="Site">Site</SelectItem>
-                    <SelectItem value="Outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cep">CEP</Label>
-                <Input
-                  id="cep"
-                  placeholder="00000-000"
-                  value={formData.cep}
-                  onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                <Label htmlFor="observacoes_venda">Observações</Label>
+                <Textarea
+                  id="observacoes_venda"
+                  placeholder="Observações sobre a venda..."
+                  value={formData.observacoes_venda}
+                  onChange={(e) => setFormData({ ...formData, observacoes_venda: e.target.value })}
+                  rows={3}
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade</Label>
-                <Input
-                  id="cidade"
-                  placeholder="Cidade"
-                  value={formData.cidade}
-                  onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="estado">Estado</Label>
-                <Input
-                  id="estado"
-                  placeholder="Estado"
-                  value={formData.estado}
-                  onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro</Label>
-                <Input
-                  id="bairro"
-                  placeholder="Bairro"
-                  value={formData.bairro}
-                  onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="observacoes_venda">Observações</Label>
-              <Textarea
-                id="observacoes_venda"
-                placeholder="Observações sobre a venda..."
-                value={formData.observacoes_venda}
-                onChange={(e) => setFormData({ ...formData, observacoes_venda: e.target.value })}
-                rows={3}
-              />
-            </div>
             </div>
 
             <div className="flex gap-4 pt-4">

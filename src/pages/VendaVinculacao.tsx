@@ -40,7 +40,14 @@ export default function VendaVinculacao() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const [formData, setFormData] = useState({
-    valor_venda: "",
+    publico_alvo: "",
+    valor_produto: "",
+    custo_produto: "",
+    valor_pintura: "",
+    custo_pintura: "",
+    valor_instalacao: "",
+    valor_frete: "",
+    resgate: false,
     forma_pagamento: "",
     observacoes_venda: "",
   });
@@ -86,20 +93,34 @@ export default function VendaVinculacao() {
 
     setLoading(true);
     try {
+      const valorTotal = 
+        (parseFloat(formData.valor_produto) || 0) +
+        (parseFloat(formData.valor_pintura) || 0) +
+        (parseFloat(formData.valor_instalacao) || 0) +
+        (parseFloat(formData.valor_frete) || 0);
+
       const { error } = await supabase
         .from("vendas")
         .insert({
           lead_id: selectedLead.id,
           atendente_id: user.id,
-          valor_venda: parseFloat(formData.valor_venda),
-          forma_pagamento: formData.forma_pagamento || null,
-          observacoes_venda: formData.observacoes_venda || null,
-          data_venda: date.toISOString(),
+          publico_alvo: formData.publico_alvo || null,
           canal_aquisicao: selectedLead.canal_aquisicao,
           cidade: selectedLead.cidade || null,
           cliente_nome: selectedLead.nome,
           cliente_telefone: selectedLead.telefone,
           cliente_email: selectedLead.email || null,
+          valor_produto: parseFloat(formData.valor_produto) || 0,
+          custo_produto: parseFloat(formData.custo_produto) || 0,
+          valor_pintura: parseFloat(formData.valor_pintura) || 0,
+          custo_pintura: parseFloat(formData.custo_pintura) || 0,
+          valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
+          valor_frete: parseFloat(formData.valor_frete) || 0,
+          valor_venda: valorTotal,
+          resgate: formData.resgate,
+          forma_pagamento: formData.forma_pagamento || null,
+          observacoes_venda: formData.observacoes_venda || null,
+          data_venda: date.toISOString(),
         });
 
       if (error) throw error;
@@ -243,16 +264,19 @@ export default function VendaVinculacao() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="valor_venda">Valor da Venda *</Label>
-                <Input
-                  id="valor_venda"
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={formData.valor_venda}
-                  onChange={(e) => setFormData({ ...formData, valor_venda: e.target.value })}
-                  required
-                />
+                <Label htmlFor="publico_alvo">Público Alvo *</Label>
+                <Select 
+                  value={formData.publico_alvo}
+                  onValueChange={(value) => setFormData({ ...formData, publico_alvo: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o público" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                    <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -282,9 +306,104 @@ export default function VendaVinculacao() {
                 </Popover>
               </div>
 
+              <h4 className="font-medium text-sm">Valores e Custos</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="valor_produto">Valor Produto *</Label>
+                  <Input
+                    id="valor_produto"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_produto}
+                    onChange={(e) => setFormData({ ...formData, valor_produto: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_produto">Custo Produto *</Label>
+                  <Input
+                    id="custo_produto"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.custo_produto}
+                    onChange={(e) => setFormData({ ...formData, custo_produto: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_pintura">Valor Pintura *</Label>
+                  <Input
+                    id="valor_pintura"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_pintura}
+                    onChange={(e) => setFormData({ ...formData, valor_pintura: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_pintura">Custo Pintura *</Label>
+                  <Input
+                    id="custo_pintura"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.custo_pintura}
+                    onChange={(e) => setFormData({ ...formData, custo_pintura: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_instalacao">Valor Instalação *</Label>
+                  <Input
+                    id="valor_instalacao"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_instalacao}
+                    onChange={(e) => setFormData({ ...formData, valor_instalacao: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_frete">Valor Frete *</Label>
+                  <Input
+                    id="valor_frete"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={formData.valor_frete}
+                    onChange={(e) => setFormData({ ...formData, valor_frete: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="resgate"
+                  checked={formData.resgate}
+                  onChange={(e) => setFormData({ ...formData, resgate: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="resgate">Marcar como resgate</Label>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}>
+                <Select 
+                  value={formData.forma_pagamento}
+                  onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a forma de pagamento" />
                   </SelectTrigger>
