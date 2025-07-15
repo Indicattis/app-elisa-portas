@@ -498,7 +498,7 @@ export default function Faturamento() {
                                <Button 
                                  variant="ghost" 
                                  size="sm"
-                                 onClick={() => navigate(`/dashboard/vendas/editar/${venda.id}`)}
+                                 onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
                                >
                                  <Edit className="w-4 h-4" />
                                </Button>
