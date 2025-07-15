@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +37,19 @@ export default function VendaEdit() {
     estado: "",
     cidade: "",
     bairro: "",
-    cep: ""
+    cep: "",
+    publico_alvo: "cliente_final",
+    cliente_nome: "",
+    cliente_telefone: "",
+    cliente_email: "",
+    valor_produto: "",
+    custo_produto: "",
+    valor_pintura: "",
+    custo_pintura: "",
+    valor_instalacao: "",
+    valor_frete: "",
+    resgate: false,
+    lucro_total: ""
   });
 
   const { isAdmin } = useAuth();
@@ -74,7 +87,7 @@ export default function VendaEdit() {
       
       setVenda(vendaData);
       setFormData({
-        valor_venda: (vendaData.valor_venda * 100).toString(),
+        valor_venda: (vendaData.valor_venda ? vendaData.valor_venda * 100 : 0).toString(),
         forma_pagamento: vendaData.forma_pagamento || "",
         observacoes_venda: vendaData.observacoes_venda || "",
         canal_aquisicao: vendaData.canal_aquisicao || "Google",
@@ -82,7 +95,19 @@ export default function VendaEdit() {
         estado: vendaData.estado || "",
         cidade: vendaData.cidade || "",
         bairro: vendaData.bairro || "",
-        cep: vendaData.cep || ""
+        cep: vendaData.cep || "",
+        publico_alvo: vendaData.publico_alvo || "cliente_final",
+        cliente_nome: vendaData.cliente_nome || "",
+        cliente_telefone: vendaData.cliente_telefone || "",
+        cliente_email: vendaData.cliente_email || "",
+        valor_produto: (vendaData.valor_produto ? vendaData.valor_produto * 100 : 0).toString(),
+        custo_produto: (vendaData.custo_produto ? vendaData.custo_produto * 100 : 0).toString(),
+        valor_pintura: (vendaData.valor_pintura ? vendaData.valor_pintura * 100 : 0).toString(),
+        custo_pintura: (vendaData.custo_pintura ? vendaData.custo_pintura * 100 : 0).toString(),
+        valor_instalacao: (vendaData.valor_instalacao ? vendaData.valor_instalacao * 100 : 0).toString(),
+        valor_frete: (vendaData.valor_frete ? vendaData.valor_frete * 100 : 0).toString(),
+        resgate: vendaData.resgate || false,
+        lucro_total: (vendaData.lucro_total ? vendaData.lucro_total * 100 : 0).toString()
       });
 
       // Buscar dados do lead
@@ -118,8 +143,19 @@ export default function VendaEdit() {
       console.log("Iniciando atualização da venda:", id);
       console.log("Dados a serem atualizados:", formData);
 
+      const valorProduto = parseFloat(formData.valor_produto) / 100;
+      const custoProduto = parseFloat(formData.custo_produto) / 100;
+      const valorPintura = parseFloat(formData.valor_pintura) / 100;
+      const custoPintura = parseFloat(formData.custo_pintura) / 100;
+      const valorInstalacao = parseFloat(formData.valor_instalacao) / 100;
+      const valorFrete = parseFloat(formData.valor_frete) / 100;
+      
+      const custoTotal = custoProduto + custoPintura;
+      const valorVenda = valorProduto + valorPintura + valorInstalacao + valorFrete;
+      const lucroTotal = valorVenda - custoTotal;
+
       const updateData = {
-        valor_venda: parseFloat(formData.valor_venda) / 100,
+        valor_venda: valorVenda,
         forma_pagamento: formData.forma_pagamento || null,
         observacoes_venda: formData.observacoes_venda || null,
         canal_aquisicao: formData.canal_aquisicao,
@@ -127,7 +163,19 @@ export default function VendaEdit() {
         estado: formData.estado || null,
         cidade: formData.cidade || null,
         bairro: formData.bairro || null,
-        cep: formData.cep || null
+        cep: formData.cep || null,
+        publico_alvo: formData.publico_alvo,
+        cliente_nome: formData.cliente_nome || null,
+        cliente_telefone: formData.cliente_telefone || null,
+        cliente_email: formData.cliente_email || null,
+        valor_produto: valorProduto,
+        custo_produto: custoProduto,
+        valor_pintura: valorPintura,
+        custo_pintura: custoPintura,
+        valor_instalacao: valorInstalacao,
+        valor_frete: valorFrete,
+        resgate: formData.resgate,
+        lucro_total: lucroTotal
       };
 
       console.log("Update data processado:", updateData);
@@ -222,24 +270,30 @@ export default function VendaEdit() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="valor_venda">Valor da Venda *</Label>
+                <Label htmlFor="data_venda">Data da Venda *</Label>
                 <Input
-                  id="valor_venda"
-                  placeholder="R$ 0,00"
-                  value={formData.valor_venda ? formatCurrency(formData.valor_venda) : ""}
-                  onChange={(e) => handleValueChange(e.target.value)}
+                  id="data_venda"
+                  type="datetime-local"
+                  value={formData.data_venda}
+                  onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Input
-                  id="forma_pagamento"
-                  placeholder="Ex: PIX, Cartão, Boleto"
-                  value={formData.forma_pagamento}
-                  onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value }))}
-                />
+                <Label htmlFor="publico_alvo">Público Alvo *</Label>
+                <Select
+                  value={formData.publico_alvo}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, publico_alvo: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                    <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -262,14 +316,145 @@ export default function VendaEdit() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="data_venda">Data da Venda *</Label>
+                <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
                 <Input
-                  id="data_venda"
-                  type="datetime-local"
-                  value={formData.data_venda}
-                  onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
-                  required
+                  id="forma_pagamento"
+                  placeholder="Ex: PIX, Cartão, Boleto"
+                  value={formData.forma_pagamento}
+                  onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value }))}
                 />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">Dados do Cliente</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cliente_nome">Nome do Cliente *</Label>
+                  <Input
+                    id="cliente_nome"
+                    placeholder="Nome completo"
+                    value={formData.cliente_nome}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cliente_telefone">Telefone do Cliente *</Label>
+                  <Input
+                    id="cliente_telefone"
+                    placeholder="(11) 99999-9999"
+                    value={formData.cliente_telefone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cliente_email">E-mail do Cliente</Label>
+                  <Input
+                    id="cliente_email"
+                    type="email"
+                    placeholder="cliente@email.com"
+                    value={formData.cliente_email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">Valores</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valor_produto">Valor do Produto *</Label>
+                  <Input
+                    id="valor_produto"
+                    placeholder="R$ 0,00"
+                    value={formData.valor_produto ? formatCurrency(formData.valor_produto) : ""}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_produto: numbers }));
+                    }}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_produto">Custo do Produto *</Label>
+                  <Input
+                    id="custo_produto"
+                    placeholder="R$ 0,00"
+                    value={formData.custo_produto ? formatCurrency(formData.custo_produto) : ""}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, custo_produto: numbers }));
+                    }}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_pintura">Valor da Pintura</Label>
+                  <Input
+                    id="valor_pintura"
+                    placeholder="R$ 0,00"
+                    value={formData.valor_pintura ? formatCurrency(formData.valor_pintura) : ""}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_pintura: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_pintura">Custo da Pintura</Label>
+                  <Input
+                    id="custo_pintura"
+                    placeholder="R$ 0,00"
+                    value={formData.custo_pintura ? formatCurrency(formData.custo_pintura) : ""}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, custo_pintura: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_instalacao">Valor da Instalação</Label>
+                  <Input
+                    id="valor_instalacao"
+                    placeholder="R$ 0,00"
+                    value={formData.valor_instalacao ? formatCurrency(formData.valor_instalacao) : ""}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_instalacao: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_frete">Valor do Frete</Label>
+                  <Input
+                    id="valor_frete"
+                    placeholder="R$ 0,00"
+                    value={formData.valor_frete ? formatCurrency(formData.valor_frete) : ""}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_frete: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2 flex items-center space-x-2">
+                  <Checkbox
+                    id="resgate"
+                    checked={formData.resgate}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, resgate: checked as boolean }))}
+                  />
+                  <Label htmlFor="resgate">Foi resgate?</Label>
+                </div>
               </div>
             </div>
 
