@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,6 +15,8 @@ import { RequisicoesVenda } from "@/components/RequisicoesVenda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Venda {
   id: string;
@@ -40,23 +42,60 @@ interface Venda {
 }
 
 interface VendaStats {
-  totalVendas: number;
-  faturamentoTotal: number;
-  lucroTotal: number;
-  ticketMedio: number;
-  vendasMes: number;
-  faturamentoMes: number;
+  // Dados por estado
+  rs: {
+    lucroProdutos: number;
+    lucroPintura: number;
+    totalInstalacoes: number;
+    totalFretes: number;
+    lucroTotal: number;
+    faturamentoTotal: number;
+  };
+  sc: {
+    lucroProdutos: number;
+    lucroPintura: number;
+    totalInstalacoes: number;
+    totalFretes: number;
+    lucroTotal: number;
+    faturamentoTotal: number;
+  };
+  total: {
+    lucroProdutos: number;
+    lucroPintura: number;
+    totalInstalacoes: number;
+    totalFretes: number;
+    lucroTotal: number;
+    faturamentoTotal: number;
+  };
 }
 
 export default function Faturamento() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [stats, setStats] = useState<VendaStats>({
-    totalVendas: 0,
-    faturamentoTotal: 0,
-    lucroTotal: 0,
-    ticketMedio: 0,
-    vendasMes: 0,
-    faturamentoMes: 0,
+    rs: {
+      lucroProdutos: 0,
+      lucroPintura: 0,
+      totalInstalacoes: 0,
+      totalFretes: 0,
+      lucroTotal: 0,
+      faturamentoTotal: 0,
+    },
+    sc: {
+      lucroProdutos: 0,
+      lucroPintura: 0,
+      totalInstalacoes: 0,
+      totalFretes: 0,
+      lucroTotal: 0,
+      faturamentoTotal: 0,
+    },
+    total: {
+      lucroProdutos: 0,
+      lucroPintura: 0,
+      totalInstalacoes: 0,
+      totalFretes: 0,
+      lucroTotal: 0,
+      faturamentoTotal: 0,
+    },
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -143,42 +182,36 @@ export default function Faturamento() {
 
   const fetchStats = async () => {
     try {
-      // Stats para o mês atual
       const startDate = new Date(selectedYear, selectedMonth - 1, 1);
       const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59);
 
-      const { data: vendasMes, error: errorMes } = await supabase
+      const { data: vendasPeriodo, error } = await supabase
         .from("vendas")
-        .select("valor_produto, valor_pintura, valor_instalacao, valor_frete, lucro_total")
+        .select("valor_produto, custo_produto, valor_pintura, custo_pintura, valor_instalacao, valor_frete, lucro_total, estado")
         .gte("data_venda", startDate.toISOString())
         .lte("data_venda", endDate.toISOString());
 
-      // Stats gerais (todos os dados)
-      const { data: vendasTotais, error: errorTotal } = await supabase
-        .from("vendas")
-        .select("valor_produto, valor_pintura, valor_instalacao, valor_frete, lucro_total");
+      if (error) throw error;
 
-      if (errorMes || errorTotal) throw errorMes || errorTotal;
+      const vendasRS = vendasPeriodo?.filter(v => v.estado === 'RS') || [];
+      const vendasSC = vendasPeriodo?.filter(v => v.estado === 'SC') || [];
+      const todasVendas = vendasPeriodo || [];
 
-      const vendasMesCount = vendasMes?.length || 0;
-      const faturamentoMes = vendasMes?.reduce((acc, venda) => 
-        acc + (venda.valor_produto || 0) + (venda.valor_pintura || 0) + 
-        (venda.valor_instalacao || 0) + (venda.valor_frete || 0), 0) || 0;
-
-      const totalVendas = vendasTotais?.length || 0;
-      const faturamentoTotal = vendasTotais?.reduce((acc, venda) => 
-        acc + (venda.valor_produto || 0) + (venda.valor_pintura || 0) + 
-        (venda.valor_instalacao || 0) + (venda.valor_frete || 0), 0) || 0;
-      const lucroTotal = vendasTotais?.reduce((acc, venda) => acc + (venda.lucro_total || 0), 0) || 0;
-      const ticketMedio = totalVendas > 0 ? faturamentoTotal / totalVendas : 0;
+      const calcularStats = (vendas: any[]) => ({
+        lucroProdutos: vendas.reduce((acc, v) => acc + ((v.valor_produto || 0) - (v.custo_produto || 0)), 0),
+        lucroPintura: vendas.reduce((acc, v) => acc + ((v.valor_pintura || 0) - (v.custo_pintura || 0)), 0),
+        totalInstalacoes: vendas.reduce((acc, v) => acc + (v.valor_instalacao || 0), 0),
+        totalFretes: vendas.reduce((acc, v) => acc + (v.valor_frete || 0), 0),
+        lucroTotal: vendas.reduce((acc, v) => acc + (v.lucro_total || 0), 0),
+        faturamentoTotal: vendas.reduce((acc, v) => 
+          acc + (v.valor_produto || 0) + (v.valor_pintura || 0) + 
+          (v.valor_instalacao || 0) + (v.valor_frete || 0), 0),
+      });
 
       setStats({
-        totalVendas,
-        faturamentoTotal,
-        lucroTotal,
-        ticketMedio,
-        vendasMes: vendasMesCount,
-        faturamentoMes,
+        rs: calcularStats(vendasRS),
+        sc: calcularStats(vendasSC),
+        total: calcularStats(todasVendas),
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
@@ -209,6 +242,75 @@ export default function Faturamento() {
         description: "Erro ao excluir venda",
       });
     }
+  };
+
+  const exportarPDF = () => {
+    const doc = new jsPDF();
+    const mesNome = meses.find(m => m.value === selectedMonth)?.label || '';
+    
+    // Cabeçalho
+    doc.setFontSize(20);
+    doc.text(`Relatório de Faturamento - ${mesNome}/${selectedYear}`, 20, 20);
+    
+    // Resumo por estado
+    doc.setFontSize(14);
+    doc.text('Resumo por Estado', 20, 40);
+    
+    const resumoData = [
+      ['Métrica', 'RS', 'SC', 'Total'],
+      [
+        'Lucro Produtos',
+        `R$ ${stats.rs.lucroProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.sc.lucroProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.total.lucroProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      ],
+      [
+        'Lucro Pintura',
+        `R$ ${stats.rs.lucroPintura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.sc.lucroPintura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.total.lucroPintura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      ],
+      [
+        'Total Instalações',
+        `R$ ${stats.rs.totalInstalacoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.sc.totalInstalacoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.total.totalInstalacoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      ],
+      [
+        'Total Fretes',
+        `R$ ${stats.rs.totalFretes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.sc.totalFretes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.total.totalFretes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      ],
+      [
+        'Lucro Total',
+        `R$ ${stats.rs.lucroTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.sc.lucroTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.total.lucroTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      ],
+      [
+        'Faturamento Total',
+        `R$ ${stats.rs.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.sc.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${stats.total.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      ]
+    ];
+
+    (doc as any).autoTable({
+      head: [resumoData[0]],
+      body: resumoData.slice(1),
+      startY: 50,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [66, 139, 202] }
+    });
+
+    // Salvar arquivo
+    doc.save(`relatorio-faturamento-${mesNome}-${selectedYear}.pdf`);
+    
+    toast({
+      title: "Sucesso",
+      description: "Relatório exportado com sucesso!",
+    });
   };
 
   const filteredVendas = vendas.filter(venda => {
@@ -267,6 +369,10 @@ export default function Faturamento() {
           </p>
         </div>
         <div className="flex gap-3">
+          <Button onClick={exportarPDF} variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Exportar PDF
+          </Button>
           <Button onClick={() => navigate("/dashboard/vendas/nova")} size="sm">
             <Plus className="w-4 h-4 mr-2" />
             Nova Venda
@@ -284,63 +390,140 @@ export default function Faturamento() {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Stats Cards por Estado */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* RS */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Vendas do Mês</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <CardTitle className="text-lg">Rio Grande do Sul (RS)</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.vendasMes}</div>
-                <p className="text-xs text-muted-foreground">
-                  {meses.find(m => m.value === selectedMonth)?.label}/{selectedYear}
-                </p>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm">Lucro Produtos:</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats.rs.lucroProdutos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Lucro Pintura:</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats.rs.lucroPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Instalações:</span>
+                  <span className="font-medium">
+                    R$ {stats.rs.totalInstalacoes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Fretes:</span>
+                  <span className="font-medium">
+                    R$ {stats.rs.totalFretes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="text-sm font-medium">Lucro Total:</span>
+                  <span className="font-bold text-green-600">
+                    R$ {stats.rs.lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Faturamento:</span>
+                  <span className="font-bold text-blue-600">
+                    R$ {stats.rs.faturamentoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
+            {/* SC */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Faturamento Mês</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <CardTitle className="text-lg">Santa Catarina (SC)</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  R$ {stats.faturamentoMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm">Lucro Produtos:</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats.sc.lucroProdutos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Receita do período
-                </p>
+                <div className="flex justify-between">
+                  <span className="text-sm">Lucro Pintura:</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats.sc.lucroPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Instalações:</span>
+                  <span className="font-medium">
+                    R$ {stats.sc.totalInstalacoes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Fretes:</span>
+                  <span className="font-medium">
+                    R$ {stats.sc.totalFretes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="text-sm font-medium">Lucro Total:</span>
+                  <span className="font-bold text-green-600">
+                    R$ {stats.sc.lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Faturamento:</span>
+                  <span className="font-bold text-blue-600">
+                    R$ {stats.sc.faturamentoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Lucro Total</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
+            {/* TOTAL */}
+            <Card className="border-2 border-primary">
+              <CardHeader>
+                <CardTitle className="text-lg">TOTAL GERAL</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  R$ {stats.lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm">Lucro Produtos:</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats.total.lucroProdutos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Margem de lucro
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  R$ {stats.ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                <div className="flex justify-between">
+                  <span className="text-sm">Lucro Pintura:</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats.total.lucroPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Valor médio por venda
-                </p>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Instalações:</span>
+                  <span className="font-medium">
+                    R$ {stats.total.totalInstalacoes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Fretes:</span>
+                  <span className="font-medium">
+                    R$ {stats.total.totalFretes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="text-sm font-medium">Lucro Total:</span>
+                  <span className="font-bold text-green-600 text-lg">
+                    R$ {stats.total.lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Faturamento:</span>
+                  <span className="font-bold text-blue-600 text-lg">
+                    R$ {stats.total.faturamentoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -435,7 +618,7 @@ export default function Faturamento() {
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Lucro</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -493,41 +676,42 @@ export default function Faturamento() {
                           )}
                         </TableCell>
                          <TableCell>
-                           <div className="flex items-center gap-2">
-                             {isAdmin && (
-                               <Button 
-                                 variant="ghost" 
-                                 size="sm"
-                                 onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
-                               >
-                                 <Edit className="w-4 h-4" />
-                               </Button>
-                             )}
-                             {isAdmin && (
-                               <AlertDialog>
-                                 <AlertDialogTrigger asChild>
-                                   <Button variant="ghost" size="sm">
-                                     <Trash2 className="w-4 h-4 text-red-500" />
-                                   </Button>
-                                 </AlertDialogTrigger>
-                                 <AlertDialogContent>
-                                   <AlertDialogHeader>
-                                     <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                     <AlertDialogDescription>
-                                       Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
-                                     </AlertDialogDescription>
-                                   </AlertDialogHeader>
-                                   <AlertDialogFooter>
-                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                     <AlertDialogAction onClick={() => handleDeleteVenda(venda.id)}>
-                                       Excluir
-                                     </AlertDialogAction>
-                                   </AlertDialogFooter>
-                                 </AlertDialogContent>
-                               </AlertDialog>
-                             )}
-                           </div>
-                         </TableCell>
+                            <div className="flex items-center gap-2">
+                              {(isAdmin || userRole === 'gerente_comercial') && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                                  title="Editar venda"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {isAdmin && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" title="Excluir venda">
+                                      <Trash2 className="w-4 h-4 text-red-500" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteVenda(venda.id)}>
+                                        Excluir
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+                          </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
