@@ -1,23 +1,31 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, Plus, Package, Clock } from 'lucide-react';
-import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
+import { CalendarIcon, Plus, Package, Clock, MapPin } from 'lucide-react';
+import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Pedido {
   id: string;
   numero_pedido: string;
   cliente_nome: string;
+  cliente_telefone?: string;
   produto_tipo: string;
   produto_cor: string;
   produto_altura: string;
   produto_largura: string;
   status: 'pendente' | 'em_andamento' | 'concluido';
   data_entrega?: Date;
+  venda?: {
+    cidade?: string;
+    estado?: string;
+    bairro?: string;
+  };
 }
 
 interface CalendarioCore {
@@ -39,40 +47,82 @@ const statusColors = {
 };
 
 export default function Producao() {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [pedidos] = useState<Pedido[]>([
-    {
-      id: '1',
-      numero_pedido: 'PED001',
-      cliente_nome: 'João Silva',
-      produto_tipo: 'Porta de Enrolar',
-      produto_cor: 'Branco',
-      produto_altura: '2.20m',
-      produto_largura: '3.00m',
-      status: 'pendente'
-    },
-    {
-      id: '2',
-      numero_pedido: 'PED002',
-      cliente_nome: 'Maria Santos',
-      produto_tipo: 'Kit Porta Social',
-      produto_cor: 'Cinza',
-      produto_altura: '2.10m',
-      produto_largura: '0.80m',
-      status: 'em_andamento'
-    }
-  ]);
-
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [coresCalendario, setCoresCalendario] = useState<CalendarioCore[]>([]);
   const [draggedPedido, setDraggedPedido] = useState<Pedido | null>(null);
 
-  // Gerar semana atual para o calendário de cores
-  const generateWeekDays = () => {
-    const start = startOfWeek(selectedDate || new Date(), { weekStartsOn: 1 });
-    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  // Carregar pedidos do banco
+  useEffect(() => {
+    const loadPedidos = async () => {
+      const { data, error } = await supabase
+        .from('pedidos_producao')
+        .select(`
+          *,
+          venda:vendas(cidade, estado, bairro)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar pedidos:', error);
+        return;
+      }
+
+      const pedidosFormatted = data.map(pedido => ({
+        id: pedido.id,
+        numero_pedido: pedido.numero_pedido,
+        cliente_nome: pedido.cliente_nome,
+        cliente_telefone: pedido.cliente_telefone,
+        produto_tipo: pedido.produto_tipo,
+        produto_cor: pedido.produto_cor,
+        produto_altura: pedido.produto_altura,
+        produto_largura: pedido.produto_largura,
+        status: pedido.status as 'pendente' | 'em_andamento' | 'concluido',
+        data_entrega: pedido.data_entrega ? new Date(pedido.data_entrega) : undefined,
+        venda: pedido.venda?.[0] || undefined,
+      }));
+
+      setPedidos(pedidosFormatted);
+    };
+
+    loadPedidos();
+  }, []);
+
+  // Carregar cores do calendário
+  useEffect(() => {
+    const loadCores = async () => {
+      const { data, error } = await supabase
+        .from('calendario_cores')
+        .select('*')
+        .eq('ativa', true);
+
+      if (error) {
+        console.error('Erro ao carregar cores:', error);
+        return;
+      }
+
+      const coresFormatted = data.map(cor => ({
+        data: new Date(cor.data_producao),
+        cor: cor.cor,
+        ativa: cor.ativa,
+      }));
+
+      setCoresCalendario(coresFormatted);
+    };
+
+    loadCores();
+  }, []);
+
+  // Gerar dias do mês para o calendário
+  const generateMonthDays = () => {
+    const currentDate = selectedDate || new Date();
+    const start = startOfMonth(currentDate);
+    const end = endOfMonth(currentDate);
+    return eachDayOfInterval({ start, end });
   };
 
-  const weekDays = generateWeekDays();
+  const monthDays = generateMonthDays();
 
   const handleDragStart = (pedido: Pedido) => {
     setDraggedPedido(pedido);
@@ -97,7 +147,22 @@ export default function Producao() {
     return coresCalendario.find(c => isSameDay(c.data, date))?.cor;
   };
 
-  const updateCorForDate = (date: Date, cor: string) => {
+  const updateCorForDate = async (date: Date, cor: string) => {
+    const { error } = await supabase
+      .from('calendario_cores')
+      .upsert({
+        data_producao: format(date, 'yyyy-MM-dd'),
+        cor,
+        ativa: true,
+      }, {
+        onConflict: 'data_producao'
+      });
+
+    if (error) {
+      console.error('Erro ao salvar cor:', error);
+      return;
+    }
+
     setCoresCalendario(prev => {
       const existing = prev.findIndex(c => isSameDay(c.data, date));
       if (existing >= 0) {
@@ -110,71 +175,109 @@ export default function Producao() {
     });
   };
 
+  const getPedidosForDate = (date: Date) => {
+    return pedidos.filter(pedido => 
+      pedido.data_entrega && isSameDay(pedido.data_entrega, date)
+    );
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-foreground">Produção</h1>
-        <Button className="gap-2">
+        <Button 
+          className="gap-2" 
+          onClick={() => navigate('/dashboard/novo-pedido')}
+        >
           <Plus className="h-4 w-4" />
           Criar Pedido
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendário de Cores */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-3 space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5" />
-                Calendário de Cores
+                Calendário de Produção
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                locale={ptBR}
-                className="rounded-md border"
-              />
-              
-              {/* Configuração de cores para a semana */}
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-4">Cores da Semana</h3>
-                <div className="grid grid-cols-7 gap-2">
-                  {weekDays.map((day, index) => (
-                    <div
-                      key={index}
-                      className="text-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                      onDragOver={handleDragOver}
-                      onDrop={() => handleDrop(day)}
-                    >
-                      <div className="text-sm font-medium mb-2">
-                        {format(day, 'EEE', { locale: ptBR })}
-                      </div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        {format(day, 'dd/MM')}
-                      </div>
-                      
-                      <select
-                        value={getCorForDate(day) || ''}
-                        onChange={(e) => updateCorForDate(day, e.target.value)}
-                        className="w-full text-xs p-1 border rounded"
-                      >
-                        <option value="">Selecionar cor</option>
-                        {cores.map(cor => (
-                          <option key={cor} value={cor}>{cor}</option>
-                        ))}
-                      </select>
-                      
-                      {draggedPedido && (
-                        <div className="mt-2 text-xs text-blue-600">
-                          Solte aqui para agendar
-                        </div>
-                      )}
+              {/* Calendário expandido por mês */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">
+                  {format(selectedDate || new Date(), 'MMMM yyyy', { locale: ptBR })}
+                </h3>
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((day) => (
+                    <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
+                      {day}
                     </div>
                   ))}
+                </div>
+                <div className="grid grid-cols-7 gap-2">
+                  {monthDays.map((day, index) => {
+                    const corDia = getCorForDate(day);
+                    const pedidosDia = getPedidosForDate(day);
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={cn(
+                          "min-h-[120px] p-2 border rounded-lg hover:bg-muted/50 transition-colors",
+                          isSameDay(day, new Date()) && "bg-primary/10 border-primary/20"
+                        )}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(day)}
+                      >
+                        <div className="flex flex-col h-full">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm font-medium">
+                              {format(day, 'd')}
+                            </div>
+                            {corDia && (
+                              <Badge variant="outline" className="text-xs px-1 py-0">
+                                {corDia}
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {/* Seletor de cor */}
+                          <select
+                            value={corDia || ''}
+                            onChange={(e) => updateCorForDate(day, e.target.value)}
+                            className="w-full text-xs p-1 border rounded mb-2"
+                          >
+                            <option value="">Cor</option>
+                            {cores.map(cor => (
+                              <option key={cor} value={cor}>{cor}</option>
+                            ))}
+                          </select>
+                          
+                          {/* Pedidos do dia */}
+                          <div className="flex-1 space-y-1">
+                            {pedidosDia.map((pedido) => (
+                              <div
+                                key={pedido.id}
+                                className="text-xs p-1 bg-blue-100 text-blue-800 rounded truncate"
+                                title={`${pedido.numero_pedido} - ${pedido.cliente_nome}`}
+                              >
+                                {pedido.numero_pedido}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {draggedPedido && (
+                            <div className="mt-2 text-xs text-blue-600 text-center">
+                              Solte aqui
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
@@ -218,6 +321,14 @@ export default function Producao() {
                     <div className="text-xs">
                       {pedido.produto_altura} x {pedido.produto_largura}
                     </div>
+                    {pedido.venda && (pedido.venda.cidade || pedido.venda.estado) && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <MapPin className="h-3 w-3" />
+                        <span>
+                          {[pedido.venda.cidade, pedido.venda.estado].filter(Boolean).join(', ')}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {pedido.data_entrega && (

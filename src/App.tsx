@@ -27,6 +27,7 @@ import VendaDetails from "./pages/VendaDetails";
 import Visitas from "./pages/Visitas";
 import VisitaNova from "./pages/VisitaNova";
 import Producao from "./pages/Producao";
+import NovoPedido from "./pages/NovoPedido";
 
 const queryClient = new QueryClient();
 
@@ -218,6 +219,16 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <Producao />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/novo-pedido"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <NovoPedido />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
