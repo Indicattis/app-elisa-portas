@@ -643,7 +643,11 @@ export type Database = {
         | "outro"
       status_visita: "agendada" | "concluida" | "cancelada"
       turno_visita: "manha" | "tarde" | "noite"
-      user_role: "administrador" | "atendente" | "gerente_comercial"
+      user_role:
+        | "administrador"
+        | "atendente"
+        | "gerente_comercial"
+        | "gerente_fabril"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -787,7 +791,12 @@ export const Constants = {
       ],
       status_visita: ["agendada", "concluida", "cancelada"],
       turno_visita: ["manha", "tarde", "noite"],
-      user_role: ["administrador", "atendente", "gerente_comercial"],
+      user_role: [
+        "administrador",
+        "atendente",
+        "gerente_comercial",
+        "gerente_fabril",
+      ],
     },
   },
 } as const
