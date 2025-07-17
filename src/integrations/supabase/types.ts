@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      calendario_cores: {
+        Row: {
+          ativa: boolean
+          cor: string
+          created_at: string
+          created_by: string | null
+          data_producao: string
+          id: string
+        }
+        Insert: {
+          ativa?: boolean
+          cor: string
+          created_at?: string
+          created_by?: string | null
+          data_producao: string
+          id?: string
+        }
+        Update: {
+          ativa?: boolean
+          cor?: string
+          created_at?: string
+          created_by?: string | null
+          data_producao?: string
+          id?: string
+        }
+        Relationships: []
+      }
       elisaportas_leads: {
         Row: {
           altura_porta: string | null
@@ -354,6 +381,118 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "elisaportas_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordens_producao: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          observacoes: string | null
+          pedido_id: string
+          responsavel_id: string | null
+          status: string
+          tipo_ordem: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          observacoes?: string | null
+          pedido_id: string
+          responsavel_id?: string | null
+          status?: string
+          tipo_ordem: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          observacoes?: string | null
+          pedido_id?: string
+          responsavel_id?: string | null
+          status?: string
+          tipo_ordem?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordens_producao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_producao: {
+        Row: {
+          cliente_nome: string
+          cliente_telefone: string | null
+          created_at: string
+          created_by: string | null
+          data_entrega: string | null
+          id: string
+          numero_pedido: string
+          observacoes: string | null
+          produto_altura: string
+          produto_cor: string
+          produto_largura: string
+          produto_tipo: string
+          status: string
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          cliente_nome: string
+          cliente_telefone?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_entrega?: string | null
+          id?: string
+          numero_pedido: string
+          observacoes?: string | null
+          produto_altura: string
+          produto_cor: string
+          produto_largura: string
+          produto_tipo: string
+          status?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          cliente_nome?: string
+          cliente_telefone?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_entrega?: string | null
+          id?: string
+          numero_pedido?: string
+          observacoes?: string | null
+          produto_altura?: string
+          produto_cor?: string
+          produto_largura?: string
+          produto_tipo?: string
+          status?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_producao_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
             referencedColumns: ["id"]
           },
         ]
