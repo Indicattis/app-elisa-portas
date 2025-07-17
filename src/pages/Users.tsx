@@ -21,7 +21,7 @@ interface AdminUser {
   user_id: string;
   email: string;
   nome: string;
-  role: "administrador" | "atendente" | "gerente_comercial";
+  role: "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril";
   ativo: boolean;
   foto_perfil_url: string | null;
   created_at: string;
@@ -223,7 +223,7 @@ export default function Users() {
                       {editingUser === user.id ? (
                         <Select
                           value={editForm.role}
-                          onValueChange={(value) => setEditForm({ ...editForm, role: value as "administrador" | "atendente" | "gerente_comercial" })}
+                          onValueChange={(value) => setEditForm({ ...editForm, role: value as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" })}
                         >
                           <SelectTrigger className="max-w-xs">
                             <SelectValue />
@@ -232,12 +232,14 @@ export default function Users() {
                             <SelectItem value="administrador">Administrador</SelectItem>
                             <SelectItem value="atendente">Atendente</SelectItem>
                             <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
+                            <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
                         <Badge variant={user.role === "administrador" ? "default" : "secondary"}>
                           {user.role === "administrador" ? "Administrador" : 
-                           user.role === "gerente_comercial" ? "Gerente Comercial" : "Atendente"}
+                           user.role === "gerente_comercial" ? "Gerente Comercial" : 
+                           user.role === "gerente_fabril" ? "Gerente Fabril" : "Atendente"}
                         </Badge>
                       )}
                     </TableCell>

@@ -26,6 +26,7 @@ import NotFound from "./pages/NotFound";
 import VendaDetails from "./pages/VendaDetails";
 import Visitas from "./pages/Visitas";
 import VisitaNova from "./pages/VisitaNova";
+import Producao from "./pages/Producao";
 
 const queryClient = new QueryClient();
 
@@ -207,6 +208,16 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <VisitaNova />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/producao"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Producao />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Factory
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Leads", href: "/dashboard/leads", icon: FileText },
   { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator },
   { name: "Visitas", href: "/dashboard/visitas", icon: Calendar },
+  { name: "Produção", href: "/dashboard/producao", icon: Factory, adminOrManagerFabril: true },
   { name: "Usuários", href: "/dashboard/users", icon: Users, adminOnly: true },
   { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, adminOrManager: true },
 ];
@@ -27,7 +29,7 @@ const navigation = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { signOut, user, isAdmin, userRole } = useAuth();
+  const { signOut, user, isAdmin, userRole, isGerenteFabril } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/dashboard") {
@@ -39,6 +41,7 @@ export function Sidebar() {
   const filteredNavigation = navigation.filter(item => {
     if (item.adminOnly && !isAdmin) return false;
     if (item.adminOrManager && !isAdmin && userRole !== 'gerente_comercial') return false;
+    if (item.adminOrManagerFabril && !isAdmin && userRole !== 'gerente_comercial' && !isGerenteFabril) return false;
     return true;
   });
 

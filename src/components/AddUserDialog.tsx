@@ -20,7 +20,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     nome: "",
     email: "",
     password: "",
-    role: "atendente" as "administrador" | "atendente" | "gerente_comercial",
+    role: "atendente" as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril",
   });
   const { toast } = useToast();
 
@@ -143,7 +143,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
               </Label>
               <Select
                 value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value as "administrador" | "atendente" | "gerente_comercial" })}
+                onValueChange={(value) => setFormData({ ...formData, role: value as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" })}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
@@ -152,6 +152,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                   <SelectItem value="administrador">Administrador</SelectItem>
                   <SelectItem value="atendente">Atendente</SelectItem>
                   <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
+                  <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
                 </SelectContent>
               </Select>
             </div>
