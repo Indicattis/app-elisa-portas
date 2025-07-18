@@ -148,15 +148,36 @@ export default function Producao() {
   };
 
   const updateCorForDate = async (date: Date, cor: string) => {
-    const { error } = await supabase
+    const dateString = format(date, 'yyyy-MM-dd');
+    
+    // Primeiro, verificar se já existe uma cor para essa data
+    const { data: existing } = await supabase
       .from('calendario_cores')
-      .upsert({
-        data_producao: format(date, 'yyyy-MM-dd'),
-        cor,
-        ativa: true,
-      }, {
-        onConflict: 'data_producao'
-      });
+      .select('id')
+      .eq('data_producao', dateString)
+      .eq('ativa', true)
+      .single();
+
+    let error;
+    
+    if (existing) {
+      // Atualizar registro existente
+      const { error: updateError } = await supabase
+        .from('calendario_cores')
+        .update({ cor })
+        .eq('id', existing.id);
+      error = updateError;
+    } else {
+      // Criar novo registro
+      const { error: insertError } = await supabase
+        .from('calendario_cores')
+        .insert({
+          data_producao: dateString,
+          cor,
+          ativa: true,
+        });
+      error = insertError;
+    }
 
     if (error) {
       console.error('Erro ao salvar cor:', error);
@@ -164,10 +185,10 @@ export default function Producao() {
     }
 
     setCoresCalendario(prev => {
-      const existing = prev.findIndex(c => isSameDay(c.data, date));
-      if (existing >= 0) {
+      const existingIndex = prev.findIndex(c => isSameDay(c.data, date));
+      if (existingIndex >= 0) {
         const updated = [...prev];
-        updated[existing] = { ...updated[existing], cor };
+        updated[existingIndex] = { ...updated[existingIndex], cor };
         return updated;
       } else {
         return [...prev, { data: date, cor, ativa: true }];
