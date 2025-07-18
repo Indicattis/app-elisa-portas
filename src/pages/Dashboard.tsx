@@ -178,55 +178,112 @@ export default function Dashboard() {
       </div>
 
       {/* Metas Mensais */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-green-600" />
+      <Card className="bg-gradient-to-br from-background to-muted/20">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-2xl">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Target className="h-8 w-8 text-primary" />
+            </div>
             Progresso das Metas Mensais
           </CardTitle>
           <CardDescription>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${metaStatus.bgColor} ${metaStatus.color}`}>
+            <span className={`px-4 py-2 rounded-full text-sm font-semibold ${metaStatus.bgColor} ${metaStatus.color}`}>
               {metaStatus.label}
             </span>
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Meta Mínima */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">Meta Mínima</span>
-                <span>R$ 1.000.000,00</span>
+        <CardContent className="space-y-8">
+          {/* Meta Mínima */}
+          <div className="space-y-4 p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-green-100">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-lg">Meta Mínima</h4>
+                  <p className="text-3xl font-bold text-green-600">
+                    {progressoMetaMinima.toFixed(1)}%
+                  </p>
+                </div>
               </div>
-              <Progress value={Math.min(progressoMetaMinima, 100)} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {progressoMetaMinima.toFixed(1)}% - R$ {stats.faturamentoMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
+              <div className="text-right">
+                <p className="text-lg font-semibold">R$ 1.000.000,00</p>
+                <p className="text-sm text-muted-foreground">
+                  R$ {stats.faturamentoMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
             </div>
+            <Progress 
+              value={Math.min(progressoMetaMinima, 100)} 
+              className="h-4 bg-green-100"
+              style={{
+                '--progress-background': 'hsl(var(--primary))',
+                animation: 'scale-in 0.5s ease-out'
+              } as React.CSSProperties}
+            />
+          </div>
 
-            {/* Meta Ideal */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-blue-600">Meta Ideal</span>
-                <span>R$ 1.500.000,00</span>
+          {/* Meta Ideal */}
+          <div className="space-y-4 p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-blue-100">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-lg text-blue-600">Meta Ideal</h4>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {progressoMetaIdeal.toFixed(1)}%
+                  </p>
+                </div>
               </div>
-              <Progress value={Math.min(progressoMetaIdeal, 100)} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {progressoMetaIdeal.toFixed(1)}% - Faltam R$ {Math.max(0, stats.metaIdeal - stats.faturamentoMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
+              <div className="text-right">
+                <p className="text-lg font-semibold">R$ 1.500.000,00</p>
+                <p className="text-sm text-muted-foreground">
+                  Faltam R$ {Math.max(0, stats.metaIdeal - stats.faturamentoMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
             </div>
+            <Progress 
+              value={Math.min(progressoMetaIdeal, 100)} 
+              className="h-4 bg-blue-100"
+              style={{
+                '--progress-background': 'hsl(217, 91%, 60%)',
+                animation: 'scale-in 0.5s ease-out 0.1s both'
+              } as React.CSSProperties}
+            />
+          </div>
 
-            {/* Super Meta */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-purple-600">Super Meta</span>
-                <span>R$ 2.000.000,00</span>
+          {/* Super Meta */}
+          <div className="space-y-4 p-4 rounded-lg border bg-card/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-purple-100">
+                  <Target className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-lg text-purple-600">Super Meta</h4>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {progressoSuperMeta.toFixed(1)}%
+                  </p>
+                </div>
               </div>
-              <Progress value={Math.min(progressoSuperMeta, 100)} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {progressoSuperMeta.toFixed(1)}% - Faltam R$ {Math.max(0, stats.superMeta - stats.faturamentoMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
+              <div className="text-right">
+                <p className="text-lg font-semibold">R$ 2.000.000,00</p>
+                <p className="text-sm text-muted-foreground">
+                  Faltam R$ {Math.max(0, stats.superMeta - stats.faturamentoMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
             </div>
+            <Progress 
+              value={Math.min(progressoSuperMeta, 100)} 
+              className="h-4 bg-purple-100"
+              style={{
+                '--progress-background': 'hsl(271, 81%, 56%)',
+                animation: 'scale-in 0.5s ease-out 0.2s both'
+              } as React.CSSProperties}
+            />
           </div>
         </CardContent>
       </Card>
