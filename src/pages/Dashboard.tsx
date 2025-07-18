@@ -8,57 +8,42 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface DashboardStats {
-  totalLeads: number;
-  leadsAguardando: number;
-  leadsEmAndamento: number;
-  leadsConcluidos: number;
-  totalUsuarios?: number;
   faturamentoMes: number;
-  faturamentoAno: number;
-  metaAnual: number;
-  totalOrcamentos: number;
-  orcamentosPendentes: number;
+  metaMinima: number;
+  metaIdeal: number;
+  superMeta: number;
+  totalVendas: number;
   ticketMedio: number;
+  totalUsuarios?: number;
 }
 
-interface LogAtividade {
+interface VendaRecente {
   id: string;
-  acao: string;
-  created_at: string;
-  lead_id: string;
-  atendente_nome?: string;
+  data_venda: string;
+  cliente_nome: string;
+  valor_venda: number;
+  atendente_nome: string;
 }
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
-    totalLeads: 0,
-    leadsAguardando: 0,
-    leadsEmAndamento: 0,
-    leadsConcluidos: 0,
-    totalUsuarios: 0,
     faturamentoMes: 0,
-    faturamentoAno: 0,
-    metaAnual: 1000000, // Meta de 1 milhão
-    totalOrcamentos: 0,
-    orcamentosPendentes: 0,
+    metaMinima: 1000000, // R$ 1.000.000,00
+    metaIdeal: 1500000,  // R$ 1.500.000,00
+    superMeta: 2000000,  // R$ 2.000.000,00
+    totalVendas: 0,
     ticketMedio: 0,
+    totalUsuarios: 0,
   });
-  const [logs, setLogs] = useState<LogAtividade[]>([]);
+  const [vendasRecentes, setVendasRecentes] = useState<VendaRecente[]>([]);
 
   useEffect(() => {
     fetchDashboardStats();
-    fetchLogs();
+    fetchVendasRecentes();
   }, []);
 
   const fetchDashboardStats = async () => {
     try {
-      // Buscar estatísticas de leads
-      const { data: leads, error: leadsError } = await supabase
-        .from("elisaportas_leads")
-        .select("status_atendimento");
-
-      if (leadsError) throw leadsError;
-
       // Buscar total de usuários
       const { count: totalUsuarios, error: usersError } = await supabase
         .from("admin_users")
@@ -69,75 +54,50 @@ export default function Dashboard() {
       // Buscar faturamento do mês atual
       const currentDate = new Date();
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
 
       const { data: vendasMes, error: vendasMesError } = await supabase
         .from("vendas")
         .select("valor_venda")
         .gte("data_venda", startOfMonth.toISOString());
 
-      const { data: vendasAno, error: vendasAnoError } = await supabase
-        .from("vendas")
-        .select("valor_venda")
-        .gte("data_venda", startOfYear.toISOString());
+      if (vendasMesError) throw vendasMesError;
 
-      // Buscar orçamentos
-      const { data: orcamentos, error: orcamentosError } = await supabase
-        .from("orcamentos")
-        .select("status, valor_total");
-
-      if (vendasMesError || vendasAnoError || orcamentosError) {
-        console.error("Error fetching sales/budget data");
-      }
-
-      const leadsAguardando = leads?.filter(lead => lead.status_atendimento === 1).length || 0;
-      const leadsEmAndamento = leads?.filter(lead => lead.status_atendimento === 2).length || 0;
-      const leadsPausados = leads?.filter(lead => lead.status_atendimento === 3).length || 0;
-      const leadsConcluidos = leads?.filter(lead => lead.status_atendimento === 4).length || 0;
-
-      const faturamentoMes = vendasMes?.reduce((acc, venda) => acc + venda.valor_venda, 0) || 0;
-      const faturamentoAno = vendasAno?.reduce((acc, venda) => acc + venda.valor_venda, 0) || 0;
-      const ticketMedio = vendasAno?.length ? faturamentoAno / vendasAno.length : 0;
-
-      const totalOrcamentos = orcamentos?.length || 0;
-      const orcamentosPendentes = orcamentos?.filter(orc => orc.status === 'pendente').length || 0;
+      const faturamentoMes = vendasMes?.reduce((acc, venda) => acc + (venda.valor_venda || 0), 0) || 0;
+      const totalVendas = vendasMes?.length || 0;
+      const ticketMedio = totalVendas > 0 ? faturamentoMes / totalVendas : 0;
 
       setStats({
-        totalLeads: leads?.length || 0,
-        leadsAguardando,
-        leadsEmAndamento: leadsEmAndamento + leadsPausados,
-        leadsConcluidos,
-        totalUsuarios: totalUsuarios || 0,
         faturamentoMes,
-        faturamentoAno,
-        metaAnual: 1000000,
-        totalOrcamentos,
-        orcamentosPendentes,
+        metaMinima: 1000000,
+        metaIdeal: 1500000,
+        superMeta: 2000000,
+        totalVendas,
         ticketMedio,
+        totalUsuarios: totalUsuarios || 0,
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
     }
   };
 
-  const fetchLogs = async () => {
+  const fetchVendasRecentes = async () => {
     try {
-      const { data: logsData, error } = await supabase
-        .from("lead_atendimento_historico")
+      const { data: vendasData, error } = await supabase
+        .from("vendas")
         .select(`
           id,
-          acao,
-          created_at,
-          lead_id,
+          data_venda,
+          cliente_nome,
+          valor_venda,
           atendente_id
         `)
-        .order("created_at", { ascending: false })
-        .limit(15);
+        .order("data_venda", { ascending: false })
+        .limit(10);
 
       if (error) throw error;
 
       // Buscar nomes dos atendentes
-      const atendenteIds = [...new Set(logsData?.map(log => log.atendente_id).filter(Boolean))];
+      const atendenteIds = [...new Set(vendasData?.map(venda => venda.atendente_id).filter(Boolean))];
       let atendenteMap = new Map();
       
       if (atendenteIds.length > 0) {
@@ -153,18 +113,29 @@ export default function Dashboard() {
         }
       }
 
-      const logsComNomes = logsData?.map(log => ({
-        ...log,
-        atendente_nome: atendenteMap.get(log.atendente_id) || "Sistema"
+      const vendasComNomes = vendasData?.map(venda => ({
+        ...venda,
+        atendente_nome: atendenteMap.get(venda.atendente_id) || "Atendente não encontrado"
       })) || [];
 
-      setLogs(logsComNomes);
+      setVendasRecentes(vendasComNomes);
     } catch (error) {
-      console.error("Erro ao buscar logs:", error);
+      console.error("Erro ao buscar vendas recentes:", error);
     }
   };
 
-  const progressoMeta = (stats.faturamentoAno / stats.metaAnual) * 100;
+  const progressoMetaMinima = (stats.faturamentoMes / stats.metaMinima) * 100;
+  const progressoMetaIdeal = (stats.faturamentoMes / stats.metaIdeal) * 100;
+  const progressoSuperMeta = (stats.faturamentoMes / stats.superMeta) * 100;
+
+  const getMetaStatus = () => {
+    if (stats.faturamentoMes >= stats.superMeta) return { label: "🚀 Super Meta Atingida!", color: "text-purple-600", bgColor: "bg-purple-100" };
+    if (stats.faturamentoMes >= stats.metaIdeal) return { label: "🎯 Meta Ideal Atingida!", color: "text-blue-600", bgColor: "bg-blue-100" };
+    if (stats.faturamentoMes >= stats.metaMinima) return { label: "✅ Meta Mínima Atingida!", color: "text-green-600", bgColor: "bg-green-100" };
+    return { label: "📈 Trabalhando para a meta", color: "text-orange-600", bgColor: "bg-orange-100" };
+  };
+
+  const metaStatus = getMetaStatus();
 
   const statCards = [
     {
@@ -175,9 +146,9 @@ export default function Dashboard() {
       color: "text-green-600",
     },
     {
-      title: "Faturamento Anual",
-      value: `R$ ${stats.faturamentoAno.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      description: `${progressoMeta.toFixed(1)}% da meta anual`,
+      title: "Total de Vendas",
+      value: stats.totalVendas,
+      description: "Vendas realizadas no mês",
       icon: TrendingUp,
       color: "text-blue-600",
     },
@@ -187,34 +158,6 @@ export default function Dashboard() {
       description: "Valor médio por venda",
       icon: Target,
       color: "text-purple-600",
-    },
-    {
-      title: "Total de Leads",
-      value: stats.totalLeads,
-      description: "Leads cadastrados no sistema",
-      icon: FileText,
-      color: "text-orange-600",
-    },
-    {
-      title: "Aguardando Atendimento",
-      value: stats.leadsAguardando,
-      description: "Leads aguardando atendimento",
-      icon: Clock,
-      color: "text-yellow-600",
-    },
-    {
-      title: "Em Andamento",
-      value: stats.leadsEmAndamento,
-      description: "Leads sendo atendidos",
-      icon: AlertCircle,
-      color: "text-blue-600",
-    },
-    {
-      title: "Orçamentos Pendentes",
-      value: stats.orcamentosPendentes,
-      description: `${stats.totalOrcamentos} orçamentos no total`,
-      icon: Calendar,
-      color: "text-red-600",
     },
     {
       title: "Total de Usuários",
@@ -234,27 +177,56 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Meta Anual */}
+      {/* Metas Mensais */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5 text-green-600" />
-            Meta Anual de Faturamento
+            Progresso das Metas Mensais
           </CardTitle>
           <CardDescription>
-            Progresso em direção à meta de R$ 1.000.000,00
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${metaStatus.bgColor} ${metaStatus.color}`}>
+              {metaStatus.label}
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span>R$ {stats.faturamentoAno.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-              <span>R$ 1.000.000,00</span>
+          <div className="space-y-6">
+            {/* Meta Mínima */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">Meta Mínima</span>
+                <span>R$ 1.000.000,00</span>
+              </div>
+              <Progress value={Math.min(progressoMetaMinima, 100)} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {progressoMetaMinima.toFixed(1)}% - R$ {stats.faturamentoMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
             </div>
-            <Progress value={progressoMeta} className="h-3" />
-            <p className="text-sm text-muted-foreground">
-              {progressoMeta >= 100 ? "🎉 Meta atingida!" : `Faltam R$ ${(stats.metaAnual - stats.faturamentoAno).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} para atingir a meta`}
-            </p>
+
+            {/* Meta Ideal */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-blue-600">Meta Ideal</span>
+                <span>R$ 1.500.000,00</span>
+              </div>
+              <Progress value={Math.min(progressoMetaIdeal, 100)} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {progressoMetaIdeal.toFixed(1)}% - Faltam R$ {Math.max(0, stats.metaIdeal - stats.faturamentoMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+
+            {/* Super Meta */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-purple-600">Super Meta</span>
+                <span>R$ 2.000.000,00</span>
+              </div>
+              <Progress value={Math.min(progressoSuperMeta, 100)} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {progressoSuperMeta.toFixed(1)}% - Faltam R$ {Math.max(0, stats.superMeta - stats.faturamentoMes).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -281,25 +253,32 @@ export default function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Atividade Recente</CardTitle>
+            <CardTitle>Vendas Recentes</CardTitle>
             <CardDescription>
-              Últimas alterações nos leads
+              Últimas vendas realizadas
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {logs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhuma atividade recente</p>
+              {vendasRecentes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma venda recente</p>
               ) : (
-                logs.map((log) => (
-                  <div key={log.id} className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {log.atendente_nome} {log.acao.replace('_', ' ')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(log.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                vendasRecentes.map((venda) => (
+                  <div key={venda.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {venda.cliente_nome || "Cliente não informado"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Por {venda.atendente_nome} • {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-green-600">
+                        R$ {(venda.valor_venda || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
@@ -311,33 +290,35 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Status do Sistema</CardTitle>
+            <CardTitle>Resumo de Performance</CardTitle>
             <CardDescription>
-              Informações do sistema
+              Indicadores de desempenho
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm">Database</span>
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  Online
+                <span className="text-sm">Status das Metas</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${metaStatus.bgColor} ${metaStatus.color}`}>
+                  {stats.faturamentoMes >= stats.metaMinima ? "Atingida" : "Em Progresso"}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Autenticação</span>
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  Ativo
+                <span className="text-sm">Vendas no Mês</span>
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                  {stats.totalVendas} vendas
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Orçamentos Pendentes</span>
+                <span className="text-sm">Performance</span>
                 <span className={`text-xs px-2 py-1 rounded-full ${
-                  stats.orcamentosPendentes > 0 
-                    ? "bg-yellow-100 text-yellow-800" 
-                    : "bg-green-100 text-green-800"
+                  progressoMetaMinima >= 100 
+                    ? "bg-green-100 text-green-800" 
+                    : progressoMetaMinima >= 50
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
                 }`}>
-                  {stats.orcamentosPendentes > 0 ? `${stats.orcamentosPendentes} pendentes` : "Em dia"}
+                  {progressoMetaMinima >= 100 ? "Excelente" : progressoMetaMinima >= 50 ? "Boa" : "Precisa Melhorar"}
                 </span>
               </div>
             </div>
