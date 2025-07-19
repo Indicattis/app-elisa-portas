@@ -580,7 +580,7 @@ export type Database = {
           estado: string | null
           forma_pagamento: string | null
           id: string
-          lead_id: string
+          lead_id: string | null
           lucro_total: number | null
           observacoes_venda: string | null
           publico_alvo: string | null
@@ -608,7 +608,7 @@ export type Database = {
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
-          lead_id: string
+          lead_id?: string | null
           lucro_total?: number | null
           observacoes_venda?: string | null
           publico_alvo?: string | null
@@ -636,7 +636,7 @@ export type Database = {
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
-          lead_id?: string
+          lead_id?: string | null
           lucro_total?: number | null
           observacoes_venda?: string | null
           publico_alvo?: string | null
