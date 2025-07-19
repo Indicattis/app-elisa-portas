@@ -4,7 +4,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, Plus, Package, Clock, MapPin } from 'lucide-react';
+import { CalendarIcon, Plus, Package, Clock, MapPin, Palette, Trash2 } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,24 @@ const cores = [
   'Dourado', 'Prata', 'Bronze'
 ];
 
+const coresBg = {
+  'Branco': 'bg-white',
+  'Preto': 'bg-black',
+  'Cinza': 'bg-gray-500',
+  'Azul': 'bg-blue-500',
+  'Verde': 'bg-green-500',
+  'Vermelho': 'bg-red-500',
+  'Amarelo': 'bg-yellow-500',
+  'Laranja': 'bg-orange-500',
+  'Rosa': 'bg-pink-500',
+  'Roxo': 'bg-purple-500',
+  'Marrom': 'bg-amber-800',
+  'Bege': 'bg-yellow-200',
+  'Dourado': 'bg-yellow-400',
+  'Prata': 'bg-gray-300',
+  'Bronze': 'bg-yellow-600'
+};
+
 const statusColors = {
   pendente: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   em_andamento: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -52,6 +70,7 @@ export default function Producao() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [coresCalendario, setCoresCalendario] = useState<CalendarioCore[]>([]);
   const [draggedPedido, setDraggedPedido] = useState<Pedido | null>(null);
+  const [selectedColorForDay, setSelectedColorForDay] = useState<{date: Date, color: string} | null>(null);
 
   // Carregar pedidos do banco
   useEffect(() => {
@@ -132,10 +151,45 @@ export default function Producao() {
     setDraggedPedido(null);
   };
 
-  const handleDrop = (date: Date) => {
+  const handleDrop = async (date: Date) => {
     if (draggedPedido) {
-      console.log(`Pedido ${draggedPedido.numero_pedido} agendado para ${format(date, 'dd/MM/yyyy')}`);
-      // Aqui você implementaria a lógica para atualizar a data de entrega no banco
+      const dateString = format(date, 'yyyy-MM-dd');
+      
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ 
+          data_entrega: dateString,
+          status: 'em_andamento'
+        })
+        .eq('id', draggedPedido.id);
+
+      if (!error) {
+        setPedidos(prev => prev.map(p => 
+          p.id === draggedPedido.id 
+            ? { ...p, data_entrega: date, status: 'em_andamento' as const }
+            : p
+        ));
+      }
+    }
+  };
+
+  const handleDropToTrash = async () => {
+    if (draggedPedido) {
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ 
+          data_entrega: null,
+          status: 'pendente'
+        })
+        .eq('id', draggedPedido.id);
+
+      if (!error) {
+        setPedidos(prev => prev.map(p => 
+          p.id === draggedPedido.id 
+            ? { ...p, data_entrega: undefined, status: 'pendente' as const }
+            : p
+        ));
+      }
     }
   };
 
@@ -247,54 +301,102 @@ export default function Producao() {
                       <div
                         key={index}
                         className={cn(
-                          "min-h-[120px] p-2 border rounded-lg hover:bg-muted/50 transition-colors",
-                          isSameDay(day, new Date()) && "bg-primary/10 border-primary/20"
+                          "relative min-h-[140px] p-2 border rounded-lg hover:bg-muted/50 transition-colors",
+                          isSameDay(day, new Date()) && "bg-primary/10 border-primary/20",
+                          draggedPedido && "border-dashed border-2 border-blue-300"
                         )}
                         onDragOver={handleDragOver}
                         onDrop={() => handleDrop(day)}
                       >
                         <div className="flex flex-col h-full">
+                          {/* Cabeçalho do dia */}
                           <div className="flex items-center justify-between mb-2">
                             <div className="text-sm font-medium">
                               {format(day, 'd')}
                             </div>
-                            {corDia && (
-                              <Badge variant="outline" className="text-xs px-1 py-0">
-                                {corDia}
-                              </Badge>
-                            )}
                           </div>
                           
-                          {/* Seletor de cor */}
-                          <select
-                            value={corDia || ''}
-                            onChange={(e) => updateCorForDate(day, e.target.value)}
-                            className="w-full text-xs p-1 border rounded mb-2"
-                          >
-                            <option value="">Cor</option>
-                            {cores.map(cor => (
-                              <option key={cor} value={cor}>{cor}</option>
-                            ))}
-                          </select>
-                          
-                          {/* Pedidos do dia */}
-                          <div className="flex-1 space-y-1">
+                          {/* Lista de pedidos */}
+                          <div className="flex-1 space-y-1 mb-8">
                             {pedidosDia.map((pedido) => (
                               <div
                                 key={pedido.id}
-                                className="text-xs p-1 bg-blue-100 text-blue-800 rounded truncate"
+                                className={cn(
+                                  "text-xs p-1 rounded cursor-move border",
+                                  statusColors[pedido.status]
+                                )}
+                                draggable
+                                onDragStart={() => handleDragStart(pedido)}
+                                onDragEnd={handleDragEnd}
                                 title={`${pedido.numero_pedido} - ${pedido.cliente_nome}`}
                               >
                                 {pedido.numero_pedido}
                               </div>
                             ))}
+                            
+                            {draggedPedido && (
+                              <div className="text-xs text-blue-600 text-center p-2 border-2 border-dashed border-blue-300 rounded">
+                                Solte aqui
+                              </div>
+                            )}
                           </div>
                           
-                          {draggedPedido && (
-                            <div className="mt-2 text-xs text-blue-600 text-center">
-                              Solte aqui
+                          {/* Seletor de cor no canto inferior direito */}
+                          <div className="absolute bottom-2 right-2">
+                            <div className="relative">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => setSelectedColorForDay(
+                                  selectedColorForDay?.date && isSameDay(selectedColorForDay.date, day) 
+                                    ? null 
+                                    : { date: day, color: corDia || '' }
+                                )}
+                              >
+                                <Palette 
+                                  className={cn(
+                                    "h-3 w-3",
+                                    corDia && coresBg[corDia as keyof typeof coresBg],
+                                    corDia === 'Branco' && "border border-gray-300"
+                                  )} 
+                                />
+                              </Button>
+                              
+                              {/* Dropdown de cores */}
+                              {selectedColorForDay?.date && isSameDay(selectedColorForDay.date, day) && (
+                                <div className="absolute bottom-8 right-0 bg-white border shadow-lg rounded-md p-2 z-10 min-w-[120px]">
+                                  <div className="grid grid-cols-3 gap-1">
+                                    {cores.map(cor => (
+                                      <button
+                                        key={cor}
+                                        className={cn(
+                                          "w-6 h-6 rounded border-2 hover:scale-110 transition-transform",
+                                          coresBg[cor as keyof typeof coresBg],
+                                          cor === 'Branco' && "border-gray-300",
+                                          corDia === cor && "ring-2 ring-blue-500"
+                                        )}
+                                        onClick={() => {
+                                          updateCorForDate(day, cor);
+                                          setSelectedColorForDay(null);
+                                        }}
+                                        title={cor}
+                                      />
+                                    ))}
+                                  </div>
+                                  <button
+                                    className="w-full text-xs mt-2 p-1 text-gray-500 hover:text-gray-700"
+                                    onClick={() => {
+                                      updateCorForDate(day, '');
+                                      setSelectedColorForDay(null);
+                                    }}
+                                  >
+                                    Remover cor
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -307,6 +409,22 @@ export default function Producao() {
 
         {/* Lista de Pedidos */}
         <div className="space-y-4">
+          {/* Lixeira */}
+          {draggedPedido && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent 
+                className="p-4 text-center"
+                onDragOver={handleDragOver}
+                onDrop={handleDropToTrash}
+              >
+                <Trash2 className="h-8 w-8 mx-auto text-red-500 mb-2" />
+                <p className="text-sm text-red-600">
+                  Solte aqui para remover da programação
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
