@@ -71,6 +71,8 @@ export default function Producao() {
   const [coresCalendario, setCoresCalendario] = useState<CalendarioCore[]>([]);
   const [draggedPedido, setDraggedPedido] = useState<Pedido | null>(null);
   const [selectedColorForDay, setSelectedColorForDay] = useState<{date: Date, color: string} | null>(null);
+  const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
+  const [viewMode, setViewMode] = useState<'lista' | 'detalhes'>('lista');
 
   // Carregar pedidos do banco
   useEffect(() => {
@@ -256,6 +258,16 @@ export default function Producao() {
     );
   };
 
+  // Pedidos sem data (para listagem)
+  const getPedidosSemData = () => {
+    return pedidos.filter(pedido => !pedido.data_entrega);
+  };
+
+  const handlePedidoDoubleClick = (pedido: Pedido) => {
+    setSelectedPedido(pedido);
+    setViewMode('detalhes');
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -328,6 +340,7 @@ export default function Producao() {
                                 draggable
                                 onDragStart={() => handleDragStart(pedido)}
                                 onDragEnd={handleDragEnd}
+                                onDoubleClick={() => handlePedidoDoubleClick(pedido)}
                                 title={`${pedido.numero_pedido} - ${pedido.cliente_nome}`}
                               >
                                 {pedido.numero_pedido}
@@ -427,57 +440,141 @@ export default function Producao() {
           
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Pedidos de Produção
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  {viewMode === 'lista' ? 'Pedidos de Produção' : 'Informações do Pedido'}
+                </div>
+                {viewMode === 'detalhes' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setViewMode('lista');
+                      setSelectedPedido(null);
+                    }}
+                  >
+                    Voltar
+                  </Button>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {pedidos.map((pedido) => (
+              {viewMode === 'lista' ? (
+                <>
+                  {getPedidosSemData().map((pedido) => (
                 <div
                   key={pedido.id}
                   className="p-4 border rounded-lg cursor-move hover:shadow-md transition-shadow bg-card"
                   draggable
-                  onDragStart={() => handleDragStart(pedido)}
-                  onDragEnd={handleDragEnd}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-semibold text-sm">{pedido.numero_pedido}</div>
-                    <Badge 
-                      variant="outline" 
-                      className={cn("text-xs", statusColors[pedido.status])}
+                      onDragStart={() => handleDragStart(pedido)}
+                      onDragEnd={handleDragEnd}
+                      onDoubleClick={() => handlePedidoDoubleClick(pedido)}
                     >
-                      {pedido.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <div className="font-medium">{pedido.cliente_nome}</div>
-                    <div>{pedido.produto_tipo}</div>
-                    <div className="flex items-center gap-2">
-                      <span>Cor: {pedido.produto_cor}</span>
-                    </div>
-                    <div className="text-xs">
-                      {pedido.produto_altura} x {pedido.produto_largura}
-                    </div>
-                    {pedido.venda && (pedido.venda.cidade || pedido.venda.estado) && (
-                      <div className="flex items-center gap-1 text-xs">
-                        <MapPin className="h-3 w-3" />
-                        <span>
-                          {[pedido.venda.cidade, pedido.venda.estado].filter(Boolean).join(', ')}
-                        </span>
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-semibold text-sm">{pedido.numero_pedido}</div>
+                        <Badge 
+                          variant="outline" 
+                          className={cn("text-xs", statusColors[pedido.status])}
+                        >
+                          {pedido.status.replace('_', ' ')}
+                        </Badge>
                       </div>
-                    )}
-                  </div>
-
-                  {pedido.data_entrega && (
-                    <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      Entrega: {format(pedido.data_entrega, 'dd/MM/yyyy')}
+                      
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <div className="font-medium">{pedido.cliente_nome}</div>
+                        <div>{pedido.produto_tipo}</div>
+                        <div className="flex items-center gap-2">
+                          <span>Cor: {pedido.produto_cor}</span>
+                        </div>
+                        <div className="text-xs">
+                          {pedido.produto_altura} x {pedido.produto_largura}
+                        </div>
+                        {pedido.venda && (pedido.venda.cidade || pedido.venda.estado) && (
+                          <div className="flex items-center gap-1 text-xs">
+                            <MapPin className="h-3 w-3" />
+                            <span>
+                              {[pedido.venda.cidade, pedido.venda.estado].filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {getPedidosSemData().length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">
+                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Todos os pedidos estão programados</p>
                     </div>
                   )}
+                </>
+              ) : selectedPedido && (
+                <div className="space-y-4">
+                  <div className="border rounded-lg p-4 bg-muted/10">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-lg font-semibold">{selectedPedido.numero_pedido}</h3>
+                      <Badge 
+                        variant="outline" 
+                        className={cn("text-sm", statusColors[selectedPedido.status])}
+                      >
+                        {selectedPedido.status.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-muted-foreground">Cliente:</span>
+                        <p className="mt-1">{selectedPedido.cliente_nome}</p>
+                        {selectedPedido.cliente_telefone && (
+                          <p className="text-muted-foreground">{selectedPedido.cliente_telefone}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <span className="font-medium text-muted-foreground">Produto:</span>
+                        <p className="mt-1">{selectedPedido.produto_tipo}</p>
+                        <p className="text-muted-foreground">
+                          Dimensões: {selectedPedido.produto_altura} x {selectedPedido.produto_largura}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Cor: {selectedPedido.produto_cor}
+                        </p>
+                      </div>
+
+                      {selectedPedido.venda && (
+                        <div>
+                          <span className="font-medium text-muted-foreground">Localização:</span>
+                          <div className="flex items-center gap-1 mt-1">
+                            <MapPin className="h-4 w-4" />
+                            <span>
+                              {[
+                                selectedPedido.venda.cidade, 
+                                selectedPedido.venda.estado,
+                                selectedPedido.venda.bairro
+                              ].filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedPedido.data_entrega && (
+                        <div>
+                          <span className="font-medium text-muted-foreground">Data de entrega:</span>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{format(selectedPedido.data_entrega, 'dd/MM/yyyy')}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground">
+                    Dica: Clique duas vezes em um pedido no calendário para ver suas informações
+                  </div>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         </div>
