@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface Venda {
   id: string;
@@ -296,7 +296,7 @@ export default function Faturamento() {
       ]
     ];
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [resumoData[0]],
       body: resumoData.slice(1),
       startY: 50,
