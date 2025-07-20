@@ -396,13 +396,17 @@ export default function Producao() {
                                     : { date: day, color: corDia || '' }
                                 )}
                               >
-                                <Palette 
-                                  className={cn(
-                                    "h-3 w-3",
-                                    corDia && coresBg[corDia as keyof typeof coresBg],
-                                    corDia === 'Branco' && "border border-gray-300"
-                                  )} 
-                                />
+                                {corDia ? (
+                                  <div 
+                                    className={cn(
+                                      "h-4 w-4 rounded border",
+                                      coresBg[corDia as keyof typeof coresBg],
+                                      corDia === 'Branco' && "border-gray-400"
+                                    )} 
+                                  />
+                                ) : (
+                                  <Palette className="h-3 w-3" />
+                                )}
                               </Button>
                               
                               {/* Dropdown de cores */}
