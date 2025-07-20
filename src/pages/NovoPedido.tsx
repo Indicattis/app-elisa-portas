@@ -42,6 +42,12 @@ const pedidoSchema = z.object({
   produto_largura: z.string().min(1, 'Largura é obrigatória'),
   data_entrega: z.date().optional(),
   observacoes: z.string().optional(),
+  endereco_rua: z.string().optional(),
+  endereco_numero: z.string().optional(),
+  endereco_bairro: z.string().optional(),
+  endereco_cidade: z.string().optional(),
+  endereco_estado: z.string().optional(),
+  endereco_cep: z.string().optional(),
 });
 
 type PedidoFormData = z.infer<typeof pedidoSchema>;
@@ -60,6 +66,12 @@ export default function NovoPedido() {
       produto_altura: '',
       produto_largura: '',
       observacoes: '',
+      endereco_rua: '',
+      endereco_numero: '',
+      endereco_bairro: '',
+      endereco_cidade: '',
+      endereco_estado: '',
+      endereco_cep: '',
     },
   });
 
@@ -77,6 +89,12 @@ export default function NovoPedido() {
           produto_largura: data.produto_largura,
           data_entrega: data.data_entrega?.toISOString().split('T')[0] || null,
           observacoes: data.observacoes || null,
+          endereco_rua: data.endereco_rua || null,
+          endereco_numero: data.endereco_numero || null,
+          endereco_bairro: data.endereco_bairro || null,
+          endereco_cidade: data.endereco_cidade || null,
+          endereco_estado: data.endereco_estado || null,
+          endereco_cep: data.endereco_cep || null,
           status: 'pendente',
           created_by: (await supabase.auth.getUser()).data.user?.id,
         });
@@ -164,6 +182,99 @@ export default function NovoPedido() {
                   </FormItem>
                 )}
               />
+
+              {/* Campos de Endereço */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Endereço</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="endereco_rua"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Rua</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Rua das Flores" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endereco_numero"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="endereco_bairro"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bairro</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Centro" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endereco_cidade"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cidade</FormLabel>
+                        <FormControl>
+                          <Input placeholder="São Paulo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endereco_estado"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado</FormLabel>
+                        <FormControl>
+                          <Input placeholder="SP" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="endereco_cep"
+                  render={({ field }) => (
+                    <FormItem className="md:w-1/3">
+                      <FormLabel>CEP</FormLabel>
+                      <FormControl>
+                        <Input placeholder="00000-000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField

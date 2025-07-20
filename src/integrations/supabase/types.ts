@@ -442,6 +442,12 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_entrega: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_estado: string | null
+          endereco_numero: string | null
+          endereco_rua: string | null
           id: string
           numero_pedido: string
           observacoes: string | null
@@ -459,6 +465,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_entrega?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_estado?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
           id?: string
           numero_pedido: string
           observacoes?: string | null
@@ -476,6 +488,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_entrega?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_estado?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
           id?: string
           numero_pedido?: string
           observacoes?: string | null

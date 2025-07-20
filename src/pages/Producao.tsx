@@ -21,6 +21,12 @@ interface Pedido {
   produto_largura: string;
   status: 'pendente' | 'em_andamento' | 'concluido';
   data_entrega?: Date;
+  endereco_rua?: string;
+  endereco_numero?: string;
+  endereco_bairro?: string;
+  endereco_cidade?: string;
+  endereco_estado?: string;
+  endereco_cep?: string;
   venda?: {
     cidade?: string;
     estado?: string;
@@ -106,6 +112,12 @@ export default function Producao() {
         produto_largura: pedido.produto_largura,
         status: pedido.status as 'pendente' | 'em_andamento' | 'concluido',
         data_entrega: pedido.data_entrega ? new Date(pedido.data_entrega) : undefined,
+        endereco_rua: pedido.endereco_rua,
+        endereco_numero: pedido.endereco_numero,
+        endereco_bairro: pedido.endereco_bairro,
+        endereco_cidade: pedido.endereco_cidade,
+        endereco_estado: pedido.endereco_estado,
+        endereco_cep: pedido.endereco_cep,
         venda: pedido.venda?.[0] || undefined,
       }));
 
@@ -335,7 +347,6 @@ export default function Producao() {
                         className={cn(
                           "relative min-h-[140px] p-2 border rounded-lg transition-all duration-200",
                           isSameDay(day, new Date()) && "bg-primary/10 border-primary/20",
-                          draggedPedido && !isHovered && "border-dashed border-2 border-gray-300",
                           isHovered && "bg-blue-100 border-blue-400 border-2 shadow-md",
                           !draggedPedido && "hover:bg-muted/50"
                         )}
@@ -370,12 +381,6 @@ export default function Producao() {
                                 {pedido.numero_pedido}
                               </div>
                             ))}
-                            
-                            {draggedPedido && isHovered && (
-                              <div className="text-xs text-blue-600 text-center p-2 border-2 border-dashed border-blue-400 rounded bg-blue-50">
-                                Solte aqui
-                              </div>
-                            )}
                           </div>
                           
                           {/* Seletor de cor no canto inferior direito */}
@@ -566,24 +571,32 @@ export default function Producao() {
                         </p>
                       </div>
 
-                      {selectedPedido.venda && (selectedPedido.venda.cidade || selectedPedido.venda.estado || selectedPedido.venda.bairro || selectedPedido.venda.cep) && (
+                      {(selectedPedido.endereco_rua || selectedPedido.endereco_cidade || selectedPedido.venda?.cidade) && (
                         <div>
                           <span className="font-medium text-muted-foreground">Endereço:</span>
                           <div className="flex items-start gap-1 mt-1">
                             <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
                             <div className="space-y-1">
-                              {selectedPedido.venda.bairro && (
+                              {(selectedPedido.endereco_rua || selectedPedido.endereco_numero) && (
+                                <p>
+                                  {selectedPedido.endereco_rua}
+                                  {selectedPedido.endereco_numero && `, ${selectedPedido.endereco_numero}`}
+                                </p>
+                              )}
+                              {selectedPedido.endereco_bairro && (
                                 <p className="text-muted-foreground">
-                                  {selectedPedido.venda.bairro}
+                                  {selectedPedido.endereco_bairro}
                                 </p>
                               )}
                               <p className="text-muted-foreground">
-                                {selectedPedido.venda.cidade}
-                                {selectedPedido.venda.estado && ` - ${selectedPedido.venda.estado}`}
+                                {selectedPedido.endereco_cidade || selectedPedido.venda?.cidade}
+                                {(selectedPedido.endereco_estado || selectedPedido.venda?.estado) && 
+                                  ` - ${selectedPedido.endereco_estado || selectedPedido.venda?.estado}`
+                                }
                               </p>
-                              {selectedPedido.venda.cep && (
+                              {(selectedPedido.endereco_cep || selectedPedido.venda?.cep) && (
                                 <p className="text-muted-foreground">
-                                  CEP: {selectedPedido.venda.cep}
+                                  CEP: {selectedPedido.endereco_cep || selectedPedido.venda?.cep}
                                 </p>
                               )}
                             </div>
