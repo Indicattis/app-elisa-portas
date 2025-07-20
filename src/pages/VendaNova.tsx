@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,12 +17,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
+interface Atendente {
+  user_id: string;
+  nome: string;
+}
+
 export default function VendaNova() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
+  const [atendentes, setAtendentes] = useState<Atendente[]>([]);
 
   const [formData, setFormData] = useState({
     publico_alvo: "",
@@ -41,11 +48,41 @@ export default function VendaNova() {
     resgate: false,
     forma_pagamento: "",
     observacoes_venda: "",
+    atendente_id: "",
   });
+
+  useEffect(() => {
+    fetchAtendentes();
+  }, []);
+
+  const fetchAtendentes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("user_id, nome")
+        .eq("ativo", true)
+        .in("role", ["atendente", "gerente_comercial", "administrador"])
+        .order("nome");
+
+      if (error) throw error;
+      setAtendentes(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar atendentes:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    if (!formData.atendente_id) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Selecione um atendente para a venda.",
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -58,7 +95,7 @@ export default function VendaNova() {
       const { error } = await supabase
         .from("vendas")
         .insert({
-          atendente_id: user.id,
+          atendente_id: formData.atendente_id,
           publico_alvo: formData.publico_alvo || null,
           canal_aquisicao: formData.canal_aquisicao,
           estado: formData.estado || null,
@@ -120,7 +157,7 @@ export default function VendaNova() {
         </div>
       </div>
 
-      <Card className="max-w-2xl">
+      <Card className="max-w-5xl">
         <CardHeader>
           <CardTitle>Dados da Venda</CardTitle>
           <CardDescription>
@@ -172,7 +209,26 @@ export default function VendaNova() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Dados da Venda</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="atendente_id">Atendente *</Label>
+                  <Select 
+                    value={formData.atendente_id}
+                    onValueChange={(value) => setFormData({ ...formData, atendente_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o atendente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {atendentes.map((atendente) => (
+                        <SelectItem key={atendente.user_id} value={atendente.user_id}>
+                          {atendente.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="publico_alvo">Público Alvo *</Label>
                   <Select 
@@ -280,7 +336,7 @@ export default function VendaNova() {
             {/* Valores e Custos */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Valores e Custos</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="valor_produto">Valor do Produto *</Label>
                   <Input
