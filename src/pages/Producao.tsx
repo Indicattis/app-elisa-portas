@@ -21,6 +21,12 @@ interface Pedido {
   produto_largura: string;
   status: 'pendente' | 'em_andamento' | 'concluido';
   data_entrega?: Date;
+  endereco_rua?: string;
+  endereco_numero?: string;
+  endereco_bairro?: string;
+  endereco_cidade?: string;
+  endereco_estado?: string;
+  endereco_cep?: string;
   venda?: {
     cidade?: string;
     estado?: string;
@@ -70,6 +76,7 @@ export default function Producao() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [coresCalendario, setCoresCalendario] = useState<CalendarioCore[]>([]);
   const [draggedPedido, setDraggedPedido] = useState<Pedido | null>(null);
+  const [dragHoverDay, setDragHoverDay] = useState<Date | null>(null);
   const [selectedColorForDay, setSelectedColorForDay] = useState<{date: Date, color: string} | null>(null);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [viewMode, setViewMode] = useState<'lista' | 'detalhes'>('lista');
@@ -101,6 +108,12 @@ export default function Producao() {
         produto_largura: pedido.produto_largura,
         status: pedido.status as 'pendente' | 'em_andamento' | 'concluido',
         data_entrega: pedido.data_entrega ? new Date(pedido.data_entrega) : undefined,
+        endereco_rua: pedido.endereco_rua,
+        endereco_numero: pedido.endereco_numero,
+        endereco_bairro: pedido.endereco_bairro,
+        endereco_cidade: pedido.endereco_cidade,
+        endereco_estado: pedido.endereco_estado,
+        endereco_cep: pedido.endereco_cep,
         venda: pedido.venda?.[0] || undefined,
       }));
 
@@ -110,7 +123,6 @@ export default function Producao() {
     loadPedidos();
   }, []);
 
-  // Carregar cores do calendário
   useEffect(() => {
     const loadCores = async () => {
       const { data, error } = await supabase
@@ -135,7 +147,6 @@ export default function Producao() {
     loadCores();
   }, []);
 
-  // Gerar dias do mês para o calendário
   const generateMonthDays = () => {
     const currentDate = selectedDate || new Date();
     const start = startOfMonth(currentDate);
@@ -151,6 +162,20 @@ export default function Producao() {
 
   const handleDragEnd = () => {
     setDraggedPedido(null);
+    setDragHoverDay(null);
+  };
+
+  const handleDragEnter = (date: Date) => {
+    if (draggedPedido) {
+      setDragHoverDay(date);
+    }
+  };
+
+  const handleDragLeave = () => {
+    // Pequeno delay para evitar flickering
+    setTimeout(() => {
+      setDragHoverDay(null);
+    }, 50);
   };
 
   const handleDrop = async (date: Date) => {
@@ -173,6 +198,7 @@ export default function Producao() {
         ));
       }
     }
+    setDragHoverDay(null);
   };
 
   const handleDropToTrash = async () => {
@@ -193,6 +219,7 @@ export default function Producao() {
         ));
       }
     }
+    setDragHoverDay(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -308,16 +335,21 @@ export default function Producao() {
                   {monthDays.map((day, index) => {
                     const corDia = getCorForDate(day);
                     const pedidosDia = getPedidosForDate(day);
+                    const isHovered = dragHoverDay && isSameDay(dragHoverDay, day);
                     
                     return (
                       <div
                         key={index}
                         className={cn(
-                          "relative min-h-[140px] p-2 border rounded-lg hover:bg-muted/50 transition-colors",
+                          "relative min-h-[140px] p-2 border rounded-lg transition-all duration-200",
                           isSameDay(day, new Date()) && "bg-primary/10 border-primary/20",
-                          draggedPedido && "border-dashed border-2 border-blue-300"
+                          draggedPedido && !isHovered && "border-dashed border-2 border-gray-300",
+                          isHovered && "bg-blue-100 border-blue-400 border-2 shadow-md",
+                          !draggedPedido && "hover:bg-muted/50"
                         )}
                         onDragOver={handleDragOver}
+                        onDragEnter={() => handleDragEnter(day)}
+                        onDragLeave={handleDragLeave}
                         onDrop={() => handleDrop(day)}
                       >
                         <div className="flex flex-col h-full">
@@ -347,8 +379,8 @@ export default function Producao() {
                               </div>
                             ))}
                             
-                            {draggedPedido && (
-                              <div className="text-xs text-blue-600 text-center p-2 border-2 border-dashed border-blue-300 rounded">
+                            {draggedPedido && isHovered && (
+                              <div className="text-xs text-blue-600 text-center p-2 border-2 border-dashed border-blue-400 rounded bg-blue-50">
                                 Solte aqui
                               </div>
                             )}
@@ -463,10 +495,10 @@ export default function Producao() {
               {viewMode === 'lista' ? (
                 <>
                   {getPedidosSemData().map((pedido) => (
-                <div
-                  key={pedido.id}
-                  className="p-4 border rounded-lg cursor-move hover:shadow-md transition-shadow bg-card"
-                  draggable
+                    <div
+                      key={pedido.id}
+                      className="p-4 border rounded-lg cursor-move hover:shadow-md transition-shadow bg-card"
+                      draggable
                       onDragStart={() => handleDragStart(pedido)}
                       onDragEnd={handleDragEnd}
                       onDoubleClick={() => handlePedidoDoubleClick(pedido)}
@@ -490,11 +522,11 @@ export default function Producao() {
                         <div className="text-xs">
                           {pedido.produto_altura} x {pedido.produto_largura}
                         </div>
-                        {pedido.venda && (pedido.venda.cidade || pedido.venda.estado) && (
+                        {(pedido.endereco_cidade || pedido.endereco_estado || pedido.venda?.cidade) && (
                           <div className="flex items-center gap-1 text-xs">
                             <MapPin className="h-3 w-3" />
                             <span>
-                              {[pedido.venda.cidade, pedido.venda.estado].filter(Boolean).join(', ')}
+                              {pedido.endereco_cidade || pedido.venda?.cidade}, {pedido.endereco_estado || pedido.venda?.estado}
                             </span>
                           </div>
                         )}
@@ -542,18 +574,35 @@ export default function Producao() {
                         </p>
                       </div>
 
-                      {selectedPedido.venda && (
+                      {(selectedPedido.endereco_rua || selectedPedido.venda) && (
                         <div>
-                          <span className="font-medium text-muted-foreground">Localização:</span>
-                          <div className="flex items-center gap-1 mt-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>
-                              {[
-                                selectedPedido.venda.cidade, 
-                                selectedPedido.venda.estado,
-                                selectedPedido.venda.bairro
-                              ].filter(Boolean).join(', ')}
-                            </span>
+                          <span className="font-medium text-muted-foreground">Endereço:</span>
+                          <div className="flex items-start gap-1 mt-1">
+                            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <div className="space-y-1">
+                              {selectedPedido.endereco_rua && (
+                                <p>
+                                  {selectedPedido.endereco_rua}
+                                  {selectedPedido.endereco_numero && `, ${selectedPedido.endereco_numero}`}
+                                </p>
+                              )}
+                              {selectedPedido.endereco_bairro && (
+                                <p className="text-muted-foreground">
+                                  {selectedPedido.endereco_bairro}
+                                </p>
+                              )}
+                              <p className="text-muted-foreground">
+                                {selectedPedido.endereco_cidade || selectedPedido.venda?.cidade}
+                                {(selectedPedido.endereco_estado || selectedPedido.venda?.estado) && 
+                                  ` - ${selectedPedido.endereco_estado || selectedPedido.venda?.estado}`
+                                }
+                              </p>
+                              {selectedPedido.endereco_cep && (
+                                <p className="text-muted-foreground">
+                                  CEP: {selectedPedido.endereco_cep}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}
