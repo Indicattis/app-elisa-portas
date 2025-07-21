@@ -132,7 +132,7 @@ export default function Producao() {
   };
 
   const updateCorCalendario = async (data: string, cor: string) => {
-    if (!cor) {
+    if (!cor || cor === "remove") {
       // Remover cor do dia
       const { error } = await supabase
         .from("calendario_cores")
@@ -160,7 +160,7 @@ export default function Producao() {
     }
 
     fetchCoresCalendario();
-    toast.success(cor ? "Cor definida com sucesso!" : "Cor removida com sucesso!");
+    toast.success(cor && cor !== "remove" ? "Cor definida com sucesso!" : "Cor removida com sucesso!");
   };
 
   const handleDragStart = (pedidoId: string) => {
@@ -256,7 +256,7 @@ export default function Producao() {
                 
                 {/* Dropdown de cores */}
                 <SelectContent>
-                  <SelectItem value="">Remover cor</SelectItem>
+                  <SelectItem value="remove">Remover cor</SelectItem>
                   {catalogoCores.map((cor) => (
                     <SelectItem key={cor.nome} value={cor.nome}>
                       <div className="flex items-center gap-2">
