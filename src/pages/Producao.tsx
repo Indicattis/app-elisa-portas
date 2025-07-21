@@ -1,634 +1,465 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, Plus, Package, Clock, MapPin, Palette, Trash2 } from 'lucide-react';
-import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { CalendarIcon, Palette, Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Pedido {
   id: string;
   numero_pedido: string;
   cliente_nome: string;
-  cliente_telefone?: string;
+  cliente_telefone: string;
   produto_tipo: string;
   produto_cor: string;
   produto_altura: string;
   produto_largura: string;
-  status: 'pendente' | 'em_andamento' | 'concluido';
-  data_entrega?: Date;
+  data_entrega: string | null;
+  status: string;
   endereco_rua?: string;
   endereco_numero?: string;
   endereco_bairro?: string;
   endereco_cidade?: string;
-  endereco_estado?: string;
   endereco_cep?: string;
-  venda?: {
-    cidade?: string;
-    estado?: string;
-    bairro?: string;
-    cep?: string;
-    cliente_nome?: string;
-    cliente_telefone?: string;
-    cliente_email?: string;
-  };
+  endereco_estado?: string;
+  observacoes?: string;
 }
-
-interface CalendarioCore {
-  data: Date;
-  cor: string;
-  ativa: boolean;
-}
-
-const cores = [
-  'Branco', 'Preto', 'Cinza', 'Azul', 'Verde', 'Vermelho', 
-  'Amarelo', 'Laranja', 'Rosa', 'Roxo', 'Marrom', 'Bege',
-  'Dourado', 'Prata', 'Bronze'
-];
-
-const coresBg = {
-  'Branco': 'bg-white',
-  'Preto': 'bg-black',
-  'Cinza': 'bg-gray-500',
-  'Azul': 'bg-blue-500',
-  'Verde': 'bg-green-500',
-  'Vermelho': 'bg-red-500',
-  'Amarelo': 'bg-yellow-500',
-  'Laranja': 'bg-orange-500',
-  'Rosa': 'bg-pink-500',
-  'Roxo': 'bg-purple-500',
-  'Marrom': 'bg-amber-800',
-  'Bege': 'bg-yellow-200',
-  'Dourado': 'bg-yellow-400',
-  'Prata': 'bg-gray-300',
-  'Bronze': 'bg-yellow-600'
-};
-
-const statusColors = {
-  pendente: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  em_andamento: 'bg-blue-100 text-blue-800 border-blue-200',
-  concluido: 'bg-green-100 text-green-800 border-green-200'
-};
 
 export default function Producao() {
-  const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [coresCalendario, setCoresCalendario] = useState<CalendarioCore[]>([]);
-  const [draggedPedido, setDraggedPedido] = useState<Pedido | null>(null);
-  const [dragHoverDay, setDragHoverDay] = useState<Date | null>(null);
-  const [selectedColorForDay, setSelectedColorForDay] = useState<{date: Date, color: string} | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
-  const [viewMode, setViewMode] = useState<'lista' | 'detalhes'>('lista');
-
-  // Carregar pedidos do banco
-  useEffect(() => {
-    const loadPedidos = async () => {
-      const { data, error } = await supabase
-        .from('pedidos_producao')
-        .select(`
-          *,
-          venda:vendas(cidade, estado, bairro, cep, cliente_nome, cliente_telefone, cliente_email)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Erro ao carregar pedidos:', error);
-        return;
-      }
-
-      const pedidosFormatted = data.map(pedido => ({
-        id: pedido.id,
-        numero_pedido: pedido.numero_pedido,
-        cliente_nome: pedido.cliente_nome,
-        cliente_telefone: pedido.cliente_telefone,
-        produto_tipo: pedido.produto_tipo,
-        produto_cor: pedido.produto_cor,
-        produto_altura: pedido.produto_altura,
-        produto_largura: pedido.produto_largura,
-        status: pedido.status as 'pendente' | 'em_andamento' | 'concluido',
-        data_entrega: pedido.data_entrega ? new Date(pedido.data_entrega) : undefined,
-        endereco_rua: pedido.endereco_rua,
-        endereco_numero: pedido.endereco_numero,
-        endereco_bairro: pedido.endereco_bairro,
-        endereco_cidade: pedido.endereco_cidade,
-        endereco_estado: pedido.endereco_estado,
-        endereco_cep: pedido.endereco_cep,
-        venda: pedido.venda?.[0] || undefined,
-      }));
-
-      setPedidos(pedidosFormatted);
-    };
-
-    loadPedidos();
-  }, []);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [coresCalendario, setCoresCalendario] = useState<{ [date: string]: string }>({});
+  const [draggedPedido, setDraggedPedido] = useState<string | null>(null);
+  const [isDragHovering, setIsDragHovering] = useState<string | null>(null);
+  const [catalogoCores, setCatalogoCores] = useState<{ nome: string; codigo_hex: string }[]>([]);
 
   useEffect(() => {
-    const loadCores = async () => {
-      const { data, error } = await supabase
-        .from('calendario_cores')
-        .select('*')
-        .eq('ativa', true);
+    fetchPedidos();
+    fetchCoresCalendario();
+    fetchCatalogoCores();
+  }, [selectedMonth, selectedYear]);
 
-      if (error) {
-        console.error('Erro ao carregar cores:', error);
-        return;
-      }
+  const fetchPedidos = async () => {
+    const { data, error } = await supabase
+      .from("pedidos_producao")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      const coresFormatted = data.map(cor => ({
-        data: new Date(cor.data_producao),
-        cor: cor.cor,
-        ativa: cor.ativa,
-      }));
+    if (error) {
+      toast.error("Erro ao buscar pedidos");
+      return;
+    }
 
-      setCoresCalendario(coresFormatted);
-    };
+    const pedidosFormatados = data?.map(pedido => ({
+      id: pedido.id,
+      numero_pedido: pedido.numero_pedido,
+      cliente_nome: pedido.cliente_nome,
+      cliente_telefone: pedido.cliente_telefone || '',
+      produto_tipo: pedido.produto_tipo,
+      produto_cor: pedido.produto_cor,
+      produto_altura: pedido.produto_altura,
+      produto_largura: pedido.produto_largura,
+      data_entrega: pedido.data_entrega,
+      status: pedido.status,
+      endereco_rua: pedido.endereco_rua,
+      endereco_numero: pedido.endereco_numero,
+      endereco_bairro: pedido.endereco_bairro,
+      endereco_cidade: pedido.endereco_cidade,
+      endereco_cep: pedido.endereco_cep,
+      endereco_estado: pedido.endereco_estado,
+      observacoes: pedido.observacoes
+    })) || [];
 
-    loadCores();
-  }, []);
-
-  const generateMonthDays = () => {
-    const currentDate = selectedDate || new Date();
-    const start = startOfMonth(currentDate);
-    const end = endOfMonth(currentDate);
-    return eachDayOfInterval({ start, end });
+    setPedidos(pedidosFormatados);
   };
 
-  const monthDays = generateMonthDays();
+  const fetchCoresCalendario = async () => {
+    const { data, error } = await supabase
+      .from("calendario_cores")
+      .select("data_producao, cor")
+      .eq("ativa", true);
 
-  const handleDragStart = (pedido: Pedido) => {
-    setDraggedPedido(pedido);
+    if (error) {
+      toast.error("Erro ao buscar cores do calendário");
+      return;
+    }
+
+    const coresMap: { [date: string]: string } = {};
+    data?.forEach((item) => {
+      coresMap[item.data_producao] = item.cor;
+    });
+    setCoresCalendario(coresMap);
+  };
+
+  const fetchCatalogoCores = async () => {
+    const { data, error } = await supabase
+      .from("catalogo_cores")
+      .select("nome, codigo_hex")
+      .eq("ativa", true)
+      .order("nome");
+
+    if (error) {
+      toast.error("Erro ao buscar catálogo de cores");
+      return;
+    }
+
+    setCatalogoCores(data || []);
+  };
+
+  const getCorStyle = (nomeCor: string) => {
+    const cor = catalogoCores.find(c => c.nome === nomeCor);
+    return cor ? { backgroundColor: cor.codigo_hex } : {};
+  };
+
+  const updateDataEntrega = async (pedidoId: string, novaData: string) => {
+    const { error } = await supabase
+      .from("pedidos_producao")
+      .update({ data_entrega: novaData })
+      .eq("id", pedidoId);
+
+    if (error) {
+      toast.error("Erro ao atualizar data de entrega");
+      return;
+    }
+
+    toast.success("Data de entrega atualizada com sucesso!");
+    fetchPedidos();
+  };
+
+  const updateCorCalendario = async (data: string, cor: string) => {
+    if (!cor) {
+      // Remover cor do dia
+      const { error } = await supabase
+        .from("calendario_cores")
+        .delete()
+        .eq("data_producao", data);
+
+      if (error) {
+        toast.error("Erro ao remover cor do calendário");
+        return;
+      }
+    } else {
+      // Adicionar ou atualizar cor do dia
+      const { error } = await supabase
+        .from("calendario_cores")
+        .upsert({
+          data_producao: data,
+          cor: cor,
+          ativa: true
+        });
+
+      if (error) {
+        toast.error("Erro ao atualizar cor do calendário");
+        return;
+      }
+    }
+
+    fetchCoresCalendario();
+    toast.success(cor ? "Cor definida com sucesso!" : "Cor removida com sucesso!");
+  };
+
+  const handleDragStart = (pedidoId: string) => {
+    setDraggedPedido(pedidoId);
   };
 
   const handleDragEnd = () => {
     setDraggedPedido(null);
-    setDragHoverDay(null);
+    setIsDragHovering(null);
   };
 
-  const handleDragEnter = (date: Date) => {
-    if (draggedPedido) {
-      setDragHoverDay(date);
-    }
+  const handleDragOver = (e: React.DragEvent, data: string) => {
+    e.preventDefault();
+    setIsDragHovering(data);
   };
 
   const handleDragLeave = () => {
-    // Pequeno delay para evitar flickering
-    setTimeout(() => {
-      setDragHoverDay(null);
-    }, 50);
+    setIsDragHovering(null);
   };
 
-  const handleDrop = async (date: Date) => {
-    if (draggedPedido) {
-      const dateString = format(date, 'yyyy-MM-dd');
-      
-      const { error } = await supabase
-        .from('pedidos_producao')
-        .update({ 
-          data_entrega: dateString,
-          status: 'em_andamento'
-        })
-        .eq('id', draggedPedido.id);
-
-      if (!error) {
-        setPedidos(prev => prev.map(p => 
-          p.id === draggedPedido.id 
-            ? { ...p, data_entrega: date, status: 'em_andamento' as const }
-            : p
-        ));
-      }
-    }
-    setDragHoverDay(null);
-  };
-
-  const handleDropToTrash = async () => {
-    if (draggedPedido) {
-      const { error } = await supabase
-        .from('pedidos_producao')
-        .update({ 
-          data_entrega: null,
-          status: 'pendente'
-        })
-        .eq('id', draggedPedido.id);
-
-      if (!error) {
-        setPedidos(prev => prev.map(p => 
-          p.id === draggedPedido.id 
-            ? { ...p, data_entrega: undefined, status: 'pendente' as const }
-            : p
-        ));
-      }
-    }
-    setDragHoverDay(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent, novaData: string) => {
     e.preventDefault();
+    if (draggedPedido) {
+      updateDataEntrega(draggedPedido, novaData);
+    }
+    setDraggedPedido(null);
+    setIsDragHovering(null);
   };
 
-  const getCorForDate = (date: Date) => {
-    return coresCalendario.find(c => isSameDay(c.data, date))?.cor;
+  const getDaysInMonth = (month: number, year: number) => {
+    const date = new Date(year, month + 1, 0);
+    return date.getDate();
   };
 
-  const updateCorForDate = async (date: Date, cor: string) => {
-    const dateString = format(date, 'yyyy-MM-dd');
-    
-    // Primeiro, verificar se já existe uma cor para essa data
-    const { data: existing } = await supabase
-      .from('calendario_cores')
-      .select('id')
-      .eq('data_producao', dateString)
-      .eq('ativa', true)
-      .single();
+  const getFirstDayOfMonth = (month: number, year: number) => {
+    const date = new Date(year, month, 1);
+    return date.getDay();
+  };
 
-    let error;
-    
-    if (existing) {
-      // Atualizar registro existente
-      const { error: updateError } = await supabase
-        .from('calendario_cores')
-        .update({ cor })
-        .eq('id', existing.id);
-      error = updateError;
-    } else {
-      // Criar novo registro
-      const { error: insertError } = await supabase
-        .from('calendario_cores')
-        .insert({
-          data_producao: dateString,
-          cor,
-          ativa: true,
-        });
-      error = insertError;
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+    const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear);
+    const days = [];
+
+    // Dias vazios no início
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-24"></div>);
     }
 
-    if (error) {
-      console.error('Erro ao salvar cor:', error);
-      return;
-    }
+    // Dias do mês
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dataString = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const pedidosNoDia = pedidos.filter(p => p.data_entrega === dataString);
+      const corDia = coresCalendario[dataString];
 
-    setCoresCalendario(prev => {
-      const existingIndex = prev.findIndex(c => isSameDay(c.data, date));
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = { ...updated[existingIndex], cor };
-        return updated;
-      } else {
-        return [...prev, { data: date, cor, ativa: true }];
-      }
-    });
-  };
-
-  const getPedidosForDate = (date: Date) => {
-    return pedidos.filter(pedido => 
-      pedido.data_entrega && isSameDay(pedido.data_entrega, date)
-    );
-  };
-
-  // Pedidos sem data (para listagem)
-  const getPedidosSemData = () => {
-    return pedidos.filter(pedido => !pedido.data_entrega);
-  };
-
-  const handlePedidoDoubleClick = (pedido: Pedido) => {
-    setSelectedPedido(pedido);
-    setViewMode('detalhes');
-  };
-
-  return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-foreground">Produção</h1>
-        <Button 
-          className="gap-2" 
-          onClick={() => navigate('/dashboard/novo-pedido')}
-        >
-          <Plus className="h-4 w-4" />
-          Criar Pedido
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Calendário de Cores */}
-        <div className="lg:col-span-3 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5" />
-                Calendário de Produção
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Calendário expandido por mês */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  {format(selectedDate || new Date(), 'MMMM yyyy', { locale: ptBR })}
-                </h3>
-                <div className="grid grid-cols-7 gap-2 mb-4">
-                  {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((day) => (
-                    <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-2">
-                  {monthDays.map((day, index) => {
-                    const corDia = getCorForDate(day);
-                    const pedidosDia = getPedidosForDate(day);
-                    const isHovered = dragHoverDay && isSameDay(dragHoverDay, day);
-                    
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "relative min-h-[140px] p-2 border rounded-lg transition-all duration-200",
-                          isSameDay(day, new Date()) && "bg-primary/10 border-primary/20",
-                          isHovered && "bg-blue-100 border-blue-400 border-2 shadow-md",
-                          !draggedPedido && "hover:bg-muted/50"
-                        )}
-                        onDragOver={handleDragOver}
-                        onDragEnter={() => handleDragEnter(day)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={() => handleDrop(day)}
-                      >
-                        <div className="flex flex-col h-full">
-                          {/* Cabeçalho do dia */}
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-sm font-medium">
-                              {format(day, 'd')}
-                            </div>
-                          </div>
-                          
-                          {/* Lista de pedidos */}
-                          <div className="flex-1 space-y-1 mb-8">
-                            {pedidosDia.map((pedido) => (
-                              <div
-                                key={pedido.id}
-                                className={cn(
-                                  "text-xs p-1 rounded cursor-move border",
-                                  statusColors[pedido.status]
-                                )}
-                                draggable
-                                onDragStart={() => handleDragStart(pedido)}
-                                onDragEnd={handleDragEnd}
-                                onDoubleClick={() => handlePedidoDoubleClick(pedido)}
-                                title={`${pedido.numero_pedido} - ${pedido.cliente_nome}`}
-                              >
-                                {pedido.numero_pedido}
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* Seletor de cor no canto inferior direito */}
-                          <div className="absolute bottom-2 right-2">
-                            <div className="relative">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0"
-                                onClick={() => setSelectedColorForDay(
-                                  selectedColorForDay?.date && isSameDay(selectedColorForDay.date, day) 
-                                    ? null 
-                                    : { date: day, color: corDia || '' }
-                                )}
-                              >
-                                {corDia ? (
-                                  <div 
-                                    className={cn(
-                                      "h-4 w-4 rounded border",
-                                      coresBg[corDia as keyof typeof coresBg],
-                                      corDia === 'Branco' && "border-gray-400"
-                                    )} 
-                                  />
-                                ) : (
-                                  <Palette className="h-3 w-3" />
-                                )}
-                              </Button>
-                              
-                              {/* Dropdown de cores */}
-                              {selectedColorForDay?.date && isSameDay(selectedColorForDay.date, day) && (
-                                <div className="absolute bottom-8 right-0 bg-white border shadow-lg rounded-md p-2 z-10 min-w-[120px]">
-                                  <div className="grid grid-cols-3 gap-1">
-                                    {cores.map(cor => (
-                                      <button
-                                        key={cor}
-                                        className={cn(
-                                          "w-6 h-6 rounded border-2 hover:scale-110 transition-transform",
-                                          coresBg[cor as keyof typeof coresBg],
-                                          cor === 'Branco' && "border-gray-300",
-                                          corDia === cor && "ring-2 ring-blue-500"
-                                        )}
-                                        onClick={() => {
-                                          updateCorForDate(day, cor);
-                                          setSelectedColorForDay(null);
-                                        }}
-                                        title={cor}
-                                      />
-                                    ))}
-                                  </div>
-                                  <button
-                                    className="w-full text-xs mt-2 p-1 text-gray-500 hover:text-gray-700"
-                                    onClick={() => {
-                                      updateCorForDate(day, '');
-                                      setSelectedColorForDay(null);
-                                    }}
-                                  >
-                                    Remover cor
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Lista de Pedidos */}
-        <div className="space-y-4">
-          {/* Lixeira */}
-          {draggedPedido && (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent 
-                className="p-4 text-center"
-                onDragOver={handleDragOver}
-                onDrop={handleDropToTrash}
-              >
-                <Trash2 className="h-8 w-8 mx-auto text-red-500 mb-2" />
-                <p className="text-sm text-red-600">
-                  Solte aqui para remover da programação
-                </p>
-              </CardContent>
-            </Card>
+      days.push(
+        <div
+          key={day}
+          className={cn(
+            "h-24 border border-border p-1 flex flex-col justify-between relative",
+            isDragHovering === dataString && "bg-blue-100"
           )}
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  {viewMode === 'lista' ? 'Pedidos de Produção' : 'Informações do Pedido'}
-                </div>
-                {viewMode === 'detalhes' && (
+          onDragOver={(e) => handleDragOver(e, dataString)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, dataString)}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">{day}</span>
+            
+            {/* Seletor de cor para o dia */}
+            <div className="relative">
+              <Select
+                value={corDia || ""}
+                onValueChange={(cor) => updateCorCalendario(dataString, cor)}
+              >
+                <SelectTrigger className="h-6 w-6 p-0 border-none">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setViewMode('lista');
-                      setSelectedPedido(null);
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {corDia ? (
+                      <div 
+                        className="h-4 w-4 rounded border border-gray-300" 
+                        style={getCorStyle(corDia)}
+                      />
+                    ) : (
+                      <Palette className="h-3 w-3" />
+                    )}
+                  </Button>
+                </SelectTrigger>
+                
+                {/* Dropdown de cores */}
+                <SelectContent>
+                  <SelectItem value="">Remover cor</SelectItem>
+                  {catalogoCores.map((cor) => (
+                    <SelectItem key={cor.nome} value={cor.nome}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="h-3 w-3 rounded border border-gray-300" 
+                          style={{ backgroundColor: cor.codigo_hex }}
+                        />
+                        {cor.nome}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1 overflow-hidden">
+            {pedidosNoDia.map((pedido) => (
+              <div
+                key={pedido.id}
+                className="bg-primary/10 text-primary text-xs p-1 rounded cursor-move"
+                draggable
+                onDragStart={() => handleDragStart(pedido.id)}
+                onDragEnd={handleDragEnd}
+                onClick={() => {
+                  setSelectedPedido(pedido);
+                  setDialogOpen(true);
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium truncate">{pedido.numero_pedido}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPedido(pedido);
+                      setDialogOpen(true);
                     }}
                   >
-                    Voltar
+                    <Eye className="h-3 w-3" />
                   </Button>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {viewMode === 'lista' ? (
-                <>
-                  {getPedidosSemData().map((pedido) => (
-                    <div
-                      key={pedido.id}
-                      className="p-4 border rounded-lg cursor-move hover:shadow-md transition-shadow bg-card"
-                      draggable
-                      onDragStart={() => handleDragStart(pedido)}
-                      onDragEnd={handleDragEnd}
-                      onDoubleClick={() => handlePedidoDoubleClick(pedido)}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="font-semibold text-sm">{pedido.numero_pedido}</div>
-                        <Badge 
-                          variant="outline" 
-                          className={cn("text-xs", statusColors[pedido.status])}
-                        >
-                          {pedido.status.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <div className="font-medium">{pedido.cliente_nome}</div>
-                        <div>{pedido.produto_tipo}</div>
-                        <div className="flex items-center gap-2">
-                          <span>Cor: {pedido.produto_cor}</span>
-                        </div>
-                        <div className="text-xs">
-                          {pedido.produto_altura} x {pedido.produto_largura}
-                        </div>
-                        {(pedido.venda?.cidade || pedido.venda?.estado) && (
-                          <div className="flex items-center gap-1 text-xs">
-                            <MapPin className="h-3 w-3" />
-                            <span>
-                              {pedido.venda?.cidade}, {pedido.venda?.estado}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {getPedidosSemData().length === 0 && (
-                    <div className="text-center text-muted-foreground py-8">
-                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Todos os pedidos estão programados</p>
-                    </div>
-                  )}
-                </>
-              ) : selectedPedido && (
-                <div className="space-y-4">
-                  <div className="border rounded-lg p-4 bg-muted/10">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-lg font-semibold">{selectedPedido.numero_pedido}</h3>
-                      <Badge 
-                        variant="outline" 
-                        className={cn("text-sm", statusColors[selectedPedido.status])}
-                      >
-                        {selectedPedido.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-muted-foreground">Cliente:</span>
-                        <p className="mt-1">{selectedPedido.cliente_nome}</p>
-                        {selectedPedido.cliente_telefone && (
-                          <p className="text-muted-foreground">{selectedPedido.cliente_telefone}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <span className="font-medium text-muted-foreground">Produto:</span>
-                        <p className="mt-1">{selectedPedido.produto_tipo}</p>
-                        <p className="text-muted-foreground">
-                          Dimensões: {selectedPedido.produto_altura} x {selectedPedido.produto_largura}
-                        </p>
-                        <p className="text-muted-foreground">
-                          Cor: {selectedPedido.produto_cor}
-                        </p>
-                      </div>
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {pedido.cliente_nome}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="h-4 w-4 rounded-full border border-gray-300" 
+                    style={getCorStyle(pedido.produto_cor)}
+                  />
+                  <span>Cor: {pedido.produto_cor}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
-                      {(selectedPedido.endereco_rua || selectedPedido.endereco_cidade || selectedPedido.venda?.cidade) && (
-                        <div>
-                          <span className="font-medium text-muted-foreground">Endereço:</span>
-                          <div className="flex items-start gap-1 mt-1">
-                            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                            <div className="space-y-1">
-                              {(selectedPedido.endereco_rua || selectedPedido.endereco_numero) && (
-                                <p>
-                                  {selectedPedido.endereco_rua}
-                                  {selectedPedido.endereco_numero && `, ${selectedPedido.endereco_numero}`}
-                                </p>
-                              )}
-                              {selectedPedido.endereco_bairro && (
-                                <p className="text-muted-foreground">
-                                  {selectedPedido.endereco_bairro}
-                                </p>
-                              )}
-                              <p className="text-muted-foreground">
-                                {selectedPedido.endereco_cidade || selectedPedido.venda?.cidade}
-                                {(selectedPedido.endereco_estado || selectedPedido.venda?.estado) && 
-                                  ` - ${selectedPedido.endereco_estado || selectedPedido.venda?.estado}`
-                                }
-                              </p>
-                              {(selectedPedido.endereco_cep || selectedPedido.venda?.cep) && (
-                                <p className="text-muted-foreground">
-                                  CEP: {selectedPedido.endereco_cep || selectedPedido.venda?.cep}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+    return days;
+  };
 
-                      {selectedPedido.data_entrega && (
-                        <div>
-                          <span className="font-medium text-muted-foreground">Data de entrega:</span>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{format(selectedPedido.data_entrega, 'dd/MM/yyyy')}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="text-xs text-muted-foreground">
-                    Dica: Clique duas vezes em um pedido no calendário para ver suas informações
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
+
+  return (
+    <div className="container mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Calendário de Produção</h1>
+        
+        <div className="flex items-center gap-4">
+          <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month, index) => (
+                <SelectItem key={index} value={index.toString()}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Calendário */}
+      <div className="bg-card rounded-lg border">
+        {/* Cabeçalho dos dias da semana */}
+        <div className="grid grid-cols-7 gap-0 border-b">
+          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
+            <div key={day} className="p-4 text-center font-medium bg-muted/50">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Grid dos dias */}
+        <div className="grid grid-cols-7 gap-0">
+          {renderCalendar()}
+        </div>
+      </div>
+
+      {/* Dialog de detalhes do pedido */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Pedido</DialogTitle>
+          </DialogHeader>
+          {selectedPedido && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg">
+                  Pedido {selectedPedido.numero_pedido}
+                </h3>
+                <p className="text-muted-foreground">
+                  Status: {selectedPedido.status}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Cliente</h4>
+                <p>{selectedPedido.cliente_nome}</p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedPedido.cliente_telefone}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Produto</h4>
+                <p>
+                  {selectedPedido.produto_tipo} - {selectedPedido.produto_altura} x {selectedPedido.produto_largura}
+                </p>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div 
+                    className="h-4 w-4 rounded-full border border-gray-300" 
+                    style={getCorStyle(selectedPedido.produto_cor)}
+                  />
+                  <span>Cor: {selectedPedido.produto_cor}</span>
+                </div>
+              </div>
+
+              {(selectedPedido.endereco_rua || selectedPedido.endereco_cidade) && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Endereço</h4>
+                  <div className="text-sm space-y-1">
+                    {selectedPedido.endereco_rua && (
+                      <p>{selectedPedido.endereco_rua}, {selectedPedido.endereco_numero}</p>
+                    )}
+                    {selectedPedido.endereco_bairro && (
+                      <p>{selectedPedido.endereco_bairro}</p>
+                    )}
+                    {selectedPedido.endereco_cidade && (
+                      <p>{selectedPedido.endereco_cidade} - {selectedPedido.endereco_estado}</p>
+                    )}
+                    {selectedPedido.endereco_cep && (
+                      <p>CEP: {selectedPedido.endereco_cep}</p>
+                    )}
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+
+              {selectedPedido.observacoes && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Observações</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedPedido.observacoes}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Data de Entrega</h4>
+                <p className="text-sm">
+                  {selectedPedido.data_entrega 
+                    ? new Date(selectedPedido.data_entrega + 'T00:00:00').toLocaleDateString('pt-BR')
+                    : "Não definida"
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

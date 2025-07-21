@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      catalogo_cores: {
+        Row: {
+          ativa: boolean
+          codigo_hex: string
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          codigo_hex: string
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          codigo_hex?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       elisaportas_leads: {
         Row: {
           altura_porta: string | null

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -46,12 +47,14 @@ export default function LeadEdit() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [catalogoCores, setCatalogoCores] = useState<{ nome: string; codigo_hex: string }[]>([]);
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (id) {
       fetchLead();
+      fetchCatalogoCores();
     }
   }, [id]);
 
@@ -76,6 +79,25 @@ export default function LeadEdit() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchCatalogoCores = async () => {
+    const { data, error } = await supabase
+      .from("catalogo_cores")
+      .select("nome, codigo_hex")
+      .eq("ativa", true)
+      .order("nome");
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao buscar catálogo de cores",
+      });
+      return;
+    }
+
+    setCatalogoCores(data || []);
   };
 
   const handleSave = async () => {
@@ -374,11 +396,40 @@ export default function LeadEdit() {
 
             <div className="space-y-2">
               <Label htmlFor="cor_porta">Cor da Porta</Label>
-              <Input
-                id="cor_porta"
-                value={lead.cor_porta || ""}
-                onChange={(e) => setLead({ ...lead, cor_porta: e.target.value })}
-              />
+              <Select 
+                value={lead.cor_porta || ""} 
+                onValueChange={(value) => setLead({ ...lead, cor_porta: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a cor">
+                    {lead.cor_porta && (
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="h-3 w-3 rounded border border-gray-300" 
+                          style={{ 
+                            backgroundColor: catalogoCores.find(c => c.nome === lead.cor_porta)?.codigo_hex 
+                          }}
+                        />
+                        {lead.cor_porta}
+                      </div>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Remover cor</SelectItem>
+                  {catalogoCores.map((cor) => (
+                    <SelectItem key={cor.nome} value={cor.nome}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="h-3 w-3 rounded border border-gray-300" 
+                          style={{ backgroundColor: cor.codigo_hex }}
+                        />
+                        {cor.nome}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

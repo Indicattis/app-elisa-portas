@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,6 +54,7 @@ type PedidoFormData = z.infer<typeof pedidoSchema>;
 
 export default function NovoPedido() {
   const navigate = useNavigate();
+  const [catalogoCores, setCatalogoCores] = useState<{ nome: string; codigo_hex: string }[]>([]);
   
   const form = useForm<PedidoFormData>({
     resolver: zodResolver(pedidoSchema),
@@ -74,6 +75,29 @@ export default function NovoPedido() {
       endereco_cep: '',
     },
   });
+
+  useEffect(() => {
+    fetchCatalogoCores();
+  }, []);
+
+  const fetchCatalogoCores = async () => {
+    const { data, error } = await supabase
+      .from("catalogo_cores")
+      .select("nome, codigo_hex")
+      .eq("ativa", true)
+      .order("nome");
+
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao buscar catálogo de cores',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCatalogoCores(data || []);
+  };
 
   const onSubmit = async (data: PedidoFormData) => {
     try {
@@ -315,9 +339,15 @@ export default function NovoPedido() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {cores.map((cor) => (
-                            <SelectItem key={cor} value={cor}>
-                              {cor}
+                          {catalogoCores.map((cor) => (
+                            <SelectItem key={cor.nome} value={cor.nome}>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="h-3 w-3 rounded border border-gray-300" 
+                                  style={{ backgroundColor: cor.codigo_hex }}
+                                />
+                                {cor.nome}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
