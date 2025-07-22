@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Calendar, Package, Phone, MapPin } from "lucide-react";
+import { ArrowLeft, Calendar, Package, Phone, MapPin, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProducaoChecklist } from "./ProducaoChecklist";
+import { EditPedidoModal } from "./EditPedidoModal";
 
 interface Pedido {
   id: string;
@@ -32,6 +34,7 @@ interface ProductionSidebarProps {
   onPedidoDoubleClick: (pedido: Pedido) => void;
   onPedidoDragStart: (pedidoId: string) => void;
   onPedidoDragEnd: () => void;
+  onPedidosUpdated: () => void;
 }
 
 export function ProductionSidebar({ 
@@ -39,10 +42,12 @@ export function ProductionSidebar({
   catalogoCores, 
   onPedidoDoubleClick,
   onPedidoDragStart,
-  onPedidoDragEnd
+  onPedidoDragEnd,
+  onPedidosUpdated
 }: ProductionSidebarProps) {
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [view, setView] = useState<'list' | 'detail'>('list');
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const getCorStyle = (nomeCor: string) => {
     const cor = catalogoCores.find(c => c.nome === nomeCor);
@@ -60,126 +65,184 @@ export function ProductionSidebar({
     setSelectedPedido(null);
   };
 
+  const handleEditClick = () => {
+    setEditModalOpen(true);
+  };
+
+  const handleEditSave = () => {
+    onPedidosUpdated();
+    // Atualizar o pedido selecionado se ainda estiver na visualização de detalhes
+    if (selectedPedido) {
+      const updatedPedido = pedidos.find(p => p.id === selectedPedido.id);
+      if (updatedPedido) {
+        setSelectedPedido(updatedPedido);
+      }
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pendente':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'em_andamento':
+        return 'bg-blue-100 text-blue-800';
+      case 'para_instalacao':
+        return 'bg-green-100 text-green-800';
+      case 'concluido':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const pedidosSemData = pedidos.filter(p => !p.data_entrega);
   const pedidosComData = pedidos.filter(p => p.data_entrega);
 
   if (view === 'detail' && selectedPedido) {
     return (
-      <div className="w-80 bg-card border-l border-border flex flex-col h-full">
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackToList}
-              className="p-1 h-8 w-8"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h3 className="font-semibold">Detalhes do Pedido</h3>
-          </div>
-        </div>
-
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-lg mb-1">
-                Pedido {selectedPedido.numero_pedido}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Status: {selectedPedido.status}
-              </p>
+      <>
+        <div className="w-80 bg-card border-l border-border flex flex-col h-full">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToList}
+                className="p-1 h-8 w-8"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h3 className="font-semibold flex-1">Detalhes do Pedido</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleEditClick}
+                className="p-1 h-8 w-8"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
 
-            <Separator />
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-lg mb-1">
+                  Pedido {selectedPedido.numero_pedido}
+                </h4>
+                <span className={cn(
+                  "text-xs px-2 py-1 rounded-full",
+                  getStatusColor(selectedPedido.status)
+                )}>
+                  {selectedPedido.status}
+                </span>
+              </div>
 
-            <div>
-              <h5 className="font-medium mb-2 flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                Cliente
-              </h5>
-              <p className="text-sm">{selectedPedido.cliente_nome}</p>
-              {selectedPedido.cliente_telefone && (
-                <p className="text-sm text-muted-foreground">
-                  {selectedPedido.cliente_telefone}
+              <Separator />
+
+              <div>
+                <h5 className="font-medium mb-2 flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Cliente
+                </h5>
+                <p className="text-sm">{selectedPedido.cliente_nome}</p>
+                {selectedPedido.cliente_telefone && (
+                  <p className="text-sm text-muted-foreground">
+                    {selectedPedido.cliente_telefone}
+                  </p>
+                )}
+              </div>
+
+              <Separator />
+
+              <div>
+                <h5 className="font-medium mb-2 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Produto
+                </h5>
+                <p className="text-sm">
+                  {selectedPedido.produto_tipo} - {selectedPedido.produto_altura} x {selectedPedido.produto_largura}
                 </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div 
+                    className="h-4 w-4 rounded-full border border-gray-300" 
+                    style={getCorStyle(selectedPedido.produto_cor)}
+                  />
+                  <span className="text-sm">Cor: {selectedPedido.produto_cor}</span>
+                </div>
+              </div>
+
+              <Separator />
+
+              <ProducaoChecklist 
+                pedidoId={selectedPedido.id}
+                onStatusChange={onPedidosUpdated}
+              />
+
+              {(selectedPedido.endereco_rua || selectedPedido.endereco_cidade) && (
+                <>
+                  <Separator />
+                  <div>
+                    <h5 className="font-medium mb-2 flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Endereço
+                    </h5>
+                    <div className="text-sm space-y-1">
+                      {selectedPedido.endereco_rua && (
+                        <p>{selectedPedido.endereco_rua}, {selectedPedido.endereco_numero}</p>
+                      )}
+                      {selectedPedido.endereco_bairro && (
+                        <p>{selectedPedido.endereco_bairro}</p>
+                      )}
+                      {selectedPedido.endereco_cidade && (
+                        <p>{selectedPedido.endereco_cidade} - {selectedPedido.endereco_estado}</p>
+                      )}
+                      {selectedPedido.endereco_cep && (
+                        <p>CEP: {selectedPedido.endereco_cep}</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {selectedPedido.data_entrega && (
+                <>
+                  <Separator />
+                  <div>
+                    <h5 className="font-medium mb-2 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Data de Entrega
+                    </h5>
+                    <p className="text-sm">
+                      {new Date(selectedPedido.data_entrega + 'T00:00:00').toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {selectedPedido.observacoes && (
+                <>
+                  <Separator />
+                  <div>
+                    <h5 className="font-medium mb-2">Observações</h5>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedPedido.observacoes}
+                    </p>
+                  </div>
+                </>
               )}
             </div>
+          </ScrollArea>
+        </div>
 
-            <Separator />
-
-            <div>
-              <h5 className="font-medium mb-2 flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Produto
-              </h5>
-              <p className="text-sm">
-                {selectedPedido.produto_tipo} - {selectedPedido.produto_altura} x {selectedPedido.produto_largura}
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <div 
-                  className="h-4 w-4 rounded-full border border-gray-300" 
-                  style={getCorStyle(selectedPedido.produto_cor)}
-                />
-                <span className="text-sm">Cor: {selectedPedido.produto_cor}</span>
-              </div>
-            </div>
-
-            {(selectedPedido.endereco_rua || selectedPedido.endereco_cidade) && (
-              <>
-                <Separator />
-                <div>
-                  <h5 className="font-medium mb-2 flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Endereço
-                  </h5>
-                  <div className="text-sm space-y-1">
-                    {selectedPedido.endereco_rua && (
-                      <p>{selectedPedido.endereco_rua}, {selectedPedido.endereco_numero}</p>
-                    )}
-                    {selectedPedido.endereco_bairro && (
-                      <p>{selectedPedido.endereco_bairro}</p>
-                    )}
-                    {selectedPedido.endereco_cidade && (
-                      <p>{selectedPedido.endereco_cidade} - {selectedPedido.endereco_estado}</p>
-                    )}
-                    {selectedPedido.endereco_cep && (
-                      <p>CEP: {selectedPedido.endereco_cep}</p>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {selectedPedido.data_entrega && (
-              <>
-                <Separator />
-                <div>
-                  <h5 className="font-medium mb-2 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Data de Entrega
-                  </h5>
-                  <p className="text-sm">
-                    {new Date(selectedPedido.data_entrega + 'T00:00:00').toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              </>
-            )}
-
-            {selectedPedido.observacoes && (
-              <>
-                <Separator />
-                <div>
-                  <h5 className="font-medium mb-2">Observações</h5>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedPedido.observacoes}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        </ScrollArea>
-      </div>
+        <EditPedidoModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          pedido={selectedPedido}
+          onSave={handleEditSave}
+          catalogoCores={catalogoCores}
+        />
+      </>
     );
   }
 
@@ -203,7 +266,10 @@ export function ProductionSidebar({
             {pedidosSemData.map((pedido) => (
               <div
                 key={pedido.id}
-                className="bg-background border border-border rounded-lg p-3 cursor-move hover:bg-accent/50 transition-colors"
+                className={cn(
+                  "border rounded-lg p-3 cursor-move hover:bg-accent/50 transition-colors",
+                  pedido.status === 'para_instalacao' ? 'bg-green-50 border-green-200' : 'bg-background border-border'
+                )}
                 draggable
                 onDragStart={() => onPedidoDragStart(pedido.id)}
                 onDragEnd={onPedidoDragEnd}
@@ -214,9 +280,7 @@ export function ProductionSidebar({
                     <span className="font-medium text-sm">{pedido.numero_pedido}</span>
                     <span className={cn(
                       "text-xs px-2 py-1 rounded-full",
-                      pedido.status === 'pendente' && "bg-yellow-100 text-yellow-800",
-                      pedido.status === 'em_andamento' && "bg-blue-100 text-blue-800",
-                      pedido.status === 'concluido' && "bg-green-100 text-green-800"
+                      getStatusColor(pedido.status)
                     )}>
                       {pedido.status}
                     </span>
@@ -251,7 +315,10 @@ export function ProductionSidebar({
             {pedidosComData.map((pedido) => (
               <div
                 key={pedido.id}
-                className="bg-background border border-border rounded-lg p-3 cursor-move hover:bg-accent/50 transition-colors"
+                className={cn(
+                  "border rounded-lg p-3 cursor-move hover:bg-accent/50 transition-colors",
+                  pedido.status === 'para_instalacao' ? 'bg-green-50 border-green-200' : 'bg-background border-border'
+                )}
                 draggable
                 onDragStart={() => onPedidoDragStart(pedido.id)}
                 onDragEnd={onPedidoDragEnd}
@@ -262,9 +329,7 @@ export function ProductionSidebar({
                     <span className="font-medium text-sm">{pedido.numero_pedido}</span>
                     <span className={cn(
                       "text-xs px-2 py-1 rounded-full",
-                      pedido.status === 'pendente' && "bg-yellow-100 text-yellow-800",
-                      pedido.status === 'em_andamento' && "bg-blue-100 text-blue-800",
-                      pedido.status === 'concluido' && "bg-green-100 text-green-800"
+                      getStatusColor(pedido.status)
                     )}>
                       {pedido.status}
                     </span>

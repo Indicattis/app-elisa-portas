@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CalendarIcon, Palette, Eye } from "lucide-react";
+import { CalendarIcon, Palette, Eye, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProductionSidebar } from "@/components/production/ProductionSidebar";
 
@@ -29,6 +30,7 @@ interface Pedido {
 }
 
 export default function Producao() {
+  const navigate = useNavigate();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -115,6 +117,13 @@ export default function Producao() {
   const getCorStyle = (nomeCor: string) => {
     const cor = catalogoCores.find(c => c.nome === nomeCor);
     return cor ? { backgroundColor: cor.codigo_hex } : {};
+  };
+
+  const getPedidoStyle = (pedido: Pedido) => {
+    if (pedido.status === 'para_instalacao') {
+      return "bg-green-100 border-green-400";
+    }
+    return "bg-primary/10 text-primary";
   };
 
   const updateDataEntrega = async (pedidoId: string, novaData: string) => {
@@ -205,6 +214,10 @@ export default function Producao() {
     setDialogOpen(true);
   };
 
+  const handleNovoPedido = () => {
+    navigate('/dashboard/novo-pedido');
+  };
+
   const getDaysInMonth = (month: number, year: number) => {
     const date = new Date(year, month + 1, 0);
     return date.getDate();
@@ -292,7 +305,10 @@ export default function Producao() {
             {pedidosNoDia.map((pedido) => (
               <div
                 key={pedido.id}
-                className="bg-primary/10 text-primary text-xs p-1 rounded cursor-move"
+                className={cn(
+                  "text-xs p-1 rounded cursor-move",
+                  getPedidoStyle(pedido)
+                )}
                 draggable
                 onDragStart={() => handleDragStart(pedido.id)}
                 onDragEnd={handleDragEnd}
@@ -352,6 +368,11 @@ export default function Producao() {
             <h1 className="text-3xl font-bold">Calendário de Produção</h1>
             
             <div className="flex items-center gap-4">
+              <Button onClick={handleNovoPedido} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Novo Pedido
+              </Button>
+
               <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -406,6 +427,7 @@ export default function Producao() {
         onPedidoDoubleClick={handlePedidoDoubleClick}
         onPedidoDragStart={handlePedidoDragStart}
         onPedidoDragEnd={handlePedidoDragEnd}
+        onPedidosUpdated={fetchPedidos}
       />
 
       {/* Dialog de detalhes do pedido */}

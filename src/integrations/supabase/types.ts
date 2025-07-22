@@ -420,6 +420,10 @@ export type Database = {
           data_inicio: string | null
           id: string
           observacoes: string | null
+          ordem_perfiladeira_concluida: boolean | null
+          ordem_pintura_concluida: boolean | null
+          ordem_separacao_concluida: boolean | null
+          ordem_soldagem_concluida: boolean | null
           pedido_id: string
           responsavel_id: string | null
           status: string
@@ -433,6 +437,10 @@ export type Database = {
           data_inicio?: string | null
           id?: string
           observacoes?: string | null
+          ordem_perfiladeira_concluida?: boolean | null
+          ordem_pintura_concluida?: boolean | null
+          ordem_separacao_concluida?: boolean | null
+          ordem_soldagem_concluida?: boolean | null
           pedido_id: string
           responsavel_id?: string | null
           status?: string
@@ -446,6 +454,10 @@ export type Database = {
           data_inicio?: string | null
           id?: string
           observacoes?: string | null
+          ordem_perfiladeira_concluida?: boolean | null
+          ordem_pintura_concluida?: boolean | null
+          ordem_separacao_concluida?: boolean | null
+          ordem_soldagem_concluida?: boolean | null
           pedido_id?: string
           responsavel_id?: string | null
           status?: string
