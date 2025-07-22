@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { CalendarIcon, Palette, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProductionSidebar } from "@/components/production/ProductionSidebar";
 
 interface Pedido {
   id: string;
@@ -163,6 +164,15 @@ export default function Producao() {
     toast.success(cor && cor !== "remove" ? "Cor definida com sucesso!" : "Cor removida com sucesso!");
   };
 
+  const handlePedidoDragStart = (pedidoId: string) => {
+    setDraggedPedido(pedidoId);
+  };
+
+  const handlePedidoDragEnd = () => {
+    setDraggedPedido(null);
+    setIsDragHovering(null);
+  };
+
   const handleDragStart = (pedidoId: string) => {
     setDraggedPedido(pedidoId);
   };
@@ -188,6 +198,11 @@ export default function Producao() {
     }
     setDraggedPedido(null);
     setIsDragHovering(null);
+  };
+
+  const handlePedidoDoubleClick = (pedido: Pedido) => {
+    setSelectedPedido(pedido);
+    setDialogOpen(true);
   };
 
   const getDaysInMonth = (month: number, year: number) => {
@@ -281,7 +296,7 @@ export default function Producao() {
                 draggable
                 onDragStart={() => handleDragStart(pedido.id)}
                 onDragEnd={handleDragEnd}
-                onClick={() => {
+                onDoubleClick={() => {
                   setSelectedPedido(pedido);
                   setDialogOpen(true);
                 }}
@@ -329,55 +344,69 @@ export default function Producao() {
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Calendário de Produção</h1>
-        
-        <div className="flex items-center gap-4">
-          <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month, index) => (
-                <SelectItem key={index} value={index.toString()}>
-                  {month}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="flex h-screen">
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold">Calendário de Produção</h1>
+            
+            <div className="flex items-center gap-4">
+              <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((month, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Calendário */}
-      <div className="bg-card rounded-lg border">
-        {/* Cabeçalho dos dias da semana */}
-        <div className="grid grid-cols-7 gap-0 border-b">
-          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
-            <div key={day} className="p-4 text-center font-medium bg-muted/50">
-              {day}
+              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Grid dos dias */}
-        <div className="grid grid-cols-7 gap-0">
-          {renderCalendar()}
+          {/* Calendário */}
+          <div className="bg-card rounded-lg border">
+            {/* Cabeçalho dos dias da semana */}
+            <div className="grid grid-cols-7 gap-0 border-b">
+              {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
+                <div key={day} className="p-4 text-center font-medium bg-muted/50">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Grid dos dias */}
+            <div className="grid grid-cols-7 gap-0">
+              {renderCalendar()}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Sidebar */}
+      <ProductionSidebar
+        pedidos={pedidos}
+        catalogoCores={catalogoCores}
+        onPedidoDoubleClick={handlePedidoDoubleClick}
+        onPedidoDragStart={handlePedidoDragStart}
+        onPedidoDragEnd={handlePedidoDragEnd}
+      />
 
       {/* Dialog de detalhes do pedido */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
