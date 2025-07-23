@@ -35,6 +35,11 @@ interface ProductionSidebarProps {
   onPedidoDragStart: (pedidoId: string) => void;
   onPedidoDragEnd: () => void;
   onPedidosUpdated: () => void;
+  selectedPedido?: Pedido | null;
+  isDragHovering?: boolean;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragLeave?: () => void;
 }
 
 export function ProductionSidebar({ 
@@ -43,9 +48,13 @@ export function ProductionSidebar({
   onPedidoDoubleClick,
   onPedidoDragStart,
   onPedidoDragEnd,
-  onPedidosUpdated
+  onPedidosUpdated,
+  selectedPedido,
+  isDragHovering,
+  onDrop,
+  onDragOver,
+  onDragLeave
 }: ProductionSidebarProps) {
-  const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -55,14 +64,12 @@ export function ProductionSidebar({
   };
 
   const handlePedidoDoubleClick = (pedido: Pedido) => {
-    setSelectedPedido(pedido);
-    setView('detail');
     onPedidoDoubleClick(pedido);
+    setView('detail');
   };
 
   const handleBackToList = () => {
     setView('list');
-    setSelectedPedido(null);
   };
 
   const handleEditClick = () => {
@@ -71,13 +78,6 @@ export function ProductionSidebar({
 
   const handleEditSave = () => {
     onPedidosUpdated();
-    // Atualizar o pedido selecionado se ainda estiver na visualização de detalhes
-    if (selectedPedido) {
-      const updatedPedido = pedidos.find(p => p.id === selectedPedido.id);
-      if (updatedPedido) {
-        setSelectedPedido(updatedPedido);
-      }
-    }
   };
 
   const getStatusColor = (status: string) => {
@@ -247,12 +247,25 @@ export function ProductionSidebar({
   }
 
   return (
-    <div className="w-80 bg-card border-l border-border flex flex-col h-full">
+    <div 
+      className={cn(
+        "w-80 bg-card border-l border-border flex flex-col h-full",
+        isDragHovering && "bg-blue-50 border-blue-200"
+      )}
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+    >
       <div className="p-4 border-b border-border">
         <h3 className="font-semibold">Lista de Pedidos</h3>
         <p className="text-sm text-muted-foreground">
           {pedidos.length} pedidos • Duplo clique para detalhes
         </p>
+        {isDragHovering && (
+          <p className="text-sm text-blue-600 mt-2">
+            Solte aqui para remover data de entrega
+          </p>
+        )}
       </div>
 
       <ScrollArea className="flex-1">

@@ -1,11 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CalendarIcon, Palette, Eye, Plus } from "lucide-react";
+import { Palette, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProductionSidebar } from "@/components/production/ProductionSidebar";
 
@@ -35,7 +35,6 @@ export default function Producao() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [coresCalendario, setCoresCalendario] = useState<{ [date: string]: string }>({});
   const [draggedPedido, setDraggedPedido] = useState<string | null>(null);
   const [isDragHovering, setIsDragHovering] = useState<string | null>(null);
@@ -126,7 +125,7 @@ export default function Producao() {
     return "bg-primary/10 text-primary";
   };
 
-  const updateDataEntrega = async (pedidoId: string, novaData: string) => {
+  const updateDataEntrega = async (pedidoId: string, novaData: string | null) => {
     const { error } = await supabase
       .from("pedidos_producao")
       .update({ data_entrega: novaData })
@@ -137,7 +136,7 @@ export default function Producao() {
       return;
     }
 
-    toast.success("Data de entrega atualizada com sucesso!");
+    toast.success(novaData ? "Data de entrega atualizada com sucesso!" : "Data de entrega removida com sucesso!");
     fetchPedidos();
   };
 
@@ -173,13 +172,8 @@ export default function Producao() {
     toast.success(cor && cor !== "remove" ? "Cor definida com sucesso!" : "Cor removida com sucesso!");
   };
 
-  const handlePedidoDragStart = (pedidoId: string) => {
-    setDraggedPedido(pedidoId);
-  };
-
-  const handlePedidoDragEnd = () => {
-    setDraggedPedido(null);
-    setIsDragHovering(null);
+  const handlePedidoDoubleClick = (pedido: Pedido) => {
+    setSelectedPedido(pedido);
   };
 
   const handleDragStart = (pedidoId: string) => {
@@ -191,27 +185,28 @@ export default function Producao() {
     setIsDragHovering(null);
   };
 
-  const handleDragOver = (e: React.DragEvent, data: string) => {
+  const handleDragOver = (e: React.DragEvent, target: string) => {
     e.preventDefault();
-    setIsDragHovering(data);
+    setIsDragHovering(target);
   };
 
   const handleDragLeave = () => {
     setIsDragHovering(null);
   };
 
-  const handleDrop = (e: React.DragEvent, novaData: string) => {
+  const handleDrop = (e: React.DragEvent, target: string) => {
     e.preventDefault();
     if (draggedPedido) {
-      updateDataEntrega(draggedPedido, novaData);
+      if (target === 'sidebar') {
+        // Remover data de entrega ao arrastar para a sidebar
+        updateDataEntrega(draggedPedido, null);
+      } else {
+        // Definir nova data de entrega
+        updateDataEntrega(draggedPedido, target);
+      }
     }
     setDraggedPedido(null);
     setIsDragHovering(null);
-  };
-
-  const handlePedidoDoubleClick = (pedido: Pedido) => {
-    setSelectedPedido(pedido);
-    setDialogOpen(true);
   };
 
   const handleNovoPedido = () => {
@@ -282,7 +277,6 @@ export default function Producao() {
                   </Button>
                 </SelectTrigger>
                 
-                {/* Dropdown de cores */}
                 <SelectContent>
                   <SelectItem value="remove">Remover cor</SelectItem>
                   {catalogoCores.map((cor) => (
@@ -313,10 +307,7 @@ export default function Producao() {
                 draggable
                 onDragStart={() => handleDragStart(pedido.id)}
                 onDragEnd={handleDragEnd}
-                onDoubleClick={() => {
-                  setSelectedPedido(pedido);
-                  setDialogOpen(true);
-                }}
+                onDoubleClick={() => handlePedidoDoubleClick(pedido)}
                 title={`${pedido.numero_pedido} - ${pedido.cliente_nome} - ${pedido.endereco_cidade || 'Cidade não informada'}`}
               >
                 {/* Círculo da cor */}
@@ -334,20 +325,6 @@ export default function Producao() {
                 <span className="text-muted-foreground truncate flex-1 min-w-0">
                   {pedido.endereco_cidade || 'N/A'}
                 </span>
-                
-                {/* Botão de visualizar */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-3 w-3 p-0 flex-shrink-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedPedido(pedido);
-                    setDialogOpen(true);
-                  }}
-                >
-                  <Eye className="h-2 w-2" />
-                </Button>
               </div>
             ))}
           </div>
@@ -431,92 +408,15 @@ export default function Producao() {
         pedidos={pedidos}
         catalogoCores={catalogoCores}
         onPedidoDoubleClick={handlePedidoDoubleClick}
-        onPedidoDragStart={handlePedidoDragStart}
-        onPedidoDragEnd={handlePedidoDragEnd}
+        onPedidoDragStart={handleDragStart}
+        onPedidoDragEnd={handleDragEnd}
         onPedidosUpdated={fetchPedidos}
+        selectedPedido={selectedPedido}
+        isDragHovering={isDragHovering === 'sidebar'}
+        onDrop={(e) => handleDrop(e, 'sidebar')}
+        onDragOver={(e) => handleDragOver(e, 'sidebar')}
+        onDragLeave={handleDragLeave}
       />
-
-      {/* Dialog de detalhes do pedido */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Detalhes do Pedido</DialogTitle>
-          </DialogHeader>
-          {selectedPedido && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-lg">
-                  Pedido {selectedPedido.numero_pedido}
-                </h3>
-                <p className="text-muted-foreground">
-                  Status: {selectedPedido.status}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Cliente</h4>
-                <p>{selectedPedido.cliente_nome}</p>
-                <p className="text-sm text-muted-foreground">
-                  {selectedPedido.cliente_telefone}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Produto</h4>
-                <p>
-                  {selectedPedido.produto_tipo} - {selectedPedido.produto_altura} x {selectedPedido.produto_largura}
-                </p>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div 
-                    className="h-4 w-4 rounded-full border border-gray-300" 
-                    style={getCorStyle(selectedPedido.produto_cor)}
-                  />
-                  <span>Cor: {selectedPedido.produto_cor}</span>
-                </div>
-              </div>
-
-              {(selectedPedido.endereco_rua || selectedPedido.endereco_cidade) && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Endereço</h4>
-                  <div className="text-sm space-y-1">
-                    {selectedPedido.endereco_rua && (
-                      <p>{selectedPedido.endereco_rua}, {selectedPedido.endereco_numero}</p>
-                    )}
-                    {selectedPedido.endereco_bairro && (
-                      <p>{selectedPedido.endereco_bairro}</p>
-                    )}
-                    {selectedPedido.endereco_cidade && (
-                      <p>{selectedPedido.endereco_cidade} - {selectedPedido.endereco_estado}</p>
-                    )}
-                    {selectedPedido.endereco_cep && (
-                      <p>CEP: {selectedPedido.endereco_cep}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {selectedPedido.observacoes && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Observações</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedPedido.observacoes}
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Data de Entrega</h4>
-                <p className="text-sm">
-                  {selectedPedido.data_entrega 
-                    ? new Date(selectedPedido.data_entrega + 'T00:00:00').toLocaleDateString('pt-BR')
-                    : "Não definida"
-                  }
-                </p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
