@@ -39,49 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
-      try {
-        // Limpar tokens inválidos do localStorage
-        const refreshToken = localStorage.getItem('sb-zddnvwqhfcqspmxscwyy-auth-token');
-        if (refreshToken) {
-          try {
-            JSON.parse(refreshToken);
-          } catch {
-            localStorage.removeItem('sb-zddnvwqhfcqspmxscwyy-auth-token');
-          }
-        }
-
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          // Limpar tokens inválidos
-          await supabase.auth.signOut();
-          if (mounted) {
-            setUser(null);
-            setUserRole(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        if (session?.user && mounted) {
-          setUser(session.user);
-          await fetchUserRole(session.user.id);
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        if (mounted) {
-          setUser(null);
-          setUserRole(null);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     const fetchUserRole = async (userId: string) => {
       try {
         const { data, error } = await supabase
@@ -103,11 +60,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    initializeAuth();
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          await supabase.auth.signOut();
+          if (mounted) {
+            setUser(null);
+            setUserRole(null);
+          }
+          return;
+        }
 
+        if (session?.user && mounted) {
+          setUser(session.user);
+          // Usar setTimeout para evitar loop infinito
+          setTimeout(() => {
+            fetchUserRole(session.user.id);
+          }, 0);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setUser(null);
+          setUserRole(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id);
 
         if (event === 'SIGNED_OUT' || !session) {
           setUser(null);
@@ -115,7 +107,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         } else if (event === 'SIGNED_IN' && session) {
           setUser(session.user);
-          await fetchUserRole(session.user.id);
+          // Usar setTimeout para evitar loop infinito
+          setTimeout(() => {
+            fetchUserRole(session.user.id);
+          }, 0);
           setLoading(false);
         } else if (event === 'TOKEN_REFRESHED' && session) {
           setUser(session.user);
@@ -123,6 +118,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     );
+
+    // Inicializar auth
+    initializeAuth();
 
     return () => {
       mounted = false;
@@ -183,11 +181,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      setLoading(true);
       await supabase.auth.signOut();
       setUser(null);
       setUserRole(null);
     } catch (error) {
       console.error('Error signing out:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
