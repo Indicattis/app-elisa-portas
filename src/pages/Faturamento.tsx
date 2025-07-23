@@ -108,7 +108,7 @@ export default function Faturamento() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAdmin || userRole === 'gerente_comercial') {
+    if (isAdmin || userRole?.role === 'gerente_comercial') {
       fetchVendas();
       fetchStats();
     }
@@ -337,7 +337,7 @@ export default function Faturamento() {
 
   const anos = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  if (!isAdmin && userRole !== 'gerente_comercial') {
+  if (!isAdmin && userRole?.role !== 'gerente_comercial') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -677,7 +677,7 @@ export default function Faturamento() {
                         </TableCell>
                          <TableCell>
                             <div className="flex items-center gap-2">
-                              {(isAdmin || userRole === 'gerente_comercial') && (
+                              {(isAdmin || userRole?.role === 'gerente_comercial') && (
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
