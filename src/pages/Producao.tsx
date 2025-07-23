@@ -235,7 +235,7 @@ export default function Producao() {
 
     // Dias vazios no início
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-24"></div>);
+      days.push(<div key={`empty-${i}`} className="h-32"></div>);
     }
 
     // Dias do mês
@@ -248,7 +248,7 @@ export default function Producao() {
         <div
           key={day}
           className={cn(
-            "h-24 border border-border p-1 flex flex-col justify-between relative",
+            "h-32 border border-border p-1 flex flex-col justify-between relative overflow-hidden",
             isDragHovering === dataString && "bg-blue-100"
           )}
           onDragOver={(e) => handleDragOver(e, dataString)}
@@ -301,12 +301,13 @@ export default function Producao() {
             </div>
           </div>
 
-          <div className="space-y-1 overflow-hidden">
+          {/* Lista de pedidos em formato de linha */}
+          <div className="flex-1 overflow-y-auto space-y-0.5">
             {pedidosNoDia.map((pedido) => (
               <div
                 key={pedido.id}
                 className={cn(
-                  "text-xs p-1 rounded cursor-move",
+                  "h-5 flex items-center gap-1 px-1 rounded cursor-move text-xs",
                   getPedidoStyle(pedido)
                 )}
                 draggable
@@ -316,32 +317,37 @@ export default function Producao() {
                   setSelectedPedido(pedido);
                   setDialogOpen(true);
                 }}
+                title={`${pedido.numero_pedido} - ${pedido.cliente_nome} - ${pedido.endereco_cidade || 'Cidade não informada'}`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium truncate">{pedido.numero_pedido}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedPedido(pedido);
-                      setDialogOpen(true);
-                    }}
-                  >
-                    <Eye className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {pedido.cliente_nome}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="h-4 w-4 rounded-full border border-gray-300" 
-                    style={getCorStyle(pedido.produto_cor)}
-                  />
-                  <span>Cor: {pedido.produto_cor}</span>
-                </div>
+                {/* Círculo da cor */}
+                <div 
+                  className="h-3 w-3 rounded-full border border-gray-300 flex-shrink-0" 
+                  style={getCorStyle(pedido.produto_cor)}
+                />
+                
+                {/* Código do pedido */}
+                <span className="font-medium truncate flex-shrink-0 min-w-0">
+                  {pedido.numero_pedido}
+                </span>
+                
+                {/* Cidade */}
+                <span className="text-muted-foreground truncate flex-1 min-w-0">
+                  {pedido.endereco_cidade || 'N/A'}
+                </span>
+                
+                {/* Botão de visualizar */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-3 w-3 p-0 flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPedido(pedido);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <Eye className="h-2 w-2" />
+                </Button>
               </div>
             ))}
           </div>
