@@ -120,9 +120,9 @@ export default function Producao() {
 
   const getPedidoStyle = (pedido: Pedido) => {
     if (pedido.status === 'para_instalacao') {
-      return "bg-green-100 border-green-400";
+      return "bg-green-100 border-green-300 text-green-800";
     }
-    return "bg-primary/10 text-primary";
+    return "bg-primary/10 text-primary border-border";
   };
 
   const updateDataEntrega = async (pedidoId: string, novaData: string | null) => {

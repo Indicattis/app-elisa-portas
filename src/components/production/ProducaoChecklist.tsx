@@ -48,17 +48,16 @@ export function ProducaoChecklist({ pedidoId, onStatusChange }: ProducaoChecklis
 
   const updateOrdemStatus = async (tipo: string, campo: string, valor: boolean) => {
     try {
-      // Primeiro, vamos buscar a ordem específica ou criar se não existir
-      let { data: ordemExistente, error: fetchError } = await supabase
+      // Buscar todas as ordens do pedido primeiro
+      const { data: ordensExistentes, error: fetchError } = await supabase
         .from("ordens_producao")
         .select("*")
-        .eq("pedido_id", pedidoId)
-        .eq("tipo_ordem", tipo)
-        .single();
+        .eq("pedido_id", pedidoId);
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
+      if (fetchError) throw fetchError;
+
+      // Verificar se existe ordem para o tipo específico
+      let ordemExistente = ordensExistentes?.find(o => o.tipo_ordem === tipo);
 
       if (!ordemExistente) {
         // Criar nova ordem se não existir
