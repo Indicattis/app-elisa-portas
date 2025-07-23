@@ -2,28 +2,39 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
 
-interface UserRole {
+interface AdminUser {
   id: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'administrador' | 'atendente' | 'gerente_comercial' | 'gerente_fabril';
   created_at: string;
+  ativo: boolean;
+  nome: string;
+  foto_perfil_url: string | null;
+  user_id: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  userRole: UserRole | null;
+  userRole: AdminUser | null;
   loading: boolean;
   isAdmin: boolean;
+  isAtendente: boolean;
+  isGerenteComercial: boolean;
+  isGerenteFabril: boolean;
   signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userRole, setUserRole] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -74,9 +85,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchUserRole = async (userId: string) => {
       try {
         const { data, error } = await supabase
-          .from('user_roles')
+          .from('admin_users')
           .select('*')
-          .eq('id', userId)
+          .eq('user_id', userId)
           .single();
 
         if (error) {
@@ -119,6 +130,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro no login",
+          description: error.message,
+        });
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string, metadata?: any) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro no cadastro",
+          description: error.message,
+        });
+        throw error;
+      }
+
+      toast({
+        title: "Cadastro realizado",
+        description: "Verifique seu email para confirmar a conta.",
+      });
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -129,10 +191,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isAdmin = userRole?.role === 'admin';
+  const isAdmin = userRole?.role === 'administrador';
+  const isAtendente = userRole?.role === 'atendente';
+  const isGerenteComercial = userRole?.role === 'gerente_comercial';
+  const isGerenteFabril = userRole?.role === 'gerente_fabril';
 
   return (
-    <AuthContext.Provider value={{ user, userRole, loading, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      userRole, 
+      loading, 
+      isAdmin, 
+      isAtendente,
+      isGerenteComercial,
+      isGerenteFabril,
+      signOut,
+      signIn,
+      signUp
+    }}>
       {children}
     </AuthContext.Provider>
   );

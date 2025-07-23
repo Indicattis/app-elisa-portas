@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { 
@@ -29,7 +30,7 @@ const navigation = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { signOut, user, isAdmin, userRole, isGerenteFabril } = useAuth();
+  const { signOut, user, isAdmin, userRole, isGerenteFabril, isGerenteComercial } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/dashboard") {
@@ -40,8 +41,8 @@ export function Sidebar() {
 
   const filteredNavigation = navigation.filter(item => {
     if (item.adminOnly && !isAdmin) return false;
-    if (item.adminOrManager && !isAdmin && userRole !== 'gerente_comercial') return false;
-    if (item.adminOrManagerFabril && !isAdmin && userRole !== 'gerente_comercial' && !isGerenteFabril) return false;
+    if (item.adminOrManager && !isAdmin && !isGerenteComercial) return false;
+    if (item.adminOrManagerFabril && !isAdmin && !isGerenteComercial && !isGerenteFabril) return false;
     return true;
   });
 
@@ -104,7 +105,7 @@ export function Sidebar() {
             <div className="mb-4">
               <p className="text-sm font-medium">{user?.email}</p>
               <p className="text-xs text-muted-foreground capitalize">
-                {userRole}
+                {userRole?.role?.replace('_', ' ')}
               </p>
             </div>
           )}

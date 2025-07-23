@@ -1,10 +1,10 @@
+
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -25,8 +25,13 @@ export default function Auth() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    await signIn(email, password);
-    setIsLoading(false);
+    try {
+      await signIn(email, password);
+    } catch (error) {
+      console.error('Sign in error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -38,8 +43,13 @@ export default function Auth() {
     const password = formData.get("password") as string;
     const nome = formData.get("nome") as string;
 
-    await signUp(email, password, { nome });
-    setIsLoading(false);
+    try {
+      await signUp(email, password, { nome });
+    } catch (error) {
+      console.error('Sign up error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
