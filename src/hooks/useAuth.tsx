@@ -1,164 +1,147 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { User } from "@supabase/supabase-js";
+
+interface UserRole {
+  id: string;
+  email: string;
+  role: 'admin' | 'user';
+  created_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
+  userRole: UserRole | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData: { nome: string }) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
-  userRole: string | null;
   isAdmin: boolean;
-  isAtendente: boolean;
-  isGerenteComercial: boolean;
-  isGerenteFabril: boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("admin_users")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("ativo", true)
-      .single();
-    
-    if (error || !data) {
-      setUserRole(null);
-      return;
-    }
-    
-    setUserRole(data.role);
-  };
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Limpar tokens inválidos do localStorage
+        const refreshToken = localStorage.getItem('sb-zddnvwqhfcqspmxscwyy-auth-token');
+        if (refreshToken) {
+          try {
+            JSON.parse(refreshToken);
+          } catch {
+            localStorage.removeItem('sb-zddnvwqhfcqspmxscwyy-auth-token');
+          }
+        }
+
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (session?.user) {
-          // Defer the role fetch to avoid blocking
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
-        } else {
+        if (error) {
+          console.error('Error getting session:', error);
+          // Limpar tokens inválidos
+          await supabase.auth.signOut();
+          if (mounted) {
+            setUser(null);
+            setUserRole(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        if (session?.user && mounted) {
+          setUser(session.user);
+          await fetchUserRole(session.user.id);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setUser(null);
           setUserRole(null);
         }
-        
-        setLoading(false);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    const fetchUserRole = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user role:', error);
+          return;
+        }
+
+        if (mounted) {
+          setUserRole(data);
+        }
+      } catch (error) {
+        console.error('Error in fetchUserRole:', error);
+      }
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        if (event === 'SIGNED_OUT' || !session) {
+          setUser(null);
+          setUserRole(null);
+          setLoading(false);
+        } else if (event === 'SIGNED_IN' && session) {
+          setUser(session.user);
+          await fetchUserRole(session.user.id);
+          setLoading(false);
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          setUser(session.user);
+          setLoading(false);
+        }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserRole(session.user.id);
-      }
-      
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao fazer login",
-        description: error.message,
-      });
-    }
-    
-    return { error };
-  };
-
-  const signUp = async (email: string, password: string, userData: { nome: string }) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          nome: userData.nome,
-        }
-      }
-    });
-    
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar conta",
-        description: error.message,
-      });
-    } else {
-      toast({
-        title: "Conta criada com sucesso",
-        description: "Verifique seu email para confirmar a conta.",
-      });
-    }
-    
-    return { error };
-  };
-
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUserRole(null);
-    toast({
-      title: "Logout realizado",
-      description: "Você foi desconectado com sucesso.",
-    });
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setUserRole(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
-  const isAdmin = userRole === "administrador";
-  const isAtendente = userRole === "atendente";
-  const isGerenteComercial = userRole === "gerente_comercial";
-  const isGerenteFabril = userRole === "gerente_fabril";
+  const isAdmin = userRole?.role === 'admin';
 
-  const value = {
-    user,
-    session,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    userRole,
-    isAdmin,
-    isAtendente,
-    isGerenteComercial,
-    isGerenteFabril,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, userRole, loading, isAdmin, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
