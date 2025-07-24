@@ -334,14 +334,14 @@ export default function Producao() {
               <div
                 key={pedido.id}
                 className={cn(
-                  "h-6 flex items-center gap-1 px-1 rounded text-xs group relative",
+                  "h-6 flex items-center gap-1 px-1 rounded text-xs group relative cursor-pointer hover:shadow-sm transition-all",
                   getPedidoStyle(pedido)
                 )}
                 draggable
                 onDragStart={() => handleDragStart(pedido.id)}
                 onDragEnd={handleDragEnd}
-                onDoubleClick={() => handlePedidoDoubleClick(pedido)}
-                title={`${pedido.numero_pedido} - ${pedido.cliente_nome} - ${pedido.endereco_cidade || 'Cidade não informada'}`}
+                onClick={() => handlePedidoDoubleClick(pedido)}
+                title={`Clique para ver detalhes - ${pedido.numero_pedido} - ${pedido.cliente_nome} - ${pedido.endereco_cidade || 'Cidade não informada'}`}
               >
                 {/* Círculo da cor */}
                 <div 
@@ -409,26 +409,41 @@ export default function Producao() {
             
           <div className="flex items-center gap-4">
             {/* Índices de status */}
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex items-center gap-1">
-                <div className="h-3 w-3 rounded bg-blue-500"></div>
-                <span>Em produção: {pedidos.filter(p => p.status === 'em_producao').length}</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                <div className="h-4 w-4 rounded-full bg-blue-500"></div>
+                <div className="text-sm">
+                  <span className="font-semibold text-blue-700">Em produção</span>
+                  <div className="text-xl font-bold text-blue-800">{pedidos.filter(p => p.status === 'em_producao').length}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="h-3 w-3 rounded bg-orange-500"></div>
-                <span>Pendente pintura: {pedidos.filter(p => p.status === 'pendente_pintura').length}</span>
+              <div className="flex items-center gap-2 bg-orange-50 px-3 py-2 rounded-lg border border-orange-200">
+                <div className="h-4 w-4 rounded-full bg-orange-500"></div>
+                <div className="text-sm">
+                  <span className="font-semibold text-orange-700">Pendente pintura</span>
+                  <div className="text-xl font-bold text-orange-800">{pedidos.filter(p => p.status === 'pendente_pintura').length}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="h-3 w-3 rounded bg-red-500"></div>
-                <span>Pendente instalação: {pedidos.filter(p => p.status === 'pendente_instalacao').length}</span>
+              <div className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+                <div className="h-4 w-4 rounded-full bg-red-500"></div>
+                <div className="text-sm">
+                  <span className="font-semibold text-red-700">Pendente instalação</span>
+                  <div className="text-xl font-bold text-red-800">{pedidos.filter(p => p.status === 'pendente_instalacao').length}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="h-3 w-3 rounded bg-gray-600"></div>
-                <span>Autorizado: {pedidos.filter(p => p.status === 'autorizado').length}</span>
+              <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                <div className="h-4 w-4 rounded-full bg-gray-600"></div>
+                <div className="text-sm">
+                  <span className="font-semibold text-gray-700">Autorizado</span>
+                  <div className="text-xl font-bold text-gray-800">{pedidos.filter(p => p.status === 'autorizado').length}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="h-3 w-3 rounded bg-green-500"></div>
-                <span>Instalada: {pedidos.filter(p => p.status === 'instalada').length}</span>
+              <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+                <div className="h-4 w-4 rounded-full bg-green-500"></div>
+                <div className="text-sm">
+                  <span className="font-semibold text-green-700">Instalada</span>
+                  <div className="text-xl font-bold text-green-800">{pedidos.filter(p => p.status === 'instalada').length}</div>
+                </div>
               </div>
             </div>
 
