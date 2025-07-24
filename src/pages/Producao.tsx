@@ -407,6 +407,39 @@ export default function Producao() {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">Calendário de Produção</h1>
             
+          
+
+            <Button onClick={handleNovoPedido} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Pedido
+            </Button>
+
+              <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((month, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           <div className="flex items-center gap-4">
             {/* Índices de status */}
             <div className="flex items-center gap-4">
@@ -445,38 +478,6 @@ export default function Producao() {
                   <div className="text-xl font-bold text-green-800">{pedidos.filter(p => p.status === 'instalada').length}</div>
                 </div>
               </div>
-            </div>
-
-            <Button onClick={handleNovoPedido} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Pedido
-            </Button>
-
-              <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map((month, index) => (
-                    <SelectItem key={index} value={index.toString()}>
-                      {month}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
