@@ -407,11 +407,35 @@ export default function Producao() {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">Calendário de Produção</h1>
             
-            <div className="flex items-center gap-4">
-              <Button onClick={handleNovoPedido} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Novo Pedido
-              </Button>
+          <div className="flex items-center gap-4">
+            {/* Índices de status */}
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-1">
+                <div className="h-3 w-3 rounded bg-blue-500"></div>
+                <span>Em produção: {pedidos.filter(p => p.status === 'em_producao').length}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="h-3 w-3 rounded bg-orange-500"></div>
+                <span>Pendente pintura: {pedidos.filter(p => p.status === 'pendente_pintura').length}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="h-3 w-3 rounded bg-red-500"></div>
+                <span>Pendente instalação: {pedidos.filter(p => p.status === 'pendente_instalacao').length}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="h-3 w-3 rounded bg-gray-600"></div>
+                <span>Autorizado: {pedidos.filter(p => p.status === 'autorizado').length}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="h-3 w-3 rounded bg-green-500"></div>
+                <span>Instalada: {pedidos.filter(p => p.status === 'instalada').length}</span>
+              </div>
+            </div>
+
+            <Button onClick={handleNovoPedido} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Pedido
+            </Button>
 
               <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
                 <SelectTrigger className="w-40">
