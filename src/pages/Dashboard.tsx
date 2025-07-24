@@ -63,40 +63,33 @@ export default function Dashboard() {
 
   const fetchChartData = async () => {
     try {
-      const currentMonth = startOfMonth(selectedMonth);
-      const previousMonth = startOfMonth(subMonths(selectedMonth, 1));
+      const currentYear = selectedMonth.getFullYear();
+      const chartDataPromises = [];
 
-      // Faturamento do mês atual selecionado
-      const { data: currentMonthData, error: currentError } = await supabase
-        .from("vendas")
-        .select("valor_venda")
-        .gte("data_venda", currentMonth.toISOString())
-        .lt("data_venda", startOfMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1)).toISOString());
+      // Buscar dados para todos os 12 meses do ano
+      for (let month = 0; month < 12; month++) {
+        const startOfMonthDate = new Date(currentYear, month, 1);
+        const endOfMonthDate = new Date(currentYear, month + 1, 0);
 
-      if (currentError) throw currentError;
+        chartDataPromises.push(
+          supabase
+            .from("vendas")
+            .select("valor_venda")
+            .gte("data_venda", startOfMonthDate.toISOString())
+            .lte("data_venda", endOfMonthDate.toISOString())
+            .then(({ data, error }) => {
+              if (error) throw error;
+              const total = data?.reduce((acc, venda) => acc + (venda.valor_venda || 0), 0) || 0;
+              return {
+                mes: format(startOfMonthDate, "MMM", { locale: ptBR }),
+                faturamento: total,
+              };
+            })
+        );
+      }
 
-      // Faturamento do mês anterior
-      const { data: previousMonthData, error: previousError } = await supabase
-        .from("vendas")
-        .select("valor_venda")
-        .gte("data_venda", previousMonth.toISOString())
-        .lt("data_venda", currentMonth.toISOString());
-
-      if (previousError) throw previousError;
-
-      const currentMonthTotal = currentMonthData?.reduce((acc, venda) => acc + (venda.valor_venda || 0), 0) || 0;
-      const previousMonthTotal = previousMonthData?.reduce((acc, venda) => acc + (venda.valor_venda || 0), 0) || 0;
-
-      setChartData([
-        {
-          mes: format(previousMonth, "MMM/yyyy", { locale: ptBR }),
-          faturamento: previousMonthTotal,
-        },
-        {
-          mes: format(currentMonth, "MMM/yyyy", { locale: ptBR }),
-          faturamento: currentMonthTotal,
-        },
-      ]);
+      const results = await Promise.all(chartDataPromises);
+      setChartData(results);
     } catch (error) {
       console.error("Erro ao buscar dados do gráfico:", error);
     }
@@ -241,9 +234,9 @@ export default function Dashboard() {
       {/* Gráfico de Comparação */}
       <Card>
         <CardHeader>
-          <CardTitle>Comparação de Faturamento</CardTitle>
+          <CardTitle>Faturamento Anual</CardTitle>
           <CardDescription>
-            Faturamento do mês atual vs mês anterior
+            Faturamento de todos os meses do ano de {selectedMonth.getFullYear()}
           </CardDescription>
         </CardHeader>
         <CardContent>
