@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Calendar, Package, Phone, MapPin, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProducaoChecklist } from "./ProducaoChecklist";
@@ -40,6 +41,8 @@ interface ProductionSidebarProps {
   onDrop?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
+  onStatusUpdate?: (pedidoId: string, novoStatus: string) => void;
+  statusOptions?: { value: string; label: string; color: string }[];
 }
 
 export function ProductionSidebar({ 
@@ -53,7 +56,9 @@ export function ProductionSidebar({
   isDragHovering,
   onDrop,
   onDragOver,
-  onDragLeave
+  onDragLeave,
+  onStatusUpdate,
+  statusOptions
 }: ProductionSidebarProps) {
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -82,16 +87,18 @@ export function ProductionSidebar({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pendente':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'em_andamento':
+      case 'em_producao':
         return 'bg-blue-100 text-blue-800';
-      case 'para_instalacao':
-        return 'bg-green-100 text-green-800';
-      case 'concluido':
+      case 'pendente_pintura':
+        return 'bg-orange-100 text-orange-800';
+      case 'pendente_instalacao':
+        return 'bg-red-100 text-red-800';
+      case 'autorizado':
+        return 'bg-gray-100 text-gray-800';
+      case 'instalada':
         return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted/10 text-muted-foreground';
     }
   };
 
@@ -291,12 +298,40 @@ export function ProductionSidebar({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{pedido.numero_pedido}</span>
-                    <span className={cn(
-                      "text-xs px-2 py-1 rounded-full",
-                      getStatusColor(pedido.status)
-                    )}>
-                      {pedido.status}
-                    </span>
+                    {onStatusUpdate && statusOptions ? (
+                      <Select
+                        value={pedido.status}
+                        onValueChange={(novoStatus) => onStatusUpdate(pedido.id, novoStatus)}
+                      >
+                        <SelectTrigger className="h-6 w-auto p-1 text-xs">
+                          <span className={cn(
+                            "px-2 py-1 rounded-full",
+                            getStatusColor(pedido.status)
+                          )}>
+                            {statusOptions.find(s => s.value === pedido.status)?.label || pedido.status}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className={`h-2 w-2 rounded-full bg-${option.color}-500`}
+                                />
+                                {option.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className={cn(
+                        "text-xs px-2 py-1 rounded-full",
+                        getStatusColor(pedido.status)
+                      )}>
+                        {pedido.status}
+                      </span>
+                    )}
                   </div>
                   
                   <div className="text-xs text-muted-foreground">
@@ -340,12 +375,40 @@ export function ProductionSidebar({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{pedido.numero_pedido}</span>
-                    <span className={cn(
-                      "text-xs px-2 py-1 rounded-full",
-                      getStatusColor(pedido.status)
-                    )}>
-                      {pedido.status}
-                    </span>
+                    {onStatusUpdate && statusOptions ? (
+                      <Select
+                        value={pedido.status}
+                        onValueChange={(novoStatus) => onStatusUpdate(pedido.id, novoStatus)}
+                      >
+                        <SelectTrigger className="h-6 w-auto p-1 text-xs">
+                          <span className={cn(
+                            "px-2 py-1 rounded-full",
+                            getStatusColor(pedido.status)
+                          )}>
+                            {statusOptions.find(s => s.value === pedido.status)?.label || pedido.status}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className={`h-2 w-2 rounded-full bg-${option.color}-500`}
+                                />
+                                {option.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className={cn(
+                        "text-xs px-2 py-1 rounded-full",
+                        getStatusColor(pedido.status)
+                      )}>
+                        {pedido.status}
+                      </span>
+                    )}
                   </div>
                   
                   <div className="text-xs text-muted-foreground">

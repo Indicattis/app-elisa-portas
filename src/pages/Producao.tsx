@@ -119,10 +119,43 @@ export default function Producao() {
   };
 
   const getPedidoStyle = (pedido: Pedido) => {
-    if (pedido.status === 'para_instalacao') {
-      return "bg-green-100 border-green-300 text-green-800";
+    switch (pedido.status) {
+      case 'em_producao':
+        return "bg-blue-100 border-blue-300 text-blue-800";
+      case 'pendente_pintura':
+        return "bg-orange-100 border-orange-300 text-orange-800";
+      case 'pendente_instalacao':
+        return "bg-red-100 border-red-300 text-red-800";
+      case 'autorizado':
+        return "bg-gray-100 border-gray-300 text-gray-800";
+      case 'instalada':
+        return "bg-green-100 border-green-300 text-green-800";
+      default:
+        return "bg-muted/10 text-muted-foreground border-border";
     }
-    return "bg-primary/10 text-primary border-border";
+  };
+
+  const statusOptions = [
+    { value: 'em_producao', label: 'Em produção', color: 'blue' },
+    { value: 'pendente_pintura', label: 'Pendente pintura', color: 'orange' },
+    { value: 'pendente_instalacao', label: 'Pendente instalação', color: 'red' },
+    { value: 'autorizado', label: 'Autorizado', color: 'gray' },
+    { value: 'instalada', label: 'Instalada', color: 'green' }
+  ];
+
+  const updateStatusPedido = async (pedidoId: string, novoStatus: string) => {
+    const { error } = await supabase
+      .from("pedidos_producao")
+      .update({ status: novoStatus })
+      .eq("id", pedidoId);
+
+    if (error) {
+      toast.error("Erro ao atualizar status do pedido");
+      return;
+    }
+
+    toast.success("Status atualizado com sucesso!");
+    fetchPedidos();
   };
 
   const updateDataEntrega = async (pedidoId: string, novaData: string | null) => {
@@ -301,7 +334,7 @@ export default function Producao() {
               <div
                 key={pedido.id}
                 className={cn(
-                  "h-5 flex items-center gap-1 px-1 rounded cursor-move text-xs",
+                  "h-6 flex items-center gap-1 px-1 rounded text-xs group relative",
                   getPedidoStyle(pedido)
                 )}
                 draggable
@@ -325,6 +358,30 @@ export default function Producao() {
                 <span className="text-muted-foreground truncate flex-1 min-w-0">
                   {pedido.endereco_cidade || 'N/A'}
                 </span>
+
+                {/* Seletor de status (aparece no hover) */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Select
+                    value={pedido.status}
+                    onValueChange={(novoStatus) => updateStatusPedido(pedido.id, novoStatus)}
+                  >
+                    <SelectTrigger className="h-4 w-4 p-0 border-none bg-transparent">
+                      <div className="h-2 w-2 rounded-full bg-current" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className={`h-2 w-2 rounded-full bg-${option.color}-500`}
+                            />
+                            {option.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             ))}
           </div>
@@ -416,6 +473,8 @@ export default function Producao() {
         onDrop={(e) => handleDrop(e, 'sidebar')}
         onDragOver={(e) => handleDragOver(e, 'sidebar')}
         onDragLeave={handleDragLeave}
+        onStatusUpdate={updateStatusPedido}
+        statusOptions={statusOptions}
       />
     </div>
   );
