@@ -35,10 +35,11 @@ export default function Producao() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
-  const [coresCalendario, setCoresCalendario] = useState<{ [date: string]: string }>({});
+  const [coresCalendario, setCoresCalendario] = useState<{ [date: string]: string[] }>({});
   const [draggedPedido, setDraggedPedido] = useState<string | null>(null);
   const [isDragHovering, setIsDragHovering] = useState<string | null>(null);
   const [catalogoCores, setCatalogoCores] = useState<{ nome: string; codigo_hex: string }[]>([]);
+  const [statusFiltros, setStatusFiltros] = useState<string[]>(['em_producao', 'pendente_pintura', 'pendente_instalacao', 'autorizado', 'instalada']);
 
   useEffect(() => {
     fetchPedidos();
@@ -91,9 +92,12 @@ export default function Producao() {
       return;
     }
 
-    const coresMap: { [date: string]: string } = {};
+    const coresMap: { [date: string]: string[] } = {};
     data?.forEach((item) => {
-      coresMap[item.data_producao] = item.cor;
+      if (!coresMap[item.data_producao]) {
+        coresMap[item.data_producao] = [];
+      }
+      coresMap[item.data_producao].push(item.cor);
     });
     setCoresCalendario(coresMap);
   };
@@ -173,36 +177,58 @@ export default function Producao() {
     fetchPedidos();
   };
 
-  const updateCorCalendario = async (data: string, cor: string) => {
-    if (!cor || cor === "remove") {
-      // Remover cor do dia
-      const { error } = await supabase
-        .from("calendario_cores")
-        .delete()
-        .eq("data_producao", data);
+  const adicionarCorCalendario = async (data: string, cor: string) => {
+    const coresExistentes = coresCalendario[data] || [];
+    
+    if (coresExistentes.length >= 4) {
+      toast.error("Máximo de 4 cores por dia");
+      return;
+    }
 
-      if (error) {
-        toast.error("Erro ao remover cor do calendário");
-        return;
-      }
-    } else {
-      // Adicionar ou atualizar cor do dia
-      const { error } = await supabase
-        .from("calendario_cores")
-        .upsert({
-          data_producao: data,
-          cor: cor,
-          ativa: true
-        });
+    if (coresExistentes.includes(cor)) {
+      toast.error("Esta cor já foi adicionada para este dia");
+      return;
+    }
 
-      if (error) {
-        toast.error("Erro ao atualizar cor do calendário");
-        return;
-      }
+    const { error } = await supabase
+      .from("calendario_cores")
+      .insert({
+        data_producao: data,
+        cor: cor,
+        ativa: true
+      });
+
+    if (error) {
+      toast.error("Erro ao adicionar cor do calendário");
+      return;
     }
 
     fetchCoresCalendario();
-    toast.success(cor && cor !== "remove" ? "Cor definida com sucesso!" : "Cor removida com sucesso!");
+    toast.success("Cor adicionada com sucesso!");
+  };
+
+  const removerCorCalendario = async (data: string, cor: string) => {
+    const { error } = await supabase
+      .from("calendario_cores")
+      .delete()
+      .eq("data_producao", data)
+      .eq("cor", cor);
+
+    if (error) {
+      toast.error("Erro ao remover cor do calendário");
+      return;
+    }
+
+    fetchCoresCalendario();
+    toast.success("Cor removida com sucesso!");
+  };
+
+  const toggleStatusFiltro = (status: string) => {
+    setStatusFiltros(prev => 
+      prev.includes(status) 
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
   };
 
   const handlePedidoDoubleClick = (pedido: Pedido) => {
@@ -269,8 +295,10 @@ export default function Producao() {
     // Dias do mês
     for (let day = 1; day <= daysInMonth; day++) {
       const dataString = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const pedidosNoDia = pedidos.filter(p => p.data_entrega === dataString);
-      const corDia = coresCalendario[dataString];
+      const pedidosNoDiaFiltrados = pedidos.filter(p => 
+        p.data_entrega === dataString && statusFiltros.includes(p.status)
+      );
+      const coresDia = coresCalendario[dataString] || [];
 
       days.push(
         <div
@@ -286,51 +314,48 @@ export default function Producao() {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{day}</span>
             
-            {/* Seletor de cor para o dia */}
-            <div className="relative">
-              <Select
-                value={corDia || ""}
-                onValueChange={(cor) => updateCorCalendario(dataString, cor)}
-              >
-                <SelectTrigger className="h-6 w-6 p-0 border-none">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {corDia ? (
-                      <div 
-                        className="h-4 w-4 rounded border border-gray-300" 
-                        style={getCorStyle(corDia)}
-                      />
-                    ) : (
-                      <Palette className="h-3 w-3" />
-                    )}
-                  </Button>
-                </SelectTrigger>
-                
-                <SelectContent>
-                  <SelectItem value="remove">Remover cor</SelectItem>
-                  {catalogoCores.map((cor) => (
-                    <SelectItem key={cor.nome} value={cor.nome}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="h-3 w-3 rounded border border-gray-300" 
-                          style={{ backgroundColor: cor.codigo_hex }}
-                        />
-                        {cor.nome}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Cores do dia */}
+            <div className="flex gap-1 items-center">
+              {/* Mostrar cores existentes */}
+              {coresDia.slice(0, 4).map((cor, index) => (
+                <div
+                  key={index}
+                  className="h-3 w-3 rounded border border-gray-300 cursor-pointer"
+                  style={getCorStyle(cor)}
+                  onClick={() => removerCorCalendario(dataString, cor)}
+                  title={`${cor} - Clique para remover`}
+                />
+              ))}
+              
+              {/* Botão para adicionar nova cor */}
+              {coresDia.length < 4 && (
+                <Select onValueChange={(cor) => adicionarCorCalendario(dataString, cor)}>
+                  <SelectTrigger className="h-3 w-3 p-0 border-none">
+                    <Palette className="h-2 w-2" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalogoCores
+                      .filter(cor => !coresDia.includes(cor.nome))
+                      .map((cor) => (
+                        <SelectItem key={cor.nome} value={cor.nome}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="h-3 w-3 rounded border border-gray-300" 
+                              style={{ backgroundColor: cor.codigo_hex }}
+                            />
+                            {cor.nome}
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 
           {/* Lista de pedidos em formato de linha */}
           <div className="flex-1 overflow-y-auto space-y-0.5">
-            {pedidosNoDia.map((pedido) => (
+            {pedidosNoDiaFiltrados.map((pedido) => (
               <div
                 key={pedido.id}
                 className={cn(
@@ -440,44 +465,38 @@ export default function Producao() {
                 </SelectContent>
               </Select>
             </div>
-          <div className="flex items-center gap-4">
-            {/* Índices de status */}
-            <div className="flex items-center gap-4 p-10">
-              <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                {/* <div className="h-4 w-4 rounded-full bg-blue-500"></div> */}
-                <div className="text-sm">
-                  <span className="font-semibold text-blue-700">Em produção</span>
-                  <div className="text-xl font-bold text-blue-800">{pedidos.filter(p => p.status === 'em_producao').length}</div>
+          {/* Filtros de status */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3">Filtros por Status</h3>
+            <div className="flex items-center gap-4 flex-wrap">
+              {statusOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-3 rounded-lg border cursor-pointer transition-all",
+                    statusFiltros.includes(option.value)
+                      ? `bg-${option.color}-50 border-${option.color}-200 shadow-sm`
+                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                  )}
+                  onClick={() => toggleStatusFiltro(option.value)}
+                >
+                  <div className={`h-3 w-3 rounded-full bg-${option.color}-500`} />
+                  <div className="text-sm">
+                    <span className={cn(
+                      "font-semibold",
+                      statusFiltros.includes(option.value) ? `text-${option.color}-700` : "text-gray-700"
+                    )}>
+                      {option.label}
+                    </span>
+                    <div className={cn(
+                      "text-lg font-bold",
+                      statusFiltros.includes(option.value) ? `text-${option.color}-800` : "text-gray-800"
+                    )}>
+                      {pedidos.filter(p => p.status === option.value).length}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 bg-orange-50 px-3 py-2 rounded-lg border border-orange-200">
-                {/* <div className="h-4 w-4 rounded-full bg-orange-500"></div> */}
-                <div className="text-sm">
-                  <span className="font-semibold text-orange-700">Pendente pintura</span>
-                  <div className="text-xl font-bold text-orange-800">{pedidos.filter(p => p.status === 'pendente_pintura').length}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
-                {/* <div className="h-4 w-4 rounded-full bg-red-500"></div> */}
-                <div className="text-sm">
-                  <span className="font-semibold text-red-700">Pendente instalação</span>
-                  <div className="text-xl font-bold text-red-800">{pedidos.filter(p => p.status === 'pendente_instalacao').length}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                {/* <div className="h-4 w-4 rounded-full bg-gray-600"></div> */}
-                <div className="text-sm">
-                  <span className="font-semibold text-gray-700">Autorizado</span>
-                  <div className="text-xl font-bold text-gray-800">{pedidos.filter(p => p.status === 'autorizado').length}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
-                {/* <div className="h-4 w-4 rounded-full bg-green-500"></div> */}
-                <div className="text-sm">
-                  <span className="font-semibold text-green-700">Instalada</span>
-                  <div className="text-xl font-bold text-green-800">{pedidos.filter(p => p.status === 'instalada').length}</div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
