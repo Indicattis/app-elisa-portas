@@ -115,7 +115,11 @@ export default function Marketing() {
       .select("*")
       .order("mes", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao buscar investimentos:", error);
+      setInvestimentos([]);
+      return;
+    }
     setInvestimentos(data || []);
   };
 
@@ -138,7 +142,7 @@ export default function Marketing() {
       .from("marketing_investimentos")
       .select("*")
       .eq("mes", selectedMonth + "-01")
-      .single();
+      .maybeSingle();
 
     const totalInvestimento = investimentoData ? (
       Number(investimentoData.investimento_google_ads) +
