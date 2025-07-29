@@ -1,10 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { OrcamentoFormData, CampoPersonalizado } from "@/types/orcamento";
+import type { OrcamentoProduto } from "@/types/produto";
 
 export const createOrcamento = async (
   formData: OrcamentoFormData,
   camposPersonalizados: CampoPersonalizado[],
+  produtos: OrcamentoProduto[],
   valorTotal: number,
   userId: string
 ) => {
@@ -43,6 +45,24 @@ export const createOrcamento = async (
     .single();
 
   if (error) throw error;
+
+  // Salvar produtos do orçamento
+  if (produtos.length > 0) {
+    const produtosData = produtos.map(produto => ({
+      orcamento_id: data.id,
+      tipo_produto: produto.tipo_produto,
+      medidas: produto.medidas || null,
+      cor: produto.cor || null,
+      descricao: produto.descricao,
+      valor: produto.valor
+    }));
+
+    const { error: produtosError } = await supabase
+      .from("orcamento_produtos")
+      .insert(produtosData);
+
+    if (produtosError) throw produtosError;
+  }
 
   // Só atualizar valor do orçamento no lead se for aprovado automaticamente
   if (!formData.requer_analise) {

@@ -1,4 +1,6 @@
 
+import type { OrcamentoProduto } from "./produto";
+
 export interface OrcamentoFormData {
   lead_id: string;
   valor_produto: string;
@@ -10,6 +12,7 @@ export interface OrcamentoFormData {
   desconto_percentual: number;
   requer_analise: boolean;
   motivo_analise: string;
+  produtos?: OrcamentoProduto[];
 }
 
 export interface OrcamentoFilters {

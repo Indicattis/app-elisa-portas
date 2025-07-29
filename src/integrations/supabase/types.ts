@@ -365,6 +365,42 @@ export type Database = {
         }
         Relationships: []
       }
+      orcamento_produtos: {
+        Row: {
+          cor: string | null
+          created_at: string
+          descricao: string
+          id: string
+          medidas: string | null
+          orcamento_id: string
+          tipo_produto: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          medidas?: string | null
+          orcamento_id: string
+          tipo_produto: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          medidas?: string | null
+          orcamento_id?: string
+          tipo_produto?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       orcamentos: {
         Row: {
           aprovado_por: string | null

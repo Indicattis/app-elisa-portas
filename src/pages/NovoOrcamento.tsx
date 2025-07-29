@@ -18,6 +18,8 @@ export default function NovoOrcamento() {
     setFormData,
     camposPersonalizados,
     setCamposPersonalizados,
+    produtos,
+    setProdutos,
     createOrcamento,
     resetForm
   } = useOrcamentos();

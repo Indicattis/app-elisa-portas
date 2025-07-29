@@ -7,8 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Download } from "lucide-react";
+import { ProdutoForm } from "./ProdutoForm";
+import { generateOrcamentoPDF } from "@/utils/pdfGenerator";
+import { useToast } from "@/hooks/use-toast";
 import type { Lead } from "@/types/lead";
+import type { OrcamentoProduto } from "@/types/produto";
 
 interface OrcamentoFormProps {
   leads: Lead[];
@@ -31,7 +35,9 @@ export function OrcamentoForm({
   onCancel,
   loading
 }: OrcamentoFormProps) {
+  const { toast } = useToast();
   const [calculatedTotal, setCalculatedTotal] = useState(0);
+  const [produtos, setProdutos] = useState<OrcamentoProduto[]>([]);
 
   // Calcular total sempre que os valores mudarem
   useEffect(() => {
@@ -42,8 +48,9 @@ export function OrcamentoForm({
     const personalizados = camposPersonalizados.reduce((acc, campo) => {
       return acc + (parseFloat(campo.valor) || 0);
     }, 0);
+    const valorProdutos = produtos.reduce((acc, prod) => acc + prod.valor, 0);
 
-    const subtotal = produto + pintura + frete + instalacao + personalizados;
+    const subtotal = produto + pintura + frete + instalacao + personalizados + valorProdutos;
     const desconto = (subtotal * formData.desconto_percentual) / 100;
     const total = subtotal - desconto;
 
@@ -54,7 +61,8 @@ export function OrcamentoForm({
     formData.valor_frete,
     formData.valor_instalacao,
     formData.desconto_percentual,
-    camposPersonalizados
+    camposPersonalizados,
+    produtos
   ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,6 +82,43 @@ export function OrcamentoForm({
     const updated = [...camposPersonalizados];
     updated[index] = { ...updated[index], [field]: value };
     setCamposPersonalizados(updated);
+  };
+
+  const handleDownloadPDF = () => {
+    const selectedLead = leads.find(lead => lead.id === formData.lead_id);
+    if (!selectedLead) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Selecione um lead para gerar o PDF",
+      });
+      return;
+    }
+
+    const pdfData = {
+      id: `ORD-${Date.now()}`,
+      cliente: {
+        nome: selectedLead.nome,
+        telefone: selectedLead.telefone,
+        email: selectedLead.email,
+        cidade: selectedLead.cidade,
+      },
+      produtos,
+      valor_pintura: parseFloat(formData.valor_pintura) || 0,
+      valor_frete: parseFloat(formData.valor_frete) || 0,
+      valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
+      valor_total: calculatedTotal,
+      desconto_percentual: formData.desconto_percentual,
+      forma_pagamento: formData.forma_pagamento || "Não informado",
+      data_criacao: new Date().toLocaleDateString("pt-BR"),
+    };
+
+    generateOrcamentoPDF(pdfData);
+    
+    toast({
+      title: "PDF Gerado",
+      description: "O orçamento foi baixado com sucesso",
+    });
   };
 
   return (
@@ -173,6 +218,8 @@ export function OrcamentoForm({
             </div>
           </div>
 
+          <ProdutoForm produtos={produtos} setProdutos={setProdutos} />
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Campos Personalizados</Label>
@@ -251,13 +298,25 @@ export function OrcamentoForm({
             </span>
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancelar
+          <div className="flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleDownloadPDF}
+              disabled={!formData.lead_id}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Baixar PDF
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Criando..." : "Criar Orçamento"}
-            </Button>
+            
+            <div className="flex space-x-2">
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Criando..." : "Criar Orçamento"}
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>

@@ -14,7 +14,7 @@ export function useOrcamentos() {
 
   // Sempre chame os hooks na mesma ordem, independente dos dados
   const { leads, orcamentos, fetchOrcamentos } = useOrcamentoData();
-  const { formData, setFormData, camposPersonalizados, setCamposPersonalizados, resetForm } = useOrcamentoForm();
+  const { formData, setFormData, camposPersonalizados, setCamposPersonalizados, produtos, setProdutos, resetForm } = useOrcamentoForm();
   const { filters, setFilters, filteredOrcamentos } = useOrcamentoFilters(orcamentos);
 
   const handleCreateOrcamento = async (valorTotal: number) => {
@@ -30,7 +30,7 @@ export function useOrcamentos() {
     setLoading(true);
 
     try {
-      const data = await createOrcamento(formData, camposPersonalizados, valorTotal, user.id);
+      const data = await createOrcamento(formData, camposPersonalizados, produtos, valorTotal, user.id);
 
       toast({
         title: "Sucesso",
@@ -107,6 +107,8 @@ export function useOrcamentos() {
     setFormData,
     camposPersonalizados,
     setCamposPersonalizados,
+    produtos,
+    setProdutos,
     createOrcamento: handleCreateOrcamento,
     approveOrcamento: handleApproveOrcamento,
     rejectOrcamento: handleRejectOrcamento,
