@@ -326,6 +326,45 @@ export type Database = {
           },
         ]
       }
+      marketing_investimentos: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          investimento_google_ads: number | null
+          investimento_linkedin_ads: number | null
+          investimento_meta_ads: number | null
+          mes: string
+          observacoes: string | null
+          outros_investimentos: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          investimento_google_ads?: number | null
+          investimento_linkedin_ads?: number | null
+          investimento_meta_ads?: number | null
+          mes: string
+          observacoes?: string | null
+          outros_investimentos?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          investimento_google_ads?: number | null
+          investimento_linkedin_ads?: number | null
+          investimento_meta_ads?: number | null
+          mes?: string
+          observacoes?: string | null
+          outros_investimentos?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orcamentos: {
         Row: {
           aprovado_por: string | null

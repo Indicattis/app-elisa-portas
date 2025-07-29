@@ -30,6 +30,7 @@ import Visitas from "./pages/Visitas";
 import VisitaNova from "./pages/VisitaNova";
 import Producao from "./pages/Producao";
 import NovoPedido from "./pages/NovoPedido";
+import Marketing from "./pages/Marketing";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -247,6 +248,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <NovoPedido />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/marketing"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Marketing />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
