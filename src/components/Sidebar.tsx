@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, Factory, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, Factory, TrendingUp, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -39,6 +39,11 @@ const navigation = [{
   name: "Marketing",
   href: "/dashboard/marketing",
   icon: TrendingUp,
+  adminOrManager: true
+}, {
+  name: "Contas a Receber",
+  href: "/dashboard/contas-receber",
+  icon: CreditCard,
   adminOrManager: true
 }];
 export function Sidebar() {

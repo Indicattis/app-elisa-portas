@@ -49,6 +49,8 @@ export default function VendaNova() {
     forma_pagamento: "",
     observacoes_venda: "",
     atendente_id: "",
+    numero_parcelas: "1",
+    valor_entrada: "",
   });
 
   useEffect(() => {
@@ -92,33 +94,69 @@ export default function VendaNova() {
         (parseFloat(formData.valor_instalacao) || 0) +
         (parseFloat(formData.valor_frete) || 0);
 
-      const { error } = await supabase
+      const vendaData = {
+        atendente_id: formData.atendente_id,
+        publico_alvo: formData.publico_alvo || null,
+        canal_aquisicao: formData.canal_aquisicao,
+        estado: formData.estado || null,
+        cidade: formData.cidade || null,
+        cep: formData.cep || null,
+        cliente_nome: formData.cliente_nome || null,
+        cliente_telefone: formData.cliente_telefone || null,
+        cliente_email: formData.cliente_email || null,
+        valor_produto: parseFloat(formData.valor_produto) || 0,
+        custo_produto: parseFloat(formData.custo_produto) || 0,
+        valor_pintura: parseFloat(formData.valor_pintura) || 0,
+        custo_pintura: parseFloat(formData.custo_pintura) || 0,
+        valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
+        valor_frete: parseFloat(formData.valor_frete) || 0,
+        valor_venda: valorTotal,
+        resgate: formData.resgate,
+        forma_pagamento: formData.forma_pagamento || null,
+        observacoes_venda: formData.observacoes_venda || null,
+        data_venda: date.toISOString(),
+        lead_id: null,
+        numero_parcelas: parseInt(formData.numero_parcelas) || 1,
+        valor_entrada: parseFloat(formData.valor_entrada) || 0,
+      };
+
+      const { data: vendaResult, error } = await supabase
         .from("vendas")
-        .insert({
-          atendente_id: formData.atendente_id,
-          publico_alvo: formData.publico_alvo || null,
-          canal_aquisicao: formData.canal_aquisicao,
-          estado: formData.estado || null,
-          cidade: formData.cidade || null,
-          cep: formData.cep || null,
-          cliente_nome: formData.cliente_nome || null,
-          cliente_telefone: formData.cliente_telefone || null,
-          cliente_email: formData.cliente_email || null,
-          valor_produto: parseFloat(formData.valor_produto) || 0,
-          custo_produto: parseFloat(formData.custo_produto) || 0,
-          valor_pintura: parseFloat(formData.valor_pintura) || 0,
-          custo_pintura: parseFloat(formData.custo_pintura) || 0,
-          valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
-          valor_frete: parseFloat(formData.valor_frete) || 0,
-          valor_venda: valorTotal,
-          resgate: formData.resgate,
-          forma_pagamento: formData.forma_pagamento || null,
-          observacoes_venda: formData.observacoes_venda || null,
-          data_venda: date.toISOString(),
-          lead_id: null, // Venda sem vinculação a lead
-        });
+        .insert(vendaData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Se for parcelado, criar as parcelas
+      if (formData.forma_pagamento === "parcelado" && vendaResult) {
+        const numeroParcelas = parseInt(formData.numero_parcelas);
+        const valorEntrada = parseFloat(formData.valor_entrada);
+        const valorRestante = valorTotal - valorEntrada;
+        const valorParcela = valorRestante / numeroParcelas;
+
+        const parcelas = [];
+        for (let i = 1; i <= numeroParcelas; i++) {
+          const dataVencimento = new Date();
+          dataVencimento.setMonth(dataVencimento.getMonth() + i);
+          
+          parcelas.push({
+            venda_id: vendaResult.id,
+            numero_parcela: i,
+            valor_parcela: valorParcela,
+            data_vencimento: dataVencimento.toISOString().split('T')[0],
+            status: 'pendente'
+          });
+        }
+
+        const { error: parcelasError } = await supabase
+          .from("contas_receber")
+          .insert(parcelas);
+
+        if (parcelasError) {
+          console.error("Erro ao criar parcelas:", parcelasError);
+        }
+      }
 
       toast({
         title: "Sucesso",
@@ -451,6 +489,36 @@ export default function VendaNova() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Campos de Parcelamento */}
+              {formData.forma_pagamento === "parcelado" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                  <div className="space-y-2">
+                    <Label htmlFor="numero_parcelas">Número de Parcelas *</Label>
+                    <Input
+                      id="numero_parcelas"
+                      type="number"
+                      min="1"
+                      max="36"
+                      value={formData.numero_parcelas}
+                      onChange={(e) => setFormData({ ...formData, numero_parcelas: e.target.value })}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="valor_entrada">Valor de Entrada</Label>
+                    <Input
+                      id="valor_entrada"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={formData.valor_entrada}
+                      onChange={(e) => setFormData({ ...formData, valor_entrada: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="observacoes_venda">Observações</Label>

@@ -104,6 +104,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_receber: {
+        Row: {
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          id: string
+          numero_parcela: number
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor_pago: number | null
+          valor_parcela: number
+          venda_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          id?: string
+          numero_parcela: number
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_pago?: number | null
+          valor_parcela: number
+          venda_id: string
+        }
+        Update: {
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          id?: string
+          numero_parcela?: number
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_pago?: number | null
+          valor_parcela?: number
+          venda_id?: string
+        }
+        Relationships: []
+      }
       elisaportas_leads: {
         Row: {
           altura_porta: string | null
@@ -714,10 +756,12 @@ export type Database = {
           id: string
           lead_id: string | null
           lucro_total: number | null
+          numero_parcelas: number | null
           observacoes_venda: string | null
           publico_alvo: string | null
           resgate: boolean | null
           updated_at: string
+          valor_entrada: number | null
           valor_frete: number | null
           valor_instalacao: number | null
           valor_pintura: number | null
@@ -742,10 +786,12 @@ export type Database = {
           id?: string
           lead_id?: string | null
           lucro_total?: number | null
+          numero_parcelas?: number | null
           observacoes_venda?: string | null
           publico_alvo?: string | null
           resgate?: boolean | null
           updated_at?: string
+          valor_entrada?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null
           valor_pintura?: number | null
@@ -770,10 +816,12 @@ export type Database = {
           id?: string
           lead_id?: string | null
           lucro_total?: number | null
+          numero_parcelas?: number | null
           observacoes_venda?: string | null
           publico_alvo?: string | null
           resgate?: boolean | null
           updated_at?: string
+          valor_entrada?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null
           valor_pintura?: number | null

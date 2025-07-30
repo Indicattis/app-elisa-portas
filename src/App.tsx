@@ -31,6 +31,7 @@ import VisitaNova from "./pages/VisitaNova";
 import Producao from "./pages/Producao";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
+import ContasReceber from "./pages/ContasReceber";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -258,6 +259,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Marketing />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/contas-receber"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <ContasReceber />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
