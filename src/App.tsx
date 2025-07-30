@@ -32,6 +32,7 @@ import Producao from "./pages/Producao";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
 import ContasReceber from "./pages/ContasReceber";
+import Organograma from "./pages/Organograma";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -269,6 +270,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <ContasReceber />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/organograma"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <DashboardLayout>
+                        <Organograma />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

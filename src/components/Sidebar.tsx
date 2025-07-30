@@ -45,6 +45,11 @@ const navigation = [{
   href: "/dashboard/contas-receber",
   icon: CreditCard,
   adminOrManager: true
+}, {
+  name: "Organograma",
+  href: "/dashboard/organograma",
+  icon: Users,
+  adminOnly: true
 }];
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
