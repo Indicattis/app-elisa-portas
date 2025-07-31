@@ -33,6 +33,7 @@ import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
 import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
+import Calendario from "./pages/Calendario";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -280,6 +281,16 @@ const App = () => (
                     <ProtectedRoute requireAdmin={true}>
                       <DashboardLayout>
                         <Organograma />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/calendario"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Calendario />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

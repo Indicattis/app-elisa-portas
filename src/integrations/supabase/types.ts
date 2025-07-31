@@ -254,6 +254,71 @@ export type Database = {
         }
         Relationships: []
       }
+      eventos_calendario: {
+        Row: {
+          categoria: string
+          created_at: string
+          created_by: string
+          data_evento: string
+          descricao_evento: string | null
+          horario_evento: string
+          id: string
+          nome_evento: string
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          created_by: string
+          data_evento: string
+          descricao_evento?: string | null
+          horario_evento: string
+          id?: string
+          nome_evento: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          created_by?: string
+          data_evento?: string
+          descricao_evento?: string | null
+          horario_evento?: string
+          id?: string
+          nome_evento?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      eventos_membros: {
+        Row: {
+          created_at: string
+          evento_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          evento_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          evento_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_membros_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos_calendario"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_anexos: {
         Row: {
           created_at: string
