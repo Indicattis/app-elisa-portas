@@ -317,6 +317,13 @@ export type Database = {
             referencedRelation: "eventos_calendario"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_eventos_membros_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       lead_anexos: {
