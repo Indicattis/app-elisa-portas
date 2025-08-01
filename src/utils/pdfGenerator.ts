@@ -219,5 +219,11 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('Contato: (11) 99999-9999 | contato@elisaportas.com.br', margin, yPosition + 12);
 
   // Salvar o PDF
-  pdf.save(`orcamento-${data.id.slice(-8)}.pdf`);
+  try {
+    pdf.save(`orcamento-${data.id.slice(-8)}.pdf`);
+    console.log("PDF gerado com sucesso");
+  } catch (error) {
+    console.error("Erro ao salvar PDF:", error);
+    throw error;
+  }
 };

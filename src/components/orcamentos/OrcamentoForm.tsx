@@ -51,8 +51,7 @@ export function OrcamentoForm({
     const valorProdutos = produtos.reduce((acc, prod) => acc + prod.valor, 0);
 
     const subtotal = produto + pintura + frete + instalacao + personalizados + valorProdutos;
-    const desconto = (subtotal * formData.desconto_percentual) / 100;
-    const total = subtotal - desconto;
+    const total = subtotal; // Removido o desconto - apenas gerente comercial pode aplicar desconto
 
     setCalculatedTotal(total);
   }, [
@@ -60,7 +59,6 @@ export function OrcamentoForm({
     formData.valor_pintura,
     formData.valor_frete,
     formData.valor_instalacao,
-    formData.desconto_percentual,
     camposPersonalizados,
     produtos
   ]);
@@ -85,40 +83,49 @@ export function OrcamentoForm({
   };
 
   const handleDownloadPDF = () => {
-    const selectedLead = leads.find(lead => lead.id === formData.lead_id);
-    if (!selectedLead) {
+    try {
+      const selectedLead = leads.find(lead => lead.id === formData.lead_id);
+      if (!selectedLead) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Selecione um lead para gerar o PDF",
+        });
+        return;
+      }
+
+      const pdfData = {
+        id: `ORD-${Date.now()}`,
+        cliente: {
+          nome: selectedLead.nome,
+          telefone: selectedLead.telefone,
+          email: selectedLead.email || "",
+          cidade: selectedLead.cidade || "",
+        },
+        produtos,
+        valor_pintura: parseFloat(formData.valor_pintura) || 0,
+        valor_frete: parseFloat(formData.valor_frete) || 0,
+        valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
+        valor_total: calculatedTotal,
+        desconto_percentual: 0, // Desconto removido do formulário
+        forma_pagamento: formData.forma_pagamento || "Não informado",
+        data_criacao: new Date().toLocaleDateString("pt-BR"),
+      };
+
+      generateOrcamentoPDF(pdfData);
+      
+      toast({
+        title: "PDF Gerado",
+        description: "O orçamento foi baixado com sucesso",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Selecione um lead para gerar o PDF",
+        description: "Erro ao gerar o PDF. Tente novamente.",
       });
-      return;
     }
-
-    const pdfData = {
-      id: `ORD-${Date.now()}`,
-      cliente: {
-        nome: selectedLead.nome,
-        telefone: selectedLead.telefone,
-        email: selectedLead.email,
-        cidade: selectedLead.cidade,
-      },
-      produtos,
-      valor_pintura: parseFloat(formData.valor_pintura) || 0,
-      valor_frete: parseFloat(formData.valor_frete) || 0,
-      valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
-      valor_total: calculatedTotal,
-      desconto_percentual: formData.desconto_percentual,
-      forma_pagamento: formData.forma_pagamento || "Não informado",
-      data_criacao: new Date().toLocaleDateString("pt-BR"),
-    };
-
-    generateOrcamentoPDF(pdfData);
-    
-    toast({
-      title: "PDF Gerado",
-      description: "O orçamento foi baixado com sucesso",
-    });
   };
 
   return (
@@ -255,17 +262,6 @@ export function OrcamentoForm({
             ))}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="desconto_percentual">Desconto (%)</Label>
-            <Input
-              id="desconto_percentual"
-              type="number"
-              min="0"
-              max="100"
-              value={formData.desconto_percentual}
-              onChange={(e) => setFormData({ ...formData, desconto_percentual: parseInt(e.target.value) || 0 })}
-            />
-          </div>
 
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
