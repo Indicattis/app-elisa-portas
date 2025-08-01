@@ -134,8 +134,10 @@ export default function Marketing() {
   };
 
   const fetchMetrics = async () => {
-    const mesStart = startOfMonth(new Date(selectedMonth + "-01"));
-    const mesEnd = endOfMonth(new Date(selectedMonth + "-01"));
+    // Construir datas do mês selecionado em UTC para evitar problemas de timezone
+    const [year, month] = selectedMonth.split('-');
+    const mesStart = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const mesEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
 
     // Buscar investimentos do mês
     const { data: investimentoData } = await supabase
