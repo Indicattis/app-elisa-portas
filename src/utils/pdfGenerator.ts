@@ -20,6 +20,7 @@ interface OrcamentoPDFData {
 }
 
 export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
+  console.log('Iniciando geração do PDF com dados:', data);
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.width;
   const margin = 20;
@@ -220,6 +221,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   // Salvar o PDF
   try {
+    console.log('Tentando salvar PDF...');
     pdf.save(`orcamento-${data.id.slice(-8)}.pdf`);
     console.log("PDF gerado com sucesso");
   } catch (error) {

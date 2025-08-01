@@ -83,6 +83,7 @@ export function OrcamentoForm({
   };
 
   const handleDownloadPDF = () => {
+    console.log('Botão PDF clicado');
     try {
       const selectedLead = leads.find(lead => lead.id === formData.lead_id);
       if (!selectedLead) {
