@@ -663,6 +663,60 @@ export type Database = {
           },
         ]
       }
+      organograma_connections: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          source_user_id: string
+          target_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          source_user_id: string
+          target_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          source_user_id?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
+      organograma_positions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          position_x: number
+          position_y: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          position_x: number
+          position_y: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          position_x?: number
+          position_y?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pedidos_producao: {
         Row: {
           cliente_nome: string

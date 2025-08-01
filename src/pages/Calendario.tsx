@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Clock, Users, Tag, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Clock, Users, Tag, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Edit } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { EditEventModal } from "@/components/calendario/EditEventModal";
 
 interface EventoCalendario {
   id: string;
@@ -57,6 +58,8 @@ export default function Calendario() {
     descricao_evento: "",
     membros: [] as string[]
   });
+  const [editingEvent, setEditingEvent] = useState<EventoCalendario | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -454,13 +457,25 @@ export default function Calendario() {
               ) : (
                 <div className="space-y-3">
                   {eventosSelecionados.map((evento) => (
-                    <div key={evento.id} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <h4 className="font-medium">{evento.nome_evento}</h4>
-                        <Badge variant="secondary" className={categoriaLabels[evento.categoria].color}>
-                          {categoriaLabels[evento.categoria].label}
-                        </Badge>
-                      </div>
+                     <div key={evento.id} className="border rounded-lg p-3 space-y-2">
+                       <div className="flex items-start justify-between">
+                         <h4 className="font-medium">{evento.nome_evento}</h4>
+                         <div className="flex items-center gap-2">
+                           <Badge variant="secondary" className={categoriaLabels[evento.categoria].color}>
+                             {categoriaLabels[evento.categoria].label}
+                           </Badge>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => {
+                               setEditingEvent(evento);
+                               setIsEditModalOpen(true);
+                             }}
+                           >
+                             <Edit className="h-4 w-4" />
+                           </Button>
+                         </div>
+                       </div>
                       
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
@@ -499,6 +514,17 @@ export default function Calendario() {
           </Card>
         </div>
       </div>
+
+      <EditEventModal
+        evento={editingEvent}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingEvent(null);
+        }}
+        onEventUpdated={carregarEventos}
+        usuarios={usuarios}
+      />
     </div>
   );
 }
