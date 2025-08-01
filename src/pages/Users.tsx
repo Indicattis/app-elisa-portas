@@ -117,6 +117,9 @@ export default function Users() {
           : user
       )
     );
+    
+    // Atualizar o banco de dados também
+    fetchUsers();
   };
 
   const getInitials = (name: string) => {
