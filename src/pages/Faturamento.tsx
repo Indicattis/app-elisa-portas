@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RequisicoesVenda } from "@/components/RequisicoesVenda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BulkUploadVendas from "@/components/BulkUploadVendas";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import jsPDF from 'jspdf';
@@ -384,8 +385,9 @@ export default function Faturamento() {
       </div>
 
       <Tabs defaultValue="vendas" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="vendas">Vendas</TabsTrigger>
+          <TabsTrigger value="upload">Upload</TabsTrigger>
           <TabsTrigger value="requisicoes">Requisições</TabsTrigger>
         </TabsList>
 
@@ -719,6 +721,13 @@ export default function Faturamento() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="upload">
+          <BulkUploadVendas onUploadComplete={() => {
+            fetchVendas();
+            fetchStats();
+          }} />
         </TabsContent>
 
         <TabsContent value="requisicoes">
