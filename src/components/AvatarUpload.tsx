@@ -21,41 +21,54 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
+      console.log('Iniciando upload de avatar para userId:', userId);
       
       if (!event.target.files || event.target.files.length === 0) {
+        console.log('Nenhum arquivo selecionado');
         return;
       }
 
       const file = event.target.files[0];
+      console.log('Arquivo selecionado:', file.name, file.size, file.type);
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/avatar.${fileExt}`;
+      console.log('Nome do arquivo no storage:', fileName);
 
       // Upload da imagem
+      console.log('Fazendo upload para o bucket user-avatars...');
       const { error: uploadError } = await supabase.storage
         .from('user-avatars')
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) {
+        console.error('Erro no upload:', uploadError);
         throw uploadError;
       }
 
+      console.log('Upload realizado com sucesso, obtendo URL pública...');
+      
       // Obter URL pública
       const { data } = supabase.storage
         .from('user-avatars')
         .getPublicUrl(fileName);
 
       const avatarUrl = data.publicUrl;
+      console.log('URL pública obtida:', avatarUrl);
 
       // Atualizar na base de dados
+      console.log('Atualizando foto_perfil_url na tabela admin_users para user_id:', userId);
       const { error: updateError } = await supabase
         .from('admin_users')
         .update({ foto_perfil_url: avatarUrl })
         .eq('user_id', userId);
 
       if (updateError) {
+        console.error('Erro ao atualizar banco de dados:', updateError);
         throw updateError;
       }
 
+      console.log('Banco de dados atualizado com sucesso, chamando onAvatarUpdate...');
       onAvatarUpdate(avatarUrl);
       
       toast({

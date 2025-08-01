@@ -809,6 +809,54 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       vendas: {
         Row: {
           atendente_id: string
@@ -994,6 +1042,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_permission: {
+        Args: {
+          _user_id: string
+          _permission: Database["public"]["Enums"]["app_permission"]
+        }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: boolean
+      }
       iniciar_atendimento: {
         Args: { lead_uuid: string }
         Returns: boolean
@@ -1020,6 +1082,19 @@ export type Database = {
       }
     }
     Enums: {
+      app_permission:
+        | "dashboard"
+        | "leads"
+        | "orcamentos"
+        | "vendas"
+        | "producao"
+        | "calendario"
+        | "marketing"
+        | "faturamento"
+        | "contas_receber"
+        | "visitas"
+        | "organograma"
+        | "users"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -1166,6 +1241,20 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_permission: [
+        "dashboard",
+        "leads",
+        "orcamentos",
+        "vendas",
+        "producao",
+        "calendario",
+        "marketing",
+        "faturamento",
+        "contas_receber",
+        "visitas",
+        "organograma",
+        "users",
+      ],
       lead_status: [
         "aguardando_atendimento",
         "em_andamento",

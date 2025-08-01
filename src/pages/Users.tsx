@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
-import { Search, Edit, Save, X } from "lucide-react";
+import { PermissionManager } from "@/components/PermissionManager";
+import { Search, Edit, Save, X, UsersIcon, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -164,148 +166,167 @@ export default function Users() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
-          <p className="text-muted-foreground">Gerencie todos os usuários do sistema</p>
+          <p className="text-muted-foreground">Gerencie usuários e permissões do sistema</p>
         </div>
         <AddUserDialog onUserAdded={fetchUsers} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Usuários</CardTitle>
-          <CardDescription>
-            {filteredUsers.length} usuários encontrados
-          </CardDescription>
-          <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome, email ou função..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Foto</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <AvatarUpload
-                        userId={user.user_id}
-                        currentAvatarUrl={user.foto_perfil_url}
-                        userName={user.nome}
-                        onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {editingUser === user.id ? (
-                        <Input
-                          value={editForm.nome || ""}
-                          onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                          className="max-w-xs"
-                        />
-                      ) : (
-                        user.nome
-                      )}
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {editingUser === user.id ? (
-                        <Select
-                          value={editForm.role}
-                          onValueChange={(value) => setEditForm({ ...editForm, role: value as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" })}
-                        >
-                          <SelectTrigger className="max-w-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="administrador">Administrador</SelectItem>
-                            <SelectItem value="atendente">Atendente</SelectItem>
-                            <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
-                            <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge variant={user.role === "administrador" ? "default" : "secondary"}>
-                          {user.role === "administrador" ? "Administrador" : 
-                           user.role === "gerente_comercial" ? "Gerente Comercial" : 
-                           user.role === "gerente_fabril" ? "Gerente Fabril" : "Atendente"}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingUser === user.id ? (
-                        <Select
-                          value={editForm.ativo ? "true" : "false"}
-                          onValueChange={(value) => setEditForm({ ...editForm, ativo: value === "true" })}
-                        >
-                          <SelectTrigger className="max-w-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Ativo</SelectItem>
-                            <SelectItem value="false">Inativo</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge variant={user.ativo ? "default" : "destructive"}>
-                          {user.ativo ? "Ativo" : "Inativo"}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(user.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        {editingUser === user.id ? (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSave(user.id)}
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <UsersIcon className="w-4 h-4" />
+            Usuários
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Permissões
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lista de Usuários</CardTitle>
+              <CardDescription>
+                {filteredUsers.length} usuários encontrados
+              </CardDescription>
+              <div className="flex items-center space-x-2">
+                <Search className="w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, email ou função..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-sm"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Foto</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Função</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data de Criação</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <AvatarUpload
+                            userId={user.user_id}
+                            currentAvatarUrl={user.foto_perfil_url}
+                            userName={user.nome}
+                            onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {editingUser === user.id ? (
+                            <Input
+                              value={editForm.nome || ""}
+                              onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                              className="max-w-xs"
+                            />
+                          ) : (
+                            user.nome
+                          )}
+                        </TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          {editingUser === user.id ? (
+                            <Select
+                              value={editForm.role}
+                              onValueChange={(value) => setEditForm({ ...editForm, role: value as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" })}
                             >
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleCancel}
+                              <SelectTrigger className="max-w-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="administrador">Administrador</SelectItem>
+                                <SelectItem value="atendente">Atendente</SelectItem>
+                                <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
+                                <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant={user.role === "administrador" ? "default" : "secondary"}>
+                              {user.role === "administrador" ? "Administrador" : 
+                               user.role === "gerente_comercial" ? "Gerente Comercial" : 
+                               user.role === "gerente_fabril" ? "Gerente Fabril" : "Atendente"}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {editingUser === user.id ? (
+                            <Select
+                              value={editForm.ativo ? "true" : "false"}
+                              onValueChange={(value) => setEditForm({ ...editForm, ativo: value === "true" })}
                             >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(user)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                              <SelectTrigger className="max-w-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="true">Ativo</SelectItem>
+                                <SelectItem value="false">Inativo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant={user.ativo ? "default" : "destructive"}>
+                              {user.ativo ? "Ativo" : "Inativo"}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(user.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            {editingUser === user.id ? (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSave(user.id)}
+                                >
+                                  <Save className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleCancel}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(user)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="permissions">
+          <PermissionManager users={users} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
