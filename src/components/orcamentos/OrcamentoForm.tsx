@@ -84,9 +84,14 @@ export function OrcamentoForm({
 
   const handleDownloadPDF = () => {
     console.log('Botão PDF clicado');
+    console.log('FormData:', formData);
+    console.log('Produtos:', produtos);
+    console.log('Calculated total:', calculatedTotal);
+    
     try {
       const selectedLead = leads.find(lead => lead.id === formData.lead_id);
       if (!selectedLead) {
+        console.log('Lead não encontrado');
         toast({
           variant: "destructive",
           title: "Erro",
@@ -94,6 +99,8 @@ export function OrcamentoForm({
         });
         return;
       }
+
+      console.log('Lead selecionado:', selectedLead);
 
       const pdfData = {
         id: `ORD-${Date.now()}`,
@@ -103,7 +110,7 @@ export function OrcamentoForm({
           email: selectedLead.email || "",
           cidade: selectedLead.cidade || "",
         },
-        produtos,
+        produtos: produtos || [],
         valor_pintura: parseFloat(formData.valor_pintura) || 0,
         valor_frete: parseFloat(formData.valor_frete) || 0,
         valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
@@ -113,6 +120,9 @@ export function OrcamentoForm({
         data_criacao: new Date().toLocaleDateString("pt-BR"),
       };
 
+      console.log('Dados para PDF:', pdfData);
+      console.log('Chamando generateOrcamentoPDF...');
+      
       generateOrcamentoPDF(pdfData);
       
       toast({
