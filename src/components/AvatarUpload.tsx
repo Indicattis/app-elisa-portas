@@ -48,12 +48,12 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
 
       console.log('Upload realizado com sucesso, obtendo URL pública...');
       
-      // Obter URL pública
+      // Obter URL pública com timestamp para evitar cache
       const { data } = supabase.storage
         .from('user-avatars')
         .getPublicUrl(fileName);
 
-      const avatarUrl = data.publicUrl;
+      const avatarUrl = `${data.publicUrl}?t=${Date.now()}`;
       console.log('URL pública obtida:', avatarUrl);
 
       // Atualizar na base de dados
@@ -70,12 +70,6 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
 
       console.log('Banco de dados atualizado com sucesso, chamando onAvatarUpdate...');
       onAvatarUpdate(avatarUrl);
-      
-      // Forçar recarregamento da imagem adicionando timestamp
-      const imageElement = document.querySelector(`img[src*="${userId}"]`) as HTMLImageElement;
-      if (imageElement) {
-        imageElement.src = `${avatarUrl}?t=${Date.now()}`;
-      }
       
       toast({
         title: "Sucesso",
@@ -138,7 +132,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
     <div className="flex items-center space-x-4">
       <Avatar className="w-16 h-16">
         <AvatarImage 
-          src={currentAvatarUrl ? `${currentAvatarUrl}?t=${Date.now()}` : undefined} 
+          src={currentAvatarUrl || undefined} 
           alt={userName} 
         />
         <AvatarFallback className="text-lg">
