@@ -47,12 +47,15 @@ export default function Users() {
 
   const fetchUsers = async () => {
     try {
+      console.log('Buscando usuários...');
       const { data, error } = await supabase
         .from("admin_users")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+      console.log('Usuários carregados:', data);
+      console.log('URLs de foto dos usuários:', data?.map(u => ({ nome: u.nome, foto_url: u.foto_perfil_url })));
       setUsers(data || []);
     } catch (error) {
       console.error("Erro ao buscar usuários:", error);
@@ -112,13 +115,16 @@ export default function Users() {
   };
 
   const handleAvatarUpdate = (userId: string, newAvatarUrl: string | null) => {
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
+    console.log('Atualizando avatar no estado local:', { userId, newAvatarUrl });
+    setUsers(prevUsers => {
+      const updatedUsers = prevUsers.map(user => 
         user.user_id === userId 
           ? { ...user, foto_perfil_url: newAvatarUrl }
           : user
-      )
-    );
+      );
+      console.log('Estado atualizado:', updatedUsers.find(u => u.user_id === userId));
+      return updatedUsers;
+    });
   };
 
   const getInitials = (name: string) => {
