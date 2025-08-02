@@ -9,9 +9,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Autorizado {
@@ -39,6 +40,7 @@ export default function Autorizados() {
   const [loading, setLoading] = useState(true);
   const [editingAutorizado, setEditingAutorizado] = useState<Autorizado | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -83,6 +85,72 @@ export default function Autorizados() {
     setIsEditDialogOpen(true);
   };
 
+  const uploadImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('Você deve selecionar uma imagem para upload.');
+      }
+
+      const file = event.target.files[0];
+      
+      // Validação do tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Por favor, selecione apenas arquivos de imagem.');
+      }
+
+      // Validação do tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('A imagem deve ter no máximo 5MB.');
+      }
+
+      // Converter imagem para base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        if (editingAutorizado) {
+          setEditingAutorizado({ 
+            ...editingAutorizado, 
+            logo_url: base64String 
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+
+      toast({
+        title: 'Sucesso',
+        description: 'Imagem carregada com sucesso!'
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro no upload',
+        description: error.message
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    if (editingAutorizado) {
+      setEditingAutorizado({ 
+        ...editingAutorizado, 
+        logo_url: undefined 
+      });
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const handleSaveEdit = async () => {
     if (!editingAutorizado) return;
 
@@ -101,6 +169,7 @@ export default function Autorizados() {
           cep: editingAutorizado.cep,
           regiao: editingAutorizado.regiao,
           ativo: editingAutorizado.ativo,
+          logo_url: editingAutorizado.logo_url,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingAutorizado.id);
@@ -418,6 +487,57 @@ export default function Autorizados() {
                     setEditingAutorizado({ ...editingAutorizado, regiao: e.target.value })
                   }
                 />
+              </div>
+
+              {/* Seção de Upload de Imagem */}
+              <div className="space-y-4">
+                <Label>Logo do Autorizado</Label>
+                <div className="flex items-center space-x-4">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={editingAutorizado.logo_url} />
+                    <AvatarFallback className="text-lg">
+                      {getInitials(editingAutorizado.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        disabled={uploading}
+                      >
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Camera className="h-4 w-4 mr-2" />
+                        )}
+                        {uploading ? 'Carregando...' : 'Escolher Imagem'}
+                      </Button>
+                      {editingAutorizado.logo_url && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={removeImage}
+                        >
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={uploadImage}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Máximo 5MB. Formatos: JPG, PNG, GIF.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">
