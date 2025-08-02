@@ -71,6 +71,12 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
       console.log('Banco de dados atualizado com sucesso, chamando onAvatarUpdate...');
       onAvatarUpdate(avatarUrl);
       
+      // Forçar recarregamento da imagem adicionando timestamp
+      const imageElement = document.querySelector(`img[src*="${userId}"]`) as HTMLImageElement;
+      if (imageElement) {
+        imageElement.src = `${avatarUrl}?t=${Date.now()}`;
+      }
+      
       toast({
         title: "Sucesso",
         description: "Foto de perfil atualizada com sucesso",
@@ -131,7 +137,10 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
   return (
     <div className="flex items-center space-x-4">
       <Avatar className="w-16 h-16">
-        <AvatarImage src={currentAvatarUrl || undefined} alt={userName} />
+        <AvatarImage 
+          src={currentAvatarUrl ? `${currentAvatarUrl}?t=${Date.now()}` : undefined} 
+          alt={userName} 
+        />
         <AvatarFallback className="text-lg">
           {getInitials(userName)}
         </AvatarFallback>
