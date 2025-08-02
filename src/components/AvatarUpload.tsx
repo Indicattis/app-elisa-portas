@@ -48,12 +48,12 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
 
       console.log('Upload realizado com sucesso, obtendo URL pública...');
       
-      // Obter URL pública com timestamp para evitar cache
+      // Obter URL pública
       const { data } = supabase.storage
         .from('user-avatars')
         .getPublicUrl(fileName);
 
-      const avatarUrl = `${data.publicUrl}?t=${Date.now()}`;
+      const avatarUrl = data.publicUrl;
       console.log('URL pública obtida:', avatarUrl);
 
       // Atualizar na base de dados

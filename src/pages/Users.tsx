@@ -130,16 +130,6 @@ export default function Users() {
       .slice(0, 2);
   };
 
-  // Função para obter URL da imagem com timestamp para evitar cache
-  const getImageUrl = (url: string | null) => {
-    if (!url) return undefined;
-    
-    // Se já tem timestamp, usar como está
-    if (url.includes('?t=')) return url;
-    
-    // Adicionar timestamp para evitar cache
-    return `${url}?t=${Date.now()}`;
-  };
 
   const filteredUsers = users.filter(
     (user) =>
@@ -228,7 +218,7 @@ export default function Users() {
                         <TableCell>
                           <AvatarUpload
                             userId={user.user_id}
-                            currentAvatarUrl={getImageUrl(user.foto_perfil_url)}
+                            currentAvatarUrl={user.foto_perfil_url}
                             userName={user.nome}
                             onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
                           />
