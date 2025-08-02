@@ -54,6 +54,11 @@ const navigation = [{
   name: "Calendário",
   href: "/dashboard/calendario",
   icon: CalendarDays
+}, {
+  name: "Autorizados",
+  href: "/dashboard/autorizados",
+  icon: Users,
+  adminOnly: true
 }];
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);

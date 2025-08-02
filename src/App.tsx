@@ -34,6 +34,8 @@ import Marketing from "./pages/Marketing";
 import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
+import Autorizados from "./pages/Autorizados";
+import AutorizadoNovo from "./pages/AutorizadoNovo";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -291,6 +293,26 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Calendario />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/autorizados"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <DashboardLayout>
+                        <Autorizados />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/autorizados/novo"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <DashboardLayout>
+                        <AutorizadoNovo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
