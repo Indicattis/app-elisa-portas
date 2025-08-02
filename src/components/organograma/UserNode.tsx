@@ -1,11 +1,16 @@
 import { memo, useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Link } from 'lucide-react';
 
 interface UserNodeData {
   nome: string;
   role: string;
   foto_perfil_url?: string;
+  onStartConnection?: (nodeId: string) => void;
+  onEndConnection?: (nodeId: string) => void;
+  isConnectionMode?: boolean;
 }
 
 const getRoleBorderColor = (role: string) => {
@@ -37,19 +42,33 @@ const getRoleDisplayName = (role: string) => {
   }
 };
 
-function UserNode({ data }: NodeProps) {
-  const [isConnecting, setIsConnecting] = useState(false);
+function UserNode({ data, id }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const nodeData = data as unknown as UserNodeData;
   
-  const handleDoubleClick = (e: React.MouseEvent) => {
+  const handleStartConnection = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsConnecting(!isConnecting);
+    if (nodeData.onStartConnection) {
+      nodeData.onStartConnection(id as string);
+    }
   };
 
-  const borderColor = getRoleBorderColor((data as unknown as UserNodeData).role);
-  const roleDisplay = getRoleDisplayName((data as unknown as UserNodeData).role);
+  const handleEndConnection = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (nodeData.onEndConnection) {
+      nodeData.onEndConnection(id as string);
+    }
+  };
+
+  const borderColor = getRoleBorderColor(nodeData.role);
+  const roleDisplay = getRoleDisplayName(nodeData.role);
 
   return (
-    <div className="text-center">
+    <div 
+      className="text-center relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <Handle 
         type="target" 
         position={Position.Top} 
@@ -63,30 +82,42 @@ function UserNode({ data }: NodeProps) {
       
       <div 
         className={`relative cursor-pointer transition-all duration-200 ${
-          isConnecting ? 'ring-2 ring-primary' : ''
+          nodeData.isConnectionMode ? 'ring-2 ring-primary cursor-crosshair' : ''
         }`}
-        onDoubleClick={handleDoubleClick}
+        onClick={nodeData.isConnectionMode ? handleEndConnection : undefined}
       >
         <Avatar 
           className={`w-20 h-20 border-4 ${borderColor} transition-all duration-200 hover:scale-105`}
         >
           <AvatarImage 
-            src={(data as unknown as UserNodeData).foto_perfil_url} 
-            alt={(data as unknown as UserNodeData).nome}
+            src={nodeData.foto_perfil_url} 
+            alt={nodeData.nome}
           />
           <AvatarFallback className="text-lg font-semibold">
-            {(data as unknown as UserNodeData).nome.split(' ').map(n => n[0]).join('').toUpperCase()}
+            {nodeData.nome.split(' ').map(n => n[0]).join('').toUpperCase()}
           </AvatarFallback>
         </Avatar>
         
-        {isConnecting && (
+        {/* Botão de conexão que aparece no hover */}
+        {isHovered && !nodeData.isConnectionMode && (
+          <Button
+            size="icon"
+            variant="default"
+            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-primary hover:bg-primary/80 shadow-lg"
+            onClick={handleStartConnection}
+          >
+            <Link className="h-3 w-3" />
+          </Button>
+        )}
+        
+        {nodeData.isConnectionMode && (
           <div className="absolute -inset-1 border-2 border-dashed border-primary rounded-full animate-pulse" />
         )}
       </div>
       
       <div className="mt-2 max-w-[120px]">
         <p className="text-sm font-semibold text-foreground truncate">
-          {(data as unknown as UserNodeData).nome}
+          {nodeData.nome}
         </p>
         <p className="text-xs text-muted-foreground">
           {roleDisplay}

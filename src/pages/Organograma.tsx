@@ -38,13 +38,71 @@ export default function Organograma() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
-      loadSavedPositions();
     }
   }, [isAdmin]);
+
+  const handleStartConnection = useCallback((sourceNodeId: string) => {
+    setConnectionMode(sourceNodeId);
+    // Atualizar nodes para indicar modo de conexão
+    setNodes(nodes => 
+      nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          isConnectionMode: node.id === sourceNodeId,
+        }
+      }))
+    );
+  }, [setNodes]);
+
+  const handleEndConnection = useCallback((targetNodeId: string) => {
+    if (connectionMode && connectionMode !== targetNodeId) {
+      // Verificar se a conexão já existe
+      const connectionExists = edges.some(edge => 
+        (edge.source === connectionMode && edge.target === targetNodeId) ||
+        (edge.source === targetNodeId && edge.target === connectionMode)
+      );
+
+      if (!connectionExists) {
+        // Criar nova conexão
+        const newEdge: Edge = {
+          id: `${connectionMode}-${targetNodeId}`,
+          source: connectionMode,
+          target: targetNodeId,
+          type: 'default',
+        };
+        setEdges(edges => [...edges, newEdge]);
+        
+        toast({
+          title: "Conexão criada",
+          description: "Vínculo adicionado com sucesso!",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Conexão já existe",
+          description: "Este vínculo já foi criado anteriormente.",
+        });
+      }
+    }
+    
+    // Resetar modo de conexão
+    setConnectionMode(null);
+    setNodes(nodes => 
+      nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          isConnectionMode: false,
+        }
+      }))
+    );
+  }, [connectionMode, edges, setEdges, setNodes, toast]);
 
   const loadSavedPositions = async () => {
     try {
@@ -68,8 +126,22 @@ export default function Organograma() {
             const savedPosition = positions.find(p => p.user_id === node.id);
             return savedPosition ? {
               ...node,
-              position: { x: Number(savedPosition.position_x), y: Number(savedPosition.position_y) }
-            } : node;
+              position: { x: Number(savedPosition.position_x), y: Number(savedPosition.position_y) },
+              data: {
+                ...node.data,
+                onStartConnection: handleStartConnection,
+                onEndConnection: handleEndConnection,
+                isConnectionMode: false,
+              }
+            } : {
+              ...node,
+              data: {
+                ...node.data,
+                onStartConnection: handleStartConnection,
+                onEndConnection: handleEndConnection,
+                isConnectionMode: false,
+              }
+            };
           })
         );
       }
@@ -112,10 +184,16 @@ export default function Organograma() {
             nome: user.nome,
             role: user.role,
             foto_perfil_url: user.foto_perfil_url,
+            onStartConnection: handleStartConnection,
+            onEndConnection: handleEndConnection,
+            isConnectionMode: false,
           },
         }));
         
         setNodes(initialNodes);
+        
+        // Carregar posições salvas após criar os nós iniciais
+        setTimeout(() => loadSavedPositions(), 100);
       }
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
@@ -186,6 +264,7 @@ export default function Organograma() {
     }
   };
 
+
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
@@ -214,8 +293,13 @@ export default function Organograma() {
           <div>
             <h1 className="text-2xl font-bold">Organograma</h1>
             <p className="text-muted-foreground">
-              Organize a estrutura hierárquica da empresa. Arraste os usuários para posicionar e conecte-os criando vínculos.
+              Organize a estrutura hierárquica da empresa. Arraste os usuários para posicionar e passe o mouse sobre eles para criar vínculos.
             </p>
+            {connectionMode && (
+              <p className="text-sm text-primary font-medium mt-1">
+                Modo de conexão ativo - Clique em outro usuário para criar vínculo
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
             <Button
