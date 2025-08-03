@@ -554,37 +554,49 @@ export default function Marketing() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={publicoAlvoData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {publicoAlvoData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360}, 70%, 50%)`} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number, name) => [
-                      `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                      'Valor Total'
-                    ]}
-                    labelFormatter={(label) => {
-                      const item = publicoAlvoData.find(d => d.name === label);
-                      return `${label} - ${item?.vendas || 0} vendas`;
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {publicoAlvoData.length > 0 ? (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={publicoAlvoData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {publicoAlvoData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360}, 70%, 50%)`} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number, name) => [
+                        `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                        'Valor Total'
+                      ]}
+                      labelFormatter={(label) => {
+                        const item = publicoAlvoData.find(d => d.name === label);
+                        return `${label} - ${item?.vendas || 0} vendas`;
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Nenhuma venda encontrada</p>
+                  <p className="text-sm">
+                    Não há dados de vendas para o período selecionado
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -596,37 +608,49 @@ export default function Marketing() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={canalAquisicaoData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
-                    outerRadius={80}
-                    fill="#82ca9d"
-                    dataKey="value"
-                  >
-                    {canalAquisicaoData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360 + 180}, 70%, 50%)`} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number, name) => [
-                      `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                      'Valor Total'
-                    ]}
-                    labelFormatter={(label) => {
-                      const item = canalAquisicaoData.find(d => d.name === label);
-                      return `${label} - ${item?.vendas || 0} vendas`;
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {canalAquisicaoData.length > 0 ? (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={canalAquisicaoData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                      outerRadius={80}
+                      fill="#82ca9d"
+                      dataKey="value"
+                    >
+                      {canalAquisicaoData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360 + 180}, 70%, 50%)`} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number, name) => [
+                        `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                        'Valor Total'
+                      ]}
+                      labelFormatter={(label) => {
+                        const item = canalAquisicaoData.find(d => d.name === label);
+                        return `${label} - ${item?.vendas || 0} vendas`;
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Nenhuma venda encontrada</p>
+                  <p className="text-sm">
+                    Não há dados de vendas para o período selecionado
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
