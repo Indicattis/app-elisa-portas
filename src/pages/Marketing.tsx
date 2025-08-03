@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, DollarSign, Users, Target, Plus } from "lucide-react";
+import { TrendingUp, DollarSign, Users, Target, Plus, BarChart3 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
@@ -80,6 +81,7 @@ export default function Marketing() {
   const [publicoAlvoData, setPublicoAlvoData] = useState<PublicoAlvoData[]>([]);
   const [canalAquisicaoData, setCanalAquisicaoData] = useState<CanalAquisicaoData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartMode, setChartMode] = useState<'quantidade' | 'faturamento'>('quantidade');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newInvestment, setNewInvestment] = useState({
     mes: selectedMonth,
@@ -544,13 +546,46 @@ export default function Marketing() {
         </Card>
       </div>
 
+      {/* Controle dos Gráficos */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Análise de Vendas
+          </CardTitle>
+          <CardDescription>
+            Visualize os dados por quantidade de vendas ou participação no faturamento
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Label htmlFor="chart-mode" className="text-sm font-medium">
+              Exibir por:
+            </Label>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm ${chartMode === 'quantidade' ? 'font-medium' : 'text-muted-foreground'}`}>
+                Quantidade
+              </span>
+              <Switch
+                id="chart-mode"
+                checked={chartMode === 'faturamento'}
+                onCheckedChange={(checked) => setChartMode(checked ? 'faturamento' : 'quantidade')}
+              />
+              <span className={`text-sm ${chartMode === 'faturamento' ? 'font-medium' : 'text-muted-foreground'}`}>
+                Faturamento
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Gráficos de Pizza */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Vendas por Público Alvo</CardTitle>
             <CardDescription>
-              Distribuição de vendas por segmento de público
+              Distribuição por {chartMode === 'quantidade' ? 'quantidade de vendas' : 'participação no faturamento'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -566,7 +601,7 @@ export default function Marketing() {
                       label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
                       outerRadius={80}
                       fill="#8884d8"
-                      dataKey="value"
+                      dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
                     >
                       {publicoAlvoData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360}, 70%, 50%)`} />
@@ -574,12 +609,16 @@ export default function Marketing() {
                     </Pie>
                     <Tooltip 
                       formatter={(value: number, name) => [
-                        `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                        'Valor Total'
+                        chartMode === 'quantidade' 
+                          ? `${value} vendas`
+                          : `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                        chartMode === 'quantidade' ? 'Quantidade' : 'Valor Total'
                       ]}
                       labelFormatter={(label) => {
                         const item = publicoAlvoData.find(d => d.name === label);
-                        return `${label} - ${item?.vendas || 0} vendas`;
+                        return chartMode === 'quantidade' 
+                          ? `${label} - R$ ${item?.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`
+                          : `${label} - ${item?.vendas || 0} vendas`;
                       }}
                     />
                     <Legend />
@@ -604,7 +643,7 @@ export default function Marketing() {
           <CardHeader>
             <CardTitle>Vendas por Canal de Aquisição</CardTitle>
             <CardDescription>
-              Distribuição de vendas por canal de marketing
+              Distribuição por {chartMode === 'quantidade' ? 'quantidade de vendas' : 'participação no faturamento'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -620,7 +659,7 @@ export default function Marketing() {
                       label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
                       outerRadius={80}
                       fill="#82ca9d"
-                      dataKey="value"
+                      dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
                     >
                       {canalAquisicaoData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360 + 180}, 70%, 50%)`} />
@@ -628,12 +667,16 @@ export default function Marketing() {
                     </Pie>
                     <Tooltip 
                       formatter={(value: number, name) => [
-                        `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                        'Valor Total'
+                        chartMode === 'quantidade' 
+                          ? `${value} vendas`
+                          : `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                        chartMode === 'quantidade' ? 'Quantidade' : 'Valor Total'
                       ]}
                       labelFormatter={(label) => {
                         const item = canalAquisicaoData.find(d => d.name === label);
-                        return `${label} - ${item?.vendas || 0} vendas`;
+                        return chartMode === 'quantidade' 
+                          ? `${label} - R$ ${item?.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`
+                          : `${label} - ${item?.vendas || 0} vendas`;
                       }}
                     />
                     <Legend />
