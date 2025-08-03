@@ -173,6 +173,59 @@ export function Sidebar() {
           ))}
         </nav>
 
+        {/* Botão de Configurações */}
+        {isAdmin && (
+          <div className="px-4 pb-2">
+            <div className="relative group">
+              <NavLink 
+                to="/dashboard/configuracoes" 
+                className={() => `
+                  relative flex items-center px-4 py-3 rounded-xl text-sm font-medium
+                  transition-all duration-300 ease-in-out transform
+                  ${isActive("/dashboard/configuracoes") 
+                    ? "bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground shadow-lg scale-105 translate-x-1" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-gradient-to-r hover:from-muted/50 hover:to-transparent hover:scale-105 hover:translate-x-1"
+                  }
+                  ${collapsed ? "justify-center" : ""}
+                `}
+              >
+                {/* Active Indicator */}
+                {isActive("/dashboard/configuracoes") && !collapsed && (
+                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-secondary-foreground rounded-r-full animate-scale-in"></div>
+                )}
+                
+                {/* Icon with Animation */}
+                <div className="relative">
+                  <Settings className={`h-5 w-5 transition-all duration-300 ${collapsed ? "" : "mr-4"} ${isActive("/dashboard/configuracoes") ? "drop-shadow-sm" : "group-hover:scale-110"}`} />
+                  {isActive("/dashboard/configuracoes") && (
+                    <div className="absolute inset-0 bg-secondary-foreground/20 rounded-full animate-pulse"></div>
+                  )}
+                </div>
+                
+                {/* Text with Fade Animation */}
+                {!collapsed && (
+                  <span className="animate-fade-in transition-all duration-300 group-hover:font-semibold">
+                    Configurações
+                  </span>
+                )}
+                
+                {/* Hover Arrow */}
+                {!collapsed && !isActive("/dashboard/configuracoes") && (
+                  <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all duration-300" />
+                )}
+              </NavLink>
+              
+              {/* Tooltip for Collapsed State */}
+              {collapsed && (
+                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-popover text-popover-foreground text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 whitespace-nowrap">
+                  Configurações
+                  <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-popover"></div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Modern User Info & Actions with Gradient */}
         <div className="p-4 border-t border-border/30 bg-gradient-to-r from-muted/30 to-transparent backdrop-blur-sm">
           {!collapsed && (

@@ -36,6 +36,7 @@ import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
 import AutorizadoNovo from "./pages/AutorizadoNovo";
+import Configuracoes from "./pages/Configuracoes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -313,6 +314,16 @@ const App = () => (
                     <ProtectedRoute requireAdmin={true}>
                       <DashboardLayout>
                         <AutorizadoNovo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/configuracoes"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <DashboardLayout>
+                        <Configuracoes />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
