@@ -25,7 +25,13 @@ export function useLeads() {
     try {
       const { data, error } = await supabase
         .from("elisaportas_leads")
-        .select("*")
+        .select(`
+          *,
+          canais_aquisicao:canal_aquisicao_id (
+            id,
+            nome
+          )
+        `)
         .order("data_envio", { ascending: false });
 
       if (error) throw error;

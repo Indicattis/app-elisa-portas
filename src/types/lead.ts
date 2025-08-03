@@ -17,7 +17,12 @@ export interface Lead {
   tipo_porta: string | null;
   data_inicio_atendimento: string | null;
   canal_aquisicao: string;
+  canal_aquisicao_id: string | null;
   observacoes: string | null;
+  canais_aquisicao?: {
+    id: string;
+    nome: string;
+  };
 }
 
 export interface FilterValues {

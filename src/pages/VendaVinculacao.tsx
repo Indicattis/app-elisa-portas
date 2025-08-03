@@ -24,7 +24,12 @@ interface Lead {
   email?: string;
   cidade?: string;
   canal_aquisicao: string;
+  canal_aquisicao_id?: string;
   status_atendimento: number;
+  canais_aquisicao?: {
+    id: string;
+    nome: string;
+  };
 }
 
 export default function VendaVinculacao() {
@@ -69,7 +74,13 @@ export default function VendaVinculacao() {
     try {
       const { data, error } = await supabase
         .from("elisaportas_leads")
-        .select("id, nome, telefone, email, cidade, canal_aquisicao, status_atendimento")
+        .select(`
+          id, nome, telefone, email, cidade, canal_aquisicao, canal_aquisicao_id, status_atendimento,
+          canais_aquisicao:canal_aquisicao_id (
+            id,
+            nome
+          )
+        `)
         .order("nome");
 
       if (error) throw error;
@@ -105,7 +116,7 @@ export default function VendaVinculacao() {
           lead_id: selectedLead.id,
           atendente_id: user.id,
           publico_alvo: formData.publico_alvo || null,
-          canal_aquisicao: selectedLead.canal_aquisicao,
+          canal_aquisicao_id: selectedLead.canal_aquisicao_id || null,
           cidade: selectedLead.cidade || null,
           cliente_nome: selectedLead.nome,
           cliente_telefone: selectedLead.telefone,
@@ -211,7 +222,7 @@ export default function VendaVinculacao() {
                 )}
                 <div className="flex items-center gap-2 mt-2">
                   {getStatusBadge(selectedLead.status_atendimento)}
-                  <Badge variant="outline">{selectedLead.canal_aquisicao}</Badge>
+                  <Badge variant="outline">{selectedLead.canais_aquisicao?.nome || selectedLead.canal_aquisicao}</Badge>
                 </div>
               </div>
             )}
@@ -242,7 +253,7 @@ export default function VendaVinculacao() {
                       <div className="flex flex-col items-end gap-1">
                         {getStatusBadge(lead.status_atendimento)}
                         <Badge variant="outline" className="text-xs">
-                          {lead.canal_aquisicao}
+                          {lead.canais_aquisicao?.nome || lead.canal_aquisicao}
                         </Badge>
                       </div>
                     </div>
