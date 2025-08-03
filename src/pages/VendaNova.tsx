@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 
 interface Atendente {
   user_id: string;
@@ -26,13 +27,14 @@ export default function VendaNova() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { canais } = useCanaisAquisicao();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [atendentes, setAtendentes] = useState<Atendente[]>([]);
 
   const [formData, setFormData] = useState({
     publico_alvo: "",
-    canal_aquisicao: "Google",
+    canal_aquisicao_id: "",
     estado: "",
     cidade: "",
     cep: "",
@@ -97,7 +99,7 @@ export default function VendaNova() {
       const vendaData = {
         atendente_id: formData.atendente_id,
         publico_alvo: formData.publico_alvo || null,
-        canal_aquisicao: formData.canal_aquisicao,
+        canal_aquisicao_id: formData.canal_aquisicao_id,
         estado: formData.estado || null,
         cidade: formData.cidade || null,
         cep: formData.cep || null,
@@ -284,22 +286,21 @@ export default function VendaNova() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="canal_aquisicao">Canal de Aquisição *</Label>
+                  <Label htmlFor="canal_aquisicao_id">Canal de Aquisição *</Label>
                   <Select 
-                    value={formData.canal_aquisicao}
-                    onValueChange={(value) => setFormData({ ...formData, canal_aquisicao: value })}
+                    value={formData.canal_aquisicao_id}
+                    onValueChange={(value) => setFormData({ ...formData, canal_aquisicao_id: value })}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Selecione o canal" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Google">Google</SelectItem>
-                      <SelectItem value="Facebook">Facebook</SelectItem>
-                      <SelectItem value="Instagram">Instagram</SelectItem>
-                      <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                      <SelectItem value="Indicação">Indicação</SelectItem>
-                      <SelectItem value="Site">Site</SelectItem>
-                      <SelectItem value="Outros">Outros</SelectItem>
+                      {canais.map((canal) => (
+                        <SelectItem key={canal.id} value={canal.id}>
+                          {canal.nome}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileText, AlertCircle, CheckCircle, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 
 interface UploadProgress {
   total: number;
@@ -19,7 +20,8 @@ interface VendaUpload {
   data_venda: string;
   atendente_id: string;
   publico_alvo?: string;
-  canal_aquisicao: string;
+  canal_aquisicao?: string; // Para compatibilidade com uploads antigos
+  canal_aquisicao_id?: string; // Novo campo padronizado
   estado?: string;
   cidade?: string;
   cep?: string;
@@ -44,18 +46,19 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { canais } = useCanaisAquisicao();
 
   const exampleData = {
-    csv: `data_venda,atendente_id,publico_alvo,canal_aquisicao,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda,resgate
-2024-01-15T10:00:00Z,550e8400-e29b-41d4-a716-446655440000,Residencial,Google,RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false
-2024-01-16T14:30:00Z,550e8400-e29b-41d4-a716-446655440001,Comercial,Facebook,SC,Florianópolis,88000-000,Maria Santos,48888888888,maria@empresa.com,8000.00,5000.00,1200.00,600.00,800.00,300.00,10300.00,true`,
+    csv: `data_venda,atendente_id,publico_alvo,canal_aquisicao_id,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda,resgate
+2024-01-15T10:00:00Z,550e8400-e29b-41d4-a716-446655440000,Residencial,${canais[0]?.id || 'CANAL_ID_1'},RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false
+2024-01-16T14:30:00Z,550e8400-e29b-41d4-a716-446655440001,Comercial,${canais[1]?.id || 'CANAL_ID_2'},SC,Florianópolis,88000-000,Maria Santos,48888888888,maria@empresa.com,8000.00,5000.00,1200.00,600.00,800.00,300.00,10300.00,true`,
     
     json: JSON.stringify([
       {
         data_venda: "2024-01-15T10:00:00Z",
         atendente_id: "550e8400-e29b-41d4-a716-446655440000",
         publico_alvo: "Residencial",
-        canal_aquisicao: "Google",
+        canal_aquisicao_id: "CANAL_ID_1",
         estado: "RS",
         cidade: "Porto Alegre",
         cep: "90000-000",
@@ -75,7 +78,7 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
         data_venda: "2024-01-16T14:30:00Z",
         atendente_id: "550e8400-e29b-41d4-a716-446655440001",
         publico_alvo: "Comercial",
-        canal_aquisicao: "Facebook",
+        canal_aquisicao_id: "CANAL_ID_2",
         estado: "SC",
         cidade: "Florianópolis",
         cep: "88000-000",
@@ -147,7 +150,7 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
     
     if (!venda.data_venda) errors.push('data_venda é obrigatório');
     if (!venda.atendente_id) errors.push('atendente_id é obrigatório');
-    if (!venda.canal_aquisicao) errors.push('canal_aquisicao é obrigatório');
+    if (!venda.canal_aquisicao_id && !venda.canal_aquisicao) errors.push('canal_aquisicao_id ou canal_aquisicao é obrigatório');
     if (typeof venda.valor_produto !== 'number' || venda.valor_produto < 0) errors.push('valor_produto deve ser um número positivo');
     if (typeof venda.custo_produto !== 'number' || venda.custo_produto < 0) errors.push('custo_produto deve ser um número positivo');
     if (typeof venda.valor_venda !== 'number' || venda.valor_venda < 0) errors.push('valor_venda deve ser um número positivo');
@@ -194,6 +197,15 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
           try {
             // Remove lucro_total dos dados antes de inserir
             const { lucro_total, ...vendaData } = venda;
+            
+            // Buscar canal se venda.canal_aquisicao foi fornecido em vez de canal_aquisicao_id
+            if (venda.canal_aquisicao && !venda.canal_aquisicao_id) {
+              const canal = canais.find(c => c.nome === venda.canal_aquisicao);
+              if (canal) {
+                vendaData.canal_aquisicao_id = canal.id;
+              }
+              delete vendaData.canal_aquisicao;
+            }
             
             const { error } = await supabase
               .from('vendas')
@@ -293,7 +305,7 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
           </div>
           
           <div className="text-sm text-muted-foreground space-y-1">
-            <p><strong>Campos obrigatórios:</strong> data_venda, atendente_id, canal_aquisicao, valor_produto, custo_produto, valor_venda</p>
+            <p><strong>Campos obrigatórios:</strong> data_venda, atendente_id, canal_aquisicao_id, valor_produto, custo_produto, valor_venda</p>
             <p><strong>Formato de data:</strong> ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)</p>
             <p><strong>atendente_id:</strong> UUID do usuário atendente (consulte a tabela de usuários)</p>
             <p><strong>Nota:</strong> O campo lucro_total é calculado automaticamente pelo sistema e não deve ser incluído no arquivo</p>

@@ -10,14 +10,15 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
-import { canaisAquisicao } from "@/utils/canaisAquisicao";
+import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 
 export default function LeadNovo() {
+  const { canais } = useCanaisAquisicao();
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     telefone: "",
-    canal_aquisicao: "Google",
+    canal_aquisicao_id: "",
     mensagem: "",
   });
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,7 @@ export default function LeadNovo() {
             nome: formData.nome,
             email: formData.email,
             telefone: formData.telefone,
-            canal_aquisicao: formData.canal_aquisicao,
+            canal_aquisicao_id: formData.canal_aquisicao_id,
             mensagem: formData.mensagem,
             data_envio: new Date().toISOString(),
             status_atendimento: 1, // Defina o status inicial
@@ -119,18 +120,19 @@ export default function LeadNovo() {
               </div>
               
                 <div className="space-y-2">
-                  <Label htmlFor="canal_aquisicao">Canal de Aquisição</Label>
+                  <Label htmlFor="canal_aquisicao_id">Canal de Aquisição</Label>
                   <Select
-                    value={formData.canal_aquisicao}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao: value }))}
+                    value={formData.canal_aquisicao_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o canal" />
                     </SelectTrigger>
                     <SelectContent>
-                      {canaisAquisicao.map((canal) => (
-                        <SelectItem key={canal} value={canal}>
-                          {canal}
+                      {canais.map((canal) => (
+                        <SelectItem key={canal.id} value={canal.id}>
+                          {canal.nome}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -131,6 +131,36 @@ export type Database = {
         }
         Relationships: []
       }
+      canais_aquisicao: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalogo_cores: {
         Row: {
           ativa: boolean
@@ -205,6 +235,7 @@ export type Database = {
           altura_porta: string | null
           atendente_id: string | null
           canal_aquisicao: string
+          canal_aquisicao_id: string | null
           cidade: string | null
           cor_porta: string | null
           created_at: string
@@ -240,6 +271,7 @@ export type Database = {
           altura_porta?: string | null
           atendente_id?: string | null
           canal_aquisicao?: string
+          canal_aquisicao_id?: string | null
           cidade?: string | null
           cor_porta?: string | null
           created_at?: string
@@ -275,6 +307,7 @@ export type Database = {
           altura_porta?: string | null
           atendente_id?: string | null
           canal_aquisicao?: string
+          canal_aquisicao_id?: string | null
           cidade?: string | null
           cor_porta?: string | null
           created_at?: string
@@ -306,7 +339,15 @@ export type Database = {
           updated_at?: string
           valor_orcamento?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "elisaportas_leads_canal_aquisicao_id_fkey"
+            columns: ["canal_aquisicao_id"]
+            isOneToOne: false
+            referencedRelation: "canais_aquisicao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       eventos_calendario: {
         Row: {
@@ -970,6 +1011,7 @@ export type Database = {
           atendente_id: string
           bairro: string | null
           canal_aquisicao: string
+          canal_aquisicao_id: string | null
           cep: string | null
           cidade: string | null
           cliente_email: string | null
@@ -1000,6 +1042,7 @@ export type Database = {
           atendente_id: string
           bairro?: string | null
           canal_aquisicao?: string
+          canal_aquisicao_id?: string | null
           cep?: string | null
           cidade?: string | null
           cliente_email?: string | null
@@ -1030,6 +1073,7 @@ export type Database = {
           atendente_id?: string
           bairro?: string | null
           canal_aquisicao?: string
+          canal_aquisicao_id?: string | null
           cep?: string | null
           cidade?: string | null
           cliente_email?: string | null
@@ -1057,6 +1101,13 @@ export type Database = {
           valor_venda?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vendas_canal_aquisicao_id_fkey"
+            columns: ["canal_aquisicao_id"]
+            isOneToOne: false
+            referencedRelation: "canais_aquisicao"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendas_lead_id_fkey"
             columns: ["lead_id"]
