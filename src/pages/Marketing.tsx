@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TrendingUp, DollarSign, Users, Target, Plus } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 interface MarketingInvestment {
   id: string;
@@ -28,7 +29,13 @@ interface VendaData {
   atendente_id: string;
   estado: string;
   canal_aquisicao: string;
+  canal_aquisicao_id: string;
+  publico_alvo: string;
   data_venda: string;
+  canais_aquisicao?: {
+    id: string;
+    nome: string;
+  };
 }
 
 interface MarketingMetrics {
@@ -39,6 +46,18 @@ interface MarketingMetrics {
   taxaConversao: number;
   totalLeads: number;
   vendasConvertidas: number;
+}
+
+interface PublicoAlvoData {
+  name: string;
+  value: number;
+  vendas: number;
+}
+
+interface CanalAquisicaoData {
+  name: string;
+  value: number;
+  vendas: number;
 }
 
 export default function Marketing() {
@@ -58,6 +77,8 @@ export default function Marketing() {
     vendasConvertidas: 0
   });
   const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
+  const [publicoAlvoData, setPublicoAlvoData] = useState<PublicoAlvoData[]>([]);
+  const [canalAquisicaoData, setCanalAquisicaoData] = useState<CanalAquisicaoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newInvestment, setNewInvestment] = useState({
@@ -95,7 +116,8 @@ export default function Marketing() {
       await Promise.all([
         fetchInvestimentos(),
         fetchVendedores(),
-        fetchMetrics()
+        fetchMetrics(),
+        fetchChartData()
       ]);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -243,6 +265,76 @@ export default function Marketing() {
         description: "Erro ao salvar investimento",
         variant: "destructive"
       });
+    }
+  };
+
+  const fetchChartData = async () => {
+    try {
+      const [year, month] = selectedMonth.split('-');
+      const mesStart = startOfMonth(new Date(parseInt(year), parseInt(month) - 1));
+      const mesEnd = endOfMonth(new Date(parseInt(year), parseInt(month) - 1));
+
+      // Buscar vendas do mês com canais de aquisição
+      let vendasQuery = supabase
+        .from("vendas")
+        .select(`
+          valor_venda, publico_alvo, canal_aquisicao, canal_aquisicao_id,
+          canais_aquisicao:canal_aquisicao_id (
+            id,
+            nome
+          )
+        `)
+        .gte("data_venda", mesStart.toISOString())
+        .lte("data_venda", mesEnd.toISOString());
+
+      if (selectedVendedor !== "todos") {
+        vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
+      }
+
+      const { data: vendasData } = await vendasQuery;
+
+      if (vendasData) {
+        // Processar dados de público alvo
+        const publicoAlvoMap = new Map<string, { value: number; vendas: number }>();
+        
+        vendasData.forEach(venda => {
+          const publico = venda.publico_alvo || 'Não informado';
+          const current = publicoAlvoMap.get(publico) || { value: 0, vendas: 0 };
+          publicoAlvoMap.set(publico, {
+            value: current.value + venda.valor_venda,
+            vendas: current.vendas + 1
+          });
+        });
+
+        const publicoData = Array.from(publicoAlvoMap.entries()).map(([name, data]) => ({
+          name,
+          value: data.value,
+          vendas: data.vendas
+        }));
+
+        // Processar dados de canal de aquisição
+        const canalMap = new Map<string, { value: number; vendas: number }>();
+        
+        vendasData.forEach(venda => {
+          const canal = venda.canais_aquisicao?.nome || venda.canal_aquisicao || 'Não informado';
+          const current = canalMap.get(canal) || { value: 0, vendas: 0 };
+          canalMap.set(canal, {
+            value: current.value + venda.valor_venda,
+            vendas: current.vendas + 1
+          });
+        });
+
+        const canalData = Array.from(canalMap.entries()).map(([name, data]) => ({
+          name,
+          value: data.value,
+          vendas: data.vendas
+        }));
+
+        setPublicoAlvoData(publicoData);
+        setCanalAquisicaoData(canalData);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados dos gráficos:', error);
     }
   };
 
@@ -448,6 +540,93 @@ export default function Marketing() {
             <p className="text-xs text-muted-foreground">
               {metrics.vendasConvertidas} de {metrics.totalLeads} leads
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráficos de Pizza */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Vendas por Público Alvo</CardTitle>
+            <CardDescription>
+              Distribuição de vendas por segmento de público
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={publicoAlvoData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {publicoAlvoData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360}, 70%, 50%)`} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number, name) => [
+                      `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                      'Valor Total'
+                    ]}
+                    labelFormatter={(label) => {
+                      const item = publicoAlvoData.find(d => d.name === label);
+                      return `${label} - ${item?.vendas || 0} vendas`;
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Vendas por Canal de Aquisição</CardTitle>
+            <CardDescription>
+              Distribuição de vendas por canal de marketing
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={canalAquisicaoData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                    outerRadius={80}
+                    fill="#82ca9d"
+                    dataKey="value"
+                  >
+                    {canalAquisicaoData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360 + 180}, 70%, 50%)`} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number, name) => [
+                      `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                      'Valor Total'
+                    ]}
+                    labelFormatter={(label) => {
+                      const item = canalAquisicaoData.find(d => d.name === label);
+                      return `${label} - ${item?.vendas || 0} vendas`;
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
