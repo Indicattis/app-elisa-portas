@@ -25,6 +25,11 @@ interface Venda {
   atendente_nome: string;
   publico_alvo: string | null;
   canal_aquisicao: string;
+  canal_aquisicao_id: string | null;
+  canais_aquisicao?: {
+    id: string;
+    nome: string;
+  };
   estado: string | null;
   cidade: string | null;
   cep: string | null;
@@ -125,6 +130,7 @@ export default function Faturamento() {
           atendente_id,
           publico_alvo,
           canal_aquisicao,
+          canal_aquisicao_id,
           estado,
           cidade,
           cep,
@@ -139,7 +145,11 @@ export default function Faturamento() {
           valor_frete,
           valor_venda,
           lucro_total,
-          resgate
+          resgate,
+          canais_aquisicao:canal_aquisicao_id (
+            id,
+            nome
+          )
         `)
         .order("data_venda", { ascending: false });
 
@@ -646,7 +656,7 @@ export default function Faturamento() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{venda.canal_aquisicao}</Badge>
+                          <Badge variant="outline">{venda.canais_aquisicao?.nome || venda.canal_aquisicao}</Badge>
                         </TableCell>
                         <TableCell>
                           {venda.cidade && venda.estado ? `${venda.cidade}, ${venda.estado}` : '-'}

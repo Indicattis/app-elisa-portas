@@ -156,7 +156,13 @@ export default function Marketing() {
     // Buscar vendas do mês com filtros
     let vendasQuery = supabase
       .from("vendas")
-      .select("valor_venda, atendente_id, estado, canal_aquisicao, data_venda")
+      .select(`
+        valor_venda, atendente_id, estado, canal_aquisicao, canal_aquisicao_id, data_venda,
+        canais_aquisicao:canal_aquisicao_id (
+          id,
+          nome
+        )
+      `)
       .gte("data_venda", mesStart.toISOString())
       .lte("data_venda", mesEnd.toISOString());
 
