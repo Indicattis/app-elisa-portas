@@ -33,7 +33,7 @@ interface VendaUpload {
   valor_instalacao: number;
   valor_frete: number;
   valor_venda: number;
-  lucro_total: number;
+  lucro_total?: number; // Calculado automaticamente pelo banco
   resgate?: boolean;
 }
 
@@ -46,9 +46,9 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
   const { user } = useAuth();
 
   const exampleData = {
-    csv: `data_venda,atendente_id,publico_alvo,canal_aquisicao,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda,lucro_total,resgate
-2024-01-15T10:00:00Z,550e8400-e29b-41d4-a716-446655440000,Residencial,Google,RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,2300.00,false
-2024-01-16T14:30:00Z,550e8400-e29b-41d4-a716-446655440001,Comercial,Facebook,SC,Florianópolis,88000-000,Maria Santos,48888888888,maria@empresa.com,8000.00,5000.00,1200.00,600.00,800.00,300.00,10300.00,3700.00,true`,
+    csv: `data_venda,atendente_id,publico_alvo,canal_aquisicao,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda,resgate
+2024-01-15T10:00:00Z,550e8400-e29b-41d4-a716-446655440000,Residencial,Google,RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false
+2024-01-16T14:30:00Z,550e8400-e29b-41d4-a716-446655440001,Comercial,Facebook,SC,Florianópolis,88000-000,Maria Santos,48888888888,maria@empresa.com,8000.00,5000.00,1200.00,600.00,800.00,300.00,10300.00,true`,
     
     json: JSON.stringify([
       {
@@ -69,7 +69,6 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
         valor_instalacao: 500.00,
         valor_frete: 200.00,
         valor_venda: 6500.00,
-        lucro_total: 2300.00,
         resgate: false
       },
       {
@@ -90,7 +89,6 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
         valor_instalacao: 800.00,
         valor_frete: 300.00,
         valor_venda: 10300.00,
-        lucro_total: 3700.00,
         resgate: true
       }
     ], null, 2)
@@ -130,7 +128,7 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
       headers.forEach((header, i) => {
         const value = values[i]?.trim();
         if (value) {
-          if (['valor_produto', 'custo_produto', 'valor_pintura', 'custo_pintura', 'valor_instalacao', 'valor_frete', 'valor_venda', 'lucro_total'].includes(header)) {
+          if (['valor_produto', 'custo_produto', 'valor_pintura', 'custo_pintura', 'valor_instalacao', 'valor_frete', 'valor_venda'].includes(header)) {
             obj[header] = parseFloat(value);
           } else if (header === 'resgate') {
             obj[header] = value.toLowerCase() === 'true';
@@ -194,10 +192,13 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
           });
         } else {
           try {
+            // Remove lucro_total dos dados antes de inserir
+            const { lucro_total, ...vendaData } = venda;
+            
             const { error } = await supabase
               .from('vendas')
               .insert({
-                ...venda,
+                ...vendaData,
                 data_venda: new Date(venda.data_venda).toISOString()
               });
             
@@ -295,6 +296,7 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
             <p><strong>Campos obrigatórios:</strong> data_venda, atendente_id, canal_aquisicao, valor_produto, custo_produto, valor_venda</p>
             <p><strong>Formato de data:</strong> ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)</p>
             <p><strong>atendente_id:</strong> UUID do usuário atendente (consulte a tabela de usuários)</p>
+            <p><strong>Nota:</strong> O campo lucro_total é calculado automaticamente pelo sistema e não deve ser incluído no arquivo</p>
           </div>
         </div>
 
