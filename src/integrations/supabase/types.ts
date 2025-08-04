@@ -535,6 +535,44 @@ export type Database = {
           },
         ]
       }
+      lead_etiqueta_historico: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          observacoes: string | null
+          tag_id_anterior: number | null
+          tag_id_novo: number | null
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          observacoes?: string | null
+          tag_id_anterior?: number | null
+          tag_id_novo?: number | null
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          observacoes?: string | null
+          tag_id_anterior?: number | null
+          tag_id_novo?: number | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_etiqueta_historico_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "elisaportas_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_investimentos: {
         Row: {
           created_at: string

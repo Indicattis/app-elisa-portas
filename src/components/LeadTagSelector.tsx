@@ -46,6 +46,7 @@ export function LeadTagSelector({
     
     try {
       setLoading(true);
+      const currentTag = currentTagId;
       
       // Se selecionou "Cliente fechado", atualizar status para vendido (5)
       const updateData: any = { tag_id: tagId };
@@ -59,6 +60,20 @@ export function LeadTagSelector({
         .eq("id", leadId);
 
       if (error) throw error;
+
+      // Registrar no histórico de etiquetas
+      const { error: historicoError } = await supabase
+        .from("lead_etiqueta_historico")
+        .insert({
+          lead_id: leadId,
+          tag_id_anterior: currentTag,
+          tag_id_novo: tagId,
+          usuario_id: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (historicoError) {
+        console.warn("Erro ao registrar histórico de etiquetas:", historicoError);
+      }
 
       await onTagChange(tagId);
       onOpenChange(false);
@@ -84,6 +99,7 @@ export function LeadTagSelector({
     
     try {
       setLoading(true);
+      const currentTag = currentTagId;
       
       const { error } = await supabase
         .from("elisaportas_leads")
@@ -91,6 +107,20 @@ export function LeadTagSelector({
         .eq("id", leadId);
 
       if (error) throw error;
+
+      // Registrar no histórico de etiquetas
+      const { error: historicoError } = await supabase
+        .from("lead_etiqueta_historico")
+        .insert({
+          lead_id: leadId,
+          tag_id_anterior: currentTag,
+          tag_id_novo: null,
+          usuario_id: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (historicoError) {
+        console.warn("Erro ao registrar histórico de etiquetas:", historicoError);
+      }
 
       await onTagChange(null);
       onOpenChange(false);

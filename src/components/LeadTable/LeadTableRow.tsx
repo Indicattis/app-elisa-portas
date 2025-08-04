@@ -193,16 +193,6 @@ export function LeadTableRow({
         <TableCell>
           {format(new Date(lead.data_envio), "dd/MM/yyyy", { locale: ptBR })}
         </TableCell>
-        <TableCell>
-          {getOrcamentoStatusBadge()}
-        </TableCell>
-        <TableCell>
-          {lead.valor_orcamento
-            ? `R$ ${lead.valor_orcamento.toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-              })}`
-            : "-"}
-        </TableCell>
       </TableRow>
 
       <LeadTagSelector

@@ -62,8 +62,6 @@ export function LeadTable({
               <TableHead>Cidade</TableHead>
               <TableHead>Atendente</TableHead>
               <TableHead>Data</TableHead>
-              <TableHead>Orçamento</TableHead>
-              <TableHead>Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

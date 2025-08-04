@@ -31,6 +31,7 @@ import { ptBR } from "date-fns/locale";
 import { LeadComments } from "@/components/LeadComments";
 import { LeadLossModal } from "@/components/LeadLossModal";
 import { LeadTagSelector } from "@/components/LeadTagSelector";
+import { LeadEtiquetaHistorico } from "@/components/LeadEtiquetaHistorico";
 import { STATUS_CONFIG, getLeadTag, canEditTag } from "@/utils/newLeadSystem";
 import type { LeadStatus, MotivoPerda } from "@/utils/newLeadSystem";
 
@@ -780,6 +781,9 @@ export default function LeadDetails() {
         </div>
       </div>
 
+      {/* Histórico de Etiquetas */}
+      <LeadEtiquetaHistorico leadId={lead.id} />
+
       {/* Comentários */}
       <LeadComments leadId={lead.id} />
 
@@ -798,6 +802,7 @@ export default function LeadDetails() {
         leadStatus={lead.novo_status}
         onTagChange={handleTagChange}
         leadName={lead.nome}
+        leadId={lead.id}
       />
     </div>
   );
