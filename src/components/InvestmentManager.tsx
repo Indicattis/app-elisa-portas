@@ -12,9 +12,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface InvestmentData {
-  id: string;
+  id?: string;
   mes: string;
-  regiao: string;
+  regiao?: string | null;
   investimento_google_ads: number;
   investimento_meta_ads: number;
   investimento_linkedin_ads: number;
@@ -23,10 +23,9 @@ interface InvestmentData {
 
 interface InvestmentManagerProps {
   selectedYear: number;
-  regioes: string[];
 }
 
-export default function InvestmentManager({ selectedYear, regioes }: InvestmentManagerProps) {
+export default function InvestmentManager({ selectedYear }: InvestmentManagerProps) {
   const { toast } = useToast();
   const [investments, setInvestments] = useState<InvestmentData[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -35,46 +34,59 @@ export default function InvestmentManager({ selectedYear, regioes }: InvestmentM
 
   useEffect(() => {
     generateInvestmentMatrix();
-  }, [selectedYear, regioes]);
+  }, [selectedYear]);
 
   const generateInvestmentMatrix = async () => {
     setLoading(true);
+    
     try {
-      // Buscar investimentos existentes para o ano
-      const { data: existingInvestments } = await supabase
-        .from("marketing_investimentos")
-        .select("*")
-        .gte("mes", `${selectedYear}-01-01`)
-        .lte("mes", `${selectedYear}-12-01`);
+      // Buscar investimentos existentes do ano selecionado (dados consolidados)
+      const { data: existingInvestments, error } = await supabase
+        .from('marketing_investimentos')
+        .select('*')
+        .gte('mes', `${selectedYear}-01-01`)
+        .lte('mes', `${selectedYear}-12-01`)
+        .is('regiao', null); // Buscar apenas dados consolidados
 
-      // Gerar matriz completa de investimentos (12 meses x regiões)
-      const investmentMatrix: InvestmentData[] = [];
+      if (error) throw error;
+
+      // Gerar matriz de 12 meses
+      const matriz: InvestmentData[] = [];
       
       for (let month = 1; month <= 12; month++) {
-        const monthStr = `${selectedYear}-${month.toString().padStart(2, '0')}-01`;
+        const mesFormatted = `${selectedYear}-${month.toString().padStart(2, '0')}-01`;
         
-        for (const regiao of regioes) {
-          // Verificar se já existe um registro
-          const existing = existingInvestments?.find(inv => 
-            inv.mes === monthStr && 
-            inv.regiao === regiao
-          );
+        // Verificar se já existe investimento para este mês
+        const existing = existingInvestments?.find(
+          inv => inv.mes === mesFormatted
+        );
 
-          investmentMatrix.push({
-            id: existing?.id || `${monthStr}_${regiao}`,
-            mes: monthStr,
-            regiao,
-            investimento_google_ads: existing?.investimento_google_ads || 0,
-            investimento_meta_ads: existing?.investimento_meta_ads || 0,
-            investimento_linkedin_ads: existing?.investimento_linkedin_ads || 0,
-            outros_investimentos: existing?.outros_investimentos || 0,
+        if (existing) {
+          matriz.push({
+            id: existing.id,
+            mes: mesFormatted,
+            regiao: null,
+            investimento_google_ads: existing.investimento_google_ads || 0,
+            investimento_meta_ads: existing.investimento_meta_ads || 0,
+            investimento_linkedin_ads: existing.investimento_linkedin_ads || 0,
+            outros_investimentos: existing.outros_investimentos || 0,
+          });
+        } else {
+          // Criar linha vazia para preenchimento
+          matriz.push({
+            mes: mesFormatted,
+            regiao: null,
+            investimento_google_ads: 0,
+            investimento_meta_ads: 0,
+            investimento_linkedin_ads: 0,
+            outros_investimentos: 0,
           });
         }
       }
 
-      setInvestments(investmentMatrix);
+      setInvestments(matriz);
     } catch (error) {
-      console.error("Erro ao gerar matriz de investimentos:", error);
+      console.error('Erro ao gerar matriz de investimentos:', error);
       toast({
         title: "Erro",
         description: "Erro ao carregar investimentos",
@@ -91,63 +103,55 @@ export default function InvestmentManager({ selectedYear, regioes }: InvestmentM
   };
 
   const handleSave = async () => {
-    if (!editingId || !editValues) return;
+    if (!editingId && !editValues) return;
 
     try {
-      const userData = await supabase.auth.getUser();
-      const investmentData = {
-        mes: editValues.mes,
-        regiao: editValues.regiao,
-        investimento_google_ads: editValues.investimento_google_ads || 0,
-        investimento_meta_ads: editValues.investimento_meta_ads || 0,
-        investimento_linkedin_ads: editValues.investimento_linkedin_ads || 0,
-        outros_investimentos: editValues.outros_investimentos || 0,
-        created_by: userData.data.user?.id
-      };
+      if (editingId && editValues) {
+        // Atualizar ou criar registro consolidado
+        if (editValues.id) {
+          // Atualizar registro existente
+          const { error } = await supabase
+            .from('marketing_investimentos')
+            .update({
+              investimento_google_ads: editValues.investimento_google_ads,
+              investimento_meta_ads: editValues.investimento_meta_ads,
+              investimento_linkedin_ads: editValues.investimento_linkedin_ads,
+              outros_investimentos: editValues.outros_investimentos,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', editValues.id);
 
-      // Verificar se é um ID real ou temporário
-      const isRealId = !editingId.includes('_');
-      
-      if (isRealId) {
-        // Atualizar registro existente
-        const { error } = await supabase
-          .from("marketing_investimentos")
-          .update(investmentData)
-          .eq("id", editingId);
-        
-        if (error) throw error;
-      } else {
-        // Criar novo registro
-        const { data, error } = await supabase
-          .from("marketing_investimentos")
-          .insert(investmentData)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        
-        // Atualizar o ID no estado local
+          if (error) throw error;
+        } else {
+          // Criar novo registro consolidado
+          const { error } = await supabase
+            .from('marketing_investimentos')
+            .insert({
+              mes: editValues.mes,
+              regiao: null, // Dados consolidados não têm região específica
+              investimento_google_ads: editValues.investimento_google_ads,
+              investimento_meta_ads: editValues.investimento_meta_ads,
+              investimento_linkedin_ads: editValues.investimento_linkedin_ads,
+              outros_investimentos: editValues.outros_investimentos,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            });
+
+          if (error) throw error;
+        }
+
+        // Atualizar estado local
         setInvestments(prev => prev.map(inv => 
-          inv.id === editingId 
-            ? { ...inv, ...investmentData, id: data.id }
-            : inv
+          inv.id === editingId ? { ...inv, ...editValues } : inv
         ));
+
+        toast({
+          title: "Sucesso",
+          description: "Investimento salvo com sucesso",
+        });
+
+        setEditingId(null);
+        setEditValues({});
       }
-
-      // Atualizar o estado local
-      setInvestments(prev => prev.map(inv => 
-        inv.id === editingId 
-          ? { ...inv, ...editValues }
-          : inv
-      ));
-
-      toast({
-        title: "Sucesso",
-        description: "Investimento salvo com sucesso",
-      });
-
-      setEditingId(null);
-      setEditValues({});
     } catch (error) {
       console.error("Erro ao salvar investimento:", error);
       toast({
@@ -184,9 +188,9 @@ export default function InvestmentManager({ selectedYear, regioes }: InvestmentM
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gestão de Investimentos por Região e Canal</CardTitle>
+        <CardTitle>Gestão de Investimentos Consolidados</CardTitle>
         <CardDescription>
-          Gerencie os investimentos mensais por região e canal de aquisição para {selectedYear}
+          Gerencie os investimentos mensais consolidados para {selectedYear}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -194,8 +198,7 @@ export default function InvestmentManager({ selectedYear, regioes }: InvestmentM
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Mês</TableHead>
-                <TableHead>Região</TableHead>
+                <TableHead>Mês/Ano</TableHead>
                 <TableHead className="text-right">Google Ads</TableHead>
                 <TableHead className="text-right">Meta Ads</TableHead>
                 <TableHead className="text-right">LinkedIn Ads</TableHead>
@@ -206,11 +209,10 @@ export default function InvestmentManager({ selectedYear, regioes }: InvestmentM
             </TableHeader>
             <TableBody>
               {investments.map((investment) => (
-                <TableRow key={investment.id}>
-                  <TableCell>
-                    {format(new Date(investment.mes), "MMM/yyyy", { locale: ptBR })}
+                <TableRow key={investment.id || investment.mes}>
+                  <TableCell className="font-medium">
+                    {format(new Date(investment.mes), "MMMM 'de' yyyy", { locale: ptBR })}
                   </TableCell>
-                  <TableCell>{investment.regiao}</TableCell>
                   
                   {editingId === investment.id ? (
                     <>

@@ -21,7 +21,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
-import InvestmentManager from "@/components/InvestmentManager";
+
 
 interface MarketingInvestment {
   id: string;
@@ -175,16 +175,13 @@ export default function Marketing() {
     let query = supabase
       .from("marketing_investimentos")
       .select("*")
+      .is("regiao", null) // Buscar apenas dados consolidados
       .order("mes", { ascending: false });
 
     if (dateRange?.from && dateRange?.to) {
       const startMonth = format(dateRange.from, "yyyy-MM") + "-01";
       const endMonth = format(dateRange.to, "yyyy-MM") + "-01";
       query = query.gte("mes", startMonth).lte("mes", endMonth);
-    }
-
-    if (selectedRegiao) {
-      query = query.eq("regiao", selectedRegiao);
     }
 
     const { data, error } = await query;
@@ -224,16 +221,13 @@ export default function Marketing() {
     const startDate = format(dateRange.from, "yyyy-MM-dd");
     const endDate = format(dateRange.to, "yyyy-MM-dd");
 
-    // Buscar investimentos do período
+    // Buscar investimentos do período (dados consolidados)
     let investimentosQuery = supabase
       .from("marketing_investimentos")
       .select("*")
+      .is("regiao", null) // Buscar apenas dados consolidados
       .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
       .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
-
-    if (selectedRegiao) {
-      investimentosQuery = investimentosQuery.eq("regiao", selectedRegiao);
-    }
 
     const { data: investimentosData } = await investimentosQuery;
 
@@ -439,10 +433,11 @@ export default function Marketing() {
 
       const { data: vendasData } = await vendasQuery;
 
-      // Buscar investimentos por região
+      // Buscar investimentos consolidados
       let investimentosQuery = supabase
         .from("marketing_investimentos")
         .select("*")
+        .is("regiao", null) // Buscar apenas dados consolidados
         .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
         .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
 
@@ -491,20 +486,25 @@ export default function Marketing() {
         });
       });
 
-      // Adicionar dados de investimentos
-      investimentosData?.forEach(inv => {
-        if (!inv.regiao) return;
-        
-        const current = regionMap.get(inv.regiao);
-        if (current) {
-          const totalInv = (inv.investimento_google_ads || 0) + 
-                          (inv.investimento_meta_ads || 0) + 
-                          (inv.investimento_linkedin_ads || 0) + 
-                          (inv.outros_investimentos || 0);
+      // Distribuir investimentos consolidados entre regiões
+      const totalInvestimento = investimentosData?.reduce((total, inv) => 
+        total + (inv.investimento_google_ads || 0) +
+                (inv.investimento_meta_ads || 0) +
+                (inv.investimento_linkedin_ads || 0) +
+                (inv.outros_investimentos || 0), 0
+      ) || 0;
+
+      // Distribuir proporcionalmente entre regiões baseado no faturamento
+      const totalFaturamento = Array.from(regionMap.values()).reduce((sum, region) => sum + region.faturamento, 0);
+      
+      regionMap.forEach((region, regiao) => {
+        if (totalFaturamento > 0) {
+          const proporcao = region.faturamento / totalFaturamento;
+          const investimentoRegiao = totalInvestimento * proporcao;
           
-          regionMap.set(inv.regiao, {
-            ...current,
-            investimento: current.investimento + totalInv
+          regionMap.set(regiao, {
+            ...region,
+            investimento: investimentoRegiao
           });
         }
       });
@@ -999,11 +999,6 @@ export default function Marketing() {
         </CardContent>
       </Card>
 
-      {/* Gestão de Investimentos */}
-      <InvestmentManager 
-        selectedYear={dateRange?.from ? dateRange.from.getFullYear() : new Date().getFullYear()}
-        regioes={regioes}
-      />
 
       {/* Gráficos de Pizza */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
