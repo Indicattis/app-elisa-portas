@@ -51,7 +51,11 @@ export function LeadTableRow({
 }: LeadTableRowProps) {
   const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
   const status = getLeadStatus(lead);
-  const statusInfo = statusConfig[status as keyof typeof statusConfig];
+  const statusInfo = statusConfig[status as keyof typeof statusConfig] || {
+    label: "Desconhecido",
+    className: "bg-gray-500", 
+    rowClassName: "bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800"
+  };
 
   const leadTag = getLeadTag(lead.tag_id);
   const canEditTags = canEditTag(lead.novo_status || 'aguardando_atendimento');
