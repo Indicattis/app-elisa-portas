@@ -64,6 +64,7 @@ interface CanalAquisicaoData {
 export default function Marketing() {
   const { isAdmin, isGerenteComercial } = useAuth();
   const { toast } = useToast();
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("ano-atual");
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
   const [selectedVendedor, setSelectedVendedor] = useState<string>("todos");
   const [selectedRegiao, setSelectedRegiao] = useState<string>("todas");
@@ -110,7 +111,7 @@ export default function Marketing() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedMonth, selectedVendedor, selectedRegiao]);
+  }, [selectedPeriod, selectedMonth, selectedVendedor, selectedRegiao]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -158,26 +159,55 @@ export default function Marketing() {
   };
 
   const fetchMetrics = async () => {
-    // Construir datas do mês selecionado em UTC para evitar problemas de timezone
-    const [year, month] = selectedMonth.split('-');
-    const mesStart = new Date(parseInt(year), parseInt(month) - 1, 1);
-    const mesEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+    // Construir datas baseadas no período selecionado
+    let mesStart: Date, mesEnd: Date, periodKey: string;
+    
+    if (selectedPeriod === "ano-atual") {
+      const currentYear = new Date().getFullYear();
+      mesStart = new Date(currentYear, 0, 1); // 1º de janeiro
+      mesEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999); // 31 de dezembro
+      periodKey = currentYear.toString();
+    } else {
+      const [year, month] = selectedMonth.split('-');
+      mesStart = new Date(parseInt(year), parseInt(month) - 1, 1);
+      mesEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+      periodKey = selectedMonth + "-01";
+    }
 
-    // Buscar investimentos do mês
-    const { data: investimentoData } = await supabase
-      .from("marketing_investimentos")
-      .select("*")
-      .eq("mes", selectedMonth + "-01")
-      .maybeSingle();
+    // Buscar investimentos do período
+    let totalInvestimento = 0;
+    if (selectedPeriod === "ano-atual") {
+      // Para ano todo, somar todos os investimentos do ano
+      const currentYear = new Date().getFullYear();
+      const { data: investimentosAno } = await supabase
+        .from("marketing_investimentos")
+        .select("*")
+        .gte("mes", `${currentYear}-01-01`)
+        .lte("mes", `${currentYear}-12-31`);
+      
+      totalInvestimento = investimentosAno?.reduce((sum, inv) => sum + (
+        Number(inv.investimento_google_ads) +
+        Number(inv.investimento_meta_ads) +
+        Number(inv.investimento_linkedin_ads) +
+        Number(inv.outros_investimentos)
+      ), 0) || 0;
+    } else {
+      // Para mês específico
+      const { data: investimentoData } = await supabase
+        .from("marketing_investimentos")
+        .select("*")
+        .eq("mes", periodKey)
+        .maybeSingle();
 
-    const totalInvestimento = investimentoData ? (
-      Number(investimentoData.investimento_google_ads) +
-      Number(investimentoData.investimento_meta_ads) +
-      Number(investimentoData.investimento_linkedin_ads) +
-      Number(investimentoData.outros_investimentos)
-    ) : 0;
+      totalInvestimento = investimentoData ? (
+        Number(investimentoData.investimento_google_ads) +
+        Number(investimentoData.investimento_meta_ads) +
+        Number(investimentoData.investimento_linkedin_ads) +
+        Number(investimentoData.outros_investimentos)
+      ) : 0;
+    }
 
-    // Buscar vendas do mês com filtros
+    // Buscar vendas do período com filtros apenas para Google e Meta
     let vendasQuery = supabase
       .from("vendas")
       .select(`
@@ -189,6 +219,22 @@ export default function Marketing() {
       `)
       .gte("data_venda", mesStart.toISOString())
       .lte("data_venda", mesEnd.toISOString());
+    
+    // Buscar IDs dos canais Google e Meta
+    const { data: canaisGoogleMeta } = await supabase
+      .from("canais_aquisicao")
+      .select("id")
+      .in("nome", ["Google", "Meta"]);
+    
+    const idsGoogleMeta = canaisGoogleMeta?.map(c => c.id) || [];
+    
+    // Filtrar vendas apenas dos canais Google e Meta
+    if (idsGoogleMeta.length > 0) {
+      vendasQuery = vendasQuery.in("canal_aquisicao_id", idsGoogleMeta);
+    } else {
+      // Se não encontrar os canais, filtrar por nome no campo legado
+      vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta"]);
+    }
 
     if (selectedVendedor !== "todos") {
       vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
@@ -200,12 +246,20 @@ export default function Marketing() {
 
     const { data: vendasData } = await vendasQuery;
 
-    // Buscar leads do mês com filtros
+    // Buscar leads do período com filtros apenas para Google e Meta
     let leadsQuery = supabase
       .from("elisaportas_leads")
-      .select("id, atendente_id, endereco_estado, novo_status")
+      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao, canal_aquisicao_id")
       .gte("data_envio", mesStart.toISOString())
       .lte("data_envio", mesEnd.toISOString());
+    
+    // Filtrar leads apenas dos canais Google e Meta
+    if (idsGoogleMeta.length > 0) {
+      leadsQuery = leadsQuery.in("canal_aquisicao_id", idsGoogleMeta);
+    } else {
+      // Se não encontrar os canais, filtrar por nome no campo legado
+      leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta"]);
+    }
 
     if (selectedVendedor !== "todos") {
       leadsQuery = leadsQuery.eq("atendente_id", selectedVendedor);
@@ -272,11 +326,20 @@ export default function Marketing() {
 
   const fetchChartData = async () => {
     try {
-      const [year, month] = selectedMonth.split('-');
-      const mesStart = startOfMonth(new Date(parseInt(year), parseInt(month) - 1));
-      const mesEnd = endOfMonth(new Date(parseInt(year), parseInt(month) - 1));
+      // Construir datas baseadas no período selecionado
+      let mesStart: Date, mesEnd: Date;
+      
+      if (selectedPeriod === "ano-atual") {
+        const currentYear = new Date().getFullYear();
+        mesStart = new Date(currentYear, 0, 1);
+        mesEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+      } else {
+        const [year, month] = selectedMonth.split('-');
+        mesStart = startOfMonth(new Date(parseInt(year), parseInt(month) - 1));
+        mesEnd = endOfMonth(new Date(parseInt(year), parseInt(month) - 1));
+      }
 
-      // Buscar vendas do mês com canais de aquisição
+      // Buscar vendas do período com canais de aquisição
       let vendasQuery = supabase
         .from("vendas")
         .select(`
@@ -448,14 +511,28 @@ export default function Marketing() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="month">Mês</Label>
-              <Input
-                id="month"
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-              />
+              <Label htmlFor="period">Período</Label>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ano-atual">Todo o ano atual</SelectItem>
+                  <SelectItem value="mes-especifico">Mês específico</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            {selectedPeriod === "mes-especifico" && (
+              <div>
+                <Label htmlFor="month">Mês</Label>
+                <Input
+                  id="month"
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="vendedor">Vendedor</Label>
               <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
