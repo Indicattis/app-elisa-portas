@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, DollarSign, Users, Target, Plus, BarChart3 } from "lucide-react";
+import { TrendingUp, DollarSign, Users, Target, Plus, BarChart3, Edit } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
@@ -18,6 +18,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 interface MarketingInvestment {
   id: string;
   mes: string;
+  regiao?: string;
   investimento_google_ads: number;
   investimento_meta_ads: number;
   investimento_linkedin_ads: number;
@@ -64,10 +65,9 @@ interface CanalAquisicaoData {
 export default function Marketing() {
   const { isAdmin, isGerenteComercial } = useAuth();
   const { toast } = useToast();
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("ano-atual");
-  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
-  const [selectedVendedor, setSelectedVendedor] = useState<string>("todos");
-  const [selectedRegiao, setSelectedRegiao] = useState<string>("todas");
+  const [selectedMeses, setSelectedMeses] = useState<string[]>([format(new Date(), "yyyy-MM")]);
+  const [selectedVendedores, setSelectedVendedores] = useState<string[]>([]);
+  const [selectedRegioes, setSelectedRegioes] = useState<string[]>([]);
   const [investimentos, setInvestimentos] = useState<MarketingInvestment[]>([]);
   const [metrics, setMetrics] = useState<MarketingMetrics>({
     totalInvestimento: 0,
@@ -79,13 +79,16 @@ export default function Marketing() {
     vendasConvertidas: 0
   });
   const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
+  const [regioes, setRegioes] = useState<string[]>([]);
   const [publicoAlvoData, setPublicoAlvoData] = useState<PublicoAlvoData[]>([]);
   const [canalAquisicaoData, setCanalAquisicaoData] = useState<CanalAquisicaoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartMode, setChartMode] = useState<'quantidade' | 'faturamento'>('quantidade');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingInvestimento, setEditingInvestimento] = useState<MarketingInvestment | null>(null);
   const [newInvestment, setNewInvestment] = useState({
-    mes: selectedMonth,
+    mes: format(new Date(), "yyyy-MM"),
+    regiao: "",
     investimento_google_ads: 0,
     investimento_meta_ads: 0,
     investimento_linkedin_ads: 0,
@@ -111,7 +114,7 @@ export default function Marketing() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedPeriod, selectedMonth, selectedVendedor, selectedRegiao]);
+  }, [selectedMeses, selectedVendedores, selectedRegioes]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -119,6 +122,7 @@ export default function Marketing() {
       await Promise.all([
         fetchInvestimentos(),
         fetchVendedores(),
+        fetchRegioes(),
         fetchMetrics(),
         fetchChartData()
       ]);
@@ -158,56 +162,42 @@ export default function Marketing() {
     setVendedores(data?.map(v => ({ id: v.user_id, nome: v.nome })) || []);
   };
 
+  const fetchRegioes = async () => {
+    const { data, error } = await supabase
+      .from("vendas")
+      .select("estado")
+      .not("estado", "is", null);
+
+    if (error) throw error;
+    const regionesUnicas = [...new Set(data?.map(v => v.estado))];
+    setRegioes(regionesUnicas);
+  };
+
   const fetchMetrics = async () => {
-    // Construir datas baseadas no período selecionado
-    let mesStart: Date, mesEnd: Date, periodKey: string;
-    
-    if (selectedPeriod === "ano-atual") {
-      const currentYear = new Date().getFullYear();
-      mesStart = new Date(currentYear, 0, 1); // 1º de janeiro
-      mesEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999); // 31 de dezembro
-      periodKey = currentYear.toString();
-    } else {
-      const [year, month] = selectedMonth.split('-');
-      mesStart = new Date(parseInt(year), parseInt(month) - 1, 1);
-      mesEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
-      periodKey = selectedMonth + "-01";
-    }
-
-    // Buscar investimentos do período
+    // Buscar investimentos dos meses selecionados
     let totalInvestimento = 0;
-    if (selectedPeriod === "ano-atual") {
-      // Para ano todo, somar todos os investimentos do ano
-      const currentYear = new Date().getFullYear();
-      const { data: investimentosAno } = await supabase
+    if (selectedMeses.length > 0) {
+      const mesFilters = selectedMeses.map(mes => `${mes}-01`);
+      let investimentosQuery = supabase
         .from("marketing_investimentos")
         .select("*")
-        .gte("mes", `${currentYear}-01-01`)
-        .lte("mes", `${currentYear}-12-31`);
-      
-      totalInvestimento = investimentosAno?.reduce((sum, inv) => sum + (
-        Number(inv.investimento_google_ads) +
-        Number(inv.investimento_meta_ads) +
-        Number(inv.investimento_linkedin_ads) +
-        Number(inv.outros_investimentos)
-      ), 0) || 0;
-    } else {
-      // Para mês específico
-      const { data: investimentoData } = await supabase
-        .from("marketing_investimentos")
-        .select("*")
-        .eq("mes", periodKey)
-        .maybeSingle();
+        .in("mes", mesFilters);
 
-      totalInvestimento = investimentoData ? (
-        Number(investimentoData.investimento_google_ads) +
-        Number(investimentoData.investimento_meta_ads) +
-        Number(investimentoData.investimento_linkedin_ads) +
-        Number(investimentoData.outros_investimentos)
-      ) : 0;
+      if (selectedRegioes.length > 0) {
+        investimentosQuery = investimentosQuery.in("regiao", selectedRegioes);
+      }
+
+      const { data: investimentosData } = await investimentosQuery;
+
+      totalInvestimento = investimentosData?.reduce((total, inv) => 
+        total + (inv.investimento_google_ads || 0) +
+                (inv.investimento_meta_ads || 0) +
+                (inv.investimento_linkedin_ads || 0) +
+                (inv.outros_investimentos || 0), 0
+      ) || 0;
     }
 
-    // Buscar vendas do período com filtros apenas para Google e Meta
+    // Construir datas baseadas nos meses selecionados
     let vendasQuery = supabase
       .from("vendas")
       .select(`
@@ -216,9 +206,7 @@ export default function Marketing() {
           id,
           nome
         )
-      `)
-      .gte("data_venda", mesStart.toISOString())
-      .lte("data_venda", mesEnd.toISOString());
+      `);
     
     // Buscar IDs dos canais Google e Meta
     const { data: canaisGoogleMeta } = await supabase
@@ -236,12 +224,32 @@ export default function Marketing() {
       vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
     }
 
-    if (selectedVendedor !== "todos") {
-      vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
+    if (selectedVendedores.length > 0) {
+      vendasQuery = vendasQuery.in("atendente_id", selectedVendedores);
     }
 
-    if (selectedRegiao !== "todas") {
-      vendasQuery = vendasQuery.eq("estado", selectedRegiao);
+    if (selectedRegioes.length > 0) {
+      vendasQuery = vendasQuery.in("estado", selectedRegioes);
+    }
+
+    // Filtrar por meses selecionados
+    if (selectedMeses.length > 0) {
+      const dateFilters = selectedMeses.map(mes => {
+        const startDate = `${mes}-01`;
+        const endDate = new Date(new Date(mes).getFullYear(), new Date(mes).getMonth() + 1, 0).toISOString().split('T')[0];
+        return { start: startDate, end: endDate };
+      });
+      
+      // Aplicar filtros OR para múltiplos meses
+      if (dateFilters.length === 1) {
+        vendasQuery = vendasQuery.gte("data_venda", dateFilters[0].start).lte("data_venda", dateFilters[0].end);
+      } else {
+        // Para múltiplos meses, usar filtro OR
+        const orConditions = dateFilters.map(filter => 
+          `and(data_venda.gte.${filter.start},data_venda.lte.${filter.end})`
+        ).join(',');
+        vendasQuery = vendasQuery.or(orConditions);
+      }
     }
 
     const { data: vendasData } = await vendasQuery;
@@ -249,9 +257,7 @@ export default function Marketing() {
     // Buscar leads do período com filtros apenas para Google e Meta
     let leadsQuery = supabase
       .from("elisaportas_leads")
-      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao, canal_aquisicao_id")
-      .gte("data_envio", mesStart.toISOString())
-      .lte("data_envio", mesEnd.toISOString());
+      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao, canal_aquisicao_id");
     
     // Filtrar leads apenas dos canais Google e Meta
     if (idsGoogleMeta.length > 0) {
@@ -261,12 +267,30 @@ export default function Marketing() {
       leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
     }
 
-    if (selectedVendedor !== "todos") {
-      leadsQuery = leadsQuery.eq("atendente_id", selectedVendedor);
+    if (selectedVendedores.length > 0) {
+      leadsQuery = leadsQuery.in("atendente_id", selectedVendedores);
     }
 
-    if (selectedRegiao !== "todas") {
-      leadsQuery = leadsQuery.eq("endereco_estado", selectedRegiao);
+    if (selectedRegioes.length > 0) {
+      leadsQuery = leadsQuery.in("endereco_estado", selectedRegioes);
+    }
+
+    // Filtrar por meses selecionados
+    if (selectedMeses.length > 0) {
+      const dateFilters = selectedMeses.map(mes => {
+        const startDate = `${mes}-01`;
+        const endDate = new Date(new Date(mes).getFullYear(), new Date(mes).getMonth() + 1, 0).toISOString().split('T')[0];
+        return { start: startDate, end: endDate };
+      });
+      
+      if (dateFilters.length === 1) {
+        leadsQuery = leadsQuery.gte("created_at", dateFilters[0].start).lte("created_at", dateFilters[0].end);
+      } else {
+        const orConditions = dateFilters.map(filter => 
+          `and(created_at.gte.${filter.start},created_at.lte.${filter.end})`
+        ).join(',');
+        leadsQuery = leadsQuery.or(orConditions);
+      }
     }
 
     const { data: leadsData } = await leadsQuery;
@@ -291,28 +315,41 @@ export default function Marketing() {
 
   const handleSaveInvestment = async () => {
     try {
-      const { error } = await supabase
-        .from("marketing_investimentos")
-        .upsert({
-          mes: newInvestment.mes + "-01",
-          investimento_google_ads: newInvestment.investimento_google_ads,
-          investimento_meta_ads: newInvestment.investimento_meta_ads,
-          investimento_linkedin_ads: newInvestment.investimento_linkedin_ads,
-          outros_investimentos: newInvestment.outros_investimentos,
-          observacoes: newInvestment.observacoes,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        }, {
-          onConflict: "mes"
-        });
+      const userData = await supabase.auth.getUser();
+      const investimentoData = {
+        mes: newInvestment.mes + "-01",
+        regiao: newInvestment.regiao || null,
+        investimento_google_ads: newInvestment.investimento_google_ads,
+        investimento_meta_ads: newInvestment.investimento_meta_ads,
+        investimento_linkedin_ads: newInvestment.investimento_linkedin_ads,
+        outros_investimentos: newInvestment.outros_investimentos,
+        observacoes: newInvestment.observacoes,
+        created_by: userData.data.user?.id
+      };
+
+      let error;
+      if (editingInvestimento) {
+        const { error: updateError } = await supabase
+          .from("marketing_investimentos")
+          .update(investimentoData)
+          .eq("id", editingInvestimento.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("marketing_investimentos")
+          .insert(investimentoData);
+        error = insertError;
+      }
 
       if (error) throw error;
 
       toast({
         title: "Sucesso",
-        description: "Investimento salvo com sucesso",
+        description: `Investimento ${editingInvestimento ? 'atualizado' : 'salvo'} com sucesso`,
       });
 
       setDialogOpen(false);
+      resetForm();
       fetchData();
     } catch (error) {
       console.error("Erro ao salvar investimento:", error);
@@ -324,21 +361,35 @@ export default function Marketing() {
     }
   };
 
+  const resetForm = () => {
+    setNewInvestment({
+      mes: format(new Date(), "yyyy-MM"),
+      regiao: "",
+      investimento_google_ads: 0,
+      investimento_meta_ads: 0,
+      investimento_linkedin_ads: 0,
+      outros_investimentos: 0,
+      observacoes: ""
+    });
+    setEditingInvestimento(null);
+  };
+
+  const handleEdit = (investimento: MarketingInvestment) => {
+    setEditingInvestimento(investimento);
+    setNewInvestment({
+      mes: investimento.mes.slice(0, 7),
+      regiao: investimento.regiao || "",
+      investimento_google_ads: Number(investimento.investimento_google_ads) || 0,
+      investimento_meta_ads: Number(investimento.investimento_meta_ads) || 0,
+      investimento_linkedin_ads: Number(investimento.investimento_linkedin_ads) || 0,
+      outros_investimentos: Number(investimento.outros_investimentos) || 0,
+      observacoes: investimento.observacoes || ""
+    });
+    setDialogOpen(true);
+  };
+
   const fetchChartData = async () => {
     try {
-      // Construir datas baseadas no período selecionado
-      let mesStart: Date, mesEnd: Date;
-      
-      if (selectedPeriod === "ano-atual") {
-        const currentYear = new Date().getFullYear();
-        mesStart = new Date(currentYear, 0, 1);
-        mesEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
-      } else {
-        const [year, month] = selectedMonth.split('-');
-        mesStart = startOfMonth(new Date(parseInt(year), parseInt(month) - 1));
-        mesEnd = endOfMonth(new Date(parseInt(year), parseInt(month) - 1));
-      }
-
       // Buscar vendas do período com canais de aquisição
       let vendasQuery = supabase
         .from("vendas")
@@ -348,12 +399,32 @@ export default function Marketing() {
             id,
             nome
           )
-        `)
-        .gte("data_venda", mesStart.toISOString())
-        .lte("data_venda", mesEnd.toISOString());
+        `);
 
-      if (selectedVendedor !== "todos") {
-        vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
+      if (selectedVendedores.length > 0) {
+        vendasQuery = vendasQuery.in("atendente_id", selectedVendedores);
+      }
+
+      if (selectedRegioes.length > 0) {
+        vendasQuery = vendasQuery.in("estado", selectedRegioes);
+      }
+
+      // Filtrar por meses selecionados
+      if (selectedMeses.length > 0) {
+        const dateFilters = selectedMeses.map(mes => {
+          const startDate = `${mes}-01`;
+          const endDate = new Date(new Date(mes).getFullYear(), new Date(mes).getMonth() + 1, 0).toISOString().split('T')[0];
+          return { start: startDate, end: endDate };
+        });
+        
+        if (dateFilters.length === 1) {
+          vendasQuery = vendasQuery.gte("data_venda", dateFilters[0].start).lte("data_venda", dateFilters[0].end);
+        } else {
+          const orConditions = dateFilters.map(filter => 
+            `and(data_venda.gte.${filter.start},data_venda.lte.${filter.end})`
+          ).join(',');
+          vendasQuery = vendasQuery.or(orConditions);
+        }
       }
 
       const { data: vendasData } = await vendasQuery;
@@ -403,6 +474,42 @@ export default function Marketing() {
     }
   };
 
+  const toggleMes = (mes: string) => {
+    setSelectedMeses(prev => 
+      prev.includes(mes) 
+        ? prev.filter(m => m !== mes)
+        : [...prev, mes]
+    );
+  };
+
+  const toggleVendedor = (vendedorId: string) => {
+    setSelectedVendedores(prev => 
+      prev.includes(vendedorId) 
+        ? prev.filter(v => v !== vendedorId)
+        : [...prev, vendedorId]
+    );
+  };
+
+  const toggleRegiao = (regiao: string) => {
+    setSelectedRegioes(prev => 
+      prev.includes(regiao) 
+        ? prev.filter(r => r !== regiao)
+        : [...prev, regiao]
+    );
+  };
+
+  const getMesesOptions = () => {
+    const meses = [];
+    const hoje = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const mesString = data.toISOString().slice(0, 7);
+      const mesNome = data.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      meses.push({ value: mesString, label: mesNome });
+    }
+    return meses;
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -413,8 +520,6 @@ export default function Marketing() {
       </div>
     );
   }
-
-  const regioes = ["RS", "SC"];
 
   return (
     <div className="p-6 space-y-6">
@@ -428,14 +533,16 @@ export default function Marketing() {
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Investimento
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Adicionar Investimento</DialogTitle>
+              <DialogTitle>
+                {editingInvestimento ? 'Editar' : 'Adicionar'} Investimento
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -446,6 +553,23 @@ export default function Marketing() {
                   value={newInvestment.mes}
                   onChange={(e) => setNewInvestment({ ...newInvestment, mes: e.target.value })}
                 />
+              </div>
+              <div>
+                <Label htmlFor="regiao">Região</Label>
+                <Select 
+                  value={newInvestment.regiao} 
+                  onValueChange={(value) => setNewInvestment({ ...newInvestment, regiao: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma região" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas as regiões</SelectItem>
+                    {regioes.map((regiao) => (
+                      <SelectItem key={regiao} value={regiao}>{regiao}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="google-ads">Google Ads (R$)</Label>
@@ -496,75 +620,86 @@ export default function Marketing() {
                 />
               </div>
               <Button onClick={handleSaveInvestment} className="w-full">
-                Salvar Investimento
+                {editingInvestimento ? 'Atualizar' : 'Salvar'} Investimento
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros Dinâmicos */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+          <CardTitle>Filtros Dinâmicos</CardTitle>
+          <CardDescription>
+            Selecione múltiplos filtros clicando nos botões
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="period">Período</Label>
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ano-atual">Todo o ano atual</SelectItem>
-                  <SelectItem value="mes-especifico">Mês específico</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardContent className="space-y-6">
+          <div>
+            <Label className="text-sm font-medium mb-3 block">Meses</Label>
+            <div className="flex flex-wrap gap-2">
+              {getMesesOptions().map((mes) => (
+                <Button
+                  key={mes.value}
+                  variant={selectedMeses.includes(mes.value) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleMes(mes.value)}
+                  className="text-xs"
+                >
+                  {mes.label}
+                </Button>
+              ))}
             </div>
-            {selectedPeriod === "mes-especifico" && (
-              <div>
-                <Label htmlFor="month">Mês</Label>
-                <Input
-                  id="month"
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                />
-              </div>
-            )}
-            <div>
-              <Label htmlFor="vendedor">Vendedor</Label>
-              <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  {vendedores.map((vendedor) => (
-                    <SelectItem key={vendedor.id} value={vendedor.id}>
-                      {vendedor.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-3 block">Vendedores</Label>
+            <div className="flex flex-wrap gap-2">
+              {vendedores.map((vendedor) => (
+                <Button
+                  key={vendedor.id}
+                  variant={selectedVendedores.includes(vendedor.id) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleVendedor(vendedor.id)}
+                  className="text-xs"
+                >
+                  {vendedor.nome}
+                </Button>
+              ))}
             </div>
-            <div>
-              <Label htmlFor="regiao">Região</Label>
-              <Select value={selectedRegiao} onValueChange={setSelectedRegiao}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas</SelectItem>
-                  {regioes.map((regiao) => (
-                    <SelectItem key={regiao} value={regiao}>
-                      {regiao}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-3 block">Regiões</Label>
+            <div className="flex flex-wrap gap-2">
+              {regioes.map((regiao) => (
+                <Button
+                  key={regiao}
+                  variant={selectedRegioes.includes(regiao) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleRegiao(regiao)}
+                  className="text-xs"
+                >
+                  {regiao}
+                </Button>
+              ))}
             </div>
+          </div>
+
+          <div className="pt-4 border-t">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                setSelectedMeses([format(new Date(), "yyyy-MM")]);
+                setSelectedVendedores([]);
+                setSelectedRegioes([]);
+              }}
+              className="w-full"
+            >
+              Limpar Filtros
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -795,7 +930,7 @@ export default function Marketing() {
           <CardHeader>
             <CardTitle>Performance por Canal</CardTitle>
             <CardDescription>
-              Dados do mês de {format(new Date(selectedMonth + "-01"), "MMMM 'de' yyyy", { locale: ptBR })}
+              Dados do período selecionado
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -831,39 +966,51 @@ export default function Marketing() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {investimentos.slice(0, 5).map((investimento) => (
+            {investimentos.slice(0, 10).map((investimento) => (
               <div key={investimento.id} className="flex items-center justify-between border-b pb-2">
                 <div>
                   <p className="font-medium">
                     {format(new Date(investimento.mes), "MMMM 'de' yyyy", { locale: ptBR })}
                   </p>
+                  {investimento.regiao && (
+                    <p className="text-sm text-muted-foreground">{investimento.regiao}</p>
+                  )}
                   {investimento.observacoes && (
                     <p className="text-sm text-muted-foreground">{investimento.observacoes}</p>
                   )}
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">
-                    R$ {(
-                      Number(investimento.investimento_google_ads) +
-                      Number(investimento.investimento_meta_ads) +
-                      Number(investimento.investimento_linkedin_ads) +
-                      Number(investimento.outros_investimentos)
-                    ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    {Number(investimento.investimento_google_ads) > 0 && (
-                      <div>Google: R$ {Number(investimento.investimento_google_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                    )}
-                    {Number(investimento.investimento_meta_ads) > 0 && (
-                      <div>Meta: R$ {Number(investimento.investimento_meta_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                    )}
-                    {Number(investimento.investimento_linkedin_ads) > 0 && (
-                      <div>LinkedIn: R$ {Number(investimento.investimento_linkedin_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                    )}
-                    {Number(investimento.outros_investimentos) > 0 && (
-                      <div>Outros: R$ {Number(investimento.outros_investimentos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                    )}
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="font-medium">
+                      R$ {(
+                        Number(investimento.investimento_google_ads) +
+                        Number(investimento.investimento_meta_ads) +
+                        Number(investimento.investimento_linkedin_ads) +
+                        Number(investimento.outros_investimentos)
+                      ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      {Number(investimento.investimento_google_ads) > 0 && (
+                        <div>Google: R$ {Number(investimento.investimento_google_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                      )}
+                      {Number(investimento.investimento_meta_ads) > 0 && (
+                        <div>Meta: R$ {Number(investimento.investimento_meta_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                      )}
+                      {Number(investimento.investimento_linkedin_ads) > 0 && (
+                        <div>LinkedIn: R$ {Number(investimento.investimento_linkedin_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                      )}
+                      {Number(investimento.outros_investimentos) > 0 && (
+                        <div>Outros: R$ {Number(investimento.outros_investimentos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                      )}
+                    </div>
                   </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEdit(investimento)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}

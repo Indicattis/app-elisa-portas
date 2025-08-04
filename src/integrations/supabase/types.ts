@@ -546,6 +546,7 @@ export type Database = {
           mes: string
           observacoes: string | null
           outros_investimentos: number | null
+          regiao: string | null
           updated_at: string
         }
         Insert: {
@@ -558,6 +559,7 @@ export type Database = {
           mes: string
           observacoes?: string | null
           outros_investimentos?: number | null
+          regiao?: string | null
           updated_at?: string
         }
         Update: {
@@ -570,6 +572,7 @@ export type Database = {
           mes?: string
           observacoes?: string | null
           outros_investimentos?: number | null
+          regiao?: string | null
           updated_at?: string
         }
         Relationships: []
