@@ -4,12 +4,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RequisicoesVenda } from "@/components/RequisicoesVenda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 interface Venda {
   id: string;
@@ -77,6 +82,10 @@ interface VendaStats {
 
 export default function Faturamento() {
   const [vendas, setVendas] = useState<Venda[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
   const [stats, setStats] = useState<VendaStats>({
     rs: {
       lucroProdutos: 0,
@@ -118,7 +127,7 @@ export default function Faturamento() {
       fetchVendas();
       fetchStats();
     }
-  }, [isAdmin, userRole, selectedMonth, selectedYear]);
+  }, [isAdmin, userRole, dateRange]);
 
   const fetchVendas = async () => {
     try {
@@ -153,12 +162,14 @@ export default function Faturamento() {
         `)
         .order("data_venda", { ascending: false });
 
-      const startDate = new Date(selectedYear, selectedMonth - 1, 1);
-      const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59);
-      
-      query = query
-        .gte("data_venda", startDate.toISOString())
-        .lte("data_venda", endDate.toISOString());
+      if (dateRange?.from && dateRange?.to) {
+        const startDate = format(dateRange.from, "yyyy-MM-dd");
+        const endDate = format(dateRange.to, "yyyy-MM-dd");
+        
+        query = query
+          .gte("data_venda", startDate + " 00:00:00")
+          .lte("data_venda", endDate + " 23:59:59");
+      }
 
       const { data: vendasData, error } = await query;
 
@@ -193,14 +204,16 @@ export default function Faturamento() {
 
   const fetchStats = async () => {
     try {
-      const startDate = new Date(selectedYear, selectedMonth - 1, 1);
-      const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59);
+      if (!dateRange?.from || !dateRange?.to) return;
+
+      const startDate = format(dateRange.from, "yyyy-MM-dd");
+      const endDate = format(dateRange.to, "yyyy-MM-dd");
 
       const { data: vendasPeriodo, error } = await supabase
         .from("vendas")
         .select("valor_produto, custo_produto, valor_pintura, custo_pintura, valor_instalacao, valor_frete, lucro_total, estado")
-        .gte("data_venda", startDate.toISOString())
-        .lte("data_venda", endDate.toISOString());
+        .gte("data_venda", startDate + " 00:00:00")
+        .lte("data_venda", endDate + " 23:59:59");
 
       if (error) throw error;
 
@@ -257,11 +270,13 @@ export default function Faturamento() {
 
   const exportarPDF = () => {
     const doc = new jsPDF();
-    const mesNome = meses.find(m => m.value === selectedMonth)?.label || '';
+    const periodo = dateRange?.from && dateRange?.to 
+      ? `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`
+      : 'Período não definido';
     
     // Cabeçalho
     doc.setFontSize(20);
-    doc.text(`Relatório de Faturamento - ${mesNome}/${selectedYear}`, 20, 20);
+    doc.text(`Relatório de Faturamento - ${periodo}`, 20, 20);
     
     // Resumo por estado
     doc.setFontSize(14);
@@ -316,7 +331,10 @@ export default function Faturamento() {
     });
 
     // Salvar arquivo
-    doc.save(`relatorio-faturamento-${mesNome}-${selectedYear}.pdf`);
+    const fileName = dateRange?.from && dateRange?.to 
+      ? `relatorio-faturamento-${format(dateRange.from, "yyyy-MM-dd")}-${format(dateRange.to, "yyyy-MM-dd")}.pdf`
+      : `relatorio-faturamento-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+    doc.save(fileName);
     
     toast({
       title: "Sucesso",
@@ -551,30 +569,56 @@ export default function Faturamento() {
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {meses.map((mes) => (
-                        <SelectItem key={mes.value} value={mes.value.toString()}>
-                          {mes.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {anos.map((ano) => (
-                        <SelectItem key={ano} value={ano.toString()}>
-                          {ano}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-sm font-medium">Período:</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-64 justify-start text-left font-normal",
+                          !dateRange && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                              {format(dateRange.to, "dd/MM/yyyy")}
+                            </>
+                          ) : (
+                            format(dateRange.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span>Selecione um período</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={(range) => {
+                          setDateRange(range);
+                        }}
+                        numberOfMonths={2}
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      setLoading(true);
+                      fetchVendas();
+                      fetchStats();
+                    }}
+                  >
+                    Aplicar
+                  </Button>
                 </div>
               </div>
               

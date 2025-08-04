@@ -607,7 +607,10 @@ export default function Marketing() {
                     mode="range"
                     defaultMonth={dateRange?.from}
                     selected={dateRange}
-                    onSelect={setDateRange}
+                    onSelect={(range) => {
+                      setDateRange(range);
+                      // Não recarrega automaticamente, apenas atualiza o estado
+                    }}
                     numberOfMonths={2}
                     className="pointer-events-auto"
                   />
@@ -648,7 +651,7 @@ export default function Marketing() {
             </div>
           </div>
 
-          <div className="pt-4 border-t">
+          <div className="pt-4 border-t flex gap-2">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -660,9 +663,20 @@ export default function Marketing() {
                 setSelectedVendedor("");
                 setSelectedRegiao("");
               }}
-              className="w-full"
+              className="flex-1"
             >
               Limpar Filtros
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={() => {
+                setLoading(true);
+                fetchMetrics();
+                fetchChartData();
+              }}
+              className="flex-1"
+            >
+              Aplicar Filtros
             </Button>
           </div>
         </CardContent>
