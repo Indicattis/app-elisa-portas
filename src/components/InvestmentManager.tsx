@@ -107,7 +107,7 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
       const userData = await supabase.auth.getUser();
       const investmentData = {
         mes: formData.mes + "-01",
-        regiao: formData.regiao || null,
+        regiao: formData.regiao === "TODAS" ? null : formData.regiao,
         investimento_google_ads: formData.investimento_google_ads,
         investimento_meta_ads: formData.investimento_meta_ads,
         investimento_linkedin_ads: formData.investimento_linkedin_ads,
@@ -154,7 +154,7 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
     setEditingInvestment(investment);
     setFormData({
       mes: investment.mes.slice(0, 7),
-      regiao: investment.regiao || "",
+      regiao: investment.regiao || "TODAS",
       investimento_google_ads: Number(investment.investimento_google_ads) || 0,
       investimento_meta_ads: Number(investment.investimento_meta_ads) || 0,
       investimento_linkedin_ads: Number(investment.investimento_linkedin_ads) || 0,
@@ -265,7 +265,7 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
                     <SelectValue placeholder="Selecione uma região" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as regiões (consolidado)</SelectItem>
+                    <SelectItem value="TODAS">Todas as regiões (consolidado)</SelectItem>
                     {regioes.map((regiao) => (
                       <SelectItem key={regiao} value={regiao}>{regiao}</SelectItem>
                     ))}
