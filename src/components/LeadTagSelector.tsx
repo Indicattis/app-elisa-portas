@@ -35,11 +35,8 @@ export function LeadTagSelector({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
-  const canEdit = canEditTag(leadStatus);
-  const availableTags = LEAD_TAGS.filter(tag => 
-    // Tags 1-7 podem ser selecionadas livremente quando status é 1 ou 2 (incluindo "Cliente fechado")
-    canEdit && [1, 2, 3, 4, 5, 6, 7].includes(tag.id)
-  );
+  // Agora todos os usuários podem visualizar e alterar qualquer tag
+  const availableTags = LEAD_TAGS;
 
   const handleTagSelect = async (tagId: number) => {
     if (!leadId) return;
@@ -48,11 +45,8 @@ export function LeadTagSelector({
       setLoading(true);
       const currentTag = currentTagId;
       
-      // Se selecionou "Cliente fechado", atualizar status para vendido (5)
+      // Apenas atualizar a tag agora
       const updateData: any = { tag_id: tagId };
-      if (tagId === 7) { // ID da tag "Cliente fechado"
-        updateData.status_atendimento = 5; // Status vendido
-      }
       
       const { error } = await supabase
         .from("elisaportas_leads")
@@ -151,14 +145,7 @@ export function LeadTagSelector({
           </DialogDescription>
         </DialogHeader>
 
-        {!canEdit ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">
-              Não é possível alterar a etiqueta neste status do lead.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
+        <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
               {currentTagId && (
                 <div className="mb-3">
@@ -203,8 +190,7 @@ export function LeadTagSelector({
                 </Button>
               </div>
             )}
-          </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

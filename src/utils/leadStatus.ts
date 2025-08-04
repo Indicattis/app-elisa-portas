@@ -3,28 +3,8 @@ import { isToday } from "date-fns";
 import type { Lead } from "@/types/lead";
 
 export const getLeadStatus = (lead: Lead) => {
-  switch (lead.status_atendimento) {
-    case 1:
-      // Aguardando atendente (sem atendente)
-      return "aguardando_atendente";
-    case 2:
-      // Em andamento (capturado)
-      return "em_andamento";
-    case 4:
-      // Aguardando aprovação de venda
-      return "aguardando_aprovacao_venda";
-    case 5:
-      // Vendido (requisição aprovada)
-      return "vendido";
-    case 6:
-      // Desqualificado (cancelado)
-      return "desqualificado";
-    case 7:
-      // Venda perdida
-      return "venda_perdida";
-    default:
-      return "aguardando_atendente";
-  }
+  // Agora usa novo_status diretamente
+  return lead.novo_status || "aguardando_atendimento";
 };
 
 export const statusConfig = {

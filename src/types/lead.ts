@@ -6,7 +6,6 @@ export interface Lead {
   email: string;
   telefone: string;
   cidade: string;
-  status_atendimento: number;
   novo_status: 'aguardando_atendimento' | 'em_andamento' | 'perdido' | 'aguardando_aprovacao_venda' | 'venda_reprovada' | 'venda_aprovada';
   tag_id: number | null;
   motivo_perda: 'desqualificado' | 'perdido_por_preco' | 'perdido_por_prazo' | 'outro' | null;

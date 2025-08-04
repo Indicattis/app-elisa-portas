@@ -136,7 +136,7 @@ export function useLeads() {
       const { error } = await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 2,
+          novo_status: 'em_andamento',
           atendente_id: user?.id,
           data_inicio_atendimento: new Date().toISOString(),
         })
@@ -173,7 +173,7 @@ export function useLeads() {
       const { error } = await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 7, // Status perdido
+          novo_status: 'perdido',
         })
         .eq("id", leadId);
 
@@ -208,7 +208,7 @@ export function useLeads() {
       const { error } = await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 6, // Status desqualificado
+          novo_status: 'perdido',
         })
         .eq("id", leadId);
 
@@ -243,7 +243,7 @@ export function useLeads() {
       const { error } = await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 1, // Volta para aguardando atendente
+          novo_status: 'aguardando_atendimento',
           atendente_id: null,
           data_inicio_atendimento: null,
         })
@@ -280,7 +280,7 @@ export function useLeads() {
       const { error } = await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 4, // Aguardando aprovação
+          novo_status: 'aguardando_aprovacao_venda',
         })
         .eq("id", leadId);
 

@@ -260,7 +260,6 @@ export type Database = {
           novo_status: Database["public"]["Enums"]["lead_status"] | null
           observacoes: string | null
           observacoes_perda: string | null
-          status_atendimento: number
           tag_id: number | null
           telefone: string
           tipo_porta: string | null
@@ -296,7 +295,6 @@ export type Database = {
           novo_status?: Database["public"]["Enums"]["lead_status"] | null
           observacoes?: string | null
           observacoes_perda?: string | null
-          status_atendimento?: number
           tag_id?: number | null
           telefone: string
           tipo_porta?: string | null
@@ -332,7 +330,6 @@ export type Database = {
           novo_status?: Database["public"]["Enums"]["lead_status"] | null
           observacoes?: string | null
           observacoes_perda?: string | null
-          status_atendimento?: number
           tag_id?: number | null
           telefone?: string
           tipo_porta?: string | null
@@ -1225,22 +1222,9 @@ export type Database = {
             }
         Returns: boolean
       }
-      cancel_lead_attendance: {
-        Args: { lead_uuid: string }
-        Returns: boolean
-      }
       criar_requisicao_venda: {
         Args: { lead_uuid: string; orcamento_uuid?: string }
         Returns: string
-      }
-      finalizar_venda: {
-        Args: {
-          lead_uuid: string
-          valor_venda: number
-          forma_pagamento?: string
-          observacoes_venda?: string
-        }
-        Returns: boolean
       }
       has_permission: {
         Args: {
@@ -1256,10 +1240,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      iniciar_atendimento: {
-        Args: { lead_uuid: string }
-        Returns: boolean
-      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1269,10 +1249,6 @@ export type Database = {
         Returns: boolean
       }
       is_lead_attendant: {
-        Args: { lead_uuid: string }
-        Returns: boolean
-      }
-      pause_lead_attendance: {
         Args: { lead_uuid: string }
         Returns: boolean
       }

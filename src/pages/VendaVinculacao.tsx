@@ -25,7 +25,7 @@ interface Lead {
   cidade?: string;
   canal_aquisicao: string;
   canal_aquisicao_id?: string;
-  status_atendimento: number;
+  novo_status: string;
   canais_aquisicao?: {
     id: string;
     nome: string;
@@ -75,7 +75,7 @@ export default function VendaVinculacao() {
       const { data, error } = await supabase
         .from("elisaportas_leads")
         .select(`
-          id, nome, telefone, email, cidade, canal_aquisicao, canal_aquisicao_id, status_atendimento,
+          id, nome, telefone, email, cidade, canal_aquisicao, canal_aquisicao_id, novo_status,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -154,24 +154,6 @@ export default function VendaVinculacao() {
     }
   };
 
-  const getStatusBadge = (status: number) => {
-    const statusMap = {
-      1: { label: "Aguardando", variant: "secondary" as const },
-      2: { label: "Em andamento", variant: "default" as const },
-      3: { label: "Pausado", variant: "outline" as const },
-      4: { label: "Perdido", variant: "destructive" as const },
-      5: { label: "Vendido", variant: "default" as const },
-      6: { label: "Venda Aprovada", variant: "default" as const },
-    };
-
-    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: "Desconhecido", variant: "outline" as const };
-    
-    return (
-      <Badge variant={statusInfo.variant}>
-        {statusInfo.label}
-      </Badge>
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -221,7 +203,7 @@ export default function VendaVinculacao() {
                   <p className="text-sm text-muted-foreground">{selectedLead.email}</p>
                 )}
                 <div className="flex items-center gap-2 mt-2">
-                  {getStatusBadge(selectedLead.status_atendimento)}
+                  <Badge variant="outline">{selectedLead.novo_status}</Badge>
                   <Badge variant="outline">{selectedLead.canais_aquisicao?.nome || selectedLead.canal_aquisicao}</Badge>
                 </div>
               </div>
@@ -251,7 +233,7 @@ export default function VendaVinculacao() {
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        {getStatusBadge(lead.status_atendimento)}
+                        <Badge variant="outline">{lead.novo_status}</Badge>
                         <Badge variant="outline" className="text-xs">
                           {lead.canais_aquisicao?.nome || lead.canal_aquisicao}
                         </Badge>

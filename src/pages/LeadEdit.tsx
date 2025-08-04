@@ -20,7 +20,7 @@ interface Lead {
   email: string;
   telefone: string;
   cidade: string;
-  status_atendimento: number;
+  novo_status: string;
   data_envio: string;
   atendente_id: string | null;
   valor_orcamento: number | null;

@@ -40,7 +40,7 @@ export default function LeadNovo() {
             canal_aquisicao_id: formData.canal_aquisicao_id,
             mensagem: formData.mensagem,
             data_envio: new Date().toISOString(),
-            status_atendimento: 1, // Defina o status inicial
+            novo_status: 'aguardando_atendimento', // Status inicial
           },
         ])
         .select();

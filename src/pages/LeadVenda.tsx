@@ -124,7 +124,7 @@ export default function LeadVenda() {
       const { error: leadError } = await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 5,
+          novo_status: 'venda_aprovada',
           data_conclusao_atendimento: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })

@@ -41,7 +41,6 @@ interface Lead {
   email: string;
   telefone: string;
   cidade: string;
-  status_atendimento: number;
   novo_status: LeadStatus;
   tag_id: number | null;
   motivo_perda: MotivoPerda | null;

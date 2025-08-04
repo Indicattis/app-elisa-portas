@@ -136,7 +136,7 @@ export function RequisicoesVenda() {
       await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 5,
+          novo_status: 'venda_aprovada',
           data_conclusao_atendimento: new Date().toISOString()
         })
         .eq("id", selectedRequisicao.lead_id);
@@ -187,7 +187,7 @@ export function RequisicoesVenda() {
       await supabase
         .from("elisaportas_leads")
         .update({
-          status_atendimento: 2
+          novo_status: 'em_andamento'
         })
         .eq("id", selectedRequisicao.lead_id);
 
