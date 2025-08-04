@@ -224,7 +224,7 @@ export default function Marketing() {
     const { data: canaisGoogleMeta } = await supabase
       .from("canais_aquisicao")
       .select("id")
-      .in("nome", ["Google", "Meta"]);
+      .in("nome", ["Google", "Meta (Facebook/Instagram)"]);
     
     const idsGoogleMeta = canaisGoogleMeta?.map(c => c.id) || [];
     
@@ -233,7 +233,7 @@ export default function Marketing() {
       vendasQuery = vendasQuery.in("canal_aquisicao_id", idsGoogleMeta);
     } else {
       // Se não encontrar os canais, filtrar por nome no campo legado
-      vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta"]);
+      vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
     }
 
     if (selectedVendedor !== "todos") {
@@ -258,7 +258,7 @@ export default function Marketing() {
       leadsQuery = leadsQuery.in("canal_aquisicao_id", idsGoogleMeta);
     } else {
       // Se não encontrar os canais, filtrar por nome no campo legado
-      leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta"]);
+      leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
     }
 
     if (selectedVendedor !== "todos") {
