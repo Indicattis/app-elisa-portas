@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -28,9 +27,7 @@ interface InvestmentManagerProps {
   selectedYear: number;
 }
 
-interface InvestmentFormData {
-  mes: string;
-  regiao: string;
+interface RegionInvestmentData {
   investimento_google_ads: number;
   investimento_meta_ads: number;
   investimento_linkedin_ads: number;
@@ -43,21 +40,17 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
   const [investments, setInvestments] = useState<InvestmentData[]>([]);
   const [regioes, setRegioes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingInvestment, setEditingInvestment] = useState<InvestmentData | null>(null);
-  const [formData, setFormData] = useState<InvestmentFormData>({
-    mes: format(new Date(), "yyyy-MM"),
-    regiao: "",
-    investimento_google_ads: 0,
-    investimento_meta_ads: 0,
-    investimento_linkedin_ads: 0,
-    outros_investimentos: 0,
-    observacoes: ""
-  });
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
+  const [monthlyData, setMonthlyData] = useState<Record<string, RegionInvestmentData>>({});
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     loadData();
   }, [selectedYear]);
+
+  useEffect(() => {
+    loadMonthData();
+  }, [selectedMonth, investments]);
 
   const loadData = async () => {
     setLoading(true);
@@ -102,113 +95,119 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
     setRegioes(regionesUnicas);
   };
 
-  const handleSave = async () => {
+  const loadMonthData = () => {
+    const monthKey = selectedMonth + "-01";
+    const monthInvestments = investments.filter(inv => inv.mes === monthKey);
+    
+    const newMonthlyData: Record<string, RegionInvestmentData> = {};
+    
+    // Incluir consolidado
+    const consolidado = monthInvestments.find(inv => !inv.regiao);
+    newMonthlyData["TODAS"] = {
+      investimento_google_ads: consolidado?.investimento_google_ads || 0,
+      investimento_meta_ads: consolidado?.investimento_meta_ads || 0,
+      investimento_linkedin_ads: consolidado?.investimento_linkedin_ads || 0,
+      outros_investimentos: consolidado?.outros_investimentos || 0,
+      observacoes: consolidado?.observacoes || ""
+    };
+
+    // Incluir cada região
+    regioes.forEach(regiao => {
+      const regionInvestment = monthInvestments.find(inv => inv.regiao === regiao);
+      newMonthlyData[regiao] = {
+        investimento_google_ads: regionInvestment?.investimento_google_ads || 0,
+        investimento_meta_ads: regionInvestment?.investimento_meta_ads || 0,
+        investimento_linkedin_ads: regionInvestment?.investimento_linkedin_ads || 0,
+        outros_investimentos: regionInvestment?.outros_investimentos || 0,
+        observacoes: regionInvestment?.observacoes || ""
+      };
+    });
+
+    setMonthlyData(newMonthlyData);
+  };
+
+  const updateRegionData = (regiao: string, field: keyof RegionInvestmentData, value: number | string) => {
+    setMonthlyData(prev => ({
+      ...prev,
+      [regiao]: {
+        investimento_google_ads: 0,
+        investimento_meta_ads: 0,
+        investimento_linkedin_ads: 0,
+        outros_investimentos: 0,
+        observacoes: "",
+        ...prev[regiao],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveMonth = async () => {
     try {
       const userData = await supabase.auth.getUser();
-      const investmentData = {
-        mes: formData.mes + "-01",
-        regiao: formData.regiao === "TODAS" ? null : formData.regiao,
-        investimento_google_ads: formData.investimento_google_ads,
-        investimento_meta_ads: formData.investimento_meta_ads,
-        investimento_linkedin_ads: formData.investimento_linkedin_ads,
-        outros_investimentos: formData.outros_investimentos,
-        observacoes: formData.observacoes,
-        created_by: userData.data.user?.id
-      };
-
-      let error;
-      if (editingInvestment) {
-        const { error: updateError } = await supabase
-          .from("marketing_investimentos")
-          .update(investmentData)
-          .eq("id", editingInvestment.id);
-        error = updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from("marketing_investimentos")
-          .insert(investmentData);
-        error = insertError;
-      }
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: `Investimento ${editingInvestment ? 'atualizado' : 'criado'} com sucesso`,
-      });
-
-      setDialogOpen(false);
-      resetForm();
-      fetchInvestments();
-    } catch (error) {
-      console.error("Erro ao salvar investimento:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao salvar investimento",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleEdit = (investment: InvestmentData) => {
-    setEditingInvestment(investment);
-    setFormData({
-      mes: investment.mes.slice(0, 7),
-      regiao: investment.regiao || "TODAS",
-      investimento_google_ads: Number(investment.investimento_google_ads) || 0,
-      investimento_meta_ads: Number(investment.investimento_meta_ads) || 0,
-      investimento_linkedin_ads: Number(investment.investimento_linkedin_ads) || 0,
-      outros_investimentos: Number(investment.outros_investimentos) || 0,
-      observacoes: investment.observacoes || ""
-    });
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async (investment: InvestmentData) => {
-    if (!confirm('Tem certeza que deseja excluir este investimento?')) return;
-
-    try {
-      const { error } = await supabase
+      const monthKey = selectedMonth + "-01";
+      
+      // Deletar dados existentes do mês
+      await supabase
         .from("marketing_investimentos")
         .delete()
-        .eq("id", investment.id);
+        .eq("mes", monthKey);
 
-      if (error) throw error;
+      // Inserir novos dados
+      const insertData = Object.entries(monthlyData).map(([regiao, data]) => ({
+        mes: monthKey,
+        regiao: regiao === "TODAS" ? null : regiao,
+        investimento_google_ads: data.investimento_google_ads,
+        investimento_meta_ads: data.investimento_meta_ads,
+        investimento_linkedin_ads: data.investimento_linkedin_ads,
+        outros_investimentos: data.outros_investimentos,
+        observacoes: data.observacoes,
+        created_by: userData.data.user?.id
+      })).filter(item => 
+        item.investimento_google_ads > 0 || 
+        item.investimento_meta_ads > 0 || 
+        item.investimento_linkedin_ads > 0 || 
+        item.outros_investimentos > 0 ||
+        item.observacoes.trim()
+      );
+
+      if (insertData.length > 0) {
+        const { error } = await supabase
+          .from("marketing_investimentos")
+          .insert(insertData);
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Sucesso",
-        description: "Investimento excluído com sucesso",
+        description: "Investimentos salvos com sucesso",
       });
 
+      setEditing(false);
       fetchInvestments();
     } catch (error) {
-      console.error("Erro ao excluir investimento:", error);
+      console.error("Erro ao salvar investimentos:", error);
       toast({
         title: "Erro",
-        description: "Erro ao excluir investimento",
+        description: "Erro ao salvar investimentos",
         variant: "destructive"
       });
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      mes: format(new Date(), "yyyy-MM"),
-      regiao: "",
-      investimento_google_ads: 0,
-      investimento_meta_ads: 0,
-      investimento_linkedin_ads: 0,
-      outros_investimentos: 0,
-      observacoes: ""
-    });
-    setEditingInvestment(null);
+  const getTotalByRegion = (regiao: string) => {
+    const data = monthlyData[regiao];
+    if (!data) return 0;
+    return (data.investimento_google_ads || 0) +
+           (data.investimento_meta_ads || 0) +
+           (data.investimento_linkedin_ads || 0) +
+           (data.outros_investimentos || 0);
   };
 
-  const getTotalInvestment = (investment: InvestmentData) => {
-    return (investment.investimento_google_ads || 0) +
-           (investment.investimento_meta_ads || 0) +
-           (investment.investimento_linkedin_ads || 0) +
-           (investment.outros_investimentos || 0);
+  const getGrandTotal = () => {
+    return Object.keys(monthlyData).reduce((total, regiao) => {
+      return total + getTotalByRegion(regiao);
+    }, 0);
   };
 
   if (loading) {
@@ -231,113 +230,42 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
             Gerencie os investimentos por região e canal de aquisição para {selectedYear}
           </CardDescription>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Investimento
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingInvestment ? 'Editar' : 'Novo'} Investimento
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="mes">Mês</Label>
-                <Input
-                  id="mes"
-                  type="month"
-                  value={formData.mes}
-                  onChange={(e) => setFormData({ ...formData, mes: e.target.value })}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="regiao">Região</Label>
-                <Select 
-                  value={formData.regiao} 
-                  onValueChange={(value) => setFormData({ ...formData, regiao: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma região" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TODAS">Todas as regiões (consolidado)</SelectItem>
-                    {regioes.map((regiao) => (
-                      <SelectItem key={regiao} value={regiao}>{regiao}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="google-ads">Google Ads (R$)</Label>
-                <Input
-                  id="google-ads"
-                  type="number"
-                  step="0.01"
-                  value={formData.investimento_google_ads}
-                  onChange={(e) => setFormData({ ...formData, investimento_google_ads: Number(e.target.value) })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="meta-ads">Meta Ads (R$)</Label>
-                <Input
-                  id="meta-ads"
-                  type="number"
-                  step="0.01"
-                  value={formData.investimento_meta_ads}
-                  onChange={(e) => setFormData({ ...formData, investimento_meta_ads: Number(e.target.value) })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="linkedin-ads">LinkedIn Ads (R$)</Label>
-                <Input
-                  id="linkedin-ads"
-                  type="number"
-                  step="0.01"
-                  value={formData.investimento_linkedin_ads}
-                  onChange={(e) => setFormData({ ...formData, investimento_linkedin_ads: Number(e.target.value) })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="outros">Outros Investimentos (R$)</Label>
-                <Input
-                  id="outros"
-                  type="number"
-                  step="0.01"
-                  value={formData.outros_investimentos}
-                  onChange={(e) => setFormData({ ...formData, outros_investimentos: Number(e.target.value) })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Observações sobre o investimento..."
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <Button onClick={handleSave} className="flex-1">
-                  {editingInvestment ? 'Atualizar' : 'Salvar'} Investimento
-                </Button>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
-                </Button>
-              </div>
+        <div className="flex gap-2 items-center">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 12 }, (_, i) => {
+                const month = String(i + 1).padStart(2, '0');
+                const value = `${selectedYear}-${month}`;
+                const label = format(new Date(selectedYear, i), "MMMM 'de' yyyy", { locale: ptBR });
+                return (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          
+          {editing ? (
+            <div className="flex gap-2">
+              <Button onClick={handleSaveMonth}>
+                <Save className="h-4 w-4 mr-2" />
+                Salvar
+              </Button>
+              <Button variant="outline" onClick={() => setEditing(false)}>
+                Cancelar
+              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          ) : (
+            <Button onClick={() => setEditing(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Editar Mês
+            </Button>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent>
@@ -345,66 +273,206 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Mês/Ano</TableHead>
                 <TableHead>Região</TableHead>
-                <TableHead className="text-right">Google Ads</TableHead>
-                <TableHead className="text-right">Meta Ads</TableHead>
-                <TableHead className="text-right">LinkedIn Ads</TableHead>
-                <TableHead className="text-right">Outros</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-center">Ações</TableHead>
+                <TableHead className="text-right">Google Ads (R$)</TableHead>
+                <TableHead className="text-right">Meta Ads (R$)</TableHead>
+                <TableHead className="text-right">LinkedIn Ads (R$)</TableHead>
+                <TableHead className="text-right">Outros (R$)</TableHead>
+                <TableHead className="text-right">Total (R$)</TableHead>
+                <TableHead>Observações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {investments.length > 0 ? (
-                investments.map((investment) => (
-                  <TableRow key={investment.id}>
-                    <TableCell className="font-medium">
-                      {format(new Date(investment.mes), "MMMM 'de' yyyy", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell>{investment.regiao || "Todas as regiões"}</TableCell>
-                    <TableCell className="text-right">
-                      R$ {investment.investimento_google_ads.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      R$ {investment.investimento_meta_ads.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      R$ {investment.investimento_linkedin_ads.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      R$ {investment.outros_investimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      R$ {getTotalInvestment(investment).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-1 justify-center">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleEdit(investment)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleDelete(investment)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    Nenhum investimento cadastrado para {selectedYear}
+              {/* Linha consolidada */}
+              <TableRow className="bg-muted/50">
+                <TableCell className="font-medium">Consolidado (Todas as regiões)</TableCell>
+                <TableCell>
+                  {editing ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={monthlyData["TODAS"]?.investimento_google_ads || 0}
+                      onChange={(e) => updateRegionData("TODAS", "investimento_google_ads", Number(e.target.value))}
+                      className="text-right"
+                    />
+                  ) : (
+                    <span className="text-right block">
+                      R$ {(monthlyData["TODAS"]?.investimento_google_ads || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editing ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={monthlyData["TODAS"]?.investimento_meta_ads || 0}
+                      onChange={(e) => updateRegionData("TODAS", "investimento_meta_ads", Number(e.target.value))}
+                      className="text-right"
+                    />
+                  ) : (
+                    <span className="text-right block">
+                      R$ {(monthlyData["TODAS"]?.investimento_meta_ads || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editing ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={monthlyData["TODAS"]?.investimento_linkedin_ads || 0}
+                      onChange={(e) => updateRegionData("TODAS", "investimento_linkedin_ads", Number(e.target.value))}
+                      className="text-right"
+                    />
+                  ) : (
+                    <span className="text-right block">
+                      R$ {(monthlyData["TODAS"]?.investimento_linkedin_ads || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editing ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={monthlyData["TODAS"]?.outros_investimentos || 0}
+                      onChange={(e) => updateRegionData("TODAS", "outros_investimentos", Number(e.target.value))}
+                      className="text-right"
+                    />
+                  ) : (
+                    <span className="text-right block">
+                      R$ {(monthlyData["TODAS"]?.outros_investimentos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  R$ {getTotalByRegion("TODAS").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell>
+                  {editing ? (
+                    <Textarea
+                      value={monthlyData["TODAS"]?.observacoes || ""}
+                      onChange={(e) => updateRegionData("TODAS", "observacoes", e.target.value)}
+                      placeholder="Observações..."
+                      className="min-h-[60px]"
+                    />
+                  ) : (
+                    <span>{monthlyData["TODAS"]?.observacoes || "-"}</span>
+                  )}
+                </TableCell>
+              </TableRow>
+
+              {/* Linhas por região */}
+              {regioes.map((regiao) => (
+                <TableRow key={regiao}>
+                  <TableCell className="font-medium">{regiao}</TableCell>
+                  <TableCell>
+                    {editing ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={monthlyData[regiao]?.investimento_google_ads || 0}
+                        onChange={(e) => updateRegionData(regiao, "investimento_google_ads", Number(e.target.value))}
+                        className="text-right"
+                      />
+                    ) : (
+                      <span className="text-right block">
+                        R$ {(monthlyData[regiao]?.investimento_google_ads || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {editing ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={monthlyData[regiao]?.investimento_meta_ads || 0}
+                        onChange={(e) => updateRegionData(regiao, "investimento_meta_ads", Number(e.target.value))}
+                        className="text-right"
+                      />
+                    ) : (
+                      <span className="text-right block">
+                        R$ {(monthlyData[regiao]?.investimento_meta_ads || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {editing ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={monthlyData[regiao]?.investimento_linkedin_ads || 0}
+                        onChange={(e) => updateRegionData(regiao, "investimento_linkedin_ads", Number(e.target.value))}
+                        className="text-right"
+                      />
+                    ) : (
+                      <span className="text-right block">
+                        R$ {(monthlyData[regiao]?.investimento_linkedin_ads || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {editing ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={monthlyData[regiao]?.outros_investimentos || 0}
+                        onChange={(e) => updateRegionData(regiao, "outros_investimentos", Number(e.target.value))}
+                        className="text-right"
+                      />
+                    ) : (
+                      <span className="text-right block">
+                        R$ {(monthlyData[regiao]?.outros_investimentos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    R$ {getTotalByRegion(regiao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell>
+                    {editing ? (
+                      <Textarea
+                        value={monthlyData[regiao]?.observacoes || ""}
+                        onChange={(e) => updateRegionData(regiao, "observacoes", e.target.value)}
+                        placeholder="Observações..."
+                        className="min-h-[60px]"
+                      />
+                    ) : (
+                      <span>{monthlyData[regiao]?.observacoes || "-"}</span>
+                    )}
                   </TableCell>
                 </TableRow>
-              )}
+              ))}
+
+              {/* Linha de total geral */}
+              <TableRow className="border-t-2 bg-accent/50">
+                <TableCell className="font-bold">TOTAL GERAL</TableCell>
+                <TableCell className="text-right font-bold">
+                  R$ {Object.keys(monthlyData).reduce((total, regiao) => 
+                    total + (monthlyData[regiao]?.investimento_google_ads || 0), 0
+                  ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="text-right font-bold">
+                  R$ {Object.keys(monthlyData).reduce((total, regiao) => 
+                    total + (monthlyData[regiao]?.investimento_meta_ads || 0), 0
+                  ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="text-right font-bold">
+                  R$ {Object.keys(monthlyData).reduce((total, regiao) => 
+                    total + (monthlyData[regiao]?.investimento_linkedin_ads || 0), 0
+                  ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="text-right font-bold">
+                  R$ {Object.keys(monthlyData).reduce((total, regiao) => 
+                    total + (monthlyData[regiao]?.outros_investimentos || 0), 0
+                  ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="text-right font-bold">
+                  R$ {getGrandTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell></TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </div>
