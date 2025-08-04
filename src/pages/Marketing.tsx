@@ -10,11 +10,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TrendingUp, DollarSign, Users, Target, Plus, BarChart3, Edit } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { DateRange } from "react-day-picker";
@@ -68,12 +69,23 @@ interface CanalAquisicaoData {
   vendas: number;
 }
 
+interface RegionPerformanceData {
+  regiao: string;
+  investimento: number;
+  faturamento: number;
+  vendas: number;
+  lucro: number;
+  cac: number;
+  ticketMedio: number;
+  roi: number;
+}
+
 export default function Marketing() {
   const { isAdmin, isGerenteComercial } = useAuth();
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
+    from: startOfYear(new Date()),
+    to: endOfYear(new Date())
   });
   const [selectedVendedor, setSelectedVendedor] = useState<string>("");
   const [selectedRegiao, setSelectedRegiao] = useState<string>("");
@@ -92,6 +104,7 @@ export default function Marketing() {
   const [regioes, setRegioes] = useState<string[]>([]);
   const [publicoAlvoData, setPublicoAlvoData] = useState<PublicoAlvoData[]>([]);
   const [canalAquisicaoData, setCanalAquisicaoData] = useState<CanalAquisicaoData[]>([]);
+  const [regionPerformanceData, setRegionPerformanceData] = useState<RegionPerformanceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartMode, setChartMode] = useState<'quantidade' | 'faturamento'>('quantidade');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -142,7 +155,8 @@ export default function Marketing() {
         fetchVendedores(),
         fetchRegioes(),
         fetchMetrics(),
-        fetchChartData()
+        fetchChartData(),
+        fetchRegionPerformance()
       ]);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -403,6 +417,111 @@ export default function Marketing() {
     }
   };
 
+  const fetchRegionPerformance = async () => {
+    if (!dateRange?.from || !dateRange?.to) return;
+
+    const startDate = format(dateRange.from, "yyyy-MM-dd");
+    const endDate = format(dateRange.to, "yyyy-MM-dd");
+
+    try {
+      // Buscar vendas por região
+      let vendasQuery = supabase
+        .from("vendas")
+        .select("valor_venda, estado, custo_produto, custo_pintura")
+        .gte("data_venda", startDate)
+        .lte("data_venda", endDate)
+        .not("estado", "is", null);
+
+      if (selectedCanalAquisicao) {
+        vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
+      }
+
+      const { data: vendasData } = await vendasQuery;
+
+      // Buscar investimentos por região
+      let investimentosQuery = supabase
+        .from("marketing_investimentos")
+        .select("*")
+        .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
+        .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
+
+      const { data: investimentosData } = await investimentosQuery;
+
+      // Processar dados por região
+      const regionMap = new Map<string, RegionPerformanceData>();
+
+      // Inicializar com todas as regiões
+      regioes.forEach(regiao => {
+        regionMap.set(regiao, {
+          regiao,
+          investimento: 0,
+          faturamento: 0,
+          vendas: 0,
+          lucro: 0,
+          cac: 0,
+          ticketMedio: 0,
+          roi: 0
+        });
+      });
+
+      // Adicionar dados de vendas
+      vendasData?.forEach(venda => {
+        if (!venda.estado) return;
+        
+        const current = regionMap.get(venda.estado) || {
+          regiao: venda.estado,
+          investimento: 0,
+          faturamento: 0,
+          vendas: 0,
+          lucro: 0,
+          cac: 0,
+          ticketMedio: 0,
+          roi: 0
+        };
+
+        const custo = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
+        const lucroVenda = venda.valor_venda - custo;
+
+        regionMap.set(venda.estado, {
+          ...current,
+          faturamento: current.faturamento + venda.valor_venda,
+          vendas: current.vendas + 1,
+          lucro: current.lucro + lucroVenda
+        });
+      });
+
+      // Adicionar dados de investimentos
+      investimentosData?.forEach(inv => {
+        if (!inv.regiao) return;
+        
+        const current = regionMap.get(inv.regiao);
+        if (current) {
+          const totalInv = (inv.investimento_google_ads || 0) + 
+                          (inv.investimento_meta_ads || 0) + 
+                          (inv.investimento_linkedin_ads || 0) + 
+                          (inv.outros_investimentos || 0);
+          
+          regionMap.set(inv.regiao, {
+            ...current,
+            investimento: current.investimento + totalInv
+          });
+        }
+      });
+
+      // Calcular métricas finais
+      const regionData = Array.from(regionMap.values()).map(data => ({
+        ...data,
+        ticketMedio: data.vendas > 0 ? data.faturamento / data.vendas : 0,
+        cac: data.vendas > 0 ? data.investimento / data.vendas : 0,
+        roi: data.investimento > 0 ? ((data.faturamento - data.investimento) / data.investimento) * 100 : 0
+      })).filter(data => data.faturamento > 0 || data.investimento > 0);
+
+      setRegionPerformanceData(regionData);
+    } catch (error) {
+      console.error('Erro ao buscar performance por região:', error);
+    }
+  };
+
   const handleSaveInvestment = async () => {
     try {
       const userData = await supabase.auth.getUser();
@@ -596,16 +715,13 @@ export default function Marketing() {
 
       {/* Filtros */}
       <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>
-            Selecione o período e filtros para análise
-          </CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Filtros</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
-              <Label className="text-sm font-medium mb-3 block">Período</Label>
+              <Label className="text-sm font-medium mb-2 block">Período</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -649,7 +765,7 @@ export default function Marketing() {
             </div>
 
             <div>
-              <Label className="text-sm font-medium mb-3 block">Canal de Aquisição</Label>
+              <Label className="text-sm font-medium mb-2 block">Canal de Aquisição</Label>
               <Select value={selectedCanalAquisicao} onValueChange={setSelectedCanalAquisicao}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos os canais de aquisição" />
@@ -665,7 +781,7 @@ export default function Marketing() {
             </div>
 
             <div>
-              <Label className="text-sm font-medium mb-3 block">Vendedor</Label>
+              <Label className="text-sm font-medium mb-2 block">Vendedor</Label>
               <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos os vendedores" />
@@ -681,7 +797,7 @@ export default function Marketing() {
             </div>
 
             <div>
-              <Label className="text-sm font-medium mb-3 block">Região</Label>
+              <Label className="text-sm font-medium mb-2 block">Região</Label>
               <Select value={selectedRegiao} onValueChange={setSelectedRegiao}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas as regiões" />
@@ -697,18 +813,27 @@ export default function Marketing() {
             </div>
           </div>
 
-          <div className="pt-4 border-t flex gap-2">
+          <div className="pt-3 border-t flex gap-2">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => {
                 setDateRange({
-                  from: startOfMonth(new Date()),
-                  to: endOfMonth(new Date())
+                  from: startOfYear(new Date()),
+                  to: endOfYear(new Date())
                 });
                 setSelectedVendedor("");
                 setSelectedRegiao("");
                 setSelectedCanalAquisicao("");
+                // Aplicar automaticamente após limpar
+                setTimeout(() => {
+                  setLoading(true);
+                  Promise.all([
+                    fetchMetrics(),
+                    fetchChartData(),
+                    fetchRegionPerformance()
+                  ]).finally(() => setLoading(false));
+                }, 100);
               }}
               className="flex-1"
             >
@@ -720,7 +845,8 @@ export default function Marketing() {
                 setLoading(true);
                 Promise.all([
                   fetchMetrics(),
-                  fetchChartData()
+                  fetchChartData(),
+                  fetchRegionPerformance()
                 ]).finally(() => setLoading(false));
               }}
               className="flex-1"
