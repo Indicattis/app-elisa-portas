@@ -19,6 +19,7 @@ import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 
 interface MarketingInvestment {
   id: string;
@@ -76,6 +77,7 @@ export default function Marketing() {
   });
   const [selectedVendedor, setSelectedVendedor] = useState<string>("");
   const [selectedRegiao, setSelectedRegiao] = useState<string>("");
+  const [selectedCanalAquisicao, setSelectedCanalAquisicao] = useState<string>("");
   const [investimentos, setInvestimentos] = useState<MarketingInvestment[]>([]);
   const [metrics, setMetrics] = useState<MarketingMetrics>({
     totalInvestimento: 0,
@@ -94,6 +96,7 @@ export default function Marketing() {
   const [chartMode, setChartMode] = useState<'quantidade' | 'faturamento'>('quantidade');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInvestimento, setEditingInvestimento] = useState<MarketingInvestment | null>(null);
+  const { canais } = useCanaisAquisicao();
   const [newInvestment, setNewInvestment] = useState({
     mes: format(new Date(), "yyyy-MM"),
     regiao: "",
@@ -125,11 +128,11 @@ export default function Marketing() {
   }, []);
 
   useEffect(() => {
-    if (selectedVendedor !== "" || selectedRegiao !== "") {
+    if (selectedVendedor !== "" || selectedRegiao !== "" || selectedCanalAquisicao !== "") {
       fetchMetrics();
       fetchChartData();
     }
-  }, [selectedVendedor, selectedRegiao]);
+  }, [selectedVendedor, selectedRegiao, selectedCanalAquisicao]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -239,19 +242,23 @@ export default function Marketing() {
       .gte("data_venda", startDate)
       .lte("data_venda", endDate);
 
-    // Buscar IDs dos canais Google e Meta
-    const { data: canaisGoogleMeta } = await supabase
-      .from("canais_aquisicao")
-      .select("id")
-      .in("nome", ["Google", "Meta (Facebook/Instagram)"]);
-    
-    const idsGoogleMeta = canaisGoogleMeta?.map(c => c.id) || [];
-    
-    // Filtrar vendas apenas dos canais Google e Meta
-    if (idsGoogleMeta.length > 0) {
-      vendasQuery = vendasQuery.in("canal_aquisicao_id", idsGoogleMeta);
+    if (selectedCanalAquisicao) {
+      vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
     } else {
-      vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
+      // Buscar IDs dos canais Google e Meta se nenhum canal específico selecionado
+      const { data: canaisGoogleMeta } = await supabase
+        .from("canais_aquisicao")
+        .select("id")
+        .in("nome", ["Google", "Meta (Facebook/Instagram)"]);
+      
+      const idsGoogleMeta = canaisGoogleMeta?.map(c => c.id) || [];
+      
+      // Filtrar vendas apenas dos canais Google e Meta
+      if (idsGoogleMeta.length > 0) {
+        vendasQuery = vendasQuery.in("canal_aquisicao_id", idsGoogleMeta);
+      } else {
+        vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
+      }
     }
 
     if (selectedVendedor) {
@@ -271,11 +278,23 @@ export default function Marketing() {
       .gte("created_at", startDate)
       .lte("created_at", endDate);
     
-    // Filtrar leads apenas dos canais Google e Meta
-    if (idsGoogleMeta.length > 0) {
-      leadsQuery = leadsQuery.in("canal_aquisicao_id", idsGoogleMeta);
+    if (selectedCanalAquisicao) {
+      leadsQuery = leadsQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
     } else {
-      leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
+      // Buscar IDs dos canais Google e Meta se nenhum canal específico selecionado
+      const { data: canaisGoogleMeta } = await supabase
+        .from("canais_aquisicao")
+        .select("id")
+        .in("nome", ["Google", "Meta (Facebook/Instagram)"]);
+      
+      const idsGoogleMeta = canaisGoogleMeta?.map(c => c.id) || [];
+      
+      // Filtrar leads apenas dos canais Google e Meta
+      if (idsGoogleMeta.length > 0) {
+        leadsQuery = leadsQuery.in("canal_aquisicao_id", idsGoogleMeta);
+      } else {
+        leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
+      }
     }
 
     if (selectedVendedor) {
@@ -331,6 +350,10 @@ export default function Marketing() {
 
       if (selectedRegiao) {
         vendasQuery = vendasQuery.eq("estado", selectedRegiao);
+      }
+
+      if (selectedCanalAquisicao) {
+        vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
       }
 
       const { data: vendasData } = await vendasQuery;
@@ -580,7 +603,7 @@ export default function Marketing() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label className="text-sm font-medium mb-3 block">Período</Label>
               <Popover>
@@ -623,6 +646,22 @@ export default function Marketing() {
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Canal de Aquisição</Label>
+              <Select value={selectedCanalAquisicao} onValueChange={setSelectedCanalAquisicao}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os canais de aquisição" />
+                </SelectTrigger>
+                <SelectContent>
+                  {canais.map((canal) => (
+                    <SelectItem key={canal.id} value={canal.id}>
+                      {canal.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -669,6 +708,7 @@ export default function Marketing() {
                 });
                 setSelectedVendedor("");
                 setSelectedRegiao("");
+                setSelectedCanalAquisicao("");
               }}
               className="flex-1"
             >
