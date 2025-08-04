@@ -122,7 +122,14 @@ export default function Marketing() {
 
   useEffect(() => {
     fetchData();
-  }, [dateRange, selectedVendedor, selectedRegiao]);
+  }, []);
+
+  useEffect(() => {
+    if (selectedVendedor !== "" || selectedRegiao !== "") {
+      fetchMetrics();
+      fetchChartData();
+    }
+  }, [selectedVendedor, selectedRegiao]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -671,8 +678,10 @@ export default function Marketing() {
               size="sm" 
               onClick={() => {
                 setLoading(true);
-                fetchMetrics();
-                fetchChartData();
+                Promise.all([
+                  fetchMetrics(),
+                  fetchChartData()
+                ]).finally(() => setLoading(false));
               }}
               className="flex-1"
             >
