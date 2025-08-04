@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +17,8 @@ import { TrendingUp, DollarSign, Users, Target, Plus, BarChart3, Edit } from "lu
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 interface MarketingInvestment {
   id: string;
@@ -65,9 +70,12 @@ interface CanalAquisicaoData {
 export default function Marketing() {
   const { isAdmin, isGerenteComercial } = useAuth();
   const { toast } = useToast();
-  const [selectedMeses, setSelectedMeses] = useState<string[]>([format(new Date(), "yyyy-MM")]);
-  const [selectedVendedores, setSelectedVendedores] = useState<string[]>([]);
-  const [selectedRegioes, setSelectedRegioes] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
+  const [selectedVendedor, setSelectedVendedor] = useState<string>("");
+  const [selectedRegiao, setSelectedRegiao] = useState<string>("");
   const [investimentos, setInvestimentos] = useState<MarketingInvestment[]>([]);
   const [metrics, setMetrics] = useState<MarketingMetrics>({
     totalInvestimento: 0,
@@ -114,7 +122,7 @@ export default function Marketing() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedMeses, selectedVendedores, selectedRegioes]);
+  }, [dateRange, selectedVendedor, selectedRegiao]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -139,10 +147,22 @@ export default function Marketing() {
   };
 
   const fetchInvestimentos = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("marketing_investimentos")
       .select("*")
       .order("mes", { ascending: false });
+
+    if (dateRange?.from && dateRange?.to) {
+      const startMonth = format(dateRange.from, "yyyy-MM") + "-01";
+      const endMonth = format(dateRange.to, "yyyy-MM") + "-01";
+      query = query.gte("mes", startMonth).lte("mes", endMonth);
+    }
+
+    if (selectedRegiao) {
+      query = query.eq("regiao", selectedRegiao);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Erro ao buscar investimentos:", error);
@@ -174,30 +194,32 @@ export default function Marketing() {
   };
 
   const fetchMetrics = async () => {
-    // Buscar investimentos dos meses selecionados
-    let totalInvestimento = 0;
-    if (selectedMeses.length > 0) {
-      const mesFilters = selectedMeses.map(mes => `${mes}-01`);
-      let investimentosQuery = supabase
-        .from("marketing_investimentos")
-        .select("*")
-        .in("mes", mesFilters);
+    if (!dateRange?.from || !dateRange?.to) return;
 
-      if (selectedRegioes.length > 0) {
-        investimentosQuery = investimentosQuery.in("regiao", selectedRegioes);
-      }
+    const startDate = format(dateRange.from, "yyyy-MM-dd");
+    const endDate = format(dateRange.to, "yyyy-MM-dd");
 
-      const { data: investimentosData } = await investimentosQuery;
+    // Buscar investimentos do período
+    let investimentosQuery = supabase
+      .from("marketing_investimentos")
+      .select("*")
+      .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
+      .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
 
-      totalInvestimento = investimentosData?.reduce((total, inv) => 
-        total + (inv.investimento_google_ads || 0) +
-                (inv.investimento_meta_ads || 0) +
-                (inv.investimento_linkedin_ads || 0) +
-                (inv.outros_investimentos || 0), 0
-      ) || 0;
+    if (selectedRegiao) {
+      investimentosQuery = investimentosQuery.eq("regiao", selectedRegiao);
     }
 
-    // Construir datas baseadas nos meses selecionados
+    const { data: investimentosData } = await investimentosQuery;
+
+    const totalInvestimento = investimentosData?.reduce((total, inv) => 
+      total + (inv.investimento_google_ads || 0) +
+              (inv.investimento_meta_ads || 0) +
+              (inv.investimento_linkedin_ads || 0) +
+              (inv.outros_investimentos || 0), 0
+    ) || 0;
+
+    // Buscar vendas do período
     let vendasQuery = supabase
       .from("vendas")
       .select(`
@@ -206,8 +228,10 @@ export default function Marketing() {
           id,
           nome
         )
-      `);
-    
+      `)
+      .gte("data_venda", startDate)
+      .lte("data_venda", endDate);
+
     // Buscar IDs dos canais Google e Meta
     const { data: canaisGoogleMeta } = await supabase
       .from("canais_aquisicao")
@@ -220,77 +244,39 @@ export default function Marketing() {
     if (idsGoogleMeta.length > 0) {
       vendasQuery = vendasQuery.in("canal_aquisicao_id", idsGoogleMeta);
     } else {
-      // Se não encontrar os canais, filtrar por nome no campo legado
       vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
     }
 
-    if (selectedVendedores.length > 0) {
-      vendasQuery = vendasQuery.in("atendente_id", selectedVendedores);
+    if (selectedVendedor) {
+      vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
     }
 
-    if (selectedRegioes.length > 0) {
-      vendasQuery = vendasQuery.in("estado", selectedRegioes);
-    }
-
-    // Filtrar por meses selecionados
-    if (selectedMeses.length > 0) {
-      const dateFilters = selectedMeses.map(mes => {
-        const startDate = `${mes}-01`;
-        const endDate = new Date(new Date(mes).getFullYear(), new Date(mes).getMonth() + 1, 0).toISOString().split('T')[0];
-        return { start: startDate, end: endDate };
-      });
-      
-      // Aplicar filtros OR para múltiplos meses
-      if (dateFilters.length === 1) {
-        vendasQuery = vendasQuery.gte("data_venda", dateFilters[0].start).lte("data_venda", dateFilters[0].end);
-      } else {
-        // Para múltiplos meses, usar filtro OR
-        const orConditions = dateFilters.map(filter => 
-          `and(data_venda.gte.${filter.start},data_venda.lte.${filter.end})`
-        ).join(',');
-        vendasQuery = vendasQuery.or(orConditions);
-      }
+    if (selectedRegiao) {
+      vendasQuery = vendasQuery.eq("estado", selectedRegiao);
     }
 
     const { data: vendasData } = await vendasQuery;
 
-    // Buscar leads do período com filtros apenas para Google e Meta
+    // Buscar leads do período
     let leadsQuery = supabase
       .from("elisaportas_leads")
-      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao, canal_aquisicao_id");
+      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao, canal_aquisicao_id")
+      .gte("created_at", startDate)
+      .lte("created_at", endDate);
     
     // Filtrar leads apenas dos canais Google e Meta
     if (idsGoogleMeta.length > 0) {
       leadsQuery = leadsQuery.in("canal_aquisicao_id", idsGoogleMeta);
     } else {
-      // Se não encontrar os canais, filtrar por nome no campo legado
       leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
     }
 
-    if (selectedVendedores.length > 0) {
-      leadsQuery = leadsQuery.in("atendente_id", selectedVendedores);
+    if (selectedVendedor) {
+      leadsQuery = leadsQuery.eq("atendente_id", selectedVendedor);
     }
 
-    if (selectedRegioes.length > 0) {
-      leadsQuery = leadsQuery.in("endereco_estado", selectedRegioes);
-    }
-
-    // Filtrar por meses selecionados
-    if (selectedMeses.length > 0) {
-      const dateFilters = selectedMeses.map(mes => {
-        const startDate = `${mes}-01`;
-        const endDate = new Date(new Date(mes).getFullYear(), new Date(mes).getMonth() + 1, 0).toISOString().split('T')[0];
-        return { start: startDate, end: endDate };
-      });
-      
-      if (dateFilters.length === 1) {
-        leadsQuery = leadsQuery.gte("created_at", dateFilters[0].start).lte("created_at", dateFilters[0].end);
-      } else {
-        const orConditions = dateFilters.map(filter => 
-          `and(created_at.gte.${filter.start},created_at.lte.${filter.end})`
-        ).join(',');
-        leadsQuery = leadsQuery.or(orConditions);
-      }
+    if (selectedRegiao) {
+      leadsQuery = leadsQuery.eq("endereco_estado", selectedRegiao);
     }
 
     const { data: leadsData } = await leadsQuery;
@@ -311,6 +297,80 @@ export default function Marketing() {
       totalLeads,
       vendasConvertidas
     });
+  };
+
+  const fetchChartData = async () => {
+    if (!dateRange?.from || !dateRange?.to) return;
+
+    const startDate = format(dateRange.from, "yyyy-MM-dd");
+    const endDate = format(dateRange.to, "yyyy-MM-dd");
+
+    try {
+      let vendasQuery = supabase
+        .from("vendas")
+        .select(`
+          valor_venda, publico_alvo, canal_aquisicao, canal_aquisicao_id,
+          canais_aquisicao:canal_aquisicao_id (
+            id,
+            nome
+          )
+        `)
+        .gte("data_venda", startDate)
+        .lte("data_venda", endDate);
+
+      if (selectedVendedor) {
+        vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
+      }
+
+      if (selectedRegiao) {
+        vendasQuery = vendasQuery.eq("estado", selectedRegiao);
+      }
+
+      const { data: vendasData } = await vendasQuery;
+
+      if (vendasData) {
+        // Processar dados de público alvo
+        const publicoAlvoMap = new Map<string, { value: number; vendas: number }>();
+        
+        vendasData.forEach(venda => {
+          const publico = venda.publico_alvo || 'Não informado';
+          const current = publicoAlvoMap.get(publico) || { value: 0, vendas: 0 };
+          publicoAlvoMap.set(publico, {
+            value: current.value + venda.valor_venda,
+            vendas: current.vendas + 1
+          });
+        });
+
+        const publicoData = Array.from(publicoAlvoMap.entries()).map(([name, data]) => ({
+          name,
+          value: data.value,
+          vendas: data.vendas
+        }));
+
+        // Processar dados de canal de aquisição
+        const canalMap = new Map<string, { value: number; vendas: number }>();
+        
+        vendasData.forEach(venda => {
+          const canal = venda.canais_aquisicao?.nome || venda.canal_aquisicao || 'Não informado';
+          const current = canalMap.get(canal) || { value: 0, vendas: 0 };
+          canalMap.set(canal, {
+            value: current.value + venda.valor_venda,
+            vendas: current.vendas + 1
+          });
+        });
+
+        const canalData = Array.from(canalMap.entries()).map(([name, data]) => ({
+          name,
+          value: data.value,
+          vendas: data.vendas
+        }));
+
+        setPublicoAlvoData(publicoData);
+        setCanalAquisicaoData(canalData);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados dos gráficos:', error);
+    }
   };
 
   const handleSaveInvestment = async () => {
@@ -386,128 +446,6 @@ export default function Marketing() {
       observacoes: investimento.observacoes || ""
     });
     setDialogOpen(true);
-  };
-
-  const fetchChartData = async () => {
-    try {
-      // Buscar vendas do período com canais de aquisição
-      let vendasQuery = supabase
-        .from("vendas")
-        .select(`
-          valor_venda, publico_alvo, canal_aquisicao, canal_aquisicao_id,
-          canais_aquisicao:canal_aquisicao_id (
-            id,
-            nome
-          )
-        `);
-
-      if (selectedVendedores.length > 0) {
-        vendasQuery = vendasQuery.in("atendente_id", selectedVendedores);
-      }
-
-      if (selectedRegioes.length > 0) {
-        vendasQuery = vendasQuery.in("estado", selectedRegioes);
-      }
-
-      // Filtrar por meses selecionados
-      if (selectedMeses.length > 0) {
-        const dateFilters = selectedMeses.map(mes => {
-          const startDate = `${mes}-01`;
-          const endDate = new Date(new Date(mes).getFullYear(), new Date(mes).getMonth() + 1, 0).toISOString().split('T')[0];
-          return { start: startDate, end: endDate };
-        });
-        
-        if (dateFilters.length === 1) {
-          vendasQuery = vendasQuery.gte("data_venda", dateFilters[0].start).lte("data_venda", dateFilters[0].end);
-        } else {
-          const orConditions = dateFilters.map(filter => 
-            `and(data_venda.gte.${filter.start},data_venda.lte.${filter.end})`
-          ).join(',');
-          vendasQuery = vendasQuery.or(orConditions);
-        }
-      }
-
-      const { data: vendasData } = await vendasQuery;
-
-      if (vendasData) {
-        // Processar dados de público alvo
-        const publicoAlvoMap = new Map<string, { value: number; vendas: number }>();
-        
-        vendasData.forEach(venda => {
-          const publico = venda.publico_alvo || 'Não informado';
-          const current = publicoAlvoMap.get(publico) || { value: 0, vendas: 0 };
-          publicoAlvoMap.set(publico, {
-            value: current.value + venda.valor_venda,
-            vendas: current.vendas + 1
-          });
-        });
-
-        const publicoData = Array.from(publicoAlvoMap.entries()).map(([name, data]) => ({
-          name,
-          value: data.value,
-          vendas: data.vendas
-        }));
-
-        // Processar dados de canal de aquisição
-        const canalMap = new Map<string, { value: number; vendas: number }>();
-        
-        vendasData.forEach(venda => {
-          const canal = venda.canais_aquisicao?.nome || venda.canal_aquisicao || 'Não informado';
-          const current = canalMap.get(canal) || { value: 0, vendas: 0 };
-          canalMap.set(canal, {
-            value: current.value + venda.valor_venda,
-            vendas: current.vendas + 1
-          });
-        });
-
-        const canalData = Array.from(canalMap.entries()).map(([name, data]) => ({
-          name,
-          value: data.value,
-          vendas: data.vendas
-        }));
-
-        setPublicoAlvoData(publicoData);
-        setCanalAquisicaoData(canalData);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar dados dos gráficos:', error);
-    }
-  };
-
-  const toggleMes = (mes: string) => {
-    setSelectedMeses(prev => 
-      prev.includes(mes) 
-        ? prev.filter(m => m !== mes)
-        : [...prev, mes]
-    );
-  };
-
-  const toggleVendedor = (vendedorId: string) => {
-    setSelectedVendedores(prev => 
-      prev.includes(vendedorId) 
-        ? prev.filter(v => v !== vendedorId)
-        : [...prev, vendedorId]
-    );
-  };
-
-  const toggleRegiao = (regiao: string) => {
-    setSelectedRegioes(prev => 
-      prev.includes(regiao) 
-        ? prev.filter(r => r !== regiao)
-        : [...prev, regiao]
-    );
-  };
-
-  const getMesesOptions = () => {
-    const meses = [];
-    const hoje = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      const mesString = data.toISOString().slice(0, 7);
-      const mesNome = data.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-      meses.push({ value: mesString, label: mesNome });
-    }
-    return meses;
   };
 
   if (loading) {
@@ -627,63 +565,89 @@ export default function Marketing() {
         </Dialog>
       </div>
 
-      {/* Filtros Dinâmicos */}
+      {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros Dinâmicos</CardTitle>
+          <CardTitle>Filtros</CardTitle>
           <CardDescription>
-            Selecione múltiplos filtros clicando nos botões
+            Selecione o período e filtros para análise
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Meses</Label>
-            <div className="flex flex-wrap gap-2">
-              {getMesesOptions().map((mes) => (
-                <Button
-                  key={mes.value}
-                  variant={selectedMeses.includes(mes.value) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleMes(mes.value)}
-                  className="text-xs"
-                >
-                  {mes.label}
-                </Button>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Período</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="date"
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateRange && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "LLL dd, y", { locale: ptBR })} -{" "}
+                          {format(dateRange.to, "LLL dd, y", { locale: ptBR })}
+                        </>
+                      ) : (
+                        format(dateRange.from, "LLL dd, y", { locale: ptBR })
+                      )
+                    ) : (
+                      <span>Selecione um período</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-          </div>
 
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Vendedores</Label>
-            <div className="flex flex-wrap gap-2">
-              {vendedores.map((vendedor) => (
-                <Button
-                  key={vendedor.id}
-                  variant={selectedVendedores.includes(vendedor.id) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleVendedor(vendedor.id)}
-                  className="text-xs"
-                >
-                  {vendedor.nome}
-                </Button>
-              ))}
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Vendedor</Label>
+              <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os vendedores</SelectItem>
+                  {vendedores.map((vendedor) => (
+                    <SelectItem key={vendedor.id} value={vendedor.id}>
+                      {vendedor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
 
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Regiões</Label>
-            <div className="flex flex-wrap gap-2">
-              {regioes.map((regiao) => (
-                <Button
-                  key={regiao}
-                  variant={selectedRegioes.includes(regiao) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleRegiao(regiao)}
-                  className="text-xs"
-                >
-                  {regiao}
-                </Button>
-              ))}
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Região</Label>
+              <Select value={selectedRegiao} onValueChange={setSelectedRegiao}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as regiões" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas as regiões</SelectItem>
+                  {regioes.map((regiao) => (
+                    <SelectItem key={regiao} value={regiao}>
+                      {regiao}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -692,9 +656,12 @@ export default function Marketing() {
               variant="ghost" 
               size="sm" 
               onClick={() => {
-                setSelectedMeses([format(new Date(), "yyyy-MM")]);
-                setSelectedVendedores([]);
-                setSelectedRegioes([]);
+                setDateRange({
+                  from: startOfMonth(new Date()),
+                  to: endOfMonth(new Date())
+                });
+                setSelectedVendedor("");
+                setSelectedRegiao("");
               }}
               className="w-full"
             >
