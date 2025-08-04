@@ -21,6 +21,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
+import InvestmentManager from "@/components/InvestmentManager";
 
 interface MarketingInvestment {
   id: string;
@@ -943,6 +944,66 @@ export default function Marketing() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tabela de Performance por Região */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Performance por Região</CardTitle>
+          <CardDescription>
+            Análise detalhada do retorno de investimento por região
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Região</TableHead>
+                  <TableHead className="text-right">Investimento</TableHead>
+                  <TableHead className="text-right">Faturamento</TableHead>
+                  <TableHead className="text-right">Vendas</TableHead>
+                  <TableHead className="text-right">Ticket Médio</TableHead>
+                  <TableHead className="text-right">CAC</TableHead>
+                  <TableHead className="text-right">Lucro</TableHead>
+                  <TableHead className="text-right">ROI</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {regionPerformanceData.map((data) => (
+                  <TableRow key={data.regiao}>
+                    <TableCell className="font-medium">{data.regiao}</TableCell>
+                    <TableCell className="text-right">
+                      R$ {data.investimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      R$ {data.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right">{data.vendas}</TableCell>
+                    <TableCell className="text-right">
+                      R$ {data.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      R$ {data.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      R$ {data.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className={`text-right font-medium ${data.roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {data.roi.toFixed(1)}%
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Gestão de Investimentos */}
+      <InvestmentManager 
+        selectedYear={dateRange?.from ? dateRange.from.getFullYear() : new Date().getFullYear()}
+        regioes={regioes}
+      />
 
       {/* Gráficos de Pizza */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
