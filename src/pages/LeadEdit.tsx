@@ -396,9 +396,9 @@ export default function LeadEdit() {
 
             <div className="space-y-2">
               <Label htmlFor="cor_porta">Cor da Porta</Label>
-              <Select 
+               <Select 
                 value={lead.cor_porta || ""} 
-                onValueChange={(value) => setLead({ ...lead, cor_porta: value })}
+                onValueChange={(value) => setLead({ ...lead, cor_porta: value === "REMOVE_COLOR" ? null : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a cor">
@@ -416,7 +416,7 @@ export default function LeadEdit() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Remover cor</SelectItem>
+                  <SelectItem value="REMOVE_COLOR">Remover cor</SelectItem>
                   {catalogoCores.map((cor) => (
                     <SelectItem key={cor.nome} value={cor.nome}>
                       <div className="flex items-center gap-2">
