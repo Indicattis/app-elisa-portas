@@ -6,6 +6,7 @@ import { useLeads } from "@/hooks/useLeads";
 import { LeadTable } from "@/components/LeadTable";
 import { LeadFilters } from "@/components/LeadFilters";
 import { LeadIndicators } from "@/components/LeadIndicators";
+import { LeadStats } from "@/components/LeadStats";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { Lead, FilterValues } from "@/types/lead";
@@ -129,6 +130,8 @@ export default function Leads() {
       </div>
 
       <LeadIndicators />
+
+      <LeadStats leads={filteredLeads} />
 
       <LeadFilters
         filters={filters}

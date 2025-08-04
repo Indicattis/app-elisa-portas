@@ -37,8 +37,8 @@ export function LeadTagSelector({
   
   const canEdit = canEditTag(leadStatus);
   const availableTags = LEAD_TAGS.filter(tag => 
-    // Tags 1-6 podem ser selecionadas livremente quando status é 1 ou 2
-    canEdit && [1, 2, 3, 4, 5, 6].includes(tag.id)
+    // Tags 1-7 podem ser selecionadas livremente quando status é 1 ou 2 (incluindo "Cliente fechado")
+    canEdit && [1, 2, 3, 4, 5, 6, 7].includes(tag.id)
   );
 
   const handleTagSelect = async (tagId: number) => {
@@ -47,9 +47,15 @@ export function LeadTagSelector({
     try {
       setLoading(true);
       
+      // Se selecionou "Cliente fechado", atualizar status para vendido (5)
+      const updateData: any = { tag_id: tagId };
+      if (tagId === 7) { // ID da tag "Cliente fechado"
+        updateData.status_atendimento = 5; // Status vendido
+      }
+      
       const { error } = await supabase
         .from("elisaportas_leads")
-        .update({ tag_id: tagId })
+        .update(updateData)
         .eq("id", leadId);
 
       if (error) throw error;
@@ -59,7 +65,7 @@ export function LeadTagSelector({
       
       toast({
         title: "Sucesso",
-        description: "Etiqueta atualizada com sucesso",
+        description: tagId === 7 ? "Lead marcado como vendido!" : "Etiqueta atualizada com sucesso",
       });
     } catch (error) {
       console.error("Erro ao alterar tag:", error);

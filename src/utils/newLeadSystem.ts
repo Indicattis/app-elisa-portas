@@ -29,7 +29,7 @@ export const LEAD_TAGS: LeadTag[] = [
   { id: 4, name: 'Resgatar', color: 'bg-red-300 text-gray-800', description: 'Resgatar (Última chance)' },
   { id: 5, name: 'Aguardando Obra', color: 'bg-yellow-400 text-gray-800', description: 'Aguardando obra (Trello)' },
   { id: 6, name: 'Visita', color: 'bg-blue-300 text-gray-800', description: 'Visita' },
-  { id: 7, name: 'Fechado', color: 'bg-gray-400 text-white', description: 'Cliente fechado' },
+  { id: 7, name: 'Cliente Fechado', color: 'bg-green-600 text-white', description: 'Cliente fechado' },
   { id: 8, name: 'Perdido', color: 'bg-red-600 text-white', description: 'Perdido! (Perda de tempo)' },
   { id: 9, name: 'Aguardando Gerência', color: 'bg-orange-500 text-white', description: 'Aguardando gerência' }
 ];

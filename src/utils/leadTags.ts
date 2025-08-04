@@ -67,8 +67,8 @@ export const leadTags: LeadTag[] = [
   {
     id: 'cliente_fechado',
     name: 'Cliente fechado',
-    color: 'border-gray-500',
-    bgColor: '#6B7280', // Cinza
+    color: 'border-green-600',
+    bgColor: '#16A34A', // Verde forte para indicar venda
     textColor: 'text-white'
   }
 ];
