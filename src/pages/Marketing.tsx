@@ -502,7 +502,6 @@ export default function Marketing() {
                     <SelectValue placeholder="Selecione uma região" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as regiões</SelectItem>
                     {regioes.map((regiao) => (
                       <SelectItem key={regiao} value={regiao}>{regiao}</SelectItem>
                     ))}
@@ -623,7 +622,6 @@ export default function Marketing() {
                   <SelectValue placeholder="Todos os vendedores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os vendedores</SelectItem>
                   {vendedores.map((vendedor) => (
                     <SelectItem key={vendedor.id} value={vendedor.id}>
                       {vendedor.nome}
@@ -640,7 +638,6 @@ export default function Marketing() {
                   <SelectValue placeholder="Todas as regiões" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as regiões</SelectItem>
                   {regioes.map((regiao) => (
                     <SelectItem key={regiao} value={regiao}>
                       {regiao}
