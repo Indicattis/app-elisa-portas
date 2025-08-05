@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -48,17 +48,62 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
   const { user } = useAuth();
   const { canais } = useCanaisAquisicao();
 
+  // Fetch real system data
+  const [atendentes, setAtendentes] = useState<Array<{ user_id: string; nome: string }>>([]);
+
+  useEffect(() => {
+    const fetchAtendentes = async () => {
+      const { data } = await supabase
+        .from('admin_users')
+        .select('user_id, nome')
+        .eq('ativo', true)
+        .order('nome');
+      
+      if (data) setAtendentes(data);
+    };
+    
+    fetchAtendentes();
+  }, []);
+
+  const generateCSVTemplate = () => {
+    const headers = 'data_venda,atendente_id,publico_alvo,canal_aquisicao_id,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda,resgate';
+    
+    const exampleRow = canais.length > 0 && atendentes.length > 0 
+      ? `2024-01-15T10:00:00Z,${atendentes[0].user_id},Residencial,${canais[0].id},RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false`
+      : `2024-01-15T10:00:00Z,SEU_ATENDENTE_ID,Residencial,SEU_CANAL_ID,RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false`;
+    
+    return `${headers}\n${exampleRow}`;
+  };
+
+  const downloadTemplate = () => {
+    const csvContent = generateCSVTemplate();
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'template-vendas.csv');
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Template baixado",
+      description: "Use este arquivo como base para seu upload",
+    });
+  };
+
   const exampleData = {
-    csv: `data_venda,atendente_id,publico_alvo,canal_aquisicao_id,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda,resgate
-2024-01-15T10:00:00Z,550e8400-e29b-41d4-a716-446655440000,Residencial,${canais[0]?.id || 'CANAL_ID_1'},RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false
-2024-01-16T14:30:00Z,550e8400-e29b-41d4-a716-446655440001,Comercial,${canais[1]?.id || 'CANAL_ID_2'},SC,Florianópolis,88000-000,Maria Santos,48888888888,maria@empresa.com,8000.00,5000.00,1200.00,600.00,800.00,300.00,10300.00,true`,
+    csv: generateCSVTemplate(),
     
     json: JSON.stringify([
       {
         data_venda: "2024-01-15T10:00:00Z",
-        atendente_id: "550e8400-e29b-41d4-a716-446655440000",
+        atendente_id: atendentes[0]?.user_id || "SEU_ATENDENTE_ID",
         publico_alvo: "Residencial",
-        canal_aquisicao_id: "CANAL_ID_1",
+        canal_aquisicao_id: canais[0]?.id || "SEU_CANAL_ID",
         estado: "RS",
         cidade: "Porto Alegre",
         cep: "90000-000",
@@ -76,15 +121,13 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
       },
       {
         data_venda: "2024-01-16T14:30:00Z",
-        atendente_id: "550e8400-e29b-41d4-a716-446655440001",
+        atendente_id: atendentes[1]?.user_id || "OUTRO_ATENDENTE_ID",
         publico_alvo: "Comercial",
-        canal_aquisicao_id: "CANAL_ID_2",
+        canal_aquisicao_id: canais[1]?.id || "OUTRO_CANAL_ID",
         estado: "SC",
         cidade: "Florianópolis",
+        bairro: "Centro",
         cep: "88000-000",
-        cliente_nome: "Maria Santos",
-        cliente_telefone: "48888888888",
-        cliente_email: "maria@empresa.com",
         valor_produto: 8000.00,
         custo_produto: 5000.00,
         valor_pintura: 1200.00,
@@ -284,9 +327,64 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Template Download */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-medium">Template para Download</h4>
+            <Button onClick={downloadTemplate} variant="outline" size="sm">
+              <FileText className="w-4 h-4 mr-2" />
+              Baixar Template CSV
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Baixe um arquivo CSV com os cabeçalhos corretos e uma linha de exemplo para facilitar o upload.
+          </p>
+        </div>
+
+        {/* Dados do Sistema */}
+        <div className="space-y-4">
+          <h4 className="font-medium">Dados do Sistema:</h4>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <h5 className="text-sm font-medium mb-2">Atendentes Disponíveis:</h5>
+              <div className="max-h-32 overflow-y-auto bg-muted p-3 rounded-md">
+                {atendentes.length > 0 ? (
+                  <div className="space-y-1">
+                    {atendentes.map((atendente) => (
+                      <div key={atendente.user_id} className="text-xs">
+                        <strong>{atendente.nome}:</strong> {atendente.user_id}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">Carregando atendentes...</div>
+                )}
+              </div>
+            </div>
+            
+            <div>
+              <h5 className="text-sm font-medium mb-2">Canais de Aquisição:</h5>
+              <div className="max-h-32 overflow-y-auto bg-muted p-3 rounded-md">
+                {canais.length > 0 ? (
+                  <div className="space-y-1">
+                    {canais.map((canal) => (
+                      <div key={canal.id} className="text-xs">
+                        <strong>{canal.nome}:</strong> {canal.id}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">Carregando canais...</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Exemplo de formato */}
         <div className="space-y-4">
-          <h4 className="font-medium">Formato dos dados:</h4>
+          <h4 className="font-medium">Exemplos de Formato:</h4>
           
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -304,11 +402,31 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
             </div>
           </div>
           
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p><strong>Campos obrigatórios:</strong> data_venda, atendente_id, canal_aquisicao_id, valor_produto, custo_produto, valor_venda</p>
-            <p><strong>Formato de data:</strong> ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)</p>
-            <p><strong>atendente_id:</strong> UUID do usuário atendente (consulte a tabela de usuários)</p>
-            <p><strong>Nota:</strong> O campo lucro_total é calculado automaticamente pelo sistema e não deve ser incluído no arquivo</p>
+          <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+            <h5 className="font-medium text-blue-800">Instruções importantes:</h5>
+            <div className="text-sm text-blue-700 space-y-2">
+              <div>
+                <strong>Campos obrigatórios:</strong>
+                <ul className="list-disc list-inside ml-4 mt-1">
+                  <li>data_venda (formato: YYYY-MM-DDTHH:mm:ssZ)</li>
+                  <li>atendente_id (usar IDs da tabela acima)</li>
+                  <li>canal_aquisicao_id (usar IDs da tabela acima)</li>
+                  <li>valor_produto, custo_produto, valor_venda (números positivos)</li>
+                </ul>
+              </div>
+              <div>
+                <strong>Campos opcionais:</strong> publico_alvo, estado, cidade, bairro, cep, cliente_nome, cliente_telefone, cliente_email, valor_pintura, custo_pintura, valor_instalacao, valor_frete, resgate
+              </div>
+              <div>
+                <strong>Valores monetários:</strong> Use ponto (.) como separador decimal (ex: 1234.56)
+              </div>
+              <div>
+                <strong>Campo resgate:</strong> Use true/false (sem aspas no CSV)
+              </div>
+              <div>
+                <strong>Nota:</strong> O campo lucro_total é calculado automaticamente e não deve ser incluído
+              </div>
+            </div>
           </div>
         </div>
 
