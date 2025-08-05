@@ -105,13 +105,12 @@ export function Sidebar() {
               variant="ghost" 
               size="icon" 
               onClick={() => setCollapsed(!collapsed)}
-              className="relative overflow-hidden hover:bg-primary/10 hover:scale-110 transition-all duration-300 group"
+              className="hover:bg-muted"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               {collapsed ? (
-                <Menu className="h-4 w-4 transition-transform duration-300 group-hover:rotate-180" />
+                <Menu className="h-4 w-4" />
               ) : (
-                <X className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+                <X className="h-4 w-4" />
               )}
             </Button>
           </div>
@@ -125,40 +124,23 @@ export function Sidebar() {
                 to={item.href} 
                 className={() => `
                   relative flex items-center px-4 py-3 rounded-xl text-sm font-medium
-                  transition-all duration-300 ease-in-out transform
+                  transition-colors duration-200
                   ${isActive(item.href) 
-                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg scale-105 translate-x-1" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-gradient-to-r hover:from-muted/50 hover:to-transparent hover:scale-105 hover:translate-x-1"
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }
                   ${collapsed ? "justify-center" : ""}
                 `}
-                style={{
-                  animationDelay: `${index * 50}ms`
-                }}
               >
                 {/* Active Indicator */}
                 {isActive(item.href) && !collapsed && (
                   <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary-foreground rounded-r-full animate-scale-in"></div>
                 )}
                 
-                {/* Icon with Animation */}
-                <div className="relative">
-                  <item.icon className={`h-5 w-5 transition-all duration-300 ${collapsed ? "" : "mr-4"} ${isActive(item.href) ? "drop-shadow-sm" : "group-hover:scale-110"}`} />
-                  {isActive(item.href) && (
-                    <div className="absolute inset-0 bg-primary-foreground/20 rounded-full animate-pulse"></div>
-                  )}
-                </div>
+                <item.icon className={`h-5 w-5 ${collapsed ? "" : "mr-4"}`} />
                 
-                {/* Text with Fade Animation */}
                 {!collapsed && (
-                  <span className="animate-fade-in transition-all duration-300 group-hover:font-semibold">
-                    {item.name}
-                  </span>
-                )}
-                
-                {/* Hover Arrow */}
-                {!collapsed && !isActive(item.href) && (
-                  <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all duration-300" />
+                  <span>{item.name}</span>
                 )}
               </NavLink>
               
@@ -181,37 +163,18 @@ export function Sidebar() {
                 to="/dashboard/configuracoes" 
                 className={() => `
                   relative flex items-center px-4 py-3 rounded-xl text-sm font-medium
-                  transition-all duration-300 ease-in-out transform
+                  transition-colors duration-200
                   ${isActive("/dashboard/configuracoes") 
-                    ? "bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground shadow-lg scale-105 translate-x-1" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-gradient-to-r hover:from-muted/50 hover:to-transparent hover:scale-105 hover:translate-x-1"
+                    ? "bg-secondary text-secondary-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }
                   ${collapsed ? "justify-center" : ""}
                 `}
               >
-                {/* Active Indicator */}
-                {isActive("/dashboard/configuracoes") && !collapsed && (
-                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-secondary-foreground rounded-r-full animate-scale-in"></div>
-                )}
+                <Settings className={`h-5 w-5 ${collapsed ? "" : "mr-4"}`} />
                 
-                {/* Icon with Animation */}
-                <div className="relative">
-                  <Settings className={`h-5 w-5 transition-all duration-300 ${collapsed ? "" : "mr-4"} ${isActive("/dashboard/configuracoes") ? "drop-shadow-sm" : "group-hover:scale-110"}`} />
-                  {isActive("/dashboard/configuracoes") && (
-                    <div className="absolute inset-0 bg-secondary-foreground/20 rounded-full animate-pulse"></div>
-                  )}
-                </div>
-                
-                {/* Text with Fade Animation */}
                 {!collapsed && (
-                  <span className="animate-fade-in transition-all duration-300 group-hover:font-semibold">
-                    Configurações
-                  </span>
-                )}
-                
-                {/* Hover Arrow */}
-                {!collapsed && !isActive("/dashboard/configuracoes") && (
-                  <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all duration-300" />
+                  <span>Configurações</span>
                 )}
               </NavLink>
               
@@ -245,11 +208,10 @@ export function Sidebar() {
               variant="outline" 
               size={collapsed ? "icon" : "sm"} 
               onClick={signOut} 
-              className="flex-1 relative overflow-hidden group border-destructive/20 hover:border-destructive/40 hover:bg-destructive/5 transition-all duration-300"
+              className="flex-1 hover:bg-destructive/10"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-destructive/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <LogOut className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-              {!collapsed && <span className="ml-2 font-medium">Sair</span>}
+              <LogOut className="h-4 w-4" />
+              {!collapsed && <span className="ml-2">Sair</span>}
             </Button>
           </div>
         </div>

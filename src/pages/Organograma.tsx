@@ -266,8 +266,28 @@ export default function Organograma() {
 
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Connection) => {
+      // Verificar se a conexão já existe
+      const connectionExists = edges.some(edge => 
+        (edge.source === params.source && edge.target === params.target) ||
+        (edge.source === params.target && edge.target === params.source)
+      );
+
+      if (!connectionExists) {
+        setEdges((eds) => addEdge(params, eds));
+        toast({
+          title: "Conexão criada",
+          description: "Vínculo adicionado com sucesso!",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Conexão já existe",
+          description: "Este vínculo já foi criado anteriormente.",
+        });
+      }
+    },
+    [setEdges, edges, toast]
   );
 
   if (!isAdmin) {
@@ -293,7 +313,7 @@ export default function Organograma() {
           <div>
             <h1 className="text-2xl font-bold">Organograma</h1>
             <p className="text-muted-foreground">
-              Organize a estrutura hierárquica da empresa. Arraste os usuários para posicionar e passe o mouse sobre eles para criar vínculos.
+              Organize a estrutura hierárquica da empresa. Arraste os usuários para posicionar e arraste de um nó para outro para criar vínculos.
             </p>
             {connectionMode && (
               <p className="text-sm text-primary font-medium mt-1">
@@ -325,6 +345,7 @@ export default function Organograma() {
           nodeTypes={nodeTypes}
           fitView
           className="bg-background"
+          deleteKeyCode={["Backspace", "Delete"]}
         >
           <Background />
           <Controls />
