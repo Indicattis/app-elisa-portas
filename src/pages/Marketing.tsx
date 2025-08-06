@@ -38,7 +38,6 @@ interface VendaData {
   valor_venda: number;
   atendente_id: string;
   estado: string;
-  canal_aquisicao: string;
   canal_aquisicao_id: string;
   publico_alvo: string;
   data_venda: string;
@@ -221,6 +220,8 @@ export default function Marketing() {
     const startDate = format(dateRange.from, "yyyy-MM-dd");
     const endDate = format(dateRange.to, "yyyy-MM-dd");
 
+    console.log("Buscando métricas para período:", startDate, "a", endDate);
+
     // Buscar investimentos do período (dados consolidados)
     let investimentosQuery = supabase
       .from("marketing_investimentos")
@@ -229,7 +230,10 @@ export default function Marketing() {
       .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
       .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
 
-    const { data: investimentosData } = await investimentosQuery;
+    const { data: investimentosData, error: investError } = await investimentosQuery;
+    
+    console.log("Dados de investimentos encontrados:", investimentosData);
+    if (investError) console.error("Erro ao buscar investimentos:", investError);
 
     const totalInvestimento = investimentosData?.reduce((total, inv) => 
       total + (inv.investimento_google_ads || 0) +
@@ -237,12 +241,14 @@ export default function Marketing() {
               (inv.investimento_linkedin_ads || 0) +
               (inv.outros_investimentos || 0), 0
     ) || 0;
+    
+    console.log("Total de investimento calculado:", totalInvestimento);
 
     // Buscar vendas do período
     let vendasQuery = supabase
       .from("vendas")
       .select(`
-        valor_venda, atendente_id, estado, canal_aquisicao, canal_aquisicao_id, data_venda,
+        valor_venda, atendente_id, estado, canal_aquisicao_id, data_venda,
         canais_aquisicao:canal_aquisicao_id (
           id,
           nome
@@ -265,8 +271,6 @@ export default function Marketing() {
       // Filtrar vendas apenas dos canais Google e Meta
       if (idsGoogleMeta.length > 0) {
         vendasQuery = vendasQuery.in("canal_aquisicao_id", idsGoogleMeta);
-      } else {
-        vendasQuery = vendasQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
       }
     }
 
@@ -278,12 +282,15 @@ export default function Marketing() {
       vendasQuery = vendasQuery.eq("estado", selectedRegiao);
     }
 
-    const { data: vendasData } = await vendasQuery;
+    const { data: vendasData, error: vendasError } = await vendasQuery;
+    
+    console.log("Dados de vendas encontrados:", vendasData);
+    if (vendasError) console.error("Erro ao buscar vendas:", vendasError);
 
     // Buscar leads do período
     let leadsQuery = supabase
       .from("elisaportas_leads")
-      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao, canal_aquisicao_id")
+      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao_id")
       .gte("created_at", startDate)
       .lte("created_at", endDate);
     
@@ -301,8 +308,6 @@ export default function Marketing() {
       // Filtrar leads apenas dos canais Google e Meta
       if (idsGoogleMeta.length > 0) {
         leadsQuery = leadsQuery.in("canal_aquisicao_id", idsGoogleMeta);
-      } else {
-        leadsQuery = leadsQuery.in("canal_aquisicao", ["Google", "Meta", "Meta (Facebook/Instagram)", "Facebook", "Instagram"]);
       }
     }
 
@@ -314,7 +319,10 @@ export default function Marketing() {
       leadsQuery = leadsQuery.eq("endereco_estado", selectedRegiao);
     }
 
-    const { data: leadsData } = await leadsQuery;
+    const { data: leadsData, error: leadsError } = await leadsQuery;
+    
+    console.log("Dados de leads encontrados:", leadsData);
+    if (leadsError) console.error("Erro ao buscar leads:", leadsError);
 
     const totalVendas = vendasData?.reduce((sum, venda) => sum + Number(venda.valor_venda), 0) || 0;
     const totalLeads = leadsData?.length || 0;
@@ -322,6 +330,16 @@ export default function Marketing() {
     const taxaConversao = totalLeads > 0 ? (vendasConvertidas / totalLeads) * 100 : 0;
     const roi = totalInvestimento > 0 ? ((totalVendas - totalInvestimento) / totalInvestimento) * 100 : 0;
     const cac = vendasConvertidas > 0 ? totalInvestimento / vendasConvertidas : 0;
+
+    console.log("Métricas calculadas:", {
+      totalInvestimento,
+      totalVendas,
+      roi,
+      cac,
+      taxaConversao,
+      totalLeads,
+      vendasConvertidas
+    });
 
     setMetrics({
       totalInvestimento,
@@ -344,7 +362,7 @@ export default function Marketing() {
       let vendasQuery = supabase
         .from("vendas")
         .select(`
-          valor_venda, publico_alvo, canal_aquisicao, canal_aquisicao_id,
+          valor_venda, publico_alvo, canal_aquisicao_id,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -390,7 +408,7 @@ export default function Marketing() {
         const canalMap = new Map<string, { value: number; vendas: number }>();
         
         vendasData.forEach(venda => {
-          const canal = venda.canais_aquisicao?.nome || venda.canal_aquisicao || 'Não informado';
+          const canal = venda.canais_aquisicao?.nome || 'Não informado';
           const current = canalMap.get(canal) || { value: 0, vendas: 0 };
           canalMap.set(canal, {
             value: current.value + venda.valor_venda,
