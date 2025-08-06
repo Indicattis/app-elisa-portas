@@ -29,7 +29,6 @@ interface Venda {
   data_venda: string;
   atendente_nome: string;
   publico_alvo: string | null;
-  canal_aquisicao: string;
   canal_aquisicao_id: string | null;
   canais_aquisicao?: {
     id: string;
@@ -138,7 +137,6 @@ export default function Faturamento() {
           data_venda,
           atendente_id,
           publico_alvo,
-          canal_aquisicao,
           canal_aquisicao_id,
           estado,
           cidade,
@@ -700,7 +698,7 @@ export default function Faturamento() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{venda.canais_aquisicao?.nome || venda.canal_aquisicao}</Badge>
+                          <Badge variant="outline">{venda.canais_aquisicao?.nome || 'Canal não especificado'}</Badge>
                         </TableCell>
                         <TableCell>
                           {venda.cidade && venda.estado ? `${venda.cidade}, ${venda.estado}` : '-'}
