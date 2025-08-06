@@ -1048,7 +1048,6 @@ export type Database = {
         Row: {
           atendente_id: string
           bairro: string | null
-          canal_aquisicao: string
           canal_aquisicao_id: string | null
           cep: string | null
           cidade: string | null
@@ -1062,7 +1061,6 @@ export type Database = {
           estado: string | null
           forma_pagamento: string | null
           id: string
-          lead_id: string | null
           lucro_total: number | null
           numero_parcelas: number | null
           observacoes_venda: string | null
@@ -1079,7 +1077,6 @@ export type Database = {
         Insert: {
           atendente_id: string
           bairro?: string | null
-          canal_aquisicao?: string
           canal_aquisicao_id?: string | null
           cep?: string | null
           cidade?: string | null
@@ -1093,7 +1090,6 @@ export type Database = {
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
-          lead_id?: string | null
           lucro_total?: number | null
           numero_parcelas?: number | null
           observacoes_venda?: string | null
@@ -1110,7 +1106,6 @@ export type Database = {
         Update: {
           atendente_id?: string
           bairro?: string | null
-          canal_aquisicao?: string
           canal_aquisicao_id?: string | null
           cep?: string | null
           cidade?: string | null
@@ -1124,7 +1119,6 @@ export type Database = {
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
-          lead_id?: string | null
           lucro_total?: number | null
           numero_parcelas?: number | null
           observacoes_venda?: string | null
@@ -1144,13 +1138,6 @@ export type Database = {
             columns: ["canal_aquisicao_id"]
             isOneToOne: false
             referencedRelation: "canais_aquisicao"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendas_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "elisaportas_leads"
             referencedColumns: ["id"]
           },
         ]
