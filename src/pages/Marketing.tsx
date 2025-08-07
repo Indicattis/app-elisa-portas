@@ -171,26 +171,35 @@ export default function Marketing() {
   };
 
   const fetchInvestimentos = async () => {
-    let query = supabase
-      .from("marketing_investimentos")
-      .select("*")
-      .is("regiao", null) // Buscar apenas dados consolidados
-      .order("mes", { ascending: false });
+    try {
+      console.log("Buscando investimentos para período:", dateRange.from, "a", dateRange.to);
+      
+      let query = supabase
+        .from("marketing_investimentos")
+        .select("*")
+        .order("mes", { ascending: false });
 
-    if (dateRange?.from && dateRange?.to) {
-      const startMonth = format(dateRange.from, "yyyy-MM") + "-01";
-      const endMonth = format(dateRange.to, "yyyy-MM") + "-01";
-      query = query.gte("mes", startMonth).lte("mes", endMonth);
-    }
+      if (dateRange?.from && dateRange?.to) {
+        const startMonth = format(dateRange.from, "yyyy-MM") + "-01";
+        const endMonth = format(dateRange.to, "yyyy-MM") + "-01";
+        console.log("Filtrando investimentos entre:", startMonth, "e", endMonth);
+        query = query.gte("mes", startMonth).lte("mes", endMonth);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
+      if (error) {
+        console.error("Erro ao buscar investimentos:", error);
+        setInvestimentos([]);
+        return;
+      }
+      
+      console.log("Dados de investimentos encontrados:", data);
+      setInvestimentos(data || []);
+    } catch (error) {
       console.error("Erro ao buscar investimentos:", error);
       setInvestimentos([]);
-      return;
     }
-    setInvestimentos(data || []);
   };
 
   const fetchVendedores = async () => {

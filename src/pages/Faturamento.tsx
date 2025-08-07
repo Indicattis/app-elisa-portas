@@ -179,13 +179,30 @@ export default function Faturamento() {
       }
 
       // Buscar nomes dos atendentes
-      const atendenteIds = [...new Set(vendasData.map(venda => venda.atendente_id))];
-      const { data: atendentesData } = await supabase
-        .from("admin_users")
-        .select("user_id, nome")
-        .in("user_id", atendenteIds);
+      const atendenteIds = [...new Set(vendasData.map(venda => venda.atendente_id))].filter(Boolean);
+      
+      let atendenteMap = new Map();
+      
+      if (atendenteIds.length > 0) {
+        // Primeiro tenta buscar em admin_users
+        const { data: adminUsersData } = await supabase
+          .from("admin_users")
+          .select("user_id, nome")
+          .in("user_id", atendenteIds);
 
-      const atendenteMap = new Map(atendentesData?.map(atendente => [atendente.user_id, atendente.nome]) || []);
+        if (adminUsersData) {
+          adminUsersData.forEach(atendente => {
+            atendenteMap.set(atendente.user_id, atendente.nome);
+          });
+        }
+
+        // Para IDs não encontrados, marcar como não encontrado
+        atendenteIds.forEach(id => {
+          if (!atendenteMap.has(id)) {
+            atendenteMap.set(id, "Atendente não encontrado");
+          }
+        });
+      }
 
       const vendasCompletas = vendasData.map((venda) => ({
         ...venda,
