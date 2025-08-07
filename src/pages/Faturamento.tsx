@@ -191,10 +191,13 @@ export default function Faturamento() {
         });
       }
 
-      const vendasCompletas = vendasData.map((venda) => ({
-        ...venda,
-        atendente_nome: atendenteMap.get(venda.atendente_id) || "Atendente não encontrado",
-      }));
+      const vendasCompletas = vendasData.map((venda) => {
+        const atendenteNome = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
+        return {
+          ...venda,
+          atendente_nome: atendenteNome || "Atendente não encontrado",
+        };
+      });
 
       setVendas(vendasCompletas);
     } catch (error) {

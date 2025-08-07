@@ -459,11 +459,10 @@ export default function Marketing() {
 
       const { data: vendasData } = await vendasQuery;
 
-      // Buscar investimentos consolidados
+      // Buscar investimentos do período
       let investimentosQuery = supabase
         .from("marketing_investimentos")
         .select("*")
-        .is("regiao", null) // Buscar apenas dados consolidados
         .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
         .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
 
