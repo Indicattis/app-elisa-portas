@@ -141,11 +141,10 @@ export default function Marketing() {
   }, []);
 
   useEffect(() => {
-    if (selectedVendedor !== "" || selectedRegiao !== "" || selectedCanalAquisicao !== "") {
-      fetchMetrics();
-      fetchChartData();
-    }
-  }, [selectedVendedor, selectedRegiao, selectedCanalAquisicao]);
+    fetchMetrics();
+    fetchChartData();
+    fetchRegionPerformance();
+  }, [selectedVendedor, selectedRegiao, selectedCanalAquisicao, dateRange]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -203,13 +202,24 @@ export default function Marketing() {
   };
 
   const fetchVendedores = async () => {
-    const { data, error } = await supabase
-      .from("admin_users")
-      .select("user_id, nome")
-      .eq("ativo", true);
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("user_id, nome")
+        .eq("ativo", true);
 
-    if (error) throw error;
-    setVendedores(data?.map(v => ({ id: v.user_id, nome: v.nome })) || []);
+      if (error) {
+        console.error("Erro ao buscar vendedores:", error);
+        setVendedores([]);
+        return;
+      }
+
+      console.log("Vendedores encontrados:", data);
+      setVendedores(data?.map(v => ({ id: v.user_id, nome: v.nome })) || []);
+    } catch (error) {
+      console.error("Erro ao buscar vendedores:", error);
+      setVendedores([]);
+    }
   };
 
   const fetchRegioes = async () => {
@@ -230,13 +240,19 @@ export default function Marketing() {
     const endDate = format(dateRange.to, "yyyy-MM-dd");
 
     console.log("Buscando métricas para período:", startDate, "a", endDate);
+    console.log("Filtros aplicados:", { selectedVendedor, selectedRegiao, selectedCanalAquisicao });
 
-    // Buscar investimentos do período (dados consolidados)
+    // Buscar investimentos do período aplicando filtros
     let investimentosQuery = supabase
       .from("marketing_investimentos")
       .select("*")
       .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
       .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
+
+    // Aplicar filtro de região nos investimentos
+    if (selectedRegiao) {
+      investimentosQuery = investimentosQuery.eq("regiao", selectedRegiao);
+    }
 
     const { data: investimentosData, error: investError } = await investimentosQuery;
     
@@ -276,7 +292,7 @@ export default function Marketing() {
       
       const idsGoogleMeta = canaisGoogleMeta?.map(c => c.id) || [];
       
-      // Filtrar vendas apenas dos canais Google e Meta
+      // Filtrar vendas apenas dos canais Google e Meta para cálculo do CAC
       if (idsGoogleMeta.length > 0) {
         vendasQuery = vendasQuery.in("canal_aquisicao_id", idsGoogleMeta);
       }
@@ -445,10 +461,10 @@ export default function Marketing() {
     const endDate = format(dateRange.to, "yyyy-MM-dd");
 
     try {
-      // Buscar vendas por região
+      // Buscar vendas por região aplicando todos os filtros
       let vendasQuery = supabase
         .from("vendas")
-        .select("valor_venda, estado, custo_produto, custo_pintura")
+        .select("valor_venda, estado, custo_produto, custo_pintura, atendente_id, canal_aquisicao_id")
         .gte("data_venda", startDate)
         .lte("data_venda", endDate)
         .not("estado", "is", null);
@@ -457,14 +473,26 @@ export default function Marketing() {
         vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
       }
 
+      if (selectedVendedor) {
+        vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
+      }
+
+      if (selectedRegiao) {
+        vendasQuery = vendasQuery.eq("estado", selectedRegiao);
+      }
+
       const { data: vendasData } = await vendasQuery;
 
-      // Buscar investimentos do período
+      // Buscar investimentos do período aplicando filtro de região
       let investimentosQuery = supabase
         .from("marketing_investimentos")
         .select("*")
         .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
         .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
+
+      if (selectedRegiao) {
+        investimentosQuery = investimentosQuery.eq("regiao", selectedRegiao);
+      }
 
       const { data: investimentosData } = await investimentosQuery;
 
@@ -923,15 +951,15 @@ export default function Marketing() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+            <CardTitle className="text-sm font-medium">CAC</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {metrics.taxaConversao.toFixed(1)}%
+              R$ {metrics.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">
-              {metrics.vendasConvertidas} de {metrics.totalLeads} leads
+              Custo de Aquisição por Cliente
             </p>
           </CardContent>
         </Card>
