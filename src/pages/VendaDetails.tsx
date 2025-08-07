@@ -75,52 +75,7 @@ export default function VendaDetails() {
       if (vendaError) throw vendaError;
       setVenda(vendaData);
 
-      // Buscar dados do lead
-      if (vendaData.lead_id) {
-        const { data: leadData, error: leadError } = await supabase
-          .from("elisaportas_leads")
-          .select("id, nome, email, telefone, cidade")
-          .eq("id", vendaData.lead_id)
-          .single();
-
-        if (!leadError && leadData) {
-          setLead(leadData);
-        }
-
-        // Buscar orçamentos do lead
-        const { data: orcamentosData, error: orcamentosError } = await supabase
-          .from("orcamentos")
-          .select("*")
-          .eq("lead_id", vendaData.lead_id)
-          .order("created_at", { ascending: false });
-
-        if (!orcamentosError && orcamentosData) {
-          setOrcamentos(orcamentosData);
-        }
-
-        // Buscar histórico do lead
-        const { data: historicoData, error: historicoError } = await supabase
-          .from("lead_atendimento_historico")
-          .select(`
-            id,
-            acao,
-            created_at,
-            observacoes,
-            admin_users!inner(nome)
-          `)
-          .eq("lead_id", vendaData.lead_id)
-          .order("created_at", { ascending: false });
-
-        if (!historicoError && historicoData) {
-          setHistorico(historicoData.map(item => ({
-            id: item.id,
-            acao: item.acao,
-            created_at: item.created_at,
-            observacoes: item.observacoes,
-            atendente_nome: (item.admin_users as any)?.nome || 'Usuário'
-          })));
-        }
-      }
+      // Vendas table doesn't have lead_id, so skip lead/orcamento/historico lookups
     } catch (error) {
       console.error("Erro ao buscar detalhes da venda:", error);
       toast({
@@ -234,7 +189,7 @@ export default function VendaDetails() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Canal de Aquisição</p>
-                <p className="font-medium">{venda.canal_aquisicao}</p>
+                <p className="font-medium">{venda.canal_aquisicao_id || "Não informado"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Forma de Pagamento</p>

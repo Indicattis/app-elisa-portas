@@ -90,7 +90,7 @@ export default function VendaEdit() {
         valor_venda: (vendaData.valor_venda ? vendaData.valor_venda * 100 : 0).toString(),
         forma_pagamento: vendaData.forma_pagamento || "",
         observacoes_venda: vendaData.observacoes_venda || "",
-        canal_aquisicao: vendaData.canal_aquisicao || "Google",
+        canal_aquisicao: vendaData.canal_aquisicao_id || "Google",
         data_venda: new Date(vendaData.data_venda).toISOString().slice(0, 16),
         estado: vendaData.estado || "",
         cidade: vendaData.cidade || "",
@@ -110,18 +110,7 @@ export default function VendaEdit() {
         lucro_total: (vendaData.lucro_total ? vendaData.lucro_total * 100 : 0).toString()
       });
 
-      // Buscar dados do lead
-      if (vendaData.lead_id) {
-        const { data: leadData, error: leadError } = await supabase
-          .from("elisaportas_leads")
-          .select("id, nome, email, telefone, cidade")
-          .eq("id", vendaData.lead_id)
-          .single();
-
-        if (!leadError && leadData) {
-          setLead(leadData);
-        }
-      }
+      // Vendas table doesn't have lead_id, so skip lead lookup
     } catch (error) {
       console.error("Erro ao buscar venda:", error);
       toast({
@@ -158,7 +147,7 @@ export default function VendaEdit() {
         valor_venda: valorVenda,
         forma_pagamento: formData.forma_pagamento || null,
         observacoes_venda: formData.observacoes_venda || null,
-        canal_aquisicao: formData.canal_aquisicao,
+        canal_aquisicao_id: formData.canal_aquisicao,
         data_venda: new Date(formData.data_venda).toISOString(),
         estado: formData.estado || null,
         cidade: formData.cidade || null,
