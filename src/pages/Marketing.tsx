@@ -259,12 +259,28 @@ export default function Marketing() {
     console.log("Dados de investimentos encontrados:", investimentosData);
     if (investError) console.error("Erro ao buscar investimentos:", investError);
 
-    const totalInvestimento = investimentosData?.reduce((total, inv) => 
-      total + (inv.investimento_google_ads || 0) +
-              (inv.investimento_meta_ads || 0) +
-              (inv.investimento_linkedin_ads || 0) +
-              (inv.outros_investimentos || 0), 0
-    ) || 0;
+    let totalInvestimento = 0;
+    const canalSelecionadoNome = canais.find(c => c.id === selectedCanalAquisicao)?.nome;
+    if (investimentosData && investimentosData.length > 0) {
+      if (selectedCanalAquisicao && canalSelecionadoNome) {
+        const nomeLower = canalSelecionadoNome.toLowerCase();
+        if (nomeLower.includes('google')) {
+          totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.investimento_google_ads || 0), 0);
+        } else if (nomeLower.includes('meta')) {
+          totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.investimento_meta_ads || 0), 0);
+        } else if (nomeLower.includes('linkedin')) {
+          totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.investimento_linkedin_ads || 0), 0);
+        } else {
+          totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.outros_investimentos || 0), 0);
+        }
+      } else {
+        totalInvestimento = investimentosData.reduce((total, inv) =>
+          total + Number(inv.investimento_google_ads || 0) +
+                  Number(inv.investimento_meta_ads || 0) +
+                  Number(inv.investimento_linkedin_ads || 0) +
+                  Number(inv.outros_investimentos || 0), 0);
+      }
+    }
     
     console.log("Total de investimento calculado:", totalInvestimento);
 
@@ -540,12 +556,28 @@ export default function Marketing() {
       });
 
       // Distribuir investimentos consolidados entre regiões
-      const totalInvestimento = investimentosData?.reduce((total, inv) => 
-        total + (inv.investimento_google_ads || 0) +
-                (inv.investimento_meta_ads || 0) +
-                (inv.investimento_linkedin_ads || 0) +
-                (inv.outros_investimentos || 0), 0
-      ) || 0;
+      let totalInvestimento = 0;
+      const canalSelecionadoNome = canais.find(c => c.id === selectedCanalAquisicao)?.nome;
+      if (investimentosData && investimentosData.length > 0) {
+        if (selectedCanalAquisicao && canalSelecionadoNome) {
+          const nomeLower = canalSelecionadoNome.toLowerCase();
+          if (nomeLower.includes('google')) {
+            totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.investimento_google_ads || 0), 0);
+          } else if (nomeLower.includes('meta')) {
+            totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.investimento_meta_ads || 0), 0);
+          } else if (nomeLower.includes('linkedin')) {
+            totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.investimento_linkedin_ads || 0), 0);
+          } else {
+            totalInvestimento = investimentosData.reduce((total, inv) => total + Number(inv.outros_investimentos || 0), 0);
+          }
+        } else {
+          totalInvestimento = investimentosData.reduce((total, inv) =>
+            total + Number(inv.investimento_google_ads || 0) +
+                    Number(inv.investimento_meta_ads || 0) +
+                    Number(inv.investimento_linkedin_ads || 0) +
+                    Number(inv.outros_investimentos || 0), 0);
+        }
+      }
 
       // Distribuir proporcionalmente entre regiões baseado no faturamento
       const totalFaturamento = Array.from(regionMap.values()).reduce((sum, region) => sum + region.faturamento, 0);
