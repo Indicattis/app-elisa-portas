@@ -33,20 +33,11 @@ export function filterLeads(leads: Lead[], filters: ExtendedFilterValues): Lead[
     const matchesDataInicio = !filters.dataInicio || leadDate >= new Date(filters.dataInicio);
     const matchesDataFim = !filters.dataFim || leadDate <= new Date(filters.dataFim + "T23:59:59");
 
-    // Filtro por etiqueta
+    // Filtro por etiqueta (novo sistema: usa tag_id numérico)
     let matchesEtiqueta = true;
     if (filters.etiqueta) {
-      try {
-        if (lead.observacoes) {
-          const parsed = JSON.parse(lead.observacoes);
-          const leadTags = parsed.tags || [];
-          matchesEtiqueta = leadTags.includes(filters.etiqueta);
-        } else {
-          matchesEtiqueta = false;
-        }
-      } catch {
-        matchesEtiqueta = false;
-      }
+      const tagId = Number(filters.etiqueta);
+      matchesEtiqueta = lead.tag_id === tagId;
     }
 
     return matchesSearch && matchesStatus && matchesAtendente && matchesCidade && 

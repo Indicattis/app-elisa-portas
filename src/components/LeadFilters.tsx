@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, X } from "lucide-react";
-import { leadTags } from "@/utils/leadTags";
+import { LEAD_TAGS } from "@/utils/newLeadSystem";
 interface FilterValues {
   search: string;
   status: string;
@@ -114,14 +114,16 @@ export function LeadFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as etiquetas</SelectItem>
-              {leadTags.map(tag => <SelectItem key={tag.id} value={tag.id}>
+              {LEAD_TAGS.map(tag => (
+                <SelectItem key={tag.id} value={String(tag.id)}>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{
-                  backgroundColor: tag.bgColor
-                }} />
+                    <div
+                      className={`w-3 h-3 rounded-full ${tag.color.split(' ').find(c => c.startsWith('bg-')) || ''}`}
+                    />
                     {tag.name}
                   </div>
-                </SelectItem>)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
