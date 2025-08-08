@@ -21,66 +21,52 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
-      console.log('Iniciando upload de avatar para userId:', userId);
-      
+
       if (!event.target.files || event.target.files.length === 0) {
-        console.log('Nenhum arquivo selecionado');
         return;
       }
 
       const file = event.target.files[0];
-      console.log('Arquivo selecionado:', file.name, file.size, file.type);
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/avatar.${fileExt}`;
-      console.log('Nome do arquivo no storage:', fileName);
 
-      // Upload da imagem
-      console.log('Fazendo upload para o bucket user-avatars...');
-      const { error: uploadError } = await supabase.storage
-        .from('user-avatars')
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) {
-        console.error('Erro no upload:', uploadError);
-        throw uploadError;
+      // Validação do tipo de arquivo
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Por favor, selecione apenas arquivos de imagem.");
       }
 
-      console.log('Upload realizado com sucesso, obtendo URL pública...');
-      
-      // Obter URL pública
-      const { data } = supabase.storage
-        .from('user-avatars')
-        .getPublicUrl(fileName);
+      // Validação do tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("A imagem deve ter no máximo 5MB.");
+      }
 
-      const avatarUrl = data.publicUrl;
-      console.log('URL pública obtida:', avatarUrl);
+      // Converter imagem para base64 (mesma lógica dos Autorizados)
+      const base64String: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Falha ao ler a imagem."));
+        reader.readAsDataURL(file);
+      });
 
-      // Atualizar na base de dados
-      console.log('Atualizando foto_perfil_url na tabela admin_users para user_id:', userId);
+      // Atualizar na base de dados diretamente com base64
       const { error: updateError } = await supabase
         .from('admin_users')
-        .update({ foto_perfil_url: avatarUrl })
+        .update({ foto_perfil_url: base64String })
         .eq('user_id', userId);
 
       if (updateError) {
-        console.error('Erro ao atualizar banco de dados:', updateError);
         throw updateError;
       }
 
-      console.log('Banco de dados atualizado com sucesso, chamando onAvatarUpdate...');
-      onAvatarUpdate(avatarUrl);
+      onAvatarUpdate(base64String);
       
       toast({
         title: "Sucesso",
         description: "Foto de perfil atualizada com sucesso",
       });
-    } catch (error) {
-      console.error('Erro ao fazer upload:', error);
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao fazer upload da foto",
+        description: error?.message || "Erro ao fazer upload da foto",
       });
     } finally {
       setUploading(false);
