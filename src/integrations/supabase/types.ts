@@ -188,6 +188,33 @@ export type Database = {
         }
         Relationships: []
       }
+      contador_vendas_dias: {
+        Row: {
+          created_at: string
+          created_by: string
+          data: string
+          id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data: string
+          id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data?: string
+          id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       contas_receber: {
         Row: {
           created_at: string
