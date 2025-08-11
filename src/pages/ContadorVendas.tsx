@@ -1,0 +1,247 @@
+import { useEffect, useMemo, useState } from "react";
+import { format, isSameMonth, isSameWeek, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, startOfYear, endOfYear, getYear, isWeekend, isSameDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+interface DiaVenda {
+  id?: string;
+  data: string; // ISO date string
+  valor: number;
+}
+
+const getRangeStyle = (valor: number, weekend: boolean) => {
+  if (weekend) return { base: "bg-muted text-muted-foreground", star: false, ring: "" };
+  if (valor >= 80001) return { base: "bg-black text-white border-2 border-yellow-400", star: true, ring: "ring-2 ring-yellow-400" };
+  if (valor >= 50001) return { base: "bg-green-600 text-white", star: false, ring: "" };
+  if (valor >= 20001) return { base: "bg-yellow-500 text-black", star: false, ring: "" };
+  if (valor > 0) return { base: "bg-red-600 text-white", star: false, ring: "" };
+  return { base: "bg-muted text-muted-foreground", star: false, ring: "" };
+};
+
+const monthsInYear = Array.from({ length: 12 }, (_, i) => i);
+
+export default function ContadorVendas() {
+  const [year, setYear] = useState(getYear(new Date()));
+  const [data, setData] = useState<Record<string, DiaVenda>>({});
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [inputValor, setInputValor] = useState<string>("");
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    document.title = "Contador de vendas";
+  }, []);
+
+  const fetchYear = async (y: number) => {
+    setLoading(true);
+    const { data: rows, error } = await supabase
+      .from("contador_vendas_dias")
+      .select("id, data, valor")
+      .gte("data", `${y}-01-01`)
+      .lte("data", `${y}-12-31`);
+
+    if (error) {
+      toast({ title: "Erro ao carregar", description: error.message });
+      setLoading(false);
+      return;
+    }
+
+    const map: Record<string, DiaVenda> = {};
+    rows?.forEach((r: any) => {
+      map[r.data] = { id: r.id, data: r.data, valor: Number(r.valor) };
+    });
+    setData(map);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchYear(year);
+  }, [year]);
+
+  const handlePrevYear = () => setYear(y => y - 1);
+  const handleNextYear = () => setYear(y => y + 1);
+
+  const openModalForDate = (date: Date) => {
+    if (isWeekend(date)) {
+      toast({ title: "Indisponível", description: "O contador funciona apenas de segunda a sexta." });
+      return;
+    }
+    const iso = format(date, "yyyy-MM-dd");
+    const existing = data[iso];
+    if (date < new Date() && !isSameDay(date, new Date()) && existing) {
+      toast({ title: "Bloqueado", description: "Não é possível alterar dias passados." });
+      return;
+    }
+    setSelectedDate(date);
+    setInputValor(existing ? String(existing.valor).replace(".", ",") : "");
+    setOpen(true);
+  };
+
+  const saveValor = async () => {
+    if (!selectedDate || !user) return;
+    const iso = format(selectedDate, "yyyy-MM-dd");
+
+    // Parse valor from Brazilian format if typed with comma
+    const normalized = inputValor.replace(/\./g, "").replace(",", ".");
+    const valor = Number(normalized);
+    if (isNaN(valor) || valor < 0) {
+      toast({ title: "Valor inválido", description: "Insira um número válido." });
+      return;
+    }
+
+    const payload = { data: iso, valor, created_by: user.id };
+    const { data: upserted, error } = await supabase
+      .from("contador_vendas_dias")
+      .upsert(payload, { onConflict: "data" })
+      .select("id, data, valor")
+      .maybeSingle();
+
+    if (error) {
+      toast({ title: "Erro ao salvar", description: error.message });
+      return;
+    }
+
+    const saved: { id?: string; data: string; valor: number } = upserted
+      ? { id: upserted.id, data: upserted.data, valor: Number(upserted.valor) }
+      : { id: undefined, data: iso, valor };
+    setData(prev => ({ ...prev, [iso]: { id: saved.id, data: iso, valor: saved.valor } }));
+    toast({ title: "Salvo!", description: `Valor de ${format(selectedDate, "PPP", { locale: ptBR })} atualizado.` });
+    setOpen(false);
+  };
+
+  const today = new Date();
+  const monthSum = useMemo(() => {
+    const start = startOfMonth(today);
+    const end = endOfMonth(today);
+    return Object.values(data).reduce((sum, d) => {
+      const dDate = new Date(d.data);
+      return (dDate >= start && dDate <= end) ? sum + d.valor : sum;
+    }, 0);
+  }, [data]);
+
+  const weekSum = useMemo(() => {
+    const start = startOfWeek(today, { weekStartsOn: 1 });
+    const end = endOfWeek(today, { weekStartsOn: 1 });
+    return Object.values(data).reduce((sum, d) => {
+      const dDate = new Date(d.data);
+      return (dDate >= start && dDate <= end) ? sum + d.valor : sum;
+    }, 0);
+  }, [data]);
+
+  const renderMonth = (monthIndex: number) => {
+    const firstDay = new Date(year, monthIndex, 1);
+    const monthStart = startOfMonth(firstDay);
+    const monthEnd = endOfMonth(firstDay);
+
+    // Build grid from Monday to Sunday
+    const startGrid = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endGrid = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+    const days: Date[] = [];
+    let day = startGrid;
+    while (day <= endGrid) {
+      days.push(day);
+      day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+    }
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">{format(firstDay, "LLLL", { locale: ptBR })}</h3>
+        </div>
+        <div className="grid grid-cols-7 gap-3">
+          {["S", "T", "Q", "Q", "S", "S", "D"].map((d, i) => (
+            <div key={i} className="text-xs text-muted-foreground text-center">{d}</div>
+          ))}
+          {days.map((d, idx) => {
+            const inMonth = isSameMonth(d, firstDay);
+            const iso = format(d, "yyyy-MM-dd");
+            const registro = data[iso];
+            const weekend = isWeekend(d);
+            const valor = registro?.valor || 0;
+            const style = getRangeStyle(valor, weekend || !inMonth);
+            const isToday = isSameDay(d, today);
+
+            return (
+              <div key={idx} className="flex items-center justify-center">
+                <button
+                  onClick={() => inMonth ? openModalForDate(d) : undefined}
+                  disabled={!inMonth}
+                  className={`relative w-14 h-14 md:w-16 md:h-16 rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
+                  title={registro ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor) : undefined}
+                >
+                  <span className="text-[10px] opacity-90">{format(d, "d")}</span>
+                  <span className="text-[11px] font-semibold">
+                    {registro ? new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(valor) : "-"}
+                  </span>
+                  {style.star && (
+                    <Star className="absolute -top-1 -right-1 h-4 w-4 text-yellow-400 drop-shadow" />
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Contador de vendas</h1>
+          <p className="text-muted-foreground">Marque o valor vendido por dia (seg à sex). Azul é a cor primária do layout.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handlePrevYear} className="hover-scale"><ChevronLeft /></Button>
+          <div className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-lg font-semibold">{year}</div>
+          <Button variant="outline" onClick={handleNextYear} className="hover-scale"><ChevronRight /></Button>
+        </div>
+      </header>
+
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        {monthsInYear.map(renderMonth)}
+      </section>
+
+      <aside className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <h3 className="text-sm text-muted-foreground">Vendas deste mês</h3>
+          <p className="text-3xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthSum)}</p>
+        </div>
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <h3 className="text-sm text-muted-foreground">Vendas desta semana</h3>
+          <p className="text-3xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(weekSum)}</p>
+        </div>
+      </aside>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Valor do dia {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : ""}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground">Valor (R$)</label>
+            <Input
+              value={inputValor}
+              onChange={(e) => setInputValor(e.target.value)}
+              placeholder="Ex: 45.000,00"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={saveValor}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

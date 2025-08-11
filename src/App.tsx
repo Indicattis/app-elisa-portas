@@ -37,6 +37,7 @@ import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
 import AutorizadoNovo from "./pages/AutorizadoNovo";
 import Configuracoes from "./pages/Configuracoes";
+import ContadorVendas from "./pages/ContadorVendas";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -324,6 +325,16 @@ const App = () => (
                     <ProtectedRoute requireAdmin={true}>
                       <DashboardLayout>
                         <Configuracoes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/contador-vendas"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <ContadorVendas />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

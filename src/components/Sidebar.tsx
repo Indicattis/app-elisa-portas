@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, Factory, TrendingUp, CreditCard, CalendarDays, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, Factory, TrendingUp, CreditCard, CalendarDays, ChevronRight, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -54,6 +54,10 @@ const navigation = [{
   name: "Calendário",
   href: "/dashboard/calendario",
   icon: CalendarDays
+}, {
+  name: "Contador de vendas",
+  href: "/dashboard/contador-vendas",
+  icon: DollarSign
 }, {
   name: "Autorizados",
   href: "/dashboard/autorizados",
