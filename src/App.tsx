@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Sidebar } from "@/components/Sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
@@ -62,7 +62,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full">
       {/* Sidebar fixa no desktop */}
       <div className="hidden md:block">
-        <Sidebar />
+        <AppSidebar />
       </div>
 
       <div className="flex-1 flex flex-col">
@@ -76,7 +76,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72 sm:w-80">
-                <Sidebar />
+                <AppSidebar />
               </SheetContent>
             </Sheet>
             <span className="text-sm font-medium">Menu</span>

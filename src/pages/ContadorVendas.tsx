@@ -33,7 +33,7 @@ export default function ContadorVendas() {
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [inputValor, setInputValor] = useState<string>("");
-  const [viewMode, setViewMode] = useState<'year' | 'month'>('year');
+  const [viewMode, setViewMode] = useState<'year' | 'month'>('month');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -77,10 +77,6 @@ export default function ContadorVendas() {
     }
     const iso = format(date, "yyyy-MM-dd");
     const existing = data[iso];
-    if (date < new Date() && !isSameDay(date, new Date()) && existing) {
-      toast({ title: "Bloqueado", description: "Não é possível alterar dias passados." });
-      return;
-    }
     setSelectedDate(date);
     setInputValor(existing ? String(existing.valor).replace(".", ",") : "");
     setOpen(true);
@@ -199,18 +195,18 @@ export default function ContadorVendas() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Contador de vendas</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Contador de vendas</h1>
           <p className="text-muted-foreground">Marque o valor vendido por dia (seg à sex). Azul é a cor primária do layout.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handlePrevYear} className="hover-scale" aria-label="Ano anterior"><ChevronLeft /></Button>
           <div className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-lg font-semibold" aria-live="polite">{year}</div>
           <Button variant="outline" onClick={handleNextYear} className="hover-scale" aria-label="Próximo ano"><ChevronRight /></Button>
-          <div className="ml-4 inline-flex rounded-md border">
-            <Button size="sm" variant={viewMode === 'year' ? 'default' : 'ghost'} onClick={() => setViewMode('year')}>Ano</Button>
+          <div className="ml-2 inline-flex rounded-md border">
             <Button size="sm" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}>Mês atual</Button>
+            <Button size="sm" variant={viewMode === 'year' ? 'default' : 'ghost'} onClick={() => setViewMode('year')}>Ano</Button>
           </div>
         </div>
       </header>

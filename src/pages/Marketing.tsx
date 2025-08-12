@@ -695,10 +695,10 @@ export default function Marketing() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Marketing</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Marketing</h1>
           <p className="text-muted-foreground">
             Análise de performance e investimentos em marketing
           </p>
@@ -944,7 +944,7 @@ export default function Marketing() {
       </Card>
 
       {/* Métricas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Investimento Total</CardTitle>
@@ -1009,7 +1009,7 @@ export default function Marketing() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <Label htmlFor="chart-mode" className="text-sm font-medium">
               Exibir por:
             </Label>
@@ -1086,7 +1086,7 @@ export default function Marketing() {
 
 
       {/* Gráficos de Pizza */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Vendas por Público Alvo</CardTitle>
