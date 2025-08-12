@@ -17,7 +17,7 @@ interface DiaVenda {
 
 const getRangeStyle = (valor: number, weekend: boolean) => {
   if (weekend) return { base: "bg-muted text-muted-foreground", star: false, ring: "" };
-  if (valor >= 80001) return { base: "bg-black text-white border-2 border-yellow-400", star: true, ring: "ring-2 ring-yellow-400" };
+  if (valor >= 75001) return { base: "bg-black text-white border-2 border-yellow-400", star: true, ring: "ring-2 ring-yellow-400" };
   if (valor >= 50001) return { base: "bg-green-600 text-white", star: false, ring: "" };
   if (valor >= 20001) return { base: "bg-yellow-500 text-black", star: false, ring: "" };
   if (valor > 0) return { base: "bg-red-600 text-white", star: false, ring: "" };
@@ -33,6 +33,7 @@ export default function ContadorVendas() {
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [inputValor, setInputValor] = useState<string>("");
+  const [viewMode, setViewMode] = useState<'year' | 'month'>('year');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -136,7 +137,7 @@ export default function ContadorVendas() {
     }, 0);
   }, [data]);
 
-  const renderMonth = (monthIndex: number) => {
+  const renderMonth = (monthIndex: number, large = false) => {
     const firstDay = new Date(year, monthIndex, 1);
     const monthStart = startOfMonth(firstDay);
     const monthEnd = endOfMonth(firstDay);
@@ -151,6 +152,8 @@ export default function ContadorVendas() {
       days.push(day);
       day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
     }
+
+    const daySize = large ? 'w-20 h-20 md:w-24 md:h-24' : 'w-14 h-14 md:w-16 md:h-16';
 
     return (
       <div className="space-y-3">
@@ -175,7 +178,7 @@ export default function ContadorVendas() {
                 <button
                   onClick={() => inMonth ? openModalForDate(d) : undefined}
                   disabled={!inMonth}
-                  className={`relative w-14 h-14 md:w-16 md:h-16 rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
+                  className={`relative ${daySize} rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
                   title={registro ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor) : undefined}
                 >
                   <span className="text-[10px] opacity-90">{format(d, "d")}</span>
@@ -202,14 +205,43 @@ export default function ContadorVendas() {
           <p className="text-muted-foreground">Marque o valor vendido por dia (seg à sex). Azul é a cor primária do layout.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handlePrevYear} className="hover-scale"><ChevronLeft /></Button>
-          <div className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-lg font-semibold">{year}</div>
-          <Button variant="outline" onClick={handleNextYear} className="hover-scale"><ChevronRight /></Button>
+          <Button variant="outline" onClick={handlePrevYear} className="hover-scale" aria-label="Ano anterior"><ChevronLeft /></Button>
+          <div className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-lg font-semibold" aria-live="polite">{year}</div>
+          <Button variant="outline" onClick={handleNextYear} className="hover-scale" aria-label="Próximo ano"><ChevronRight /></Button>
+          <div className="ml-4 inline-flex rounded-md border">
+            <Button size="sm" variant={viewMode === 'year' ? 'default' : 'ghost'} onClick={() => setViewMode('year')}>Ano</Button>
+            <Button size="sm" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}>Mês atual</Button>
+          </div>
         </div>
       </header>
 
+      <section aria-labelledby="legendas" className="flex flex-wrap items-center gap-4">
+        <h2 id="legendas" className="sr-only">Legenda de cores do contador</h2>
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-4 w-4 rounded-full bg-red-600" aria-hidden="true"></span>
+          <span className="text-sm">0–20.000</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-4 w-4 rounded-full bg-yellow-500 border border-yellow-600" aria-hidden="true"></span>
+          <span className="text-sm">20.001–50.000</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-4 w-4 rounded-full bg-green-600" aria-hidden="true"></span>
+          <span className="text-sm">50.001–75.000</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="relative inline-flex h-4 w-4 items-center justify-center rounded-full bg-black border-2 border-yellow-400" aria-hidden="true"></span>
+          <span className="text-sm">75.001+</span>
+        </div>
+        <div className="text-xs text-muted-foreground">Cores aplicadas apenas de seg–sex</div>
+      </section>
+
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {monthsInYear.map(renderMonth)}
+        {viewMode === 'year' ? monthsInYear.map((m) => renderMonth(m)) : (
+          <div className="md:col-span-2 xl:col-span-3">
+            {renderMonth(today.getMonth(), true)}
+          </div>
+        )}
       </section>
 
       <aside className="grid grid-cols-1 md:grid-cols-2 gap-4">
