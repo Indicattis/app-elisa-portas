@@ -9,6 +9,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -57,12 +60,35 @@ const queryClient = new QueryClient({
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar />
-      <main className="flex-1 p-6">
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
-      </main>
+      {/* Sidebar fixa no desktop */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        {/* Header mobile com botão de menu */}
+        <div className="md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/50">
+          <div className="h-12 flex items-center justify-between px-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Abrir menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72 sm:w-80">
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+            <span className="text-sm font-medium">Menu</span>
+          </div>
+        </div>
+
+        <main className="flex-1 p-4 sm:p-6">
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </main>
+      </div>
     </div>
   );
 }

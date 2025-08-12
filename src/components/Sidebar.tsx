@@ -99,7 +99,7 @@ export function Sidebar() {
                   <img 
                     src="/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png" 
                     alt="Elisa Portas" 
-                    className="h-10 w-auto transition-all duration-300 hover:scale-105 drop-shadow-md" 
+                    className="h-8 md:h-10 w-auto transition-all duration-300 hover:scale-105 drop-shadow-md" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent rounded opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
@@ -127,7 +127,7 @@ export function Sidebar() {
               <NavLink 
                 to={item.href} 
                 className={() => `
-                  relative flex items-center px-4 py-3 rounded-xl text-sm font-medium
+                  relative flex items-center px-3 py-2 md:px-4 md:py-3 rounded-xl text-xs md:text-sm font-medium
                   transition-colors duration-200
                   ${isActive(item.href) 
                     ? "bg-primary text-primary-foreground" 
@@ -141,7 +141,7 @@ export function Sidebar() {
                   <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary-foreground rounded-r-full animate-scale-in"></div>
                 )}
                 
-                <item.icon className={`h-5 w-5 ${collapsed ? "" : "mr-4"}`} />
+                <item.icon className={`h-4 w-4 md:h-5 md:w-5 ${collapsed ? "" : "mr-4"}`} />
                 
                 {!collapsed && (
                   <span>{item.name}</span>
@@ -166,7 +166,7 @@ export function Sidebar() {
               <NavLink 
                 to="/dashboard/configuracoes" 
                 className={() => `
-                  relative flex items-center px-4 py-3 rounded-xl text-sm font-medium
+                  relative flex items-center px-3 py-2 md:px-4 md:py-3 rounded-xl text-xs md:text-sm font-medium
                   transition-colors duration-200
                   ${isActive("/dashboard/configuracoes") 
                     ? "bg-secondary text-secondary-foreground" 
@@ -175,7 +175,7 @@ export function Sidebar() {
                   ${collapsed ? "justify-center" : ""}
                 `}
               >
-                <Settings className={`h-5 w-5 ${collapsed ? "" : "mr-4"}`} />
+                <Settings className={`h-4 w-4 md:h-5 md:w-5 ${collapsed ? "" : "mr-4"}`} />
                 
                 {!collapsed && (
                   <span>Configurações</span>
