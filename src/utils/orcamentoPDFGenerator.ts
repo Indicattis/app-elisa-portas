@@ -41,16 +41,21 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
     return labels[tipo] || tipo;
   };
 
-  // Cabeçalho da empresa
-  pdf.setFontSize(20);
-  pdf.setTextColor(...primaryColor);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('ELISA PORTAS LTDA', margin, yPosition);
-  
-  pdf.setFontSize(12);
-  pdf.setTextColor(...grayColor);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('A maior fábrica de portas de enrolar do Sul do país', margin, yPosition + 8);
+  // Logo da empresa
+  try {
+    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 60, 20);
+  } catch (error) {
+    // Fallback para texto se a imagem não carregar
+    pdf.setFontSize(20);
+    pdf.setTextColor(...primaryColor);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('ELISA PORTAS LTDA', margin, yPosition);
+    
+    pdf.setFontSize(12);
+    pdf.setTextColor(...grayColor);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('A maior fábrica de portas de enrolar do Sul do país', margin, yPosition + 8);
+  }
 
   // Informações da empresa no canto direito
   pdf.setFontSize(8);
@@ -174,12 +179,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
         fontSize: 8,
         fontStyle: 'bold'
       },
+      tableWidth: 'auto',
       columnStyles: {
-        0: { cellWidth: 50 },  // Produto - mais reduzido
-        1: { cellWidth: 25, halign: 'center' },  // QTD - mais reduzido
-        2: { cellWidth: 25, halign: 'right' },   // Preço - mais reduzido
-        3: { cellWidth: 25, halign: 'center' },  // Desconto - mais reduzido
-        4: { cellWidth: 30, halign: 'right' }    // Preço Final - mais reduzido
+        0: { halign: 'left' },     // Produto
+        1: { halign: 'center' },   // QTD
+        2: { halign: 'right' },    // Preço
+        3: { halign: 'center' },   // Desconto
+        4: { halign: 'right' }     // Preço Final
       },
       margin: { left: margin, right: margin }
     });
