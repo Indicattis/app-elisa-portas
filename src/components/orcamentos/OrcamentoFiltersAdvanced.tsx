@@ -99,11 +99,11 @@ export function OrcamentoFiltersAdvanced({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os status</SelectItem>
-                <SelectItem value="1">Em aberto</SelectItem>
-                <SelectItem value="2">Congelado</SelectItem>
-                <SelectItem value="3">Perdido</SelectItem>
-                <SelectItem value="4">Vendido</SelectItem>
-                <SelectItem value="5">Venda reprovada</SelectItem>
+                <SelectItem value="pendente">Em aberto</SelectItem>
+                <SelectItem value="congelado">Congelado</SelectItem>
+                <SelectItem value="perdido">Perdido</SelectItem>
+                <SelectItem value="vendido">Vendido</SelectItem>
+                <SelectItem value="reprovado">Venda reprovada</SelectItem>
               </SelectContent>
             </Select>
           </div>

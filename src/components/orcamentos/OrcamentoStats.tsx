@@ -10,15 +10,15 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
   const valorTotal = orcamentos.reduce((sum, orc) => sum + (Number(orc.valor_total) || 0), 0);
   
   const statusCounts = {
-    1: orcamentos.filter(orc => orc.status_orcamento === 1).length, // Em aberto
-    2: orcamentos.filter(orc => orc.status_orcamento === 2).length, // Congelado
-    3: orcamentos.filter(orc => orc.status_orcamento === 3).length, // Perdido
-    4: orcamentos.filter(orc => orc.status_orcamento === 4).length, // Vendido
+    pendente: orcamentos.filter(orc => orc.status === 'pendente').length, // Em aberto
+    congelado: orcamentos.filter(orc => orc.status === 'congelado').length, // Congelado
+    perdido: orcamentos.filter(orc => orc.status === 'perdido').length, // Perdido
+    vendido: orcamentos.filter(orc => orc.status === 'vendido').length, // Vendido
   };
 
   // Ranking de motivos de perda
   const motivosPerda = orcamentos
-    .filter(orc => orc.status_orcamento === 3 && orc.motivo_perda)
+    .filter(orc => orc.status === 'perdido' && orc.motivo_perda)
     .reduce((acc, orc) => {
       acc[orc.motivo_perda] = (acc[orc.motivo_perda] || 0) + 1;
       return acc;
@@ -55,9 +55,9 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
           <Clock className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{statusCounts[1]}</div>
+          <div className="text-2xl font-bold text-blue-600">{statusCounts.pendente}</div>
           <p className="text-xs text-muted-foreground">
-            {getPercentage(statusCounts[1])}% do total
+            {getPercentage(statusCounts.pendente)}% do total
           </p>
         </CardContent>
       </Card>
@@ -68,9 +68,9 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
           <Snowflake className="h-4 w-4 text-orange-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-orange-600">{statusCounts[2]}</div>
+          <div className="text-2xl font-bold text-orange-600">{statusCounts.congelado}</div>
           <p className="text-xs text-muted-foreground">
-            {getPercentage(statusCounts[2])}% do total
+            {getPercentage(statusCounts.congelado)}% do total
           </p>
         </CardContent>
       </Card>
@@ -81,9 +81,9 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
           <XCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">{statusCounts[3]}</div>
+          <div className="text-2xl font-bold text-red-600">{statusCounts.perdido}</div>
           <p className="text-xs text-muted-foreground">
-            {getPercentage(statusCounts[3])}% do total
+            {getPercentage(statusCounts.perdido)}% do total
           </p>
         </CardContent>
       </Card>
@@ -94,9 +94,9 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
           <CheckCircle2 className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{statusCounts[4]}</div>
+          <div className="text-2xl font-bold text-green-600">{statusCounts.vendido}</div>
           <p className="text-xs text-muted-foreground">
-            {getPercentage(statusCounts[4])}% do total
+            {getPercentage(statusCounts.vendido)}% do total
           </p>
         </CardContent>
       </Card>

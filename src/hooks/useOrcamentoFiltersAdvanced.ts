@@ -35,7 +35,7 @@ export function useOrcamentoFiltersAdvanced(orcamentos: any[] = []) {
 
     // Filtro por status
     if (filters.status && filters.status !== "todos") {
-      filtered = filtered.filter(orc => orc.status_orcamento === parseInt(filters.status));
+      filtered = filtered.filter(orc => orc.status === filters.status);
     }
 
     // Filtro por classe

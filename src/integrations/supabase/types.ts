@@ -776,6 +776,13 @@ export type Database = {
             referencedRelation: "catalogo_cores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orcamento_produtos_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orcamentos: {
