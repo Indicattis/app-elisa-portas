@@ -126,8 +126,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   // Adicionar avatar do atendente
   try {
-    const avatarUrl = data.vendedora?.avatar_url || '/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png';
-    pdf.addImage(avatarUrl, 'PNG', margin, yPosition, 20, 20);
+    // Verifica se há avatar do vendedor, senão usa a logo da empresa como fallback
+    if (data.vendedora?.avatar_url && data.vendedora.avatar_url !== '') {
+      pdf.addImage(data.vendedora.avatar_url, 'PNG', margin, yPosition, 20, 20);
+    } else {
+      // Usar logo da empresa como fallback
+      pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 20, 20);
+    }
   } catch (error) {
     // Fallback para círculo se a imagem não carregar
     pdf.setFillColor(200, 200, 200);
@@ -150,21 +155,32 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   if (data.produtos.length > 0) {
     // Preparar dados da tabela
     const tableData = data.produtos.map(produto => {
-      let descricao = getTipoProdutoLabel(produto.tipo_produto);
+      const categoria = getTipoProdutoLabel(produto.tipo_produto);
       
-      // Adicionar medidas se disponíveis
-      if (produto.medidas) {
-        descricao += ` - ${produto.medidas}`;
+      let produto_descricao = '';
+      
+      // Para produtos de porta, incluir medidas
+      if (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social') {
+        if (produto.medidas) {
+          produto_descricao = `${categoria} ${produto.medidas}`;
+        } else {
+          produto_descricao = categoria;
+        }
       }
-      
-      // Adicionar descrição personalizada apenas se for diferente do tipo padrão
-      if (produto.descricao && !produto.descricao.toLowerCase().includes(getTipoProdutoLabel(produto.tipo_produto).toLowerCase())) {
-        descricao += `\n${produto.descricao}`;
+      // Para acessórios, usar a descrição se disponível
+      else if (produto.tipo_produto === 'acessorio') {
+        produto_descricao = produto.descricao || 'Acessório';
       }
-      
-      // Adicionar descrição de manutenção
-      if (produto.descricao_manutencao) {
-        descricao += `\n${produto.descricao_manutencao}`;
+      // Para manutenção, usar a descrição de manutenção
+      else if (produto.tipo_produto === 'manutencao') {
+        produto_descricao = produto.descricao_manutencao || 'Serviço de manutenção';
+      }
+      // Para adicionais, usar a descrição
+      else if (produto.tipo_produto === 'adicional') {
+        produto_descricao = produto.descricao || 'Adicional';
+      }
+      else {
+        produto_descricao = categoria;
       }
 
       const quantidade = 1; // Por padrão 1 unidade, pode ser modificado conforme necessário
@@ -173,7 +189,8 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       const precoFinal = precoUnitario - (precoUnitario * desconto / 100);
 
       return [
-        descricao,
+        categoria,
+        produto_descricao,
         quantidade.toString(),
         formatCurrency(precoUnitario),
         desconto > 0 ? `${desconto}%` : '-',
@@ -184,11 +201,11 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
     // Adicionar serviços adicionais
     if (parseFloat(data.formData.valor_frete) > 0) {
       const freteValue = parseFloat(data.formData.valor_frete);
-      tableData.push(['Frete', '1', formatCurrency(freteValue), '-', formatCurrency(freteValue)]);
+      tableData.push(['Serviço', 'Frete', '1', formatCurrency(freteValue), '-', formatCurrency(freteValue)]);
     }
 
     autoTable(pdf, {
-      head: [['Produto', 'Un.', 'Valor', 'Desconto', 'Valor final']],
+      head: [['Categoria', 'Produto', 'Un.', 'Valor', 'Desconto', 'Valor final']],
       body: tableData,
       startY: yPosition,
       styles: { 
@@ -203,11 +220,12 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       },
       tableWidth: 'auto',
       columnStyles: {
-        0: { halign: 'left' },     // Produto
-        1: { halign: 'center' },   // QTD
-        2: { halign: 'right' },    // Preço
-        3: { halign: 'center' },   // Desconto
-        4: { halign: 'right' }     // Preço Final
+        0: { halign: 'left' },     // Categoria
+        1: { halign: 'left' },     // Produto
+        2: { halign: 'center' },   // QTD
+        3: { halign: 'right' },    // Preço
+        4: { halign: 'center' },   // Desconto
+        5: { halign: 'right' }     // Preço Final
       },
       margin: { left: margin, right: margin }
     });
