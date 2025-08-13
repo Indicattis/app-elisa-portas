@@ -2,7 +2,7 @@
 import type { OrcamentoProduto } from "./produto";
 
 export interface OrcamentoFormData {
-  lead_id: string;
+  lead_id?: string;
   cliente_nome: string;
   cliente_cpf: string;
   cliente_telefone: string;

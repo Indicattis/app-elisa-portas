@@ -70,7 +70,6 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
       const pdfData = {
         id: orcamento.id,
         formData: {
-          lead_id: orcamento.lead_id,
           cliente_nome: orcamento.cliente_nome,
           cliente_cpf: orcamento.cliente_cpf,
           cliente_telefone: orcamento.cliente_telefone,

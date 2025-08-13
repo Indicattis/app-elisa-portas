@@ -14,8 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface RequisicaoVenda {
   id: string;
-  lead_id: string;
-  orcamento_id: string | null;
+  orcamento_id: string;
   solicitante_id: string;
   gerente_id: string | null;
   status: string;
@@ -26,16 +25,29 @@ interface RequisicaoVenda {
   observacoes: string | null;
   data_aprovacao: string | null;
   created_at: string;
-  elisaportas_leads: {
-    nome: string;
-    telefone: string;
-    email: string;
-    valor_orcamento: number;
-  };
   orcamentos: {
+    id: string;
+    cliente_nome: string;
+    cliente_telefone: string;
+    cliente_email: string | null;
+    cliente_cpf: string | null;
+    cliente_estado: string | null;
+    cliente_cidade: string | null;
+    cliente_bairro: string | null;
+    cliente_cep: string | null;
     valor_total: number;
+    valor_produto: number;
+    valor_pintura: number;
+    valor_frete: number;
+    valor_instalacao: number;
     forma_pagamento: string;
-  } | null;
+    modalidade_instalacao: string | null;
+    numero_parcelas: number | null;
+    valor_entrada: number | null;
+    desconto_percentual: number | null;
+    canal_aquisicao_id: string | null;
+    campos_personalizados: any;
+  };
 }
 
 export function RequisicoesVenda() {
@@ -64,8 +76,27 @@ export function RequisicoesVenda() {
         .from("requisicoes_venda")
         .select(`
           *,
-          elisaportas_leads (nome, telefone, email, valor_orcamento),
-          orcamentos (valor_total, forma_pagamento)
+          orcamentos (
+            id,
+            cliente_nome,
+            cliente_telefone,
+            cliente_email,
+            cliente_cpf,
+            cliente_estado,
+            cliente_cidade,
+            cliente_bairro,
+            cliente_cep,
+            valor_total,
+            valor_produto,
+            valor_pintura,
+            valor_frete,
+            valor_instalacao,
+            forma_pagamento,
+            modalidade_instalacao,
+            desconto_percentual,
+            canal_aquisicao_id,
+            campos_personalizados
+          )
         `)
         .order("created_at", { ascending: false });
 
@@ -86,7 +117,7 @@ export function RequisicoesVenda() {
   };
 
   const calcularLucro = () => {
-    const valorVenda = selectedRequisicao?.orcamentos?.valor_total || selectedRequisicao?.elisaportas_leads?.valor_orcamento || 0;
+    const valorVenda = selectedRequisicao?.orcamentos?.valor_total || 0;
     const custoTotal = 
       (parseFloat(custos.custo_material) || 0) +
       (parseFloat(custos.custo_pintura) || 0) +
@@ -118,28 +149,36 @@ export function RequisicoesVenda() {
 
       if (updateError) throw updateError;
 
-      // Criar venda
-      const valorVenda = selectedRequisicao.orcamentos?.valor_total || selectedRequisicao.elisaportas_leads?.valor_orcamento || 0;
+      // Criar venda com todos os dados do orçamento
+      const orcamento = selectedRequisicao.orcamentos;
+      const lucroTotal = calcularLucro();
+      
       const { error: vendaError } = await supabase
         .from("vendas")
         .insert({
-          lead_id: selectedRequisicao.lead_id,
           atendente_id: selectedRequisicao.solicitante_id,
-          valor_venda: valorVenda,
-          forma_pagamento: selectedRequisicao.orcamentos?.forma_pagamento || "Não informado",
-          observacoes_venda: custos.observacoes
+          cliente_nome: orcamento.cliente_nome,
+          cliente_telefone: orcamento.cliente_telefone,
+          cliente_email: orcamento.cliente_email,
+          valor_venda: orcamento.valor_total,
+          valor_produto: orcamento.valor_produto,
+          valor_pintura: orcamento.valor_pintura,
+          valor_frete: orcamento.valor_frete,
+          valor_instalacao: orcamento.valor_instalacao,
+          custo_produto: parseFloat(custos.custo_material) || 0,
+          custo_pintura: parseFloat(custos.custo_pintura) || 0,
+          forma_pagamento: orcamento.forma_pagamento,
+          estado: orcamento.cliente_estado,
+          cidade: orcamento.cliente_cidade,
+          bairro: orcamento.cliente_bairro,
+          cep: orcamento.cliente_cep,
+          canal_aquisicao_id: orcamento.canal_aquisicao_id,
+          lucro_total: lucroTotal,
+          observacoes_venda: custos.observacoes,
+          data_venda: new Date().toISOString()
         });
 
       if (vendaError) throw vendaError;
-
-      // Atualizar status do lead para vendido
-      await supabase
-        .from("elisaportas_leads")
-        .update({
-          novo_status: 'venda_aprovada',
-          data_conclusao_atendimento: new Date().toISOString()
-        })
-        .eq("id", selectedRequisicao.lead_id);
 
       toast({
         title: "Sucesso",
@@ -183,17 +222,17 @@ export function RequisicoesVenda() {
 
       if (error) throw error;
 
-      // Reverter status do lead para em andamento
+      // Atualizar status do orçamento de volta para pendente
       await supabase
-        .from("elisaportas_leads")
+        .from("orcamentos")
         .update({
-          novo_status: 'em_andamento'
+          status: 'pendente'
         })
-        .eq("id", selectedRequisicao.lead_id);
+        .eq("id", selectedRequisicao.orcamento_id);
 
       toast({
         title: "Requisição reprovada",
-        description: "A requisição foi reprovada com sucesso",
+        description: "A requisição foi reprovada e o orçamento voltou ao status pendente",
       });
 
       fetchRequisicoes();
@@ -283,8 +322,8 @@ export function RequisicoesVenda() {
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-lg">{requisicao.elisaportas_leads?.nome}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{requisicao.elisaportas_leads?.telefone}</p>
+                        <CardTitle className="text-lg">{requisicao.orcamentos?.cliente_nome}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{requisicao.orcamentos?.cliente_telefone}</p>
                       </div>
                       {getStatusBadge(requisicao.status)}
                     </div>
@@ -293,7 +332,7 @@ export function RequisicoesVenda() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>Valor:</span>
-                        <span>R$ {(requisicao.orcamentos?.valor_total || requisicao.elisaportas_leads?.valor_orcamento || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                        <span>R$ {(requisicao.orcamentos?.valor_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                       </div>
                       {requisicao.orcamentos && (
                         <div className="flex justify-between">
@@ -328,33 +367,48 @@ export function RequisicoesVenda() {
                             Ver
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-4xl">
                           <DialogHeader>
-                            <DialogTitle>Requisição de Venda - {selectedRequisicao?.elisaportas_leads?.nome}</DialogTitle>
+                            <DialogTitle>Requisição de Venda - {selectedRequisicao?.orcamentos?.cliente_nome}</DialogTitle>
                           </DialogHeader>
                           
                           {selectedRequisicao && (
                             <div className="space-y-6">
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-2 gap-6">
                                 <div>
-                                  <h3 className="font-semibold mb-2">Informações do Lead</h3>
+                                  <h3 className="font-semibold mb-2">Informações do Cliente</h3>
                                   <div className="space-y-1 text-sm">
-                                    <p><strong>Nome:</strong> {selectedRequisicao.elisaportas_leads?.nome}</p>
-                                    <p><strong>Telefone:</strong> {selectedRequisicao.elisaportas_leads?.telefone}</p>
-                                    <p><strong>Email:</strong> {selectedRequisicao.elisaportas_leads?.email}</p>
+                                    <p><strong>Nome:</strong> {selectedRequisicao.orcamentos?.cliente_nome}</p>
+                                    <p><strong>Telefone:</strong> {selectedRequisicao.orcamentos?.cliente_telefone}</p>
+                                    {selectedRequisicao.orcamentos?.cliente_email && (
+                                      <p><strong>Email:</strong> {selectedRequisicao.orcamentos.cliente_email}</p>
+                                    )}
+                                    {selectedRequisicao.orcamentos?.cliente_cpf && (
+                                      <p><strong>CPF:</strong> {selectedRequisicao.orcamentos.cliente_cpf}</p>
+                                    )}
+                                    {selectedRequisicao.orcamentos?.cliente_cidade && (
+                                      <p><strong>Cidade:</strong> {selectedRequisicao.orcamentos.cliente_cidade} - {selectedRequisicao.orcamentos.cliente_estado}</p>
+                                    )}
                                   </div>
                                 </div>
                                 
                                 <div>
-                                  <h3 className="font-semibold mb-2">Valor da Venda</h3>
-                                  <div className="text-2xl font-bold text-primary">
-                                    R$ {(selectedRequisicao.orcamentos?.valor_total || selectedRequisicao.elisaportas_leads?.valor_orcamento || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                  <h3 className="font-semibold mb-2">Detalhes da Venda</h3>
+                                  <div className="space-y-2">
+                                    <div className="text-2xl font-bold text-primary">
+                                      R$ {(selectedRequisicao.orcamentos?.valor_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-sm space-y-1">
+                                      <p>Produto: R$ {(selectedRequisicao.orcamentos?.valor_produto || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                      <p>Pintura: R$ {(selectedRequisicao.orcamentos?.valor_pintura || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                      <p>Frete: R$ {(selectedRequisicao.orcamentos?.valor_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                      <p>Instalação: R$ {(selectedRequisicao.orcamentos?.valor_instalacao || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                      <p className="mt-2"><strong>Pagamento:</strong> {selectedRequisicao.orcamentos?.forma_pagamento}</p>
+                                      {selectedRequisicao.orcamentos?.modalidade_instalacao && (
+                                        <p><strong>Instalação:</strong> {selectedRequisicao.orcamentos.modalidade_instalacao}</p>
+                                      )}
+                                    </div>
                                   </div>
-                                  {selectedRequisicao.orcamentos && (
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                      Pagamento: {selectedRequisicao.orcamentos.forma_pagamento}
-                                    </p>
-                                  )}
                                 </div>
                               </div>
 
@@ -424,7 +478,7 @@ export function RequisicoesVenda() {
                                       </div>
                                       <div>
                                         <p className="font-semibold">Valor de Venda:</p>
-                                        <p>R$ {(selectedRequisicao.orcamentos?.valor_total || selectedRequisicao.elisaportas_leads?.valor_orcamento || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                        <p>R$ {(selectedRequisicao.orcamentos?.valor_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                                       </div>
                                       <div>
                                         <p className="font-semibold">Lucro:</p>
@@ -435,14 +489,22 @@ export function RequisicoesVenda() {
                                     </div>
                                   </div>
 
-                                  <div className="flex justify-end space-x-4">
-                                    <Button variant="destructive" onClick={reprovarRequisicao} disabled={loading}>
-                                      <X className="w-4 h-4 mr-2" />
-                                      Reprovar
-                                    </Button>
-                                    <Button onClick={aprovarRequisicao} disabled={loading}>
+                                  <div className="flex gap-2 pt-4">
+                                    <Button 
+                                      onClick={aprovarRequisicao} 
+                                      disabled={loading}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
                                       <Check className="w-4 h-4 mr-2" />
                                       Aprovar
+                                    </Button>
+                                    <Button 
+                                      variant="destructive" 
+                                      onClick={reprovarRequisicao} 
+                                      disabled={loading}
+                                    >
+                                      <X className="w-4 h-4 mr-2" />
+                                      Reprovar
                                     </Button>
                                   </div>
                                 </div>
@@ -450,30 +512,21 @@ export function RequisicoesVenda() {
 
                               {selectedRequisicao.status !== "pendente" && (
                                 <div className="space-y-4">
-                                  <h3 className="font-semibold">Custos Informados</h3>
+                                  <h3 className="font-semibold">Custos Registrados</h3>
                                   <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div className="flex justify-between">
-                                      <span>Material:</span>
-                                      <span>R$ {(selectedRequisicao.custo_material || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                                    <div>
+                                      <p><strong>Material:</strong> R$ {(selectedRequisicao.custo_material || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                      <p><strong>Pintura:</strong> R$ {(selectedRequisicao.custo_pintura || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <span>Pintura:</span>
-                                      <span>R$ {(selectedRequisicao.custo_pintura || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span>Instalação:</span>
-                                      <span>R$ {(selectedRequisicao.custo_instalacao || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span>Frete:</span>
-                                      <span>R$ {(selectedRequisicao.custo_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                                    <div>
+                                      <p><strong>Instalação:</strong> R$ {(selectedRequisicao.custo_instalacao || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                      <p><strong>Frete:</strong> R$ {(selectedRequisicao.custo_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                                     </div>
                                   </div>
-                                  
                                   {selectedRequisicao.observacoes && (
                                     <div>
                                       <p className="font-semibold">Observações:</p>
-                                      <p className="text-sm text-muted-foreground">{selectedRequisicao.observacoes}</p>
+                                      <p className="text-sm">{selectedRequisicao.observacoes}</p>
                                     </div>
                                   )}
                                 </div>
@@ -484,8 +537,8 @@ export function RequisicoesVenda() {
                       </Dialog>
 
                       {status === "lixeira" && (
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="destructive"
                           onClick={() => excluirRequisicao(requisicao.id)}
                         >

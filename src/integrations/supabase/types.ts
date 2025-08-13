@@ -1117,7 +1117,6 @@ export type Database = {
           data_aprovacao: string | null
           gerente_id: string | null
           id: string
-          lead_id: string | null
           observacoes: string | null
           orcamento_id: string | null
           solicitante_id: string
@@ -1133,7 +1132,6 @@ export type Database = {
           data_aprovacao?: string | null
           gerente_id?: string | null
           id?: string
-          lead_id?: string | null
           observacoes?: string | null
           orcamento_id?: string | null
           solicitante_id: string
@@ -1149,22 +1147,13 @@ export type Database = {
           data_aprovacao?: string | null
           gerente_id?: string | null
           id?: string
-          lead_id?: string | null
           observacoes?: string | null
           orcamento_id?: string | null
           solicitante_id?: string
           status?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "requisicoes_venda_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "elisaportas_leads"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       role_permissions: {
         Row: {
@@ -1384,7 +1373,9 @@ export type Database = {
         Returns: number
       }
       criar_requisicao_venda: {
-        Args: { lead_uuid?: string; orcamento_uuid?: string }
+        Args:
+          | { lead_uuid?: string; orcamento_uuid?: string }
+          | { orcamento_uuid: string }
         Returns: string
       }
       has_permission: {
