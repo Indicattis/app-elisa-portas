@@ -126,6 +126,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   // Adicionar avatar do atendente
   try {
+    // Salvar o estado atual do PDF
+    pdf.saveGraphicsState();
+    
+    // Criar clip path circular
+    pdf.circle(margin + 10, yPosition + 10, 10);
+    pdf.clip();
+    
     // Verifica se há avatar do vendedor, senão usa a logo da empresa como fallback
     if (data.vendedora?.avatar_url && data.vendedora.avatar_url !== '') {
       pdf.addImage(data.vendedora.avatar_url, 'PNG', margin, yPosition, 20, 20);
@@ -133,6 +140,15 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       // Usar logo da empresa como fallback
       pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 20, 20);
     }
+    
+    // Restaurar o estado do PDF (remove o clip path)
+    pdf.restoreGraphicsState();
+    
+    // Adicionar borda circular opcional
+    pdf.setLineWidth(0.5);
+    pdf.setDrawColor(200, 200, 200);
+    pdf.circle(margin + 10, yPosition + 10, 10, 'S');
+    
   } catch (error) {
     // Fallback para círculo se a imagem não carregar
     pdf.setFillColor(200, 200, 200);
