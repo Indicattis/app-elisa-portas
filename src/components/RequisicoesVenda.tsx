@@ -25,6 +25,7 @@ interface RequisicaoVenda {
   observacoes: string | null;
   data_aprovacao: string | null;
   created_at: string;
+  canal_aquisicao_id: string | null;
   orcamentos: {
     id: string;
     cliente_nome: string;
@@ -179,7 +180,7 @@ export function RequisicoesVenda() {
           bairro: orcamento.cliente_bairro,
           cep: orcamento.cliente_cep,
           publico_alvo: orcamento.publico_alvo,
-          canal_aquisicao_id: orcamento.canal_aquisicao_id,
+          canal_aquisicao_id: selectedRequisicao.canal_aquisicao_id || orcamento.canal_aquisicao_id,
           observacoes_venda: custos.observacoes,
           data_venda: new Date().toISOString()
         });
