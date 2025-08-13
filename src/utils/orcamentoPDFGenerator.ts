@@ -89,15 +89,15 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   const numeroOrcamento = data.numeroOrcamento || `ORC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Nº: ${numeroOrcamento}`);
+  pdf.text(`Nº: ${numeroOrcamento}`, pageWidth - margin - 60, yPosition);
   pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition + 6);
   
-  yPosition += 15;
+  yPosition += 10;
 
   // Dados do cliente com fundo destacado
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('DADOS DO CLIENTE', margin, yPosition);
+  pdf.text('Dados do cliente', margin, yPosition);
   yPosition += 10;
 
   // Fundo cinza claro para a seção do cliente
@@ -115,12 +115,12 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`Cidade: ${data.formData.cliente_cidade || 'Não informado'}`, pageWidth/2, yPosition + 9);
   pdf.text(`CEP: ${data.formData.cliente_cep || 'Não informado'}`, pageWidth/2, yPosition + 15);
   
-  yPosition += 35;
+  yPosition += 25;
 
   // Informações da vendedora
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('VENDEDORA RESPONSÁVEL', margin, yPosition);
+  pdf.text('Atendente responsável', margin, yPosition);
   yPosition += 10;
 
   // Adicionar avatar placeholder (substituir pela imagem real quando disponível)
@@ -137,7 +137,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 25, yPosition + 8);
   pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 25, yPosition + 14);
   
-  yPosition += 35;
+  yPosition += 25;
 
   // Produtos
   pdf.setFontSize(12);
