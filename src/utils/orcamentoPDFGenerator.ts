@@ -92,7 +92,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`Nº: ${numeroOrcamento}`, 40, yPosition);
   pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition);
   
-  yPosition += 20;
+  yPosition += 10;
 
   // Dados do cliente com fundo destacado
   pdf.setFontSize(12);
