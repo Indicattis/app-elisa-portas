@@ -378,7 +378,8 @@ export function NovoOrcamentoForm({
       const pdfData = {
         formData,
         produtos,
-        calculatedTotal
+        calculatedTotal,
+        valorInstalacao
       };
 
       generateOrcamentoPDF(pdfData);
@@ -733,6 +734,7 @@ export function NovoOrcamentoForm({
             formData={formData}
             produtos={produtos}
             calculatedTotal={calculatedTotal}
+            valorInstalacao={valorInstalacao}
           />
         </div>
       </div>

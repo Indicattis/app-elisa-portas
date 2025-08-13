@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { OrcamentoFormData } from '@/types/orcamento';
 import type { OrcamentoProduto } from '@/types/produto';
+import { distribuirCustosLogisticos, criarItensLogisticosIncluso } from './costDistribution';
 
 interface OrcamentoPDFData {
   id?: string;
@@ -9,6 +10,7 @@ interface OrcamentoPDFData {
   produtos: OrcamentoProduto[];
   calculatedTotal: number;
   numeroOrcamento?: string;
+  valorInstalacao?: number;
   vendedora?: {
     nome: string;
     cargo: string;
@@ -155,8 +157,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   yPosition += 5;
 
   if (data.produtos.length > 0) {
-    // Preparar dados da tabela
-    const tableData = data.produtos.map(produto => {
+    // Distribuir custos logísticos entre produtos de porta
+    const valorFrete = parseFloat(data.formData.valor_frete) || 0;
+    const valorInstalacao = data.valorInstalacao || 0;
+    const produtosComCustosDistribuidos = distribuirCustosLogisticos(data.produtos, valorFrete, valorInstalacao);
+    
+    // Preparar dados da tabela com produtos
+    const tableData = produtosComCustosDistribuidos.map(produto => {
       const categoria = getTipoProdutoLabel(produto.tipo_produto);
       
       let produto_descricao = '';
@@ -205,11 +212,18 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       ];
     });
 
-    // Adicionar serviços adicionais
-    if (parseFloat(data.formData.valor_frete) > 0) {
-      const freteValue = parseFloat(data.formData.valor_frete);
-      tableData.push(['Serviço', 'Frete', '1', formatCurrency(freteValue), '-', formatCurrency(freteValue)]);
-    }
+    // Adicionar itens logísticos como "Incluso"
+    const itensLogisticos = criarItensLogisticosIncluso();
+    itensLogisticos.forEach(item => {
+      tableData.push([
+        'Serviço',
+        `${item.descricao}: Incluso`,
+        '1',
+        formatCurrency(0),
+        '-',
+        formatCurrency(0)
+      ]);
+    });
 
     autoTable(pdf, {
       head: [['Categoria', 'Produto', 'Un.', 'Valor', 'Desconto', 'Valor final']],

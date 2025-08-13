@@ -4,14 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { OrcamentoFormData } from '@/types/orcamento';
 import type { OrcamentoProduto } from '@/types/produto';
+import { distribuirCustosLogisticos, criarItensLogisticosIncluso } from '@/utils/costDistribution';
 
 interface OrcamentoPreviewProps {
   formData: OrcamentoFormData;
   produtos: OrcamentoProduto[];
   calculatedTotal: number;
+  valorInstalacao?: number;
 }
 
-export function OrcamentoPreview({ formData, produtos, calculatedTotal }: OrcamentoPreviewProps) {
+export function OrcamentoPreview({ formData, produtos, calculatedTotal, valorInstalacao = 0 }: OrcamentoPreviewProps) {
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { 
       style: 'currency', 
@@ -32,6 +34,11 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
   };
 
   const numeroOrcamento = `ORC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+  // Distribuir custos logísticos entre produtos de porta
+  const valorFrete = parseFloat(formData.valor_frete) || 0;
+  const produtosComCustosDistribuidos = distribuirCustosLogisticos(produtos, valorFrete, valorInstalacao);
+  const itensLogisticos = criarItensLogisticosIncluso();
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -103,7 +110,7 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
             </p>
           ) : (
             <div className="space-y-4">
-              {produtos.map((produto, index) => (
+              {produtosComCustosDistribuidos.map((produto, index) => (
                 <div key={index} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -124,6 +131,21 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
                   </div>
                 </div>
               ))}
+              
+              {/* Itens logísticos como "Incluso" */}
+              {itensLogisticos.map((item, index) => (
+                <div key={`logistic-${index}`} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-medium">{item.descricao}</h4>
+                      <p className="text-sm text-muted-foreground">Incluso no valor dos produtos</p>
+                    </div>
+                    <Badge variant="secondary">
+                      Incluso
+                    </Badge>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -138,7 +160,7 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Quantidade de itens:</span>
-              <span>{produtos.length}</span>
+              <span>{produtos.length + itensLogisticos.length}</span>
             </div>
             
             {formData.desconto_total_percentual > 0 && (
