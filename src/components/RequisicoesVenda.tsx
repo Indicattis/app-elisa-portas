@@ -172,7 +172,6 @@ export function RequisicoesVenda() {
           bairro: orcamento.cliente_bairro,
           cep: orcamento.cliente_cep,
           canal_aquisicao_id: orcamento.canal_aquisicao_id,
-          lucro_total: lucroTotal,
           observacoes_venda: custos.observacoes,
           data_venda: new Date().toISOString()
         });
