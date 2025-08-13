@@ -94,7 +94,6 @@ export function RequisicoesVenda() {
             forma_pagamento,
             modalidade_instalacao,
             desconto_percentual,
-            canal_aquisicao_id,
             campos_personalizados
           )
         `)

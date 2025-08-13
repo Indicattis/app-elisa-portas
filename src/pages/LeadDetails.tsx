@@ -232,7 +232,6 @@ export default function LeadDetails() {
       // Criar requisição de venda usando a função do Supabase
       const { data: requisicaoId, error: requisicaoError } = await supabase
         .rpc('criar_requisicao_venda', {
-          lead_uuid: lead.id,
           orcamento_uuid: approvedBudgets[0].id
         });
 
