@@ -89,8 +89,8 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   const numeroOrcamento = data.numeroOrcamento || `ORC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Nº: ${numeroOrcamento}`, 45, yPosition);
-  pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition + 6);
+  pdf.text(`Nº: ${numeroOrcamento}`, 40, yPosition);
+  pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, yPosition);
   
   yPosition += 20;
 
