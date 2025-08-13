@@ -173,10 +173,6 @@ export function NovoOrcamentoForm({
         produto.preco_producao = novoProduto.preco_producao || 0;
         produto.descricao = `${getNomeProduto(produto)} ${produto.medidas || ''}`.trim();
         valor = novoProduto.preco_producao || 0;
-        // Adicionar valor de instalação ao custo logístico
-        if (novoProduto.preco_instalacao) {
-          setValorInstalacao(prev => prev + (novoProduto.preco_instalacao || 0));
-        }
         break;
       
       case 'acessorio':
@@ -246,18 +242,6 @@ export function NovoOrcamentoForm({
                 value={novoProduto.preco_producao || ""}
                 onChange={(e) => setNovoProduto({...novoProduto, preco_producao: parseFloat(e.target.value) || 0})}
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Preço de Instalação (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={novoProduto.preco_instalacao || ""}
-                onChange={(e) => setNovoProduto({...novoProduto, preco_instalacao: parseFloat(e.target.value) || 0})}
-              />
-              <p className="text-xs text-muted-foreground">
-                Será adicionado aos custos logísticos
-              </p>
             </div>
           </>
         );
@@ -581,6 +565,16 @@ export function NovoOrcamentoForm({
                 step="0.01"
                 value={formData.valor_frete}
                 onChange={(e) => setFormData({...formData, valor_frete: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Instalação (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={valorInstalacao}
+                onChange={(e) => setValorInstalacao(parseFloat(e.target.value) || 0)}
               />
             </div>
 
