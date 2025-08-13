@@ -66,6 +66,7 @@ export function NovoOrcamentoForm({
   const [acessorios, setAcessorios] = useState<Acessorio[]>([]);
   const [adicionais, setAdicionais] = useState<Adicional[]>([]);
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
 
   // Produto temporário para adição
@@ -110,17 +111,19 @@ export function NovoOrcamentoForm({
 
   const fetchData = async () => {
     try {
-      const [coresResponse, acessoriosResponse, adicionaisResponse, autorizadosResponse] = await Promise.all([
+      const [coresResponse, acessoriosResponse, adicionaisResponse, autorizadosResponse, leadsResponse] = await Promise.all([
         supabase.from('catalogo_cores').select('*').eq('ativa', true),
         supabase.from('acessorios').select('*').eq('ativo', true),
         supabase.from('adicionais').select('*').eq('ativo', true),
-        supabase.from('autorizados').select('*').eq('ativo', true)
+        supabase.from('autorizados').select('*').eq('ativo', true),
+        supabase.from('elisaportas_leads').select('id, nome, telefone, email').order('data_envio', { ascending: false })
       ]);
 
       if (coresResponse.data) setCores(coresResponse.data);
       if (acessoriosResponse.data) setAcessorios(acessoriosResponse.data);
       if (adicionaisResponse.data) setAdicionais(adicionaisResponse.data);
       if (autorizadosResponse.data) setAutorizados(autorizadosResponse.data);
+      if (leadsResponse.data) setLeads(leadsResponse.data);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast({
@@ -364,6 +367,16 @@ export function NovoOrcamentoForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validar se lead foi selecionado (apenas para novos orçamentos)
+    if (!isEdit && (!formData.lead_id || formData.lead_id.trim() === '')) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Selecione um lead para criar o orçamento"
+      });
+      return;
+    }
+    
     if (produtos.length === 0) {
       toast({
         variant: "destructive",
@@ -381,6 +394,36 @@ export function NovoOrcamentoForm({
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Seleção de Lead */}
+        {!isEdit && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Selecionar Lead</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Lead *</Label>
+                <Select 
+                  value={formData.lead_id} 
+                  onValueChange={(value) => setFormData({...formData, lead_id: value})}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um lead" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {leads.map((lead) => (
+                      <SelectItem key={lead.id} value={lead.id}>
+                        {lead.nome} - {lead.telefone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Informações do Cliente */}
         <Card>
           <CardHeader>
