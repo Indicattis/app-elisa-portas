@@ -140,9 +140,10 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   }
 
   pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 20, yPosition + 4);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 25, yPosition + 8);
-  pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 25, yPosition + 14);
+  pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 20, yPosition + 8);
   
   yPosition += 30;
 
