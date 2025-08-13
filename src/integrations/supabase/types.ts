@@ -781,37 +781,28 @@ export type Database = {
       orcamentos: {
         Row: {
           aprovado_por: string | null
-          autorizado_id: string | null
+          atendente_id: string | null
           campos_personalizados: Json | null
           classe: number | null
           cliente_bairro: string | null
           cliente_cep: string | null
           cliente_cidade: string | null
           cliente_cpf: string | null
+          cliente_email: string | null
           cliente_estado: string | null
-          cliente_nome: string | null
+          cliente_nome: string
           cliente_telefone: string | null
           created_at: string
           data_aprovacao: string | null
-          desconto_adicional_percentual: number | null
-          desconto_adicional_valor: number | null
           desconto_percentual: number | null
-          desconto_total_percentual: number | null
-          documento_url: string | null
           forma_pagamento: string
           id: string
-          justificativa_perda: string | null
           lead_id: string | null
           modalidade_instalacao: string | null
           motivo_analise: string | null
-          motivo_perda: string | null
-          observacoes_aprovacao: string | null
           requer_analise: boolean
           status: string
-          status_orcamento: number | null
-          tipo_desconto_adicional: string | null
           updated_at: string
-          usuario_id: string
           valor_frete: number
           valor_instalacao: number
           valor_pintura: number
@@ -820,76 +811,58 @@ export type Database = {
         }
         Insert: {
           aprovado_por?: string | null
-          autorizado_id?: string | null
+          atendente_id?: string | null
           campos_personalizados?: Json | null
           classe?: number | null
           cliente_bairro?: string | null
           cliente_cep?: string | null
           cliente_cidade?: string | null
           cliente_cpf?: string | null
+          cliente_email?: string | null
           cliente_estado?: string | null
-          cliente_nome?: string | null
+          cliente_nome: string
           cliente_telefone?: string | null
           created_at?: string
           data_aprovacao?: string | null
-          desconto_adicional_percentual?: number | null
-          desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
-          desconto_total_percentual?: number | null
-          documento_url?: string | null
           forma_pagamento: string
           id?: string
-          justificativa_perda?: string | null
           lead_id?: string | null
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
-          motivo_perda?: string | null
-          observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
-          status_orcamento?: number | null
-          tipo_desconto_adicional?: string | null
           updated_at?: string
-          usuario_id: string
           valor_frete?: number
           valor_instalacao?: number
           valor_pintura?: number
-          valor_produto: number
-          valor_total: number
+          valor_produto?: number
+          valor_total?: number
         }
         Update: {
           aprovado_por?: string | null
-          autorizado_id?: string | null
+          atendente_id?: string | null
           campos_personalizados?: Json | null
           classe?: number | null
           cliente_bairro?: string | null
           cliente_cep?: string | null
           cliente_cidade?: string | null
           cliente_cpf?: string | null
+          cliente_email?: string | null
           cliente_estado?: string | null
-          cliente_nome?: string | null
+          cliente_nome?: string
           cliente_telefone?: string | null
           created_at?: string
           data_aprovacao?: string | null
-          desconto_adicional_percentual?: number | null
-          desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
-          desconto_total_percentual?: number | null
-          documento_url?: string | null
           forma_pagamento?: string
           id?: string
-          justificativa_perda?: string | null
           lead_id?: string | null
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
-          motivo_perda?: string | null
-          observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
-          status_orcamento?: number | null
-          tipo_desconto_adicional?: string | null
           updated_at?: string
-          usuario_id?: string
           valor_frete?: number
           valor_instalacao?: number
           valor_pintura?: number
@@ -898,11 +871,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_orcamentos_autorizado"
-            columns: ["autorizado_id"]
+            foreignKeyName: "orcamentos_atendente_id_fkey"
+            columns: ["atendente_id"]
             isOneToOne: false
-            referencedRelation: "autorizados"
-            referencedColumns: ["id"]
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "orcamentos_lead_id_fkey"
@@ -1164,13 +1137,6 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "elisaportas_leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "requisicoes_venda_orcamento_id_fkey"
-            columns: ["orcamento_id"]
-            isOneToOne: false
-            referencedRelation: "orcamentos"
             referencedColumns: ["id"]
           },
         ]
