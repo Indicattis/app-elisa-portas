@@ -146,7 +146,7 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
   const handleStatusChange = async (orcamentoId: string, novoStatus: number, motivoPerda?: MotivoPerda, justificativa?: string) => {
     try {
       const updateData: any = { 
-        status_orcamento: novoStatus 
+        status: getStatusString(novoStatus)
       };
 
       if (novoStatus === 3 && motivoPerda && justificativa) {
@@ -197,14 +197,38 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
 
   const canEdit = (orcamento: any) => {
     const isOwner = orcamento.atendente_id === user?.id;
-    const canEditStatus = [1, 2].includes(orcamento.status_orcamento);
+    const statusNumero = getStatusNumber(orcamento.status);
+    const canEditStatus = [1, 2].includes(statusNumero);
     return (isAdmin || isOwner) && canEditStatus;
   };
 
   const canChangeStatus = (orcamento: any) => {
     const isOwner = orcamento.atendente_id === user?.id;
-    const canChangeStatus = [1, 2].includes(orcamento.status_orcamento);
+    const statusNumero = getStatusNumber(orcamento.status);
+    const canChangeStatus = [1, 2].includes(statusNumero);
     return (isAdmin || isOwner) && canChangeStatus;
+  };
+
+  const getStatusNumber = (status: string) => {
+    const statusMap: { [key: string]: number } = {
+      'pendente': 1,
+      'congelado': 2,
+      'perdido': 3,
+      'vendido': 4,
+      'reprovado': 5
+    };
+    return statusMap[status] || 1;
+  };
+
+  const getStatusString = (number: number) => {
+    const statusMap: { [key: number]: string } = {
+      1: 'pendente',
+      2: 'congelado',
+      3: 'perdido',
+      4: 'vendido',
+      5: 'reprovado'
+    };
+    return statusMap[number] || 'pendente';
   };
 
   const canDelete = (orcamento: any) => {
@@ -329,10 +353,10 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                 
                 <TableCell>
                   <Badge 
-                    variant={getStatusBadgeVariant(orcamento.status_orcamento)}
-                    className={orcamento.status_orcamento === 4 ? "bg-green-500 text-white hover:bg-green-600" : ""}
+                    variant={getStatusBadgeVariant(getStatusNumber(orcamento.status))}
+                    className={getStatusNumber(orcamento.status) === 4 ? "bg-green-500 text-white hover:bg-green-600" : ""}
                   >
-                    {ORCAMENTO_STATUS[orcamento.status_orcamento as keyof typeof ORCAMENTO_STATUS]}
+                    {ORCAMENTO_STATUS[getStatusNumber(orcamento.status) as keyof typeof ORCAMENTO_STATUS]}
                   </Badge>
                 </TableCell>
                 

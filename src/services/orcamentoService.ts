@@ -31,7 +31,7 @@ export const createOrcamento = async (
     valor_total: valorTotal,
     requer_analise: formData.requer_analise,
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
-    status_orcamento: 1, // Sempre começa como "Em aberto"
+    status: 'pendente', // Sempre começa como "Em aberto" mas com string no banco
     valor_produto: 0,
     valor_pintura: 0,
     valor_instalacao: 0,

@@ -22,8 +22,19 @@ const MOTIVOS_PERDA = [
   { value: 'produto', label: 'Produto' }
 ];
 
+const getStatusNumber = (status: string) => {
+  const statusMap: { [key: string]: number } = {
+    'pendente': 1,
+    'congelado': 2,
+    'perdido': 3,
+    'vendido': 4,
+    'reprovado': 5
+  };
+  return statusMap[status] || 1;
+};
+
 export function OrcamentoStatusModal({ orcamento, open, onOpenChange, onStatusChange }: OrcamentoStatusModalProps) {
-  const [novoStatus, setNovoStatus] = useState<number>(orcamento?.status_orcamento || 1);
+  const [novoStatus, setNovoStatus] = useState<number>(getStatusNumber(orcamento?.status) || 1);
   const [motivoPerda, setMotivoPerda] = useState<MotivoPerda>();
   const [justificativa, setJustificativa] = useState("");
 
@@ -35,7 +46,7 @@ export function OrcamentoStatusModal({ orcamento, open, onOpenChange, onStatusCh
   };
 
   const getStatusOptions = () => {
-    const currentStatus = orcamento?.status_orcamento || 1;
+    const currentStatus = getStatusNumber(orcamento?.status) || 1;
     
     // Status que podem ser alterados baseado no status atual
     switch (currentStatus) {

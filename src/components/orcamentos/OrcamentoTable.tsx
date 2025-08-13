@@ -20,7 +20,7 @@ export function OrcamentoTable({ orcamentos, onEdit, onRefresh }: OrcamentoTable
   const handleStatusChange = async (orcamentoId: string, novoStatus: number, motivoPerda?: MotivoPerda, justificativa?: string) => {
     try {
       const updateData: any = { 
-        status_orcamento: novoStatus 
+        status: getStatusString(novoStatus)
       };
 
       if (novoStatus === 3 && motivoPerda && justificativa) {
@@ -67,6 +67,17 @@ export function OrcamentoTable({ orcamentos, onEdit, onRefresh }: OrcamentoTable
         description: "Erro ao atualizar status do orçamento",
       });
     }
+  };
+
+  const getStatusString = (number: number) => {
+    const statusMap: { [key: number]: string } = {
+      1: 'pendente',
+      2: 'congelado',
+      3: 'perdido',
+      4: 'vendido',
+      5: 'reprovado'
+    };
+    return statusMap[number] || 'pendente';
   };
 
   const handleCardStatusChange = (orcamento: any) => {
