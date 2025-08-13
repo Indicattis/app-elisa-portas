@@ -25,6 +25,9 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   const primaryColor = [41, 128, 185] as [number, number, number];
   const grayColor = [128, 128, 128] as [number, number, number];
   const lightGrayColor = [245, 245, 245] as [number, number, number];
+  
+  // Configurar fonte padrão como sans-serif
+  pdf.setFont('helvetica', 'normal');
 
   const formatCurrency = (value: number) => {
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -91,23 +94,28 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   
   yPosition += 15;
 
-  // Dados do cliente
+  // Dados do cliente com fundo destacado
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('DADOS DO CLIENTE', margin, yPosition);
   yPosition += 10;
 
+  // Fundo cinza claro para a seção do cliente
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(margin, yPosition - 3, pageWidth - (margin * 2), 30, 'F');
+  
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Nome: ${data.formData.cliente_nome || 'Não informado'}`, margin, yPosition);
-  pdf.text(`CPF: ${data.formData.cliente_cpf || 'Não informado'}`, margin, yPosition + 6);
-  pdf.text(`Telefone: ${data.formData.cliente_telefone || 'Não informado'}`, margin, yPosition + 12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text(`Nome: ${data.formData.cliente_nome || 'Não informado'}`, margin + 3, yPosition + 3);
+  pdf.text(`CPF: ${data.formData.cliente_cpf || 'Não informado'}`, margin + 3, yPosition + 9);
+  pdf.text(`Telefone: ${data.formData.cliente_telefone || 'Não informado'}`, margin + 3, yPosition + 15);
   
-  pdf.text(`Estado: ${data.formData.cliente_estado || 'Não informado'}`, pageWidth/2, yPosition);
-  pdf.text(`Cidade: ${data.formData.cliente_cidade || 'Não informado'}`, pageWidth/2, yPosition + 6);
-  pdf.text(`CEP: ${data.formData.cliente_cep || 'Não informado'}`, pageWidth/2, yPosition + 12);
+  pdf.text(`Estado: ${data.formData.cliente_estado || 'Não informado'}`, pageWidth/2, yPosition + 3);
+  pdf.text(`Cidade: ${data.formData.cliente_cidade || 'Não informado'}`, pageWidth/2, yPosition + 9);
+  pdf.text(`CEP: ${data.formData.cliente_cep || 'Não informado'}`, pageWidth/2, yPosition + 15);
   
-  yPosition += 25;
+  yPosition += 35;
 
   // Informações da vendedora
   pdf.setFontSize(12);
@@ -115,12 +123,21 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('VENDEDORA RESPONSÁVEL', margin, yPosition);
   yPosition += 10;
 
+  // Adicionar avatar placeholder (substituir pela imagem real quando disponível)
+  try {
+    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 20, 20);
+  } catch (error) {
+    // Fallback para círculo se a imagem não carregar
+    pdf.setFillColor(200, 200, 200);
+    pdf.circle(margin + 10, yPosition + 10, 10, 'F');
+  }
+
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin, yPosition);
-  pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin, yPosition + 6);
+  pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 25, yPosition + 8);
+  pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 25, yPosition + 14);
   
-  yPosition += 25;
+  yPosition += 35;
 
   // Produtos
   pdf.setFontSize(12);
@@ -206,23 +223,29 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   
-  // Quantidade de itens
+  // Quantidade de itens - alinhado à direita máxima
   pdf.text('Quantidade de itens:', margin, yPosition);
-  pdf.text(data.produtos.length.toString(), pageWidth - margin - 30, yPosition);
+  const qtyText = data.produtos.length.toString();
+  const qtyTextWidth = pdf.getTextWidth(qtyText);
+  pdf.text(qtyText, pageWidth - margin - qtyTextWidth, yPosition);
   yPosition += 8;
 
-  // Desconto se houver
+  // Desconto se houver - alinhado à direita máxima
   if (data.formData.desconto_total_percentual > 0) {
     const subtotal = data.calculatedTotal / (1 - data.formData.desconto_total_percentual / 100);
     const desconto = subtotal - data.calculatedTotal;
     
     pdf.text('Subtotal:', margin, yPosition);
-    pdf.text(formatCurrency(subtotal), pageWidth - margin - 50, yPosition);
+    const subtotalText = formatCurrency(subtotal);
+    const subtotalTextWidth = pdf.getTextWidth(subtotalText);
+    pdf.text(subtotalText, pageWidth - margin - subtotalTextWidth, yPosition);
     yPosition += 8;
     
     pdf.setTextColor(0, 150, 0); // Verde para desconto
     pdf.text(`Desconto (${data.formData.desconto_total_percentual}%):`, margin, yPosition);
-    pdf.text(`-${formatCurrency(desconto)}`, pageWidth - margin - 50, yPosition);
+    const descontoText = `-${formatCurrency(desconto)}`;
+    const descontoTextWidth = pdf.getTextWidth(descontoText);
+    pdf.text(descontoText, pageWidth - margin - descontoTextWidth, yPosition);
     yPosition += 8;
     pdf.setTextColor(0, 0, 0); // Voltar para preto
   }
@@ -233,11 +256,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.line(margin, yPosition, pageWidth - margin, yPosition);
   yPosition += 10;
 
-  // Total
+  // Total - alinhado à direita máxima
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(14);
   pdf.text('TOTAL:', margin, yPosition);
-  pdf.text(formatCurrency(data.calculatedTotal), pageWidth - margin - 60, yPosition);
+  const totalText = formatCurrency(data.calculatedTotal);
+  const totalTextWidth = pdf.getTextWidth(totalText);
+  pdf.text(totalText, pageWidth - margin - totalTextWidth, yPosition);
   
   yPosition += 25;
 
