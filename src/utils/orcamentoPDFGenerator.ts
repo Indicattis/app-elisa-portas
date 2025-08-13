@@ -12,6 +12,7 @@ interface OrcamentoPDFData {
   vendedora?: {
     nome: string;
     cargo: string;
+    avatar_url?: string;
   };
 }
 
@@ -123,9 +124,10 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('Atendente responsável', margin, yPosition);
   yPosition += 5;
 
-  // Adicionar avatar placeholder (substituir pela imagem real quando disponível)
+  // Adicionar avatar do atendente
   try {
-    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 20, 20);
+    const avatarUrl = data.vendedora?.avatar_url || '/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png';
+    pdf.addImage(avatarUrl, 'PNG', margin, yPosition, 20, 20);
   } catch (error) {
     // Fallback para círculo se a imagem não carregar
     pdf.setFillColor(200, 200, 200);
@@ -150,14 +152,17 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
     const tableData = data.produtos.map(produto => {
       let descricao = getTipoProdutoLabel(produto.tipo_produto);
       
+      // Adicionar medidas se disponíveis
       if (produto.medidas) {
-        descricao += `\nMedidas: ${produto.medidas}`;
+        descricao += ` - ${produto.medidas}`;
       }
       
-      if (produto.descricao) {
+      // Adicionar descrição personalizada apenas se for diferente do tipo padrão
+      if (produto.descricao && !produto.descricao.toLowerCase().includes(getTipoProdutoLabel(produto.tipo_produto).toLowerCase())) {
         descricao += `\n${produto.descricao}`;
       }
       
+      // Adicionar descrição de manutenção
       if (produto.descricao_manutencao) {
         descricao += `\n${produto.descricao_manutencao}`;
       }
