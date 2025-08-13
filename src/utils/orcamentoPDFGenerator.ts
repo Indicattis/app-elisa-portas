@@ -75,7 +75,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   
   // Linha divisória
   pdf.setDrawColor(...grayColor);
-  pdf.setLineWidth(0.2);
+  pdf.setLineWidth(0.5);
   pdf.line(margin, yPosition + 15, pageWidth - margin, yPosition + 15);
   
   yPosition += 25;
@@ -84,12 +84,12 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(16);
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('ORÇAMENTO', margin, yPosition);
+  pdf.text('#Proposta', margin, yPosition);
   
   const numeroOrcamento = data.numeroOrcamento || `ORC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Nº: ${numeroOrcamento}`, pageWidth - margin - 60, yPosition);
+  pdf.text(`Nº: ${numeroOrcamento}`);
   pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition + 6);
   
   yPosition += 15;
