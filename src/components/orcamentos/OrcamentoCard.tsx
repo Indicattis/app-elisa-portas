@@ -144,7 +144,16 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange }: OrcamentoCa
       <CardContent className="space-y-3">
         <div>
           <p className="text-sm font-medium">Atendente:</p>
-          <p className="text-sm opacity-75">{orcamento.admin_users?.nome || "Não atribuído"}</p>
+          <div className="flex items-center gap-2">
+            {orcamento.admin_users?.foto_perfil_url && (
+              <img 
+                src={orcamento.admin_users.foto_perfil_url} 
+                alt="Foto do atendente"
+                className="w-6 h-6 rounded-full object-cover"
+              />
+            )}
+            <p className="text-sm opacity-75">{orcamento.admin_users?.nome || "Não atribuído"}</p>
+          </div>
         </div>
 
         <div>

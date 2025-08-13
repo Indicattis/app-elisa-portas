@@ -34,7 +34,8 @@ export function useOrcamentoData() {
         .from("orcamentos")
         .select(`
           *,
-          elisaportas_leads (nome, telefone, email)
+          elisaportas_leads (nome, telefone, email),
+          admin_users!orcamentos_atendente_id_fkey (nome, foto_perfil_url)
         `)
         .order("created_at", { ascending: false });
 
