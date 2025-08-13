@@ -16,6 +16,7 @@ export interface OrcamentoFormData {
   desconto_total_percentual: number;
   requer_analise: boolean;
   motivo_analise: string;
+  canal_aquisicao_id?: string;
   produtos?: OrcamentoProduto[];
 }
 

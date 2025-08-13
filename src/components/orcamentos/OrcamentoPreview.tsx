@@ -127,15 +127,6 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
             </div>
           )}
 
-          {/* Serviços Adicionais */}
-          <div className="mt-6 space-y-2">
-            {parseFloat(formData.valor_frete) > 0 && (
-              <div className="flex justify-between text-sm">
-                <span>Frete</span>
-                <span>{formatCurrency(parseFloat(formData.valor_frete))}</span>
-              </div>
-            )}
-          </div>
         </div>
 
         <Separator className="mb-6" />
@@ -166,8 +157,12 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
             <Separator />
             
             <div className="flex justify-between text-lg font-bold">
-              <span>TOTAL:</span>
+              <span>TOTAL GERAL:</span>
               <span>{formatCurrency(calculatedTotal)}</span>
+            </div>
+            
+            <div className="text-xs text-muted-foreground mt-2">
+              <p>* O valor inclui frete, instalação e demais custos logísticos</p>
             </div>
           </div>
 

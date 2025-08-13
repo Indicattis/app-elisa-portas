@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { OrcamentoPreview } from "./OrcamentoPreview";
+import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import type { OrcamentoFormData, Acessorio, Adicional } from "@/types/orcamento";
 import type { OrcamentoProduto } from "@/types/produto";
 
@@ -45,6 +46,7 @@ export function NovoOrcamentoForm({
   isEdit
 }: NovoOrcamentoFormProps) {
   const { toast } = useToast();
+  const { canais } = useCanaisAquisicao();
   
   const [formData, setFormData] = useState<OrcamentoFormData>({
     lead_id: leadId || "",
@@ -60,7 +62,8 @@ export function NovoOrcamentoForm({
     forma_pagamento: "",
     desconto_total_percentual: 0,
     requer_analise: false,
-    motivo_analise: ""
+    motivo_analise: "",
+    canal_aquisicao_id: ""
   });
 
   const [produtos, setProdutos] = useState<OrcamentoProduto[]>([]);
@@ -70,6 +73,7 @@ export function NovoOrcamentoForm({
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [valorInstalacao, setValorInstalacao] = useState(0);
   
   const togglePreview = () => {
     setShowPreview(!showPreview);
@@ -78,8 +82,7 @@ export function NovoOrcamentoForm({
   // Produto temporário para adição
   const [novoProduto, setNovoProduto] = useState<Partial<OrcamentoProduto>>({
     tipo_produto: 'porta_enrolar',
-    valor: 0,
-    desconto_percentual: 0
+    valor: 0
   });
 
   useEffect(() => {
@@ -141,15 +144,14 @@ export function NovoOrcamentoForm({
   useEffect(() => {
     const frete = parseFloat(formData.valor_frete) || 0;
     const subtotalProdutos = produtos.reduce((acc, produto) => {
-      const valorComDesconto = produto.valor * (1 - (produto.desconto_percentual || 0) / 100);
-      return acc + valorComDesconto;
+      return acc + produto.valor;
     }, 0);
     
-    const subtotal = subtotalProdutos + frete;
+    const subtotal = subtotalProdutos + frete + valorInstalacao;
     const total = subtotal * (1 - formData.desconto_total_percentual / 100);
     
     setCalculatedTotal(total);
-  }, [produtos, formData.valor_frete, formData.desconto_total_percentual]);
+  }, [produtos, formData.valor_frete, formData.desconto_total_percentual, valorInstalacao]);
 
   const adicionarProduto = () => {
     if (!novoProduto.tipo_produto) return;
@@ -160,7 +162,6 @@ export function NovoOrcamentoForm({
     let produto: OrcamentoProduto = {
       tipo_produto: novoProduto.tipo_produto,
       valor: 0,
-      desconto_percentual: novoProduto.desconto_percentual || 0,
       descricao: ''
     };
 
@@ -170,9 +171,12 @@ export function NovoOrcamentoForm({
       case 'porta_social':
         produto.medidas = novoProduto.medidas;
         produto.preco_producao = novoProduto.preco_producao || 0;
-        produto.preco_instalacao = novoProduto.preco_instalacao || 0;
         produto.descricao = `${getNomeProduto(produto)} ${produto.medidas || ''}`.trim();
-        valor = (novoProduto.preco_producao || 0) + (novoProduto.preco_instalacao || 0);
+        valor = novoProduto.preco_producao || 0;
+        // Adicionar valor de instalação ao custo logístico
+        if (novoProduto.preco_instalacao) {
+          setValorInstalacao(prev => prev + (novoProduto.preco_instalacao || 0));
+        }
         break;
       
       case 'acessorio':
@@ -212,8 +216,7 @@ export function NovoOrcamentoForm({
     // Reset form
     setNovoProduto({
       tipo_produto: 'porta_enrolar',
-      valor: 0,
-      desconto_percentual: 0
+      valor: 0
     });
   };
 
@@ -252,6 +255,9 @@ export function NovoOrcamentoForm({
                 value={novoProduto.preco_instalacao || ""}
                 onChange={(e) => setNovoProduto({...novoProduto, preco_instalacao: parseFloat(e.target.value) || 0})}
               />
+              <p className="text-xs text-muted-foreground">
+                Será adicionado aos custos logísticos
+              </p>
             </div>
           </>
         );
@@ -529,23 +535,6 @@ export function NovoOrcamentoForm({
 
               {renderCamposProduto()}
 
-              <div className="space-y-2">
-                <Label>Desconto Individual (%) - Máx. 10%</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="10"
-                  step="0.1"
-                  value={novoProduto.desconto_percentual || ""}
-                  onChange={(e) => {
-                    const valor = parseFloat(e.target.value) || 0;
-                    if (valor <= 10) {
-                      setNovoProduto({...novoProduto, desconto_percentual: valor});
-                    }
-                  }}
-                />
-              </div>
-
               <Button type="button" onClick={adicionarProduto}>
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Produto
@@ -562,9 +551,6 @@ export function NovoOrcamentoForm({
                       <div className="font-medium">{getNomeProduto(produto)}</div>
                       <div className="text-sm text-muted-foreground">
                         Valor: R$ {produto.valor.toFixed(2)}
-                        {produto.desconto_percentual && produto.desconto_percentual > 0 && (
-                          <span> - Desconto: {produto.desconto_percentual}%</span>
-                        )}
                       </div>
                     </div>
                     <Button
@@ -624,6 +610,25 @@ export function NovoOrcamentoForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <Label>Canal de Aquisição</Label>
+              <Select
+                value={formData.canal_aquisicao_id || ""}
+                onValueChange={(value) => setFormData({...formData, canal_aquisicao_id: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o canal de aquisição" />
+                </SelectTrigger>
+                <SelectContent>
+                  {canais.map(canal => (
+                    <SelectItem key={canal.id} value={canal.id}>
+                      {canal.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label>Forma de Pagamento</Label>
               <Select
                 value={formData.forma_pagamento}
@@ -644,20 +649,23 @@ export function NovoOrcamentoForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Desconto Total (%) - Máx. 10%</Label>
+              <Label>Desconto Total (%) - Máx. 5%</Label>
               <Input
                 type="number"
                 min="0"
-                max="10"
+                max="5"
                 step="0.1"
                 value={formData.desconto_total_percentual}
                 onChange={(e) => {
                   const valor = parseFloat(e.target.value) || 0;
-                  if (valor <= 10) {
+                  if (valor <= 5) {
                     setFormData({...formData, desconto_total_percentual: valor});
                   }
                 }}
               />
+              <p className="text-xs text-muted-foreground">
+                Descontos maiores que 5% requerem aprovação da gerência
+              </p>
             </div>
 
             <div className="flex items-center space-x-2">
