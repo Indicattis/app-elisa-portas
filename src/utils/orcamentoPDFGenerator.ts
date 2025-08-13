@@ -145,7 +145,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFont('helvetica', 'normal');
   pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 15, yPosition + 8);
   
-  yPosition += 30;
+  yPosition += 20;
 
   // Produtos
   pdf.setFontSize(12);
