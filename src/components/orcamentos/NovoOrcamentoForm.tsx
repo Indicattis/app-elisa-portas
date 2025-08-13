@@ -70,6 +70,10 @@ export function NovoOrcamentoForm({
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  
+  const togglePreview = () => {
+    setShowPreview(!showPreview);
+  };
 
   // Produto temporário para adição
   const [novoProduto, setNovoProduto] = useState<Partial<OrcamentoProduto>>({
@@ -688,10 +692,11 @@ export function NovoOrcamentoForm({
                 </Button>
                 <Button 
                   type="button" 
-                  variant="outline" 
-                  onClick={() => setShowPreview(!showPreview)}
+                  variant="outline"
+                  className="flex-1"
+                  onClick={togglePreview}
                 >
-                  {showPreview ? "Ocultar" : "Mostrar"} Pré-visualização
+                  {showPreview ? "Ocultar Pré-visualização" : "Mostrar Pré-visualização"}
                 </Button>
                 <Button type="submit" disabled={loading}>
                   {loading ? "Salvando..." : isEdit ? "Atualizar" : "Criar Orçamento"}
