@@ -26,17 +26,21 @@ interface Autorizado {
 }
 
 interface NovoOrcamentoFormProps {
-  onSubmit: (data: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => Promise<void>;
-  onCancel: () => void;
-  loading: boolean;
+  onSubmit?: (data: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => Promise<void>;
+  onCancel?: () => void;
+  loading?: boolean;
   leadId?: string;
+  initialData?: any;
+  isEdit?: boolean;
 }
 
 export function NovoOrcamentoForm({
   onSubmit,
   onCancel,
   loading,
-  leadId
+  leadId,
+  initialData,
+  isEdit
 }: NovoOrcamentoFormProps) {
   const { toast } = useToast();
   
@@ -73,7 +77,36 @@ export function NovoOrcamentoForm({
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (initialData && isEdit) {
+      loadInitialData();
+    }
+  }, [initialData, isEdit]);
+
+  const loadInitialData = () => {
+    if (!initialData) return;
+    
+    setFormData({
+      lead_id: initialData.lead_id,
+      cliente_nome: initialData.cliente_nome || "",
+      cliente_cpf: initialData.cliente_cpf || "",
+      cliente_telefone: initialData.cliente_telefone || "",
+      cliente_estado: initialData.cliente_estado || "",
+      cliente_cidade: initialData.cliente_cidade || "",
+      cliente_bairro: initialData.cliente_bairro || "",
+      cliente_cep: initialData.cliente_cep || "",
+      valor_frete: initialData.valor_frete?.toString() || "0",
+      modalidade_instalacao: initialData.modalidade_instalacao || "instalacao_elisa",
+      autorizado_id: initialData.autorizado_id,
+      forma_pagamento: initialData.forma_pagamento || "",
+      desconto_total_percentual: initialData.desconto_total_percentual || 0,
+      requer_analise: initialData.requer_analise || false,
+      motivo_analise: initialData.motivo_analise || ""
+    });
+
+    if (initialData.orcamento_produtos) {
+      setProdutos(initialData.orcamento_produtos);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -340,7 +373,9 @@ export function NovoOrcamentoForm({
       return;
     }
 
-    await onSubmit(formData, produtos, calculatedTotal);
+    if (onSubmit) {
+      await onSubmit(formData, produtos, calculatedTotal);
+    }
   };
 
   return (

@@ -27,6 +27,7 @@ import VendaEdit from "./pages/VendaEdit";
 import Faturamento from "./pages/Faturamento";
 import Orcamentos from "./pages/Orcamentos";
 import NovoOrcamento from "./pages/NovoOrcamento";
+import OrcamentoEdit from "./pages/OrcamentoEdit";
 import NotFound from "./pages/NotFound";
 import VendaDetails from "./pages/VendaDetails";
 import Visitas from "./pages/Visitas";
@@ -161,6 +162,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <NovoOrcamento />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/orcamentos/editar/:id"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <OrcamentoEdit />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

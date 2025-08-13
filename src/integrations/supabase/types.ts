@@ -783,6 +783,7 @@ export type Database = {
           aprovado_por: string | null
           autorizado_id: string | null
           campos_personalizados: Json | null
+          classe: number | null
           cliente_bairro: string | null
           cliente_cep: string | null
           cliente_cidade: string | null
@@ -799,12 +800,15 @@ export type Database = {
           documento_url: string | null
           forma_pagamento: string
           id: string
+          justificativa_perda: string | null
           lead_id: string
           modalidade_instalacao: string | null
           motivo_analise: string | null
+          motivo_perda: string | null
           observacoes_aprovacao: string | null
           requer_analise: boolean
           status: string
+          status_orcamento: number | null
           tipo_desconto_adicional: string | null
           updated_at: string
           usuario_id: string
@@ -818,6 +822,7 @@ export type Database = {
           aprovado_por?: string | null
           autorizado_id?: string | null
           campos_personalizados?: Json | null
+          classe?: number | null
           cliente_bairro?: string | null
           cliente_cep?: string | null
           cliente_cidade?: string | null
@@ -834,12 +839,15 @@ export type Database = {
           documento_url?: string | null
           forma_pagamento: string
           id?: string
+          justificativa_perda?: string | null
           lead_id: string
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
+          motivo_perda?: string | null
           observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
+          status_orcamento?: number | null
           tipo_desconto_adicional?: string | null
           updated_at?: string
           usuario_id: string
@@ -853,6 +861,7 @@ export type Database = {
           aprovado_por?: string | null
           autorizado_id?: string | null
           campos_personalizados?: Json | null
+          classe?: number | null
           cliente_bairro?: string | null
           cliente_cep?: string | null
           cliente_cidade?: string | null
@@ -869,12 +878,15 @@ export type Database = {
           documento_url?: string | null
           forma_pagamento?: string
           id?: string
+          justificativa_perda?: string | null
           lead_id?: string
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
+          motivo_perda?: string | null
           observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
+          status_orcamento?: number | null
           tipo_desconto_adicional?: string | null
           updated_at?: string
           usuario_id?: string
@@ -1376,6 +1388,10 @@ export type Database = {
             }
         Returns: boolean
       }
+      calcular_classe_orcamento: {
+        Args: { valor_total: number }
+        Returns: number
+      }
       criar_requisicao_venda: {
         Args: { lead_uuid: string; orcamento_uuid?: string }
         Returns: string
@@ -1433,6 +1449,13 @@ export type Database = {
         | "perdido_por_preco"
         | "perdido_por_prazo"
         | "outro"
+      motivo_perda_orcamento:
+        | "preco"
+        | "prazo"
+        | "qualidade"
+        | "logistica"
+        | "atendimento"
+        | "produto"
       status_visita: "agendada" | "concluida" | "cancelada"
       turno_visita: "manha" | "tarde" | "noite"
       user_role:
@@ -1594,6 +1617,14 @@ export const Constants = {
         "perdido_por_preco",
         "perdido_por_prazo",
         "outro",
+      ],
+      motivo_perda_orcamento: [
+        "preco",
+        "prazo",
+        "qualidade",
+        "logistica",
+        "atendimento",
+        "produto",
       ],
       status_visita: ["agendada", "concluida", "cancelada"],
       turno_visita: ["manha", "tarde", "noite"],

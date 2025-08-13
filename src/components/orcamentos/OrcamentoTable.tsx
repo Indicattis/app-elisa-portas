@@ -1,110 +1,103 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, Clock, XCircle, Download } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { generatePDF, getStatusBadgeProps } from "@/utils/orcamentoUtils";
-import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { OrcamentoCard } from "./OrcamentoCard";
+import { OrcamentoStatusModal } from "./OrcamentoStatusModal";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { MotivoPerda } from "@/types/orcamento";
 
 interface OrcamentoTableProps {
   orcamentos: any[];
-  onApprove: (orcamento: any) => void;
-  onReject: (orcamentoId: string) => void;
+  onEdit?: (orcamento: any) => void;
+  onRefresh?: () => void;
 }
 
-export function OrcamentoTable({ orcamentos, onApprove, onReject }: OrcamentoTableProps) {
-  const { isAdmin, isGerenteComercial } = useAuth();
+export function OrcamentoTable({ orcamentos, onEdit, onRefresh }: OrcamentoTableProps) {
   const { toast } = useToast();
+  const [selectedOrcamento, setSelectedOrcamento] = useState<any>(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
-  const getStatusBadge = (status: string) => {
-    const props = getStatusBadgeProps(status);
-    const IconComponent = props.icon === "Clock" ? Clock : props.icon === "CheckCircle" ? CheckCircle : XCircle;
-    
-    return (
-      <Badge variant={props.variant} className={props.className}>
-        <IconComponent className="w-3 h-3 mr-1" />
-        {props.text}
-      </Badge>
-    );
+  const handleStatusChange = async (orcamentoId: string, novoStatus: number, motivoPerda?: MotivoPerda, justificativa?: string) => {
+    try {
+      const updateData: any = { 
+        status_orcamento: novoStatus 
+      };
+
+      if (novoStatus === 3 && motivoPerda && justificativa) {
+        updateData.motivo_perda = motivoPerda;
+        updateData.justificativa_perda = justificativa;
+      }
+
+      const { error } = await supabase
+        .from("orcamentos")
+        .update(updateData)
+        .eq("id", orcamentoId);
+
+      if (error) throw error;
+
+      // Se status foi alterado para "Vendido", criar requisição de venda
+      if (novoStatus === 4) {
+        const orcamento = orcamentos.find(o => o.id === orcamentoId);
+        if (orcamento) {
+          const { error: reqError } = await supabase
+            .from("requisicoes_venda")
+            .insert({
+              lead_id: orcamento.lead_id,
+              orcamento_id: orcamentoId,
+              solicitante_id: orcamento.usuario_id
+            });
+
+          if (reqError) throw reqError;
+
+          toast({
+            title: "Sucesso",
+            description: "Status atualizado e requisição de venda criada",
+          });
+        }
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Status do orçamento atualizado",
+        });
+      }
+
+      onRefresh?.();
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao atualizar status do orçamento",
+      });
+    }
   };
 
-  const handleGeneratePDF = (orcamento: any) => {
-    generatePDF(orcamento, toast);
+  const handleCardStatusChange = (orcamento: any) => {
+    setSelectedOrcamento(orcamento);
+    setShowStatusModal(true);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Lista de Orçamentos</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Lead</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Valor Total</TableHead>
-              <TableHead>Forma de Pagamento</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orcamentos.map((orcamento) => (
-              <TableRow key={orcamento.id}>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{orcamento.elisaportas_leads?.nome}</div>
-                    <div className="text-sm text-muted-foreground">{orcamento.elisaportas_leads?.telefone}</div>
-                  </div>
-                </TableCell>
-                <TableCell>{getStatusBadge(orcamento.status)}</TableCell>
-                <TableCell className="font-medium">
-                  R$ {orcamento.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell>{orcamento.forma_pagamento}</TableCell>
-                <TableCell>
-                  {format(new Date(orcamento.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleGeneratePDF(orcamento)}>
-                      <Download className="w-3 h-3 mr-1" />
-                      PDF
-                    </Button>
-                    {(isAdmin || isGerenteComercial) && orcamento.status === 'pendente' && (
-                      <>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="text-green-600 border-green-600"
-                          onClick={() => onApprove(orcamento)}
-                        >
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Aprovar
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="text-red-600 border-red-600"
-                          onClick={() => onReject(orcamento.id)}
-                        >
-                          <XCircle className="w-3 h-3 mr-1" />
-                          Reprovar
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {orcamentos.map((orcamento) => (
+          <OrcamentoCard
+            key={orcamento.id}
+            orcamento={orcamento}
+            onEdit={onEdit}
+            onStatusChange={handleCardStatusChange}
+          />
+        ))}
+      </div>
+
+      {selectedOrcamento && (
+        <OrcamentoStatusModal
+          orcamento={selectedOrcamento}
+          open={showStatusModal}
+          onOpenChange={setShowStatusModal}
+          onStatusChange={handleStatusChange}
+        />
+      )}
+    </>
   );
 }
