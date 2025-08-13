@@ -67,6 +67,9 @@ export const createOrcamento = async (
           case 'manutencao':
             descricao = produto.descricao_manutencao || 'Serviço de Manutenção';
             break;
+          case 'pintura_epoxi':
+            descricao = 'Pintura Epóxi';
+            break;
           default:
             descricao = produto.tipo_produto;
         }
@@ -173,6 +176,9 @@ export const updateOrcamento = async (
             break;
           case 'manutencao':
             descricao = produto.descricao_manutencao || 'Serviço de Manutenção';
+            break;
+          case 'pintura_epoxi':
+            descricao = 'Pintura Epóxi';
             break;
           default:
             descricao = produto.tipo_produto;
