@@ -154,11 +154,14 @@ export function NovoOrcamentoForm({
   const adicionarProduto = () => {
     if (!novoProduto.tipo_produto) return;
 
+    console.log("Adicionando produto:", novoProduto);
+
     let valor = 0;
     let produto: OrcamentoProduto = {
       tipo_produto: novoProduto.tipo_produto,
       valor: 0,
-      desconto_percentual: novoProduto.desconto_percentual || 0
+      desconto_percentual: novoProduto.desconto_percentual || 0,
+      descricao: ''
     };
 
     // Definir campos específicos baseado no tipo
@@ -168,33 +171,42 @@ export function NovoOrcamentoForm({
         produto.medidas = novoProduto.medidas;
         produto.preco_producao = novoProduto.preco_producao || 0;
         produto.preco_instalacao = novoProduto.preco_instalacao || 0;
+        produto.descricao = `${getNomeProduto(produto)} ${produto.medidas || ''}`.trim();
         valor = (novoProduto.preco_producao || 0) + (novoProduto.preco_instalacao || 0);
         break;
       
       case 'acessorio':
         produto.acessorio_id = novoProduto.acessorio_id;
         const acessorio = acessorios.find(a => a.id === novoProduto.acessorio_id);
+        produto.descricao = acessorio?.nome || 'Acessório';
         valor = acessorio?.preco || 0;
         break;
       
       case 'adicional':
         produto.adicional_id = novoProduto.adicional_id;
         const adicional = adicionais.find(a => a.id === novoProduto.adicional_id);
+        produto.descricao = adicional?.nome || 'Adicional';
         valor = adicional?.preco || 0;
         break;
       
       case 'manutencao':
         produto.descricao_manutencao = novoProduto.descricao_manutencao;
+        produto.descricao = novoProduto.descricao_manutencao || 'Serviço de Manutenção';
         valor = novoProduto.valor || 0;
         break;
       
       case 'pintura_epoxi':
         produto.cor_id = novoProduto.cor_id;
+        const corSelecionada = cores.find(c => c.id === novoProduto.cor_id);
+        produto.descricao = corSelecionada ? `Pintura Epóxi - ${corSelecionada.nome}` : 'Pintura Epóxi';
         valor = novoProduto.valor || 0;
         break;
     }
 
     produto.valor = valor;
+    
+    console.log("Produto final:", produto);
+    
     setProdutos([...produtos, produto]);
     
     // Reset form
