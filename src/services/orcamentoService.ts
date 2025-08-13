@@ -47,20 +47,49 @@ export const createOrcamento = async (
 
   // Salvar produtos do orçamento
   if (produtos.length > 0) {
-    const produtosData = produtos.map(produto => ({
-      orcamento_id: data.id,
-      tipo_produto: produto.tipo_produto,
-      medidas: produto.medidas || null,
-      cor_id: produto.cor_id || null,
-      acessorio_id: produto.acessorio_id || null,
-      adicional_id: produto.adicional_id || null,
-      descricao: produto.descricao || null,
-      descricao_manutencao: produto.descricao_manutencao || null,
-      valor: produto.valor,
-      preco_producao: produto.preco_producao || 0,
-      preco_instalacao: produto.preco_instalacao || 0,
-      desconto_percentual: produto.desconto_percentual || 0
-    }));
+    const produtosData = produtos.map(produto => {
+      // Gerar descrição baseada no tipo de produto se não houver uma específica
+      let descricao = produto.descricao;
+      if (!descricao) {
+        switch (produto.tipo_produto) {
+          case 'porta_enrolar_automatica':
+            descricao = `Porta de Enrolar Automática${produto.medidas ? ` - ${produto.medidas}` : ''}`;
+            break;
+          case 'porta_social':
+            descricao = `Porta Social${produto.medidas ? ` - ${produto.medidas}` : ''}`;
+            break;
+          case 'pintura_epoxi':
+            descricao = 'Pintura Epóxi';
+            break;
+          case 'acessorio':
+            descricao = 'Acessório';
+            break;
+          case 'adicional':
+            descricao = 'Adicional';
+            break;
+          case 'manutencao':
+            descricao = produto.descricao_manutencao || 'Serviço de Manutenção';
+            break;
+          default:
+            descricao = produto.tipo_produto;
+        }
+      }
+
+      return {
+        orcamento_id: data.id,
+        tipo_produto: produto.tipo_produto,
+        medidas: produto.medidas || null,
+        cor_id: produto.cor_id || null,
+        acessorio_id: produto.acessorio_id || null,
+        adicional_id: produto.adicional_id || null,
+        descricao: descricao,
+        descricao_manutencao: produto.descricao_manutencao || null,
+        valor: produto.valor,
+        preco_producao: produto.preco_producao || 0,
+        preco_instalacao: produto.preco_instalacao || 0,
+        desconto_percentual: produto.desconto_percentual || 0
+      };
+    });
 
     const { error: produtosError } = await supabase
       .from("orcamento_produtos")
@@ -128,20 +157,49 @@ export const updateOrcamento = async (
 
   // Salvar novos produtos do orçamento
   if (produtos.length > 0) {
-    const produtosData = produtos.map(produto => ({
-      orcamento_id: orcamentoId,
-      tipo_produto: produto.tipo_produto,
-      medidas: produto.medidas || null,
-      cor_id: produto.cor_id || null,
-      acessorio_id: produto.acessorio_id || null,
-      adicional_id: produto.adicional_id || null,
-      descricao: produto.descricao || null,
-      descricao_manutencao: produto.descricao_manutencao || null,
-      valor: produto.valor,
-      preco_producao: produto.preco_producao || 0,
-      preco_instalacao: produto.preco_instalacao || 0,
-      desconto_percentual: produto.desconto_percentual || 0
-    }));
+    const produtosData = produtos.map(produto => {
+      // Gerar descrição baseada no tipo de produto se não houver uma específica
+      let descricao = produto.descricao;
+      if (!descricao) {
+        switch (produto.tipo_produto) {
+          case 'porta_enrolar_automatica':
+            descricao = `Porta de Enrolar Automática${produto.medidas ? ` - ${produto.medidas}` : ''}`;
+            break;
+          case 'porta_social':
+            descricao = `Porta Social${produto.medidas ? ` - ${produto.medidas}` : ''}`;
+            break;
+          case 'pintura_epoxi':
+            descricao = 'Pintura Epóxi';
+            break;
+          case 'acessorio':
+            descricao = 'Acessório';
+            break;
+          case 'adicional':
+            descricao = 'Adicional';
+            break;
+          case 'manutencao':
+            descricao = produto.descricao_manutencao || 'Serviço de Manutenção';
+            break;
+          default:
+            descricao = produto.tipo_produto;
+        }
+      }
+
+      return {
+        orcamento_id: orcamentoId,
+        tipo_produto: produto.tipo_produto,
+        medidas: produto.medidas || null,
+        cor_id: produto.cor_id || null,
+        acessorio_id: produto.acessorio_id || null,
+        adicional_id: produto.adicional_id || null,
+        descricao: descricao,
+        descricao_manutencao: produto.descricao_manutencao || null,
+        valor: produto.valor,
+        preco_producao: produto.preco_producao || 0,
+        preco_instalacao: produto.preco_instalacao || 0,
+        desconto_percentual: produto.desconto_percentual || 0
+      };
+    });
 
     const { error: produtosError } = await supabase
       .from("orcamento_produtos")
