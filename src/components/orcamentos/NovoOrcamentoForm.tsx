@@ -58,6 +58,7 @@ export function NovoOrcamentoForm({
     cliente_bairro: "",
     cliente_cep: "",
     valor_frete: "0",
+    valor_instalacao: "0",
     modalidade_instalacao: "instalacao_elisa",
     forma_pagamento: "",
     desconto_total_percentual: 0,
@@ -73,7 +74,6 @@ export function NovoOrcamentoForm({
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
-  const [valorInstalacao, setValorInstalacao] = useState(0);
   
   const togglePreview = () => {
     setShowPreview(!showPreview);
@@ -105,6 +105,7 @@ export function NovoOrcamentoForm({
       cliente_bairro: initialData.cliente_bairro || "",
       cliente_cep: initialData.cliente_cep || "",
       valor_frete: initialData.valor_frete?.toString() || "0",
+      valor_instalacao: initialData.valor_instalacao?.toString() || "0",
       modalidade_instalacao: initialData.modalidade_instalacao || "instalacao_elisa",
       forma_pagamento: initialData.forma_pagamento || "",
       desconto_total_percentual: initialData.desconto_total_percentual || 0,
@@ -143,15 +144,16 @@ export function NovoOrcamentoForm({
   // Calcular total
   useEffect(() => {
     const frete = parseFloat(formData.valor_frete) || 0;
+    const instalacao = parseFloat(formData.valor_instalacao) || 0;
     const subtotalProdutos = produtos.reduce((acc, produto) => {
       return acc + produto.valor;
     }, 0);
     
-    const subtotal = subtotalProdutos + frete + valorInstalacao;
+    const subtotal = subtotalProdutos + frete + instalacao;
     const total = subtotal * (1 - formData.desconto_total_percentual / 100);
     
     setCalculatedTotal(total);
-  }, [produtos, formData.valor_frete, formData.desconto_total_percentual, valorInstalacao]);
+  }, [produtos, formData.valor_frete, formData.valor_instalacao, formData.desconto_total_percentual]);
 
   const adicionarProduto = () => {
     if (!novoProduto.tipo_produto) return;
@@ -379,7 +381,7 @@ export function NovoOrcamentoForm({
         formData,
         produtos,
         calculatedTotal,
-        valorInstalacao
+        valorInstalacao: parseFloat(formData.valor_instalacao) || 0
       };
 
       generateOrcamentoPDF(pdfData);
@@ -574,8 +576,8 @@ export function NovoOrcamentoForm({
               <Input
                 type="number"
                 step="0.01"
-                value={valorInstalacao}
-                onChange={(e) => setValorInstalacao(parseFloat(e.target.value) || 0)}
+                value={formData.valor_instalacao}
+                onChange={(e) => setFormData({...formData, valor_instalacao: e.target.value})}
               />
             </div>
 
@@ -734,7 +736,7 @@ export function NovoOrcamentoForm({
             formData={formData}
             produtos={produtos}
             calculatedTotal={calculatedTotal}
-            valorInstalacao={valorInstalacao}
+            valorInstalacao={parseFloat(formData.valor_instalacao) || 0}
           />
         </div>
       </div>

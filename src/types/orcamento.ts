@@ -11,6 +11,7 @@ export interface OrcamentoFormData {
   cliente_bairro: string;
   cliente_cep: string;
   valor_frete: string;
+  valor_instalacao: string;
   modalidade_instalacao: 'instalacao_elisa' | 'autorizado_elisa';
   forma_pagamento: string;
   desconto_total_percentual: number;

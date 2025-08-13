@@ -79,6 +79,7 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
           cliente_bairro: orcamento.cliente_bairro,
           cliente_cep: orcamento.cliente_cep,
           valor_frete: orcamento.valor_frete.toString(),
+          valor_instalacao: orcamento.valor_instalacao?.toString() || "0",
           modalidade_instalacao: orcamento.modalidade_instalacao,
           forma_pagamento: orcamento.forma_pagamento,
           desconto_total_percentual: orcamento.desconto_percentual || 0,

@@ -24,6 +24,7 @@ export const createOrcamento = async (
     cliente_bairro: formData.cliente_bairro,
     cliente_cep: formData.cliente_cep,
     valor_frete: parseFloat(formData.valor_frete) || 0,
+    valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
     modalidade_instalacao: formData.modalidade_instalacao,
     forma_pagamento: formData.forma_pagamento,
     desconto_percentual: formData.desconto_total_percentual || 0,
@@ -33,7 +34,6 @@ export const createOrcamento = async (
     status: 'pendente', // Sempre começa como "Em aberto" mas com string no banco
     valor_produto: 0,
     valor_pintura: 0,
-    valor_instalacao: 0,
     campos_personalizados: {}
   };
 
@@ -129,6 +129,7 @@ export const updateOrcamento = async (
     cliente_bairro: formData.cliente_bairro,
     cliente_cep: formData.cliente_cep,
     valor_frete: parseFloat(formData.valor_frete) || 0,
+    valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
     modalidade_instalacao: formData.modalidade_instalacao,
     forma_pagamento: formData.forma_pagamento,
     desconto_percentual: formData.desconto_total_percentual || 0,
@@ -136,8 +137,7 @@ export const updateOrcamento = async (
     requer_analise: formData.requer_analise,
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
     valor_produto: 0,
-    valor_pintura: 0,
-    valor_instalacao: 0
+    valor_pintura: 0
   };
 
   const { error } = await supabase
