@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { OrcamentoFormData, CampoPersonalizado } from "@/types/orcamento";
 import type { OrcamentoProduto } from "@/types/produto";
@@ -81,31 +80,6 @@ export const createOrcamento = async (
   return data;
 };
 
-export const approveOrcamento = async (
-  orcamentoId: string,
-  desconto_adicional: number,
-  tipo_desconto: string,
-  observacoes: string
-) => {
-  const { error } = await supabase.rpc("aprovar_orcamento", {
-    orcamento_uuid: orcamentoId,
-    desconto_adicional,
-    tipo_desconto,
-    observacoes: observacoes || null
-  });
-
-  if (error) throw error;
-};
-
-export const rejectOrcamento = async (orcamentoId: string) => {
-  const { error } = await supabase
-    .from("orcamentos")
-    .update({ status: 'reprovado' })
-    .eq("id", orcamentoId);
-
-  if (error) throw error;
-};
-
 export const updateOrcamento = async (
   orcamentoId: string,
   formData: OrcamentoFormData,
@@ -185,4 +159,29 @@ export const updateOrcamento = async (
   }
 
   return { id: orcamentoId };
+};
+
+export const approveOrcamento = async (
+  orcamentoId: string,
+  desconto_adicional: number,
+  tipo_desconto: string,
+  observacoes: string
+) => {
+  const { error } = await supabase.rpc("aprovar_orcamento", {
+    orcamento_uuid: orcamentoId,
+    desconto_adicional,
+    tipo_desconto,
+    observacoes: observacoes || null
+  });
+
+  if (error) throw error;
+};
+
+export const rejectOrcamento = async (orcamentoId: string) => {
+  const { error } = await supabase
+    .from("orcamentos")
+    .update({ status: 'reprovado' })
+    .eq("id", orcamentoId);
+
+  if (error) throw error;
 };

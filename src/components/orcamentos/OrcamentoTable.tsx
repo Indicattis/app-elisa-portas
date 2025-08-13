@@ -40,7 +40,6 @@ export function OrcamentoTable({ orcamentos, onEdit, onRefresh }: OrcamentoTable
         const orcamento = orcamentos.find(o => o.id === orcamentoId);
         if (orcamento) {
           const { error: reqError } = await supabase.rpc('criar_requisicao_venda', {
-            lead_uuid: orcamento.lead_id,
             orcamento_uuid: orcamentoId
           });
 
