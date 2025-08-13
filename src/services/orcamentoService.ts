@@ -16,7 +16,6 @@ export const createOrcamento = async (
 
   const orcamentoData = {
     lead_id: formData.lead_id || null,
-    usuario_id: userId,
     atendente_id: userId, // Atribuir automaticamente ao usuário logado
     cliente_nome: formData.cliente_nome,
     cliente_cpf: formData.cliente_cpf,
@@ -27,19 +26,12 @@ export const createOrcamento = async (
     cliente_cep: formData.cliente_cep,
     valor_frete: parseFloat(formData.valor_frete) || 0,
     modalidade_instalacao: formData.modalidade_instalacao,
-    autorizado_id: formData.autorizado_id || null,
     forma_pagamento: formData.forma_pagamento,
     desconto_total_percentual: formData.desconto_total_percentual || 0,
     valor_total: valorTotal,
     requer_analise: formData.requer_analise,
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
-    status: formData.requer_analise ? 'pendente' : 'aprovado',
-    // Campos antigos para compatibilidade
-    valor_produto: 0,
-    valor_pintura: 0,
-    valor_instalacao: 0,
-    desconto_percentual: 0,
-    campos_personalizados: {}
+    status: formData.requer_analise ? 'pendente' : 'aprovado'
   };
 
   const { data, error } = await supabase

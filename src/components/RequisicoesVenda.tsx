@@ -70,7 +70,7 @@ export function RequisicoesVenda() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setRequisicoes(data || []);
+      setRequisicoes((data || []) as any);
     } catch (error) {
       console.error("Erro ao buscar requisições:", error);
       toast({

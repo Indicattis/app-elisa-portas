@@ -99,7 +99,6 @@ export function NovoOrcamentoForm({
       cliente_cep: initialData.cliente_cep || "",
       valor_frete: initialData.valor_frete?.toString() || "0",
       modalidade_instalacao: initialData.modalidade_instalacao || "instalacao_elisa",
-      autorizado_id: initialData.autorizado_id,
       forma_pagamento: initialData.forma_pagamento || "",
       desconto_total_percentual: initialData.desconto_total_percentual || 0,
       requer_analise: initialData.requer_analise || false,
@@ -595,26 +594,6 @@ export function NovoOrcamentoForm({
               </Select>
             </div>
 
-            {formData.modalidade_instalacao === 'autorizado_elisa' && (
-              <div className="space-y-2">
-                <Label>Autorizado</Label>
-                <Select
-                  value={formData.autorizado_id || ""}
-                  onValueChange={(value) => setFormData({...formData, autorizado_id: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o autorizado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {autorizados.map(autorizado => (
-                      <SelectItem key={autorizado.id} value={autorizado.id}>
-                        {autorizado.nome} - {autorizado.cidade}/{autorizado.estado}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </CardContent>
         </Card>
 

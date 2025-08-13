@@ -176,11 +176,11 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
         fontStyle: 'bold'
       },
       columnStyles: {
-        0: { cellWidth: 80 },  // Produto
-        1: { cellWidth: 20, halign: 'center' },  // QTD
-        2: { cellWidth: 30, halign: 'right' },   // Preço
-        3: { cellWidth: 25, halign: 'center' },  // Desconto
-        4: { cellWidth: 35, halign: 'right' }    // Preço Final
+        0: { cellWidth: 60 },  // Produto - reduzido
+        1: { cellWidth: 18, halign: 'center' },  // QTD - reduzido
+        2: { cellWidth: 28, halign: 'right' },   // Preço - reduzido
+        3: { cellWidth: 22, halign: 'center' },  // Desconto - reduzido
+        4: { cellWidth: 32, halign: 'right' }    // Preço Final - reduzido
       },
       margin: { left: margin, right: margin }
     });

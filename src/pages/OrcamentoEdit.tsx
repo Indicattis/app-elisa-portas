@@ -35,7 +35,7 @@ export default function OrcamentoEdit() {
       if (error) throw error;
 
       // Verificar se pode editar
-      const canEdit = [1, 2].includes(data.status_orcamento);
+      const canEdit = ['pendente', 'aprovado'].includes(data.status);
       if (!canEdit) {
         toast({
           variant: "destructive",
