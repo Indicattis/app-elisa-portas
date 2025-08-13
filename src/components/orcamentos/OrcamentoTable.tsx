@@ -39,19 +39,16 @@ export function OrcamentoTable({ orcamentos, onEdit, onRefresh }: OrcamentoTable
       if (novoStatus === 4) {
         const orcamento = orcamentos.find(o => o.id === orcamentoId);
         if (orcamento) {
-          const { error: reqError } = await supabase
-            .from("requisicoes_venda")
-            .insert({
-              lead_id: orcamento.lead_id,
-              orcamento_id: orcamentoId,
-              solicitante_id: orcamento.usuario_id
-            });
+          const { error: reqError } = await supabase.rpc('criar_requisicao_venda', {
+            lead_uuid: orcamento.lead_id,
+            orcamento_uuid: orcamentoId
+          });
 
           if (reqError) throw reqError;
 
           toast({
             title: "Sucesso",
-            description: "Status atualizado e requisição de venda criada",
+            description: "Orçamento vendido e requisição de venda criada",
           });
         }
       } else {

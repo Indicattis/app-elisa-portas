@@ -161,10 +161,28 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
 
       if (error) throw error;
 
-      toast({
-        title: "Sucesso",
-        description: "Status do orçamento atualizado",
-      });
+      // Se status foi alterado para "Vendido", criar requisição de venda
+      if (novoStatus === 4) {
+        const orcamento = orcamentos.find(o => o.id === orcamentoId);
+        if (orcamento) {
+          const { error: reqError } = await supabase.rpc('criar_requisicao_venda', {
+            lead_uuid: orcamento.lead_id,
+            orcamento_uuid: orcamentoId
+          });
+
+          if (reqError) throw reqError;
+
+          toast({
+            title: "Sucesso",
+            description: "Orçamento vendido e requisição de venda criada",
+          });
+        }
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Status do orçamento atualizado",
+        });
+      }
 
       onRefresh?.();
     } catch (error) {
@@ -181,6 +199,12 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
     const isOwner = orcamento.atendente_id === user?.id;
     const canEditStatus = [1, 2].includes(orcamento.status_orcamento);
     return (isAdmin || isOwner) && canEditStatus;
+  };
+
+  const canChangeStatus = (orcamento: any) => {
+    const isOwner = orcamento.atendente_id === user?.id;
+    const canChangeStatus = [1, 2].includes(orcamento.status_orcamento);
+    return (isAdmin || isOwner) && canChangeStatus;
   };
 
   const canDelete = (orcamento: any) => {
@@ -339,26 +363,26 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                     </Button>
                     
                     {canEdit(orcamento) && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onEdit?.(orcamento)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedOrcamento(orcamento);
-                            setShowStatusModal(true);
-                          }}
-                        >
-                          <AlertTriangle className="w-4 h-4" />
-                        </Button>
-                      </>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onEdit?.(orcamento)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
+                    
+                    {canChangeStatus(orcamento) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedOrcamento(orcamento);
+                          setShowStatusModal(true);
+                        }}
+                      >
+                        <AlertTriangle className="w-4 h-4" />
+                      </Button>
                     )}
                     
                     {canDelete(orcamento) && (

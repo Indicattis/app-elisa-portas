@@ -16,7 +16,7 @@ export const createOrcamento = async (
 
   const orcamentoData = {
     lead_id: formData.lead_id || null,
-    atendente_id: userId, // Atribuir automaticamente ao usuário logado
+    atendente_id: userId,
     cliente_nome: formData.cliente_nome,
     cliente_cpf: formData.cliente_cpf,
     cliente_telefone: formData.cliente_telefone,
@@ -31,7 +31,7 @@ export const createOrcamento = async (
     valor_total: valorTotal,
     requer_analise: formData.requer_analise,
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
-    status: formData.requer_analise ? 'pendente' : 'aprovado',
+    status_orcamento: 1, // Sempre começa como "Em aberto"
     valor_produto: 0,
     valor_pintura: 0,
     valor_instalacao: 0,
@@ -70,8 +70,8 @@ export const createOrcamento = async (
     if (produtosError) throw produtosError;
   }
 
-  // Só atualizar valor do orçamento no lead se for aprovado automaticamente
-  if (!formData.requer_analise) {
+  // Atualizar valor do orçamento no lead
+  if (formData.lead_id) {
     await supabase
       .from("elisaportas_leads")
       .update({ valor_orcamento: valorTotal })
