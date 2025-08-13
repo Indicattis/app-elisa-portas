@@ -1,13 +1,7 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import type { OrcamentoFormData } from '@/types/orcamento';
 import type { OrcamentoProduto } from '@/types/produto';
-
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 interface OrcamentoPDFData {
   id?: string;
@@ -158,7 +152,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       tableData.push(['Frete', formatCurrency(parseFloat(data.formData.valor_frete))]);
     }
 
-    pdf.autoTable({
+    autoTable(pdf, {
       head: [['DESCRIÇÃO', 'VALOR']],
       body: tableData,
       startY: yPosition,
