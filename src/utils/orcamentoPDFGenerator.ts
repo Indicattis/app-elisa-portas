@@ -43,7 +43,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   // Logo da empresa
   try {
-    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 60, 20);
+    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 30, 20);
   } catch (error) {
     // Fallback para texto se a imagem não carregar
     pdf.setFontSize(20);
