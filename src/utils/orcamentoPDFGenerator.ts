@@ -284,12 +284,12 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   // pdf.text(`Modalidade de Instalação: ${modalidade}`, margin, yPosition);
   
   // Rodapé sempre no final da página
-  yPosition = pdf.internal.pageSize.height - 10;
+  yPosition = pdf.internal.pageSize.height - 15;
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
   pdf.text('Este orçamento tem validade de 30 dias.', margin, yPosition);
-  pdf.text('Elisa Portas LTDA - Soluções em Portas de Aço', margin, yPosition + 6);
-  pdf.text('Contato: contato@elisaportas.com.br', margin, yPosition + 12);
+  pdf.text('Elisa Portas LTDA - A maior fábrica de portas de enrolar do Sul do País', margin, yPosition + 6);
+  pdf.text('Contato: comercial@elisaportas.com.br', margin, yPosition + 12);
 
   // Salvar o PDF
   const fileName = `orcamento-${numeroOrcamento}.pdf`;
