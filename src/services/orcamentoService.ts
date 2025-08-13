@@ -27,11 +27,15 @@ export const createOrcamento = async (
     valor_frete: parseFloat(formData.valor_frete) || 0,
     modalidade_instalacao: formData.modalidade_instalacao,
     forma_pagamento: formData.forma_pagamento,
-    desconto_total_percentual: formData.desconto_total_percentual || 0,
+    desconto_percentual: formData.desconto_total_percentual || 0,
     valor_total: valorTotal,
     requer_analise: formData.requer_analise,
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
-    status: formData.requer_analise ? 'pendente' : 'aprovado'
+    status: formData.requer_analise ? 'pendente' : 'aprovado',
+    valor_produto: 0,
+    valor_pintura: 0,
+    valor_instalacao: 0,
+    campos_personalizados: {}
   };
 
   const { data, error } = await supabase
