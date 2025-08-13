@@ -1112,6 +1112,7 @@ export type Database = {
       }
       requisicoes_venda: {
         Row: {
+          canal_aquisicao_id: string | null
           created_at: string
           custo_frete: number | null
           custo_instalacao: number | null
@@ -1127,6 +1128,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          canal_aquisicao_id?: string | null
           created_at?: string
           custo_frete?: number | null
           custo_instalacao?: number | null
@@ -1142,6 +1144,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          canal_aquisicao_id?: string | null
           created_at?: string
           custo_frete?: number | null
           custo_instalacao?: number | null
@@ -1162,6 +1165,13 @@ export type Database = {
             columns: ["orcamento_id"]
             isOneToOne: false
             referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisicoes_venda_canal_aquisicao_id_fkey"
+            columns: ["canal_aquisicao_id"]
+            isOneToOne: false
+            referencedRelation: "canais_aquisicao"
             referencedColumns: ["id"]
           },
         ]
