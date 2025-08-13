@@ -77,7 +77,7 @@ export function NovoOrcamentoForm({
 
   // Produto temporário para adição
   const [novoProduto, setNovoProduto] = useState<Partial<OrcamentoProduto>>({
-    tipo_produto: 'porta_enrolar_automatica',
+    tipo_produto: 'porta_enrolar',
     valor: 0,
     desconto_percentual: 0
   });
@@ -163,17 +163,12 @@ export function NovoOrcamentoForm({
 
     // Definir campos específicos baseado no tipo
     switch (novoProduto.tipo_produto) {
-      case 'porta_enrolar_automatica':
+      case 'porta_enrolar':
       case 'porta_social':
         produto.medidas = novoProduto.medidas;
         produto.preco_producao = novoProduto.preco_producao || 0;
         produto.preco_instalacao = novoProduto.preco_instalacao || 0;
         valor = (novoProduto.preco_producao || 0) + (novoProduto.preco_instalacao || 0);
-        break;
-      
-      case 'pintura_epoxi':
-        produto.cor_id = novoProduto.cor_id;
-        valor = novoProduto.valor || 0;
         break;
       
       case 'acessorio':
@@ -199,7 +194,7 @@ export function NovoOrcamentoForm({
     
     // Reset form
     setNovoProduto({
-      tipo_produto: 'porta_enrolar_automatica',
+      tipo_produto: 'porta_enrolar',
       valor: 0,
       desconto_percentual: 0
     });
@@ -211,7 +206,7 @@ export function NovoOrcamentoForm({
 
   const renderCamposProduto = () => {
     switch (novoProduto.tipo_produto) {
-      case 'porta_enrolar_automatica':
+      case 'porta_enrolar':
       case 'porta_social':
         return (
           <>
@@ -239,45 +234,6 @@ export function NovoOrcamentoForm({
                 step="0.01"
                 value={novoProduto.preco_instalacao || ""}
                 onChange={(e) => setNovoProduto({...novoProduto, preco_instalacao: parseFloat(e.target.value) || 0})}
-              />
-            </div>
-          </>
-        );
-
-      case 'pintura_epoxi':
-        return (
-          <>
-            <div className="space-y-2">
-              <Label>Cor</Label>
-              <Select
-                value={novoProduto.cor_id || ""}
-                onValueChange={(value) => setNovoProduto({...novoProduto, cor_id: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a cor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cores.map(cor => (
-                    <SelectItem key={cor.id} value={cor.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-4 h-4 rounded border" 
-                          style={{backgroundColor: cor.codigo_hex}}
-                        />
-                        {cor.nome}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Preço (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={novoProduto.valor || ""}
-                onChange={(e) => setNovoProduto({...novoProduto, valor: parseFloat(e.target.value) || 0})}
               />
             </div>
           </>
@@ -357,8 +313,7 @@ export function NovoOrcamentoForm({
 
   const getNomeProduto = (produto: OrcamentoProduto) => {
     const tipos = {
-      'porta_enrolar_automatica': 'Porta de Enrolar Automática',
-      'pintura_epoxi': 'Pintura Epóxi',
+      'porta_enrolar': 'Porta de Enrolar',
       'porta_social': 'Porta Social',
       'acessorio': 'Acessório',
       'adicional': 'Adicional',
@@ -498,11 +453,10 @@ export function NovoOrcamentoForm({
                   onValueChange={(value: any) => setNovoProduto({...novoProduto, tipo_produto: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="porta_enrolar_automatica">Porta de Enrolar Automática</SelectItem>
-                    <SelectItem value="pintura_epoxi">Pintura Epóxi</SelectItem>
+                    <SelectItem value="porta_enrolar">Porta de Enrolar</SelectItem>
                     <SelectItem value="porta_social">Porta Social</SelectItem>
                     <SelectItem value="acessorio">Acessório</SelectItem>
                     <SelectItem value="adicional">Adicional</SelectItem>

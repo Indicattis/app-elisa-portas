@@ -21,8 +21,7 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
 
   const getTipoProdutoLabel = (tipo: string) => {
     const labels: Record<string, string> = {
-      porta_enrolar_automatica: 'Porta de Enrolar Automática',
-      pintura_epoxi: 'Pintura Epóxi',
+      porta_enrolar: 'Porta de Enrolar',
       porta_social: 'Porta Social',
       acessorio: 'Acessório',
       manutencao: 'Manutenção',

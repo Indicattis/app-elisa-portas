@@ -112,11 +112,8 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
     let descricao = '';
     switch (produto.tipo_produto) {
-      case 'porta_enrolar_automatica':
-        descricao = 'Porta de Enrolar Automática';
-        break;
-      case 'pintura_epoxi':
-        descricao = 'Pintura Epóxi';
+      case 'porta_enrolar':
+        descricao = 'Porta de Enrolar';
         break;
       case 'porta_social':
         descricao = 'Porta Social';

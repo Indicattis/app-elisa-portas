@@ -247,11 +247,9 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
 
     const getIcon = (tipo: string) => {
       switch (tipo) {
-        case 'porta_enrolar_automatica':
+        case 'porta_enrolar':
         case 'porta_social':
           return DoorOpen;
-        case 'pintura_epoxi':
-          return Palette;
         case 'manutencao':
           return Wrench;
         case 'acessorio':

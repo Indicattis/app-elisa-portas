@@ -52,14 +52,11 @@ export const createOrcamento = async (
       let descricao = produto.descricao;
       if (!descricao) {
         switch (produto.tipo_produto) {
-          case 'porta_enrolar_automatica':
-            descricao = `Porta de Enrolar Automática${produto.medidas ? ` - ${produto.medidas}` : ''}`;
+          case 'porta_enrolar':
+            descricao = `Porta de Enrolar${produto.medidas ? ` - ${produto.medidas}` : ''}`;
             break;
           case 'porta_social':
             descricao = `Porta Social${produto.medidas ? ` - ${produto.medidas}` : ''}`;
-            break;
-          case 'pintura_epoxi':
-            descricao = 'Pintura Epóxi';
             break;
           case 'acessorio':
             descricao = 'Acessório';
@@ -162,14 +159,11 @@ export const updateOrcamento = async (
       let descricao = produto.descricao;
       if (!descricao) {
         switch (produto.tipo_produto) {
-          case 'porta_enrolar_automatica':
-            descricao = `Porta de Enrolar Automática${produto.medidas ? ` - ${produto.medidas}` : ''}`;
+          case 'porta_enrolar':
+            descricao = `Porta de Enrolar${produto.medidas ? ` - ${produto.medidas}` : ''}`;
             break;
           case 'porta_social':
             descricao = `Porta Social${produto.medidas ? ` - ${produto.medidas}` : ''}`;
-            break;
-          case 'pintura_epoxi':
-            descricao = 'Pintura Epóxi';
             break;
           case 'acessorio':
             descricao = 'Acessório';
