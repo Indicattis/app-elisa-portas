@@ -284,7 +284,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   // pdf.text(`Modalidade de Instalação: ${modalidade}`, margin, yPosition);
   
   // Rodapé sempre no final da página
-  yPosition = pdf.internal.pageSize.height - 40;
+  yPosition = pdf.internal.pageSize.height - 10;
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
   pdf.text('Este orçamento tem validade de 30 dias.', margin, yPosition);
