@@ -18,8 +18,8 @@ interface OrcamentoPDFData {
 export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.width;
-  const margin = 20;
-  let yPosition = 30;
+  const margin = 10;
+  let yPosition = 15;
 
   // Configuração de cores
   const primaryColor = [41, 128, 185] as [number, number, number];
@@ -42,7 +42,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   };
 
   // Cabeçalho da empresa
-  pdf.setFontSize(24);
+  pdf.setFontSize(20);
   pdf.setTextColor(...primaryColor);
   pdf.setFont('helvetica', 'bold');
   pdf.text('ELISA PORTAS LTDA', margin, yPosition);
@@ -50,10 +50,10 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(12);
   pdf.setTextColor(...grayColor);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Soluções em Portas de Aço', margin, yPosition + 8);
+  pdf.text('A maior fábrica de portas de enrolar do Sul do país', margin, yPosition + 8);
 
   // Informações da empresa no canto direito
-  pdf.setFontSize(9);
+  pdf.setFontSize(8);
   pdf.setTextColor(0, 0, 0);
   const empresaInfo = [
     'Rua Padre Elio Baron Toaldo, 571',
@@ -70,7 +70,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setLineWidth(1);
   pdf.line(margin, yPosition + 20, pageWidth - margin, yPosition + 20);
   
-  yPosition += 35;
+  yPosition += 25;
 
   // Título do documento e número
   pdf.setFontSize(18);
@@ -84,15 +84,15 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`Nº: ${numeroOrcamento}`, pageWidth - margin - 60, yPosition);
   pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition + 6);
   
-  yPosition += 25;
+  yPosition += 15;
 
   // Dados do cliente
-  pdf.setFontSize(14);
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('DADOS DO CLIENTE', margin, yPosition);
   yPosition += 10;
 
-  pdf.setFontSize(11);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   pdf.text(`Nome: ${data.formData.cliente_nome || 'Não informado'}`, margin, yPosition);
   pdf.text(`CPF: ${data.formData.cliente_cpf || 'Não informado'}`, margin, yPosition + 6);
@@ -102,10 +102,10 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`Cidade: ${data.formData.cliente_cidade || 'Não informado'}`, pageWidth/2, yPosition + 6);
   pdf.text(`CEP: ${data.formData.cliente_cep || 'Não informado'}`, pageWidth/2, yPosition + 12);
   
-  yPosition += 30;
+  yPosition += 20;
 
   // Informações da vendedora
-  pdf.setFontSize(14);
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('VENDEDORA RESPONSÁVEL', margin, yPosition);
   yPosition += 10;
@@ -115,13 +115,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin, yPosition);
   pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin, yPosition + 6);
   
-  yPosition += 25;
+  yPosition += 15;
 
   // Produtos
-  pdf.setFontSize(14);
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('PRODUTOS E SERVIÇOS', margin, yPosition);
-  yPosition += 15;
+  yPosition += 5;
 
   if (data.produtos.length > 0) {
     // Preparar dados da tabela
@@ -161,24 +161,24 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
     }
 
     autoTable(pdf, {
-      head: [['PRODUTO', 'QTD', 'PREÇO', 'DESCONTO', 'PREÇO FINAL']],
+      head: [['Produto', 'Un.', 'Valor', 'Desconto', 'Valor final']],
       body: tableData,
       startY: yPosition,
       styles: { 
-        fontSize: 10,
-        cellPadding: 5
+        fontSize: 8,
+        cellPadding: 3
       },
       headStyles: { 
         fillColor: primaryColor,
         textColor: [255, 255, 255],
-        fontSize: 11,
+        fontSize: 8,
         fontStyle: 'bold'
       },
       columnStyles: {
         0: { cellWidth: 50 },  // Produto - mais reduzido
-        1: { cellWidth: 15, halign: 'center' },  // QTD - mais reduzido
+        1: { cellWidth: 25, halign: 'center' },  // QTD - mais reduzido
         2: { cellWidth: 25, halign: 'right' },   // Preço - mais reduzido
-        3: { cellWidth: 20, halign: 'center' },  // Desconto - mais reduzido
+        3: { cellWidth: 25, halign: 'center' },  // Desconto - mais reduzido
         4: { cellWidth: 30, halign: 'right' }    // Preço Final - mais reduzido
       },
       margin: { left: margin, right: margin }
@@ -254,7 +254,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   
   // Rodapé sempre no final da página
   yPosition = pdf.internal.pageSize.height - 40;
-  pdf.setFontSize(9);
+  pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
   pdf.text('Este orçamento tem validade de 30 dias.', margin, yPosition);
   pdf.text('Elisa Portas LTDA - Soluções em Portas de Aço', margin, yPosition + 6);
