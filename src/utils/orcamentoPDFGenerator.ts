@@ -40,7 +40,8 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       porta_social: 'Porta Social',
       acessorio: 'Acessório',
       manutencao: 'Manutenção',
-      adicional: 'Adicional'
+      adicional: 'Adicional',
+      pintura_epoxi: 'Pintura Epóxi'
     };
     return labels[tipo] || tipo;
   };

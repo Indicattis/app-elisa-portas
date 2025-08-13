@@ -1,7 +1,7 @@
 export interface OrcamentoProduto {
   id?: string;
   orcamento_id?: string;
-  tipo_produto: 'porta_enrolar' | 'porta_social' | 'acessorio' | 'manutencao' | 'adicional';
+  tipo_produto: 'porta_enrolar' | 'porta_social' | 'acessorio' | 'manutencao' | 'adicional' | 'pintura_epoxi';
   medidas?: string;
   cor_id?: string;
   acessorio_id?: string;

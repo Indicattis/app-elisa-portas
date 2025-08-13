@@ -25,7 +25,8 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal }: Orcame
       porta_social: 'Porta Social',
       acessorio: 'Acessório',
       manutencao: 'Manutenção',
-      adicional: 'Adicional'
+      adicional: 'Adicional',
+      pintura_epoxi: 'Pintura Epóxi'
     };
     return labels[tipo] || tipo;
   };

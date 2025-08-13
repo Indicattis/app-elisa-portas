@@ -187,6 +187,13 @@ export function NovoOrcamentoForm({
         produto.descricao_manutencao = novoProduto.descricao_manutencao;
         valor = novoProduto.valor || 0;
         break;
+      
+      case 'pintura_epoxi':
+        produto.cor_id = novoProduto.cor_id;
+        produto.medidas = novoProduto.medidas; // Área em m²
+        produto.preco_producao = novoProduto.preco_producao || 0; // Preço por m²
+        valor = novoProduto.valor || 0; // Valor total já calculado
+        break;
     }
 
     produto.valor = valor;
@@ -306,6 +313,81 @@ export function NovoOrcamentoForm({
           </>
         );
 
+      case 'pintura_epoxi':
+        return (
+          <>
+            <div className="space-y-2">
+              <Label>Cor</Label>
+              <Select
+                value={novoProduto.cor_id || ""}
+                onValueChange={(value) => setNovoProduto({...novoProduto, cor_id: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a cor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cores.map(cor => (
+                    <SelectItem key={cor.id} value={cor.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-4 h-4 rounded border" 
+                          style={{ backgroundColor: cor.codigo_hex }}
+                        />
+                        {cor.nome}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Área (m²)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 25"
+                value={novoProduto.medidas || ""}
+                onChange={(e) => {
+                  const area = parseFloat(e.target.value) || 0;
+                  const preco = novoProduto.preco_producao || 0;
+                  setNovoProduto({
+                    ...novoProduto, 
+                    medidas: e.target.value,
+                    valor: area * preco
+                  });
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Preço por m² (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={novoProduto.preco_producao || ""}
+                onChange={(e) => {
+                  const preco = parseFloat(e.target.value) || 0;
+                  const area = parseFloat(novoProduto.medidas || "0") || 0;
+                  setNovoProduto({
+                    ...novoProduto, 
+                    preco_producao: preco,
+                    valor: preco * area
+                  });
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Valor Total (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={novoProduto.valor || ""}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+          </>
+        );
+
       default:
         return null;
     }
@@ -317,7 +399,8 @@ export function NovoOrcamentoForm({
       'porta_social': 'Porta Social',
       'acessorio': 'Acessório',
       'adicional': 'Adicional',
-      'manutencao': 'Manutenção'
+      'manutencao': 'Manutenção',
+      'pintura_epoxi': 'Pintura Epóxi'
     };
     return tipos[produto.tipo_produto];
   };
@@ -461,6 +544,7 @@ export function NovoOrcamentoForm({
                     <SelectItem value="acessorio">Acessório</SelectItem>
                     <SelectItem value="adicional">Adicional</SelectItem>
                     <SelectItem value="manutencao">Manutenção</SelectItem>
+                    <SelectItem value="pintura_epoxi">Pintura Epóxi</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
