@@ -15,7 +15,7 @@ export const createOrcamento = async (
   }
 
   const orcamentoData = {
-    lead_id: formData.lead_id,
+    lead_id: formData.lead_id || null,
     usuario_id: userId,
     cliente_nome: formData.cliente_nome,
     cliente_cpf: formData.cliente_cpf,
@@ -26,7 +26,7 @@ export const createOrcamento = async (
     cliente_cep: formData.cliente_cep,
     valor_frete: parseFloat(formData.valor_frete) || 0,
     modalidade_instalacao: formData.modalidade_instalacao,
-    autorizado_id: formData.autorizado_id,
+    autorizado_id: formData.autorizado_id || null,
     forma_pagamento: formData.forma_pagamento,
     desconto_total_percentual: formData.desconto_total_percentual || 0,
     valor_total: valorTotal,
