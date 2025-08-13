@@ -190,9 +190,7 @@ export function NovoOrcamentoForm({
       
       case 'pintura_epoxi':
         produto.cor_id = novoProduto.cor_id;
-        produto.medidas = novoProduto.medidas; // Área em m²
-        produto.preco_producao = novoProduto.preco_producao || 0; // Preço por m²
-        valor = novoProduto.valor || 0; // Valor total já calculado
+        valor = novoProduto.valor || 0;
         break;
     }
 
@@ -341,48 +339,16 @@ export function NovoOrcamentoForm({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Área (m²)</Label>
+              <Label>Preço Total (R$)</Label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Ex: 25"
-                value={novoProduto.medidas || ""}
-                onChange={(e) => {
-                  const area = parseFloat(e.target.value) || 0;
-                  const preco = novoProduto.preco_producao || 0;
-                  setNovoProduto({
-                    ...novoProduto, 
-                    medidas: e.target.value,
-                    valor: area * preco
-                  });
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Preço por m² (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={novoProduto.preco_producao || ""}
-                onChange={(e) => {
-                  const preco = parseFloat(e.target.value) || 0;
-                  const area = parseFloat(novoProduto.medidas || "0") || 0;
-                  setNovoProduto({
-                    ...novoProduto, 
-                    preco_producao: preco,
-                    valor: preco * area
-                  });
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Valor Total (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
+                placeholder="Ex: 2500.00"
                 value={novoProduto.valor || ""}
-                readOnly
-                className="bg-muted"
+                onChange={(e) => setNovoProduto({
+                  ...novoProduto, 
+                  valor: parseFloat(e.target.value) || 0
+                })}
               />
             </div>
           </>

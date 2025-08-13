@@ -181,6 +181,11 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       else if (produto.tipo_produto === 'adicional') {
         produto_descricao = produto.descricao || 'Adicional';
       }
+      // Para pintura epóxi, buscar o nome da cor
+      else if (produto.tipo_produto === 'pintura_epoxi') {
+        // Aqui seria ideal ter o nome da cor, mas por enquanto mantemos uma descrição padrão
+        produto_descricao = 'Pintura Epóxi';
+      }
       else {
         produto_descricao = categoria;
       }
