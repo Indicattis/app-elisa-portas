@@ -801,7 +801,7 @@ export type Database = {
           forma_pagamento: string
           id: string
           justificativa_perda: string | null
-          lead_id: string
+          lead_id: string | null
           modalidade_instalacao: string | null
           motivo_analise: string | null
           motivo_perda: string | null
@@ -840,7 +840,7 @@ export type Database = {
           forma_pagamento: string
           id?: string
           justificativa_perda?: string | null
-          lead_id: string
+          lead_id?: string | null
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
           motivo_perda?: string | null
@@ -879,7 +879,7 @@ export type Database = {
           forma_pagamento?: string
           id?: string
           justificativa_perda?: string | null
-          lead_id?: string
+          lead_id?: string | null
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
           motivo_perda?: string | null

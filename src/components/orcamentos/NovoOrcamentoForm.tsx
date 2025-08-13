@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Minus, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
+import { OrcamentoPreview } from "./OrcamentoPreview";
 import type { OrcamentoFormData, Acessorio, Adicional } from "@/types/orcamento";
 import type { OrcamentoProduto } from "@/types/produto";
 
@@ -66,8 +68,8 @@ export function NovoOrcamentoForm({
   const [acessorios, setAcessorios] = useState<Acessorio[]>([]);
   const [adicionais, setAdicionais] = useState<Adicional[]>([]);
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
-  const [leads, setLeads] = useState<any[]>([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Produto temporário para adição
   const [novoProduto, setNovoProduto] = useState<Partial<OrcamentoProduto>>({
@@ -111,19 +113,17 @@ export function NovoOrcamentoForm({
 
   const fetchData = async () => {
     try {
-      const [coresResponse, acessoriosResponse, adicionaisResponse, autorizadosResponse, leadsResponse] = await Promise.all([
+      const [coresResponse, acessoriosResponse, adicionaisResponse, autorizadosResponse] = await Promise.all([
         supabase.from('catalogo_cores').select('*').eq('ativa', true),
         supabase.from('acessorios').select('*').eq('ativo', true),
         supabase.from('adicionais').select('*').eq('ativo', true),
-        supabase.from('autorizados').select('*').eq('ativo', true),
-        supabase.from('elisaportas_leads').select('id, nome, telefone, email').order('data_envio', { ascending: false })
+        supabase.from('autorizados').select('*').eq('ativo', true)
       ]);
 
       if (coresResponse.data) setCores(coresResponse.data);
       if (acessoriosResponse.data) setAcessorios(acessoriosResponse.data);
       if (adicionaisResponse.data) setAdicionais(adicionaisResponse.data);
       if (autorizadosResponse.data) setAutorizados(autorizadosResponse.data);
-      if (leadsResponse.data) setLeads(leadsResponse.data);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast({
@@ -364,18 +364,32 @@ export function NovoOrcamentoForm({
     return tipos[produto.tipo_produto];
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validar se lead foi selecionado (apenas para novos orçamentos)
-    if (!isEdit && (!formData.lead_id || formData.lead_id.trim() === '')) {
+  const handleDownloadPDF = () => {
+    try {
+      const pdfData = {
+        formData,
+        produtos,
+        calculatedTotal
+      };
+
+      generateOrcamentoPDF(pdfData);
+      
+      toast({
+        title: "PDF Gerado",
+        description: "O orçamento foi baixado com sucesso",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Selecione um lead para criar o orçamento"
+        description: "Erro ao gerar o PDF. Tente novamente.",
       });
-      return;
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     if (produtos.length === 0) {
       toast({
@@ -392,39 +406,11 @@ export function NovoOrcamentoForm({
   };
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Seleção de Lead */}
-        {!isEdit && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Selecionar Lead</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Lead *</Label>
-                <Select 
-                  value={formData.lead_id} 
-                  onValueChange={(value) => setFormData({...formData, lead_id: value})}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {leads.map((lead) => (
-                      <SelectItem key={lead.id} value={lead.id}>
-                        {lead.nome} - {lead.telefone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Informações do Cliente */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Formulário */}
+      <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Informações do Cliente */}
         <Card>
           <CardHeader>
             <CardTitle>Informações do Cliente</CardTitle>
@@ -698,24 +684,56 @@ export function NovoOrcamentoForm({
           </CardContent>
         </Card>
 
-        {/* Total */}
-        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-          <span className="text-lg font-semibold">Total do Orçamento:</span>
-          <span className="text-2xl font-bold text-primary">
-            R$ {calculatedTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
+          {/* Total */}
+          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+            <span className="text-lg font-semibold">Total do Orçamento:</span>
+            <span className="text-2xl font-bold text-primary">
+              R$ {calculatedTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </span>
+          </div>
 
-        {/* Botões */}
-        <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Criando..." : "Criar Orçamento"}
-          </Button>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex gap-4">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancelar
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleDownloadPDF}
+                  disabled={produtos.length === 0}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar PDF
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowPreview(!showPreview)}
+                >
+                  {showPreview ? "Ocultar" : "Mostrar"} Pré-visualização
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Salvando..." : isEdit ? "Atualizar" : "Criar Orçamento"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </form>
+      </div>
+
+      {/* Pré-visualização */}
+      <div className={`transition-all duration-300 ${showPreview ? 'block' : 'hidden lg:block'}`}>
+        <div className="sticky top-6">
+          <h3 className="text-lg font-semibold mb-4">Pré-visualização do Orçamento</h3>
+          <OrcamentoPreview 
+            formData={formData}
+            produtos={produtos}
+            calculatedTotal={calculatedTotal}
+          />
         </div>
-      </form>
+      </div>
     </div>
   );
 }

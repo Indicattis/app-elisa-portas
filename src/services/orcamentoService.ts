@@ -14,13 +14,8 @@ export const createOrcamento = async (
     throw new Error("Motivo da análise é obrigatório quando necessário");
   }
 
-  // Validar se lead_id foi fornecido
-  if (!formData.lead_id || formData.lead_id.trim() === '') {
-    throw new Error("Lead é obrigatório para criar o orçamento");
-  }
-
   const orcamentoData = {
-    lead_id: formData.lead_id,
+    lead_id: formData.lead_id || null,
     usuario_id: userId,
     cliente_nome: formData.cliente_nome,
     cliente_cpf: formData.cliente_cpf,
