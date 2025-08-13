@@ -72,7 +72,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   
   // Linha divisória
   pdf.setDrawColor(...primaryColor);
-  pdf.setLineWidth(1);
+  pdf.setLineWidth(0.3);
   pdf.line(margin, yPosition + 20, pageWidth - margin, yPosition + 20);
   
   yPosition += 25;
