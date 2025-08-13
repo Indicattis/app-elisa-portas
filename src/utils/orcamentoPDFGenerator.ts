@@ -89,10 +89,10 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   const numeroOrcamento = data.numeroOrcamento || `ORC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Nº: ${numeroOrcamento}`, pageWidth - margin - 60, yPosition);
+  pdf.text(`Nº: ${numeroOrcamento}`, 6, yPosition - 5);
   pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition + 6);
   
-  yPosition += 25;
+  yPosition += 20;
 
   // Dados do cliente com fundo destacado
   pdf.setFontSize(12);
@@ -121,7 +121,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('Atendente responsável', margin, yPosition);
-  yPosition += 10;
+  yPosition += 5;
 
   // Adicionar avatar placeholder (substituir pela imagem real quando disponível)
   try {
@@ -137,13 +137,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 25, yPosition + 8);
   pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 25, yPosition + 14);
   
-  yPosition += 35;
+  yPosition += 30;
 
   // Produtos
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('PRODUTOS E SERVIÇOS', margin, yPosition);
-  yPosition += 10;
+  pdf.text('Produtos e Serviços', margin, yPosition);
+  yPosition += 5;
 
   if (data.produtos.length > 0) {
     // Preparar dados da tabela
@@ -211,7 +211,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   } else {
     pdf.setFont('helvetica', 'normal');
     pdf.text('Nenhum produto adicionado', margin, yPosition);
-    yPosition += 20;
+    yPosition += 10;
   }
 
   // Resumo
