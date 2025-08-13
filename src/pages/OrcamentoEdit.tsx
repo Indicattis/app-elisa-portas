@@ -27,7 +27,7 @@ export default function OrcamentoEdit() {
           *,
           elisaportas_leads (nome, telefone, email),
           orcamento_produtos (*),
-          admin_users (nome)
+          admin_users!orcamentos_atendente_id_fkey (nome, foto_perfil_url)
         `)
         .eq("id", id)
         .single();

@@ -141,19 +141,28 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
         descricao += `\n${produto.descricao_manutencao}`;
       }
 
+      const quantidade = 1; // Por padrão 1 unidade, pode ser modificado conforme necessário
+      const precoUnitario = produto.valor;
+      const desconto = produto.desconto_percentual || 0;
+      const precoFinal = precoUnitario - (precoUnitario * desconto / 100);
+
       return [
         descricao,
-        formatCurrency(produto.valor)
+        quantidade.toString(),
+        formatCurrency(precoUnitario),
+        desconto > 0 ? `${desconto}%` : '-',
+        formatCurrency(precoFinal)
       ];
     });
 
     // Adicionar serviços adicionais
     if (parseFloat(data.formData.valor_frete) > 0) {
-      tableData.push(['Frete', formatCurrency(parseFloat(data.formData.valor_frete))]);
+      const freteValue = parseFloat(data.formData.valor_frete);
+      tableData.push(['Frete', '1', formatCurrency(freteValue), '-', formatCurrency(freteValue)]);
     }
 
     autoTable(pdf, {
-      head: [['DESCRIÇÃO', 'VALOR']],
+      head: [['PRODUTO', 'QTD', 'PREÇO', 'DESCONTO', 'PREÇO FINAL']],
       body: tableData,
       startY: yPosition,
       styles: { 
@@ -167,8 +176,11 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
         fontStyle: 'bold'
       },
       columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 40, halign: 'right' }
+        0: { cellWidth: 80 },  // Produto
+        1: { cellWidth: 20, halign: 'center' },  // QTD
+        2: { cellWidth: 30, halign: 'right' },   // Preço
+        3: { cellWidth: 25, halign: 'center' },  // Desconto
+        4: { cellWidth: 35, halign: 'right' }    // Preço Final
       },
       margin: { left: margin, right: margin }
     });
@@ -222,7 +234,15 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('TOTAL:', margin, yPosition);
   pdf.text(formatCurrency(data.calculatedTotal), pageWidth - margin - 60, yPosition);
   
-  yPosition += 20;
+  yPosition += 30;
+
+  // Verificar se há espaço suficiente para informações de pagamento
+  const remainingSpace = pdf.internal.pageSize.height - yPosition - 60; // 60 para o rodapé
+  
+  if (remainingSpace < 30) {
+    pdf.addPage();
+    yPosition = 30;
+  }
 
   // Informações de pagamento
   pdf.setFontSize(11);
@@ -233,7 +253,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   const modalidade = data.formData.modalidade_instalacao === 'instalacao_elisa' ? 'Instalação Elisa' : 'Autorizado Elisa';
   pdf.text(`Modalidade de Instalação: ${modalidade}`, margin, yPosition);
   
-  // Rodapé
+  // Rodapé sempre no final da página
   yPosition = pdf.internal.pageSize.height - 40;
   pdf.setFontSize(9);
   pdf.setTextColor(...grayColor);

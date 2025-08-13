@@ -17,6 +17,7 @@ export const createOrcamento = async (
   const orcamentoData = {
     lead_id: formData.lead_id || null,
     usuario_id: userId,
+    atendente_id: userId, // Atribuir automaticamente ao usuário logado
     cliente_nome: formData.cliente_nome,
     cliente_cpf: formData.cliente_cpf,
     cliente_telefone: formData.cliente_telefone,
