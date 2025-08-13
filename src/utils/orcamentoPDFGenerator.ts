@@ -128,7 +128,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   try {
     // Verifica se há avatar do vendedor, senão usa a logo da empresa como fallback
     if (data.vendedora?.avatar_url && data.vendedora.avatar_url !== '') {
-      pdf.addImage(data.vendedora.avatar_url, 'PNG', margin, yPosition, 20, 20);
+      pdf.addImage(data.vendedora.avatar_url, 'PNG', margin, yPosition, 15, 15);
     } else {
       // Usar logo da empresa como fallback
       pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 20, 20);
