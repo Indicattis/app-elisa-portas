@@ -73,7 +73,12 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange }: OrcamentoCa
           preco_instalacao: p.preco_instalacao
         })),
         calculatedTotal: orcamento.valor_total,
-        numeroOrcamento: `ORC-${orcamento.id.slice(-8).toUpperCase()}`
+        numeroOrcamento: `ORC-${orcamento.id.slice(-8).toUpperCase()}`,
+        vendedora: {
+          nome: orcamento.admin_users?.nome || 'Atendente',
+          cargo: orcamento.admin_users?.role || 'Consultor',
+          avatar_url: orcamento.admin_users?.foto_perfil_url || null
+        }
       };
 
       generateOrcamentoPDF(pdfData);
