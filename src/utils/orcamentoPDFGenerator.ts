@@ -46,7 +46,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   // Logo da empresa
   try {
-    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition - 20, 60, 25);
+    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition - 10, 60, 25);
   } catch (error) {
     // Fallback para texto se a imagem não carregar
     pdf.setFontSize(20);
@@ -76,7 +76,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   // Linha divisória
   pdf.setDrawColor(...grayColor);
   pdf.setLineWidth(0.2);
-  pdf.line(margin, yPosition + 18, pageWidth - margin, yPosition + 18);
+  pdf.line(margin, yPosition + 15, pageWidth - margin, yPosition + 15);
   
   yPosition += 25;
 
