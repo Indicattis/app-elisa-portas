@@ -105,3 +105,84 @@ export const rejectOrcamento = async (orcamentoId: string) => {
 
   if (error) throw error;
 };
+
+export const updateOrcamento = async (
+  orcamentoId: string,
+  formData: OrcamentoFormData,
+  produtos: OrcamentoProduto[],
+  valorTotal: number
+) => {
+  // Validar motivo da análise se necessário
+  if (formData.requer_analise && !formData.motivo_analise.trim()) {
+    throw new Error("Motivo da análise é obrigatório quando necessário");
+  }
+
+  const orcamentoData = {
+    cliente_nome: formData.cliente_nome,
+    cliente_cpf: formData.cliente_cpf,
+    cliente_telefone: formData.cliente_telefone,
+    cliente_estado: formData.cliente_estado,
+    cliente_cidade: formData.cliente_cidade,
+    cliente_bairro: formData.cliente_bairro,
+    cliente_cep: formData.cliente_cep,
+    valor_frete: parseFloat(formData.valor_frete) || 0,
+    modalidade_instalacao: formData.modalidade_instalacao,
+    forma_pagamento: formData.forma_pagamento,
+    desconto_percentual: formData.desconto_total_percentual || 0,
+    valor_total: valorTotal,
+    requer_analise: formData.requer_analise,
+    motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
+    valor_produto: 0,
+    valor_pintura: 0,
+    valor_instalacao: 0
+  };
+
+  const { error } = await supabase
+    .from("orcamentos")
+    .update(orcamentoData)
+    .eq("id", orcamentoId);
+
+  if (error) throw error;
+
+  // Deletar produtos existentes e inserir novos
+  const { error: deleteError } = await supabase
+    .from("orcamento_produtos")
+    .delete()
+    .eq("orcamento_id", orcamentoId);
+
+  if (deleteError) throw deleteError;
+
+  // Salvar novos produtos do orçamento
+  if (produtos.length > 0) {
+    const produtosData = produtos.map(produto => ({
+      orcamento_id: orcamentoId,
+      tipo_produto: produto.tipo_produto,
+      medidas: produto.medidas || null,
+      cor_id: produto.cor_id || null,
+      acessorio_id: produto.acessorio_id || null,
+      adicional_id: produto.adicional_id || null,
+      descricao: produto.descricao || null,
+      descricao_manutencao: produto.descricao_manutencao || null,
+      valor: produto.valor,
+      preco_producao: produto.preco_producao || 0,
+      preco_instalacao: produto.preco_instalacao || 0,
+      desconto_percentual: produto.desconto_percentual || 0
+    }));
+
+    const { error: produtosError } = await supabase
+      .from("orcamento_produtos")
+      .insert(produtosData);
+
+    if (produtosError) throw produtosError;
+  }
+
+  // Atualizar valor do orçamento no lead
+  if (formData.lead_id) {
+    await supabase
+      .from("elisaportas_leads")
+      .update({ valor_orcamento: valorTotal })
+      .eq("id", formData.lead_id);
+  }
+
+  return { id: orcamentoId };
+};

@@ -801,14 +801,20 @@ export type Database = {
           cliente_telefone: string | null
           created_at: string
           data_aprovacao: string | null
+          desconto_adicional_percentual: number | null
+          desconto_adicional_valor: number | null
           desconto_percentual: number | null
           forma_pagamento: string
           id: string
+          justificativa_perda: string | null
           lead_id: string | null
           modalidade_instalacao: string | null
           motivo_analise: string | null
+          motivo_perda: string | null
+          observacoes_aprovacao: string | null
           requer_analise: boolean
           status: string
+          tipo_desconto_adicional: string | null
           updated_at: string
           valor_frete: number
           valor_instalacao: number
@@ -831,14 +837,20 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           data_aprovacao?: string | null
+          desconto_adicional_percentual?: number | null
+          desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
           forma_pagamento: string
           id?: string
+          justificativa_perda?: string | null
           lead_id?: string | null
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
+          motivo_perda?: string | null
+          observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
+          tipo_desconto_adicional?: string | null
           updated_at?: string
           valor_frete?: number
           valor_instalacao?: number
@@ -861,14 +873,20 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           data_aprovacao?: string | null
+          desconto_adicional_percentual?: number | null
+          desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
           forma_pagamento?: string
           id?: string
+          justificativa_perda?: string | null
           lead_id?: string | null
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
+          motivo_perda?: string | null
+          observacoes_aprovacao?: string | null
           requer_analise?: boolean
           status?: string
+          tipo_desconto_adicional?: string | null
           updated_at?: string
           valor_frete?: number
           valor_instalacao?: number
@@ -1099,7 +1117,7 @@ export type Database = {
           data_aprovacao: string | null
           gerente_id: string | null
           id: string
-          lead_id: string
+          lead_id: string | null
           observacoes: string | null
           orcamento_id: string | null
           solicitante_id: string
@@ -1115,7 +1133,7 @@ export type Database = {
           data_aprovacao?: string | null
           gerente_id?: string | null
           id?: string
-          lead_id: string
+          lead_id?: string | null
           observacoes?: string | null
           orcamento_id?: string | null
           solicitante_id: string
@@ -1131,7 +1149,7 @@ export type Database = {
           data_aprovacao?: string | null
           gerente_id?: string | null
           id?: string
-          lead_id?: string
+          lead_id?: string | null
           observacoes?: string | null
           orcamento_id?: string | null
           solicitante_id?: string

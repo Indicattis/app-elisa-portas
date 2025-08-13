@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { NovoOrcamentoForm } from "@/components/orcamentos/NovoOrcamentoForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { updateOrcamento } from "@/services/orcamentoService";
+import type { OrcamentoFormData } from "@/types/orcamento";
+import type { OrcamentoProduto } from "@/types/produto";
 
 export default function OrcamentoEdit() {
   const { id } = useParams();
@@ -30,9 +33,19 @@ export default function OrcamentoEdit() {
           admin_users!orcamentos_atendente_id_fkey (nome, foto_perfil_url)
         `)
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Orçamento não encontrado",
+        });
+        navigate("/dashboard/orcamentos");
+        return;
+      }
 
       // Verificar se pode editar
       const canEdit = ['pendente', 'aprovado'].includes(data.status);
@@ -68,6 +81,26 @@ export default function OrcamentoEdit() {
     return <div>Orçamento não encontrado</div>;
   }
 
+  const handleSubmit = async (formData: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => {
+    try {
+      await updateOrcamento(id!, formData, produtos, valorTotal);
+      
+      toast({
+        title: "Sucesso",
+        description: "Orçamento atualizado com sucesso",
+      });
+      
+      navigate("/dashboard/orcamentos");
+    } catch (error) {
+      console.error("Erro ao atualizar orçamento:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao atualizar orçamento",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -90,6 +123,7 @@ export default function OrcamentoEdit() {
       <NovoOrcamentoForm 
         initialData={orcamento}
         isEdit={true}
+        onSubmit={handleSubmit}
         onCancel={() => navigate("/dashboard/orcamentos")}
       />
     </div>
