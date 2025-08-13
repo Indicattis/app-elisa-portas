@@ -73,7 +73,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   yPosition += 25;
 
   // Título do documento e número
-  pdf.setFontSize(18);
+  pdf.setFontSize(16);
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'bold');
   pdf.text('ORÇAMENTO', margin, yPosition);
@@ -102,7 +102,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text(`Cidade: ${data.formData.cliente_cidade || 'Não informado'}`, pageWidth/2, yPosition + 6);
   pdf.text(`CEP: ${data.formData.cliente_cep || 'Não informado'}`, pageWidth/2, yPosition + 12);
   
-  yPosition += 20;
+  yPosition += 25;
 
   // Informações da vendedora
   pdf.setFontSize(12);
@@ -110,18 +110,18 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('VENDEDORA RESPONSÁVEL', margin, yPosition);
   yPosition += 10;
 
-  pdf.setFontSize(11);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin, yPosition);
   pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin, yPosition + 6);
   
-  yPosition += 15;
+  yPosition += 25;
 
   // Produtos
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('PRODUTOS E SERVIÇOS', margin, yPosition);
-  yPosition += 5;
+  yPosition += 10;
 
   if (data.produtos.length > 0) {
     // Preparar dados da tabela
@@ -192,12 +192,12 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   }
 
   // Resumo
-  pdf.setFontSize(14);
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text('RESUMO', margin, yPosition);
-  yPosition += 15;
+  yPosition += 10;
 
-  pdf.setFontSize(11);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   
   // Quantidade de itens
@@ -233,24 +233,24 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('TOTAL:', margin, yPosition);
   pdf.text(formatCurrency(data.calculatedTotal), pageWidth - margin - 60, yPosition);
   
-  yPosition += 30;
+  yPosition += 25;
 
   // Verificar se há espaço suficiente para informações de pagamento
-  const remainingSpace = pdf.internal.pageSize.height - yPosition - 60; // 60 para o rodapé
+  // const remainingSpace = pdf.internal.pageSize.height - yPosition - 60; // 60 para o rodapé
   
-  if (remainingSpace < 30) {
-    pdf.addPage();
-    yPosition = 30;
-  }
+  // if (remainingSpace < 30) {
+  //   pdf.addPage();
+  //   yPosition = 30;
+  // }
 
   // Informações de pagamento
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`Forma de Pagamento: ${data.formData.forma_pagamento || 'Não informado'}`, margin, yPosition);
-  yPosition += 6;
+  // pdf.setFontSize(11);
+  // pdf.setFont('helvetica', 'normal');
+  // pdf.text(`Forma de Pagamento: ${data.formData.forma_pagamento || 'Não informado'}`, margin, yPosition);
+  // yPosition += 6;
   
-  const modalidade = data.formData.modalidade_instalacao === 'instalacao_elisa' ? 'Instalação Elisa' : 'Autorizado Elisa';
-  pdf.text(`Modalidade de Instalação: ${modalidade}`, margin, yPosition);
+  // const modalidade = data.formData.modalidade_instalacao === 'instalacao_elisa' ? 'Instalação Elisa' : 'Autorizado Elisa';
+  // pdf.text(`Modalidade de Instalação: ${modalidade}`, margin, yPosition);
   
   // Rodapé sempre no final da página
   yPosition = pdf.internal.pageSize.height - 40;
