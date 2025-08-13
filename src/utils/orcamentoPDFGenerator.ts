@@ -70,7 +70,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   ];
   
   empresaInfo.forEach((info, index) => {
-    pdf.text(info, pageWidth - margin - 60, yPosition + (index * 5));
+    pdf.text(info, pageWidth - margin - 50, yPosition + (index * 5));
   });
   
   // Linha divisória
@@ -90,7 +90,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
   pdf.text(`Nº: ${numeroOrcamento}`, 40, yPosition);
-  pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, yPosition);
+  pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 50, yPosition);
   
   yPosition += 20;
 
