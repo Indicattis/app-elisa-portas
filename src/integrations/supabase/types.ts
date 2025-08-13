@@ -1373,9 +1373,7 @@ export type Database = {
         Returns: number
       }
       criar_requisicao_venda: {
-        Args:
-          | { lead_uuid?: string; orcamento_uuid?: string }
-          | { orcamento_uuid: string }
+        Args: { orcamento_uuid: string }
         Returns: string
       }
       has_permission: {
