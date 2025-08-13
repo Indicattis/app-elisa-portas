@@ -128,7 +128,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   try {
     // Verifica se há avatar do vendedor, senão usa a logo da empresa como fallback
     if (data.vendedora?.avatar_url && data.vendedora.avatar_url !== '') {
-      pdf.addImage(data.vendedora.avatar_url, 'PNG', margin, yPosition, 15, 15);
+      pdf.addImage(data.vendedora.avatar_url, 'PNG', margin, yPosition, 12, 12);
     } else {
       // Usar logo da empresa como fallback
       pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 20, 20);
@@ -141,9 +141,9 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 20, yPosition + 4);
+  pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 15, yPosition + 4);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 20, yPosition + 8);
+  pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 15, yPosition + 8);
   
   yPosition += 30;
 
