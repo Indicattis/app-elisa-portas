@@ -159,7 +159,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   if (data.produtos.length > 0) {
     // Distribuir custos logísticos entre produtos de porta
     const valorFrete = parseFloat(data.formData.valor_frete) || 0;
-    const valorInstalacao = data.valorInstalacao || 0;
+    const valorInstalacao = parseFloat(data.formData.valor_instalacao) || 0;
     const produtosComCustosDistribuidos = distribuirCustosLogisticos(data.produtos, valorFrete, valorInstalacao);
     
     // Preparar dados da tabela com produtos

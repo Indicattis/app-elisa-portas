@@ -37,7 +37,8 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal, valorIns
 
   // Distribuir custos logísticos entre produtos de porta
   const valorFrete = parseFloat(formData.valor_frete) || 0;
-  const produtosComCustosDistribuidos = distribuirCustosLogisticos(produtos, valorFrete, valorInstalacao);
+  const valorInstalacaoFromForm = parseFloat(formData.valor_instalacao) || 0;
+  const produtosComCustosDistribuidos = distribuirCustosLogisticos(produtos, valorFrete, valorInstalacaoFromForm);
   const itensLogisticos = criarItensLogisticosIncluso();
 
   return (
