@@ -45,6 +45,7 @@ interface RequisicaoVenda {
     numero_parcelas: number | null;
     valor_entrada: number | null;
     desconto_percentual: number | null;
+    publico_alvo: string | null;
     canal_aquisicao_id: string | null;
     campos_personalizados: any;
   };
@@ -94,6 +95,8 @@ export function RequisicoesVenda() {
             forma_pagamento,
             modalidade_instalacao,
             desconto_percentual,
+            publico_alvo,
+            canal_aquisicao_id,
             campos_personalizados
           )
         `)
@@ -150,7 +153,11 @@ export function RequisicoesVenda() {
 
       // Criar venda com todos os dados do orçamento
       const orcamento = selectedRequisicao.orcamentos;
-      const lucroTotal = calcularLucro();
+      
+      // Calcular valor total dos produtos (produto + frete + instalação, excluindo pintura)
+      const valorTotalProdutos = (orcamento.valor_produto || 0) + 
+                                (orcamento.valor_frete || 0) + 
+                                (orcamento.valor_instalacao || 0);
       
       const { error: vendaError } = await supabase
         .from("vendas")
@@ -160,10 +167,10 @@ export function RequisicoesVenda() {
           cliente_telefone: orcamento.cliente_telefone,
           cliente_email: orcamento.cliente_email,
           valor_venda: orcamento.valor_total,
-          valor_produto: orcamento.valor_produto,
+          valor_produto: valorTotalProdutos, // Soma de produto + frete + instalação
           valor_pintura: orcamento.valor_pintura,
-          valor_frete: orcamento.valor_frete,
-          valor_instalacao: orcamento.valor_instalacao,
+          valor_frete: 0, // Já incluído no valor_produto
+          valor_instalacao: 0, // Já incluído no valor_produto
           custo_produto: parseFloat(custos.custo_material) || 0,
           custo_pintura: parseFloat(custos.custo_pintura) || 0,
           forma_pagamento: orcamento.forma_pagamento,
@@ -171,6 +178,7 @@ export function RequisicoesVenda() {
           cidade: orcamento.cliente_cidade,
           bairro: orcamento.cliente_bairro,
           cep: orcamento.cliente_cep,
+          publico_alvo: orcamento.publico_alvo,
           canal_aquisicao_id: orcamento.canal_aquisicao_id,
           observacoes_venda: custos.observacoes,
           data_venda: new Date().toISOString()
@@ -220,17 +228,17 @@ export function RequisicoesVenda() {
 
       if (error) throw error;
 
-      // Atualizar status do orçamento de volta para pendente
+      // Atualizar status do orçamento para reprovado
       await supabase
         .from("orcamentos")
         .update({
-          status: 'pendente'
+          status: 'reprovado'
         })
         .eq("id", selectedRequisicao.orcamento_id);
 
       toast({
         title: "Requisição reprovada",
-        description: "A requisição foi reprovada e o orçamento voltou ao status pendente",
+        description: "A requisição foi reprovada e o orçamento foi marcado como reprovado",
       });
 
       fetchRequisicoes();

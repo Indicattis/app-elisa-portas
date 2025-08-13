@@ -812,6 +812,7 @@ export type Database = {
           motivo_analise: string | null
           motivo_perda: string | null
           observacoes_aprovacao: string | null
+          publico_alvo: string | null
           requer_analise: boolean
           status: string
           tipo_desconto_adicional: string | null
@@ -848,6 +849,7 @@ export type Database = {
           motivo_analise?: string | null
           motivo_perda?: string | null
           observacoes_aprovacao?: string | null
+          publico_alvo?: string | null
           requer_analise?: boolean
           status?: string
           tipo_desconto_adicional?: string | null
@@ -884,6 +886,7 @@ export type Database = {
           motivo_analise?: string | null
           motivo_perda?: string | null
           observacoes_aprovacao?: string | null
+          publico_alvo?: string | null
           requer_analise?: boolean
           status?: string
           tipo_desconto_adicional?: string | null
