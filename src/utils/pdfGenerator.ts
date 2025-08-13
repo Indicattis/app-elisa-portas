@@ -112,8 +112,11 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
     let descricao = '';
     switch (produto.tipo_produto) {
-      case 'porta_enrolar':
-        descricao = 'Porta de Enrolar';
+      case 'porta_enrolar_automatica':
+        descricao = 'Porta de Enrolar Automática';
+        break;
+      case 'pintura_epoxi':
+        descricao = 'Pintura Epóxi';
         break;
       case 'porta_social':
         descricao = 'Porta Social';
@@ -140,10 +143,10 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
       yPosition += 5;
     }
 
-    if (produto.cor) {
+    if (produto.descricao_manutencao) {
       pdf.setFontSize(9);
       pdf.setTextColor(...grayColor);
-      pdf.text(`Cor: ${produto.cor}`, margin + 10, yPosition);
+      pdf.text(`Descrição: ${produto.descricao_manutencao}`, margin + 10, yPosition);
       yPosition += 5;
     }
 

@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      acessorios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          preco: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          preco?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          preco?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      adicionais: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          preco: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          preco?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          preco?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           ativo: boolean
@@ -641,53 +701,106 @@ export type Database = {
       }
       orcamento_produtos: {
         Row: {
+          acessorio_id: string | null
+          adicional_id: string | null
           cor: string | null
+          cor_id: string | null
           created_at: string
+          desconto_percentual: number | null
           descricao: string
+          descricao_manutencao: string | null
           id: string
           medidas: string | null
           orcamento_id: string
+          preco_instalacao: number | null
+          preco_producao: number | null
           tipo_produto: string
           updated_at: string
           valor: number
         }
         Insert: {
+          acessorio_id?: string | null
+          adicional_id?: string | null
           cor?: string | null
+          cor_id?: string | null
           created_at?: string
+          desconto_percentual?: number | null
           descricao: string
+          descricao_manutencao?: string | null
           id?: string
           medidas?: string | null
           orcamento_id: string
+          preco_instalacao?: number | null
+          preco_producao?: number | null
           tipo_produto: string
           updated_at?: string
           valor?: number
         }
         Update: {
+          acessorio_id?: string | null
+          adicional_id?: string | null
           cor?: string | null
+          cor_id?: string | null
           created_at?: string
+          desconto_percentual?: number | null
           descricao?: string
+          descricao_manutencao?: string | null
           id?: string
           medidas?: string | null
           orcamento_id?: string
+          preco_instalacao?: number | null
+          preco_producao?: number | null
           tipo_produto?: string
           updated_at?: string
           valor?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_orcamento_produtos_acessorio"
+            columns: ["acessorio_id"]
+            isOneToOne: false
+            referencedRelation: "acessorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_orcamento_produtos_adicional"
+            columns: ["adicional_id"]
+            isOneToOne: false
+            referencedRelation: "adicionais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_orcamento_produtos_cor"
+            columns: ["cor_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_cores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orcamentos: {
         Row: {
           aprovado_por: string | null
+          autorizado_id: string | null
           campos_personalizados: Json | null
+          cliente_bairro: string | null
+          cliente_cep: string | null
+          cliente_cidade: string | null
+          cliente_cpf: string | null
+          cliente_estado: string | null
+          cliente_nome: string | null
+          cliente_telefone: string | null
           created_at: string
           data_aprovacao: string | null
           desconto_adicional_percentual: number | null
           desconto_adicional_valor: number | null
           desconto_percentual: number | null
+          desconto_total_percentual: number | null
           documento_url: string | null
           forma_pagamento: string
           id: string
           lead_id: string
+          modalidade_instalacao: string | null
           motivo_analise: string | null
           observacoes_aprovacao: string | null
           requer_analise: boolean
@@ -703,16 +816,26 @@ export type Database = {
         }
         Insert: {
           aprovado_por?: string | null
+          autorizado_id?: string | null
           campos_personalizados?: Json | null
+          cliente_bairro?: string | null
+          cliente_cep?: string | null
+          cliente_cidade?: string | null
+          cliente_cpf?: string | null
+          cliente_estado?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
           created_at?: string
           data_aprovacao?: string | null
           desconto_adicional_percentual?: number | null
           desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
+          desconto_total_percentual?: number | null
           documento_url?: string | null
           forma_pagamento: string
           id?: string
           lead_id: string
+          modalidade_instalacao?: string | null
           motivo_analise?: string | null
           observacoes_aprovacao?: string | null
           requer_analise?: boolean
@@ -728,16 +851,26 @@ export type Database = {
         }
         Update: {
           aprovado_por?: string | null
+          autorizado_id?: string | null
           campos_personalizados?: Json | null
+          cliente_bairro?: string | null
+          cliente_cep?: string | null
+          cliente_cidade?: string | null
+          cliente_cpf?: string | null
+          cliente_estado?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
           created_at?: string
           data_aprovacao?: string | null
           desconto_adicional_percentual?: number | null
           desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
+          desconto_total_percentual?: number | null
           documento_url?: string | null
           forma_pagamento?: string
           id?: string
           lead_id?: string
+          modalidade_instalacao?: string | null
           motivo_analise?: string | null
           observacoes_aprovacao?: string | null
           requer_analise?: boolean
@@ -752,6 +885,13 @@ export type Database = {
           valor_total?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_orcamentos_autorizado"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orcamentos_lead_id_fkey"
             columns: ["lead_id"]
@@ -1263,10 +1403,6 @@ export type Database = {
         Returns: boolean
       }
       is_lead_attendant: {
-        Args: { lead_uuid: string }
-        Returns: boolean
-      }
-      pode_marcar_venda: {
         Args: { lead_uuid: string }
         Returns: boolean
       }

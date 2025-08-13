@@ -1,11 +1,17 @@
 export interface OrcamentoProduto {
   id?: string;
   orcamento_id?: string;
-  tipo_produto: 'porta_enrolar' | 'porta_social' | 'acessorio' | 'manutencao' | 'adicional';
+  tipo_produto: 'porta_enrolar_automatica' | 'pintura_epoxi' | 'porta_social' | 'acessorio' | 'adicional' | 'manutencao';
   medidas?: string;
-  cor?: string;
-  descricao: string;
+  cor_id?: string;
+  acessorio_id?: string;
+  adicional_id?: string;
+  descricao?: string;
+  descricao_manutencao?: string;
   valor: number;
+  preco_producao?: number;
+  preco_instalacao?: number;
+  desconto_percentual?: number;
 }
 
 export interface ProdutoFormData {

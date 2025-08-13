@@ -1,39 +1,20 @@
 
-import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useOrcamentos } from "@/hooks/useOrcamentos";
-import { OrcamentoForm } from "@/components/orcamentos/OrcamentoForm";
+import { NovoOrcamentoForm } from "@/components/orcamentos/NovoOrcamentoForm";
 
 export default function NovoOrcamento() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const leadId = searchParams.get("leadId");
 
-  const {
-    leads,
-    loading,
-    formData,
-    setFormData,
-    camposPersonalizados,
-    setCamposPersonalizados,
-    produtos,
-    setProdutos,
-    createOrcamento,
-    resetForm
-  } = useOrcamentos();
+  const { loading, createOrcamento } = useOrcamentos();
 
-  // Se um lead foi especificado, pre-selecionar
-  useEffect(() => {
-    if (leadId && formData.lead_id !== leadId) {
-      setFormData({ ...formData, lead_id: leadId });
-    }
-  }, [leadId, formData, setFormData]);
-
-  const handleCreateOrcamento = async (valorTotal: number) => {
+  const handleCreateOrcamento = async (formData: any, produtos: any[], valorTotal: number) => {
     try {
-      await createOrcamento(valorTotal);
+      await createOrcamento(formData, produtos, valorTotal);
       navigate("/dashboard/orcamentos");
     } catch (error) {
       console.error("Erro ao criar orçamento:", error);
@@ -41,7 +22,6 @@ export default function NovoOrcamento() {
   };
 
   const handleCancel = () => {
-    resetForm();
     navigate("/dashboard/orcamentos");
   };
 
@@ -63,15 +43,11 @@ export default function NovoOrcamento() {
         </div>
       </div>
 
-      <OrcamentoForm
-        leads={leads}
-        formData={formData}
-        setFormData={setFormData}
-        camposPersonalizados={camposPersonalizados}
-        setCamposPersonalizados={setCamposPersonalizados}
+      <NovoOrcamentoForm
         onSubmit={handleCreateOrcamento}
         onCancel={handleCancel}
         loading={loading}
+        leadId={leadId}
       />
     </div>
   );

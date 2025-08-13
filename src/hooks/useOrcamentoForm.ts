@@ -6,13 +6,17 @@ import type { OrcamentoProduto } from "@/types/produto";
 export function useOrcamentoForm() {
   const [formData, setFormData] = useState<OrcamentoFormData>({
     lead_id: "",
-    valor_produto: "",
-    valor_pintura: "0",
+    cliente_nome: "",
+    cliente_cpf: "",
+    cliente_telefone: "",
+    cliente_estado: "",
+    cliente_cidade: "",
+    cliente_bairro: "",
+    cliente_cep: "",
     valor_frete: "0",
-    valor_instalacao: "0",
-    campos_personalizados: {},
+    modalidade_instalacao: "instalacao_elisa",
     forma_pagamento: "",
-    desconto_percentual: 0,
+    desconto_total_percentual: 0,
     requer_analise: false,
     motivo_analise: ""
   });
@@ -23,13 +27,17 @@ export function useOrcamentoForm() {
   const resetForm = () => {
     setFormData({
       lead_id: "",
-      valor_produto: "",
-      valor_pintura: "0",
+      cliente_nome: "",
+      cliente_cpf: "",
+      cliente_telefone: "",
+      cliente_estado: "",
+      cliente_cidade: "",
+      cliente_bairro: "",
+      cliente_cep: "",
       valor_frete: "0",
-      valor_instalacao: "0",
-      campos_personalizados: {},
+      modalidade_instalacao: "instalacao_elisa",
       forma_pagamento: "",
-      desconto_percentual: 0,
+      desconto_total_percentual: 0,
       requer_analise: false,
       motivo_analise: ""
     });

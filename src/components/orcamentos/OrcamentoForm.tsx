@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Minus, Download } from "lucide-react";
-import { ProdutoForm } from "./ProdutoForm";
+// ProdutoForm removido - usando NovoOrcamentoForm
 import { generateOrcamentoPDF } from "@/utils/pdfGenerator";
 import { useToast } from "@/hooks/use-toast";
 import type { Lead } from "@/types/lead";
@@ -236,7 +236,7 @@ export function OrcamentoForm({
             </div>
           </div>
 
-          <ProdutoForm produtos={produtos} setProdutos={setProdutos} />
+          {/* ProdutoForm removido - usar NovoOrcamentoForm */}
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">

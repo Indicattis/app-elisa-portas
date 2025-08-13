@@ -17,7 +17,7 @@ export function useOrcamentos() {
   const { formData, setFormData, camposPersonalizados, setCamposPersonalizados, produtos, setProdutos, resetForm } = useOrcamentoForm();
   const { filters, setFilters, filteredOrcamentos } = useOrcamentoFilters(orcamentos);
 
-  const handleCreateOrcamento = async (valorTotal: number) => {
+  const handleCreateOrcamento = async (formData: any, produtos: any[], valorTotal: number) => {
     if (!user?.id) {
       toast({
         variant: "destructive",
@@ -30,14 +30,13 @@ export function useOrcamentos() {
     setLoading(true);
 
     try {
-      const data = await createOrcamento(formData, camposPersonalizados, produtos, valorTotal, user.id);
+      const data = await createOrcamento(formData, produtos, valorTotal, user.id);
 
       toast({
         title: "Sucesso",
         description: `Orçamento ${formData.requer_analise ? 'criado e enviado para análise' : 'criado e aprovado automaticamente'}`,
       });
 
-      resetForm();
       fetchOrcamentos();
 
       return data;
