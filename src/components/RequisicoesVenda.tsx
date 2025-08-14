@@ -159,6 +159,25 @@ export function RequisicoesVenda() {
       // Criar venda com todos os dados do orçamento
       const orcamento = selectedRequisicao.orcamentos;
       
+      // Buscar produtos do orçamento para calcular valor_produto corretamente
+      const { data: produtosOrcamento, error: produtosError } = await supabase
+        .from("orcamento_produtos")
+        .select("valor")
+        .eq("orcamento_id", orcamento.id);
+
+      if (produtosError) {
+        console.error("Erro ao buscar produtos do orçamento:", produtosError);
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Erro ao calcular valor dos produtos",
+        });
+        return;
+      }
+
+      // Calcular valor total dos produtos
+      const valorTotalProdutos = produtosOrcamento?.reduce((sum, produto) => sum + produto.valor, 0) || 0;
+      
       const { error: vendaError } = await supabase
         .from("vendas")
         .insert({
@@ -167,7 +186,7 @@ export function RequisicoesVenda() {
           cliente_telefone: orcamento.cliente_telefone,
           cliente_email: orcamento.cliente_email,
           valor_venda: orcamento.valor_total,
-          valor_produto: orcamento.valor_produto,
+          valor_produto: valorTotalProdutos,
           valor_pintura: orcamento.valor_pintura,
           valor_frete: orcamento.valor_frete,
           valor_instalacao: orcamento.valor_instalacao,

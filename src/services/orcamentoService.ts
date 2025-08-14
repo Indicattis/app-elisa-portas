@@ -31,10 +31,11 @@ export const createOrcamento = async (
     valor_total: valorTotal,
     requer_analise: formData.requer_analise,
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
-    status: 'pendente', // Sempre começa como "Em aberto" mas com string no banco
-    valor_produto: 0,
+    status: 'pendente',
+    valor_produto: 0, // Será calculado automaticamente pelo trigger
     valor_pintura: 0,
-    campos_personalizados: {}
+    campos_personalizados: {},
+    canal_aquisicao_id: formData.canal_aquisicao_id || null
   };
 
   const { data, error } = await supabase
@@ -136,8 +137,9 @@ export const updateOrcamento = async (
     valor_total: valorTotal,
     requer_analise: formData.requer_analise,
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
-    valor_produto: 0,
-    valor_pintura: 0
+    valor_produto: 0, // Será calculado automaticamente pelo trigger
+    valor_pintura: 0,
+    canal_aquisicao_id: formData.canal_aquisicao_id || null
   };
 
   const { error } = await supabase

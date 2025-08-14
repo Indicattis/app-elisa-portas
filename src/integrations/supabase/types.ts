@@ -1403,6 +1403,10 @@ export type Database = {
         Args: { valor_total: number }
         Returns: number
       }
+      calcular_valor_produto_orcamento: {
+        Args: { orcamento_uuid: string }
+        Returns: number
+      }
       criar_requisicao_venda: {
         Args: { orcamento_uuid: string }
         Returns: string
