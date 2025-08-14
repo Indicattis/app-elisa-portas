@@ -367,7 +367,9 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
-  pdf.text('- Deixar o local de instalacão limpo e livre para o dia da instalacão, caso haia aloum obieto que impeca a instalação, a mesma será reagendada para os próximos 15 dias. (Caso não seja avisado antecipadamente será cobrado novo deslocamento).', margin, yPosition);
+  pdf.text('- Deixar o local de instalacão limpo e livre para o dia da instalacão, caso haia aloum obieto que impeca a instalação, a mesma será ', margin, yPosition);
+  yPosition += 3;
+  pdf.text('reagendada para os próximos 15 dias. (Caso não seja avisado antecipadamente será cobrado novo deslocamento).', margin, yPosition);
   yPosition += 3;
   pdf.text('- Deixar um ponto de energia para ligar o motor.', margin, yPosition);
   yPosition += 3;
@@ -392,9 +394,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
-  pdf.text('1.1 A empresa garante os serviços e produtos por ela forecidos, pelo período de 5 anos, incluídas a garantia legal, contados a partir do recebimento definitivo do ojbeto do contrato.', margin, yPosition);
+  pdf.text('1.1 A empresa garante os serviços e produtos por ela forecidos, pelo período de 5 anos, incluídas a garantia legal, contados a partir ', margin, yPosition);
   yPosition += 3;
-  pdf.text('1.1.1 Esta garantia abrange peças, materiais e serviços, desde que os produtos tenham sido utilizados conforme orientações passadas pelos técnicos.', margin, yPosition);
+  pdf.text('do recebimento definitivo do ojbeto do contrato.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('1.1.1 Esta garantia abrange peças, materiais e serviços, desde que os produtos tenham sido utilizados conforme orientações passadas ', margin, yPosition);
+  yPosition += 3;
+  pdf.text('pelos técnicos.', margin, yPosition);
   yPosition += 3;
   pdf.text('1.1.2 Garantia de cada peça:', margin, yPosition);
   yPosition += 3;
@@ -402,7 +408,9 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   yPosition += 3;
   pdf.text('A garantia de 05 anos refere se sobre ocorrer corrosão das peças ou desplacamento da pintura epóxi.', margin, yPosition);
   yPosition += 3;
-  pdf.text('1.1.3 Somente um técnico autorizado pela empresa está habilitado a reparar defeitos cobertos pela garantia, mediante abertura de chamado.', margin, yPosition);
+  pdf.text('1.1.3 Somente um técnico autorizado pela empresa está habilitado a reparar defeitos cobertos pela garantia, mediante abertura de .', margin, yPosition);
+  yPosition += 3;
+  pdf.text('chamado.', margin, yPosition);
   yPosition += 3;
   pdf.text('1.1.3 Somente um técnico autorizado pela empresa está habilitado a reparar defeitos cobertos pela garantia, ', margin, yPosition);
   yPosition += 15;
@@ -415,9 +423,15 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
-  pdf.text('2.1 A assistência técnica será prestada de segunda-feira a sexta-feira, no horário de 8h às 17h, e consistirá na reparação de eventuais falhas das portas e na substituição de peças e componentes que se apresentem defeituosos, de acordo com normas técnicas específicas.', margin, yPosition);
+  pdf.text('2.1 A assistência técnica será prestada de segunda-feira a sexta-feira, no horário de 8h às 17h, e consistirá na reparação de ', margin, yPosition);
   yPosition += 3;
-  pdf.text('2.20 prazo para atendimento de chamado e devida resolução de problema em produtos e serviços fornecidos é de 10 dias úteis, a partir da comunição do defeito realizada pelo cliente à contratada, conforme sistema de registro da própria contratante.', margin, yPosition);
+  pdf.text('eventuais falhas das portas e na substituição de peças e componentes que se apresentem defeituosos, de acordo com normas ', margin, yPosition);
+  yPosition += 3;
+  pdf.text('técnicas específicas.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('2.20 prazo para atendimento de chamado e devida resolução de problema em produtos e serviços fornecidos é de 10 dias úteis, ', margin, yPosition);
+  yPosition += 3;
+  pdf.text('a partir da comunição do defeito realizada pelo cliente à contratada, conforme sistema de registro da própria contratante.', margin, yPosition);
   yPosition += 15;
 
   pdf.setFont('helvetica', 'bold');
@@ -428,9 +442,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
 
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
-  pdf.text('3.1 Falhas no funcionamento dos produtos decorrentes de uso inadequado, ou seja, em desacordo com as instruções e recomendações de uso. Ex: Esquecer objetos embaixo da porta.', margin, yPosition);
+  pdf.text('3.1 Falhas no funcionamento dos produtos decorrentes de uso inadequado, ou seja, em desacordo com as instruções e recomendações ', margin, yPosition);
   yPosition += 3;
-  pdf.text('3.2 Produtos ou peças que tenham sido danificados em consequência de remoção ou manuseio por pessoas não autorizadas ou fatos decorrentes de forças da natureza, tais como ralos, chuvas, inundações, etc.', margin, yPosition);
+  pdf.text('de uso. Ex: Esquecer objetos embaixo da porta.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('3.2 Produtos ou peças que tenham sido danificados em consequência de remoção ou manuseio por pessoas não autorizadas ou fatos ', margin, yPosition);
+  yPosition += 3;
+  pdf.text('decorrentes de forças da natureza, tais como ralos, chuvas, inundações, etc.', margin, yPosition);
   yPosition += 5;
 
   pdf.setFontSize(8);
