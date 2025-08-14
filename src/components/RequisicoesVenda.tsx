@@ -26,6 +26,7 @@ interface RequisicaoVenda {
   data_aprovacao: string | null;
   created_at: string;
   canal_aquisicao_id: string | null;
+  canais_aquisicao?: { nome: string } | null;
   orcamentos: {
     id: string;
     cliente_nome: string;
@@ -49,6 +50,7 @@ interface RequisicaoVenda {
     publico_alvo: string | null;
     canal_aquisicao_id: string | null;
     campos_personalizados: any;
+    canais_aquisicao?: { nome: string } | null;
   };
 }
 
@@ -78,6 +80,7 @@ export function RequisicoesVenda() {
         .from("requisicoes_venda")
         .select(`
           *,
+          canais_aquisicao (nome),
           orcamentos (
             id,
             cliente_nome,
@@ -98,7 +101,8 @@ export function RequisicoesVenda() {
             desconto_percentual,
             publico_alvo,
             canal_aquisicao_id,
-            campos_personalizados
+            campos_personalizados,
+            canais_aquisicao (nome)
           )
         `)
         .order("created_at", { ascending: false });
@@ -155,11 +159,6 @@ export function RequisicoesVenda() {
       // Criar venda com todos os dados do orçamento
       const orcamento = selectedRequisicao.orcamentos;
       
-      // Calcular valor total dos produtos (produto + frete + instalação, excluindo pintura)
-      const valorTotalProdutos = (orcamento.valor_produto || 0) + 
-                                (orcamento.valor_frete || 0) + 
-                                (orcamento.valor_instalacao || 0);
-      
       const { error: vendaError } = await supabase
         .from("vendas")
         .insert({
@@ -168,10 +167,10 @@ export function RequisicoesVenda() {
           cliente_telefone: orcamento.cliente_telefone,
           cliente_email: orcamento.cliente_email,
           valor_venda: orcamento.valor_total,
-          valor_produto: valorTotalProdutos, // Soma de produto + frete + instalação
+          valor_produto: orcamento.valor_produto,
           valor_pintura: orcamento.valor_pintura,
-          valor_frete: 0, // Já incluído no valor_produto
-          valor_instalacao: 0, // Já incluído no valor_produto
+          valor_frete: orcamento.valor_frete,
+          valor_instalacao: orcamento.valor_instalacao,
           custo_produto: parseFloat(custos.custo_material) || 0,
           custo_pintura: parseFloat(custos.custo_pintura) || 0,
           forma_pagamento: orcamento.forma_pagamento,
@@ -361,11 +360,12 @@ export function RequisicoesVenda() {
                             variant="outline"
                             onClick={() => {
                               setSelectedRequisicao(requisicao);
+                              // Preencher com custos salvos ou valores do orçamento como padrão
                               setCustos({
                                 custo_material: requisicao.custo_material?.toString() || "",
                                 custo_pintura: requisicao.custo_pintura?.toString() || "",
-                                custo_instalacao: requisicao.custo_instalacao?.toString() || "",
-                                custo_frete: requisicao.custo_frete?.toString() || "",
+                                custo_instalacao: requisicao.custo_instalacao?.toString() || (requisicao.orcamentos?.valor_instalacao || 0).toString(),
+                                custo_frete: requisicao.custo_frete?.toString() || (requisicao.orcamentos?.valor_frete || 0).toString(),
                                 observacoes: requisicao.observacoes || ""
                               });
                             }}
