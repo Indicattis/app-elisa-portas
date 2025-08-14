@@ -335,6 +335,44 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('Elisa Portas LTDA - A maior fábrica de portas de enrolar do Sul do País', margin, yPosition + 6);
   pdf.text('Contato: comercial@elisaportas.com.br', margin, yPosition + 12);
 
+  pdf.addPage();
+  yPosition = 15;
+
+  // Termos de garantia
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('INFORMAÇÕES IMPORTANTES:', margin, yPosition);
+  yPosition += 5;
+
+
+  pdf.setFontSize(8);
+  pdf.setTextColor(...grayColor);
+  pdf.text('- Todas as cortinas são produzidas em aço galvanizado de alta resistência;', margin, yPosition);
+  pdf.text('- Atenção: A empresa não se responsabiliza por passagem de PU nas laterais da porta. Pois a porta será instalada no nível e olumo, caso a estrutura ou viga esteja desalinhada, é de responsabilidade do cliente realizar o acabamento após a instalação;', margin, yPosition);
+  pdf.text('- Atenção: A porta de enrolar não é totalmente silenciosa, possui o ruído natural do atrito do aço;', margin, yPosition);
+  pdf.text('- Atenção: A porta não possui vedação total na sua parte inferior (Contra água, areia, poeira entre outros).', margin, yPosition);
+  yPosition += 5;
+  
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('RESPONSABILIDADE DO CLIENTE:', margin, yPosition);
+  yPosition += 5;
+
+  pdf.setFontSize(8);
+  pdf.setTextColor(...grayColor);
+  pdf.text('- Deixar o local de instalacão limpo e livre para o dia da instalacão, caso haia aloum obieto que impeca a instalação, a mesma será reagendada para os próximos 15 dias. (Caso não seja avisado antecipadamente será cobrado novo deslocamento).', margin, yPosition);
+  pdf.text('- Deixar um ponto de energia para ligar o motor.', margin, yPosition);
+  pdf.text('- Caso o cliente opte por outra forma de esconder o rolo e motor, é necessário dois acessos de 50x50cm para eventuais manutenções.', margin, yPosition);
+  yPosition += 5;
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('NOBREACK: Bateria para funcionamento sem energia elétrica;', margin, yPosition);
+  pdf.text('CAIXA: Para esconder rolo e motor;', margin, yPosition);
+  pdf.text('ITENS NÃO OBRIGATÓRIOS, CASO DESEJE SOLICITE NO SEU ORÇAMENTO)', margin, yPosition);
+  yPosition += 5;
+
+  
   // Salvar o PDF
   const fileName = `orcamento-${numeroOrcamento}.pdf`;
   pdf.save(fileName);
