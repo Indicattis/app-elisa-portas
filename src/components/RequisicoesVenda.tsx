@@ -159,10 +159,10 @@ export function RequisicoesVenda() {
       // Criar venda com todos os dados do orçamento
       const orcamento = selectedRequisicao.orcamentos;
       
-      // Buscar produtos do orçamento para calcular valor_produto corretamente
+      // Buscar produtos do orçamento separando pintura epóxi dos demais
       const { data: produtosOrcamento, error: produtosError } = await supabase
         .from("orcamento_produtos")
-        .select("valor")
+        .select("valor, tipo_produto")
         .eq("orcamento_id", orcamento.id);
 
       if (produtosError) {
@@ -175,8 +175,14 @@ export function RequisicoesVenda() {
         return;
       }
 
-      // Calcular valor total dos produtos
-      const valorTotalProdutos = produtosOrcamento?.reduce((sum, produto) => sum + produto.valor, 0) || 0;
+      // Separar valores: pintura epóxi vs outros produtos
+      const valorProdutosSemPintura = produtosOrcamento?.reduce((sum, produto) => {
+        return produto.tipo_produto === 'pintura_epoxi' ? sum : sum + (produto.valor || 0);
+      }, 0) || 0;
+
+      const valorPinturaEpoxi = produtosOrcamento?.reduce((sum, produto) => {
+        return produto.tipo_produto === 'pintura_epoxi' ? sum + (produto.valor || 0) : sum;
+      }, 0) || 0;
       
       const { error: vendaError } = await supabase
         .from("vendas")
@@ -186,8 +192,8 @@ export function RequisicoesVenda() {
           cliente_telefone: orcamento.cliente_telefone,
           cliente_email: orcamento.cliente_email,
           valor_venda: orcamento.valor_total,
-          valor_produto: valorTotalProdutos,
-          valor_pintura: orcamento.valor_pintura,
+          valor_produto: valorProdutosSemPintura,
+          valor_pintura: valorPinturaEpoxi,
           valor_frete: orcamento.valor_frete,
           valor_instalacao: orcamento.valor_instalacao,
           custo_produto: parseFloat(custos.custo_material) || 0,
