@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -790,6 +790,7 @@ export type Database = {
           aprovado_por: string | null
           atendente_id: string | null
           campos_personalizados: Json | null
+          canal_aquisicao_id: string | null
           classe: number | null
           cliente_bairro: string | null
           cliente_cep: string | null
@@ -827,6 +828,7 @@ export type Database = {
           aprovado_por?: string | null
           atendente_id?: string | null
           campos_personalizados?: Json | null
+          canal_aquisicao_id?: string | null
           classe?: number | null
           cliente_bairro?: string | null
           cliente_cep?: string | null
@@ -864,6 +866,7 @@ export type Database = {
           aprovado_por?: string | null
           atendente_id?: string | null
           campos_personalizados?: Json | null
+          canal_aquisicao_id?: string | null
           classe?: number | null
           cliente_bairro?: string | null
           cliente_cep?: string | null
@@ -904,6 +907,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "orcamentos_canal_aquisicao_id_fkey"
+            columns: ["canal_aquisicao_id"]
+            isOneToOne: false
+            referencedRelation: "canais_aquisicao"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "orcamentos_lead_id_fkey"
@@ -1377,15 +1387,15 @@ export type Database = {
       aprovar_orcamento: {
         Args:
           | {
-              orcamento_uuid: string
               desconto_adicional?: number
               observacoes?: string
+              orcamento_uuid: string
             }
           | {
-              orcamento_uuid: string
               desconto_adicional?: number
-              tipo_desconto?: string
               observacoes?: string
+              orcamento_uuid: string
+              tipo_desconto?: string
             }
         Returns: boolean
       }
@@ -1399,15 +1409,15 @@ export type Database = {
       }
       has_permission: {
         Args: {
-          _user_id: string
           _permission: Database["public"]["Enums"]["app_permission"]
+          _user_id: string
         }
         Returns: boolean
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
         }
         Returns: boolean
       }
