@@ -48,8 +48,8 @@ export default function VendaEdit() {
     custo_pintura: "",
     valor_instalacao: "",
     valor_frete: "",
-    resgate: false,
-    lucro_total: ""
+    resgate: false
+    // Removido lucro_total pois é uma coluna gerada
   });
 
   const { isAdmin } = useAuth();
@@ -106,8 +106,8 @@ export default function VendaEdit() {
         custo_pintura: (vendaData.custo_pintura ? vendaData.custo_pintura * 100 : 0).toString(),
         valor_instalacao: (vendaData.valor_instalacao ? vendaData.valor_instalacao * 100 : 0).toString(),
         valor_frete: (vendaData.valor_frete ? vendaData.valor_frete * 100 : 0).toString(),
-        resgate: vendaData.resgate || false,
-        lucro_total: (vendaData.lucro_total ? vendaData.lucro_total * 100 : 0).toString()
+        resgate: vendaData.resgate || false
+        // Removido lucro_total pois é uma coluna gerada automaticamente
       });
 
       // Vendas table doesn't have lead_id, so skip lead lookup
@@ -163,8 +163,8 @@ export default function VendaEdit() {
         custo_pintura: custoPintura,
         valor_instalacao: valorInstalacao,
         valor_frete: valorFrete,
-        resgate: formData.resgate,
-        lucro_total: lucroTotal
+        resgate: formData.resgate
+        // Removido lucro_total pois é uma coluna gerada automaticamente
       };
 
       console.log("Update data processado:", updateData);
