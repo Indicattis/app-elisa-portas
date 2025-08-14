@@ -349,8 +349,11 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
   pdf.text('- Todas as cortinas são produzidas em aço galvanizado de alta resistência;', margin, yPosition);
+  yPosition += 3;
   pdf.text('- Atenção: A empresa não se responsabiliza por passagem de PU nas laterais da porta. Pois a porta será instalada no nível e olumo, caso a estrutura ou viga esteja desalinhada, é de responsabilidade do cliente realizar o acabamento após a instalação;', margin, yPosition);
+  yPosition += 3;
   pdf.text('- Atenção: A porta de enrolar não é totalmente silenciosa, possui o ruído natural do atrito do aço;', margin, yPosition);
+  yPosition += 3;
   pdf.text('- Atenção: A porta não possui vedação total na sua parte inferior (Contra água, areia, poeira entre outros).', margin, yPosition);
   yPosition += 5;
   
@@ -363,15 +366,77 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
   pdf.text('- Deixar o local de instalacão limpo e livre para o dia da instalacão, caso haia aloum obieto que impeca a instalação, a mesma será reagendada para os próximos 15 dias. (Caso não seja avisado antecipadamente será cobrado novo deslocamento).', margin, yPosition);
+  yPosition += 3;
   pdf.text('- Deixar um ponto de energia para ligar o motor.', margin, yPosition);
+  yPosition += 3;
   pdf.text('- Caso o cliente opte por outra forma de esconder o rolo e motor, é necessário dois acessos de 50x50cm para eventuais manutenções.', margin, yPosition);
   yPosition += 5;
   pdf.setFont('helvetica', 'bold');
   pdf.text('NOBREACK: Bateria para funcionamento sem energia elétrica;', margin, yPosition);
+  yPosition += 3;
   pdf.text('CAIXA: Para esconder rolo e motor;', margin, yPosition);
+  yPosition += 3;
   pdf.text('ITENS NÃO OBRIGATÓRIOS, CASO DESEJE SOLICITE NO SEU ORÇAMENTO)', margin, yPosition);
   yPosition += 5;
 
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('TERMO DE GARANTIA', margin, yPosition);
+  yPosition += 5;
+
+  pdf.text('01 - GARANTIA', margin, yPosition);
+  yPosition += 5;
+  
+  pdf.setFontSize(8);
+  pdf.setTextColor(...grayColor);
+  pdf.text('1.1 A empresa garante os serviços e produtos por ela forecidos, pelo período de 5 anos, incluídas a garantia legal, contados a partir do recebimento definitivo do ojbeto do contrato.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('1.1.1 Esta garantia abrange peças, materiais e serviços, desde que os produtos tenham sido utilizados conforme orientações passadas pelos técnicos.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('1.1.2 Garantia de cada peça:', margin, yPosition);
+  yPosition += 3;
+  pdf.text('Motor - 01 ano de garantia, Controles, botoeira e instalação - 01 mês de garantia.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('A garantia de 05 anos refere se sobre ocorrer corrosão das peças ou desplacamento da pintura epóxi.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('1.1.3 Somente um técnico autorizado pela empresa está habilitado a reparar defeitos cobertos pela garantia, mediante abertura de chamado.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('1.1.3 Somente um técnico autorizado pela empresa está habilitado a reparar defeitos cobertos pela garantia, ', margin, yPosition);
+  yPosition += 5;
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('02 - ASSISTÊNCIA TÉCNICA', margin, yPosition);
+  yPosition += 5;
+
+  pdf.setFontSize(8);
+  pdf.setTextColor(...grayColor);
+  pdf.text('2.1 A assistência técnica será prestada de segunda-feira a sexta-feira, no horário de 8h às 17h, e consistirá na reparação de eventuais falhas das portas e na substituição de peças e componentes que se apresentem defeituosos, de acordo com normas técnicas específicas.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('2.20 prazo para atendimento de chamado e devida resolução de problema em produtos e serviços fornecidos é de 10 dias úteis, a partir da comunição do defeito realizada pelo cliente à contratada, conforme sistema de registro da própria contratante.', margin, yPosition);
+  yPosition += 5;
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('03 - AS GARANTIAS LEGAL E/ OU CONTRATUAL NÃO COBREM', margin, yPosition);
+  yPosition += 5;
+
+  pdf.setFontSize(8);
+  pdf.setTextColor(...grayColor);
+  pdf.text('3.1 Falhas no funcionamento dos produtos decorrentes de uso inadequado, ou seja, em desacordo com as instruções e recomendações de uso. Ex: Esquecer objetos embaixo da porta.', margin, yPosition);
+  yPosition += 3;
+  pdf.text('3.2 Produtos ou peças que tenham sido danificados em consequência de remoção ou manuseio por pessoas não autorizadas ou fatos decorrentes de forças da natureza, tais como ralos, chuvas, inundações, etc.', margin, yPosition);
+  yPosition += 5;
+
+  pdf.setFontSize(8);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Atenciosamente,', margin, yPosition);
+  yPosition += 3;
+  pdf.text('Equipe de vendas.', margin, yPosition);
+  yPosition += 5;
   
   // Salvar o PDF
   const fileName = `orcamento-${numeroOrcamento}.pdf`;
