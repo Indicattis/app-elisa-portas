@@ -350,12 +350,14 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setTextColor(...grayColor);
   pdf.text('- Todas as cortinas são produzidas em aço galvanizado de alta resistência;', margin, yPosition);
   yPosition += 3;
-  pdf.text('- Atenção: A empresa não se responsabiliza por passagem de PU nas laterais da porta. Pois a porta será instalada no nível e olumo, caso a estrutura ou viga esteja desalinhada, é de responsabilidade do cliente realizar o acabamento após a instalação;', margin, yPosition);
+  pdf.text('- Atenção: A empresa não se responsabiliza por passagem de PU nas laterais da porta. Pois a porta será instalada no nível e olumo, caso ', margin, yPosition);
+  yPosition += 3;
+  pdf.text('a estrutura ou viga esteja desalinhada, é de responsabilidade do cliente realizar o acabamento após a instalação;', margin, yPosition);
   yPosition += 3;
   pdf.text('- Atenção: A porta de enrolar não é totalmente silenciosa, possui o ruído natural do atrito do aço;', margin, yPosition);
   yPosition += 3;
   pdf.text('- Atenção: A porta não possui vedação total na sua parte inferior (Contra água, areia, poeira entre outros).', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
   
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
@@ -377,13 +379,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('CAIXA: Para esconder rolo e motor;', margin, yPosition);
   yPosition += 3;
   pdf.text('ITENS NÃO OBRIGATÓRIOS, CASO DESEJE SOLICITE NO SEU ORÇAMENTO)', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
   pdf.text('TERMO DE GARANTIA', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
   pdf.text('01 - GARANTIA', margin, yPosition);
   yPosition += 5;
@@ -403,7 +405,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('1.1.3 Somente um técnico autorizado pela empresa está habilitado a reparar defeitos cobertos pela garantia, mediante abertura de chamado.', margin, yPosition);
   yPosition += 3;
   pdf.text('1.1.3 Somente um técnico autorizado pela empresa está habilitado a reparar defeitos cobertos pela garantia, ', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
@@ -416,13 +418,13 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('2.1 A assistência técnica será prestada de segunda-feira a sexta-feira, no horário de 8h às 17h, e consistirá na reparação de eventuais falhas das portas e na substituição de peças e componentes que se apresentem defeituosos, de acordo com normas técnicas específicas.', margin, yPosition);
   yPosition += 3;
   pdf.text('2.20 prazo para atendimento de chamado e devida resolução de problema em produtos e serviços fornecidos é de 10 dias úteis, a partir da comunição do defeito realizada pelo cliente à contratada, conforme sistema de registro da própria contratante.', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
   pdf.text('03 - AS GARANTIAS LEGAL E/ OU CONTRATUAL NÃO COBREM', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
