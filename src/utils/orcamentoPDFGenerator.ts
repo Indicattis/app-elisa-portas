@@ -335,6 +335,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('Elisa Portas LTDA - A maior fábrica de portas de enrolar do Sul do País', margin, yPosition + 6);
   pdf.text('Contato: comercial@elisaportas.com.br', margin, yPosition + 12);
 
+  //NOVA PÁGINA
   pdf.addPage();
   yPosition = 15;
 
@@ -343,7 +344,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
   pdf.text('INFORMAÇÕES IMPORTANTES:', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
 
   pdf.setFontSize(8);
@@ -363,7 +364,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
   pdf.text('RESPONSABILIDADE DO CLIENTE:', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
@@ -390,7 +391,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   yPosition += 15;
 
   pdf.text('01 - GARANTIA', margin, yPosition);
-  yPosition += 5;
+  yPosition += 10;
   
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
@@ -419,7 +420,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
   pdf.text('02 - ASSISTÊNCIA TÉCNICA', margin, yPosition);
-  yPosition += 5;
+  yPosition += 10;
 
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
@@ -438,7 +439,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
   pdf.text('03 - AS GARANTIAS LEGAL E/ OU CONTRATUAL NÃO COBREM', margin, yPosition);
-  yPosition += 15;
+  yPosition += 10;
 
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
@@ -449,7 +450,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   pdf.text('3.2 Produtos ou peças que tenham sido danificados em consequência de remoção ou manuseio por pessoas não autorizadas ou fatos ', margin, yPosition);
   yPosition += 3;
   pdf.text('decorrentes de forças da natureza, tais como ralos, chuvas, inundações, etc.', margin, yPosition);
-  yPosition += 5;
+  yPosition += 15;
 
   pdf.setFontSize(8);
   pdf.setTextColor(0, 0, 0);
