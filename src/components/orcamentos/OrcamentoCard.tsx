@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Edit, Star } from "lucide-react";
+import { Download, Edit, Star, Trash2 } from "lucide-react";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ interface OrcamentoCardProps {
   orcamento: any;
   onEdit?: (orcamento: any) => void;
   onStatusChange?: (orcamento: any) => void;
+  onDelete?: (orcamento: any) => void;
 }
 
 const ORCAMENTO_STATUS = {
@@ -29,7 +30,7 @@ const ORCAMENTO_CLASSES: OrcamentoClasse = {
   4: { label: "Classe 4", color: "premium", range: "R$ 75.001 - 100.000" }
 };
 
-export function OrcamentoCard({ orcamento, onEdit, onStatusChange }: OrcamentoCardProps) {
+export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: OrcamentoCardProps) {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
 
@@ -204,6 +205,17 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange }: OrcamentoCa
             <Button size="sm" variant="outline" onClick={() => onEdit(orcamento)} className="flex-1">
               <Edit className="w-3 h-3 mr-1" />
               Editar
+            </Button>
+          )}
+
+          {isAdmin && onDelete && (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => onDelete(orcamento)} 
+              className="text-red-600 hover:text-red-700 hover:border-red-300"
+            >
+              <Trash2 className="w-3 h-3" />
             </Button>
           )}
         </div>

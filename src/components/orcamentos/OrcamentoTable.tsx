@@ -10,9 +10,10 @@ interface OrcamentoTableProps {
   orcamentos: any[];
   onEdit?: (orcamento: any) => void;
   onRefresh?: () => void;
+  onDelete?: (orcamento: any) => void;
 }
 
-export function OrcamentoTable({ orcamentos, onEdit, onRefresh }: OrcamentoTableProps) {
+export function OrcamentoTable({ orcamentos, onEdit, onRefresh, onDelete }: OrcamentoTableProps) {
   const { toast } = useToast();
   const [selectedOrcamento, setSelectedOrcamento] = useState<any>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -93,6 +94,7 @@ export function OrcamentoTable({ orcamentos, onEdit, onRefresh }: OrcamentoTable
             orcamento={orcamento}
             onEdit={onEdit}
             onStatusChange={handleCardStatusChange}
+            onDelete={onDelete}
           />
         ))}
       </div>

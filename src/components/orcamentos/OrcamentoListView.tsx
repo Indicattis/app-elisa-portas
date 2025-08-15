@@ -236,7 +236,7 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
   };
 
   const canDelete = (orcamento: any) => {
-    return isAdmin || orcamento.atendente_id === user?.id;
+    return isAdmin;
   };
 
   const renderProductIcons = (orcamento: any) => {

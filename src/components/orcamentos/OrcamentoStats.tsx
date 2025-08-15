@@ -16,6 +16,10 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
     vendido: orcamentos.filter(orc => orc.status === 'vendido').length, // Vendido
   };
 
+  const valorPerdidos = orcamentos
+    .filter(orc => orc.status === 'perdido')
+    .reduce((sum, orc) => sum + (Number(orc.valor_total) || 0), 0);
+
   // Ranking de motivos de perda
   const motivosPerda = orcamentos
     .filter(orc => orc.status === 'perdido' && orc.motivo_perda)
@@ -35,7 +39,7 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
     orcamentos.length > 0 ? ((count / orcamentos.length) * 100).toFixed(1) : '0.0';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
@@ -97,6 +101,19 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
           <div className="text-2xl font-bold text-green-600">{statusCounts.vendido}</div>
           <p className="text-xs text-muted-foreground">
             {getPercentage(statusCounts.vendido)}% do total
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Valor Perdidos</CardTitle>
+          <XCircle className="h-4 w-4 text-red-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-red-600">{formatCurrency(valorPerdidos)}</div>
+          <p className="text-xs text-muted-foreground">
+            {statusCounts.perdido} orçamentos
           </p>
         </CardContent>
       </Card>

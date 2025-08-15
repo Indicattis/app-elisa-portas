@@ -9,10 +9,13 @@ import { OrcamentoFiltersAdvanced } from "@/components/orcamentos/OrcamentoFilte
 import { OrcamentoTable } from "@/components/orcamentos/OrcamentoTable";
 import { OrcamentoListView } from "@/components/orcamentos/OrcamentoListView";
 import { OrcamentoStats } from "@/components/orcamentos/OrcamentoStats";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Orcamentos() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const { toast } = useToast();
 
   const {
     leads,
@@ -42,6 +45,35 @@ export default function Orcamentos() {
 
   const handleEdit = (orcamento: any) => {
     navigate(`/dashboard/orcamentos/editar/${orcamento.id}`);
+  };
+
+  const handleDelete = async (orcamento: any) => {
+    if (!confirm("Tem certeza que deseja excluir este orçamento? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("orcamentos")
+        .delete()
+        .eq("id", orcamento.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Orçamento excluído com sucesso",
+      });
+
+      fetchOrcamentos();
+    } catch (error) {
+      console.error("Erro ao excluir orçamento:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao excluir orçamento",
+      });
+    }
   };
 
   return (
@@ -96,6 +128,7 @@ export default function Orcamentos() {
           orcamentos={filteredOrcamentos}
           onEdit={handleEdit}
           onRefresh={fetchOrcamentos}
+          onDelete={handleDelete}
         />
       )}
     </div>

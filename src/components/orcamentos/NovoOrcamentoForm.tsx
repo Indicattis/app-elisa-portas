@@ -646,22 +646,26 @@ export function NovoOrcamentoForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Desconto Total (%) - Máx. 5%</Label>
+              <Label>Desconto Total (%)</Label>
               <Input
                 type="number"
                 min="0"
-                max="5"
+                max={formData.forma_pagamento === "a_vista" ? "10" : "5"}
                 step="0.1"
                 value={formData.desconto_total_percentual}
                 onChange={(e) => {
                   const valor = parseFloat(e.target.value) || 0;
-                  if (valor <= 5) {
+                  const maxDesconto = formData.forma_pagamento === "a_vista" ? 10 : 5;
+                  if (valor <= maxDesconto) {
                     setFormData({...formData, desconto_total_percentual: valor});
                   }
                 }}
               />
               <p className="text-xs text-muted-foreground">
-                Descontos maiores que 5% requerem aprovação da gerência
+                {formData.forma_pagamento === "a_vista" 
+                  ? "Pagamentos à vista permitem desconto de até 10%. Demais formas até 5%"
+                  : "Descontos maiores que 5% requerem aprovação da gerência"
+                }
               </p>
             </div>
 
