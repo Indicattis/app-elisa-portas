@@ -6,6 +6,7 @@ export interface OrcamentoFormData {
   cliente_nome: string;
   cliente_cpf: string;
   cliente_telefone: string;
+  cliente_email?: string;
   cliente_estado: string;
   cliente_cidade: string;
   cliente_bairro: string;

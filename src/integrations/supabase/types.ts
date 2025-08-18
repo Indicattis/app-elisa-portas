@@ -1123,6 +1123,7 @@ export type Database = {
       requisicoes_venda: {
         Row: {
           canal_aquisicao_id: string | null
+          cliente_email: string | null
           created_at: string
           custo_frete: number | null
           custo_instalacao: number | null
@@ -1139,6 +1140,7 @@ export type Database = {
         }
         Insert: {
           canal_aquisicao_id?: string | null
+          cliente_email?: string | null
           created_at?: string
           custo_frete?: number | null
           custo_instalacao?: number | null
@@ -1155,6 +1157,7 @@ export type Database = {
         }
         Update: {
           canal_aquisicao_id?: string | null
+          cliente_email?: string | null
           created_at?: string
           custo_frete?: number | null
           custo_instalacao?: number | null

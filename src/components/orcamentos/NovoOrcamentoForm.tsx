@@ -100,6 +100,7 @@ export function NovoOrcamentoForm({
       cliente_nome: initialData.cliente_nome || "",
       cliente_cpf: initialData.cliente_cpf || "",
       cliente_telefone: initialData.cliente_telefone || "",
+      cliente_email: initialData.cliente_email || "",
       cliente_estado: initialData.cliente_estado || "",
       cliente_cidade: initialData.cliente_cidade || "",
       cliente_bairro: initialData.cliente_bairro || "",
@@ -446,13 +447,22 @@ export function NovoOrcamentoForm({
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Telefone *</Label>
                 <Input
                   value={formData.cliente_telefone}
                   onChange={(e) => setFormData({...formData, cliente_telefone: e.target.value})}
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail</Label>
+                <Input
+                  type="email"
+                  placeholder="E-mail do cliente"
+                  value={formData.cliente_email || ""}
+                  onChange={(e) => setFormData({...formData, cliente_email: e.target.value})}
                 />
               </div>
               <div className="space-y-2">
