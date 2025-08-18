@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,10 +11,14 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export default function Auth() {
   const { user, signIn, signUp, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+
+  // Get the intended destination from state, default to dashboard
+  const from = location.state?.from?.pathname || "/dashboard";
 
   // Redirect if already authenticated
   if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={from} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
