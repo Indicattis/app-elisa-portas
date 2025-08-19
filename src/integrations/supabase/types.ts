@@ -699,6 +699,36 @@ export type Database = {
         }
         Relationships: []
       }
+      orcamento_custos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          orcamento_id: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          orcamento_id: string
+          tipo: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          orcamento_id?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       orcamento_produtos: {
         Row: {
           acessorio_id: string | null
@@ -714,6 +744,7 @@ export type Database = {
           orcamento_id: string
           preco_instalacao: number | null
           preco_producao: number | null
+          quantidade: number
           tipo_produto: string
           updated_at: string
           valor: number
@@ -732,6 +763,7 @@ export type Database = {
           orcamento_id: string
           preco_instalacao?: number | null
           preco_producao?: number | null
+          quantidade?: number
           tipo_produto: string
           updated_at?: string
           valor?: number
@@ -750,6 +782,7 @@ export type Database = {
           orcamento_id?: string
           preco_instalacao?: number | null
           preco_producao?: number | null
+          quantidade?: number
           tipo_produto?: string
           updated_at?: string
           valor?: number

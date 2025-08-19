@@ -9,9 +9,18 @@ export interface OrcamentoProduto {
   descricao?: string;
   descricao_manutencao?: string;
   valor: number;
+  quantidade?: number;
   preco_producao?: number;
   preco_instalacao?: number;
   desconto_percentual?: number;
+}
+
+export interface OrcamentoCusto {
+  id?: string;
+  orcamento_id?: string;
+  tipo: 'frete' | 'instalacao';
+  descricao?: string;
+  valor: number;
 }
 
 export interface ProdutoFormData {

@@ -1,5 +1,5 @@
 
-import type { OrcamentoProduto } from "./produto";
+import type { OrcamentoProduto, OrcamentoCusto } from "./produto";
 
 export interface OrcamentoFormData {
   lead_id?: string;
@@ -20,6 +20,7 @@ export interface OrcamentoFormData {
   motivo_analise: string;
   canal_aquisicao_id?: string;
   produtos?: OrcamentoProduto[];
+  custos?: OrcamentoCusto[];
 }
 
 export interface Acessorio {

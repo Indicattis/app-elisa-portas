@@ -1,10 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { OrcamentoFormData, CampoPersonalizado } from "@/types/orcamento";
-import type { OrcamentoProduto } from "@/types/produto";
+import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
 
 export const createOrcamento = async (
   formData: OrcamentoFormData,
   produtos: OrcamentoProduto[],
+  custos: OrcamentoCusto[],
   valorTotal: number,
   userId: string
 ) => {
@@ -87,6 +88,7 @@ export const createOrcamento = async (
         descricao: descricao,
         descricao_manutencao: produto.descricao_manutencao || null,
         valor: produto.valor,
+        quantidade: produto.quantidade || 1,
         preco_producao: produto.preco_producao || 0,
         preco_instalacao: produto.preco_instalacao || 0,
         desconto_percentual: produto.desconto_percentual || 0
@@ -98,6 +100,22 @@ export const createOrcamento = async (
       .insert(produtosData);
 
     if (produtosError) throw produtosError;
+  }
+
+  // Salvar custos logísticos
+  if (custos.length > 0) {
+    const custosData = custos.map(custo => ({
+      orcamento_id: data.id,
+      tipo: custo.tipo,
+      descricao: custo.descricao || null,
+      valor: custo.valor
+    }));
+
+    const { error: custosError } = await supabase
+      .from("orcamento_custos")
+      .insert(custosData);
+
+    if (custosError) throw custosError;
   }
 
   // Atualizar valor do orçamento no lead
@@ -115,6 +133,7 @@ export const updateOrcamento = async (
   orcamentoId: string,
   formData: OrcamentoFormData,
   produtos: OrcamentoProduto[],
+  custos: OrcamentoCusto[],
   valorTotal: number
 ) => {
   // Validar motivo da análise se necessário
@@ -159,6 +178,14 @@ export const updateOrcamento = async (
 
   if (deleteError) throw deleteError;
 
+  // Deletar custos existentes
+  const { error: deleteCustosError } = await supabase
+    .from("orcamento_custos")
+    .delete()
+    .eq("orcamento_id", orcamentoId);
+
+  if (deleteCustosError) throw deleteCustosError;
+
   // Salvar novos produtos do orçamento
   if (produtos.length > 0) {
     const produtosData = produtos.map(produto => {
@@ -199,6 +226,7 @@ export const updateOrcamento = async (
         descricao: descricao,
         descricao_manutencao: produto.descricao_manutencao || null,
         valor: produto.valor,
+        quantidade: produto.quantidade || 1,
         preco_producao: produto.preco_producao || 0,
         preco_instalacao: produto.preco_instalacao || 0,
         desconto_percentual: produto.desconto_percentual || 0
@@ -210,6 +238,22 @@ export const updateOrcamento = async (
       .insert(produtosData);
 
     if (produtosError) throw produtosError;
+  }
+
+  // Salvar novos custos logísticos
+  if (custos.length > 0) {
+    const custosData = custos.map(custo => ({
+      orcamento_id: orcamentoId,
+      tipo: custo.tipo,
+      descricao: custo.descricao || null,
+      valor: custo.valor
+    }));
+
+    const { error: custosError } = await supabase
+      .from("orcamento_custos")
+      .insert(custosData);
+
+    if (custosError) throw custosError;
   }
 
   // Atualizar valor do orçamento no lead

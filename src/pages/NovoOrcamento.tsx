@@ -12,9 +12,9 @@ export default function NovoOrcamento() {
 
   const { loading, createOrcamento } = useOrcamentos();
 
-  const handleCreateOrcamento = async (formData: any, produtos: any[], valorTotal: number) => {
+  const handleCreateOrcamento = async (formData: any, produtos: any[], custos: any[], valorTotal: number) => {
     try {
-      await createOrcamento(formData, produtos, valorTotal);
+      await createOrcamento(formData, produtos, custos, valorTotal);
       navigate("/dashboard/orcamentos");
     } catch (error) {
       console.error("Erro ao criar orçamento:", error);

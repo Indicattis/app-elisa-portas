@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import type { OrcamentoFormData, CampoPersonalizado } from "@/types/orcamento";
-import type { OrcamentoProduto } from "@/types/produto";
+import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
 
 export function useOrcamentoForm() {
   const [formData, setFormData] = useState<OrcamentoFormData>({
@@ -25,6 +25,7 @@ export function useOrcamentoForm() {
 
   const [camposPersonalizados, setCamposPersonalizados] = useState<CampoPersonalizado[]>([]);
   const [produtos, setProdutos] = useState<OrcamentoProduto[]>([]);
+  const [custos, setCustos] = useState<OrcamentoCusto[]>([]);
 
   const resetForm = () => {
     setFormData({
@@ -47,6 +48,7 @@ export function useOrcamentoForm() {
     });
     setCamposPersonalizados([]);
     setProdutos([]);
+    setCustos([]);
   };
 
   return {
@@ -56,6 +58,8 @@ export function useOrcamentoForm() {
     setCamposPersonalizados,
     produtos,
     setProdutos,
+    custos,
+    setCustos,
     resetForm
   };
 }
