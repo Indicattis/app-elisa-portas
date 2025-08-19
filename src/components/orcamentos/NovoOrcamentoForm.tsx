@@ -14,20 +14,17 @@ import { OrcamentoPreview } from "./OrcamentoPreview";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import type { OrcamentoFormData, Acessorio, Adicional } from "@/types/orcamento";
 import type { OrcamentoProduto } from "@/types/produto";
-
 interface Cor {
   id: string;
   nome: string;
   codigo_hex: string;
 }
-
 interface Autorizado {
   id: string;
   nome: string;
   cidade: string;
   estado: string;
 }
-
 interface NovoOrcamentoFormProps {
   onSubmit?: (data: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => Promise<void>;
   onCancel?: () => void;
@@ -36,7 +33,6 @@ interface NovoOrcamentoFormProps {
   initialData?: any;
   isEdit?: boolean;
 }
-
 export function NovoOrcamentoForm({
   onSubmit,
   onCancel,
@@ -45,9 +41,12 @@ export function NovoOrcamentoForm({
   initialData,
   isEdit
 }: NovoOrcamentoFormProps) {
-  const { toast } = useToast();
-  const { canais } = useCanaisAquisicao();
-  
+  const {
+    toast
+  } = useToast();
+  const {
+    canais
+  } = useCanaisAquisicao();
   const [formData, setFormData] = useState<OrcamentoFormData>({
     lead_id: leadId || "",
     cliente_nome: "",
@@ -66,7 +65,6 @@ export function NovoOrcamentoForm({
     motivo_analise: "",
     canal_aquisicao_id: ""
   });
-
   const [produtos, setProdutos] = useState<OrcamentoProduto[]>([]);
   const [cores, setCores] = useState<Cor[]>([]);
   const [acessorios, setAcessorios] = useState<Acessorio[]>([]);
@@ -74,7 +72,6 @@ export function NovoOrcamentoForm({
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
-  
   const togglePreview = () => {
     setShowPreview(!showPreview);
   };
@@ -84,17 +81,14 @@ export function NovoOrcamentoForm({
     tipo_produto: 'porta_enrolar',
     valor: 0
   });
-
   useEffect(() => {
     fetchData();
     if (initialData && isEdit) {
       loadInitialData();
     }
   }, [initialData, isEdit]);
-
   const loadInitialData = () => {
     if (!initialData) return;
-    
     setFormData({
       lead_id: initialData.lead_id,
       cliente_nome: initialData.cliente_nome || "",
@@ -113,21 +107,13 @@ export function NovoOrcamentoForm({
       requer_analise: initialData.requer_analise || false,
       motivo_analise: initialData.motivo_analise || ""
     });
-
     if (initialData.orcamento_produtos) {
       setProdutos(initialData.orcamento_produtos);
     }
   };
-
   const fetchData = async () => {
     try {
-      const [coresResponse, acessoriosResponse, adicionaisResponse, autorizadosResponse] = await Promise.all([
-        supabase.from('catalogo_cores').select('*').eq('ativa', true),
-        supabase.from('acessorios').select('*').eq('ativo', true),
-        supabase.from('adicionais').select('*').eq('ativo', true),
-        supabase.from('autorizados').select('*').eq('ativo', true)
-      ]);
-
+      const [coresResponse, acessoriosResponse, adicionaisResponse, autorizadosResponse] = await Promise.all([supabase.from('catalogo_cores').select('*').eq('ativa', true), supabase.from('acessorios').select('*').eq('ativo', true), supabase.from('adicionais').select('*').eq('ativo', true), supabase.from('autorizados').select('*').eq('ativo', true)]);
       if (coresResponse.data) setCores(coresResponse.data);
       if (acessoriosResponse.data) setAcessorios(acessoriosResponse.data);
       if (adicionaisResponse.data) setAdicionais(adicionaisResponse.data);
@@ -149,18 +135,13 @@ export function NovoOrcamentoForm({
     const subtotalProdutos = produtos.reduce((acc, produto) => {
       return acc + produto.valor;
     }, 0);
-    
     const subtotal = subtotalProdutos + frete + instalacao;
     const total = subtotal * (1 - formData.desconto_total_percentual / 100);
-    
     setCalculatedTotal(total);
   }, [produtos, formData.valor_frete, formData.valor_instalacao, formData.desconto_total_percentual]);
-
   const adicionarProduto = () => {
     if (!novoProduto.tipo_produto) return;
-
     console.log("Adicionando produto:", novoProduto);
-
     let valor = 0;
     let produto: OrcamentoProduto = {
       tipo_produto: novoProduto.tipo_produto,
@@ -177,27 +158,23 @@ export function NovoOrcamentoForm({
         produto.descricao = `${getNomeProduto(produto)} ${produto.medidas || ''}`.trim();
         valor = novoProduto.preco_producao || 0;
         break;
-      
       case 'acessorio':
         produto.acessorio_id = novoProduto.acessorio_id;
         const acessorio = acessorios.find(a => a.id === novoProduto.acessorio_id);
         produto.descricao = acessorio?.nome || 'Acessório';
         valor = acessorio?.preco || 0;
         break;
-      
       case 'adicional':
         produto.adicional_id = novoProduto.adicional_id;
         const adicional = adicionais.find(a => a.id === novoProduto.adicional_id);
         produto.descricao = adicional?.nome || 'Adicional';
         valor = adicional?.preco || 0;
         break;
-      
       case 'manutencao':
         produto.descricao_manutencao = novoProduto.descricao_manutencao;
         produto.descricao = novoProduto.descricao_manutencao || 'Serviço de Manutenção';
         valor = novoProduto.valor || 0;
         break;
-      
       case 'pintura_epoxi':
         produto.cor_id = novoProduto.cor_id;
         const corSelecionada = cores.find(c => c.id === novoProduto.cor_id);
@@ -205,165 +182,125 @@ export function NovoOrcamentoForm({
         valor = novoProduto.valor || 0;
         break;
     }
-
     produto.valor = valor;
-    
     console.log("Produto final:", produto);
-    
     setProdutos([...produtos, produto]);
-    
+
     // Reset form
     setNovoProduto({
       tipo_produto: 'porta_enrolar',
       valor: 0
     });
   };
-
   const removerProduto = (index: number) => {
     setProdutos(produtos.filter((_, i) => i !== index));
   };
-
   const renderCamposProduto = () => {
     switch (novoProduto.tipo_produto) {
       case 'porta_enrolar':
       case 'porta_social':
-        return (
-          <>
+        return <>
             <div className="space-y-2">
               <Label>Medidas</Label>
-              <Input
-                placeholder="Ex: 3x3m"
-                value={novoProduto.medidas || ""}
-                onChange={(e) => setNovoProduto({...novoProduto, medidas: e.target.value})}
-              />
+              <Input placeholder="Ex: 3x3m" value={novoProduto.medidas || ""} onChange={e => setNovoProduto({
+              ...novoProduto,
+              medidas: e.target.value
+            })} />
             </div>
             <div className="space-y-2">
               <Label>Preço de Produção (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={novoProduto.preco_producao || ""}
-                onChange={(e) => setNovoProduto({...novoProduto, preco_producao: parseFloat(e.target.value) || 0})}
-              />
+              <Input type="number" step="0.01" value={novoProduto.preco_producao || ""} onChange={e => setNovoProduto({
+              ...novoProduto,
+              preco_producao: parseFloat(e.target.value) || 0
+            })} />
             </div>
-          </>
-        );
-
+          </>;
       case 'acessorio':
-        return (
-          <div className="space-y-2">
+        return <div className="space-y-2">
             <Label>Acessório</Label>
-            <Select
-              value={novoProduto.acessorio_id || ""}
-              onValueChange={(value) => setNovoProduto({...novoProduto, acessorio_id: value})}
-            >
+            <Select value={novoProduto.acessorio_id || ""} onValueChange={value => setNovoProduto({
+            ...novoProduto,
+            acessorio_id: value
+          })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o acessório" />
               </SelectTrigger>
               <SelectContent>
-                {acessorios.map(acessorio => (
-                  <SelectItem key={acessorio.id} value={acessorio.id}>
+                {acessorios.map(acessorio => <SelectItem key={acessorio.id} value={acessorio.id}>
                     {acessorio.nome} - R$ {acessorio.preco.toFixed(2)}
-                  </SelectItem>
-                ))}
+                  </SelectItem>)}
               </SelectContent>
             </Select>
-          </div>
-        );
-
+          </div>;
       case 'adicional':
-        return (
-          <div className="space-y-2">
+        return <div className="space-y-2">
             <Label>Adicional</Label>
-            <Select
-              value={novoProduto.adicional_id || ""}
-              onValueChange={(value) => setNovoProduto({...novoProduto, adicional_id: value})}
-            >
+            <Select value={novoProduto.adicional_id || ""} onValueChange={value => setNovoProduto({
+            ...novoProduto,
+            adicional_id: value
+          })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o adicional" />
               </SelectTrigger>
               <SelectContent>
-                {adicionais.map(adicional => (
-                  <SelectItem key={adicional.id} value={adicional.id}>
+                {adicionais.map(adicional => <SelectItem key={adicional.id} value={adicional.id}>
                     {adicional.nome} - R$ {adicional.preco.toFixed(2)}
-                  </SelectItem>
-                ))}
+                  </SelectItem>)}
               </SelectContent>
             </Select>
-          </div>
-        );
-
+          </div>;
       case 'manutencao':
-        return (
-          <>
+        return <>
             <div className="space-y-2">
               <Label>Descrição da Manutenção</Label>
-              <Textarea
-                placeholder="Descreva o serviço de manutenção"
-                value={novoProduto.descricao_manutencao || ""}
-                onChange={(e) => setNovoProduto({...novoProduto, descricao_manutencao: e.target.value})}
-              />
+              <Textarea placeholder="Descreva o serviço de manutenção" value={novoProduto.descricao_manutencao || ""} onChange={e => setNovoProduto({
+              ...novoProduto,
+              descricao_manutencao: e.target.value
+            })} />
             </div>
             <div className="space-y-2">
               <Label>Preço (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={novoProduto.valor || ""}
-                onChange={(e) => setNovoProduto({...novoProduto, valor: parseFloat(e.target.value) || 0})}
-              />
+              <Input type="number" step="0.01" value={novoProduto.valor || ""} onChange={e => setNovoProduto({
+              ...novoProduto,
+              valor: parseFloat(e.target.value) || 0
+            })} />
             </div>
-          </>
-        );
-
+          </>;
       case 'pintura_epoxi':
-        return (
-          <>
+        return <>
             <div className="space-y-2">
               <Label>Cor</Label>
-              <Select
-                value={novoProduto.cor_id || ""}
-                onValueChange={(value) => setNovoProduto({...novoProduto, cor_id: value})}
-              >
+              <Select value={novoProduto.cor_id || ""} onValueChange={value => setNovoProduto({
+              ...novoProduto,
+              cor_id: value
+            })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a cor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {cores.map(cor => (
-                    <SelectItem key={cor.id} value={cor.id}>
+                  {cores.map(cor => <SelectItem key={cor.id} value={cor.id}>
                       <div className="flex items-center gap-2">
-                        <div 
-                          className="w-4 h-4 rounded border" 
-                          style={{ backgroundColor: cor.codigo_hex }}
-                        />
+                        <div className="w-4 h-4 rounded border" style={{
+                      backgroundColor: cor.codigo_hex
+                    }} />
                         {cor.nome}
                       </div>
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Preço Total (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Ex: 2500.00"
-                value={novoProduto.valor || ""}
-                onChange={(e) => setNovoProduto({
-                  ...novoProduto, 
-                  valor: parseFloat(e.target.value) || 0
-                })}
-              />
+              <Input type="number" step="0.01" placeholder="Ex: 2500.00" value={novoProduto.valor || ""} onChange={e => setNovoProduto({
+              ...novoProduto,
+              valor: parseFloat(e.target.value) || 0
+            })} />
             </div>
-          </>
-        );
-
+          </>;
       default:
         return null;
     }
   };
-
   const getNomeProduto = (produto: OrcamentoProduto) => {
     const tipos = {
       'porta_enrolar': 'Porta de Enrolar',
@@ -375,7 +312,6 @@ export function NovoOrcamentoForm({
     };
     return tipos[produto.tipo_produto];
   };
-
   const handleDownloadPDF = () => {
     try {
       const pdfData = {
@@ -384,26 +320,22 @@ export function NovoOrcamentoForm({
         calculatedTotal,
         valorInstalacao: parseFloat(formData.valor_instalacao) || 0
       };
-
       generateOrcamentoPDF(pdfData);
-      
       toast({
         title: "PDF Gerado",
-        description: "O orçamento foi baixado com sucesso",
+        description: "O orçamento foi baixado com sucesso"
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao gerar o PDF. Tente novamente.",
+        description: "Erro ao gerar o PDF. Tente novamente."
       });
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (produtos.length === 0) {
       toast({
         variant: "destructive",
@@ -412,14 +344,11 @@ export function NovoOrcamentoForm({
       });
       return;
     }
-
     if (onSubmit) {
       await onSubmit(formData, produtos, calculatedTotal);
     }
   };
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Formulário */}
       <div className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -432,71 +361,65 @@ export function NovoOrcamentoForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nome *</Label>
-                <Input
-                  value={formData.cliente_nome}
-                  onChange={(e) => setFormData({...formData, cliente_nome: e.target.value})}
-                  required
-                />
+                <Input value={formData.cliente_nome} onChange={e => setFormData({
+                  ...formData,
+                  cliente_nome: e.target.value
+                })} required />
               </div>
               <div className="space-y-2">
                 <Label>CPF</Label>
-                <Input
-                  value={formData.cliente_cpf}
-                  onChange={(e) => setFormData({...formData, cliente_cpf: e.target.value})}
-                />
+                <Input value={formData.cliente_cpf} onChange={e => setFormData({
+                  ...formData,
+                  cliente_cpf: e.target.value
+                })} />
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Telefone *</Label>
-                <Input
-                  value={formData.cliente_telefone}
-                  onChange={(e) => setFormData({...formData, cliente_telefone: e.target.value})}
-                  required
-                />
+                <Input value={formData.cliente_telefone} onChange={e => setFormData({
+                  ...formData,
+                  cliente_telefone: e.target.value
+                })} required />
               </div>
               <div className="space-y-2">
                 <Label>E-mail</Label>
-                <Input
-                  type="email"
-                  placeholder="E-mail do cliente"
-                  value={formData.cliente_email || ""}
-                  onChange={(e) => setFormData({...formData, cliente_email: e.target.value})}
-                />
+                <Input type="email" placeholder="E-mail do cliente" value={formData.cliente_email || ""} onChange={e => setFormData({
+                  ...formData,
+                  cliente_email: e.target.value
+                })} />
               </div>
               <div className="space-y-2">
                 <Label>Estado *</Label>
-                <Input
-                  value={formData.cliente_estado}
-                  onChange={(e) => setFormData({...formData, cliente_estado: e.target.value})}
-                  required
-                />
+                <Input value={formData.cliente_estado} onChange={e => setFormData({
+                  ...formData,
+                  cliente_estado: e.target.value
+                })} required />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Cidade *</Label>
-                <Input
-                  value={formData.cliente_cidade}
-                  onChange={(e) => setFormData({...formData, cliente_cidade: e.target.value})}
-                  required
-                />
+                <Input value={formData.cliente_cidade} onChange={e => setFormData({
+                  ...formData,
+                  cliente_cidade: e.target.value
+                })} required />
               </div>
               <div className="space-y-2">
                 <Label>Bairro</Label>
-                <Input
-                  value={formData.cliente_bairro}
-                  onChange={(e) => setFormData({...formData, cliente_bairro: e.target.value})}
-                />
+                <Input value={formData.cliente_bairro} onChange={e => setFormData({
+                  ...formData,
+                  cliente_bairro: e.target.value
+                })} />
               </div>
               <div className="space-y-2">
                 <Label>CEP</Label>
-                <Input
-                  value={formData.cliente_cep}
-                  onChange={(e) => setFormData({...formData, cliente_cep: e.target.value})}
-                />
+                <Input value={formData.cliente_cep} onChange={e => setFormData({
+                  ...formData,
+                  cliente_cep: e.target.value
+                })} />
               </div>
             </div>
           </CardContent>
@@ -512,10 +435,10 @@ export function NovoOrcamentoForm({
             <div className="border rounded-lg p-4 space-y-4">
               <div className="space-y-2">
                 <Label>Tipo de Produto</Label>
-                <Select
-                  value={novoProduto.tipo_produto}
-                  onValueChange={(value: any) => setNovoProduto({...novoProduto, tipo_produto: value})}
-                >
+                <Select value={novoProduto.tipo_produto} onValueChange={(value: any) => setNovoProduto({
+                  ...novoProduto,
+                  tipo_produto: value
+                })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
@@ -539,29 +462,20 @@ export function NovoOrcamentoForm({
             </div>
 
             {/* Lista de produtos adicionados */}
-            {produtos.length > 0 && (
-              <div className="space-y-2">
+            {produtos.length > 0 && <div className="space-y-2">
                 <Label>Produtos Adicionados</Label>
-                {produtos.map((produto, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                {produtos.map((produto, index) => <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="font-medium">{getNomeProduto(produto)}</div>
                       <div className="text-sm text-muted-foreground">
                         Valor: R$ {produto.valor.toFixed(2)}
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removerProduto(index)}
-                    >
+                    <Button type="button" variant="outline" size="sm" onClick={() => removerProduto(index)}>
                       <Minus className="w-4 h-4" />
                     </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  </div>)}
+              </div>}
           </CardContent>
         </Card>
 
@@ -573,30 +487,26 @@ export function NovoOrcamentoForm({
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Frete (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.valor_frete}
-                onChange={(e) => setFormData({...formData, valor_frete: e.target.value})}
-              />
+              <Input type="number" step="0.01" value={formData.valor_frete} onChange={e => setFormData({
+                ...formData,
+                valor_frete: e.target.value
+              })} />
             </div>
 
             <div className="space-y-2">
               <Label>Instalação (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.valor_instalacao}
-                onChange={(e) => setFormData({...formData, valor_instalacao: e.target.value})}
-              />
+              <Input type="number" step="0.01" value={formData.valor_instalacao} onChange={e => setFormData({
+                ...formData,
+                valor_instalacao: e.target.value
+              })} />
             </div>
 
             <div className="space-y-2">
               <Label>Modalidade de Instalação</Label>
-              <Select
-                value={formData.modalidade_instalacao}
-                onValueChange={(value: any) => setFormData({...formData, modalidade_instalacao: value})}
-              >
+              <Select value={formData.modalidade_instalacao} onValueChange={(value: any) => setFormData({
+                ...formData,
+                modalidade_instalacao: value
+              })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -618,29 +528,27 @@ export function NovoOrcamentoForm({
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Canal de Aquisição</Label>
-              <Select
-                value={formData.canal_aquisicao_id || ""}
-                onValueChange={(value) => setFormData({...formData, canal_aquisicao_id: value})}
-              >
+              <Select value={formData.canal_aquisicao_id || ""} onValueChange={value => setFormData({
+                ...formData,
+                canal_aquisicao_id: value
+              })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o canal de aquisição" />
                 </SelectTrigger>
                 <SelectContent>
-                  {canais.map(canal => (
-                    <SelectItem key={canal.id} value={canal.id}>
+                  {canais.map(canal => <SelectItem key={canal.id} value={canal.id}>
                       {canal.nome}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label>Forma de Pagamento</Label>
-              <Select
-                value={formData.forma_pagamento}
-                onValueChange={(value) => setFormData({...formData, forma_pagamento: value})}
-              >
+              <Select value={formData.forma_pagamento} onValueChange={value => setFormData({
+                ...formData,
+                forma_pagamento: value
+              })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a forma de pagamento" />
                 </SelectTrigger>
@@ -657,48 +565,36 @@ export function NovoOrcamentoForm({
 
             <div className="space-y-2">
               <Label>Desconto Total (%)</Label>
-              <Input
-                type="number"
-                min="0"
-                max={formData.forma_pagamento === "a_vista" ? "10" : "5"}
-                step="0.1"
-                value={formData.desconto_total_percentual}
-                onChange={(e) => {
-                  const valor = parseFloat(e.target.value) || 0;
-                  const maxDesconto = formData.forma_pagamento === "a_vista" ? 10 : 5;
-                  if (valor <= maxDesconto) {
-                    setFormData({...formData, desconto_total_percentual: valor});
-                  }
-                }}
-              />
-              <p className="text-xs text-muted-foreground">
-                {formData.forma_pagamento === "a_vista" 
-                  ? "Pagamentos à vista permitem desconto de até 10%. Demais formas até 5%"
-                  : "Descontos maiores que 5% requerem aprovação da gerência"
+              <Input type="number" min="0" max={formData.forma_pagamento === "a_vista" ? "10" : "5"} step="0.1" value={formData.desconto_total_percentual} onChange={e => {
+                const valor = parseFloat(e.target.value) || 0;
+                const maxDesconto = formData.forma_pagamento === "a_vista" ? 10 : 5;
+                if (valor <= maxDesconto) {
+                  setFormData({
+                    ...formData,
+                    desconto_total_percentual: valor
+                  });
                 }
+              }} />
+              <p className="text-xs text-muted-foreground">
+                {formData.forma_pagamento === "a_vista" ? "Pagamentos à vista permitem desconto de até 10%. Demais formas até 5%" : "Descontos maiores que 5% requerem aprovação da gerência"}
               </p>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="requer_analise"
-                checked={formData.requer_analise}
-                onCheckedChange={(checked) => setFormData({...formData, requer_analise: !!checked})}
-              />
+              <Checkbox id="requer_analise" checked={formData.requer_analise} onCheckedChange={checked => setFormData({
+                ...formData,
+                requer_analise: !!checked
+              })} />
               <Label htmlFor="requer_analise">Requer análise da gerência</Label>
             </div>
 
-            {formData.requer_analise && (
-              <div className="space-y-2">
+            {formData.requer_analise && <div className="space-y-2">
                 <Label>Motivo da Análise *</Label>
-                <Textarea
-                  placeholder="Descreva o motivo pelo qual este orçamento requer análise..."
-                  value={formData.motivo_analise}
-                  onChange={(e) => setFormData({...formData, motivo_analise: e.target.value})}
-                  required={formData.requer_analise}
-                />
-              </div>
-            )}
+                <Textarea placeholder="Descreva o motivo pelo qual este orçamento requer análise..." value={formData.motivo_analise} onChange={e => setFormData({
+                ...formData,
+                motivo_analise: e.target.value
+              })} required={formData.requer_analise} />
+              </div>}
           </CardContent>
         </Card>
 
@@ -706,7 +602,9 @@ export function NovoOrcamentoForm({
           <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <span className="text-lg font-semibold">Total do Orçamento:</span>
             <span className="text-2xl font-bold text-primary">
-              R$ {calculatedTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              R$ {calculatedTotal.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2
+            })}
             </span>
           </div>
 
@@ -716,21 +614,11 @@ export function NovoOrcamentoForm({
                 <Button type="button" variant="outline" onClick={onCancel}>
                   Cancelar
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleDownloadPDF}
-                  disabled={produtos.length === 0}
-                >
+                <Button type="button" variant="outline" onClick={handleDownloadPDF} disabled={produtos.length === 0}>
                   <Download className="w-4 h-4 mr-2" />
                   Baixar PDF
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  className="flex-1"
-                  onClick={togglePreview}
-                >
+                <Button type="button" variant="outline" className="flex-1" onClick={togglePreview}>
                   {showPreview ? "Ocultar Pré-visualização" : "Mostrar Pré-visualização"}
                 </Button>
                 <Button type="submit" disabled={loading}>
@@ -743,17 +631,6 @@ export function NovoOrcamentoForm({
       </div>
 
       {/* Pré-visualização */}
-      <div className={`transition-all duration-300 ${showPreview ? 'block' : 'hidden lg:block'}`}>
-        <div className="sticky top-6">
-          <h3 className="text-lg font-semibold mb-4">Pré-visualização do Orçamento</h3>
-          <OrcamentoPreview 
-            formData={formData}
-            produtos={produtos}
-            calculatedTotal={calculatedTotal}
-            valorInstalacao={parseFloat(formData.valor_instalacao) || 0}
-          />
-        </div>
-      </div>
-    </div>
-  );
+      
+    </div>;
 }
