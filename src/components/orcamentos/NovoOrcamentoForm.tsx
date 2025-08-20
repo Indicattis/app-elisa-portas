@@ -13,7 +13,7 @@ import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { OrcamentoPreview } from "./OrcamentoPreview";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import type { OrcamentoFormData, Acessorio, Adicional } from "@/types/orcamento";
-import type { OrcamentoProduto } from "@/types/produto";
+import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
 interface Cor {
   id: string;
   nome: string;
@@ -26,7 +26,7 @@ interface Autorizado {
   estado: string;
 }
 interface NovoOrcamentoFormProps {
-  onSubmit?: (data: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => Promise<void>;
+  onSubmit?: (data: OrcamentoFormData, produtos: OrcamentoProduto[], custos: OrcamentoCusto[], valorTotal: number) => Promise<void>;
   onCancel?: () => void;
   loading?: boolean;
   leadId?: string;
@@ -66,6 +66,7 @@ export function NovoOrcamentoForm({
     canal_aquisicao_id: ""
   });
   const [produtos, setProdutos] = useState<OrcamentoProduto[]>([]);
+  const [custos, setCustos] = useState<OrcamentoCusto[]>([]);
   const [cores, setCores] = useState<Cor[]>([]);
   const [acessorios, setAcessorios] = useState<Acessorio[]>([]);
   const [adicionais, setAdicionais] = useState<Adicional[]>([]);
@@ -345,7 +346,7 @@ export function NovoOrcamentoForm({
       return;
     }
     if (onSubmit) {
-      await onSubmit(formData, produtos, calculatedTotal);
+      await onSubmit(formData, produtos, custos, calculatedTotal);
     }
   };
   return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
