@@ -42,6 +42,7 @@ import Autorizados from "./pages/Autorizados";
 import AutorizadoNovo from "./pages/AutorizadoNovo";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
+import Pedidos from "./pages/Pedidos";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -362,6 +363,16 @@ const App = () => (
                     <ProtectedRoute requireAdmin={true}>
                       <DashboardLayout>
                         <Configuracoes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/pedidos"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Pedidos />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

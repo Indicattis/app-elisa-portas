@@ -12,7 +12,8 @@ import {
   Palette,
   Wrench,
   Package,
-  AlertTriangle
+  AlertTriangle,
+  Plus
 } from "lucide-react";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +60,65 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
   const { user, isAdmin } = useAuth();
   const [selectedOrcamento, setSelectedOrcamento] = useState<any>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
+
+  const handleGerarPedido = async (orcamento: any) => {
+    try {
+      // Buscar dados completos do orçamento
+      const { data: orcamentoCompleto, error: orcamentoError } = await supabase
+        .from('orcamentos')
+        .select(`
+          *,
+          elisaportas_leads (*),
+          orcamento_produtos (*)
+        `)
+        .eq('id', orcamento.id)
+        .single();
+
+      if (orcamentoError) throw orcamentoError;
+
+      // Gerar número do pedido único
+      const numeroPedido = `PED-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      // Pegar o primeiro produto para as especificações do pedido
+      const primeiroProduto = orcamentoCompleto.orcamento_produtos?.[0];
+      
+      // Criar pedido
+      const { error: pedidoError } = await supabase
+        .from('pedidos_producao')
+        .insert({
+          numero_pedido: numeroPedido,
+          cliente_nome: orcamentoCompleto.cliente_nome,
+          cliente_telefone: orcamentoCompleto.cliente_telefone,
+          endereco_rua: orcamentoCompleto.elisaportas_leads?.endereco_rua || '',
+          endereco_numero: orcamentoCompleto.elisaportas_leads?.endereco_numero || '',
+          endereco_bairro: orcamentoCompleto.cliente_bairro || '',
+          endereco_cidade: orcamentoCompleto.cliente_cidade || '',
+          endereco_estado: orcamentoCompleto.cliente_estado || '',
+          endereco_cep: orcamentoCompleto.cliente_cep || '',
+          produto_tipo: primeiroProduto?.tipo_produto || 'porta_enrolar',
+          produto_cor: primeiroProduto?.cor || 'Não especificado',
+          produto_largura: primeiroProduto?.medidas?.split('x')?.[0]?.trim() || 'Não especificado',
+          produto_altura: primeiroProduto?.medidas?.split('x')?.[1]?.trim() || 'Não especificado',
+          status: 'em_lancamento',
+          observacoes: `Pedido gerado a partir do orçamento ${orcamento.id}`,
+          created_by: user?.id
+        });
+
+      if (pedidoError) throw pedidoError;
+
+      toast({
+        title: "Pedido Criado",
+        description: `Pedido ${numeroPedido} foi criado com sucesso`,
+      });
+    } catch (error) {
+      console.error("Erro ao gerar pedido:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao gerar pedido. Tente novamente.",
+      });
+    }
+  };
 
   const handleGeneratePDF = async (orcamento: any) => {
     try {
@@ -387,6 +447,16 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                     >
                       <Download className="w-4 h-4" />
                     </Button>
+                    
+                    {(orcamento.status === 'vendido' || getStatusNumber(orcamento.status) === 4) && (
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => handleGerarPedido(orcamento)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    )}
                     
                     {canEdit(orcamento) && (
                       <Button

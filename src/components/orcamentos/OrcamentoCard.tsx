@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Edit, Star, Trash2 } from "lucide-react";
+import { Download, Edit, Star, Trash2, Plus } from "lucide-react";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,65 @@ const ORCAMENTO_CLASSES: OrcamentoClasse = {
 export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: OrcamentoCardProps) {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
+
+  const handleGerarPedido = async () => {
+    try {
+      // Buscar dados completos do orçamento
+      const { data: orcamentoCompleto, error: orcamentoError } = await supabase
+        .from('orcamentos')
+        .select(`
+          *,
+          elisaportas_leads (*),
+          orcamento_produtos (*)
+        `)
+        .eq('id', orcamento.id)
+        .single();
+
+      if (orcamentoError) throw orcamentoError;
+
+      // Gerar número do pedido único
+      const numeroPedido = `PED-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      // Pegar o primeiro produto para as especificações do pedido
+      const primeiroProduto = orcamentoCompleto.orcamento_produtos?.[0];
+      
+      // Criar pedido
+      const { error: pedidoError } = await supabase
+        .from('pedidos_producao')
+        .insert({
+          numero_pedido: numeroPedido,
+          cliente_nome: orcamentoCompleto.cliente_nome,
+          cliente_telefone: orcamentoCompleto.cliente_telefone,
+          endereco_rua: orcamentoCompleto.elisaportas_leads?.endereco_rua || '',
+          endereco_numero: orcamentoCompleto.elisaportas_leads?.endereco_numero || '',
+          endereco_bairro: orcamentoCompleto.cliente_bairro || '',
+          endereco_cidade: orcamentoCompleto.cliente_cidade || '',
+          endereco_estado: orcamentoCompleto.cliente_estado || '',
+          endereco_cep: orcamentoCompleto.cliente_cep || '',
+          produto_tipo: primeiroProduto?.tipo_produto || 'porta_enrolar',
+          produto_cor: primeiroProduto?.cor || 'Não especificado',
+          produto_largura: primeiroProduto?.medidas?.split('x')?.[0]?.trim() || 'Não especificado',
+          produto_altura: primeiroProduto?.medidas?.split('x')?.[1]?.trim() || 'Não especificado',
+          status: 'em_lancamento',
+          observacoes: `Pedido gerado a partir do orçamento ${orcamento.id}`,
+          created_by: user?.id
+        });
+
+      if (pedidoError) throw pedidoError;
+
+      toast({
+        title: "Pedido Criado",
+        description: `Pedido ${numeroPedido} foi criado com sucesso`,
+      });
+    } catch (error) {
+      console.error("Erro ao gerar pedido:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao gerar pedido. Tente novamente.",
+      });
+    }
+  };
 
   const handleGeneratePDF = async () => {
     try {
@@ -200,6 +259,13 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: O
             <Download className="w-3 h-3 mr-1" />
             PDF
           </Button>
+          
+          {(orcamento.status === 'vendido' || orcamento.status_orcamento === 4) && (
+            <Button size="sm" variant="default" onClick={handleGerarPedido} className="flex-1">
+              <Plus className="w-3 h-3 mr-1" />
+              Gerar Pedido
+            </Button>
+          )}
           
           {canEdit() && onEdit && (
             <Button size="sm" variant="outline" onClick={() => onEdit(orcamento)} className="flex-1">

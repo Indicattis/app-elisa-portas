@@ -7,6 +7,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Leads", href: "/dashboard/leads", icon: FileText },
   { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator },
+  { name: "Pedidos", href: "/dashboard/pedidos", icon: FileText },
   { name: "Visitas", href: "/dashboard/visitas", icon: Calendar },
   { name: "Produção", href: "/dashboard/producao", icon: Factory, adminOrManagerFabril: true },
   { name: "Usuários", href: "/dashboard/users", icon: Users, adminOnly: true },
