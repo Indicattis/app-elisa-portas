@@ -174,7 +174,7 @@ export default function ContadorVendas() {
                 <button
                   onClick={() => inMonth ? openModalForDate(d) : undefined}
                   disabled={!inMonth}
-                  className={`relative ${daySize} rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
+                  className={`relative ${daySize} rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 border border-sm ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
                   title={registro ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor) : undefined}
                 >
                   <span className="text-[10px] opacity-90">{format(d, "d")}</span>
