@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Minus, Download } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Minus, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
-import { OrcamentoPreview } from "./OrcamentoPreview";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import type { OrcamentoFormData, Acessorio, Adicional } from "@/types/orcamento";
 import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
@@ -72,14 +72,17 @@ export function NovoOrcamentoForm({
   const [adicionais, setAdicionais] = useState<Adicional[]>([]);
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
-  const [showPreview, setShowPreview] = useState(false);
-  const togglePreview = () => {
-    setShowPreview(!showPreview);
-  };
 
   // Produto temporário para adição
   const [novoProduto, setNovoProduto] = useState<Partial<OrcamentoProduto>>({
     tipo_produto: 'porta_enrolar',
+    valor: 0,
+    quantidade: 1
+  });
+
+  // Custo temporário para adição
+  const [novoCusto, setNovoCusto] = useState<Partial<OrcamentoCusto>>({
+    tipo: 'frete',
     valor: 0
   });
   useEffect(() => {
@@ -131,23 +134,25 @@ export function NovoOrcamentoForm({
 
   // Calcular total
   useEffect(() => {
-    const frete = parseFloat(formData.valor_frete) || 0;
-    const instalacao = parseFloat(formData.valor_instalacao) || 0;
     const subtotalProdutos = produtos.reduce((acc, produto) => {
-      return acc + produto.valor;
+      return acc + (produto.valor * (produto.quantidade || 1));
     }, 0);
-    const subtotal = subtotalProdutos + frete + instalacao;
+    const subtotalCustos = custos.reduce((acc, custo) => {
+      return acc + custo.valor;
+    }, 0);
+    const subtotal = subtotalProdutos + subtotalCustos;
     const total = subtotal * (1 - formData.desconto_total_percentual / 100);
     setCalculatedTotal(total);
-  }, [produtos, formData.valor_frete, formData.valor_instalacao, formData.desconto_total_percentual]);
+  }, [produtos, custos, formData.desconto_total_percentual]);
   const adicionarProduto = () => {
     if (!novoProduto.tipo_produto) return;
-    console.log("Adicionando produto:", novoProduto);
+    
     let valor = 0;
     let produto: OrcamentoProduto = {
       tipo_produto: novoProduto.tipo_produto,
       valor: 0,
-      descricao: ''
+      descricao: '',
+      quantidade: novoProduto.quantidade || 1
     };
 
     // Definir campos específicos baseado no tipo
@@ -184,17 +189,40 @@ export function NovoOrcamentoForm({
         break;
     }
     produto.valor = valor;
-    console.log("Produto final:", produto);
     setProdutos([...produtos, produto]);
 
     // Reset form
     setNovoProduto({
       tipo_produto: 'porta_enrolar',
-      valor: 0
+      valor: 0,
+      quantidade: 1
+    });
+  };
+
+  const adicionarCusto = () => {
+    if (!novoCusto.tipo || !novoCusto.valor || novoCusto.valor <= 0) return;
+    
+    const custo: OrcamentoCusto = {
+      tipo: novoCusto.tipo,
+      descricao: novoCusto.descricao || (novoCusto.tipo === 'frete' ? 'Frete' : 'Instalação'),
+      valor: novoCusto.valor
+    };
+    
+    setCustos([...custos, custo]);
+    
+    // Reset form
+    setNovoCusto({
+      tipo: 'frete',
+      valor: 0,
+      descricao: ''
     });
   };
   const removerProduto = (index: number) => {
     setProdutos(produtos.filter((_, i) => i !== index));
+  };
+
+  const removerCusto = (index: number) => {
+    setCustos(custos.filter((_, i) => i !== index));
   };
   const renderCamposProduto = () => {
     switch (novoProduto.tipo_produto) {
@@ -349,7 +377,7 @@ export function NovoOrcamentoForm({
       await onSubmit(formData, produtos, custos, calculatedTotal);
     }
   };
-  return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  return <div className="space-y-6 max-w-6xl mx-auto">
       {/* Formulário */}
       <div className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -456,27 +484,70 @@ export function NovoOrcamentoForm({
 
               {renderCamposProduto()}
 
+              <div className="space-y-2">
+                <Label>Quantidade</Label>
+                <Input 
+                  type="number" 
+                  min="1" 
+                  value={novoProduto.quantidade || 1}
+                  onChange={e => setNovoProduto({
+                    ...novoProduto,
+                    quantidade: parseInt(e.target.value) || 1
+                  })}
+                />
+              </div>
+
               <Button type="button" onClick={adicionarProduto}>
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Produto
               </Button>
             </div>
 
-            {/* Lista de produtos adicionados */}
-            {produtos.length > 0 && <div className="space-y-2">
+            {/* Tabela de produtos adicionados */}
+            {produtos.length > 0 && (
+              <div className="space-y-4">
                 <Label>Produtos Adicionados</Label>
-                {produtos.map((produto, index) => <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="font-medium">{getNomeProduto(produto)}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Valor: R$ {produto.valor.toFixed(2)}
-                      </div>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => removerProduto(index)}>
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                  </div>)}
-              </div>}
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Qtd</TableHead>
+                        <TableHead>Valor Unit.</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead className="w-20">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {produtos.map((produto, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">
+                            {getNomeProduto(produto)}
+                          </TableCell>
+                          <TableCell>{produto.descricao || produto.medidas}</TableCell>
+                          <TableCell>{produto.quantidade || 1}</TableCell>
+                          <TableCell>R$ {produto.valor.toFixed(2)}</TableCell>
+                          <TableCell className="font-medium">
+                            R$ {(produto.valor * (produto.quantidade || 1)).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => removerProduto(index)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -486,21 +557,102 @@ export function NovoOrcamentoForm({
             <CardTitle>Custos Logísticos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Frete (R$)</Label>
-              <Input type="number" step="0.01" value={formData.valor_frete} onChange={e => setFormData({
-                ...formData,
-                valor_frete: e.target.value
-              })} />
+            {/* Formulário para adicionar custos */}
+            <div className="border rounded-lg p-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo de Custo</Label>
+                  <Select 
+                    value={novoCusto.tipo || 'frete'} 
+                    onValueChange={(value: 'frete' | 'instalacao') => setNovoCusto({
+                      ...novoCusto,
+                      tipo: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="frete">Frete</SelectItem>
+                      <SelectItem value="instalacao">Instalação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Descrição (Opcional)</Label>
+                  <Input 
+                    placeholder="Ex: Frete para interior"
+                    value={novoCusto.descricao || ""}
+                    onChange={e => setNovoCusto({
+                      ...novoCusto,
+                      descricao: e.target.value
+                    })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Valor (R$)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01"
+                    min="0"
+                    value={novoCusto.valor || ""}
+                    onChange={e => setNovoCusto({
+                      ...novoCusto,
+                      valor: parseFloat(e.target.value) || 0
+                    })}
+                  />
+                </div>
+              </div>
+
+              <Button type="button" onClick={adicionarCusto}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Custo
+              </Button>
             </div>
 
-            <div className="space-y-2">
-              <Label>Instalação (R$)</Label>
-              <Input type="number" step="0.01" value={formData.valor_instalacao} onChange={e => setFormData({
-                ...formData,
-                valor_instalacao: e.target.value
-              })} />
-            </div>
+            {/* Tabela de custos adicionados */}
+            {custos.length > 0 && (
+              <div className="space-y-4">
+                <Label>Custos Adicionados</Label>
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead className="w-20">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {custos.map((custo, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">
+                            {custo.tipo === 'frete' ? 'Frete' : 'Instalação'}
+                          </TableCell>
+                          <TableCell>{custo.descricao}</TableCell>
+                          <TableCell className="font-medium">
+                            R$ {custo.valor.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => removerCusto(index)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Modalidade de Instalação</Label>
@@ -517,7 +669,6 @@ export function NovoOrcamentoForm({
                 </SelectContent>
               </Select>
             </div>
-
           </CardContent>
         </Card>
 
@@ -619,9 +770,6 @@ export function NovoOrcamentoForm({
                   <Download className="w-4 h-4 mr-2" />
                   Baixar PDF
                 </Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={togglePreview}>
-                  {showPreview ? "Ocultar Pré-visualização" : "Mostrar Pré-visualização"}
-                </Button>
                 <Button type="submit" disabled={loading}>
                   {loading ? "Salvando..." : isEdit ? "Atualizar" : "Criar Orçamento"}
                 </Button>
@@ -630,8 +778,5 @@ export function NovoOrcamentoForm({
           </Card>
         </form>
       </div>
-
-      {/* Pré-visualização */}
-      
     </div>;
 }
