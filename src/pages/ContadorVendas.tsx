@@ -153,7 +153,7 @@ export default function ContadorVendas() {
       day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
     }
 
-    const daySize = large ? 'w-28 h-28 md:w-32 md:h-32' : 'w-20 h-20 md:w-24 md:h-24';
+    const daySize = large ? 'w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 2xl:w-40 2xl:h-40' : 'w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32';
 
     return (
       <div className="space-y-3">
@@ -182,8 +182,8 @@ export default function ContadorVendas() {
                   className={`relative ${daySize} rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 border border-sm ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
                   title={registro ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor) : undefined}
                 >
-                  <span className="text-sm opacity-90">{format(d, "d")}</span>
-                  <span className="text-base font-semibold">
+                  <span className="text-xs sm:text-sm md:text-base lg:text-lg opacity-90">{format(d, "d")}</span>
+                  <span className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-semibold">
                     {registro ? `R$ ${new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(valor)}` : "-"}
                   </span>
                   {style.star && (
