@@ -15,12 +15,16 @@ interface DiaVenda {
   valor: number;
 }
 
-const getRangeStyle = (valor: number, weekend: boolean) => {
+const getRangeStyle = (valor: number, weekend: boolean, isPastDate: boolean = false) => {
   if (weekend) return { base: "bg-muted text-muted-foreground", star: false, ring: "" };
   if (valor >= 75001) return { base: "bg-black text-white border-2 border-yellow-400", star: true, ring: "ring-2 ring-yellow-400" };
   if (valor >= 50001) return { base: "bg-green-600 text-white", star: false, ring: "" };
   if (valor >= 20001) return { base: "bg-yellow-500 text-black", star: false, ring: "" };
   if (valor > 0) return { base: "bg-red-600 text-white", star: false, ring: "" };
+  // Dias passados com valor 0 ou null ficam vermelhos
+  if (isPastDate && (valor === 0 || valor === null || valor === undefined)) {
+    return { base: "bg-red-600 text-white", star: false, ring: "" };
+  }
   return { base: "bg-muted text-muted-foreground", star: false, ring: "" };
 };
 
@@ -125,8 +129,8 @@ export default function ContadorVendas() {
   }, [data]);
 
   const weekSum = useMemo(() => {
-    const start = startOfWeek(today, { weekStartsOn: 1 });
-    const end = endOfWeek(today, { weekStartsOn: 1 });
+    const start = startOfWeek(today, { weekStartsOn: 0 });
+    const end = endOfWeek(today, { weekStartsOn: 0 });
     return Object.values(data).reduce((sum, d) => {
       const dDate = new Date(d.data);
       return (dDate >= start && dDate <= end) ? sum + d.valor : sum;
@@ -138,9 +142,9 @@ export default function ContadorVendas() {
     const monthStart = startOfMonth(firstDay);
     const monthEnd = endOfMonth(firstDay);
 
-    // Build grid from Monday to Sunday
-    const startGrid = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const endGrid = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    // Build grid from Sunday to Saturday
+    const startGrid = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const endGrid = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
     const days: Date[] = [];
     let day = startGrid;
@@ -149,7 +153,7 @@ export default function ContadorVendas() {
       day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
     }
 
-    const daySize = large ? 'w-20 h-20 md:w-24 md:h-24' : 'w-14 h-14 md:w-16 md:h-16';
+    const daySize = large ? 'w-28 h-28 md:w-32 md:h-32' : 'w-20 h-20 md:w-24 md:h-24';
 
     return (
       <div className="space-y-3">
@@ -157,8 +161,8 @@ export default function ContadorVendas() {
           <h3 className="text-lg font-semibold">{format(firstDay, "LLLL", { locale: ptBR })}</h3>
         </div>
         <div className="grid grid-cols-7 gap-3">
-          {["S", "T", "Q", "Q", "S", "S", "D"].map((d, i) => (
-            <div key={i} className="text-xs text-muted-foreground text-center">{d}</div>
+          {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
+            <div key={i} className="text-sm font-medium text-muted-foreground text-center">{d}</div>
           ))}
           {days.map((d, idx) => {
             const inMonth = isSameMonth(d, firstDay);
@@ -166,7 +170,8 @@ export default function ContadorVendas() {
             const registro = data[iso];
             const weekend = isWeekend(d);
             const valor = registro?.valor || 0;
-            const style = getRangeStyle(valor, weekend || !inMonth);
+            const isPastDate = d < today && !isSameDay(d, today);
+            const style = getRangeStyle(valor, weekend || !inMonth, isPastDate && inMonth && !weekend);
             const isToday = isSameDay(d, today);
 
             return (
@@ -177,9 +182,9 @@ export default function ContadorVendas() {
                   className={`relative ${daySize} rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 border border-sm ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
                   title={registro ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor) : undefined}
                 >
-                  <span className="text-[10px] opacity-90">{format(d, "d")}</span>
-                  <span className="text-[11px] font-semibold">
-                    {registro ? new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(valor) : "-"}
+                  <span className="text-sm opacity-90">{format(d, "d")}</span>
+                  <span className="text-base font-semibold">
+                    {registro ? `R$ ${new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(valor)}` : "-"}
                   </span>
                   {style.star && (
                     <Star className="absolute -top-1 -right-1 h-4 w-4 text-yellow-400 drop-shadow" />
@@ -211,25 +216,39 @@ export default function ContadorVendas() {
         </div>
       </header>
 
-      <section aria-labelledby="legendas" className="flex flex-wrap items-center gap-4">
-        <h2 id="legendas" className="sr-only">Legenda de cores do contador</h2>
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-4 w-4 rounded-full bg-red-600" aria-hidden="true"></span>
-          <span className="text-sm">0–20.000</span>
+      <section aria-labelledby="legendas" className="space-y-4">
+        <h2 id="legendas" className="text-lg font-semibold">Legenda de cores</h2>
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <span className="inline-block h-6 w-6 rounded-full bg-red-600" aria-hidden="true"></span>
+              <span className="text-base font-medium">0–20.000</span>
+            </div>
+            <span className="text-sm text-muted-foreground font-medium">Péssimo</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <span className="inline-block h-6 w-6 rounded-full bg-yellow-500 border border-yellow-600" aria-hidden="true"></span>
+              <span className="text-base font-medium">20.001–50.000</span>
+            </div>
+            <span className="text-sm text-muted-foreground font-medium">Prejuízo</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <span className="inline-block h-6 w-6 rounded-full bg-green-600" aria-hidden="true"></span>
+              <span className="text-base font-medium">50.001–75.000</span>
+            </div>
+            <span className="text-sm text-muted-foreground font-medium">Contas pagas</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-black border-2 border-yellow-400" aria-hidden="true"></span>
+              <span className="text-base font-medium">75.001+</span>
+            </div>
+            <span className="text-sm text-muted-foreground font-medium">Lucro</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-4 w-4 rounded-full bg-yellow-500 border border-yellow-600" aria-hidden="true"></span>
-          <span className="text-sm">20.001–50.000</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-4 w-4 rounded-full bg-green-600" aria-hidden="true"></span>
-          <span className="text-sm">50.001–75.000</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="relative inline-flex h-4 w-4 items-center justify-center rounded-full bg-black border-2 border-yellow-400" aria-hidden="true"></span>
-          <span className="text-sm">75.001+</span>
-        </div>
-        <div className="text-xs text-muted-foreground">Cores aplicadas apenas de seg–sex</div>
+        <div className="text-sm text-muted-foreground font-medium">Cores aplicadas apenas de seg–sex. Dias passados sem valor também ficam vermelhos.</div>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">

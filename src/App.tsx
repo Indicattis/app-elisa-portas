@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
@@ -61,37 +62,47 @@ const queryClient = new QueryClient({
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen w-full">
-      {/* Sidebar fixa no desktop */}
-      <div className="hidden md:block">
-        <AppSidebar />
-      </div>
-
-      <div className="flex-1 flex flex-col">
-        {/* Header mobile com botão de menu */}
-        <div className="md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/50">
-          <div className="h-12 flex items-center justify-between px-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Abrir menu">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-72 sm:w-80">
-                <AppSidebar />
-              </SheetContent>
-            </Sheet>
-            <span className="text-sm font-medium">Menu</span>
-          </div>
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full">
+        {/* Sidebar para desktop */}
+        <div className="hidden md:block">
+          <AppSidebar />
         </div>
 
-        <main className="flex-1 p-4 sm:p-6">
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
-        </main>
+        <SidebarInset className="flex-1 flex flex-col md:flex-1">
+          {/* Header com botão de colapsar sidebar no desktop */}
+          <div className="hidden md:flex sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/50">
+            <div className="h-12 flex items-center px-4">
+              <SidebarTrigger className="-ml-1" />
+              <div className="h-4 w-px bg-border mx-3" />
+            </div>
+          </div>
+
+          {/* Header mobile com botão de menu */}
+          <div className="md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/50">
+            <div className="h-12 flex items-center justify-between px-4">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Abrir menu">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-72 sm:w-80">
+                  <AppSidebar />
+                </SheetContent>
+              </Sheet>
+              <span className="text-sm font-medium">Menu</span>
+            </div>
+          </div>
+
+          <main className="flex-1 p-4 sm:p-6">
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </main>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
 
