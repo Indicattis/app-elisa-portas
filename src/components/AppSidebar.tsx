@@ -50,14 +50,22 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-3 px-2 py-1">
-          <img
-            src="/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png"
-            alt="Elisa Portas"
-            className="h-8 w-auto"
-          />
-          {state === "expanded" && (
-            <span className="font-semibold text-sidebar-foreground">Elisa Portas</span>
+        <div className="flex items-center justify-center gap-3 px-2 py-1">
+          {state === "expanded" ? (
+            <>
+              <img
+                src="/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png"
+                alt="Elisa Portas"
+                className="h-8 w-auto"
+              />
+              <span className="font-semibold text-sidebar-foreground">Elisa Portas</span>
+            </>
+          ) : (
+            <img
+              src="/lovable-uploads/9103e850-9847-4e49-8e7b-1423d2953fe8.png"
+              alt="Ícone da Empresa"
+              className="h-8 w-8"
+            />
           )}
         </div>
       </SidebarHeader>
@@ -106,8 +114,13 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         )}
-        <div className="px-2">
-          <Button variant="outline" size="sm" className="w-full" onClick={signOut}>
+        <div className="px-2 flex justify-center">
+          <Button 
+            variant="outline" 
+            size={state === "expanded" ? "sm" : "icon"} 
+            className={state === "expanded" ? "w-full" : "h-8 w-8"} 
+            onClick={signOut}
+          >
             {state === "expanded" ? "Sair" : "S"}
           </Button>
         </div>
