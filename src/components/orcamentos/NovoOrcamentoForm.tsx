@@ -666,6 +666,7 @@ export function NovoOrcamentoForm({
                 <SelectContent>
                   <SelectItem value="instalacao_elisa">Instalação Elisa</SelectItem>
                   <SelectItem value="autorizado_elisa">Autorizado Elisa</SelectItem>
+                  <SelectItem value="sem_instalacao">Sem instalação</SelectItem>
                 </SelectContent>
               </Select>
             </div>

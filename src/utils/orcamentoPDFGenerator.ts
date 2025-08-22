@@ -160,7 +160,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
     // Distribuir custos logísticos entre produtos de porta
     const valorFrete = parseFloat(data.formData.valor_frete) || 0;
     const valorInstalacao = parseFloat(data.formData.valor_instalacao) || 0;
-    const produtosComCustosDistribuidos = distribuirCustosLogisticos(data.produtos, valorFrete, valorInstalacao);
+    const produtosComCustosDistribuidos = distribuirCustosLogisticos(data.produtos, valorFrete, valorInstalacao, data.formData.modalidade_instalacao);
     
     // Preparar dados da tabela com produtos
     const tableData = produtosComCustosDistribuidos.map(produto => {
@@ -213,7 +213,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
     });
 
     // Adicionar itens logísticos como "Incluso"
-    const itensLogisticos = criarItensLogisticosIncluso();
+    const itensLogisticos = criarItensLogisticosIncluso(data.formData.modalidade_instalacao);
     itensLogisticos.forEach(item => {
       tableData.push([
         'Serviço',

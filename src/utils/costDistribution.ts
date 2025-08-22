@@ -13,7 +13,8 @@ export interface ProdutoComCustoDistribuido extends OrcamentoProduto {
 export function distribuirCustosLogisticos(
   produtos: OrcamentoProduto[],
   valorFrete: number,
-  valorInstalacao: number
+  valorInstalacao: number,
+  modalidadeInstalacao?: string
 ): (ProdutoComCustoDistribuido | OrcamentoProduto)[] {
   // Identificar produtos de porta
   const produtosPorta = produtos.filter(
@@ -38,7 +39,8 @@ export function distribuirCustosLogisticos(
     if (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social') {
       const proporcao = produto.valor / valorTotalPortas;
       const custoFreteDistribuido = valorFrete * proporcao;
-      const custoInstalacaoDistribuido = valorInstalacao * proporcao;
+      // Só distribuir instalação se não for "sem_instalacao"
+      const custoInstalacaoDistribuido = modalidadeInstalacao === 'sem_instalacao' ? 0 : valorInstalacao * proporcao;
       
       return {
         ...produto,
@@ -56,24 +58,30 @@ export function distribuirCustosLogisticos(
 /**
  * Cria itens de linha para frete e instalação como "Incluso" no PDF
  */
-export function criarItensLogisticosIncluso(): Array<{
+export function criarItensLogisticosIncluso(modalidadeInstalacao?: string): Array<{
   tipo_produto: string;
   descricao: string;
   valor: number;
   isLogisticItem: true;
 }> {
-  return [
+  const itens = [
     {
       tipo_produto: 'servico',
       descricao: 'Frete',
       valor: 0,
       isLogisticItem: true as const
-    },
-    {
+    }
+  ];
+
+  // Só adicionar instalação se não for "sem_instalacao"
+  if (modalidadeInstalacao !== 'sem_instalacao') {
+    itens.push({
       tipo_produto: 'servico', 
       descricao: 'Instalação',
       valor: 0,
       isLogisticItem: true as const
-    }
-  ];
+    });
+  }
+
+  return itens;
 }
