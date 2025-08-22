@@ -699,6 +699,30 @@ export type Database = {
         }
         Relationships: []
       }
+      numeracao_controle: {
+        Row: {
+          created_at: string | null
+          id: string
+          proximo_numero: number
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          proximo_numero?: number
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          proximo_numero?: number
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       orcamento_custos: {
         Row: {
           created_at: string
@@ -1075,6 +1099,9 @@ export type Database = {
       }
       pedidos_producao: {
         Row: {
+          cliente_bairro: string | null
+          cliente_cpf: string | null
+          cliente_email: string | null
           cliente_nome: string
           cliente_telefone: string | null
           created_at: string
@@ -1086,18 +1113,31 @@ export type Database = {
           endereco_estado: string | null
           endereco_numero: string | null
           endereco_rua: string | null
+          forma_pagamento: string | null
           id: string
+          modalidade_instalacao: string | null
+          numero_parcelas: number | null
           numero_pedido: string
           observacoes: string | null
+          observacoes_venda: string | null
+          orcamento_id: string | null
           produto_altura: string
           produto_cor: string
           produto_largura: string
           produto_tipo: string
+          produtos: Json | null
           status: string
           updated_at: string
+          valor_entrada: number | null
+          valor_frete: number | null
+          valor_instalacao: number | null
+          valor_venda: number | null
           venda_id: string | null
         }
         Insert: {
+          cliente_bairro?: string | null
+          cliente_cpf?: string | null
+          cliente_email?: string | null
           cliente_nome: string
           cliente_telefone?: string | null
           created_at?: string
@@ -1109,18 +1149,31 @@ export type Database = {
           endereco_estado?: string | null
           endereco_numero?: string | null
           endereco_rua?: string | null
+          forma_pagamento?: string | null
           id?: string
+          modalidade_instalacao?: string | null
+          numero_parcelas?: number | null
           numero_pedido: string
           observacoes?: string | null
+          observacoes_venda?: string | null
+          orcamento_id?: string | null
           produto_altura: string
           produto_cor: string
           produto_largura: string
           produto_tipo: string
+          produtos?: Json | null
           status?: string
           updated_at?: string
+          valor_entrada?: number | null
+          valor_frete?: number | null
+          valor_instalacao?: number | null
+          valor_venda?: number | null
           venda_id?: string | null
         }
         Update: {
+          cliente_bairro?: string | null
+          cliente_cpf?: string | null
+          cliente_email?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
           created_at?: string
@@ -1132,15 +1185,25 @@ export type Database = {
           endereco_estado?: string | null
           endereco_numero?: string | null
           endereco_rua?: string | null
+          forma_pagamento?: string | null
           id?: string
+          modalidade_instalacao?: string | null
+          numero_parcelas?: number | null
           numero_pedido?: string
           observacoes?: string | null
+          observacoes_venda?: string | null
+          orcamento_id?: string | null
           produto_altura?: string
           produto_cor?: string
           produto_largura?: string
           produto_tipo?: string
+          produtos?: Json | null
           status?: string
           updated_at?: string
+          valor_entrada?: number | null
+          valor_frete?: number | null
+          valor_instalacao?: number | null
+          valor_venda?: number | null
           venda_id?: string | null
         }
         Relationships: [
@@ -1446,6 +1509,10 @@ export type Database = {
       criar_requisicao_venda: {
         Args: { orcamento_uuid: string }
         Returns: string
+      }
+      gerar_proximo_numero: {
+        Args: { tipo_documento: string }
+        Returns: number
       }
       has_permission: {
         Args: {
