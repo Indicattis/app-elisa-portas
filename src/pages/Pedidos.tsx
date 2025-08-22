@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Download } from "lucide-react";
+import { Download, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -17,23 +18,35 @@ import { generatePedidoPDF } from "@/utils/pedidoPDFGenerator";
 interface Pedido {
   id: string;
   numero_pedido: string;
+  orcamento_id?: string;
   cliente_nome: string;
-  cliente_telefone: string;
+  cliente_telefone?: string;
+  cliente_email?: string;
+  cliente_cpf?: string;
+  cliente_bairro?: string;
   produto_tipo: string;
   produto_cor: string;
   status: string;
   created_at: string;
-  data_entrega: string;
-  observacoes: string;
-  endereco_rua: string;
-  endereco_numero: string;
-  endereco_bairro: string;
-  endereco_cidade: string;
-  endereco_estado: string;
-  endereco_cep: string;
+  data_entrega?: string;
+  observacoes?: string;
+  endereco_rua?: string;
+  endereco_numero?: string;
+  endereco_cidade?: string;
+  endereco_estado?: string;
+  endereco_cep?: string;
   produto_largura: string;
   produto_altura: string;
-  venda_id: string;
+  venda_id?: string;
+  forma_pagamento?: string;
+  valor_venda?: number;
+  valor_entrada?: number;
+  numero_parcelas?: number;
+  observacoes_venda?: string;
+  produtos?: any;
+  valor_frete?: number;
+  valor_instalacao?: number;
+  modalidade_instalacao?: string;
 }
 
 const statusColors = {
@@ -54,6 +67,7 @@ const statusLabels = {
 
 export default function Pedidos() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,20 +99,15 @@ export default function Pedidos() {
 
   const handleDownloadPDF = async (pedido: Pedido) => {
     try {
-      // Buscar dados da venda relacionada para pegar informações de pagamento
-      let vendaData = null;
-      if (pedido.venda_id) {
-        const { data: venda } = await supabase
-          .from("vendas")
-          .select("*")
-          .eq("id", pedido.venda_id)
-          .single();
-        vendaData = venda;
-      }
-
       generatePedidoPDF({
         pedido,
-        vendaData
+        vendaData: {
+          forma_pagamento: pedido.forma_pagamento,
+          valor_venda: pedido.valor_venda,
+          valor_entrada: pedido.valor_entrada,
+          numero_parcelas: pedido.numero_parcelas,
+          observacoes_venda: pedido.observacoes_venda,
+        }
       });
 
       toast({
@@ -113,6 +122,10 @@ export default function Pedidos() {
         description: "Erro ao gerar PDF do pedido",
       });
     }
+  };
+
+  const handleEditPedido = (pedido: Pedido) => {
+    navigate(`/dashboard/pedidos/edit/${pedido.id}`);
   };
 
   const getTotalPedidos = () => pedidos.length;
@@ -166,6 +179,7 @@ export default function Pedidos() {
                 <TableHead>Número</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Produto</TableHead>
+                <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Data Criação</TableHead>
                 <TableHead>Data Entrega</TableHead>
@@ -182,16 +196,38 @@ export default function Pedidos() {
                     <div>
                       <div className="font-medium">{pedido.cliente_nome}</div>
                       <div className="text-sm text-muted-foreground">
-                        {pedido.cliente_telefone}
+                        {pedido.cliente_telefone || 'Não informado'}
                       </div>
-                    </div>
-                  </TableCell>
+                      {pedido.cliente_email && (
+                          <div className="text-xs text-muted-foreground">
+                            {pedido.cliente_email}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{pedido.produto_tipo}</div>
                       <div className="text-sm text-muted-foreground">
                         {pedido.produto_largura} x {pedido.produto_altura} - {pedido.produto_cor}
                       </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      {pedido.valor_venda && (
+                        <div className="font-medium">
+                          R$ {pedido.valor_venda.toLocaleString('pt-BR', { 
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2 
+                          })}
+                        </div>
+                      )}
+                      {pedido.forma_pagamento && (
+                        <div className="text-sm text-muted-foreground">
+                          {pedido.forma_pagamento}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -209,14 +245,24 @@ export default function Pedidos() {
                     }
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadPDF(pedido)}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      PDF
-                    </Button>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditPedido(pedido)}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadPDF(pedido)}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        PDF
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

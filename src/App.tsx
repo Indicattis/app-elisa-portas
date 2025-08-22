@@ -34,6 +34,7 @@ import VendaDetails from "./pages/VendaDetails";
 import Visitas from "./pages/Visitas";
 import VisitaNova from "./pages/VisitaNova";
 import Producao from "./pages/Producao";
+import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
 import ContasReceber from "./pages/ContasReceber";
@@ -384,6 +385,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Pedidos />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/pedidos/edit/:id"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <PedidoEdit />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

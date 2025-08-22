@@ -4,23 +4,36 @@ import autoTable from 'jspdf-autotable';
 interface Pedido {
   id: string;
   numero_pedido: string;
+  orcamento_id?: string;
   cliente_nome: string;
-  cliente_telefone: string;
+  cliente_telefone?: string;
+  cliente_email?: string;
+  cliente_cpf?: string;
+  cliente_bairro?: string;
   produto_tipo: string;
   produto_cor: string;
   status: string;
   created_at: string;
-  data_entrega: string;
-  observacoes: string;
-  endereco_rua: string;
-  endereco_numero: string;
-  endereco_bairro: string;
-  endereco_cidade: string;
-  endereco_estado: string;
-  endereco_cep: string;
+  data_entrega?: string;
+  observacoes?: string;
+  endereco_rua?: string;
+  endereco_numero?: string;
+  endereco_bairro?: string;
+  endereco_cidade?: string;
+  endereco_estado?: string;
+  endereco_cep?: string;
   produto_largura: string;
   produto_altura: string;
-  venda_id: string;
+  venda_id?: string;
+  forma_pagamento?: string;
+  valor_venda?: number;
+  valor_entrada?: number;
+  numero_parcelas?: number;
+  observacoes_venda?: string;
+  produtos?: any;
+  valor_frete?: number;
+  valor_instalacao?: number;
+  modalidade_instalacao?: string;
 }
 
 interface VendaData {
@@ -140,28 +153,64 @@ export const generatePedidoPDF = (data: PedidoPDFData) => {
     ['Data de Entrega', data.pedido.data_entrega ? new Date(data.pedido.data_entrega).toLocaleDateString('pt-BR') : 'A definir'],
   ];
 
-  autoTable(pdf, {
-    body: produtoData,
-    startY: yPosition,
-    styles: { 
-      fontSize: 10,
-      cellPadding: 3
-    },
-    columnStyles: {
-      0: { halign: 'left', fontStyle: 'bold', fillColor: [245, 245, 245] },
-      1: { halign: 'left' }
-    },
-    margin: { left: margin, right: margin },
-    theme: 'plain'
-  });
-
-  yPosition = (pdf as any).lastAutoTable.finalY + 20;
-
-  // Forma de pagamento (se disponível)
-  if (data.vendaData) {
+  // Adicionar produtos se existirem na estrutura completa
+  if (data.pedido.produtos && Array.isArray(data.pedido.produtos) && data.pedido.produtos.length > 0) {
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Informações de pagamento', margin, yPosition);
+    pdf.text('Produtos do Orçamento', margin, yPosition + 10);
+    yPosition += 30;
+
+    const produtosTableData = data.pedido.produtos.map((produto: any) => [
+      produto.tipo_produto || 'N/A',
+      produto.descricao || 'N/A',
+      produto.medidas || 'N/A',
+      produto.cor || 'N/A',
+      produto.quantidade?.toString() || '1',
+      produto.valor ? `R$ ${produto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/A'
+    ]);
+
+    autoTable(pdf, {
+      head: [['Tipo', 'Descrição', 'Medidas', 'Cor', 'Qtd', 'Valor']],
+      body: produtosTableData,
+      startY: yPosition,
+      styles: { 
+        fontSize: 9,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [41, 128, 185],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      margin: { left: margin, right: margin },
+      theme: 'striped'
+    });
+
+    yPosition = (pdf as any).lastAutoTable.finalY + 20;
+  } else {
+    autoTable(pdf, {
+      body: produtoData,
+      startY: yPosition,
+      styles: { 
+        fontSize: 10,
+        cellPadding: 3
+      },
+      columnStyles: {
+        0: { halign: 'left', fontStyle: 'bold', fillColor: [245, 245, 245] },
+        1: { halign: 'left' }
+      },
+      margin: { left: margin, right: margin },
+      theme: 'plain'
+    });
+
+    yPosition = (pdf as any).lastAutoTable.finalY + 20;
+  }
+
+  // Forma de pagamento (se disponível)
+  if (data.vendaData && (data.vendaData.forma_pagamento || data.vendaData.valor_venda)) {
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Informações de Pagamento', margin, yPosition);
     yPosition += 10;
 
     const pagamentoData = [];
@@ -180,6 +229,24 @@ export const generatePedidoPDF = (data: PedidoPDFData) => {
     
     if (data.vendaData.numero_parcelas) {
       pagamentoData.push(['Número de Parcelas', data.vendaData.numero_parcelas.toString()]);
+    }
+
+    // Adicionar informações de frete e instalação se disponíveis
+    if (data.pedido.valor_frete && data.pedido.valor_frete > 0) {
+      pagamentoData.push(['Valor do Frete', formatCurrency(data.pedido.valor_frete)]);
+    }
+    
+    if (data.pedido.valor_instalacao && data.pedido.valor_instalacao > 0) {
+      pagamentoData.push(['Valor da Instalação', formatCurrency(data.pedido.valor_instalacao)]);
+    }
+    
+    if (data.pedido.modalidade_instalacao) {
+      const modalidades = {
+        'instalacao_elisa': 'Instalação Elisa',
+        'autorizado_elisa': 'Autorizado Elisa',
+        'sem_instalacao': 'Sem instalação'
+      };
+      pagamentoData.push(['Modalidade de Instalação', modalidades[data.pedido.modalidade_instalacao as keyof typeof modalidades] || data.pedido.modalidade_instalacao]);
     }
 
     if (pagamentoData.length > 0) {
