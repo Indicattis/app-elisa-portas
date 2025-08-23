@@ -12,8 +12,6 @@ interface Pedido {
   cliente_email?: string;
   cliente_cpf?: string;
   cliente_bairro?: string;
-  produto_tipo: string;
-  produto_cor: string;
   status: string;
   created_at: string;
   data_entrega?: string;
@@ -23,12 +21,10 @@ interface Pedido {
   endereco_cidade?: string;
   endereco_estado?: string;
   endereco_cep?: string;
-  produto_largura: string;
-  produto_altura: string;
   valor_venda?: number;
   forma_pagamento?: string;
   modalidade_instalacao?: string;
-  produtos?: any;
+  produtos: any[];
 }
 
 export function usePedidos() {
@@ -45,7 +41,10 @@ export function usePedidos() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPedidos(data || []);
+      setPedidos((data || []).map(pedido => ({
+        ...pedido,
+        produtos: Array.isArray(pedido.produtos) ? pedido.produtos : []
+      })));
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
       toast({
@@ -87,10 +86,6 @@ export function usePedidos() {
           cliente_email: orcamento.cliente_email,
           cliente_cpf: orcamento.cliente_cpf,
           cliente_bairro: orcamento.cliente_bairro,
-          produto_tipo: orcamento.orcamento_produtos?.[0]?.tipo_produto || 'Produto',
-          produto_cor: orcamento.orcamento_produtos?.[0]?.cor || 'Não especificado',
-          produto_altura: orcamento.orcamento_produtos?.[0]?.medidas?.split('x')?.[1]?.trim() || '0',
-          produto_largura: orcamento.orcamento_produtos?.[0]?.medidas?.split('x')?.[0]?.trim() || '0',
           endereco_rua: orcamento.cliente_estado, // Ajustar conforme estrutura real
           endereco_cidade: orcamento.cliente_cidade,
           endereco_estado: orcamento.cliente_estado,
@@ -100,7 +95,7 @@ export function usePedidos() {
           valor_frete: orcamento.valor_frete,
           valor_instalacao: orcamento.valor_instalacao,
           modalidade_instalacao: orcamento.modalidade_instalacao,
-          produtos: orcamento.orcamento_produtos,
+          produtos: orcamento.orcamento_produtos || [],
           status: 'pendente'
         })
         .select()

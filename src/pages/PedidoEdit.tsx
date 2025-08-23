@@ -24,10 +24,6 @@ interface PedidoCompleto {
   endereco_cidade?: string;
   endereco_estado?: string;
   endereco_cep?: string;
-  produto_tipo: string;
-  produto_cor: string;
-  produto_altura: string;
-  produto_largura: string;
   data_entrega?: string;
   status: string;
   observacoes?: string;
@@ -36,7 +32,7 @@ interface PedidoCompleto {
   valor_entrada?: number;
   numero_parcelas?: number;
   observacoes_venda?: string;
-  produtos?: any;
+  produtos: any[];
   valor_frete?: number;
   valor_instalacao?: number;
   modalidade_instalacao?: string;
@@ -78,7 +74,10 @@ export default function PedidoEdit() {
         .single();
 
       if (error) throw error;
-      setPedido(data);
+      setPedido({
+        ...data,
+        produtos: Array.isArray(data.produtos) ? data.produtos : []
+      });
     } catch (error) {
       console.error("Erro ao buscar pedido:", error);
       toast({
@@ -126,10 +125,6 @@ export default function PedidoEdit() {
           endereco_cidade: pedido.endereco_cidade,
           endereco_estado: pedido.endereco_estado,
           endereco_cep: pedido.endereco_cep,
-          produto_tipo: pedido.produto_tipo,
-          produto_cor: pedido.produto_cor,
-          produto_altura: pedido.produto_altura,
-          produto_largura: pedido.produto_largura,
           data_entrega: pedido.data_entrega,
           status: pedido.status,
           observacoes: pedido.observacoes,
@@ -311,67 +306,54 @@ export default function PedidoEdit() {
           </CardContent>
         </Card>
 
-        {/* Produto */}
+        {/* Produtos */}
         <Card>
           <CardHeader>
-            <CardTitle>Produto</CardTitle>
+            <CardTitle>Produtos do Pedido</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Os produtos são herdados do orçamento e não podem ser alterados
+            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="produto_tipo">Tipo do Produto</Label>
-                <Input
-                  id="produto_tipo"
-                  value={pedido.produto_tipo || ""}
-                  onChange={(e) => handleInputChange("produto_tipo", e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="produto_cor">Cor</Label>
-                <Select 
-                  value={pedido.produto_cor || ""} 
-                  onValueChange={(value) => handleInputChange("produto_cor", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a cor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {catalogoCores.map((cor) => (
-                      <SelectItem key={cor.nome} value={cor.nome}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="h-3 w-3 rounded border border-gray-300" 
-                            style={{ backgroundColor: cor.codigo_hex }}
-                          />
-                          {cor.nome}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="produto_altura">Altura</Label>
-                <Input
-                  id="produto_altura"
-                  value={pedido.produto_altura || ""}
-                  onChange={(e) => handleInputChange("produto_altura", e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="produto_largura">Largura</Label>
-                <Input
-                  id="produto_largura"
-                  value={pedido.produto_largura || ""}
-                  onChange={(e) => handleInputChange("produto_largura", e.target.value)}
-                  required
-                />
-              </div>
+          <CardContent>
+            <div className="space-y-4">
+              {pedido.produtos && pedido.produtos.length > 0 ? (
+                pedido.produtos.map((produto: any, index: number) => (
+                  <div key={index} className="border rounded-lg p-4 bg-muted/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium">Tipo</Label>
+                        <p className="text-sm text-muted-foreground">{produto.tipo_produto || 'Não especificado'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Cor</Label>
+                        <p className="text-sm text-muted-foreground">{produto.cor || 'Não especificado'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Medidas</Label>
+                        <p className="text-sm text-muted-foreground">{produto.medidas || 'Não especificado'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                      <div>
+                        <Label className="text-sm font-medium">Quantidade</Label>
+                        <p className="text-sm text-muted-foreground">{produto.quantidade || 1}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Valor</Label>
+                        <p className="text-sm text-muted-foreground">
+                          R$ {produto.valor ? produto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Descrição</Label>
+                        <p className="text-sm text-muted-foreground">{produto.descricao || 'Sem descrição'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum produto encontrado</p>
+              )}
             </div>
           </CardContent>
         </Card>

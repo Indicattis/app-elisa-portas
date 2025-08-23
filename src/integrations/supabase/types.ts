@@ -1121,10 +1121,6 @@ export type Database = {
           observacoes: string | null
           observacoes_venda: string | null
           orcamento_id: string | null
-          produto_altura: string
-          produto_cor: string
-          produto_largura: string
-          produto_tipo: string
           produtos: Json | null
           status: string
           updated_at: string
@@ -1157,10 +1153,6 @@ export type Database = {
           observacoes?: string | null
           observacoes_venda?: string | null
           orcamento_id?: string | null
-          produto_altura: string
-          produto_cor: string
-          produto_largura: string
-          produto_tipo: string
           produtos?: Json | null
           status?: string
           updated_at?: string
@@ -1193,10 +1185,6 @@ export type Database = {
           observacoes?: string | null
           observacoes_venda?: string | null
           orcamento_id?: string | null
-          produto_altura?: string
-          produto_cor?: string
-          produto_largura?: string
-          produto_tipo?: string
           produtos?: Json | null
           status?: string
           updated_at?: string

@@ -10,8 +10,6 @@ interface Pedido {
   cliente_email?: string;
   cliente_cpf?: string;
   cliente_bairro?: string;
-  produto_tipo: string;
-  produto_cor: string;
   status: string;
   created_at: string;
   data_entrega?: string;
@@ -22,18 +20,16 @@ interface Pedido {
   endereco_cidade?: string;
   endereco_estado?: string;
   endereco_cep?: string;
-  produto_largura: string;
-  produto_altura: string;
   venda_id?: string;
   forma_pagamento?: string;
   valor_venda?: number;
   valor_entrada?: number;
   numero_parcelas?: number;
   observacoes_venda?: string;
-  produtos?: any;
+  modalidade_instalacao?: string;
   valor_frete?: number;
   valor_instalacao?: number;
-  modalidade_instalacao?: string;
+  produtos: any[];
 }
 
 interface VendaData {
@@ -113,52 +109,48 @@ export const generatePedidoPDF = (data: PedidoPDFData) => {
   pdf.text(`Nº: ${data.pedido.numero_pedido}`, 70, yPosition);
   pdf.text(`Data: ${new Date(data.pedido.created_at).toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition);
   
-  yPosition += 10;
+  yPosition += 15;
 
-  // Dados do cliente com fundo destacado
+  // Dados do cliente
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Dados do cliente', margin, yPosition);
+  pdf.text('Dados do Cliente', margin, yPosition);
   yPosition += 10;
 
-  // Fundo cinza claro para a seção do cliente
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(margin, yPosition - 3, pageWidth - (margin * 2), 30, 'F');
-  
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(0, 0, 0);
-  pdf.text(`Nome: ${data.pedido.cliente_nome}`, margin + 3, yPosition + 3);
-  pdf.text(`Telefone: ${data.pedido.cliente_telefone || 'Não informado'}`, margin + 3, yPosition + 9);
-  
-  const endereco = `${data.pedido.endereco_rua || ''}, ${data.pedido.endereco_numero || ''} - ${data.pedido.endereco_bairro || ''}`;
-  pdf.text(`Endereço: ${endereco}`, margin + 3, yPosition + 15);
-  
-  pdf.text(`Estado: ${data.pedido.endereco_estado || 'Não informado'}`, pageWidth/2, yPosition + 3);
-  pdf.text(`Cidade: ${data.pedido.endereco_cidade || 'Não informado'}`, pageWidth/2, yPosition + 9);
-  pdf.text(`CEP: ${data.pedido.endereco_cep || 'Não informado'}`, pageWidth/2, yPosition + 15);
-  
-  yPosition += 40;
-
-  // Especificações do produto
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Especificações do Produto', margin, yPosition);
-  yPosition += 10;
-
-  const produtoData = [
-    ['Tipo de Produto', data.pedido.produto_tipo],
-    ['Dimensões', `${data.pedido.produto_largura} x ${data.pedido.produto_altura}`],
-    ['Cor', data.pedido.produto_cor],
+  const clienteData = [
+    ['Cliente', data.pedido.cliente_nome],
+    ['Telefone', data.pedido.cliente_telefone || 'Não informado'],
+    ['E-mail', data.pedido.cliente_email || 'Não informado'],
+    ['CPF', data.pedido.cliente_cpf || 'Não informado'],
+    ['Endereço', `${data.pedido.endereco_rua || ''} ${data.pedido.endereco_numero || ''}, ${data.pedido.endereco_bairro || ''}`],
+    ['Cidade/Estado', `${data.pedido.endereco_cidade || ''} - ${data.pedido.endereco_estado || ''}`],
+    ['CEP', data.pedido.endereco_cep || 'Não informado'],
     ['Data de Entrega', data.pedido.data_entrega ? new Date(data.pedido.data_entrega).toLocaleDateString('pt-BR') : 'A definir'],
   ];
 
-  // Adicionar produtos se existirem na estrutura completa
+  autoTable(pdf, {
+    body: clienteData,
+    startY: yPosition,
+    styles: { 
+      fontSize: 10,
+      cellPadding: 3
+    },
+    columnStyles: {
+      0: { halign: 'left', fontStyle: 'bold', fillColor: [245, 245, 245] },
+      1: { halign: 'left' }
+    },
+    margin: { left: margin, right: margin },
+    theme: 'grid'
+  });
+
+  yPosition = (pdf as any).lastAutoTable.finalY + 20;
+
+  // Produtos do pedido
   if (data.pedido.produtos && Array.isArray(data.pedido.produtos) && data.pedido.produtos.length > 0) {
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Produtos do Orçamento', margin, yPosition + 10);
-    yPosition += 30;
+    pdf.text('Produtos do Pedido', margin, yPosition);
+    yPosition += 10;
 
     const produtosTableData = data.pedido.produtos.map((produto: any) => [
       produto.tipo_produto || 'N/A',
@@ -170,7 +162,7 @@ export const generatePedidoPDF = (data: PedidoPDFData) => {
     ]);
 
     autoTable(pdf, {
-      head: [['Tipo', 'Descrição', 'Medidas', 'Cor', 'Qtd', 'Valor']],
+      head: [['Tipo', 'Descrição', 'Medidas', 'Cor', 'Qtd', 'Valor Unit.']],
       body: produtosTableData,
       startY: yPosition,
       styles: { 
@@ -188,22 +180,10 @@ export const generatePedidoPDF = (data: PedidoPDFData) => {
 
     yPosition = (pdf as any).lastAutoTable.finalY + 20;
   } else {
-    autoTable(pdf, {
-      body: produtoData,
-      startY: yPosition,
-      styles: { 
-        fontSize: 10,
-        cellPadding: 3
-      },
-      columnStyles: {
-        0: { halign: 'left', fontStyle: 'bold', fillColor: [245, 245, 245] },
-        1: { halign: 'left' }
-      },
-      margin: { left: margin, right: margin },
-      theme: 'plain'
-    });
-
-    yPosition = (pdf as any).lastAutoTable.finalY + 20;
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Nenhum produto especificado', margin, yPosition);
+    yPosition += 20;
   }
 
   // Forma de pagamento (se disponível)

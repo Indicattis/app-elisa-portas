@@ -24,8 +24,6 @@ interface Pedido {
   cliente_email?: string;
   cliente_cpf?: string;
   cliente_bairro?: string;
-  produto_tipo: string;
-  produto_cor: string;
   status: string;
   created_at: string;
   data_entrega?: string;
@@ -35,15 +33,13 @@ interface Pedido {
   endereco_cidade?: string;
   endereco_estado?: string;
   endereco_cep?: string;
-  produto_largura: string;
-  produto_altura: string;
   venda_id?: string;
   forma_pagamento?: string;
   valor_venda?: number;
   valor_entrada?: number;
   numero_parcelas?: number;
   observacoes_venda?: string;
-  produtos?: any;
+  produtos: any[];
   valor_frete?: number;
   valor_instalacao?: number;
   modalidade_instalacao?: string;
@@ -80,7 +76,10 @@ export default function Pedidos() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPedidos(data || []);
+      setPedidos((data || []).map(pedido => ({
+        ...pedido,
+        produtos: Array.isArray(pedido.produtos) ? pedido.produtos : []
+      })));
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
       toast({
@@ -206,11 +205,19 @@ export default function Pedidos() {
                       </div>
                     </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{pedido.produto_tipo}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {pedido.produto_largura} x {pedido.produto_altura} - {pedido.produto_cor}
-                      </div>
+                    <div className="space-y-1">
+                      {pedido.produtos && pedido.produtos.length > 0 ? (
+                        pedido.produtos.map((produto: any, index: number) => (
+                          <div key={index} className="text-sm">
+                            <span className="font-medium">{produto.tipo_produto || 'Produto'}</span>
+                            {produto.cor && <span className="text-muted-foreground"> - {produto.cor}</span>}
+                            {produto.medidas && <span className="text-muted-foreground"> ({produto.medidas})</span>}
+                            {produto.quantidade > 1 && <span className="text-muted-foreground"> x{produto.quantidade}</span>}
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">Sem produtos</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
