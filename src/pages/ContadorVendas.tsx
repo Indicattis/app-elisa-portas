@@ -216,39 +216,41 @@ export default function ContadorVendas() {
         </div>
       </header>
 
-      <section aria-labelledby="legendas" className="space-y-4">
-        <h2 id="legendas" className="text-lg font-semibold">Legenda de cores</h2>
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3">
-              <span className="inline-block h-6 w-6 rounded-full bg-red-600" aria-hidden="true"></span>
-              <span className="text-base font-medium">0–20.000</span>
+      <section aria-labelledby="legendas" className="sticky top-0 z-10 bg-background border-b border-border p-4 -mx-6 mb-6">
+        <div className="w-full space-y-4">
+          <h2 id="legendas" className="text-lg font-semibold">Legenda de cores</h2>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-3">
+                <span className="inline-block h-6 w-6 rounded-full bg-red-600" aria-hidden="true"></span>
+                <span className="text-base font-medium">0–20.000</span>
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">Péssimo</span>
             </div>
-            <span className="text-sm text-muted-foreground font-medium">Péssimo</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3">
-              <span className="inline-block h-6 w-6 rounded-full bg-yellow-500 border border-yellow-600" aria-hidden="true"></span>
-              <span className="text-base font-medium">20.001–50.000</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-3">
+                <span className="inline-block h-6 w-6 rounded-full bg-yellow-500 border border-yellow-600" aria-hidden="true"></span>
+                <span className="text-base font-medium">20.001–50.000</span>
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">Prejuízo</span>
             </div>
-            <span className="text-sm text-muted-foreground font-medium">Prejuízo</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3">
-              <span className="inline-block h-6 w-6 rounded-full bg-green-600" aria-hidden="true"></span>
-              <span className="text-base font-medium">50.001–75.000</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-3">
+                <span className="inline-block h-6 w-6 rounded-full bg-green-600" aria-hidden="true"></span>
+                <span className="text-base font-medium">50.001–75.000</span>
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">Contas pagas</span>
             </div>
-            <span className="text-sm text-muted-foreground font-medium">Contas pagas</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3">
-              <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-black border-2 border-yellow-400" aria-hidden="true"></span>
-              <span className="text-base font-medium">75.001+</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-3">
+                <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-black border-2 border-yellow-400" aria-hidden="true"></span>
+                <span className="text-base font-medium">75.001+</span>
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">Lucro</span>
             </div>
-            <span className="text-sm text-muted-foreground font-medium">Lucro</span>
           </div>
+          <div className="text-sm text-muted-foreground font-medium text-center">Cores aplicadas apenas de seg–sex. Dias passados sem valor também ficam vermelhos.</div>
         </div>
-        <div className="text-sm text-muted-foreground font-medium">Cores aplicadas apenas de seg–sex. Dias passados sem valor também ficam vermelhos.</div>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
