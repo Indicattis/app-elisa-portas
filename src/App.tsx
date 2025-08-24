@@ -46,6 +46,11 @@ import AutorizadoNovo from "./pages/AutorizadoNovo";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
 import Pedidos from "./pages/Pedidos";
+import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
+import OrdemPinturaEdit from "./pages/OrdemPinturaEdit";
+import OrdemSeparacaoEdit from "./pages/OrdemSeparacaoEdit";
+import OrdemPerfiladeiraEdit from "./pages/OrdemPerfiladeiraEdit";
+import OrdemInstalacaoEdit from "./pages/OrdemInstalacaoEdit";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -453,6 +458,56 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <ContadorVendas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/ordens/solda/:ordemId"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <OrdemSoldaEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/ordens/pintura/:ordemId"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <OrdemPinturaEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/ordens/separacao/:ordemId"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <OrdemSeparacaoEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/ordens/perfiladeira/:ordemId"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <OrdemPerfiladeiraEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/ordens/instalacao/:ordemId"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <OrdemInstalacaoEdit />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

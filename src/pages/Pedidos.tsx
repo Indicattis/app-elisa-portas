@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, Edit } from "lucide-react";
+import { Download, Edit, ChevronDown, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -66,6 +66,8 @@ export default function Pedidos() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedPedidos, setExpandedPedidos] = useState<Set<string>>(new Set());
+  const [ordensProducao, setOrdensProducao] = useState<Record<string, any[]>>({});
 
   const fetchPedidos = async () => {
     try {
@@ -127,6 +129,57 @@ export default function Pedidos() {
     navigate(`/dashboard/pedidos/edit/${pedido.id}`);
   };
 
+  const togglePedidoExpansion = async (pedidoId: string) => {
+    const newExpanded = new Set(expandedPedidos);
+    
+    if (expandedPedidos.has(pedidoId)) {
+      newExpanded.delete(pedidoId);
+    } else {
+      newExpanded.add(pedidoId);
+      // Buscar ordens de produção se ainda não foram carregadas
+      if (!ordensProducao[pedidoId]) {
+        await fetchOrdensProducao(pedidoId);
+      }
+    }
+    
+    setExpandedPedidos(newExpanded);
+  };
+
+  const fetchOrdensProducao = async (pedidoId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("ordens_producao")
+        .select("*")
+        .eq("pedido_id", pedidoId);
+
+      if (error) throw error;
+
+      setOrdensProducao(prev => ({
+        ...prev,
+        [pedidoId]: data || []
+      }));
+    } catch (error) {
+      console.error("Erro ao buscar ordens:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao carregar ordens de produção",
+      });
+    }
+  };
+
+  const handleEditOrdem = (ordemId: string, tipoOrdem: string) => {
+    navigate(`/dashboard/ordens/${tipoOrdem}/${ordemId}`);
+  };
+
+  const handleDownloadOrdemPDF = (ordem: any) => {
+    // TODO: Implementar geração de PDF para ordem específica
+    toast({
+      title: "Em desenvolvimento",
+      description: "PDF da ordem será implementado em breve",
+    });
+  };
+
   const getTotalPedidos = () => pedidos.length;
   const getPedidosEmLancamento = () => pedidos.filter(p => p.status === 'em_lancamento').length;
   const getPedidosEmAndamento = () => pedidos.filter(p => p.status === 'em_andamento').length;
@@ -175,6 +228,7 @@ export default function Pedidos() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead>Número</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Produto</TableHead>
@@ -187,10 +241,29 @@ export default function Pedidos() {
             </TableHeader>
             <TableBody>
               {pedidos.map((pedido) => (
-                <TableRow key={pedido.id}>
-                  <TableCell className="font-medium">
-                    {pedido.numero_pedido}
-                  </TableCell>
+                <>
+                  <TableRow 
+                    key={pedido.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onDoubleClick={() => togglePedidoExpansion(pedido.id)}
+                  >
+                    <TableCell className="w-8">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => togglePedidoExpansion(pedido.id)}
+                        className="p-0 h-6 w-6"
+                      >
+                        {expandedPedidos.has(pedido.id) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {pedido.numero_pedido}
+                    </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{pedido.cliente_nome}</div>
@@ -272,6 +345,56 @@ export default function Pedidos() {
                     </div>
                   </TableCell>
                 </TableRow>
+                
+                {/* Ordens de Produção Expandidas */}
+                {expandedPedidos.has(pedido.id) && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="p-0">
+                      <div className="bg-muted/20 p-4 border-l-4 border-primary/20">
+                        <h4 className="font-semibold mb-3 text-sm">Ordens de Produção</h4>
+                        <div className="space-y-2">
+                          {ordensProducao[pedido.id]?.length > 0 ? (
+                            ordensProducao[pedido.id].map((ordem) => (
+                              <div key={ordem.id} className="flex items-center justify-between bg-background p-3 rounded border">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium text-sm capitalize">
+                                    {ordem.tipo_ordem?.replace('_', ' ')}
+                                  </span>
+                                  <Badge variant={ordem.status === 'concluido' ? 'default' : 'secondary'}>
+                                    {ordem.status}
+                                  </Badge>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditOrdem(ordem.id, ordem.tipo_ordem)}
+                                  >
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Editar
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDownloadOrdemPDF(ordem)}
+                                  >
+                                    <Download className="w-3 h-3 mr-1" />
+                                    PDF
+                                  </Button>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center py-4 text-muted-foreground text-sm">
+                              Nenhuma ordem de produção encontrada
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </>
               ))}
             </TableBody>
           </Table>
