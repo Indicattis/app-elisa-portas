@@ -3,16 +3,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Menu, Settings, LogOut } from "lucide-react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -73,9 +74,13 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         <SidebarInset className="flex-1 flex flex-col md:flex-1">
           {/* Header com botão de colapsar sidebar no desktop */}
           <div className="hidden md:flex sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/50">
-            <div className="h-12 flex items-center px-4">
-              <SidebarTrigger className="-ml-1" />
-              <div className="h-4 w-px bg-border mx-3" />
+            <div className="h-12 flex items-center justify-between px-4 w-full">
+              <div className="flex items-center">
+                <SidebarTrigger className="-ml-1" />
+                <div className="h-4 w-px bg-border mx-3" />
+              </div>
+              
+              <HeaderUserInfo />
             </div>
           </div>
 
@@ -104,6 +109,49 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         </SidebarInset>
       </div>
     </SidebarProvider>
+  );
+}
+
+function HeaderUserInfo() {
+  const { user, userRole, isAdmin, signOut } = useAuth();
+
+  if (!user) return null;
+
+  const getUserInitials = (email: string) => {
+    return email.substring(0, 2).toUpperCase();
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={userRole?.foto_perfil_url} alt="Foto de perfil" />
+          <AvatarFallback className="text-xs">
+            {getUserInitials(user.email || '')}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col text-sm">
+          <span className="font-medium leading-none">{user.email}</span>
+          <span className="text-xs text-muted-foreground capitalize leading-none mt-1">
+            {userRole?.role?.replace("_", " ")}
+          </span>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-1">
+        {isAdmin && (
+          <Button variant="ghost" size="sm" asChild>
+            <NavLink to="/dashboard/configuracoes">
+              <Settings className="h-4 w-4" />
+            </NavLink>
+          </Button>
+        )}
+        
+        <Button variant="ghost" size="sm" onClick={signOut}>
+          <LogOut className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
 

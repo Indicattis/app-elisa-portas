@@ -90,40 +90,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        {user && (
-          <div className="px-2 py-1 mb-2 space-y-1">
-            {state === "expanded" && (
-              <>
-                <div className="font-medium text-sm truncate">{user.email}</div>
-                <div className="text-xs text-muted-foreground capitalize">
-                  {userRole?.role?.replace("_", " ")}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-        {isAdmin && (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <NavLink to="/dashboard/configuracoes">
-                  <Settings className="h-5 w-5" />
-                  <span>Configurações</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
-        <div className="px-2 flex justify-center">
-          <Button 
-            variant="outline" 
-            size={state === "expanded" ? "sm" : "icon"} 
-            className={state === "expanded" ? "w-full" : "h-8 w-8"} 
-            onClick={signOut}
-          >
-            {state === "expanded" ? "Sair" : "S"}
-          </Button>
-        </div>
+        {/* Informações do usuário transferidas para o header */}
       </SidebarFooter>
     </Sidebar>
   );
