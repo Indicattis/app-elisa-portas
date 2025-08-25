@@ -3,6 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { gerarProximoNumero, formatarNumeroPedido } from "@/utils/numberingService";
 
+interface Produto {
+  id?: string;
+  tipo_produto?: string;
+  descricao?: string;
+  cor?: string;
+  medidas?: string;
+  quantidade?: number;
+  valor?: number;
+  [key: string]: any;
+}
+
 interface Pedido {
   id: string;
   numero_pedido: string;
@@ -24,7 +35,7 @@ interface Pedido {
   valor_venda?: number;
   forma_pagamento?: string;
   modalidade_instalacao?: string;
-  produtos: any[];
+  produtos: Produto[];
 }
 
 export function usePedidos() {
@@ -43,7 +54,7 @@ export function usePedidos() {
       if (error) throw error;
       setPedidos((data || []).map(pedido => ({
         ...pedido,
-        produtos: Array.isArray(pedido.produtos) ? pedido.produtos : []
+        produtos: Array.isArray(pedido.produtos) ? pedido.produtos as Produto[] : []
       })));
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
@@ -142,13 +153,10 @@ export function usePedidos() {
     }
   };
 
-  const criarOrdemProducao = async (pedidoId: string, tipoOrdem: string, pedidoNumero: string) => {
+  const criarOrdemProducao = async (pedidoId: string, tipoOrdem: string, pedidoNumero: string, produtoIndex?: number) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Usuário não autenticado");
-
-      // Gerar número da ordem
-      const numeroOrdem = `${pedidoNumero}-${tipoOrdem.toUpperCase()}-${Date.now()}`;
 
       // Buscar dados do pedido para copiar produtos
       const { data: pedido, error: pedidoError } = await supabase
@@ -159,96 +167,123 @@ export function usePedidos() {
 
       if (pedidoError) throw pedidoError;
 
-      let ordem;
-      let ordemError;
+      const produtos = Array.isArray(pedido.produtos) ? pedido.produtos as Produto[] : [];
+      
+      // Se produtoIndex for fornecido, criar ordem para produto específico
+      // Se não, criar ordens para todos os produtos
+      const produtosParaOrdem = produtoIndex !== undefined 
+        ? [produtos[produtoIndex]]
+        : produtos;
 
-      // Criar ordem específica baseada no tipo
-      if (tipoOrdem === 'soldagem') {
-        const { data, error } = await supabase
-          .from("ordens_soldagem")
-          .insert({
-            pedido_id: pedidoId,
-            numero_ordem: numeroOrdem,
-            status: 'pendente',
-            produtos: pedido.produtos || [],
-            created_by: user.user.id
-          })
-          .select()
-          .single();
-        ordem = data;
-        ordemError = error;
-      } else if (tipoOrdem === 'pintura') {
-        const { data, error } = await supabase
-          .from("ordens_pintura")
-          .insert({
-            pedido_id: pedidoId,
-            numero_ordem: numeroOrdem,
-            status: 'pendente',
-            produtos: pedido.produtos || [],
-            cor_principal: '',
-            tipo_tinta: '',
-            created_by: user.user.id
-          })
-          .select()
-          .single();
-        ordem = data;
-        ordemError = error;
-      } else if (tipoOrdem === 'separacao') {
-        const { data, error } = await supabase
-          .from("ordens_separacao")
-          .insert({
-            pedido_id: pedidoId,
-            numero_ordem: numeroOrdem,
-            status: 'pendente',
-            produtos: pedido.produtos || [],
-            materiais_separados: [],
-            created_by: user.user.id
-          })
-          .select()
-          .single();
-        ordem = data;
-        ordemError = error;
-      } else if (tipoOrdem === 'perfiladeira') {
-        const { data, error } = await supabase
-          .from("ordens_perfiladeira")
-          .insert({
-            pedido_id: pedidoId,
-            numero_ordem: numeroOrdem,
-            status: 'pendente',
-            produtos: pedido.produtos || [],
-            perfis_produzidos: [],
-            created_by: user.user.id
-          })
-          .select()
-          .single();
-        ordem = data;
-        ordemError = error;
-      } else if (tipoOrdem === 'instalacao') {
-        const { data, error } = await supabase
-          .from("ordens_instalacao")
-          .insert({
-            pedido_id: pedidoId,
-            numero_ordem: numeroOrdem,
-            status: 'pendente',
-            produtos: pedido.produtos || [],
-            endereco_instalacao: '',
-            equipe_instalacao: '',
-            created_by: user.user.id
-          })
-          .select()
-          .single();
-        ordem = data;
-        ordemError = error;
+      const ordensCreated = [];
+
+      for (let i = 0; i < produtosParaOrdem.length; i++) {
+        const produto = produtosParaOrdem[i];
+        const quantidade = produto?.quantidade || 1;
+        
+        // Criar ordem(s) baseada na quantidade do produto
+        for (let j = 0; j < quantidade; j++) {
+          const numeroSequencial = produtoIndex !== undefined 
+            ? `${produtoIndex + 1}-${j + 1}`
+            : `${i + 1}-${j + 1}`;
+          const numeroOrdem = `${pedidoNumero}-${tipoOrdem.toUpperCase()}-${numeroSequencial}`;
+
+          let ordem;
+          let ordemError;
+
+          const produtoIndividual = { ...produto, quantidade: 1 };
+
+          // Criar ordem específica baseada no tipo
+          if (tipoOrdem === 'soldagem') {
+            const { data, error } = await supabase
+              .from("ordens_soldagem")
+              .insert({
+                pedido_id: pedidoId,
+                numero_ordem: numeroOrdem,
+                status: 'pendente_preenchimento',
+                produtos: [produtoIndividual],
+                created_by: user.user.id
+              })
+              .select()
+              .single();
+            ordem = data;
+            ordemError = error;
+          } else if (tipoOrdem === 'pintura') {
+            const { data, error } = await supabase
+              .from("ordens_pintura")
+              .insert({
+                pedido_id: pedidoId,
+                numero_ordem: numeroOrdem,
+                status: 'pendente_preenchimento',
+                produtos: [produtoIndividual],
+                cor_principal: '',
+                tipo_tinta: '',
+                created_by: user.user.id
+              })
+              .select()
+              .single();
+            ordem = data;
+            ordemError = error;
+          } else if (tipoOrdem === 'separacao') {
+            const { data, error } = await supabase
+              .from("ordens_separacao")
+              .insert({
+                pedido_id: pedidoId,
+                numero_ordem: numeroOrdem,
+                status: 'pendente_preenchimento',
+                produtos: [produtoIndividual],
+                materiais_separados: [],
+                created_by: user.user.id
+              })
+              .select()
+              .single();
+            ordem = data;
+            ordemError = error;
+          } else if (tipoOrdem === 'perfiladeira') {
+            const { data, error } = await supabase
+              .from("ordens_perfiladeira")
+              .insert({
+                pedido_id: pedidoId,
+                numero_ordem: numeroOrdem,
+                status: 'pendente_preenchimento',
+                produtos: [produtoIndividual],
+                perfis_produzidos: [],
+                created_by: user.user.id
+              })
+              .select()
+              .single();
+            ordem = data;
+            ordemError = error;
+          } else if (tipoOrdem === 'instalacao') {
+            const { data, error } = await supabase
+              .from("ordens_instalacao")
+              .insert({
+                pedido_id: pedidoId,
+                numero_ordem: numeroOrdem,
+                status: 'pendente_preenchimento',
+                produtos: [produtoIndividual],
+                endereco_instalacao: '',
+                equipe_instalacao: '',
+                created_by: user.user.id
+              })
+              .select()
+              .single();
+            ordem = data;
+            ordemError = error;
+          }
+
+          if (ordemError) throw ordemError;
+          ordensCreated.push(ordem);
+        }
       }
 
-      if (ordemError) throw ordemError;
-
+      const totalOrdens = ordensCreated.length;
       toast({
         title: "Sucesso",
-        description: `Ordem de ${tipoOrdem} criada com sucesso`,
+        description: `${totalOrdens} ordem(s) de ${tipoOrdem} criada(s) com sucesso`,
       });
 
-      return ordem;
+      return ordensCreated;
     } catch (error) {
       console.error("Erro ao criar ordem:", error);
       toast({
@@ -258,6 +293,28 @@ export function usePedidos() {
       });
       throw error;
     }
+  };
+
+  const calcularOrdensNecessarias = (produtos: Produto[], tipoOrdem: string) => {
+    if (!produtos || produtos.length === 0) return 0;
+    
+    let totalOrdens = 0;
+    produtos.forEach(produto => {
+      const quantidade = produto?.quantidade || 1;
+      
+      // Para alguns tipos de ordem, a quantidade pode ser diferente
+      if (tipoOrdem === 'pintura') {
+        // Para pintura, verificar se o produto tem cor especificada
+        if (produto?.cor) {
+          totalOrdens += quantidade;
+        }
+      } else {
+        // Para soldagem, separação, perfiladeira - sempre necessário
+        totalOrdens += quantidade;
+      }
+    });
+    
+    return totalOrdens;
   };
 
   useEffect(() => {
@@ -270,5 +327,6 @@ export function usePedidos() {
     fetchPedidos,
     criarPedidoDeOrcamento,
     criarOrdemProducao,
+    calcularOrdensNecessarias,
   };
 }

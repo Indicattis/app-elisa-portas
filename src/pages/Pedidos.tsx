@@ -16,6 +16,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { generatePedidoPDF } from "@/utils/pedidoPDFGenerator";
 
+interface Produto {
+  id?: string;
+  tipo_produto?: string;
+  descricao?: string;
+  cor?: string;
+  medidas?: string;
+  quantidade?: number;
+  valor?: number;
+  [key: string]: any;
+}
+
 interface Pedido {
   id: string;
   numero_pedido: string;
@@ -40,7 +51,7 @@ interface Pedido {
   valor_entrada?: number;
   numero_parcelas?: number;
   observacoes_venda?: string;
-  produtos: any[];
+  produtos: Produto[];
   valor_frete?: number;
   valor_instalacao?: number;
   modalidade_instalacao?: string;
@@ -73,7 +84,7 @@ const tiposOrdem = [
 export default function Pedidos() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { pedidos, loading, criarOrdemProducao } = usePedidos();
+  const { pedidos, loading, criarOrdemProducao, calcularOrdensNecessarias } = usePedidos();
   const [expandedPedidos, setExpandedPedidos] = useState<Set<string>>(new Set());
   const [ordensProducao, setOrdensProducao] = useState<Record<string, {
     soldagem: any[];
@@ -211,13 +222,13 @@ export default function Pedidos() {
     });
   };
 
-  const handleCriarOrdem = async (pedidoId: string, tipoOrdem: string, pedidoNumero: string) => {
+  const handleCriarOrdens = async (pedidoId: string, tipoOrdem: string, pedidoNumero: string, produtos: Produto[]) => {
     try {
       await criarOrdemProducao(pedidoId, tipoOrdem, pedidoNumero);
       // Recarregar as ordens do pedido
       await fetchOrdensProducao(pedidoId);
     } catch (error) {
-      console.error("Erro ao criar ordem:", error);
+      console.error("Erro ao criar ordens:", error);
     }
   };
 
@@ -396,40 +407,48 @@ export default function Pedidos() {
                         <div className="space-y-3">
                           {tiposOrdem.map((tipoOrdem) => {
                             const ordensDoTipo = ordensProducao[pedido.id]?.[tipoOrdem.key as keyof typeof ordensProducao[string]] || [];
-                            const temOrdem = ordensDoTipo.length > 0;
+                            const ordensNecessarias = calcularOrdensNecessarias(pedido.produtos, tipoOrdem.key);
+                            const ordensExistentes = ordensDoTipo.length;
+                            const ordensRestantes = Math.max(0, ordensNecessarias - ordensExistentes);
                             
                             return (
                               <div key={tipoOrdem.key} className="bg-background p-3 rounded border">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center gap-2">
                                     <span className="font-medium text-sm">{tipoOrdem.label}</span>
-                                    {temOrdem ? (
-                                      <Badge variant="secondary">{ordensDoTipo.length} ordem(s)</Badge>
-                                    ) : (
-                                      <Badge variant="outline">Sem ordem</Badge>
-                                    )}
+                                    <div className="flex gap-1">
+                                      {ordensExistentes > 0 && (
+                                        <Badge variant="secondary">{ordensExistentes} criada(s)</Badge>
+                                      )}
+                                      {ordensRestantes > 0 && (
+                                        <Badge variant="outline">{ordensRestantes} necessária(s)</Badge>
+                                      )}
+                                      {ordensNecessarias === 0 && (
+                                        <Badge variant="outline">Não necessário</Badge>
+                                      )}
+                                    </div>
                                   </div>
                                   
-                                  {!temOrdem && (
+                                  {ordensRestantes > 0 && (
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => handleCriarOrdem(pedido.id, tipoOrdem.key, pedido.numero_pedido)}
+                                      onClick={() => handleCriarOrdens(pedido.id, tipoOrdem.key, pedido.numero_pedido, pedido.produtos)}
                                     >
                                       <Plus className="w-3 h-3 mr-1" />
-                                      Criar Ordem
+                                      Criar {ordensRestantes} Ordem(s)
                                     </Button>
                                   )}
                                 </div>
                                 
-                                {temOrdem && (
+                                {ordensExistentes > 0 && (
                                   <div className="space-y-2">
                                     {ordensDoTipo.map((ordem: any) => (
                                       <div key={ordem.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
                                         <div className="flex items-center gap-2">
                                           <span className="text-sm font-mono">{ordem.numero_ordem}</span>
-                                          <Badge variant={ordem.status === 'concluido' ? 'default' : 'secondary'}>
-                                            {ordem.status}
+                                          <Badge variant={ordem.status === 'pronto' ? 'default' : 'secondary'}>
+                                            {ordem.status === 'pendente_preenchimento' ? 'Pendente' : ordem.status}
                                           </Badge>
                                         </div>
                                         <div className="flex gap-2">
@@ -452,6 +471,21 @@ export default function Pedidos() {
                                         </div>
                                       </div>
                                     ))}
+                                  </div>
+                                )}
+                                
+                                {ordensNecessarias > 0 && (
+                                  <div className="mt-2 text-xs text-muted-foreground">
+                                    <div>Baseado em {pedido.produtos.length} produto(s):</div>
+                                    <div className="ml-2">
+                                      {pedido.produtos.map((produto, idx) => (
+                                        <div key={idx}>
+                                          • {produto.tipo_produto || 'Produto'} 
+                                          {produto.quantidade > 1 && ` (${produto.quantidade}x)`}
+                                          {produto.cor && tipoOrdem.key === 'pintura' && ` - ${produto.cor}`}
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                               </div>
