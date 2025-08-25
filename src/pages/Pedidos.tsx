@@ -143,58 +143,22 @@ export default function Pedidos() {
 
   const fetchOrdensProducao = async (pedidoId: string) => {
     try {
+      // Buscar linhas de ordens agrupadas por tipo
+      const { data: linhasOrdens, error } = await supabase
+        .from("linhas_ordens")
+        .select("*")
+        .eq("pedido_id", pedidoId);
+
+      if (error) throw error;
+
+      // Agrupar por tipo de ordem
       const ordensData = {
-        soldagem: [],
-        pintura: [],
-        separacao: [],
-        perfiladeira: [],
-        instalacao: [],
+        soldagem: linhasOrdens?.filter(linha => linha.tipo_ordem === 'soldagem') || [],
+        pintura: linhasOrdens?.filter(linha => linha.tipo_ordem === 'pintura') || [],
+        separacao: linhasOrdens?.filter(linha => linha.tipo_ordem === 'separacao') || [],
+        perfiladeira: linhasOrdens?.filter(linha => linha.tipo_ordem === 'perfiladeira') || [],
+        instalacao: linhasOrdens?.filter(linha => linha.tipo_ordem === 'instalacao') || [],
       };
-
-      // Buscar ordens de soldagem
-      const { data: soldagem, error: errorSoldagem } = await supabase
-        .from("ordens_soldagem")
-        .select("*")
-        .eq("pedido_id", pedidoId);
-
-      if (errorSoldagem) throw errorSoldagem;
-      ordensData.soldagem = soldagem || [];
-
-      // Buscar ordens de pintura
-      const { data: pintura, error: errorPintura } = await supabase
-        .from("ordens_pintura")
-        .select("*")
-        .eq("pedido_id", pedidoId);
-
-      if (errorPintura) throw errorPintura;
-      ordensData.pintura = pintura || [];
-
-      // Buscar ordens de separação
-      const { data: separacao, error: errorSeparacao } = await supabase
-        .from("ordens_separacao")
-        .select("*")
-        .eq("pedido_id", pedidoId);
-
-      if (errorSeparacao) throw errorSeparacao;
-      ordensData.separacao = separacao || [];
-
-      // Buscar ordens de perfiladeira
-      const { data: perfiladeira, error: errorPerfiladeira } = await supabase
-        .from("ordens_perfiladeira")
-        .select("*")
-        .eq("pedido_id", pedidoId);
-
-      if (errorPerfiladeira) throw errorPerfiladeira;
-      ordensData.perfiladeira = perfiladeira || [];
-
-      // Buscar ordens de instalação
-      const { data: instalacao, error: errorInstalacao } = await supabase
-        .from("ordens_instalacao")
-        .select("*")
-        .eq("pedido_id", pedidoId);
-
-      if (errorInstalacao) throw errorInstalacao;
-      ordensData.instalacao = instalacao || [];
 
       setOrdensProducao(prev => ({
         ...prev,
@@ -448,31 +412,28 @@ export default function Pedidos() {
                         </div>
                         
                         <div className="space-y-2">
-                          {ordensDoTipo.map((ordem: any, index: number) => (
-                            <div 
-                              key={ordem.id} 
-                              className="p-3 bg-background rounded border cursor-pointer hover:bg-muted/30 transition-colors"
-                              onClick={() => handleDownloadOrdemPDF(selectedPedido, tipoOrdem.key)}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <div className="font-medium text-sm">
-                                    Ordem #{index + 1}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Criada em {new Date(ordem.created_at).toLocaleDateString('pt-BR')}
-                                  </div>
-                                </div>
-                                <Download className="w-4 h-4 text-muted-foreground" />
-                              </div>
-                              
-                              {ordem.observacoes && (
-                                <div className="mt-2 text-xs text-muted-foreground">
-                                  {ordem.observacoes}
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                           {ordensDoTipo.map((linha: any, index: number) => (
+                             <div 
+                               key={linha.id} 
+                               className="p-3 bg-background rounded border cursor-pointer hover:bg-muted/30 transition-colors"
+                               onClick={() => handleDownloadOrdemPDF(selectedPedido, tipoOrdem.key)}
+                             >
+                               <div className="flex items-center justify-between">
+                                 <div>
+                                   <div className="font-medium text-sm">
+                                     {linha.item}
+                                   </div>
+                                   <div className="text-xs text-muted-foreground">
+                                     Qtd: {linha.quantidade} | Tamanho: {linha.tamanho}
+                                   </div>
+                                   <div className="text-xs text-muted-foreground">
+                                     Criada em {new Date(linha.created_at).toLocaleDateString('pt-BR')}
+                                   </div>
+                                 </div>
+                                 <Download className="w-4 h-4 text-muted-foreground" />
+                               </div>
+                             </div>
+                           ))}
                         </div>
                         
                         <Button
