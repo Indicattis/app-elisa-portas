@@ -301,16 +301,19 @@ export function usePedidos() {
     let totalOrdens = 0;
     produtos.forEach(produto => {
       const quantidade = produto?.quantidade || 1;
+      const tipoProduto = produto?.tipo_produto || '';
       
-      // Para alguns tipos de ordem, a quantidade pode ser diferente
+      // Calcular baseado no tipo específico de produto para cada ordem
       if (tipoOrdem === 'pintura') {
-        // Para pintura, verificar se o produto tem cor especificada
-        if (produto?.cor) {
+        // Para pintura, contar produtos do tipo pintura_epoxi
+        if (tipoProduto.includes('pintura_epoxi')) {
           totalOrdens += quantidade;
         }
-      } else {
-        // Para soldagem, separação, perfiladeira - sempre necessário
-        totalOrdens += quantidade;
+      } else if (['soldagem', 'separacao', 'perfiladeira', 'instalacao'].includes(tipoOrdem)) {
+        // Para soldagem, separação, perfiladeira e instalação - contar produtos porta_enrolar
+        if (tipoProduto.includes('porta_enrolar')) {
+          totalOrdens += quantidade;
+        }
       }
     });
     
