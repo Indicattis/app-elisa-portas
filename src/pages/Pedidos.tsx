@@ -143,6 +143,8 @@ export default function Pedidos() {
 
   const fetchOrdensProducao = async (pedidoId: string) => {
     try {
+      console.log("Buscando ordens para pedido:", pedidoId);
+      
       // Buscar linhas de ordens agrupadas por tipo
       const { data: linhasOrdens, error } = await supabase
         .from("linhas_ordens")
@@ -150,6 +152,8 @@ export default function Pedidos() {
         .eq("pedido_id", pedidoId);
 
       if (error) throw error;
+
+      console.log("Linhas de ordens encontradas:", linhasOrdens);
 
       // Agrupar por tipo de ordem
       const ordensData = {
@@ -159,6 +163,8 @@ export default function Pedidos() {
         perfiladeira: linhasOrdens?.filter(linha => linha.tipo_ordem === 'perfiladeira') || [],
         instalacao: linhasOrdens?.filter(linha => linha.tipo_ordem === 'instalacao') || [],
       };
+
+      console.log("Ordens agrupadas:", ordensData);
 
       setOrdensProducao(prev => ({
         ...prev,
@@ -398,10 +404,12 @@ export default function Pedidos() {
           {selectedPedido && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {tiposOrdem.map((tipoOrdem) => {
-                  const ordensDoTipo = ordensProducao[selectedPedido.id]?.[tipoOrdem.key as keyof typeof ordensProducao[string]] || [];
-                  
-                  if (ordensDoTipo.length === 0) return null;
+                 {tiposOrdem.map((tipoOrdem) => {
+                   const ordensDoTipo = ordensProducao[selectedPedido.id]?.[tipoOrdem.key as keyof typeof ordensProducao[string]] || [];
+                   
+                   console.log(`Tipo ${tipoOrdem.key}:`, ordensDoTipo);
+                   
+                   if (ordensDoTipo.length === 0) return null;
                   
                   return (
                     <div key={tipoOrdem.key} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
