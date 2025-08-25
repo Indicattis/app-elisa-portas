@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, Edit, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Download, Edit, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePedidos } from "@/hooks/usePedidos";
@@ -15,6 +15,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { generatePedidoPDF } from "@/utils/pedidoPDFGenerator";
 
 interface Produto {
@@ -91,7 +92,8 @@ export default function Pedidos() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { pedidos, loading, criarOrdemProducao, calcularOrdensNecessarias } = usePedidos();
-  const [expandedPedidos, setExpandedPedidos] = useState<Set<string>>(new Set());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [ordensProducao, setOrdensProducao] = useState<Record<string, {
     soldagem: any[];
     pintura: any[];
@@ -131,20 +133,12 @@ export default function Pedidos() {
     navigate(`/dashboard/pedidos/edit/${pedido.id}`);
   };
 
-  const togglePedidoExpansion = async (pedidoId: string) => {
-    const newExpanded = new Set(expandedPedidos);
-    
-    if (expandedPedidos.has(pedidoId)) {
-      newExpanded.delete(pedidoId);
-    } else {
-      newExpanded.add(pedidoId);
-      // Buscar ordens de produção se ainda não foram carregadas
-      if (!ordensProducao[pedidoId]) {
-        await fetchOrdensProducao(pedidoId);
-      }
+  const handleViewOrdens = async (pedido: Pedido) => {
+    setSelectedPedido(pedido);
+    if (!ordensProducao[pedido.id]) {
+      await fetchOrdensProducao(pedido.id);
     }
-    
-    setExpandedPedidos(newExpanded);
+    setModalOpen(true);
   };
 
   const fetchOrdensProducao = async (pedidoId: string) => {
@@ -329,12 +323,10 @@ export default function Pedidos() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-8"></TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Número</TableHead>
-                <TableHead>Cliente</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead>Data Criação</TableHead>
                 <TableHead>Data Entrega</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -342,215 +334,82 @@ export default function Pedidos() {
             </TableHeader>
             <TableBody>
               {pedidos.map((pedido) => (
-                <React.Fragment key={pedido.id}>
-                  <TableRow 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onDoubleClick={() => togglePedidoExpansion(pedido.id)}
-                  >
-                    <TableCell className="w-8">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => togglePedidoExpansion(pedido.id)}
-                        className="p-0 h-6 w-6"
-                      >
-                        {expandedPedidos.has(pedido.id) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {pedido.numero_pedido}
-                    </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{pedido.cliente_nome}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {pedido.cliente_telefone || 'Não informado'}
-                      </div>
-                      {pedido.cliente_email && (
-                          <div className="text-xs text-muted-foreground">
-                            {pedido.cliente_email}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
+                <TableRow 
+                  key={pedido.id}
+                  className="cursor-pointer hover:bg-muted/50 h-[35px]"
+                  onDoubleClick={() => handleViewOrdens(pedido)}
+                >
+                  <TableCell className="py-1">
+                    <Badge className={statusColors[pedido.status as keyof typeof statusColors]}>
+                      {statusLabels[pedido.status as keyof typeof statusLabels]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium py-1">
+                    {pedido.numero_pedido}
+                  </TableCell>
+                  <TableCell className="py-1">
+                    <div className="text-sm">
                       {pedido.produtos && pedido.produtos.length > 0 ? (
-                        pedido.produtos.map((produto: any, index: number) => (
-                          <div key={index} className="text-sm">
+                        pedido.produtos.slice(0, 2).map((produto: any, index: number) => (
+                          <div key={index}>
                             <span className="font-medium">{produto.tipo_produto || 'Produto'}</span>
                             {produto.cor && <span className="text-muted-foreground"> - {produto.cor}</span>}
-                            {produto.medidas && <span className="text-muted-foreground"> ({produto.medidas})</span>}
-                            {produto.quantidade > 1 && <span className="text-muted-foreground"> x{produto.quantidade}</span>}
                           </div>
                         ))
                       ) : (
                         <span className="text-muted-foreground">Sem produtos</span>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      {pedido.valor_venda && (
-                        <div className="font-medium">
-                          R$ {pedido.valor_venda.toLocaleString('pt-BR', { 
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2 
-                          })}
-                        </div>
-                      )}
-                      {pedido.forma_pagamento && (
-                        <div className="text-sm text-muted-foreground">
-                          {pedido.forma_pagamento}
+                      {pedido.produtos && pedido.produtos.length > 2 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{pedido.produtos.length - 2} mais
                         </div>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[pedido.status as keyof typeof statusColors]}>
-                      {statusLabels[pedido.status as keyof typeof statusLabels]}
-                    </Badge>
+                  <TableCell className="py-1">
+                    {pedido.valor_venda && (
+                      <div className="font-medium text-sm">
+                        R$ {pedido.valor_venda.toLocaleString('pt-BR', { 
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-1 text-sm">
                     {new Date(pedido.created_at).toLocaleDateString('pt-BR')}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-1 text-sm">
                     {pedido.data_entrega 
                       ? new Date(pedido.data_entrega).toLocaleDateString('pt-BR')
                       : '-'
                     }
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
+                  <TableCell className="text-right py-1">
+                    <div className="flex gap-1 justify-end">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEditPedido(pedido)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditPedido(pedido);
+                        }}
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Editar
+                        <Edit className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownloadPDF(pedido)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadPDF(pedido);
+                        }}
                       >
-                        <Download className="w-4 h-4 mr-2" />
-                        PDF
+                        <Download className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-                
-                {/* Ordens de Produção Expandidas */}
-                {expandedPedidos.has(pedido.id) && (
-                  <TableRow>
-                    <TableCell colSpan={9} className="p-0">
-                      <div className="bg-muted/20 p-4 border-l-4 border-primary/20">
-                        <h4 className="font-semibold mb-3 text-sm">Ordens de Produção</h4>
-                        <div className="space-y-3">
-                          {tiposOrdem.map((tipoOrdem) => {
-                            const ordensDoTipo = ordensProducao[pedido.id]?.[tipoOrdem.key as keyof typeof ordensProducao[string]] || [];
-                            const ordensNecessarias = calcularOrdensNecessarias(pedido.produtos, tipoOrdem.key);
-                            const ordensExistentes = ordensDoTipo.length;
-                            const ordensRestantes = Math.max(0, ordensNecessarias - ordensExistentes);
-                            
-                            return (
-                              <div key={tipoOrdem.key} className="bg-background p-3 rounded border">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-sm">{tipoOrdem.label}</span>
-                                    <div className="flex gap-1">
-                                      {ordensExistentes > 0 && (
-                                        <Badge variant="secondary">{ordensExistentes} criada(s)</Badge>
-                                      )}
-                                      {ordensRestantes > 0 && (
-                                        <Badge variant="outline">{ordensRestantes} necessária(s)</Badge>
-                                      )}
-                                      {ordensNecessarias === 0 && (
-                                        <Badge variant="outline">Não necessário</Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  
-                                  {ordensRestantes > 0 && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleCriarOrdens(pedido.id, tipoOrdem.key, pedido.numero_pedido, pedido.produtos)}
-                                    >
-                                      <Plus className="w-3 h-3 mr-1" />
-                                      Criar {ordensRestantes} Ordem(s)
-                                    </Button>
-                                  )}
-                                </div>
-                                
-                                 {/* Exibir botão PDF sempre que necessário */}
-                                 {ordensNecessarias > 0 && (
-                                   <div className="mt-2">
-                                     <Button
-                                       variant="outline"
-                                       size="sm"
-                                       onClick={() => handleDownloadOrdemPDF(pedido, tipoOrdem.key)}
-                                     >
-                                       <Download className="w-3 h-3 mr-1" />
-                                       PDF Ordens de {tipoOrdem.label}
-                                     </Button>
-                                   </div>
-                                 )}
-                                 
-                                 {ordensExistentes > 0 && (
-                                   <div className="space-y-2">
-                                     {ordensDoTipo.map((ordem: any) => (
-                                       <div key={ordem.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
-                                         <div className="flex items-center gap-2">
-                                           <span className="text-sm font-mono">{ordem.numero_ordem}</span>
-                                           <Badge variant={ordem.status === 'pronto' ? 'default' : 'secondary'}>
-                                             {ordem.status === 'pendente_preenchimento' ? 'Pendente' : ordem.status}
-                                           </Badge>
-                                         </div>
-                                         <div className="flex gap-2">
-                                           <Button
-                                             variant="outline"
-                                             size="sm"
-                                             onClick={() => handleEditOrdem(ordem.id, tipoOrdem.key)}
-                                           >
-                                             <Edit className="w-3 h-3 mr-1" />
-                                             Editar
-                                           </Button>
-                                         </div>
-                                       </div>
-                                     ))}
-                                   </div>
-                                 )}
-                                
-                                {ordensNecessarias > 0 && (
-                                  <div className="mt-2 text-xs text-muted-foreground">
-                                    <div>Baseado em {pedido.produtos.length} produto(s):</div>
-                                    <div className="ml-2">
-                                      {pedido.produtos.map((produto, idx) => (
-                                        <div key={idx}>
-                                          • {produto.tipo_produto || 'Produto'} 
-                                          {produto.quantidade > 1 && ` (${produto.quantidade}x)`}
-                                          {produto.cor && tipoOrdem.key === 'pintura' && ` - ${produto.cor}`}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-                </React.Fragment>
               ))}
             </TableBody>
           </Table>
@@ -562,6 +421,84 @@ export default function Pedidos() {
           <div className="text-muted-foreground">Nenhum pedido encontrado</div>
         </div>
       )}
+
+      {/* Modal de Visualização das Ordens */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Ordens de Produção - Pedido {selectedPedido?.numero_pedido}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedPedido && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {tiposOrdem.map((tipoOrdem) => {
+                  const ordensDoTipo = ordensProducao[selectedPedido.id]?.[tipoOrdem.key as keyof typeof ordensProducao[string]] || [];
+                  
+                  if (ordensDoTipo.length === 0) return null;
+                  
+                  return (
+                    <div key={tipoOrdem.key} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-lg">{tipoOrdem.label}</h4>
+                          <Badge variant="secondary">{ordensDoTipo.length} ordem(ns)</Badge>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {ordensDoTipo.map((ordem: any, index: number) => (
+                            <div 
+                              key={ordem.id} 
+                              className="p-3 bg-background rounded border cursor-pointer hover:bg-muted/30 transition-colors"
+                              onClick={() => handleDownloadOrdemPDF(selectedPedido, tipoOrdem.key)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-sm">
+                                    Ordem #{index + 1}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Criada em {new Date(ordem.created_at).toLocaleDateString('pt-BR')}
+                                  </div>
+                                </div>
+                                <Download className="w-4 h-4 text-muted-foreground" />
+                              </div>
+                              
+                              {ordem.observacoes && (
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  {ordem.observacoes}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleDownloadOrdemPDF(selectedPedido, tipoOrdem.key)}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Baixar PDF {tipoOrdem.label}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {Object.values(ordensProducao[selectedPedido.id] || {}).every(ordens => ordens.length === 0) && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhuma ordem de produção encontrada para este pedido.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
