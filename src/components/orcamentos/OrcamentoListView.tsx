@@ -61,9 +61,33 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
   const [selectedOrcamento, setSelectedOrcamento] = useState<any>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
 
+  const [loadingPedido, setLoadingPedido] = useState<Record<string, boolean>>({});
+
   const handleGerarPedido = async (orcamento: any) => {
     try {
-      // Buscar dados completos do orçamento
+      setLoadingPedido(prev => ({ ...prev, [orcamento.id]: true }));
+      
+      // Verificar se já existe pedido para este orçamento
+      const { data: pedidoExistente, error: verificacaoError } = await supabase
+        .from("pedidos_producao")
+        .select("numero_pedido")
+        .eq("orcamento_id", orcamento.id)
+        .single();
+
+      if (verificacaoError && verificacaoError.code !== 'PGRST116') {
+        throw verificacaoError;
+      }
+
+      if (pedidoExistente) {
+        toast({
+          variant: "destructive",
+          title: "Pedido já existe",
+          description: `Já existe o pedido ${pedidoExistente.numero_pedido} para este orçamento`,
+        });
+        return;
+      }
+
+      // ... keep existing code (rest of function)
       const { data: orcamentoCompleto, error: orcamentoError } = await supabase
         .from('orcamentos')
         .select(`
@@ -123,6 +147,8 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
         title: "Erro",
         description: "Erro ao gerar pedido. Tente novamente.",
       });
+    } finally {
+      setLoadingPedido(prev => ({ ...prev, [orcamento.id]: false }));
     }
   };
 
@@ -459,8 +485,13 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                         size="sm"
                         variant="default"
                         onClick={() => handleGerarPedido(orcamento)}
+                        disabled={loadingPedido[orcamento.id]}
                       >
-                        <Plus className="w-4 h-4" />
+                        {loadingPedido[orcamento.id] ? (
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
                       </Button>
                     )}
                     

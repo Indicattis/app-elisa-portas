@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, Edit, ChevronDown, ChevronRight } from "lucide-react";
+import { Download, Edit, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { usePedidos } from "@/hooks/usePedidos";
 import { 
   Table, 
   TableBody, 
@@ -61,42 +62,26 @@ const statusLabels = {
   'concluido': 'Concluído',
 };
 
+const tiposOrdem = [
+  { key: 'soldagem', label: 'Soldagem' },
+  { key: 'pintura', label: 'Pintura' },
+  { key: 'separacao', label: 'Separação' },
+  { key: 'perfiladeira', label: 'Perfiladeira' },
+  { key: 'instalacao', label: 'Instalação' },
+];
+
 export default function Pedidos() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pedidos, loading, criarOrdemProducao } = usePedidos();
   const [expandedPedidos, setExpandedPedidos] = useState<Set<string>>(new Set());
-  const [ordensProducao, setOrdensProducao] = useState<Record<string, any[]>>({});
-
-  const fetchPedidos = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("pedidos_producao")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setPedidos((data || []).map(pedido => ({
-        ...pedido,
-        produtos: Array.isArray(pedido.produtos) ? pedido.produtos : []
-      })));
-    } catch (error) {
-      console.error("Erro ao buscar pedidos:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao carregar pedidos",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPedidos();
-  }, []);
+  const [ordensProducao, setOrdensProducao] = useState<Record<string, {
+    soldagem: any[];
+    pintura: any[];
+    separacao: any[];
+    perfiladeira: any[];
+    instalacao: any[];
+  }>>({});
 
   const handleDownloadPDF = async (pedido: Pedido) => {
     try {
@@ -147,16 +132,62 @@ export default function Pedidos() {
 
   const fetchOrdensProducao = async (pedidoId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("ordens_producao")
+      const ordensData = {
+        soldagem: [],
+        pintura: [],
+        separacao: [],
+        perfiladeira: [],
+        instalacao: [],
+      };
+
+      // Buscar ordens de soldagem
+      const { data: soldagem, error: errorSoldagem } = await supabase
+        .from("ordens_soldagem")
         .select("*")
         .eq("pedido_id", pedidoId);
 
-      if (error) throw error;
+      if (errorSoldagem) throw errorSoldagem;
+      ordensData.soldagem = soldagem || [];
+
+      // Buscar ordens de pintura
+      const { data: pintura, error: errorPintura } = await supabase
+        .from("ordens_pintura")
+        .select("*")
+        .eq("pedido_id", pedidoId);
+
+      if (errorPintura) throw errorPintura;
+      ordensData.pintura = pintura || [];
+
+      // Buscar ordens de separação
+      const { data: separacao, error: errorSeparacao } = await supabase
+        .from("ordens_separacao")
+        .select("*")
+        .eq("pedido_id", pedidoId);
+
+      if (errorSeparacao) throw errorSeparacao;
+      ordensData.separacao = separacao || [];
+
+      // Buscar ordens de perfiladeira
+      const { data: perfiladeira, error: errorPerfiladeira } = await supabase
+        .from("ordens_perfiladeira")
+        .select("*")
+        .eq("pedido_id", pedidoId);
+
+      if (errorPerfiladeira) throw errorPerfiladeira;
+      ordensData.perfiladeira = perfiladeira || [];
+
+      // Buscar ordens de instalação
+      const { data: instalacao, error: errorInstalacao } = await supabase
+        .from("ordens_instalacao")
+        .select("*")
+        .eq("pedido_id", pedidoId);
+
+      if (errorInstalacao) throw errorInstalacao;
+      ordensData.instalacao = instalacao || [];
 
       setOrdensProducao(prev => ({
         ...prev,
-        [pedidoId]: data || []
+        [pedidoId]: ordensData
       }));
     } catch (error) {
       console.error("Erro ao buscar ordens:", error);
@@ -178,6 +209,16 @@ export default function Pedidos() {
       title: "Em desenvolvimento",
       description: "PDF da ordem será implementado em breve",
     });
+  };
+
+  const handleCriarOrdem = async (pedidoId: string, tipoOrdem: string, pedidoNumero: string) => {
+    try {
+      await criarOrdemProducao(pedidoId, tipoOrdem, pedidoNumero);
+      // Recarregar as ordens do pedido
+      await fetchOrdensProducao(pedidoId);
+    } catch (error) {
+      console.error("Erro ao criar ordem:", error);
+    }
   };
 
   const getTotalPedidos = () => pedidos.length;
@@ -352,43 +393,70 @@ export default function Pedidos() {
                     <TableCell colSpan={9} className="p-0">
                       <div className="bg-muted/20 p-4 border-l-4 border-primary/20">
                         <h4 className="font-semibold mb-3 text-sm">Ordens de Produção</h4>
-                        <div className="space-y-2">
-                          {ordensProducao[pedido.id]?.length > 0 ? (
-                            ordensProducao[pedido.id].map((ordem) => (
-                              <div key={ordem.id} className="flex items-center justify-between bg-background p-3 rounded border">
-                                <div className="flex items-center gap-3">
-                                  <span className="font-medium text-sm capitalize">
-                                    {ordem.tipo_ordem?.replace('_', ' ')}
-                                  </span>
-                                  <Badge variant={ordem.status === 'concluido' ? 'default' : 'secondary'}>
-                                    {ordem.status}
-                                  </Badge>
+                        <div className="space-y-3">
+                          {tiposOrdem.map((tipoOrdem) => {
+                            const ordensDoTipo = ordensProducao[pedido.id]?.[tipoOrdem.key as keyof typeof ordensProducao[string]] || [];
+                            const temOrdem = ordensDoTipo.length > 0;
+                            
+                            return (
+                              <div key={tipoOrdem.key} className="bg-background p-3 rounded border">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-sm">{tipoOrdem.label}</span>
+                                    {temOrdem ? (
+                                      <Badge variant="secondary">{ordensDoTipo.length} ordem(s)</Badge>
+                                    ) : (
+                                      <Badge variant="outline">Sem ordem</Badge>
+                                    )}
+                                  </div>
+                                  
+                                  {!temOrdem && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleCriarOrdem(pedido.id, tipoOrdem.key, pedido.numero_pedido)}
+                                    >
+                                      <Plus className="w-3 h-3 mr-1" />
+                                      Criar Ordem
+                                    </Button>
+                                  )}
                                 </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleEditOrdem(ordem.id, ordem.tipo_ordem)}
-                                  >
-                                    <Edit className="w-3 h-3 mr-1" />
-                                    Editar
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDownloadOrdemPDF(ordem)}
-                                  >
-                                    <Download className="w-3 h-3 mr-1" />
-                                    PDF
-                                  </Button>
-                                </div>
+                                
+                                {temOrdem && (
+                                  <div className="space-y-2">
+                                    {ordensDoTipo.map((ordem: any) => (
+                                      <div key={ordem.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm font-mono">{ordem.numero_ordem}</span>
+                                          <Badge variant={ordem.status === 'concluido' ? 'default' : 'secondary'}>
+                                            {ordem.status}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleEditOrdem(ordem.id, tipoOrdem.key)}
+                                          >
+                                            <Edit className="w-3 h-3 mr-1" />
+                                            Editar
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleDownloadOrdemPDF(ordem)}
+                                          >
+                                            <Download className="w-3 h-3 mr-1" />
+                                            PDF
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                            ))
-                          ) : (
-                            <div className="text-center py-4 text-muted-foreground text-sm">
-                              Nenhuma ordem de produção encontrada
-                            </div>
-                          )}
+                            );
+                          })}
                         </div>
                       </div>
                     </TableCell>

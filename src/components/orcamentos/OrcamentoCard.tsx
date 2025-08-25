@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +35,32 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: O
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
 
+  const [loadingPedido, setLoadingPedido] = useState(false);
+
   const handleGerarPedido = async () => {
     try {
+      setLoadingPedido(true);
+      
+      // Verificar se já existe pedido para este orçamento
+      const { data: pedidoExistente, error: verificacaoError } = await supabase
+        .from("pedidos_producao")
+        .select("numero_pedido")
+        .eq("orcamento_id", orcamento.id)
+        .single();
+
+      if (verificacaoError && verificacaoError.code !== 'PGRST116') {
+        throw verificacaoError;
+      }
+
+      if (pedidoExistente) {
+        toast({
+          variant: "destructive",
+          title: "Pedido já existe",
+          description: `Já existe o pedido ${pedidoExistente.numero_pedido} para este orçamento`,
+        });
+        return;
+      }
+
       // Buscar dados completos do orçamento
       const { data: orcamentoCompleto, error: orcamentoError } = await supabase
         .from('orcamentos')
@@ -96,6 +121,8 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: O
         title: "Erro",
         description: "Erro ao gerar pedido. Tente novamente.",
       });
+    } finally {
+      setLoadingPedido(false);
     }
   };
 
@@ -267,9 +294,24 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: O
           </Button>
           
           {(orcamento.status === 'vendido' || orcamento.status_orcamento === 4) && (
-            <Button size="sm" variant="default" onClick={handleGerarPedido} className="flex-1">
-              <Plus className="w-3 h-3 mr-1" />
-              Gerar Pedido
+            <Button 
+              size="sm" 
+              variant="default" 
+              onClick={handleGerarPedido}
+              disabled={loadingPedido}
+              className="flex-1"
+            >
+              {loadingPedido ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Gerando...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3 h-3 mr-1" />
+                  Gerar Pedido
+                </>
+              )}
             </Button>
           )}
           

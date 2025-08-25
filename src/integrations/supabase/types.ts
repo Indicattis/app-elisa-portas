@@ -981,6 +981,159 @@ export type Database = {
           },
         ]
       }
+      ordens_instalacao: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_agendada: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          endereco_instalacao: string | null
+          equipe_instalacao: string | null
+          id: string
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string
+          produtos: Json | null
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          endereco_instalacao?: string | null
+          equipe_instalacao?: string | null
+          id?: string
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          endereco_instalacao?: string | null
+          equipe_instalacao?: string | null
+          id?: string
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ordens_perfiladeira: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string
+          perfis_produzidos: Json | null
+          produtos: Json | null
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id: string
+          perfis_produzidos?: Json | null
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string
+          perfis_produzidos?: Json | null
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ordens_pintura: {
+        Row: {
+          cor_principal: string | null
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string
+          produtos: Json | null
+          responsavel_id: string | null
+          status: string
+          tipo_tinta: string | null
+          updated_at: string
+        }
+        Insert: {
+          cor_principal?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          tipo_tinta?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cor_principal?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          tipo_tinta?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ordens_producao: {
         Row: {
           created_at: string
@@ -1042,6 +1195,99 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ordens_separacao: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          materiais_separados: Json | null
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string
+          produtos: Json | null
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          materiais_separados?: Json | null
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          materiais_separados?: Json | null
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ordens_soldagem: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string
+          produtos: Json | null
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string
+          produtos?: Json | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       organograma_connections: {
         Row: {
@@ -1496,6 +1742,10 @@ export type Database = {
       }
       criar_requisicao_venda: {
         Args: { orcamento_uuid: string }
+        Returns: string
+      }
+      gerar_numero_ordem: {
+        Args: { pedido_numero: string; tipo_ordem: string }
         Returns: string
       }
       gerar_proximo_numero: {
