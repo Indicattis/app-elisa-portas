@@ -27,18 +27,26 @@ export default function OrdemSeparacaoForm({
   onCancel,
   maxOrdens 
 }: OrdemSeparacaoFormProps) {
+  console.log('OrdemSeparacaoForm rendered with maxOrdens:', maxOrdens);
+  
   const [items, setItems] = useState<ItemOrdem[]>([
     { id: crypto.randomUUID(), item: "", quantidade: 1, medidas: "" }
   ]);
 
   const addItem = () => {
-    if (items.length < maxOrdens) {
+    console.log('Tentando adicionar item. Items atuais:', items.length, 'Max ordens:', maxOrdens);
+    // Permitir pelo menos 10 itens se maxOrdens for 0 (flexibilidade)
+    const limite = Math.max(maxOrdens, 10);
+    if (items.length < limite) {
       setItems([...items, { 
         id: crypto.randomUUID(), 
         item: "", 
         quantidade: 1, 
         medidas: "" 
       }]);
+      console.log('Item adicionado com sucesso');
+    } else {
+      console.log('Não foi possível adicionar item. Limite atingido.');
     }
   };
 
@@ -70,6 +78,12 @@ export default function OrdemSeparacaoForm({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground mb-4">
+          {maxOrdens > 0 
+            ? `Baseado nos produtos: máximo de ${maxOrdens} ordem(ns) recomendado(s), mas você pode adicionar até 10 itens se necessário.`
+            : `Nenhum produto específico encontrado para este tipo de ordem, mas você pode criar ordens manualmente (até 10 itens).`
+          }
+        </p>
         <Table>
           <TableHeader>
             <TableRow>
@@ -125,10 +139,10 @@ export default function OrdemSeparacaoForm({
           <Button
             variant="outline"
             onClick={addItem}
-            disabled={items.length >= maxOrdens}
+            disabled={items.length >= Math.max(maxOrdens, 10)}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Adicionar Item
+            Adicionar Item ({items.length}/{Math.max(maxOrdens, 10)})
           </Button>
           
           <div className="flex gap-2">

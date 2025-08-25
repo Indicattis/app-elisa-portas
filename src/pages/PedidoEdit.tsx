@@ -184,24 +184,35 @@ export default function PedidoEdit() {
 
   // Função para calcular quantas ordens são necessárias baseado nos produtos
   const calcularOrdensNecessarias = (tipoOrdem: string) => {
-    if (!pedido?.produtos) return 0;
+    console.log('Calculando ordens necessárias para:', tipoOrdem);
+    console.log('Produtos do pedido:', pedido?.produtos);
+    
+    if (!pedido?.produtos) {
+      console.log('Sem produtos no pedido');
+      return 0;
+    }
     
     let totalOrdens = 0;
-    pedido.produtos.forEach(produto => {
+    pedido.produtos.forEach((produto, index) => {
       const quantidade = produto?.quantidade || 1;
       const tipoProduto = produto?.tipo_produto || '';
       
+      console.log(`Produto ${index}:`, { tipoProduto, quantidade });
+      
       if (tipoOrdem === 'pintura') {
         if (tipoProduto.includes('pintura_epoxi')) {
+          console.log('Produto de pintura encontrado, adicionando:', quantidade);
           totalOrdens += quantidade;
         }
       } else if (['soldagem', 'separacao', 'perfiladeira'].includes(tipoOrdem)) {
         if (tipoProduto.includes('porta_enrolar')) {
+          console.log('Produto de porta enrolar encontrado, adicionando:', quantidade);
           totalOrdens += quantidade;
         }
       }
     });
     
+    console.log(`Total de ordens necessárias para ${tipoOrdem}:`, totalOrdens);
     return totalOrdens;
   };
 

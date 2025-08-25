@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface ItemOrdem {
   item: string;
@@ -69,7 +69,7 @@ export const gerarPDFOrdem = (
     item.medidas
   ]);
   
-  (doc as any).autoTable({
+  autoTable(doc, {
     head: [tableColumns],
     body: tableRows,
     startY: posY,
