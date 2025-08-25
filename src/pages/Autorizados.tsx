@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, Map, List, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
 
 interface Autorizado {
   id: string;
@@ -29,6 +31,10 @@ interface Autorizado {
   regiao?: string;
   ativo: boolean;
   logo_url?: string;
+  latitude?: number;
+  longitude?: number;
+  last_geocoded_at?: string;
+  geocode_precision?: string;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +47,7 @@ export default function Autorizados() {
   const [editingAutorizado, setEditingAutorizado] = useState<Autorizado | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [geocoding, setGeocoding] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -219,6 +226,51 @@ export default function Autorizados() {
     }
   };
 
+  const handleGeocode = async (autorizado: Autorizado) => {
+    if (!autorizado.endereco || !autorizado.cidade || !autorizado.estado) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Endereço, cidade e estado são obrigatórios para geocodificação.'
+      });
+      return;
+    }
+
+    try {
+      setGeocoding(autorizado.id);
+      
+      const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
+        body: {
+          id: autorizado.id,
+          endereco: autorizado.endereco,
+          cidade: autorizado.cidade,
+          estado: autorizado.estado
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: 'Sucesso',
+          description: `Coordenadas obtidas: ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`
+        });
+        fetchAutorizados();
+      } else {
+        throw new Error(data.error || 'Erro ao geocodificar endereço');
+      }
+    } catch (error: any) {
+      console.error('Erro na geocodificação:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro na geocodificação',
+        description: error.message || 'Não foi possível geocodificar o endereço.'
+      });
+    } finally {
+      setGeocoding(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -245,7 +297,34 @@ export default function Autorizados() {
         </Button>
       </div>
 
-      <Card>
+      <Tabs defaultValue="map" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="map" className="flex items-center gap-2">
+            <Map className="h-4 w-4" />
+            Mapa
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            Lista
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="map">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mapa de Autorizados</CardTitle>
+              <CardDescription>
+                Visualize a localização dos autorizados no mapa do Brasil
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AutorizadosMapLeaflet autorizados={autorizados} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="list">
+          <Card>
         <CardHeader>
           <CardTitle>Lista de Autorizados</CardTitle>
           <CardDescription>
@@ -342,6 +421,21 @@ export default function Autorizados() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      {autorizado.endereco && autorizado.cidade && autorizado.estado && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGeocode(autorizado)}
+                          disabled={geocoding === autorizado.id}
+                          title={autorizado.latitude && autorizado.longitude ? 'Atualizar coordenadas' : 'Geocodificar endereço'}
+                        >
+                          {geocoding === autorizado.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm">
@@ -375,6 +469,8 @@ export default function Autorizados() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog de Edição */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
