@@ -657,6 +657,39 @@ export type Database = {
           },
         ]
       }
+      linhas_ordens: {
+        Row: {
+          created_at: string
+          id: string
+          item: string
+          pedido_id: string
+          quantidade: number
+          tamanho: string | null
+          tipo_ordem: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item: string
+          pedido_id: string
+          quantidade?: number
+          tamanho?: string | null
+          tipo_ordem: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item?: string
+          pedido_id?: string
+          quantidade?: number
+          tamanho?: string | null
+          tipo_ordem?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_investimentos: {
         Row: {
           created_at: string

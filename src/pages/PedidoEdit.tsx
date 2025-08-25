@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Package, Wrench, Flame, Scissors } from "lucide-react";
-import ProductionOrdersList from "@/components/production/ProductionOrdersList";
+import ProductionOrdersListNew from "@/components/production/ProductionOrdersListNew";
 
 interface PedidoCompleto {
   id: string;
@@ -240,7 +240,7 @@ export default function PedidoEdit() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Ordens de Produção - Primeira seção */}
-        <ProductionOrdersList 
+        <ProductionOrdersListNew 
           pedido={pedido} 
           onUpdate={handleOrderUpdate}
         />

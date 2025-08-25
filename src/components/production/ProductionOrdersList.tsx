@@ -8,6 +8,14 @@ import OrdemPerfiladeiraForm from "./OrdemPerfiladeiraForm";
 import OrdemSoldagemForm from "./OrdemSoldagemForm";
 import OrdemPinturaForm from "./OrdemPinturaForm";
 
+interface LinhaOrdem {
+  id: string;
+  tipo_ordem: string;
+  item: string;
+  quantidade: number;
+  tamanho: string;
+}
+
 interface PedidoCompleto {
   id: string;
   produtos: any[];

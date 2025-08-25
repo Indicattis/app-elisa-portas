@@ -68,6 +68,35 @@ export function usePedidos() {
     }
   };
 
+  // Função para criar ordens automaticamente para um pedido
+  const criarOrdensAutomaticamente = async (pedidoId: string, produtos: Produto[]) => {
+    const tiposOrdem = ['separacao', 'perfiladeira', 'soldagem', 'pintura'];
+    
+    for (const tipoOrdem of tiposOrdem) {
+      // Calcular quantas ordens são necessárias
+      const ordensNecessarias = calcularOrdensNecessarias(produtos, tipoOrdem);
+      
+      if (ordensNecessarias > 0) {
+        // Criar as linhas iniciais para cada ordem
+        for (let i = 0; i < ordensNecessarias; i++) {
+          const { error } = await supabase
+            .from('linhas_ordens')
+            .insert({
+              pedido_id: pedidoId,
+              tipo_ordem: tipoOrdem,
+              item: `Item ${i + 1}`,
+              quantidade: 1,
+              tamanho: ''
+            });
+          
+          if (error) {
+            console.error(`Erro ao criar linha da ordem ${tipoOrdem}:`, error);
+          }
+        }
+      }
+    }
+  };
+
   const criarPedidoDeOrcamento = async (orcamentoId: string) => {
     try {
       // Verificar se já existe pedido para este orçamento
@@ -106,6 +135,8 @@ export function usePedidos() {
       const proximoNumero = await gerarProximoNumero('pedido');
       const numeroPedido = formatarNumeroPedido(proximoNumero);
 
+      const produtosPedido = orcamento.orcamento_produtos || [];
+
       // Criar pedido com dados do orçamento
       const { data: pedido, error: pedidoError } = await supabase
         .from("pedidos_producao")
@@ -126,7 +157,7 @@ export function usePedidos() {
           valor_frete: orcamento.valor_frete,
           valor_instalacao: orcamento.valor_instalacao,
           modalidade_instalacao: orcamento.modalidade_instalacao,
-          produtos: orcamento.orcamento_produtos || [],
+          produtos: produtosPedido,
           status: 'pendente',
           created_by: (await supabase.auth.getUser()).data.user?.id
         })
@@ -134,6 +165,9 @@ export function usePedidos() {
         .single();
 
       if (pedidoError) throw pedidoError;
+
+      // Criar ordens automaticamente
+      await criarOrdensAutomaticamente(pedido.id, produtosPedido);
 
       toast({
         title: "Sucesso",
@@ -331,5 +365,6 @@ export function usePedidos() {
     criarPedidoDeOrcamento,
     criarOrdemProducao,
     calcularOrdensNecessarias,
+    criarOrdensAutomaticamente
   };
 }
