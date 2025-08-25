@@ -119,8 +119,12 @@ export type Database = {
           email: string | null
           endereco: string | null
           estado: string | null
+          geocode_precision: string | null
           id: string
+          last_geocoded_at: string | null
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
           nome: string
           regiao: string | null
           responsavel: string | null
@@ -136,8 +140,12 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          geocode_precision?: string | null
           id?: string
+          last_geocoded_at?: string | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           nome: string
           regiao?: string | null
           responsavel?: string | null
@@ -153,8 +161,12 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          geocode_precision?: string | null
           id?: string
+          last_geocoded_at?: string | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           nome?: string
           regiao?: string | null
           responsavel?: string | null
