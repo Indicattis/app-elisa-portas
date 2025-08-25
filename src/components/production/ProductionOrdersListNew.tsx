@@ -261,6 +261,7 @@ export default function ProductionOrdersListNew({ pedido, onUpdate }: Production
                 <div className="flex items-center gap-2">
                   {getStatusBadge(status)}
                   <Button
+                    type="button"
                     size="sm"
                     variant="outline"
                     onClick={(e) => {
@@ -305,6 +306,7 @@ export default function ProductionOrdersListNew({ pedido, onUpdate }: Production
                     <div className="flex justify-between items-center">
                       <h5 className="font-medium text-sm">Editar Linhas da Ordem:</h5>
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         onClick={() => addNewLine(ordem.id)}
@@ -341,6 +343,7 @@ export default function ProductionOrdersListNew({ pedido, onUpdate }: Production
                           </div>
                           <div className="col-span-1">
                             <Button
+                              type="button"
                               size="sm"
                               variant="ghost"
                               onClick={() => removeLine(ordem.id, index)}
@@ -354,12 +357,14 @@ export default function ProductionOrdersListNew({ pedido, onUpdate }: Production
 
                     <div className="flex gap-2 justify-end">
                       <Button
+                        type="button"
                         variant="outline"
                         onClick={() => cancelEdit(ordem.id)}
                       >
                         Cancelar
                       </Button>
                       <Button
+                        type="button"
                         onClick={() => saveLines(ordem.id)}
                       >
                         Salvar

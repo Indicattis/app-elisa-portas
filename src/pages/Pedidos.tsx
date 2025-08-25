@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Download, Edit, ChevronDown, ChevronRight, Plus } from "lucide-react";
@@ -342,9 +342,8 @@ export default function Pedidos() {
             </TableHeader>
             <TableBody>
               {pedidos.map((pedido) => (
-                <>
+                <React.Fragment key={pedido.id}>
                   <TableRow 
-                    key={pedido.id} 
                     className="cursor-pointer hover:bg-muted/50"
                     onDoubleClick={() => togglePedidoExpansion(pedido.id)}
                   >
@@ -551,7 +550,7 @@ export default function Pedidos() {
                     </TableCell>
                   </TableRow>
                 )}
-                </>
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
