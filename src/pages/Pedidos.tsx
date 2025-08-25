@@ -186,26 +186,30 @@ export default function Pedidos() {
 
   const handleDownloadOrdemPDF = async (pedido: Pedido, tipoOrdem: string) => {
     try {
-      // Buscar as informações das ordens do pedido
-      const { data: pedidoCompleto, error } = await supabase
-        .from("pedidos_producao")
+      // Buscar as linhas da ordem específica
+      const { data: linhasOrdem, error } = await supabase
+        .from("linhas_ordens")
         .select("*")
-        .eq("id", pedido.id)
-        .single();
+        .eq("pedido_id", pedido.id)
+        .eq("tipo_ordem", tipoOrdem);
 
       if (error) throw error;
 
-      const campoOrdem = `ordens_${tipoOrdem}`;
-      const ordensInfo = pedidoCompleto[campoOrdem];
-
-      if (!ordensInfo || ordensInfo.length === 0) {
+      if (!linhasOrdem || linhasOrdem.length === 0) {
         toast({
           variant: "destructive",
           title: "Erro",
-          description: `Nenhuma ordem de ${tipoOrdem} encontrada para este pedido`,
+          description: `Nenhuma linha de ordem de ${tipoOrdem} encontrada para este pedido`,
         });
         return;
       }
+
+      // Mapear dados para o formato esperado pelo PDF
+      const itemsOrdem = linhasOrdem.map(linha => ({
+        item: linha.item,
+        quantidade: linha.quantidade,
+        medidas: linha.tamanho || '',
+      }));
 
       // Dados do pedido para o PDF
       const dadosPedido = {
@@ -218,8 +222,8 @@ export default function Pedidos() {
         endereco_estado: pedido.endereco_estado,
       };
 
-      // Gerar PDF com as informações das ordens
-      baixarPDFOrdem(tipoOrdem, ordensInfo, dadosPedido);
+      // Gerar PDF com as linhas da ordem
+      baixarPDFOrdem(tipoOrdem, itemsOrdem, dadosPedido);
 
       toast({
         title: "Sucesso",
@@ -413,47 +417,29 @@ export default function Pedidos() {
                   
                   return (
                     <div key={tipoOrdem.key} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-lg">{tipoOrdem.label}</h4>
-                          <Badge variant="secondary">{ordensDoTipo.length} ordem(ns)</Badge>
-                        </div>
-                        
-                        <div className="space-y-2">
-                           {ordensDoTipo.map((linha: any, index: number) => (
-                             <div 
-                               key={linha.id} 
-                               className="p-3 bg-background rounded border cursor-pointer hover:bg-muted/30 transition-colors"
-                               onClick={() => handleDownloadOrdemPDF(selectedPedido, tipoOrdem.key)}
-                             >
-                               <div className="flex items-center justify-between">
-                                 <div>
-                                   <div className="font-medium text-sm">
-                                     {linha.item}
-                                   </div>
-                                   <div className="text-xs text-muted-foreground">
-                                     Qtd: {linha.quantidade} | Tamanho: {linha.tamanho}
-                                   </div>
-                                   <div className="text-xs text-muted-foreground">
-                                     Criada em {new Date(linha.created_at).toLocaleDateString('pt-BR')}
-                                   </div>
+                         <div className="space-y-3">
+                           <div className="flex items-center justify-between">
+                             <h4 className="font-semibold text-lg">{tipoOrdem.label}</h4>
+                             <Badge variant="secondary">{ordensDoTipo.length} linha(s)</Badge>
+                           </div>
+                           
+                           <div 
+                             className="p-4 bg-background rounded border cursor-pointer hover:bg-muted/30 transition-colors"
+                             onClick={() => handleDownloadOrdemPDF(selectedPedido, tipoOrdem.key)}
+                           >
+                             <div className="flex items-center justify-between">
+                               <div>
+                                 <div className="font-medium text-sm">
+                                   Ordem de {tipoOrdem.label}
                                  </div>
-                                 <Download className="w-4 h-4 text-muted-foreground" />
+                                 <div className="text-xs text-muted-foreground">
+                                   {ordensDoTipo.length} item(ns) - Clique para baixar PDF
+                                 </div>
                                </div>
+                               <Download className="w-4 h-4 text-muted-foreground" />
                              </div>
-                           ))}
-                        </div>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => handleDownloadOrdemPDF(selectedPedido, tipoOrdem.key)}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Baixar PDF {tipoOrdem.label}
-                        </Button>
-                      </div>
+                           </div>
+                         </div>
                     </div>
                   );
                 })}
