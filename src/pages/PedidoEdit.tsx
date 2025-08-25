@@ -9,10 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Package, Wrench, Flame, Scissors } from "lucide-react";
-import OrdemSeparacaoForm from "@/components/production/OrdemSeparacaoForm";
-import OrdemPerfiladeiraForm from "@/components/production/OrdemPerfiladeiraForm";
-import OrdemSoldagemForm from "@/components/production/OrdemSoldagemForm";
-import OrdemPinturaForm from "@/components/production/OrdemPinturaForm";
+import ProductionOrdersList from "@/components/production/ProductionOrdersList";
 
 interface PedidoCompleto {
   id: string;
@@ -69,8 +66,6 @@ export default function PedidoEdit() {
   const [saving, setSaving] = useState(false);
   const [catalogoCores, setCatalogoCores] = useState<Array<{ nome: string; codigo_hex: string }>>([]);
   
-  // Estados para controlar os formulários de ordens
-  const [activeOrdemForm, setActiveOrdemForm] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPedido();
@@ -182,76 +177,30 @@ export default function PedidoEdit() {
     setPedido(prev => prev ? { ...prev, [field]: value } : null);
   };
 
-  // Função para calcular quantas ordens são necessárias baseado nos produtos
-  const calcularOrdensNecessarias = (tipoOrdem: string) => {
-    console.log('Calculando ordens necessárias para:', tipoOrdem);
-    console.log('Produtos do pedido:', pedido?.produtos);
-    
-    if (!pedido?.produtos) {
-      console.log('Sem produtos no pedido');
-      return 0;
-    }
-    
-    let totalOrdens = 0;
-    pedido.produtos.forEach((produto, index) => {
-      const quantidade = produto?.quantidade || 1;
-      const tipoProduto = produto?.tipo_produto || '';
-      
-      console.log(`Produto ${index}:`, { tipoProduto, quantidade });
-      
-      if (tipoOrdem === 'pintura') {
-        if (tipoProduto.includes('pintura_epoxi')) {
-          console.log('Produto de pintura encontrado, adicionando:', quantidade);
-          totalOrdens += quantidade;
-        }
-      } else if (['soldagem', 'separacao', 'perfiladeira'].includes(tipoOrdem)) {
-        if (tipoProduto.includes('porta_enrolar')) {
-          console.log('Produto de porta enrolar encontrado, adicionando:', quantidade);
-          totalOrdens += quantidade;
-        }
-      }
-    });
-    
-    console.log(`Total de ordens necessárias para ${tipoOrdem}:`, totalOrdens);
-    return totalOrdens;
-  };
-
-  // Função para salvar ordens de produção
-  const salvarOrdem = async (tipoOrdem: string, items: any[]) => {
+  // Função para atualizar as ordens de produção
+  const handleOrderUpdate = async (updatedFields: Partial<PedidoCompleto>) => {
     if (!pedido) return;
 
     try {
-      const campoOrdem = `ordens_${tipoOrdem}` as keyof PedidoCompleto;
-      const novoStatusOrdem = { ...pedido.status_ordens, [tipoOrdem]: 'pronto' };
-      
       const { error } = await supabase
         .from("pedidos_producao")
-        .update({
-          [campoOrdem]: items,
-          status_ordens: novoStatusOrdem
-        })
+        .update(updatedFields)
         .eq("id", pedido.id);
 
       if (error) throw error;
 
-      setPedido(prev => prev ? { 
-        ...prev, 
-        [campoOrdem]: items,
-        status_ordens: novoStatusOrdem
-      } : null);
+      setPedido(prev => prev ? { ...prev, ...updatedFields } : null);
 
       toast({
         title: "Sucesso",
-        description: `Ordens de ${tipoOrdem} salvas com sucesso`,
+        description: "Ordem atualizada com sucesso",
       });
-      
-      setActiveOrdemForm(null);
     } catch (error) {
-      console.error("Erro ao salvar ordem:", error);
+      console.error("Erro ao atualizar ordem:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: `Erro ao salvar ordens de ${tipoOrdem}`,
+        description: "Erro ao atualizar ordem",
       });
     }
   };
@@ -290,6 +239,12 @@ export default function PedidoEdit() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Ordens de Produção - Primeira seção */}
+        <ProductionOrdersList 
+          pedido={pedido} 
+          onUpdate={handleOrderUpdate}
+        />
+
         {/* Dados do Cliente */}
         <Card>
           <CardHeader>
@@ -580,131 +535,6 @@ export default function PedidoEdit() {
           </CardContent>
         </Card>
 
-        {/* Ordens de Produção */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ordens de Produção</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Crie as informações necessárias para cada tipo de ordem baseado nos produtos do pedido
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Separação */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4" />
-                  <h4 className="font-medium">Separação</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {calcularOrdensNecessarias('separacao')} ordem(ns) necessária(s)
-                </p>
-                <Button
-                  type="button"
-                  variant={pedido.status_ordens?.separacao === 'pronto' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveOrdemForm('separacao')}
-                  disabled={calcularOrdensNecessarias('separacao') === 0}
-                >
-                  {pedido.status_ordens?.separacao === 'pronto' ? 'Editar' : 'Criar'} Ordens
-                </Button>
-              </div>
-
-              {/* Perfiladeira */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Wrench className="w-4 h-4" />
-                  <h4 className="font-medium">Perfiladeira</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {calcularOrdensNecessarias('perfiladeira')} ordem(ns) necessária(s)
-                </p>
-                <Button
-                  type="button"
-                  variant={pedido.status_ordens?.perfiladeira === 'pronto' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveOrdemForm('perfiladeira')}
-                  disabled={calcularOrdensNecessarias('perfiladeira') === 0}
-                >
-                  {pedido.status_ordens?.perfiladeira === 'pronto' ? 'Editar' : 'Criar'} Ordens
-                </Button>
-              </div>
-
-              {/* Soldagem */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4" />
-                  <h4 className="font-medium">Soldagem</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {calcularOrdensNecessarias('soldagem')} ordem(ns) necessária(s)
-                </p>
-                <Button
-                  type="button"
-                  variant={pedido.status_ordens?.soldagem === 'pronto' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveOrdemForm('soldagem')}
-                  disabled={calcularOrdensNecessarias('soldagem') === 0}
-                >
-                  {pedido.status_ordens?.soldagem === 'pronto' ? 'Editar' : 'Criar'} Ordens
-                </Button>
-              </div>
-
-              {/* Pintura */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Scissors className="w-4 h-4" />
-                  <h4 className="font-medium">Pintura</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {calcularOrdensNecessarias('pintura')} ordem(ns) necessária(s)
-                </p>
-                <Button
-                  type="button"
-                  variant={pedido.status_ordens?.pintura === 'pronto' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveOrdemForm('pintura')}
-                  disabled={calcularOrdensNecessarias('pintura') === 0}
-                >
-                  {pedido.status_ordens?.pintura === 'pronto' ? 'Editar' : 'Criar'} Ordens
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Formulários das Ordens */}
-        <OrdemSeparacaoForm
-          pedidoId={pedido.id}
-          isOpen={activeOrdemForm === 'separacao'}
-          onSave={(items) => salvarOrdem('separacao', items)}
-          onCancel={() => setActiveOrdemForm(null)}
-          maxOrdens={calcularOrdensNecessarias('separacao')}
-        />
-        
-        <OrdemPerfiladeiraForm
-          pedidoId={pedido.id}
-          isOpen={activeOrdemForm === 'perfiladeira'}
-          onSave={(items) => salvarOrdem('perfiladeira', items)}
-          onCancel={() => setActiveOrdemForm(null)}
-          maxOrdens={calcularOrdensNecessarias('perfiladeira')}
-        />
-        
-        <OrdemSoldagemForm
-          pedidoId={pedido.id}
-          isOpen={activeOrdemForm === 'soldagem'}
-          onSave={(items) => salvarOrdem('soldagem', items)}
-          onCancel={() => setActiveOrdemForm(null)}
-          maxOrdens={calcularOrdensNecessarias('soldagem')}
-        />
-        
-        <OrdemPinturaForm
-          pedidoId={pedido.id}
-          isOpen={activeOrdemForm === 'pintura'}
-          onSave={(items) => salvarOrdem('pintura', items)}
-          onCancel={() => setActiveOrdemForm(null)}
-          maxOrdens={calcularOrdensNecessarias('pintura')}
-        />
 
         <div className="flex gap-2 justify-end">
           <Button
