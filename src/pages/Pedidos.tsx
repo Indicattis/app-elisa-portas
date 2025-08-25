@@ -5,6 +5,7 @@ import { Download, Edit, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePedidos } from "@/hooks/usePedidos";
+import { baixarPDFOrdem } from "@/utils/ordemPDFGenerator";
 import { 
   Table, 
   TableBody, 
@@ -55,6 +56,11 @@ interface Pedido {
   valor_frete?: number;
   valor_instalacao?: number;
   modalidade_instalacao?: string;
+  ordens_separacao?: any[];
+  ordens_perfiladeira?: any[];
+  ordens_soldagem?: any[];
+  ordens_pintura?: any[];
+  status_ordens?: any;
 }
 
 const statusColors = {
@@ -214,12 +220,55 @@ export default function Pedidos() {
     navigate(`/dashboard/ordens/${tipoOrdem}/${ordemId}`);
   };
 
-  const handleDownloadOrdemPDF = (ordem: any) => {
-    // TODO: Implementar geração de PDF para ordem específica
-    toast({
-      title: "Em desenvolvimento",
-      description: "PDF da ordem será implementado em breve",
-    });
+  const handleDownloadOrdemPDF = async (pedido: Pedido, tipoOrdem: string) => {
+    try {
+      // Buscar as informações das ordens do pedido
+      const { data: pedidoCompleto, error } = await supabase
+        .from("pedidos_producao")
+        .select("*")
+        .eq("id", pedido.id)
+        .single();
+
+      if (error) throw error;
+
+      const campoOrdem = `ordens_${tipoOrdem}`;
+      const ordensInfo = pedidoCompleto[campoOrdem];
+
+      if (!ordensInfo || ordensInfo.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: `Nenhuma ordem de ${tipoOrdem} encontrada para este pedido`,
+        });
+        return;
+      }
+
+      // Dados do pedido para o PDF
+      const dadosPedido = {
+        numero_pedido: pedido.numero_pedido,
+        cliente_nome: pedido.cliente_nome,
+        cliente_telefone: pedido.cliente_telefone,
+        endereco_rua: pedido.endereco_rua,
+        endereco_numero: pedido.endereco_numero,
+        endereco_cidade: pedido.endereco_cidade,
+        endereco_estado: pedido.endereco_estado,
+      };
+
+      // Gerar PDF com as informações das ordens
+      baixarPDFOrdem(tipoOrdem, ordensInfo, dadosPedido);
+
+      toast({
+        title: "Sucesso",
+        description: `PDF da ordem de ${tipoOrdem} gerado com sucesso`,
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF da ordem:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Erro ao gerar PDF da ordem de ${tipoOrdem}`,
+      });
+    }
   };
 
   const handleCriarOrdens = async (pedidoId: string, tipoOrdem: string, pedidoNumero: string, produtos: Produto[]) => {
@@ -441,38 +490,44 @@ export default function Pedidos() {
                                   )}
                                 </div>
                                 
-                                {ordensExistentes > 0 && (
-                                  <div className="space-y-2">
-                                    {ordensDoTipo.map((ordem: any) => (
-                                      <div key={ordem.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-sm font-mono">{ordem.numero_ordem}</span>
-                                          <Badge variant={ordem.status === 'pronto' ? 'default' : 'secondary'}>
-                                            {ordem.status === 'pendente_preenchimento' ? 'Pendente' : ordem.status}
-                                          </Badge>
-                                        </div>
-                                        <div className="flex gap-2">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleEditOrdem(ordem.id, tipoOrdem.key)}
-                                          >
-                                            <Edit className="w-3 h-3 mr-1" />
-                                            Editar
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleDownloadOrdemPDF(ordem)}
-                                          >
-                                            <Download className="w-3 h-3 mr-1" />
-                                            PDF
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                                 {/* Exibir botão PDF sempre que necessário */}
+                                 {ordensNecessarias > 0 && (
+                                   <div className="mt-2">
+                                     <Button
+                                       variant="outline"
+                                       size="sm"
+                                       onClick={() => handleDownloadOrdemPDF(pedido, tipoOrdem.key)}
+                                     >
+                                       <Download className="w-3 h-3 mr-1" />
+                                       PDF Ordens de {tipoOrdem.label}
+                                     </Button>
+                                   </div>
+                                 )}
+                                 
+                                 {ordensExistentes > 0 && (
+                                   <div className="space-y-2">
+                                     {ordensDoTipo.map((ordem: any) => (
+                                       <div key={ordem.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
+                                         <div className="flex items-center gap-2">
+                                           <span className="text-sm font-mono">{ordem.numero_ordem}</span>
+                                           <Badge variant={ordem.status === 'pronto' ? 'default' : 'secondary'}>
+                                             {ordem.status === 'pendente_preenchimento' ? 'Pendente' : ordem.status}
+                                           </Badge>
+                                         </div>
+                                         <div className="flex gap-2">
+                                           <Button
+                                             variant="outline"
+                                             size="sm"
+                                             onClick={() => handleEditOrdem(ordem.id, tipoOrdem.key)}
+                                           >
+                                             <Edit className="w-3 h-3 mr-1" />
+                                             Editar
+                                           </Button>
+                                         </div>
+                                       </div>
+                                     ))}
+                                   </div>
+                                 )}
                                 
                                 {ordensNecessarias > 0 && (
                                   <div className="mt-2 text-xs text-muted-foreground">

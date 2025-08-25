@@ -1367,8 +1367,13 @@ export type Database = {
           observacoes: string | null
           observacoes_venda: string | null
           orcamento_id: string | null
+          ordens_perfiladeira: Json | null
+          ordens_pintura: Json | null
+          ordens_separacao: Json | null
+          ordens_soldagem: Json | null
           produtos: Json | null
           status: string
+          status_ordens: Json | null
           updated_at: string
           valor_entrada: number | null
           valor_frete: number | null
@@ -1399,8 +1404,13 @@ export type Database = {
           observacoes?: string | null
           observacoes_venda?: string | null
           orcamento_id?: string | null
+          ordens_perfiladeira?: Json | null
+          ordens_pintura?: Json | null
+          ordens_separacao?: Json | null
+          ordens_soldagem?: Json | null
           produtos?: Json | null
           status?: string
+          status_ordens?: Json | null
           updated_at?: string
           valor_entrada?: number | null
           valor_frete?: number | null
@@ -1431,8 +1441,13 @@ export type Database = {
           observacoes?: string | null
           observacoes_venda?: string | null
           orcamento_id?: string | null
+          ordens_perfiladeira?: Json | null
+          ordens_pintura?: Json | null
+          ordens_separacao?: Json | null
+          ordens_soldagem?: Json | null
           produtos?: Json | null
           status?: string
+          status_ordens?: Json | null
           updated_at?: string
           valor_entrada?: number | null
           valor_frete?: number | null
