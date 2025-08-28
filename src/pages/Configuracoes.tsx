@@ -2,9 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CanaisAquisicaoManager } from "@/components/CanaisAquisicaoManager";
 import InvestmentManager from "@/components/InvestmentManager";
-import { Settings, Palette, Database, Users as UsersIcon, TrendingUp } from "lucide-react";
+import { Settings, Palette, Database, Users as UsersIcon, TrendingUp, Shield } from "lucide-react";
 import { useState } from "react";
 import Users from "@/pages/Users";
+import { PermissionsTab } from "@/components/PermissionsTab";
 
 export default function Configuracoes() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -24,7 +25,7 @@ export default function Configuracoes() {
       </div>
 
       <Tabs defaultValue="canais" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="canais" className="flex items-center gap-2">
             <Database className="w-4 h-4" />
             Canais de Aquisição
@@ -40,6 +41,10 @@ export default function Configuracoes() {
           <TabsTrigger value="usuarios" className="flex items-center gap-2">
             <UsersIcon className="w-4 h-4" />
             Usuários
+          </TabsTrigger>
+          <TabsTrigger value="permissoes" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Permissões
           </TabsTrigger>
           <TabsTrigger value="sistema" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -97,6 +102,10 @@ export default function Configuracoes() {
 
         <TabsContent value="usuarios" className="space-y-6">
           <Users />
+        </TabsContent>
+
+        <TabsContent value="permissoes" className="space-y-6">
+          <PermissionsTab />
         </TabsContent>
 
         <TabsContent value="sistema" className="space-y-6">
