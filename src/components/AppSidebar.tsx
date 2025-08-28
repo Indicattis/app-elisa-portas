@@ -99,9 +99,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        {/* Informações do usuário transferidas para o header */}
-      </SidebarFooter>
+      <SidebarFooter />
     </Sidebar>
   );
 }
