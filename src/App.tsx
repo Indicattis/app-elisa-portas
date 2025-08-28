@@ -79,7 +79,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         <SidebarInset className="flex-1 flex flex-col md:flex-1">
           {/* Header com botão de colapsar sidebar no desktop */}
-          <div className="hidden md:flex sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/50">
+          <div className="hidden md:flex fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border/50 w-screen">
             <div className="h-12 flex items-center justify-between px-4 w-full">
               <div className="flex items-center">
                 <SidebarTrigger className="-ml-1" />
