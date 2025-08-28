@@ -151,7 +151,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Slide Container */}
       <div 
         className="flex transition-transform duration-1000 ease-in-out"
@@ -278,9 +278,9 @@ export default function Dashboard() {
             </div>
 
             {/* Container principal com ranking e legendas */}
-            <div className="w-full max-w-7xl flex gap-8 overflow-x-hidden">
+            <div className="w-full max-w-7xl flex gap-8">
               {/* Lista de ranking */}
-              <div className="flex-1 space-y-4 min-w-0">
+              <div className="flex-1 space-y-4">
                 {vendedores.slice(0, 10).map((vendedor) => {
                   const category = getVendedorCategory(vendedor.total);
                   return (
@@ -338,7 +338,7 @@ export default function Dashboard() {
               </div>
 
               {/* Legendas das metas - lado direito */}
-              <div className="w-80 xl:w-96 2xl:w-[26rem] bg-card rounded-lg p-6 xl:p-8 2xl:p-10 border border-border shadow-lg flex-shrink-0">
+              <div className="w-96 2xl:w-[28rem] bg-card rounded-lg p-8 2xl:p-10 border border-border shadow-lg">
                 <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground mb-6 text-center">Metas Individuais</h3>
                 <div className="space-y-4 2xl:space-y-6">
                   <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
