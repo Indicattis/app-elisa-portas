@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format, isSameMonth, isSameWeek, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, startOfYear, endOfYear, getYear, isWeekend, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -151,7 +151,7 @@ export default function ContadorVendas() {
     };
     const { error } = await supabase
       .from("contador_vendas_dias")
-      .upsert(payload, { onConflict: "data,atendente_id" });
+      .upsert(payload);
 
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message });
@@ -323,6 +323,9 @@ export default function ContadorVendas() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Vendas do dia {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : ""}</DialogTitle>
+            <DialogDescription>
+              Registre o valor das suas vendas do dia. Você pode ver as vendas de outros atendentes para referência.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
