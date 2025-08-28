@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { AppPermission } from "@/types/permissions";
@@ -16,15 +17,26 @@ export function ProtectedRouteWithPermission({
   permission, 
   fallback 
 }: ProtectedRouteWithPermissionProps) {
-  const { user, isAdmin } = useAuth();
-  const { hasPermission, loading } = useUserPermissions();
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { hasPermission, loading: permissionsLoading } = useUserPermissions();
+  const location = useLocation();
 
+  // Mostrar loading enquanto a autenticação está sendo verificada
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Redirecionar para login se não estiver autenticado
   if (!user) {
-    return null;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Mostrar loading enquanto as permissões estão sendo carregadas
-  if (loading) {
+  if (permissionsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
