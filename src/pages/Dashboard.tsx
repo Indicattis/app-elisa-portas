@@ -375,11 +375,20 @@ export default function Dashboard() {
                         ))}
                       </div>
                       
-                      {/* Coluna da categoria */}
-                      <div className={`w-20 h-16 bg-gradient-to-t ${category.color} rounded-t-lg border-2 ${category.border} flex items-center justify-center`}>
-                        <span className="text-xs font-bold text-white text-center px-1">
-                          {category.name}
-                        </span>
+                      {/* Imagem da categoria */}
+                      <div className="w-20 h-16 flex items-center justify-center">
+                        {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-16 h-16" />}
+                        {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-16 h-16" />}
+                        {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-16 h-16" />}
+                        {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-16 h-16" />}
+                        {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-16 h-16" />}
+                        {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-16 h-16" />}
+                        {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-16 h-16" />}
+                        {category.name === 'Iniciante' && (
+                          <div className="w-16 h-16 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Labels das faixas de valores */}
