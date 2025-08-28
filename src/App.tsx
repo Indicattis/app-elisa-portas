@@ -14,6 +14,7 @@ import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Settings, LogOut } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -85,7 +86,10 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div className="h-4 w-px bg-border mx-3" />
               </div>
               
-              <HeaderUserInfo />
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <HeaderUserInfo />
+              </div>
             </div>
           </div>
 
