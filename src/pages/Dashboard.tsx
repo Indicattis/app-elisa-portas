@@ -151,14 +151,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden w-screen max-w-full">
+    <div className="min-h-screen relative overflow-x-hidden w-full max-w-full">
       {/* Slide Container */}
       <div 
         className="flex transition-transform duration-1000 ease-in-out w-full"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {/* Slide 1: Faturamento */}
-        <div className="min-w-full flex-shrink-0 w-screen max-w-full">
+        <div className="min-w-full flex-shrink-0 w-full max-w-full">
           <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
             {/* Logo */}
             <div className="mt-8">
@@ -169,7 +169,7 @@ export default function Dashboard() {
             <h1 className="text-6xl font-bold text-foreground">Faturamento</h1>
             
             {/* Contador das vendas do mês */}
-            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-full max-w-[95vw] md:max-w-4xl flex items-center justify-center mx-4" style={{
+            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-full max-w-[95vw] md:max-w-4xl flex items-center justify-center mx-auto" style={{
               height: '120px'
             }}>
               <div className="text-center">
@@ -259,7 +259,7 @@ export default function Dashboard() {
         </div>
 
         {/* Slide 2: Ranking */}
-        <div className="min-w-full flex-shrink-0 w-screen max-w-full">
+        <div className="min-w-full flex-shrink-0 w-full max-w-full">
           <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
             {/* Logo */}
             <div className="mt-8">
