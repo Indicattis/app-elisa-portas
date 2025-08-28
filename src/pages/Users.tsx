@@ -23,7 +23,7 @@ interface AdminUser {
   user_id: string;
   email: string;
   nome: string;
-  role: "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril";
+  role: "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" | "diretor" | "gerente_marketing" | "gerente_financeiro" | "gerente_producao" | "gerente_instalacoes" | "instalador" | "aux_instalador" | "analista_marketing" | "assistente_marketing" | "coordenador_vendas" | "vendedor" | "assistente_administrativo" | "soldador" | "aux_geral" | "pintor" | "aux_pintura";
   ativo: boolean;
   foto_perfil_url: string | null;
   created_at: string;
@@ -245,23 +245,55 @@ export default function Users() {
                           {editingUser === user.id ? (
                             <Select
                               value={editForm.role}
-                              onValueChange={(value) => setEditForm({ ...editForm, role: value as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" })}
+                              onValueChange={(value) => setEditForm({ ...editForm, role: value as AdminUser['role'] })}
                             >
                               <SelectTrigger className="max-w-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="administrador">Administrador</SelectItem>
-                                <SelectItem value="atendente">Atendente</SelectItem>
+                                <SelectItem value="diretor">Diretor</SelectItem>
                                 <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
+                                <SelectItem value="gerente_marketing">Gerente de Marketing</SelectItem>
+                                <SelectItem value="gerente_financeiro">Gerente Financeiro</SelectItem>
+                                <SelectItem value="gerente_producao">Gerente de Produção</SelectItem>
                                 <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
+                                <SelectItem value="gerente_instalacoes">Gerente de Instalações</SelectItem>
+                                <SelectItem value="coordenador_vendas">Coordenador(a) de Vendas</SelectItem>
+                                <SelectItem value="vendedor">Vendedor(a)</SelectItem>
+                                <SelectItem value="analista_marketing">Analista de Marketing</SelectItem>
+                                <SelectItem value="assistente_marketing">Assistente de Marketing</SelectItem>
+                                <SelectItem value="assistente_administrativo">Assistente Administrativo</SelectItem>
+                                <SelectItem value="atendente">Atendente</SelectItem>
+                                <SelectItem value="instalador">Instalador</SelectItem>
+                                <SelectItem value="aux_instalador">Aux. Instalador</SelectItem>
+                                <SelectItem value="soldador">Soldador</SelectItem>
+                                <SelectItem value="pintor">Pintor(a)</SelectItem>
+                                <SelectItem value="aux_pintura">Aux. Pintura</SelectItem>
+                                <SelectItem value="aux_geral">Aux. Geral</SelectItem>
                               </SelectContent>
                             </Select>
                           ) : (
                             <Badge variant={user.role === "administrador" ? "default" : "secondary"}>
-                              {user.role === "administrador" ? "Administrador" : 
-                               user.role === "gerente_comercial" ? "Gerente Comercial" : 
-                               user.role === "gerente_fabril" ? "Gerente Fabril" : "Atendente"}
+                              {user.role === "administrador" ? "Administrador" :
+                               user.role === "diretor" ? "Diretor" :
+                               user.role === "gerente_comercial" ? "Gerente Comercial" :
+                               user.role === "gerente_marketing" ? "Gerente de Marketing" :
+                               user.role === "gerente_financeiro" ? "Gerente Financeiro" :
+                               user.role === "gerente_producao" ? "Gerente de Produção" :
+                               user.role === "gerente_fabril" ? "Gerente Fabril" :
+                               user.role === "gerente_instalacoes" ? "Gerente de Instalações" :
+                               user.role === "coordenador_vendas" ? "Coordenador(a) de Vendas" :
+                               user.role === "vendedor" ? "Vendedor(a)" :
+                               user.role === "analista_marketing" ? "Analista de Marketing" :
+                               user.role === "assistente_marketing" ? "Assistente de Marketing" :
+                               user.role === "assistente_administrativo" ? "Assistente Administrativo" :
+                               user.role === "instalador" ? "Instalador" :
+                               user.role === "aux_instalador" ? "Aux. Instalador" :
+                               user.role === "soldador" ? "Soldador" :
+                               user.role === "pintor" ? "Pintor(a)" :
+                               user.role === "aux_pintura" ? "Aux. Pintura" :
+                               user.role === "aux_geral" ? "Aux. Geral" : "Atendente"}
                             </Badge>
                           )}
                         </TableCell>

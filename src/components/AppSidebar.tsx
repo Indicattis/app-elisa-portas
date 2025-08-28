@@ -23,7 +23,7 @@ const navigation = [
   { name: "Pedidos", href: "/dashboard/pedidos", icon: FileText },
   { name: "Visitas", href: "/dashboard/visitas", icon: Calendar },
   { name: "Produção", href: "/dashboard/producao", icon: Factory, adminOrManagerFabril: true },
-  { name: "Usuários", href: "/dashboard/users", icon: Users, adminOnly: true },
+  
   { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, adminOrManager: true },
   { name: "Marketing", href: "/dashboard/marketing", icon: TrendingUp, adminOrManager: true },
   { name: "Contas a Receber", href: "/dashboard/contas-receber", icon: CreditCard, adminOrManager: true },

@@ -1,4 +1,4 @@
-export type UserRole = 'administrador' | 'gerente_comercial' | 'gerente_fabril' | 'atendente';
+export type UserRole = 'administrador' | 'gerente_comercial' | 'gerente_fabril' | 'atendente' | 'diretor' | 'gerente_marketing' | 'gerente_financeiro' | 'gerente_producao' | 'gerente_instalacoes' | 'instalador' | 'aux_instalador' | 'analista_marketing' | 'assistente_marketing' | 'coordenador_vendas' | 'vendedor' | 'assistente_administrativo' | 'soldador' | 'aux_geral' | 'pintor' | 'aux_pintura';
 
 export type AppPermission = 
   | 'dashboard'
@@ -103,5 +103,21 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   administrador: 'Administrador',
   gerente_comercial: 'Gerente Comercial',
   gerente_fabril: 'Gerente Fabril',
-  atendente: 'Atendente'
+  atendente: 'Atendente',
+  diretor: 'Diretor',
+  gerente_marketing: 'Gerente de Marketing',
+  gerente_financeiro: 'Gerente Financeiro',
+  gerente_producao: 'Gerente de Produção',
+  gerente_instalacoes: 'Gerente de Instalações',
+  instalador: 'Instalador',
+  aux_instalador: 'Aux. Instalador',
+  analista_marketing: 'Analista de Marketing',
+  assistente_marketing: 'Assistente de Marketing',
+  coordenador_vendas: 'Coordenador(a) de Vendas',
+  vendedor: 'Vendedor(a)',
+  assistente_administrativo: 'Assistente Administrativo',
+  soldador: 'Soldador',
+  aux_geral: 'Aux. Geral',
+  pintor: 'Pintor(a)',
+  aux_pintura: 'Aux. Pintura'
 };

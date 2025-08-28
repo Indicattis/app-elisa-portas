@@ -143,16 +143,32 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
               </Label>
               <Select
                 value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" })}
+                onValueChange={(value) => setFormData({ ...formData, role: value as any })}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="administrador">Administrador</SelectItem>
-                  <SelectItem value="atendente">Atendente</SelectItem>
+                  <SelectItem value="diretor">Diretor</SelectItem>
                   <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
+                  <SelectItem value="gerente_marketing">Gerente de Marketing</SelectItem>
+                  <SelectItem value="gerente_financeiro">Gerente Financeiro</SelectItem>
+                  <SelectItem value="gerente_producao">Gerente de Produção</SelectItem>
                   <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
+                  <SelectItem value="gerente_instalacoes">Gerente de Instalações</SelectItem>
+                  <SelectItem value="coordenador_vendas">Coordenador(a) de Vendas</SelectItem>
+                  <SelectItem value="vendedor">Vendedor(a)</SelectItem>
+                  <SelectItem value="analista_marketing">Analista de Marketing</SelectItem>
+                  <SelectItem value="assistente_marketing">Assistente de Marketing</SelectItem>
+                  <SelectItem value="assistente_administrativo">Assistente Administrativo</SelectItem>
+                  <SelectItem value="atendente">Atendente</SelectItem>
+                  <SelectItem value="instalador">Instalador</SelectItem>
+                  <SelectItem value="aux_instalador">Aux. Instalador</SelectItem>
+                  <SelectItem value="soldador">Soldador</SelectItem>
+                  <SelectItem value="pintor">Pintor(a)</SelectItem>
+                  <SelectItem value="aux_pintura">Aux. Pintura</SelectItem>
+                  <SelectItem value="aux_geral">Aux. Geral</SelectItem>
                 </SelectContent>
               </Select>
             </div>

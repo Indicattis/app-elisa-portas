@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CanaisAquisicaoManager } from "@/components/CanaisAquisicaoManager";
 import InvestmentManager from "@/components/InvestmentManager";
-import { Settings, Palette, Database, Users, TrendingUp } from "lucide-react";
+import { Settings, Palette, Database, Users as UsersIcon, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import Users from "@/pages/Users";
 
 export default function Configuracoes() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -37,7 +38,7 @@ export default function Configuracoes() {
             Aparência
           </TabsTrigger>
           <TabsTrigger value="usuarios" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
+            <UsersIcon className="w-4 h-4" />
             Usuários
           </TabsTrigger>
           <TabsTrigger value="sistema" className="flex items-center gap-2">
@@ -95,16 +96,7 @@ export default function Configuracoes() {
         </TabsContent>
 
         <TabsContent value="usuarios" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gerenciamento de Usuários</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Configurações avançadas de usuários em breve...
-              </p>
-            </CardContent>
-          </Card>
+          <Users />
         </TabsContent>
 
         <TabsContent value="sistema" className="space-y-6">

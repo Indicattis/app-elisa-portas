@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AdminUser {
   id: string;
   email: string;
-  role: 'administrador' | 'atendente' | 'gerente_comercial' | 'gerente_fabril';
+  role: 'administrador' | 'atendente' | 'gerente_comercial' | 'gerente_fabril' | 'diretor' | 'gerente_marketing' | 'gerente_financeiro' | 'gerente_producao' | 'gerente_instalacoes' | 'instalador' | 'aux_instalador' | 'analista_marketing' | 'assistente_marketing' | 'coordenador_vendas' | 'vendedor' | 'assistente_administrativo' | 'soldador' | 'aux_geral' | 'pintor' | 'aux_pintura';
   created_at: string;
   ativo: boolean;
   nome: string;
