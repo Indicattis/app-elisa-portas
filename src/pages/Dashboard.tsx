@@ -277,148 +277,151 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Legendas das metas */}
-            <div className="w-full max-w-6xl mb-8">
-              <h3 className="text-xl font-bold text-foreground mb-4 text-center">Metas Individuais</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-amber-600 to-amber-500 rounded-full mb-2 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Vendedor Zeta</div>
-                    <div className="text-xs text-muted-foreground">R$ 300k - R$ 400k</div>
-                  </div>
-                </div>
+            {/* Container principal com ranking e legendas */}
+            <div className="w-full max-w-7xl flex gap-8">
+              {/* Lista de ranking */}
+              <div className="flex-1 space-y-4">
+                {vendedores.slice(0, 10).map((vendedor) => {
+                  const category = getVendedorCategory(vendedor.total);
+                  return (
+                    <div 
+                      key={`${vendedor.nome}-${vendedor.posicao}`}
+                      className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg"
+                    >
+                      <div className="flex items-center space-x-4">
+                        {/* Foto do vendedor com borda colorida */}
+                        <div className="relative">
+                          {vendedor.foto_perfil_url ? (
+                            <img 
+                              src={vendedor.foto_perfil_url} 
+                              alt={`Foto de ${vendedor.nome}`}
+                              className={`w-16 h-16 rounded-full object-cover border-4 ${category.border} shadow-md`}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                            {vendedor.nome.charAt(0).toUpperCase()}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h3 className="text-xl font-bold text-foreground">
+                            {vendedor.nome}
+                          </h3>
+                          <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${category.color}`}>
+                            Vendedor {category.name}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-foreground">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          }).format(vendedor.total)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
                 
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full mb-2 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                {vendedores.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-xl text-muted-foreground">Nenhuma venda registrada este mês</p>
                   </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Vendedor Beta</div>
-                    <div className="text-xs text-muted-foreground">R$ 400k - R$ 500k</div>
+                )}
+              </div>
+
+              {/* Legendas das metas - lado direito */}
+              <div className="w-80 bg-card rounded-lg p-6 border border-border shadow-lg">
+                <h3 className="text-lg font-bold text-foreground mb-4 text-center">Metas Individuais</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-amber-600 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Vendedor Zeta</div>
+                      <div className="text-xs text-muted-foreground">R$ 300k - R$ 400k</div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-full mb-2 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Vendedor Beta</div>
+                      <div className="text-xs text-muted-foreground">R$ 400k - R$ 500k</div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Vendedor Alfa</div>
-                    <div className="text-xs text-muted-foreground">R$ 500k - R$ 600k</div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Vendedor Alfa</div>
+                      <div className="text-xs text-muted-foreground">R$ 500k - R$ 600k</div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-full mb-2 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Vendedor Gama</div>
+                      <div className="text-xs text-muted-foreground">R$ 600k - R$ 800k</div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Vendedor Gama</div>
-                    <div className="text-xs text-muted-foreground">R$ 600k - R$ 800k</div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-purple-300 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Vendedor Omni</div>
+                      <div className="text-xs text-muted-foreground">R$ 800k - R$ 1M</div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-300 rounded-full mb-2 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-red-400 to-red-300 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Vendedor Ômega</div>
+                      <div className="text-xs text-muted-foreground">R$ 1M - R$ 1.5M</div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Vendedor Omni</div>
-                    <div className="text-xs text-muted-foreground">R$ 800k - R$ 1M</div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-slate-300 to-slate-100 rounded-full flex items-center justify-center flex-shrink-0 border border-slate-400">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Vendedor Orion</div>
+                      <div className="text-xs text-muted-foreground">Acima R$ 1.5M</div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-red-400 to-red-300 rounded-full mb-2 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Vendedor Ômega</div>
-                    <div className="text-xs text-muted-foreground">R$ 1M - R$ 1.5M</div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-slate-300 to-slate-100 rounded-full mb-2 flex items-center justify-center border border-slate-400">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Vendedor Orion</div>
-                    <div className="text-xs text-muted-foreground">Acima R$ 1.5M</div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
-                  <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full mb-2 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-sm">Iniciante</div>
-                    <div className="text-xs text-muted-foreground">Abaixo R$ 300k</div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-sm">Iniciante</div>
+                      <div className="text-xs text-muted-foreground">Abaixo R$ 300k</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Lista de ranking */}
-            <div className="w-full max-w-4xl space-y-4">
-              {vendedores.slice(0, 10).map((vendedor) => {
-                const category = getVendedorCategory(vendedor.total);
-                return (
-                  <div 
-                    key={`${vendedor.nome}-${vendedor.posicao}`}
-                    className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg"
-                  >
-                    <div className="flex items-center space-x-4">
-                      {/* Foto do vendedor com borda colorida */}
-                      <div className="relative">
-                        {vendedor.foto_perfil_url ? (
-                          <img 
-                            src={vendedor.foto_perfil_url} 
-                            alt={`Foto de ${vendedor.nome}`}
-                            className={`w-16 h-16 rounded-full object-cover border-4 ${category.border} shadow-md`}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
-                          {vendedor.nome.charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-foreground">
-                          {vendedor.nome}
-                        </h3>
-                        <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${category.color}`}>
-                          Vendedor {category.name}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-foreground">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0
-                        }).format(vendedor.total)}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              
-              {vendedores.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-xl text-muted-foreground">Nenhuma venda registrada este mês</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
