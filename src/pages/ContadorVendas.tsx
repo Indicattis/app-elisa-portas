@@ -5,13 +5,19 @@ import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 interface DiaVenda {
   id?: string;
   data: string; // ISO date string
+  valor: number;
+}
+
+interface VendaAtendente {
+  atendente_id: string;
+  nome: string;
   valor: number;
 }
 
@@ -38,6 +44,7 @@ export default function ContadorVendas() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [inputValor, setInputValor] = useState<string>("");
   const [viewMode, setViewMode] = useState<'year' | 'month'>('month');
+  const [vendasAtendentes, setVendasAtendentes] = useState<VendaAtendente[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -90,20 +97,36 @@ export default function ContadorVendas() {
     
     const iso = format(date, "yyyy-MM-dd");
     
-    // Buscar a venda específica do atendente para este dia
-    const { data: vendaAtendente, error } = await supabase
+    // Buscar todas as vendas dos atendentes para este dia
+    const { data: vendasDia, error } = await supabase
       .from("contador_vendas_dias")
-      .select("valor")
-      .eq("data", iso)
-      .eq("atendente_id", user.id)
-      .maybeSingle();
+      .select(`
+        atendente_id,
+        valor,
+        admin_users!atendente_id(nome)
+      `)
+      .eq("data", iso);
     
     if (error) {
-      console.error("Erro ao buscar venda do atendente:", error);
+      console.error("Erro ao buscar vendas do dia:", error);
     }
     
+    // Organizar dados dos atendentes
+    const vendasMap = new Map<string, VendaAtendente>();
+    vendasDia?.forEach((venda: any) => {
+      vendasMap.set(venda.atendente_id, {
+        atendente_id: venda.atendente_id,
+        nome: venda.admin_users?.nome || 'Atendente',
+        valor: venda.valor
+      });
+    });
+    
+    // Buscar a venda específica do usuário atual
+    const vendaUsuario = vendasMap.get(user.id);
+    
     setSelectedDate(date);
-    setInputValor(vendaAtendente ? String(vendaAtendente.valor).replace(".", ",") : "");
+    setInputValor(vendaUsuario ? String(vendaUsuario.valor).replace(".", ",") : "");
+    setVendasAtendentes(Array.from(vendasMap.values()));
     setOpen(true);
   };
 
@@ -297,21 +320,46 @@ export default function ContadorVendas() {
       </aside>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Valor do dia {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : ""}</DialogTitle>
+            <DialogTitle>Vendas do dia {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : ""}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Valor (R$)</label>
-            <Input
-              value={inputValor}
-              onChange={(e) => setInputValor(e.target.value)}
-              placeholder="Ex: 45.000,00"
-            />
+          
+          <div className="space-y-4">
+            {/* Vendas de outros atendentes (somente leitura) */}
+            {vendasAtendentes.filter(v => v.atendente_id !== user?.id).length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Vendas de outros atendentes:</label>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {vendasAtendentes
+                    .filter(v => v.atendente_id !== user?.id)
+                    .map((venda) => (
+                      <div key={venda.atendente_id} className="flex justify-between items-center p-2 bg-muted rounded">
+                        <span className="text-sm font-medium">{venda.nome}</span>
+                        <span className="text-sm">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Venda do usuário atual (editável) */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Sua venda (R$):</label>
+              <Input
+                value={inputValor}
+                onChange={(e) => setInputValor(e.target.value)}
+                placeholder="Ex: 45.000,00"
+                className="text-lg"
+              />
+            </div>
           </div>
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={saveValor}>Salvar</Button>
+            <Button onClick={saveValor}>Salvar Minha Venda</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
