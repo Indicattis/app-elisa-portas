@@ -18,6 +18,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Performance from "./pages/Performance";
 import Leads from "./pages/Leads";
 import LeadNovo from "./pages/LeadNovo";
 import Users from "./pages/Users";
@@ -182,6 +183,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Dashboard />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/performance"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Performance />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { 
@@ -17,6 +17,7 @@ import {
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Performance", href: "/dashboard/performance", icon: BarChart3 },
   { name: "Leads", href: "/dashboard/leads", icon: FileText },
   { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator },
   { name: "Pedidos", href: "/dashboard/pedidos", icon: FileText },

@@ -204,57 +204,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Gráfico de vendas diárias */}
-            <div className="w-full max-w-[95vw] md:max-w-6xl mt-8 md:mt-12 px-4">
-              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
-                Vendas Diárias do Mês
-              </h2>
-              <div className="bg-card rounded-lg p-6 shadow-lg">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="dia" 
-                      label={{ value: 'Dia do Mês', position: 'insideBottom', offset: -5 }}
-                    />
-                    <YAxis 
-                      label={{ value: 'Valor (R$)', angle: -90, position: 'insideLeft' }}
-                      tickFormatter={(value) => new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                      }).format(value)}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [
-                        new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        }).format(value),
-                        'Vendas'
-                      ]}
-                      labelFormatter={(label) => `Dia ${label}`}
-                    />
-                    {/* Linhas de referência para os marcos de valores */}
-                    <ReferenceLine y={20000} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
-                    <ReferenceLine y={50000} stroke="#eab308" strokeWidth={2} strokeDasharray="5 5" />
-                    <ReferenceLine y={75000} stroke="#22c55e" strokeWidth={2} strokeDasharray="5 5" />
-                    
-                    <Line 
-                      type="monotone" 
-                      dataKey="valor" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
           </div>
         </div>
 
