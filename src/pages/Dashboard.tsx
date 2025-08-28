@@ -277,6 +277,92 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Legendas das metas */}
+            <div className="w-full max-w-6xl mb-8">
+              <h3 className="text-xl font-bold text-foreground mb-4 text-center">Metas Individuais</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-amber-600 to-amber-500 rounded-full mb-2 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Vendedor Zeta</div>
+                    <div className="text-xs text-muted-foreground">R$ 300k - R$ 400k</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full mb-2 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Vendedor Beta</div>
+                    <div className="text-xs text-muted-foreground">R$ 400k - R$ 500k</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-full mb-2 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Vendedor Alfa</div>
+                    <div className="text-xs text-muted-foreground">R$ 500k - R$ 600k</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-full mb-2 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Vendedor Gama</div>
+                    <div className="text-xs text-muted-foreground">R$ 600k - R$ 800k</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-300 rounded-full mb-2 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Vendedor Omni</div>
+                    <div className="text-xs text-muted-foreground">R$ 800k - R$ 1M</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-red-400 to-red-300 rounded-full mb-2 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Vendedor Ômega</div>
+                    <div className="text-xs text-muted-foreground">R$ 1M - R$ 1.5M</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-slate-300 to-slate-100 rounded-full mb-2 flex items-center justify-center border border-slate-400">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Vendedor Orion</div>
+                    <div className="text-xs text-muted-foreground">Acima R$ 1.5M</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-3 rounded-lg bg-card border border-border">
+                  <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full mb-2 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/20 rounded-full"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-sm">Iniciante</div>
+                    <div className="text-xs text-muted-foreground">Abaixo R$ 300k</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Lista de ranking */}
             <div className="w-full max-w-4xl space-y-4">
               {vendedores.slice(0, 10).map((vendedor) => {
