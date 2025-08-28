@@ -39,6 +39,11 @@ export function usePermissions() {
 
       setUserRoles(roles || []);
       setRolePermissions(permissions || []);
+      
+      console.log('Permissões carregadas:', {
+        userRoles: roles || [],
+        rolePermissions: permissions || []
+      });
     } catch (error) {
       console.error('Erro ao carregar permissões:', error);
       toast({
