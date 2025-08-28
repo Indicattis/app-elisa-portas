@@ -151,15 +151,15 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-x-hidden w-full max-w-full">
       {/* Slide Container */}
       <div 
-        className="flex transition-transform duration-1000 ease-in-out"
+        className="flex transition-transform duration-1000 ease-in-out w-full"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {/* Slide 1: Faturamento */}
-        <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8">
+        <div className="min-w-full flex-shrink-0 w-full max-w-full">
+          <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
             {/* Logo */}
             <div className="mt-8">
               <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -169,7 +169,7 @@ export default function Dashboard() {
             <h1 className="text-6xl font-bold text-foreground">Faturamento</h1>
             
             {/* Contador das vendas do mês */}
-            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-12 py-8 w-full max-w-4xl flex items-center justify-center" style={{
+            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-full max-w-[95vw] md:max-w-4xl flex items-center justify-center mx-auto" style={{
               height: '120px'
             }}>
               <div className="text-center">
@@ -205,7 +205,7 @@ export default function Dashboard() {
             </div>
 
             {/* Gráfico de vendas diárias */}
-            <div className="w-full max-w-6xl mt-12">
+            <div className="w-full max-w-[95vw] md:max-w-6xl mt-8 md:mt-12 px-4">
               <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
                 Vendas Diárias do Mês
               </h2>
@@ -259,8 +259,8 @@ export default function Dashboard() {
         </div>
 
         {/* Slide 2: Ranking */}
-        <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8">
+        <div className="min-w-full flex-shrink-0 w-full max-w-full">
+          <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
             {/* Logo */}
             <div className="mt-8">
               <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -278,46 +278,46 @@ export default function Dashboard() {
             </div>
 
             {/* Container principal com ranking e legendas */}
-            <div className="w-full max-w-7xl flex gap-8">
+            <div className="w-full max-w-[95vw] xl:max-w-7xl flex flex-col xl:flex-row gap-6 xl:gap-8 overflow-x-hidden px-4">
               {/* Lista de ranking */}
-              <div className="flex-1 space-y-4">
+              <div className="flex-1 space-y-4 min-w-0">
                 {vendedores.slice(0, 10).map((vendedor) => {
                   const category = getVendedorCategory(vendedor.total);
                   return (
                     <div 
                       key={`${vendedor.nome}-${vendedor.posicao}`}
-                      className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg"
+                      className="flex items-center justify-between p-8 rounded-lg bg-card border border-border shadow-lg"
                     >
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-6">
                         {/* Foto do vendedor com borda colorida */}
                         <div className="relative">
                           {vendedor.foto_perfil_url ? (
                             <img 
                               src={vendedor.foto_perfil_url} 
                               alt={`Foto de ${vendedor.nome}`}
-                              className={`w-16 h-16 rounded-full object-cover border-4 ${category.border} shadow-md`}
+                              className={`w-24 h-24 2xl:w-32 2xl:h-32 rounded-full object-cover border-4 ${category.border} shadow-md`}
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                                 (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                               }}
                             />
                           ) : null}
-                          <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                          <div className={`w-24 h-24 2xl:w-32 2xl:h-32 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-2xl 2xl:text-3xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
                             {vendedor.nome.charAt(0).toUpperCase()}
                           </div>
                         </div>
                         
                         <div className="space-y-2">
-                          <h3 className="text-xl font-bold text-foreground">
+                          <h3 className="text-2xl 2xl:text-4xl font-bold text-foreground">
                             {vendedor.nome}
                           </h3>
-                          <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${category.color}`}>
+                          <div className={`inline-block px-4 py-2 rounded-full text-lg 2xl:text-xl font-semibold text-white bg-gradient-to-r ${category.color}`}>
                             Vendedor {category.name}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-foreground">
+                        <div className="text-3xl 2xl:text-5xl font-bold text-foreground">
                           {new Intl.NumberFormat('pt-BR', {
                             style: 'currency',
                             currency: 'BRL',
@@ -338,76 +338,76 @@ export default function Dashboard() {
               </div>
 
               {/* Legendas das metas - lado direito */}
-              <div className="w-80 bg-card rounded-lg p-6 border border-border shadow-lg">
-                <h3 className="text-lg font-bold text-foreground mb-4 text-center">Metas Individuais</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-10 h-10" />
+              <div className="w-full xl:w-80 xl:max-w-96 2xl:w-[26rem] bg-card rounded-lg p-4 xl:p-6 2xl:p-8 border border-border shadow-lg flex-shrink-0">
+                <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground mb-6 text-center">Metas Individuais</h3>
+                <div className="space-y-4 2xl:space-y-6">
+                  <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
+                    <div className="w-16 h-16 2xl:w-20 2xl:h-20 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-16 h-16 2xl:w-20 2xl:h-20" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">Vendedor Zeta</div>
-                      <div className="text-xs text-muted-foreground">R$ 300k - R$ 400k</div>
+                      <div className="font-semibold text-lg 2xl:text-xl">Vendedor Zeta</div>
+                      <div className="text-base 2xl:text-lg text-muted-foreground">R$ 300k - R$ 400k</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-10 h-10" />
+                  <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
+                    <div className="w-16 h-16 2xl:w-20 2xl:h-20 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-16 h-16 2xl:w-20 2xl:h-20" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">Vendedor Beta</div>
-                      <div className="text-xs text-muted-foreground">R$ 400k - R$ 500k</div>
+                      <div className="font-semibold text-lg 2xl:text-xl">Vendedor Beta</div>
+                      <div className="text-base 2xl:text-lg text-muted-foreground">R$ 400k - R$ 500k</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-10 h-10" />
+                  <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
+                    <div className="w-16 h-16 2xl:w-20 2xl:h-20 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-16 h-16 2xl:w-20 2xl:h-20" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">Vendedor Alfa</div>
-                      <div className="text-xs text-muted-foreground">R$ 500k - R$ 600k</div>
+                      <div className="font-semibold text-lg 2xl:text-xl">Vendedor Alfa</div>
+                      <div className="text-base 2xl:text-lg text-muted-foreground">R$ 500k - R$ 600k</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-10 h-10" />
+                  <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
+                    <div className="w-16 h-16 2xl:w-20 2xl:h-20 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-16 h-16 2xl:w-20 2xl:h-20" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">Vendedor Gama</div>
-                      <div className="text-xs text-muted-foreground">R$ 600k - R$ 800k</div>
+                      <div className="font-semibold text-lg 2xl:text-xl">Vendedor Gama</div>
+                      <div className="text-base 2xl:text-lg text-muted-foreground">R$ 600k - R$ 800k</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-10 h-10" />
+                  <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
+                    <div className="w-16 h-16 2xl:w-20 2xl:h-20 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-16 h-16 2xl:w-20 2xl:h-20" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">Vendedor Omni</div>
-                      <div className="text-xs text-muted-foreground">R$ 800k - R$ 1M</div>
+                      <div className="font-semibold text-lg 2xl:text-xl">Vendedor Omni</div>
+                      <div className="text-base 2xl:text-lg text-muted-foreground">R$ 800k - R$ 1M</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-10 h-10" />
+                  <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
+                    <div className="w-16 h-16 2xl:w-20 2xl:h-20 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-16 h-16 2xl:w-20 2xl:h-20" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">Vendedor Ômega</div>
-                      <div className="text-xs text-muted-foreground">R$ 1M - R$ 1.5M</div>
+                      <div className="font-semibold text-lg 2xl:text-xl">Vendedor Ômega</div>
+                      <div className="text-base 2xl:text-lg text-muted-foreground">R$ 1M - R$ 1.5M</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-10 h-10" />
+                  <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
+                    <div className="w-16 h-16 2xl:w-20 2xl:h-20 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-16 h-16 2xl:w-20 2xl:h-20" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">Vendedor Orion</div>
-                      <div className="text-xs text-muted-foreground">Acima R$ 1.5M</div>
+                      <div className="font-semibold text-lg 2xl:text-xl">Vendedor Orion</div>
+                      <div className="text-base 2xl:text-lg text-muted-foreground">Acima R$ 1.5M</div>
                     </div>
                   </div>
                   
