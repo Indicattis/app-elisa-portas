@@ -1946,6 +1946,7 @@ export type Database = {
         | "visitas"
         | "organograma"
         | "users"
+        | "contador_vendas"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -2128,6 +2129,7 @@ export const Constants = {
         "visitas",
         "organograma",
         "users",
+        "contador_vendas",
       ],
       lead_status: [
         "aguardando_atendimento",
