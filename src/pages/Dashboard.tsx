@@ -170,18 +170,55 @@ export default function Dashboard() {
       border: 'border-slate-500'
     };
   };
-
-  const getAllCategories = () => [
-    { name: 'Iniciante', minValue: 0, maxValue: 300000, color: 'from-slate-500 to-slate-400', border: 'border-slate-500' },
-    { name: 'Zeta', minValue: 300000, maxValue: 400000, color: 'from-amber-600 to-amber-500', border: 'border-amber-600' },
-    { name: 'Beta', minValue: 400000, maxValue: 500000, color: 'from-gray-400 to-gray-300', border: 'border-gray-400' },
-    { name: 'Alfa', minValue: 500000, maxValue: 600000, color: 'from-yellow-400 to-yellow-300', border: 'border-yellow-400' },
-    { name: 'Gama', minValue: 600000, maxValue: 800000, color: 'from-emerald-400 to-emerald-300', border: 'border-emerald-400' },
-    { name: 'Omni', minValue: 800000, maxValue: 1000000, color: 'from-purple-400 to-purple-300', border: 'border-purple-400' },
-    { name: 'Ômega', minValue: 1000000, maxValue: 1500000, color: 'from-red-400 to-red-300', border: 'border-red-400' },
-    { name: 'Orion', minValue: 1500000, maxValue: Infinity, color: 'from-slate-300 to-slate-100', border: 'border-slate-300' }
-  ];
-
+  const getAllCategories = () => [{
+    name: 'Iniciante',
+    minValue: 0,
+    maxValue: 300000,
+    color: 'from-slate-500 to-slate-400',
+    border: 'border-slate-500'
+  }, {
+    name: 'Zeta',
+    minValue: 300000,
+    maxValue: 400000,
+    color: 'from-amber-600 to-amber-500',
+    border: 'border-amber-600'
+  }, {
+    name: 'Beta',
+    minValue: 400000,
+    maxValue: 500000,
+    color: 'from-gray-400 to-gray-300',
+    border: 'border-gray-400'
+  }, {
+    name: 'Alfa',
+    minValue: 500000,
+    maxValue: 600000,
+    color: 'from-yellow-400 to-yellow-300',
+    border: 'border-yellow-400'
+  }, {
+    name: 'Gama',
+    minValue: 600000,
+    maxValue: 800000,
+    color: 'from-emerald-400 to-emerald-300',
+    border: 'border-emerald-400'
+  }, {
+    name: 'Omni',
+    minValue: 800000,
+    maxValue: 1000000,
+    color: 'from-purple-400 to-purple-300',
+    border: 'border-purple-400'
+  }, {
+    name: 'Ômega',
+    minValue: 1000000,
+    maxValue: 1500000,
+    color: 'from-red-400 to-red-300',
+    border: 'border-red-400'
+  }, {
+    name: 'Orion',
+    minValue: 1500000,
+    maxValue: Infinity,
+    color: 'from-slate-300 to-slate-100',
+    border: 'border-slate-300'
+  }];
   return <div className="min-h-screen relative overflow-hidden">
       {/* Slide Container */}
       <div className="flex transition-transform duration-1000 ease-in-out" style={{
@@ -235,14 +272,7 @@ export default function Dashboard() {
             </div>
 
             {/* Gráfico de vendas diárias */}
-            <div className="w-full max-w-6xl mt-12">
-              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
-                Vendas Diárias do Mês
-              </h2>
-              <div className="bg-card rounded-lg p-6 shadow-lg">
-                
-              </div>
-            </div>
+            
           </div>
         </div>
 
@@ -341,29 +371,19 @@ export default function Dashboard() {
             <div className="w-full max-w-7xl mt-12">
               <div className="flex justify-center items-end gap-8 h-96">
                 {getAllCategories().map((category, index) => {
-                  const vendedoresNaCategoria = vendedores.filter(v => {
-                    if (category.name === 'Orion') return v.total >= category.minValue;
-                    return v.total >= category.minValue && v.total < category.maxValue;
-                  });
-                  
-                  return (
-                    <div key={category.name} className="flex flex-col items-center">
+                const vendedoresNaCategoria = vendedores.filter(v => {
+                  if (category.name === 'Orion') return v.total >= category.minValue;
+                  return v.total >= category.minValue && v.total < category.maxValue;
+                });
+                return <div key={category.name} className="flex flex-col items-center">
                       {/* Fotos dos vendedores */}
                       <div className="flex flex-col gap-2 mb-4 h-64 justify-end">
-                        {vendedoresNaCategoria.map((vendedor, vendedorIndex) => (
-                          <div key={vendedor.nome} className="flex flex-col items-center">
+                        {vendedoresNaCategoria.map((vendedor, vendedorIndex) => <div key={vendedor.nome} className="flex flex-col items-center">
                             <div className="relative">
-                              {vendedor.foto_perfil_url ? (
-                                <img 
-                                  src={vendedor.foto_perfil_url} 
-                                  alt={`Foto de ${vendedor.nome}`} 
-                                  className={`w-12 h-12 rounded-full object-cover border-3 ${category.border} shadow-md`}
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                    (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
-                                  }}
-                                />
-                              ) : null}
+                              {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-12 h-12 rounded-full object-cover border-3 ${category.border} shadow-md`} onError={e => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                        }} /> : null}
                               <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-sm shadow-md border-3 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
                                 {vendedor.nome.charAt(0).toUpperCase()}
                               </div>
@@ -371,8 +391,7 @@ export default function Dashboard() {
                             <span className="text-xs text-foreground mt-1 text-center max-w-16 truncate">
                               {vendedor.nome}
                             </span>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
                       
                       {/* Imagem da categoria */}
@@ -384,25 +403,17 @@ export default function Dashboard() {
                         {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-16 h-16" />}
                         {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-16 h-16" />}
                         {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-16 h-16" />}
-                        {category.name === 'Iniciante' && (
-                          <div className="w-16 h-16 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full flex items-center justify-center">
+                        {category.name === 'Iniciante' && <div className="w-16 h-16 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full flex items-center justify-center">
                             <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-                          </div>
-                        )}
+                          </div>}
                       </div>
                       
                       {/* Labels das faixas de valores */}
                       <div className="text-xs text-muted-foreground text-center mt-2 max-w-20">
-                        {category.name === 'Orion' 
-                          ? 'Acima R$ 1.5M'
-                          : category.name === 'Iniciante'
-                          ? 'Abaixo R$ 300k'
-                          : `R$ ${(category.minValue / 1000).toFixed(0)}k - R$ ${(category.maxValue / 1000).toFixed(0)}k`
-                        }
+                        {category.name === 'Orion' ? 'Acima R$ 1.5M' : category.name === 'Iniciante' ? 'Abaixo R$ 300k' : `R$ ${(category.minValue / 1000).toFixed(0)}k - R$ ${(category.maxValue / 1000).toFixed(0)}k`}
                       </div>
-                    </div>
-                  );
-                })}
+                    </div>;
+              })}
               </div>
             </div>
           </div>
