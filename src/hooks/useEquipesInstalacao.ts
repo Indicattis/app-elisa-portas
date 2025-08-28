@@ -96,6 +96,27 @@ export function useEquipesInstalacao() {
 
   useEffect(() => {
     fetchEquipes();
+
+    // Setup real-time subscription
+    const channel = supabase
+      .channel('equipes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'equipes_instalacao'
+        },
+        (payload) => {
+          console.log('Equipe changed:', payload);
+          fetchEquipes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {

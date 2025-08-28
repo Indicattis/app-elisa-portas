@@ -119,6 +119,27 @@ export function usePontosInstalacao(semanaInicio: Date) {
 
   useEffect(() => {
     fetchPontos();
+
+    // Setup real-time subscription
+    const channel = supabase
+      .channel('pontos-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pontos_instalacao'
+        },
+        (payload) => {
+          console.log('Ponto changed:', payload);
+          fetchPontos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [semanaInicio]);
 
   return {

@@ -9,6 +9,7 @@ import { CelulaDia } from "./CelulaDia";
 
 interface CronogramaInstalacaoProps {
   currentWeek: Date;
+  onEditPonto: (ponto: any) => void;
 }
 
 const DIAS_SEMANA = [
@@ -21,7 +22,7 @@ const DIAS_SEMANA = [
   { label: "Domingo", value: 0 },
 ];
 
-export function CronogramaInstalacao({ currentWeek }: CronogramaInstalacaoProps) {
+export function CronogramaInstalacao({ currentWeek, onEditPonto }: CronogramaInstalacaoProps) {
   const { equipes } = useEquipesInstalacao();
   const { pontos, updatePonto, deletePonto } = usePontosInstalacao(currentWeek);
   const { draggedItem, handleDragStart, handleDragEnd } = useDragAndDrop();
@@ -93,6 +94,7 @@ export function CronogramaInstalacao({ currentWeek }: CronogramaInstalacaoProps)
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                         onDelete={() => deletePonto(ponto.id)}
+                        onEdit={() => onEditPonto(ponto)}
                       />
                     ))}
                   </CelulaDia>

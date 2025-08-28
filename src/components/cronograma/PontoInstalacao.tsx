@@ -15,6 +15,7 @@ interface PontoInstalacaoProps {
   onDragStart: (item: { id: string; equipId: string; cidade: string }) => void;
   onDragEnd: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 }
 
 export function PontoInstalacao({ 
@@ -22,7 +23,8 @@ export function PontoInstalacao({
   cor, 
   onDragStart, 
   onDragEnd, 
-  onDelete 
+  onDelete,
+  onEdit 
 }: PontoInstalacaoProps) {
   const handleDragStart = (e: React.DragEvent) => {
     onDragStart({
@@ -39,6 +41,11 @@ export function PontoInstalacao({
       onDragEnd={onDragEnd}
       className="group relative bg-card border border-border rounded-md p-2 mb-2 cursor-move hover:shadow-sm transition-shadow"
       style={{ borderLeftColor: cor, borderLeftWidth: '3px' }}
+      onDoubleClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onEdit();
+      }}
     >
       <div className="text-sm font-medium">{ponto.cidade}</div>
       {ponto.observacoes && (
