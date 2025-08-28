@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Shield, UserCheck } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { 
@@ -32,9 +32,6 @@ const navigation = [
   { name: "Calendário", href: "/dashboard/calendario", icon: CalendarDays },
   { name: "Contador de vendas", href: "/dashboard/contador-vendas", icon: DollarSign },
   { name: "Autorizados", href: "/dashboard/autorizados", icon: Users, adminOnly: true },
-  
-  { name: "Usuários", href: "/dashboard/permissoes/usuarios", icon: UserCheck, adminOnly: true },
-  { name: "Roles & Permissões", href: "/dashboard/permissoes/roles", icon: Shield, adminOnly: true },
 ];
 
 export function AppSidebar() {

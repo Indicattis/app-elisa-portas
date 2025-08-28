@@ -51,8 +51,6 @@ import AutorizadoNovo from "./pages/AutorizadoNovo";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
 import Pedidos from "./pages/Pedidos";
-import PermissoesUsuarios from "./pages/PermissoesUsuarios";
-import PermissoesRoles from "./pages/PermissoesRoles";
 import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
 import OrdemPinturaEdit from "./pages/OrdemPinturaEdit";
 import OrdemSeparacaoEdit from "./pages/OrdemSeparacaoEdit";
@@ -539,26 +537,6 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <OrdemInstalacaoEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/permissoes/usuarios"
-                  element={
-                    <ProtectedRoute requireAdmin={true}>
-                      <DashboardLayout>
-                        <PermissoesUsuarios />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/permissoes/roles"
-                  element={
-                    <ProtectedRoute requireAdmin={true}>
-                      <DashboardLayout>
-                        <PermissoesRoles />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
