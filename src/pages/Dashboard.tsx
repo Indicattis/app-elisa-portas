@@ -16,6 +16,7 @@ interface VendedorRanking {
   nome: string;
   total: number;
   posicao: number;
+  foto_perfil_url?: string;
 }
 export default function Dashboard() {
   const [vendas, setVendas] = useState<Record<string, DiaVenda>>({});
@@ -76,7 +77,7 @@ export default function Dashboard() {
       .select(`
         atendente_id,
         valor,
-        admin_users!atendente_id(nome)
+        admin_users!atendente_id(nome, foto_perfil_url)
       `)
       .gte("data", `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`)
       .lte("data", `${currentYear}-${currentMonth.toString().padStart(2, '0')}-31`);
@@ -87,13 +88,15 @@ export default function Dashboard() {
     }
 
     // Agregar vendas por vendedor
-    const vendedoresMap = new Map<string, { nome: string; total: number }>();
+    const vendedoresMap = new Map<string, { nome: string; total: number; foto_perfil_url?: string }>();
     
     data?.forEach((venda: any) => {
       const nome = venda.admin_users?.nome || 'Vendedor';
-      const existing = vendedoresMap.get(venda.atendente_id) || { nome, total: 0 };
+      const foto_perfil_url = venda.admin_users?.foto_perfil_url;
+      const existing = vendedoresMap.get(venda.atendente_id) || { nome, total: 0, foto_perfil_url };
       vendedoresMap.set(venda.atendente_id, {
         nome,
+        foto_perfil_url,
         total: existing.total + Number(venda.valor)
       });
     });
@@ -280,6 +283,25 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center space-x-4">
                       {getRankingIcon(vendedor.posicao)}
+                      
+                      {/* Foto do vendedor */}
+                      <div className="relative">
+                        {vendedor.foto_perfil_url ? (
+                          <img 
+                            src={vendedor.foto_perfil_url} 
+                            alt={`Foto de ${vendedor.nome}`}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-lg shadow-md ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                          {vendedor.nome.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      
                       <div>
                         <h3 className={`text-xl font-bold ${vendedor.posicao <= 3 ? 'text-gray-800' : 'text-foreground'}`}>
                           {vendedor.nome}
