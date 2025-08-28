@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
@@ -35,14 +35,14 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
-  const { isAdmin } = useAuth();
+  const { hasPermission } = useUserPermissions();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isAdmin) {
+    if (hasPermission('users')) {
       fetchUsers();
     }
-  }, [isAdmin]);
+  }, [hasPermission]);
 
   const fetchUsers = async () => {
     try {
@@ -143,13 +143,13 @@ export default function Users() {
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!isAdmin) {
+  if (!hasPermission('users')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Acesso Restrito</h1>
           <p className="text-muted-foreground">
-            Esta página requer permissões de administrador.
+            Você não tem permissão para acessar esta página.
           </p>
         </div>
       </div>

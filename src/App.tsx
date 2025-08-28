@@ -153,7 +153,7 @@ function HeaderUserInfo() {
       </div>
       
       <div className="flex items-center gap-1">
-        {(isAdmin || hasPermission('configuracoes')) && (
+        {hasPermission('configuracoes') && (
           <Button variant="ghost" size="sm" asChild>
             <NavLink to="/dashboard/configuracoes">
               <Settings className="h-4 w-4" />

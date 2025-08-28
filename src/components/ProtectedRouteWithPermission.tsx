@@ -44,7 +44,7 @@ export function ProtectedRouteWithPermission({
     );
   }
 
-  if (isAdmin || hasPermission(permission)) {
+  if (hasPermission(permission)) {
     return <>{children}</>;
   }
 

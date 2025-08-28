@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { useToast } from '@/hooks/use-toast';
 import UserNode from '@/components/organograma/UserNode';
 import { Save, Download, Upload } from 'lucide-react';
@@ -32,7 +33,8 @@ interface AdminUser {
 }
 
 export default function Organograma() {
-  const { isAdmin, user } = useAuth();
+  const { user } = useAuth();
+  const { hasPermission } = useUserPermissions();
   const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -41,10 +43,10 @@ export default function Organograma() {
   const [connectionMode, setConnectionMode] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (hasPermission('organograma')) {
       fetchUsers();
     }
-  }, [isAdmin]);
+  }, [hasPermission]);
 
   const handleStartConnection = useCallback((sourceNodeId: string) => {
     setConnectionMode(sourceNodeId);
@@ -290,7 +292,7 @@ export default function Organograma() {
     [setEdges, edges, toast]
   );
 
-  if (!isAdmin) {
+  if (!hasPermission('organograma')) {
     return (
       <div className="p-6">
         <div className="text-center">
@@ -298,7 +300,7 @@ export default function Organograma() {
             Acesso Negado
           </h1>
           <p className="text-muted-foreground mt-2">
-            Apenas administradores podem acessar o organograma.
+            Você não tem permissão para acessar o organograma.
           </p>
         </div>
       </div>

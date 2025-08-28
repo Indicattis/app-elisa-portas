@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useNavigate } from "react-router-dom";
 import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -117,16 +117,16 @@ export default function Faturamento() {
   const [filterResgate, setFilterResgate] = useState("todos");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const { isAdmin, userRole } = useAuth();
+  const { hasPermission } = useUserPermissions();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAdmin || userRole?.role === 'gerente_comercial') {
+    if (hasPermission('faturamento')) {
       fetchVendas();
       fetchStats();
     }
-  }, [isAdmin, userRole, dateRange]);
+  }, [hasPermission, dateRange]);
 
   const fetchVendas = async () => {
     try {
@@ -371,13 +371,13 @@ export default function Faturamento() {
 
   const anos = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  if (!isAdmin && userRole?.role !== 'gerente_comercial') {
+  if (!hasPermission('faturamento')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Acesso Restrito</h1>
           <p className="text-muted-foreground">
-            Esta página requer permissões de administrador ou gerente comercial.
+            Você não tem permissão para acessar esta página.
           </p>
         </div>
       </div>
@@ -737,18 +737,18 @@ export default function Faturamento() {
                           )}
                         </TableCell>
                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {(isAdmin || userRole?.role === 'gerente_comercial') && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
-                                  title="Editar venda"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                              )}
-                              {isAdmin && (
+                             <div className="flex items-center gap-2">
+                               {hasPermission('vendas') && (
+                                 <Button 
+                                   variant="ghost" 
+                                   size="sm"
+                                   onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                                   title="Editar venda"
+                                 >
+                                   <Edit className="w-4 h-4" />
+                                 </Button>
+                               )}
+                               {hasPermission('users') && (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button variant="ghost" size="sm" title="Excluir venda">

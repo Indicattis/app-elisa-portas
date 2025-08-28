@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TrendingUp, DollarSign, Users, Target, Plus, BarChart3, Edit } from "lucide-react";
@@ -81,7 +81,7 @@ interface RegionPerformanceData {
 }
 
 export default function Marketing() {
-  const { isAdmin, isGerenteComercial } = useAuth();
+  const { hasPermission } = useUserPermissions();
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfYear(new Date()),
@@ -121,7 +121,7 @@ export default function Marketing() {
   });
 
   // Verificar permissões
-  if (!isAdmin && !isGerenteComercial) {
+  if (!hasPermission('marketing')) {
     return (
       <div className="p-6">
         <div className="text-center">
