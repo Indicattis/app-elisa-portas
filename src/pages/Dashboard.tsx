@@ -169,16 +169,14 @@ export default function Dashboard() {
             <h1 className="text-6xl font-bold text-foreground">Faturamento</h1>
             
             {/* Contador das vendas do mês */}
-            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-full max-w-[95vw] md:max-w-4xl flex items-center justify-center mx-auto" style={{
-              height: '120px'
-            }}>
+            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-[50vw] h-[25vh] flex items-center justify-center mx-auto">
               <div className="text-center">
                 {loading ? (
-                  <div className="text-7xl font-impact font-medium text-white">
+                  <div className="text-8xl md:text-9xl font-impact font-medium text-white">
                     Carregando...
                   </div>
                 ) : (
-                  <div className="text-7xl font-impact font-medium text-white">
+                  <div className="text-8xl md:text-9xl font-impact font-medium text-white">
                     {new Intl.NumberFormat('pt-BR', {
                       style: 'currency',
                       currency: 'BRL',
