@@ -343,7 +343,7 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/a669dea2-19db-4afa-95c5-080cdd2478bc.png" alt="Vendedor Zeta" className="w-10 h-10" />
+                      <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Zeta</div>
@@ -353,7 +353,7 @@ export default function Dashboard() {
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/fc89f20f-1719-46b8-ab7f-d030f9b131e8.png" alt="Vendedor Beta" className="w-10 h-10" />
+                      <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Beta</div>
@@ -363,7 +363,7 @@ export default function Dashboard() {
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/5fc003b3-130c-459d-a6c5-065079f8ebfa.png" alt="Vendedor Alfa" className="w-10 h-10" />
+                      <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Alfa</div>
@@ -373,7 +373,7 @@ export default function Dashboard() {
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/3a33890a-a441-4325-9964-fb8e6233231a.png" alt="Vendedor Gama" className="w-10 h-10" />
+                      <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Gama</div>
@@ -383,7 +383,7 @@ export default function Dashboard() {
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/ed3ca0c7-c5c8-4603-a066-254a0810208b.png" alt="Vendedor Omni" className="w-10 h-10" />
+                      <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Omni</div>
@@ -393,7 +393,7 @@ export default function Dashboard() {
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/3d50ad11-f33f-42e8-a3ab-46672e7610c5.png" alt="Vendedor Ômega" className="w-10 h-10" />
+                      <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Ômega</div>
@@ -403,7 +403,7 @@ export default function Dashboard() {
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <img src="/lovable-uploads/834b83ea-a6d2-4c65-861e-a75e653aa247.png" alt="Vendedor Orion" className="w-10 h-10" />
+                      <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Orion</div>
