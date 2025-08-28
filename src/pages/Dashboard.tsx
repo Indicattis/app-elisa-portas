@@ -125,7 +125,8 @@ export default function Dashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-  return <div className="min-h-screen relative overflow-hidden">
+  return (
+    <div className="min-h-screen relative overflow-hidden">
       {/* Slide Container */}
       <div className="flex transition-transform duration-1000 ease-in-out" style={{
       transform: `translateX(-${currentSlide * 100}%)`
@@ -177,8 +178,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Gráfico de vendas diárias */}
-            
           </div>
         </div>
 
@@ -294,5 +293,6 @@ export default function Dashboard() {
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {[0, 1, 2].map(index => <button key={index} onClick={() => setCurrentSlide(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
-    </div>;
+    </div>
+  );
 }
