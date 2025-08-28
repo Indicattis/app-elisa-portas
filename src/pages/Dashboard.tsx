@@ -151,15 +151,15 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden">
+    <div className="min-h-screen relative overflow-x-hidden w-screen max-w-full">
       {/* Slide Container */}
       <div 
-        className="flex transition-transform duration-1000 ease-in-out"
+        className="flex transition-transform duration-1000 ease-in-out w-full"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {/* Slide 1: Faturamento */}
-        <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8">
+        <div className="min-w-full flex-shrink-0 w-screen max-w-full">
+          <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
             {/* Logo */}
             <div className="mt-8">
               <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -169,7 +169,7 @@ export default function Dashboard() {
             <h1 className="text-6xl font-bold text-foreground">Faturamento</h1>
             
             {/* Contador das vendas do mês */}
-            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-12 py-8 w-full max-w-4xl flex items-center justify-center" style={{
+            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-full max-w-[95vw] md:max-w-4xl flex items-center justify-center mx-4" style={{
               height: '120px'
             }}>
               <div className="text-center">
@@ -205,7 +205,7 @@ export default function Dashboard() {
             </div>
 
             {/* Gráfico de vendas diárias */}
-            <div className="w-full max-w-6xl mt-12">
+            <div className="w-full max-w-[95vw] md:max-w-6xl mt-8 md:mt-12 px-4">
               <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
                 Vendas Diárias do Mês
               </h2>
@@ -259,8 +259,8 @@ export default function Dashboard() {
         </div>
 
         {/* Slide 2: Ranking */}
-        <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8">
+        <div className="min-w-full flex-shrink-0 w-screen max-w-full">
+          <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
             {/* Logo */}
             <div className="mt-8">
               <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -278,7 +278,7 @@ export default function Dashboard() {
             </div>
 
             {/* Container principal com ranking e legendas */}
-            <div className="w-full max-w-7xl flex gap-8 overflow-x-hidden">
+            <div className="w-full max-w-[95vw] xl:max-w-7xl flex flex-col xl:flex-row gap-6 xl:gap-8 overflow-x-hidden px-4">
               {/* Lista de ranking */}
               <div className="flex-1 space-y-4 min-w-0">
                 {vendedores.slice(0, 10).map((vendedor) => {
@@ -338,7 +338,7 @@ export default function Dashboard() {
               </div>
 
               {/* Legendas das metas - lado direito */}
-              <div className="w-80 xl:w-96 2xl:w-[26rem] bg-card rounded-lg p-6 xl:p-8 2xl:p-10 border border-border shadow-lg flex-shrink-0">
+              <div className="w-full xl:w-80 xl:max-w-96 2xl:w-[26rem] bg-card rounded-lg p-4 xl:p-6 2xl:p-8 border border-border shadow-lg flex-shrink-0">
                 <h3 className="text-2xl 2xl:text-3xl font-bold text-foreground mb-6 text-center">Metas Individuais</h3>
                 <div className="space-y-4 2xl:space-y-6">
                   <div className="flex items-center gap-4 p-3 2xl:p-4 rounded-lg">
