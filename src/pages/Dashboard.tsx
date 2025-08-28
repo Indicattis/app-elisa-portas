@@ -226,9 +226,9 @@ export default function Dashboard() {
     }}>
         {/* Slide 1: Faturamento */}
         <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8">
+          <div className="min-h-screen flex flex-col items-center justify-center p-6 space-y-8">
             {/* Logo */}
-            <div className="mt-8">
+            <div>
               <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
             </div>
             
@@ -278,25 +278,7 @@ export default function Dashboard() {
 
         {/* Slide 2: Ranking */}
         <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8">
-            {/* Logo */}
-            <div className="mt-8">
-              <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
-            </div>
-            
-            {/* Título Ranking */}
-            <h1 className="text-6xl font-bold text-foreground">Ranking</h1>
-            <h2 className="text-2xl text-muted-foreground">Melhores Vendedores do Mês</h2>
-            
-            {/* Data atual */}
-            <div className="text-center text-muted-foreground">
-              <div className="text-xl font-semibold">
-                {format(today, "MMMM 'de' yyyy", {
-                locale: ptBR
-              })}
-              </div>
-            </div>
-
+          <div className="min-h-screen flex flex-col items-center justify-center p-6">
             {/* Container principal com ranking */}
             <div className="w-full max-w-4xl">
               {/* Lista de ranking */}
@@ -348,25 +330,7 @@ export default function Dashboard() {
 
         {/* Slide 3: Metas Individuais Chart */}
         <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8">
-            {/* Logo */}
-            <div className="mt-8">
-              <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
-            </div>
-            
-            {/* Título */}
-            <h1 className="text-6xl font-bold text-foreground">Metas Individuais</h1>
-            <h2 className="text-2xl text-muted-foreground">Posição dos Vendedores</h2>
-            
-            {/* Data atual */}
-            <div className="text-center text-muted-foreground">
-              <div className="text-xl font-semibold">
-                {format(today, "MMMM 'de' yyyy", {
-                locale: ptBR
-              })}
-              </div>
-            </div>
-
+          <div className="min-h-screen flex flex-col items-center justify-center p-6">
             {/* Chart Layout */}
             <div className="w-full max-w-7xl mt-12">
               <div className="flex justify-center items-end gap-8 h-96">
