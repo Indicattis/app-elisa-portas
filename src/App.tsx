@@ -6,8 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRouteWithPermission } from "@/components/ProtectedRouteWithPermission";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -124,6 +126,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 function HeaderUserInfo() {
   const { user, userRole, isAdmin, signOut } = useAuth();
+  const { hasPermission } = useUserPermissions();
 
   if (!user) return null;
 
@@ -149,7 +152,7 @@ function HeaderUserInfo() {
       </div>
       
       <div className="flex items-center gap-1">
-        {isAdmin && (
+        {(isAdmin || hasPermission('configuracoes')) && (
           <Button variant="ghost" size="sm" asChild>
             <NavLink to="/dashboard/configuracoes">
               <Settings className="h-4 w-4" />
@@ -440,11 +443,11 @@ const App = () => (
                 <Route
                   path="/dashboard/configuracoes"
                   element={
-                    <ProtectedRoute requireAdmin={true}>
+                    <ProtectedRouteWithPermission permission="configuracoes">
                       <DashboardLayout>
                         <Configuracoes />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route

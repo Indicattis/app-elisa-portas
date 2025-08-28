@@ -13,6 +13,7 @@ export type AppPermission =
   | 'visitas'
   | 'organograma'
   | 'contador_vendas'
+  | 'configuracoes'
   | 'users';
 
 export interface UserRoleAssignment {
@@ -97,6 +98,11 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'contador_vendas',
     label: 'Contador de Vendas',
     description: 'Registrar e acompanhar vendas diárias'
+  },
+  configuracoes: {
+    key: 'configuracoes',
+    label: 'Configurações',
+    description: 'Acessar configurações do sistema'
   },
   users: {
     key: 'users',

@@ -1947,6 +1947,7 @@ export type Database = {
         | "organograma"
         | "users"
         | "contador_vendas"
+        | "configuracoes"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -2130,6 +2131,7 @@ export const Constants = {
         "organograma",
         "users",
         "contador_vendas",
+        "configuracoes",
       ],
       lead_status: [
         "aguardando_atendimento",
