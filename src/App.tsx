@@ -184,81 +184,81 @@ const App = () => (
                 <Route
                   path="/dashboard"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="dashboard">
                       <DashboardLayout>
                         <Dashboard />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/performance"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="dashboard">
                       <DashboardLayout>
                         <Performance />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/leads"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="leads">
                       <DashboardLayout>
                         <Leads />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/leads/novo"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="leads">
                       <DashboardLayout>
                         <LeadNovo />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/leads/:id"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="leads">
                       <DashboardLayout>
                         <LeadDetails />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/orcamentos"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="orcamentos">
                       <DashboardLayout>
                         <Orcamentos />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/orcamentos/novo"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="orcamentos">
                       <DashboardLayout>
                         <NovoOrcamento />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/orcamentos/editar/:id"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="orcamentos">
                       <DashboardLayout>
                         <OrcamentoEdit />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
@@ -294,11 +294,11 @@ const App = () => (
                 <Route
                   path="/dashboard/faturamento"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="faturamento">
                       <DashboardLayout>
                         <Faturamento />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
@@ -344,11 +344,11 @@ const App = () => (
                 <Route
                   path="/dashboard/visitas"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="visitas">
                       <DashboardLayout>
                         <Visitas />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
@@ -364,21 +364,21 @@ const App = () => (
                 <Route
                   path="/dashboard/producao"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="producao">
                       <DashboardLayout>
                         <Producao />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/instalacoes"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="producao">
                       <DashboardLayout>
                         <Instalacoes />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
@@ -394,51 +394,51 @@ const App = () => (
                 <Route
                   path="/dashboard/marketing"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="marketing">
                       <DashboardLayout>
                         <Marketing />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/contas-receber"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="contas_receber">
                       <DashboardLayout>
                         <ContasReceber />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/organograma"
                   element={
-                    <ProtectedRoute requireAdmin={true}>
+                    <ProtectedRouteWithPermission permission="organograma">
                       <DashboardLayout>
                         <Organograma />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/calendario"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="calendario">
                       <DashboardLayout>
                         <Calendario />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
                   path="/dashboard/autorizados"
                   element={
-                    <ProtectedRoute requireAdmin={true}>
+                    <ProtectedRouteWithPermission permission="users">
                       <DashboardLayout>
                         <Autorizados />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
@@ -464,11 +464,11 @@ const App = () => (
                 <Route
                   path="/dashboard/pedidos"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="vendas">
                       <DashboardLayout>
                         <Pedidos />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route
@@ -484,11 +484,11 @@ const App = () => (
                 <Route
                   path="/dashboard/contador-vendas"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRouteWithPermission permission="contador_vendas">
                       <DashboardLayout>
                         <ContadorVendas />
                       </DashboardLayout>
-                    </ProtectedRoute>
+                    </ProtectedRouteWithPermission>
                   }
                 />
                 <Route

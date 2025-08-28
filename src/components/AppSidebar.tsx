@@ -2,6 +2,8 @@ import { NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { AppPermission } from "@/types/permissions";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -15,38 +17,44 @@ import {
   useSidebar 
 } from "@/components/ui/sidebar";
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Performance", href: "/dashboard/performance", icon: BarChart3 },
-  { name: "Leads", href: "/dashboard/leads", icon: FileText },
-  { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator },
-  { name: "Pedidos", href: "/dashboard/pedidos", icon: FileText },
-  { name: "Visitas", href: "/dashboard/visitas", icon: Calendar },
-  { name: "Produção", href: "/dashboard/producao", icon: Factory, adminOrManagerFabril: true },
-  { name: "Instalações", href: "/dashboard/instalacoes", icon: Calendar, adminOrManagerFabril: true },
-  
-  { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, adminOrManager: true },
-  { name: "Marketing", href: "/dashboard/marketing", icon: TrendingUp, adminOrManager: true },
-  { name: "Contas a Receber", href: "/dashboard/contas-receber", icon: CreditCard, adminOrManager: true },
-  { name: "Organograma", href: "/dashboard/organograma", icon: Users, adminOnly: true },
-  { name: "Calendário", href: "/dashboard/calendario", icon: CalendarDays },
-  { name: "Contador de vendas", href: "/dashboard/contador-vendas", icon: DollarSign },
-  { name: "Autorizados", href: "/dashboard/autorizados", icon: Users, adminOnly: true },
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: any;
+  permission?: AppPermission;
+}
+
+const navigation: NavigationItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard" },
+  { name: "Performance", href: "/dashboard/performance", icon: BarChart3, permission: "dashboard" },
+  { name: "Leads", href: "/dashboard/leads", icon: FileText, permission: "leads" },
+  { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator, permission: "orcamentos" },
+  { name: "Pedidos", href: "/dashboard/pedidos", icon: FileText, permission: "vendas" },
+  { name: "Visitas", href: "/dashboard/visitas", icon: Calendar, permission: "visitas" },
+  { name: "Produção", href: "/dashboard/producao", icon: Factory, permission: "producao" },
+  { name: "Instalações", href: "/dashboard/instalacoes", icon: Calendar, permission: "producao" },
+  { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, permission: "faturamento" },
+  { name: "Marketing", href: "/dashboard/marketing", icon: TrendingUp, permission: "marketing" },
+  { name: "Contas a Receber", href: "/dashboard/contas-receber", icon: CreditCard, permission: "contas_receber" },
+  { name: "Organograma", href: "/dashboard/organograma", icon: Users, permission: "organograma" },
+  { name: "Calendário", href: "/dashboard/calendario", icon: CalendarDays, permission: "calendario" },
+  { name: "Contador de vendas", href: "/dashboard/contador-vendas", icon: DollarSign, permission: "contador_vendas" },
+  { name: "Autorizados", href: "/dashboard/autorizados", icon: Users, permission: "users" },
+  { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings, permission: "configuracoes" },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
-  const { signOut, user, isAdmin, isGerenteFabril, isGerenteComercial, userRole } = useAuth();
+  const { signOut, user, isAdmin } = useAuth();
+  const { hasPermission } = useUserPermissions();
   const { state } = useSidebar();
 
   const isActive = (path: string) =>
     path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(path);
 
   const filteredNavigation = navigation.filter((item) => {
-    if ((item as any).adminOnly && !isAdmin) return false;
-    if ((item as any).adminOrManager && !isAdmin && !isGerenteComercial) return false;
-    if ((item as any).adminOrManagerFabril && !isAdmin && !isGerenteComercial && !isGerenteFabril) return false;
-    return true;
+    if (!item.permission) return true;
+    return isAdmin || hasPermission(item.permission);
   });
 
   return (
