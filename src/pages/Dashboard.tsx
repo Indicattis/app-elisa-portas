@@ -342,8 +342,8 @@ export default function Dashboard() {
                 <h3 className="text-lg font-bold text-foreground mb-4 text-center">Metas Individuais</h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-amber-600 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/a669dea2-19db-4afa-95c5-080cdd2478bc.png" alt="Vendedor Zeta" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Zeta</div>
@@ -352,8 +352,8 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/fc89f20f-1719-46b8-ab7f-d030f9b131e8.png" alt="Vendedor Beta" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Beta</div>
@@ -362,8 +362,8 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/5fc003b3-130c-459d-a6c5-065079f8ebfa.png" alt="Vendedor Alfa" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Alfa</div>
@@ -372,8 +372,8 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/3a33890a-a441-4325-9964-fb8e6233231a.png" alt="Vendedor Gama" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Gama</div>
@@ -382,8 +382,8 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-purple-300 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/ed3ca0c7-c5c8-4603-a066-254a0810208b.png" alt="Vendedor Omni" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Omni</div>
@@ -392,8 +392,8 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-red-400 to-red-300 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/3d50ad11-f33f-42e8-a3ab-46672e7610c5.png" alt="Vendedor Ômega" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Ômega</div>
@@ -402,8 +402,8 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="flex items-center gap-3 p-2 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-r from-slate-300 to-slate-100 rounded-full flex items-center justify-center flex-shrink-0 border border-slate-400">
-                      <div className="w-6 h-6 bg-white/20 rounded-full"></div>
+                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <img src="/lovable-uploads/834b83ea-a6d2-4c65-861e-a75e653aa247.png" alt="Vendedor Orion" className="w-10 h-10" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-sm">Vendedor Orion</div>
