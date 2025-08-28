@@ -83,6 +83,7 @@ export type Database = {
           id: string
           nome: string
           role: Database["public"]["Enums"]["user_role"] | null
+          telefone: string | null
           updated_at: string
           user_id: string
         }
@@ -94,6 +95,7 @@ export type Database = {
           id?: string
           nome: string
           role?: Database["public"]["Enums"]["user_role"] | null
+          telefone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -105,6 +107,7 @@ export type Database = {
           id?: string
           nome?: string
           role?: Database["public"]["Enums"]["user_role"] | null
+          telefone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -262,6 +265,7 @@ export type Database = {
       }
       contador_vendas_dias: {
         Row: {
+          atendente_id: string
           created_at: string
           created_by: string
           data: string
@@ -270,6 +274,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          atendente_id: string
           created_at?: string
           created_by: string
           data: string
@@ -278,6 +283,7 @@ export type Database = {
           valor?: number
         }
         Update: {
+          atendente_id?: string
           created_at?: string
           created_by?: string
           data?: string
@@ -285,7 +291,15 @@ export type Database = {
           updated_at?: string
           valor?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contador_vendas_dias_atendente_id_fkey"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       contas_receber: {
         Row: {
@@ -1772,6 +1786,78 @@ export type Database = {
           },
         ]
       }
+      whatsapp_contador: {
+        Row: {
+          id: string
+          ultimo_indice: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ultimo_indice?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ultimo_indice?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_distribuicao: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          numero_telefone: string
+          ordem: number
+          total_cliques: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          numero_telefone: string
+          ordem: number
+          total_cliques?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          numero_telefone?: string
+          ordem?: number
+          total_cliques?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_distribuicao_controle: {
+        Row: {
+          created_at: string | null
+          id: string
+          ultima_atendente_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ultima_atendente_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ultima_atendente_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1837,6 +1923,13 @@ export type Database = {
       is_lead_attendant: {
         Args: { lead_uuid: string }
         Returns: boolean
+      }
+      obter_proximo_whatsapp: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          nome: string
+          numero_telefone: string
+        }[]
       }
     }
     Enums: {

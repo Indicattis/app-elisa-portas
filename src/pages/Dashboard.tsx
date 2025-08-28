@@ -33,11 +33,14 @@ export default function Dashboard() {
       setLoading(false);
       return;
     }
+    
+    // Agregar vendas por data (somar todos os atendentes)
     const map: Record<string, DiaVenda> = {};
     data?.forEach((row: any) => {
+      const existingValue = map[row.data]?.valor || 0;
       map[row.data] = {
         data: row.data,
-        valor: Number(row.valor)
+        valor: existingValue + Number(row.valor)
       };
     });
     setVendas(map);

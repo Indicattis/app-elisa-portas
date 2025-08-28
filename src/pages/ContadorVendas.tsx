@@ -59,9 +59,15 @@ export default function ContadorVendas() {
       return;
     }
 
+    // Agregar vendas por data (somar todos os atendentes)
     const map: Record<string, DiaVenda> = {};
     rows?.forEach((r: any) => {
-      map[r.data] = { id: r.id, data: r.data, valor: Number(r.valor) };
+      const existingValue = map[r.data]?.valor || 0;
+      map[r.data] = { 
+        id: r.id, 
+        data: r.data, 
+        valor: existingValue + Number(r.valor) 
+      };
     });
     setData(map);
     setLoading(false);
@@ -74,15 +80,30 @@ export default function ContadorVendas() {
   const handlePrevYear = () => setYear(y => y - 1);
   const handleNextYear = () => setYear(y => y + 1);
 
-  const openModalForDate = (date: Date) => {
+  const openModalForDate = async (date: Date) => {
     if (isWeekend(date)) {
       toast({ title: "Indisponível", description: "O contador funciona apenas de segunda a sexta." });
       return;
     }
+    
+    if (!user) return;
+    
     const iso = format(date, "yyyy-MM-dd");
-    const existing = data[iso];
+    
+    // Buscar a venda específica do atendente para este dia
+    const { data: vendaAtendente, error } = await supabase
+      .from("contador_vendas_dias")
+      .select("valor")
+      .eq("data", iso)
+      .eq("atendente_id", user.id)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Erro ao buscar venda do atendente:", error);
+    }
+    
     setSelectedDate(date);
-    setInputValor(existing ? String(existing.valor).replace(".", ",") : "");
+    setInputValor(vendaAtendente ? String(vendaAtendente.valor).replace(".", ",") : "");
     setOpen(true);
   };
 
@@ -98,23 +119,26 @@ export default function ContadorVendas() {
       return;
     }
 
-    const payload = { data: iso, valor, created_by: user.id };
-    const { data: upserted, error } = await supabase
+    // Inserir ou atualizar a venda individual do atendente
+    const payload = { 
+      data: iso, 
+      valor, 
+      created_by: user.id,
+      atendente_id: user.id
+    };
+    const { error } = await supabase
       .from("contador_vendas_dias")
-      .upsert(payload, { onConflict: "data" })
-      .select("id, data, valor")
-      .maybeSingle();
+      .upsert(payload, { onConflict: "data,atendente_id" });
 
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message });
       return;
     }
 
-    const saved: { id?: string; data: string; valor: number } = upserted
-      ? { id: upserted.id, data: upserted.data, valor: Number(upserted.valor) }
-      : { id: undefined, data: iso, valor };
-    setData(prev => ({ ...prev, [iso]: { id: saved.id, data: iso, valor: saved.valor } }));
-    toast({ title: "Salvo!", description: `Valor de ${format(selectedDate, "PPP", { locale: ptBR })} atualizado.` });
+    // Recarregar dados para mostrar o total agregado
+    await fetchYear(year);
+    
+    toast({ title: "Salvo!", description: `Sua venda de ${format(selectedDate, "PPP", { locale: ptBR })} foi registrada.` });
     setOpen(false);
   };
 
