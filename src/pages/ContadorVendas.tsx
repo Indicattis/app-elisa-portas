@@ -151,7 +151,10 @@ export default function ContadorVendas() {
     };
     const { error } = await supabase
       .from("contador_vendas_dias")
-      .upsert(payload);
+      .upsert(payload, { 
+        onConflict: 'data,atendente_id',
+        ignoreDuplicates: false 
+      });
 
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message });
