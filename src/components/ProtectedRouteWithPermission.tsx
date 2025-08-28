@@ -17,10 +17,19 @@ export function ProtectedRouteWithPermission({
   fallback 
 }: ProtectedRouteWithPermissionProps) {
   const { user, isAdmin } = useAuth();
-  const { hasPermission } = useUserPermissions();
+  const { hasPermission, loading } = useUserPermissions();
 
   if (!user) {
     return null;
+  }
+
+  // Mostrar loading enquanto as permissões estão sendo carregadas
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (isAdmin || hasPermission(permission)) {

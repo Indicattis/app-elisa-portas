@@ -12,10 +12,10 @@ export function usePermissions() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isAdmin) {
+    if (user) {
       fetchPermissions();
     }
-  }, [isAdmin]);
+  }, [user]);
 
   const fetchPermissions = async () => {
     try {

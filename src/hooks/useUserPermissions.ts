@@ -4,16 +4,30 @@ import { AppPermission } from '@/types/permissions';
 
 export function useUserPermissions() {
   const { user, isAdmin } = useAuth();
-  const { getUserRoles, getRolePermissions } = usePermissions();
+  const { getUserRoles, getRolePermissions, loading } = usePermissions();
 
   const hasPermission = (permission: AppPermission): boolean => {
-    if (!user) return false;
-    if (isAdmin) return true;
+    if (!user) {
+      console.log('useUserPermissions: Usuário não está logado');
+      return false;
+    }
+    
+    if (isAdmin) {
+      console.log('useUserPermissions: Usuário é admin, permitindo acesso');
+      return true;
+    }
     
     const userRoles = getUserRoles(user.id);
-    return userRoles.some(role => 
-      getRolePermissions(role).includes(permission)
-    );
+    console.log('useUserPermissions: Roles do usuário:', userRoles);
+    
+    const hasAccess = userRoles.some(role => {
+      const rolePermissions = getRolePermissions(role);
+      console.log(`useUserPermissions: Permissões da role ${role}:`, rolePermissions);
+      return rolePermissions.includes(permission);
+    });
+    
+    console.log(`useUserPermissions: Verificando permissão "${permission}":`, hasAccess);
+    return hasAccess;
   };
 
   const hasAnyPermission = (permissions: AppPermission[]): boolean => {
@@ -22,6 +36,7 @@ export function useUserPermissions() {
 
   return {
     hasPermission,
-    hasAnyPermission
+    hasAnyPermission,
+    loading
   };
 }
