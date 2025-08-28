@@ -1,24 +1,26 @@
 import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { Trophy, Medal, Award } from 'lucide-react';
-interface DiaVenda {
-  data: string;
-  valor: number;
-}
+import { useSalesData, useSellersRanking, useDashboardRealtime } from '@/hooks/useDashboardData';
+
 interface VendedorRanking {
   nome: string;
-  total: number;
+  total_vendas: number;
   posicao: number;
   foto_perfil_url?: string;
 }
+
 export default function Dashboard() {
-  const [vendas, setVendas] = useState<Record<string, DiaVenda>>({});
-  const [vendedores, setVendedores] = useState<VendedorRanking[]>([]);
-  const [loading, setLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Use React Query hooks for data fetching
+  const { data: vendasData = [], isLoading: loadingVendas } = useSalesData();
+  const { data: vendedores = [], isLoading: loadingVendedores } = useSellersRanking();
+  
+  // Setup realtime updates
+  useDashboardRealtime();
+  
+  const loading = loadingVendas || loadingVendedores;
   const today = new Date();
 
   // Auto-slide effect
@@ -29,105 +31,9 @@ export default function Dashboard() {
 
     return () => clearInterval(interval);
   }, []);
-  useEffect(() => {
-    fetchData();
-
-    // Atualizar a cada 5 minutos
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-  const fetchData = async () => {
-    await Promise.all([fetchVendasMes(), fetchRankingVendedores()]);
-  };
-  const fetchVendasMes = async () => {
-    setLoading(true);
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    const {
-      data,
-      error
-    } = await supabase.from("contador_vendas_dias").select("data, valor").gte("data", `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`).lte("data", `${currentYear}-${currentMonth.toString().padStart(2, '0')}-31`);
-    if (error) {
-      console.error("Erro ao buscar vendas:", error);
-      setLoading(false);
-      return;
-    }
-
-    // Agregar vendas por data (somar todos os atendentes)
-    const map: Record<string, DiaVenda> = {};
-    data?.forEach((row: any) => {
-      const existingValue = map[row.data]?.valor || 0;
-      map[row.data] = {
-        data: row.data,
-        valor: existingValue + Number(row.valor)
-      };
-    });
-    setVendas(map);
-    setLoading(false);
-  };
-  const fetchRankingVendedores = async () => {
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    const {
-      data,
-      error
-    } = await supabase.from("contador_vendas_dias").select(`
-        atendente_id,
-        valor,
-        admin_users!atendente_id(nome, foto_perfil_url)
-      `).gte("data", `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`).lte("data", `${currentYear}-${currentMonth.toString().padStart(2, '0')}-31`);
-    if (error) {
-      console.error("Erro ao buscar ranking:", error);
-      return;
-    }
-
-    // Agregar vendas por vendedor
-    const vendedoresMap = new Map<string, {
-      nome: string;
-      total: number;
-      foto_perfil_url?: string;
-    }>();
-    data?.forEach((venda: any) => {
-      const nome = venda.admin_users?.nome || 'Vendedor';
-      const foto_perfil_url = venda.admin_users?.foto_perfil_url;
-      const existing = vendedoresMap.get(venda.atendente_id) || {
-        nome,
-        total: 0,
-        foto_perfil_url
-      };
-      vendedoresMap.set(venda.atendente_id, {
-        nome,
-        foto_perfil_url,
-        total: existing.total + Number(venda.valor)
-      });
-    });
-
-    // Converter para array e ordenar
-    const ranking = Array.from(vendedoresMap.values()).sort((a, b) => b.total - a.total).map((vendedor, index) => ({
-      ...vendedor,
-      posicao: index + 1
-    }));
-    setVendedores(ranking);
-  };
   const totalVendasMes = useMemo(() => {
-    return Object.values(vendas).reduce((sum, venda) => sum + venda.valor, 0);
-  }, [vendas]);
-  const chartData = useMemo(() => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-    const data = [];
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-      const venda = vendas[dateStr];
-      data.push({
-        dia: day,
-        valor: venda ? venda.valor : 0
-      });
-    }
-    return data;
-  }, [vendas]);
+    return vendasData.reduce((sum, venda) => sum + venda.valor, 0);
+  }, [vendasData]);
   const getVendedorCategory = (valor: number) => {
     if (valor >= 1500000) return {
       name: 'Orion',
@@ -284,7 +190,7 @@ export default function Dashboard() {
               {/* Lista de ranking */}
               <div className="space-y-4">
                 {vendedores.slice(0, 10).map(vendedor => {
-                const category = getVendedorCategory(vendedor.total);
+                const category = getVendedorCategory(vendedor.total_vendas);
                 return <div key={`${vendedor.nome}-${vendedor.posicao}`} className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg">
                       <div className="flex items-center space-x-4">
                         {/* Foto do vendedor com borda colorida */}
@@ -314,7 +220,7 @@ export default function Dashboard() {
                         currency: 'BRL',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
-                      }).format(vendedor.total)}
+                      }).format(vendedor.total_vendas)}
                         </div>
                       </div>
                     </div>;
@@ -336,8 +242,8 @@ export default function Dashboard() {
               <div className="flex justify-center items-end gap-8 h-96">
                 {getAllCategories().map((category, index) => {
                 const vendedoresNaCategoria = vendedores.filter(v => {
-                  if (category.name === 'Orion') return v.total >= category.minValue;
-                  return v.total >= category.minValue && v.total < category.maxValue;
+                  if (category.name === 'Orion') return v.total_vendas >= category.minValue;
+                  return v.total_vendas >= category.minValue && v.total_vendas < category.maxValue;
                 });
                 return <div key={category.name} className="flex flex-col items-center">
                       {/* Fotos dos vendedores */}
