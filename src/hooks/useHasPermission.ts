@@ -1,13 +1,14 @@
+import { useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { AppPermission } from '@/types/permissions';
 
-export function useUserPermissions() {
-  const { user, isAdmin } = useAuth();
+export function useHasPermission(permission: AppPermission): boolean {
+  const { user } = useAuth();
   const { getUserRoles, getRolePermissions, loading } = usePermissions();
 
-  const hasPermission = (permission: AppPermission): boolean => {
-    if (!user) {
+  return useMemo(() => {
+    if (!user || loading) {
       return false;
     }
     
@@ -16,15 +17,5 @@ export function useUserPermissions() {
       const rolePermissions = getRolePermissions(role);
       return rolePermissions.includes(permission);
     });
-  };
-
-  const hasAnyPermission = (permissions: AppPermission[]): boolean => {
-    return permissions.some(permission => hasPermission(permission));
-  };
-
-  return {
-    hasPermission,
-    hasAnyPermission,
-    loading
-  };
+  }, [user, loading, permission, getUserRoles, getRolePermissions]);
 }

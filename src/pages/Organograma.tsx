@@ -43,7 +43,9 @@ export default function Organograma() {
   const [connectionMode, setConnectionMode] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchUsers();
+    if (hasPermission('organograma')) {
+      fetchUsers();
+    }
   }, []);
 
   const handleStartConnection = useCallback((sourceNodeId: string) => {

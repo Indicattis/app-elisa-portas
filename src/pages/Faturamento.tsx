@@ -122,8 +122,10 @@ export default function Faturamento() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchVendas();
-    fetchStats();
+    if (hasPermission('faturamento')) {
+      fetchVendas();
+      fetchStats();
+    }
   }, [dateRange]);
 
   const fetchVendas = async () => {
