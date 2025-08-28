@@ -459,6 +459,44 @@ export type Database = {
           },
         ]
       }
+      equipes_instalacao: {
+        Row: {
+          ativa: boolean
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          responsavel_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          responsavel_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          responsavel_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipes_instalacao_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eventos_calendario: {
         Row: {
           categoria: string
@@ -1520,6 +1558,50 @@ export type Database = {
             columns: ["venda_id"]
             isOneToOne: false
             referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pontos_instalacao: {
+        Row: {
+          cidade: string
+          created_at: string
+          created_by: string
+          dia_semana: number
+          equipe_id: string
+          id: string
+          observacoes: string | null
+          semana_inicio: string
+          updated_at: string
+        }
+        Insert: {
+          cidade: string
+          created_at?: string
+          created_by: string
+          dia_semana: number
+          equipe_id: string
+          id?: string
+          observacoes?: string | null
+          semana_inicio: string
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string
+          created_at?: string
+          created_by?: string
+          dia_semana?: number
+          equipe_id?: string
+          id?: string
+          observacoes?: string | null
+          semana_inicio?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pontos_instalacao_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes_instalacao"
             referencedColumns: ["id"]
           },
         ]
