@@ -139,13 +139,15 @@ export default function Dashboard() {
     return data;
   }, [vendas]);
 
-  const getRankingIcon = (posicao: number) => {
-    switch (posicao) {
-      case 1: return <Trophy className="h-8 w-8 text-yellow-500" />;
-      case 2: return <Medal className="h-8 w-8 text-gray-400" />;
-      case 3: return <Award className="h-8 w-8 text-amber-600" />;
-      default: return <div className="h-8 w-8 flex items-center justify-center bg-muted rounded-full text-lg font-bold">{posicao}</div>;
-    }
+  const getVendedorCategory = (valor: number) => {
+    if (valor >= 1500000) return { name: 'Orion', color: 'from-slate-300 to-slate-100', border: 'border-slate-300' };
+    if (valor >= 1000000) return { name: 'Ômega', color: 'from-red-400 to-red-300', border: 'border-red-400' };
+    if (valor >= 800000) return { name: 'Omni', color: 'from-purple-400 to-purple-300', border: 'border-purple-400' };
+    if (valor >= 600000) return { name: 'Gama', color: 'from-emerald-400 to-emerald-300', border: 'border-emerald-400' };
+    if (valor >= 500000) return { name: 'Alfa', color: 'from-yellow-400 to-yellow-300', border: 'border-yellow-400' };
+    if (valor >= 400000) return { name: 'Beta', color: 'from-gray-400 to-gray-300', border: 'border-gray-400' };
+    if (valor >= 300000) return { name: 'Zeta', color: 'from-amber-600 to-amber-500', border: 'border-amber-600' };
+    return { name: 'Iniciante', color: 'from-slate-500 to-slate-400', border: 'border-slate-500' };
   };
 
   return (
@@ -277,61 +279,54 @@ export default function Dashboard() {
 
             {/* Lista de ranking */}
             <div className="w-full max-w-4xl space-y-4">
-              {vendedores.slice(0, 10).map((vendedor) => (
-                <div 
-                  key={`${vendedor.nome}-${vendedor.posicao}`}
-                  className={`flex items-center justify-between p-6 rounded-lg shadow-lg transition-all duration-300 ${
-                    vendedor.posicao === 1 
-                      ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 border-2 border-yellow-400' 
-                      : vendedor.posicao === 2 
-                        ? 'bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-gray-400'
-                        : vendedor.posicao === 3
-                          ? 'bg-gradient-to-r from-amber-100 to-amber-200 border-2 border-amber-600'
-                          : 'bg-card border border-border'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    {getRankingIcon(vendedor.posicao)}
-                    
-                    {/* Foto do vendedor */}
-                    <div className="relative">
-                      {vendedor.foto_perfil_url ? (
-                        <img 
-                          src={vendedor.foto_perfil_url} 
-                          alt={`Foto de ${vendedor.nome}`}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-lg shadow-md ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
-                        {vendedor.nome.charAt(0).toUpperCase()}
+              {vendedores.slice(0, 10).map((vendedor) => {
+                const category = getVendedorCategory(vendedor.total);
+                return (
+                  <div 
+                    key={`${vendedor.nome}-${vendedor.posicao}`}
+                    className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg"
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Foto do vendedor com borda colorida */}
+                      <div className="relative">
+                        {vendedor.foto_perfil_url ? (
+                          <img 
+                            src={vendedor.foto_perfil_url} 
+                            alt={`Foto de ${vendedor.nome}`}
+                            className={`w-16 h-16 rounded-full object-cover border-4 ${category.border} shadow-md`}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                          {vendedor.nome.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold text-foreground">
+                          {vendedor.nome}
+                        </h3>
+                        <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${category.color}`}>
+                          Vendedor {category.name}
+                        </div>
                       </div>
                     </div>
-                    
-                    <div>
-                      <h3 className={`text-xl font-bold ${vendedor.posicao <= 3 ? 'text-gray-800' : 'text-foreground'}`}>
-                        {vendedor.nome}
-                      </h3>
-                      <p className={`text-sm ${vendedor.posicao <= 3 ? 'text-gray-600' : 'text-muted-foreground'}`}>
-                        {vendedor.posicao}º lugar
-                      </p>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-foreground">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                        }).format(vendedor.total)}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className={`text-2xl font-bold ${vendedor.posicao <= 3 ? 'text-gray-800' : 'text-foreground'}`}>
-                      {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                      }).format(vendedor.total)}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               
               {vendedores.length === 0 && (
                 <div className="text-center py-12">
