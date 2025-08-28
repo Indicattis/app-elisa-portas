@@ -12,10 +12,9 @@ export function useUserPermissions() {
       return false;
     }
     
-    if (isAdmin) {
-      console.log('useUserPermissions: Usuário é admin, permitindo acesso');
-      return true;
-    }
+    // REMOVIDO: Verificação automática de admin
+    // Para que o sistema de permissões funcione corretamente, 
+    // vamos verificar apenas as permissões definidas nas roles
     
     const userRoles = getUserRoles(user.id);
     console.log('useUserPermissions: Roles do usuário:', userRoles);

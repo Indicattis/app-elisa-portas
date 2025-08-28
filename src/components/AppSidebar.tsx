@@ -54,7 +54,8 @@ export function AppSidebar() {
 
   const filteredNavigation = navigation.filter((item) => {
     if (!item.permission) return true;
-    return isAdmin || hasPermission(item.permission);
+    // REMOVIDO: isAdmin || - Para que permissões funcionem corretamente
+    return hasPermission(item.permission);
   });
 
   return (
