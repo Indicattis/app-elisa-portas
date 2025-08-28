@@ -50,11 +50,11 @@ export default function Dashboard() {
       }}>
         <div className="text-center">
           {loading ? (
-            <div className="text-5xl font-black text-yellow-900">
+            <div className="text-7xl font-impact font-black text-white">
               Carregando...
             </div>
           ) : (
-            <div className="text-5xl font-black text-yellow-900">
+            <div className="text-7xl font-impact font-black text-white">
               {new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL',
