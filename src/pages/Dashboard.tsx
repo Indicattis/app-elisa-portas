@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Trophy, Medal, Award } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DiaVenda {
   data: string;
@@ -21,17 +22,7 @@ export default function Dashboard() {
   const [vendas, setVendas] = useState<Record<string, DiaVenda>>({});
   const [vendedores, setVendedores] = useState<VendedorRanking[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const today = new Date();
-
-  // Auto-slide effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide(prev => prev === 0 ? 1 : 0);
-    }, 10000); // 10 seconds
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     fetchData();
@@ -152,132 +143,59 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen relative overflow-x-hidden w-full max-w-full">
-      {/* Slide Container */}
-      <div 
-        className="flex transition-transform duration-1000 ease-in-out w-full"
-        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-      >
-        {/* Slide 1: Faturamento */}
-        <div className="min-w-full flex-shrink-0 w-full max-w-full">
-          <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
-            {/* Logo */}
-            <div className="mt-8">
-              <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
-            </div>
-            
-            {/* Título Faturamento */}
-            <h1 className="text-6xl font-bold text-foreground">Faturamento</h1>
-            
-            {/* Contador das vendas do mês */}
-            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-full max-w-[95vw] md:max-w-4xl flex items-center justify-center mx-auto" style={{
-              height: '120px'
-            }}>
-              <div className="text-center">
-                {loading ? (
-                  <div className="text-7xl font-impact font-medium text-white">
-                    Carregando...
-                  </div>
-                ) : (
-                  <div className="text-7xl font-impact font-medium text-white">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0
-                    }).format(totalVendasMes)}
-                  </div>
-                )}
+      <div className="flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
+        {/* Logo */}
+        <div className="mt-8">
+          <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
+        </div>
+        
+        {/* Título */}
+        <h1 className="text-6xl font-bold text-foreground">Dashboard</h1>
+        
+        {/* Contador das vendas do mês */}
+        <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-6 md:px-12 py-6 md:py-8 w-full max-w-[95vw] md:max-w-4xl flex items-center justify-center mx-auto" style={{
+          height: '120px'
+        }}>
+          <div className="text-center">
+            {loading ? (
+              <div className="text-7xl font-impact font-medium text-white">
+                Carregando...
               </div>
-            </div>
-
-            {/* Data e hora atual */}
-            <div className="text-center text-muted-foreground space-y-3">
-              <div className="text-xl font-semibold">
-                {format(today, "MMMM 'de' yyyy", { locale: ptBR })}
+            ) : (
+              <div className="text-7xl font-impact font-medium text-white">
+                {new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0
+                }).format(totalVendasMes)}
               </div>
-              
-              {/* Linha horizontal */}
-              <div className="w-32 h-0.5 bg-muted-foreground mx-auto"></div>
-              
-              <div className="text-lg">
-                {format(today, "dd/MM/yyyy - HH:mm", { locale: ptBR })}
-              </div>
-            </div>
-
-            {/* Gráfico de vendas diárias */}
-            <div className="w-full max-w-[95vw] md:max-w-6xl mt-8 md:mt-12 px-4">
-              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
-                Vendas Diárias do Mês
-              </h2>
-              <div className="bg-card rounded-lg p-6 shadow-lg">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="dia" 
-                      label={{ value: 'Dia do Mês', position: 'insideBottom', offset: -5 }}
-                    />
-                    <YAxis 
-                      label={{ value: 'Valor (R$)', angle: -90, position: 'insideLeft' }}
-                      tickFormatter={(value) => new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                      }).format(value)}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [
-                        new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        }).format(value),
-                        'Vendas'
-                      ]}
-                      labelFormatter={(label) => `Dia ${label}`}
-                    />
-                    {/* Linhas de referência para os marcos de valores */}
-                    <ReferenceLine y={20000} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
-                    <ReferenceLine y={50000} stroke="#eab308" strokeWidth={2} strokeDasharray="5 5" />
-                    <ReferenceLine y={75000} stroke="#22c55e" strokeWidth={2} strokeDasharray="5 5" />
-                    
-                    <Line 
-                      type="monotone" 
-                      dataKey="valor" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Slide 2: Ranking */}
-        <div className="min-w-full flex-shrink-0 w-full max-w-full">
-          <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-6 space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden">
-            {/* Logo */}
-            <div className="mt-8">
-              <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
-            </div>
-            
-            {/* Título Ranking */}
-            <h1 className="text-6xl font-bold text-foreground">Ranking</h1>
-            <h2 className="text-2xl text-muted-foreground">Melhores Vendedores do Mês</h2>
-            
-            {/* Data atual */}
-            <div className="text-center text-muted-foreground">
-              <div className="text-xl font-semibold">
-                {format(today, "MMMM 'de' yyyy", { locale: ptBR })}
-              </div>
-            </div>
+        {/* Data e hora atual */}
+        <div className="text-center text-muted-foreground space-y-3">
+          <div className="text-xl font-semibold">
+            {format(today, "MMMM 'de' yyyy", { locale: ptBR })}
+          </div>
+          
+          {/* Linha horizontal */}
+          <div className="w-32 h-0.5 bg-muted-foreground mx-auto"></div>
+          
+          <div className="text-lg">
+            {format(today, "dd/MM/yyyy - HH:mm", { locale: ptBR })}
+          </div>
+        </div>
 
-            {/* Container principal com ranking e legendas */}
+        {/* Tabs */}
+        <Tabs defaultValue="ranking" className="w-full max-w-[95vw] md:max-w-6xl">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="ranking">Ranking</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="ranking" className="mt-6">
             <div className="w-full max-w-[95vw] xl:max-w-7xl flex flex-col xl:flex-row gap-6 xl:gap-8 overflow-x-hidden px-4">
               {/* Lista de ranking */}
               <div className="flex-1 space-y-4 min-w-0">
@@ -423,23 +341,61 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Slide Indicators */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1].map((index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              currentSlide === index 
-                ? 'bg-primary scale-125' 
-                : 'bg-white/50 hover:bg-white/70'
-            }`}
-          />
-        ))}
+          </TabsContent>
+          
+          <TabsContent value="performance" className="mt-6">
+            <div className="w-full max-w-[95vw] md:max-w-6xl px-4">
+              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
+                Vendas Diárias do Mês
+              </h2>
+              <div className="bg-card rounded-lg p-6 shadow-lg">
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="dia" 
+                      label={{ value: 'Dia do Mês', position: 'insideBottom', offset: -5 }}
+                    />
+                    <YAxis 
+                      label={{ value: 'Valor (R$)', angle: -90, position: 'insideLeft' }}
+                      tickFormatter={(value) => new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(value)}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [
+                        new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        }).format(value),
+                        'Vendas'
+                      ]}
+                      labelFormatter={(label) => `Dia ${label}`}
+                    />
+                    {/* Linhas de referência para os marcos de valores */}
+                    <ReferenceLine y={20000} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
+                    <ReferenceLine y={50000} stroke="#eab308" strokeWidth={2} strokeDasharray="5 5" />
+                    <ReferenceLine y={75000} stroke="#22c55e" strokeWidth={2} strokeDasharray="5 5" />
+                    
+                    <Line 
+                      type="monotone" 
+                      dataKey="valor" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
