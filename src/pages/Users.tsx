@@ -39,10 +39,8 @@ export default function Users() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (hasPermission('users')) {
-      fetchUsers();
-    }
-  }, [hasPermission]);
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     try {
