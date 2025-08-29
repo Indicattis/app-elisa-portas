@@ -113,6 +113,51 @@ export type Database = {
         }
         Relationships: []
       }
+      app_tabs: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          href: string
+          icon: string | null
+          id: string
+          key: string
+          label: string
+          permission: Database["public"]["Enums"]["app_permission"] | null
+          sort_order: number
+          tab_group: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          href: string
+          icon?: string | null
+          id?: string
+          key: string
+          label: string
+          permission?: Database["public"]["Enums"]["app_permission"] | null
+          sort_order?: number
+          tab_group?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          href?: string
+          icon?: string | null
+          id?: string
+          key?: string
+          label?: string
+          permission?: Database["public"]["Enums"]["app_permission"] | null
+          sort_order?: number
+          tab_group?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       autorizados: {
         Row: {
           ativo: boolean
@@ -1942,7 +1987,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_tab_access: {
+        Row: {
+          active: boolean | null
+          can_access: boolean | null
+          created_at: string | null
+          created_by: string | null
+          href: string | null
+          icon: string | null
+          id: string | null
+          key: string | null
+          label: string | null
+          permission: Database["public"]["Enums"]["app_permission"] | null
+          sort_order: number | null
+          tab_group: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          can_access?: never
+          created_at?: string | null
+          created_by?: string | null
+          href?: string | null
+          icon?: string | null
+          id?: string | null
+          key?: string | null
+          label?: string | null
+          permission?: Database["public"]["Enums"]["app_permission"] | null
+          sort_order?: number | null
+          tab_group?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          can_access?: never
+          created_at?: string | null
+          created_by?: string | null
+          href?: string | null
+          icon?: string | null
+          id?: string | null
+          key?: string | null
+          label?: string | null
+          permission?: Database["public"]["Enums"]["app_permission"] | null
+          sort_order?: number | null
+          tab_group?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       aprovar_orcamento: {

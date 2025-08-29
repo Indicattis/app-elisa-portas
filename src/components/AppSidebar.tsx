@@ -1,9 +1,8 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { AppPermission } from "@/types/permissions";
+import { useTabsAccess } from "@/hooks/useTabsAccess";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -17,46 +16,35 @@ import {
   useSidebar 
 } from "@/components/ui/sidebar";
 
-interface NavigationItem {
-  name: string;
-  href: string;
-  icon: any;
-  permission?: AppPermission;
-}
-
-const navigation: NavigationItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard" },
-  { name: "Performance", href: "/dashboard/performance", icon: BarChart3, permission: "dashboard" },
-  { name: "Leads", href: "/dashboard/leads", icon: FileText, permission: "leads" },
-  { name: "Orçamentos", href: "/dashboard/orcamentos", icon: Calculator, permission: "orcamentos" },
-  { name: "Pedidos", href: "/dashboard/pedidos", icon: FileText, permission: "vendas" },
-  { name: "Visitas", href: "/dashboard/visitas", icon: Calendar, permission: "visitas" },
-  { name: "Produção", href: "/dashboard/producao", icon: Factory, permission: "producao" },
-  { name: "Instalações", href: "/dashboard/instalacoes", icon: Calendar, permission: "producao" },
-  { name: "Faturamento", href: "/dashboard/faturamento", icon: LayoutDashboard, permission: "faturamento" },
-  { name: "Marketing", href: "/dashboard/marketing", icon: TrendingUp, permission: "marketing" },
-  { name: "Contas a Receber", href: "/dashboard/contas-receber", icon: CreditCard, permission: "contas_receber" },
-  { name: "Organograma", href: "/dashboard/organograma", icon: Users, permission: "organograma" },
-  { name: "Calendário", href: "/dashboard/calendario", icon: CalendarDays, permission: "calendario" },
-  { name: "Contador de vendas", href: "/dashboard/contador-vendas", icon: DollarSign, permission: "contador_vendas" },
-  { name: "Autorizados", href: "/dashboard/autorizados", icon: Users, permission: "users" },
-  { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings, permission: "configuracoes" },
-];
+// Mapeamento de ícones por nome
+const iconMap: Record<string, any> = {
+  LayoutDashboard,
+  BarChart3,
+  FileText,
+  Calculator,
+  Calendar,
+  Factory,
+  TrendingUp,
+  CreditCard,
+  CalendarDays,
+  DollarSign,
+  Users,
+  Settings,
+};
 
 export function AppSidebar() {
   const location = useLocation();
-  const { signOut, user, isAdmin } = useAuth();
-  const { hasPermission } = useUserPermissions();
+  const { signOut, user } = useAuth();
   const { state } = useSidebar();
+  const { tabs, loading } = useTabsAccess('sidebar');
 
   const isActive = (path: string) =>
     path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(path);
 
-  const filteredNavigation = navigation.filter((item) => {
-    if (!item.permission) return true;
-    // REMOVIDO: isAdmin || - Para que permissões funcionem corretamente
-    return hasPermission(item.permission);
-  });
+  const getIcon = (iconName: string | null) => {
+    if (!iconName) return Settings;
+    return iconMap[iconName] || Settings;
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -85,16 +73,39 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredNavigation.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton asChild isActive={isActive(item.href)}>
-                    <NavLink to={item.href}>
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.name}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                tabs.map((tab) => {
+                  const Icon = getIcon(tab.icon);
+                  const isTabActive = isActive(tab.href);
+                  
+                  return (
+                    <SidebarMenuItem key={tab.key}>
+                      <SidebarMenuButton 
+                        asChild={tab.can_access} 
+                        isActive={isTabActive}
+                        className={`${!tab.can_access ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {tab.can_access ? (
+                          <NavLink to={tab.href}>
+                            <Icon className="h-5 w-5" />
+                            <span>{tab.label}</span>
+                          </NavLink>
+                        ) : (
+                          <div className="flex items-center gap-3 px-2 py-1.5">
+                            <Icon className="h-5 w-5" />
+                            <span>{tab.label}</span>
+                            <Lock className="h-3 w-3 ml-auto" />
+                          </div>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
