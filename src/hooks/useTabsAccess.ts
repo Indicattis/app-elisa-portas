@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 
-interface TabAccess {
+export interface TabAccess {
   id: string;
   key: string;
   label: string;
@@ -16,41 +15,23 @@ interface TabAccess {
 }
 
 export function useTabsAccess(tabGroup: string = 'sidebar') {
-  const [tabs, setTabs] = useState<TabAccess[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['tabs-access', tabGroup],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_tab_access')
+        .select('*')
+        .eq('tab_group', tabGroup)
+        .order('sort_order', { ascending: true });
 
-  useEffect(() => {
-    async function fetchTabs() {
-      if (!user) {
-        setTabs([]);
-        setLoading(false);
-        return;
+      if (error) {
+        console.error('Error fetching tabs access:', error);
+        throw error;
       }
 
-      try {
-        const { data, error } = await supabase
-          .from('user_tab_access')
-          .select('*')
-          .eq('tab_group', tabGroup)
-          .order('sort_order');
-
-        if (error) {
-          console.error('Error fetching tabs:', error);
-          setTabs([]);
-        } else {
-          setTabs(data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching tabs:', error);
-        setTabs([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchTabs();
-  }, [user, tabGroup]);
-
-  return { tabs, loading };
+      return data as TabAccess[];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
 }

@@ -1,6 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
 import { 
@@ -15,11 +14,12 @@ import {
   SidebarMenuItem,
   useSidebar 
 } from "@/components/ui/sidebar";
+import { icons } from "lucide-react";
 
-// Mapeamento de ícones por nome
+// Mapeamento de ícones do Lucide
 const iconMap: Record<string, any> = {
   LayoutDashboard,
-  BarChart3,
+  BarChart3, 
   FileText,
   Calculator,
   Calendar,
@@ -34,16 +34,24 @@ const iconMap: Record<string, any> = {
 
 export function AppSidebar() {
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { signOut, user, isAdmin } = useAuth();
   const { state } = useSidebar();
-  const { tabs, loading } = useTabsAccess('sidebar');
+  const { data: tabs = [], isLoading } = useTabsAccess('sidebar');
 
   const isActive = (path: string) =>
     path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(path);
 
   const getIcon = (iconName: string | null) => {
     if (!iconName) return Settings;
-    return iconMap[iconName] || Settings;
+    return iconMap[iconName] || icons[iconName as keyof typeof icons] || Settings;
+  };
+
+  const handleTabClick = (e: React.MouseEvent, canAccess: boolean, href: string) => {
+    if (!canAccess) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
   };
 
   return (
@@ -73,32 +81,35 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {loading ? (
+              {isLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
               ) : (
                 tabs.map((tab) => {
-                  const Icon = getIcon(tab.icon);
-                  const isTabActive = isActive(tab.href);
+                  const IconComponent = getIcon(tab.icon);
+                  const canAccess = tab.can_access;
                   
                   return (
                     <SidebarMenuItem key={tab.key}>
                       <SidebarMenuButton 
-                        asChild={tab.can_access} 
-                        isActive={isTabActive}
-                        className={`${!tab.can_access ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        asChild={canAccess} 
+                        isActive={canAccess && isActive(tab.href)}
+                        className={!canAccess ? "opacity-50 cursor-not-allowed" : ""}
                       >
-                        {tab.can_access ? (
+                        {canAccess ? (
                           <NavLink to={tab.href}>
-                            <Icon className="h-5 w-5" />
+                            <IconComponent className="h-5 w-5" />
                             <span>{tab.label}</span>
                           </NavLink>
                         ) : (
-                          <div className="flex items-center gap-3 px-2 py-1.5">
-                            <Icon className="h-5 w-5" />
+                          <div 
+                            className="flex items-center gap-2 w-full"
+                            onClick={(e) => handleTabClick(e, canAccess, tab.href)}
+                          >
+                            <IconComponent className="h-5 w-5" />
                             <span>{tab.label}</span>
-                            <Lock className="h-3 w-3 ml-auto" />
+                            <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
                           </div>
                         )}
                       </SidebarMenuButton>
