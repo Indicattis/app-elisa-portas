@@ -11,7 +11,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TrendingUp, DollarSign, Users, Target, Plus, BarChart3, Edit } from "lucide-react";
@@ -81,7 +80,6 @@ interface RegionPerformanceData {
 }
 
 export default function Marketing() {
-  const { hasPermission } = useUserPermissions();
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfYear(new Date()),
@@ -120,21 +118,6 @@ export default function Marketing() {
     observacoes: ""
   });
 
-  // Verificar permissões
-  if (!hasPermission('marketing')) {
-    return (
-      <div className="p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-muted-foreground mb-4">
-            Acesso Restrito
-          </h1>
-          <p className="text-muted-foreground">
-            Você não tem permissão para visualizar esta página.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   useEffect(() => {
     fetchData();

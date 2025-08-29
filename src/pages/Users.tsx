@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { useHasPermission } from "@/hooks/useHasPermission";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
@@ -36,15 +33,11 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
-  const canViewUsers = useHasPermission('users');
-  const { loading: permsLoading } = useUserPermissions();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (canViewUsers) {
-      fetchUsers();
-    }
-  }, [canViewUsers]);
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -137,34 +130,12 @@ export default function Users() {
       .slice(0, 2);
   };
 
-
   const filteredUsers = users.filter(
     (user) =>
       user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  if (permsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!permsLoading && !canViewUsers) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Acesso Restrito</h1>
-          <p className="text-muted-foreground">
-            Você não tem permissão para acessar esta página.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
