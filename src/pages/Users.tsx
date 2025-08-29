@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useHasPermission } from "@/hooks/useHasPermission";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
@@ -35,14 +36,15 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
-  const { hasPermission } = useUserPermissions();
+  const canViewUsers = useHasPermission('users');
+  const { loading: permsLoading } = useUserPermissions();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (hasPermission('users')) {
+    if (canViewUsers) {
       fetchUsers();
     }
-  }, []);
+  }, [canViewUsers]);
 
   const fetchUsers = async () => {
     try {
@@ -143,7 +145,15 @@ export default function Users() {
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!hasPermission('users')) {
+  if (permsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!permsLoading && !canViewUsers) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
