@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 export interface TabAccess {
   id: string;
@@ -15,6 +16,31 @@ export interface TabAccess {
 }
 
 export function useTabsAccess(tabGroup: string = 'sidebar') {
+  const queryClient = useQueryClient();
+
+  // Set up real-time updates for role_permissions changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('role-permissions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'role_permissions'
+        },
+        () => {
+          // Invalidate tabs access cache when permissions change
+          queryClient.invalidateQueries({ queryKey: ['tabs-access'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ['tabs-access', tabGroup],
     queryFn: async () => {
@@ -31,7 +57,7 @@ export function useTabsAccess(tabGroup: string = 'sidebar') {
 
       return data as TabAccess[];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 1000, // 10 seconds - reduced for faster updates
     retry: 1,
   });
 }

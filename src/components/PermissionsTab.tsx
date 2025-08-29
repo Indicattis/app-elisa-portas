@@ -8,10 +8,14 @@ import { Separator } from "@/components/ui/separator";
 import { Shield, User } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { UserRole, AppPermission, ROLE_LABELS, PERMISSION_LABELS } from "@/types/permissions";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export function PermissionsTab() {
   const [selectedRole, setSelectedRole] = useState<UserRole | "">("");
   const { rolePermissions, updateRolePermission, loading } = usePermissions();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const roles: UserRole[] = [
     'administrador', 'diretor', 'gerente_comercial', 'gerente_marketing', 
@@ -32,7 +36,26 @@ export function PermissionsTab() {
   };
 
   const handlePermissionToggle = async (role: UserRole, permission: AppPermission, enabled: boolean) => {
-    await updateRolePermission(role, permission, enabled);
+    try {
+      await updateRolePermission(role, permission, enabled);
+      
+      // Invalidate caches to update sidebar immediately
+      await queryClient.invalidateQueries({ queryKey: ['tabs-access'] });
+      await queryClient.invalidateQueries({ queryKey: ['permissions'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-permissions'] });
+      
+      toast({
+        title: "Permissão atualizada",
+        description: `${enabled ? 'Adicionada' : 'Removida'} permissão "${PERMISSION_LABELS[permission]?.label}" para ${ROLE_LABELS[role]}`,
+      });
+    } catch (error) {
+      console.error('Error updating permission:', error);
+      toast({
+        title: "Erro ao atualizar permissão",
+        description: "Ocorreu um erro ao salvar as alterações. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
