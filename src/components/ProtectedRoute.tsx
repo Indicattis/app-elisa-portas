@@ -1,3 +1,4 @@
+
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -7,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, userRole } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -22,23 +23,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Check if user has admin permissions in the database
-  if (!userRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Acesso Negado</h1>
-          <p className="text-muted-foreground mb-4">
-            Você não tem permissão para acessar este sistema.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Entre em contato com o administrador para obter acesso.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+  // Verificação específica para páginas que requerem admin
   if (requireAdmin && !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
