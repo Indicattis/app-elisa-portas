@@ -146,7 +146,7 @@ export default function Dashboard() {
             
             {/* Contador das vendas do mês */}
             <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] w-[90%] flex items-center justify-center" style={{
-            height: '120px'
+            height: '250px'
           }}>
               <div className="text-center">
                 {loading ? <div className="text-7xl font-impact font-medium text-white">
