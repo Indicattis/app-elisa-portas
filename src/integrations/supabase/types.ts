@@ -1768,6 +1768,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tab_permissions: {
+        Row: {
+          can_access: boolean
+          created_at: string
+          id: string
+          tab_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          tab_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          tab_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tab_permissions_tab_id_fkey"
+            columns: ["tab_id"]
+            isOneToOne: false
+            referencedRelation: "app_tabs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tab_permissions_tab_id_fkey"
+            columns: ["tab_id"]
+            isOneToOne: false
+            referencedRelation: "user_tab_access"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           atendente_id: string

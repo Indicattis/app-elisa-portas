@@ -65,13 +65,13 @@ export function UserTabPermissionsModal({ open, onOpenChange, user }: UserTabPer
 
       // Buscar permissões do usuário para essas abas
       const { data: accessData, error: accessError } = await supabase
-        .from('user_tab_access')
+        .from('user_tab_permissions')
         .select('*')
         .eq('user_id', user.user_id);
 
       if (accessError) {
         console.error('Erro ao buscar permissões:', accessError);
-        // Se a view não existir ou der erro, criar mapa vazio
+        // Se não existir registro, criar mapa vazio (todas as abas liberadas por padrão)
         setUserTabAccess(new Map());
       } else {
         const accessMap = new Map<string, boolean>();
@@ -109,10 +109,9 @@ export function UserTabPermissionsModal({ open, onOpenChange, user }: UserTabPer
           .select('id')
           .eq('user_id', user.user_id)
           .eq('tab_id', tab.id)
-          .single();
+          .maybeSingle();
 
-        if (checkError && checkError.code !== 'PGRST116') {
-          // PGRST116 = não encontrado, outros erros são problemas
+        if (checkError) {
           throw checkError;
         }
 

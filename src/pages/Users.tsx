@@ -34,6 +34,8 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
+  const [permissionsModalOpen, setPermissionsModalOpen] = useState(false);
+  const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<AdminUser | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -107,6 +109,16 @@ export default function Users() {
   const handleCancel = () => {
     setEditingUser(null);
     setEditForm({});
+  };
+
+  const handleOpenPermissionsModal = (user: AdminUser) => {
+    setSelectedUserForPermissions(user);
+    setPermissionsModalOpen(true);
+  };
+
+  const handleClosePermissionsModal = () => {
+    setPermissionsModalOpen(false);
+    setSelectedUserForPermissions(null);
   };
 
   const handleAvatarUpdate = (userId: string, newAvatarUrl: string | null) => {
@@ -307,15 +319,25 @@ export default function Users() {
                               <X className="w-4 h-4" />
                             </Button>
                           </>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(user)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        )}
+                         ) : (
+                           <>
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => handleEdit(user)}
+                             >
+                               <Edit className="w-4 h-4" />
+                             </Button>
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => handleOpenPermissionsModal(user)}
+                               title="Gerenciar permissões de abas"
+                             >
+                               <Settings className="w-4 h-4" />
+                             </Button>
+                           </>
+                         )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -325,6 +347,15 @@ export default function Users() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Permissões de Abas */}
+      {selectedUserForPermissions && (
+        <UserTabPermissionsModal
+          open={permissionsModalOpen}
+          onOpenChange={handleClosePermissionsModal}
+          user={selectedUserForPermissions}
+        />
+      )}
     </div>
   );
 }
