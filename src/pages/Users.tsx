@@ -11,7 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
-import { Search, Edit, Save, X } from "lucide-react";
+import { Search, Edit, Save, X, Settings } from "lucide-react";
+import { UserTabPermissionsModal } from "@/components/UserTabPermissionsModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
