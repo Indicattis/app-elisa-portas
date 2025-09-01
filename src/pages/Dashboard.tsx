@@ -240,7 +240,7 @@ export default function Dashboard() {
           <div className="h-full flex flex-col items-center justify-center p-6">
             {/* Chart Layout */}
             <div className="w-full max-w-7xl mt-12">
-              <div className="flex justify-center items-end gap-8 h-96">
+              <div className="flex justify-center items-end gap-12 h-96 w-full">
                 {getAllCategories().map((category, index) => {
                 const vendedoresNaCategoria = vendedores.filter(v => {
                   if (category.name === 'Orion') return v.total_vendas >= category.minValue;
@@ -251,11 +251,11 @@ export default function Dashboard() {
                       <div className="flex flex-col gap-2 mb-4 h-64 justify-end">
                         {vendedoresNaCategoria.map((vendedor, vendedorIndex) => <div key={vendedor.nome} className="flex flex-col items-center">
                             <div className="relative">
-                              {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-12 h-12 rounded-full object-cover border-3 ${category.border} shadow-md`} onError={e => {
+                              {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-16 h-16 rounded-full object-cover border-3 ${category.border} shadow-md`} onError={e => {
                           (e.target as HTMLImageElement).style.display = 'none';
                           (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                         }} /> : null}
-                              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-sm shadow-md border-3 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                              <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-lg shadow-md border-3 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
                                 {vendedor.nome.charAt(0).toUpperCase()}
                               </div>
                             </div>
@@ -266,17 +266,17 @@ export default function Dashboard() {
                       </div>
                       
                       {/* Imagem da categoria */}
-                      <div className="w-20 h-16 flex items-center justify-center">
-                        {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-16 h-16" />}
-                        {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-16 h-16" />}
-                        {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-16 h-16" />}
-                        {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-16 h-16" />}
-                        {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-16 h-16" />}
-                        {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-16 h-16" />}
-                        {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-16 h-16" />}
-                        {category.name === 'Iniciante' && <div className="w-16 h-16 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full flex items-center justify-center">
-                            <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-                          </div>}
+                      <div className="w-24 h-20 flex items-center justify-center">
+                        {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-20 h-20 filter brightness-0 saturate-100 invert-[15%] sepia-[100%] saturate-[5000%] hue-rotate-[350deg] brightness-[95%] contrast-[100%]" />}
+                         {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-20 h-20" />}
+                         {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-20 h-20" />}
+                         {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-20 h-20" />}
+                         {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-20 h-20" />}
+                         {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-20 h-20" />}
+                         {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-20 h-20" />}
+                         {category.name === 'Iniciante' && <div className="w-20 h-20 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full flex items-center justify-center">
+                             <div className="w-10 h-10 bg-white/20 rounded-full"></div>
+                           </div>}
                       </div>
                       
                       {/* Labels das faixas de valores */}
