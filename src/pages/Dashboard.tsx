@@ -134,7 +134,7 @@ export default function Dashboard() {
       transform: `translateX(-${currentSlide * 100}%)`
     }}>
         {/* Slide 1: Faturamento */}
-        <div className="min-w-full flex-shrink-0">
+        <div className="w-[90%] flex-shrink-0 mx-auto">
           <div className="h-full flex flex-col items-center justify-center p-6 space-y-8">
             {/* Logo */}
             <div>
@@ -186,7 +186,7 @@ export default function Dashboard() {
         </div>
 
         {/* Slide 2: Ranking */}
-        <div className="min-w-full flex-shrink-0">
+        <div className="w-[90%] flex-shrink-0 mx-auto">
           <div className="h-full flex flex-col items-center justify-center p-6">
             {/* Container principal com ranking */}
             <div className="w-full max-w-4xl">
@@ -238,7 +238,7 @@ export default function Dashboard() {
         </div>
 
         {/* Slide 3: Metas Individuais Chart */}
-        <div className="min-w-full flex-shrink-0">
+        <div className="w-[90%] flex-shrink-0 mx-auto">
           <div className="h-full flex flex-col items-center justify-center p-6">
             {/* Chart Layout */}
             <div className="w-full max-w-7xl mt-12">
