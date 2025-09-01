@@ -2033,8 +2033,6 @@ export type Database = {
         Row: {
           active: boolean | null
           can_access: boolean | null
-          created_at: string | null
-          created_by: string | null
           href: string | null
           icon: string | null
           id: string | null
@@ -2043,37 +2041,6 @@ export type Database = {
           permission: Database["public"]["Enums"]["app_permission"] | null
           sort_order: number | null
           tab_group: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          can_access?: never
-          created_at?: string | null
-          created_by?: string | null
-          href?: string | null
-          icon?: string | null
-          id?: string | null
-          key?: string | null
-          label?: string | null
-          permission?: Database["public"]["Enums"]["app_permission"] | null
-          sort_order?: number | null
-          tab_group?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          can_access?: never
-          created_at?: string | null
-          created_by?: string | null
-          href?: string | null
-          icon?: string | null
-          id?: string | null
-          key?: string | null
-          label?: string | null
-          permission?: Database["public"]["Enums"]["app_permission"] | null
-          sort_order?: number | null
-          tab_group?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
