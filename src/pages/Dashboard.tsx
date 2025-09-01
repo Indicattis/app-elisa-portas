@@ -151,7 +151,7 @@ export default function Dashboard() {
               <div className="text-center">
                 {loading ? <div className="text-7xl font-impact font-medium text-white">
                     Carregando...
-                  </div> : <div className="text-9xl font-impact font-medium text-white ">
+                  </div> : <div className="text-9xl font-bahnschrift font-medium text-white ">
                     {new Intl.NumberFormat('pt-BR', {
                   style: 'currency',
                   currency: 'BRL',

@@ -20,6 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				'impact': ['Impact', 'Arial Black', 'sans-serif'],
+				'bahnschrift': ['Bahnschrift', 'Arial', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
