@@ -126,14 +126,14 @@ export default function Dashboard() {
     border: 'border-slate-300'
   }];
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="h-[90vh] relative overflow-hidden">
       {/* Slide Container */}
-      <div className="flex transition-transform duration-1000 ease-in-out" style={{
+      <div className="flex h-full transition-transform duration-1000 ease-in-out" style={{
       transform: `translateX(-${currentSlide * 100}%)`
     }}>
         {/* Slide 1: Faturamento */}
         <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-center p-6 space-y-8">
+          <div className="h-full flex flex-col items-center justify-center p-6 space-y-8">
             {/* Logo */}
             <div>
               <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -183,7 +183,7 @@ export default function Dashboard() {
 
         {/* Slide 2: Ranking */}
         <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-center p-6">
+          <div className="h-full flex flex-col items-center justify-center p-6">
             {/* Container principal com ranking */}
             <div className="w-full max-w-4xl">
               {/* Lista de ranking */}
@@ -235,7 +235,7 @@ export default function Dashboard() {
 
         {/* Slide 3: Metas Individuais Chart */}
         <div className="min-w-full flex-shrink-0">
-          <div className="min-h-screen flex flex-col items-center justify-center p-6">
+          <div className="h-full flex flex-col items-center justify-center p-6">
             {/* Chart Layout */}
             <div className="w-full max-w-7xl mt-12">
               <div className="flex justify-center items-end gap-8 h-96">
