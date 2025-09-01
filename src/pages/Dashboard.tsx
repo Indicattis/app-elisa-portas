@@ -2,14 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSalesData, useSellersRanking, useDashboardRealtime } from '@/hooks/useDashboardData';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -39,7 +32,6 @@ export default function Dashboard() {
   // Setup autoplay effect
   useEffect(() => {
     if (!api) return;
-
     const interval = setInterval(() => {
       if (!isHovering) {
         api.scrollNext();
@@ -52,21 +44,17 @@ export default function Dashboard() {
   // Setup event listeners for carousel
   useEffect(() => {
     if (!api) return;
-
     const onSelect = () => {
       setSelectedIndex(api.selectedScrollSnap());
     };
-
     api.on("select", onSelect);
     api.on("reInit", onSelect);
     onSelect();
-
     return () => {
       api.off("select", onSelect);
       api.off("reInit", onSelect);
     };
   }, [api]);
-
   const handleDotClick = useCallback((index: number) => {
     if (api) {
       api.scrollTo(index);
@@ -166,22 +154,15 @@ export default function Dashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-  return (
-    <div className="h-[90vh] relative overflow-hidden">
-      <Carousel
-        setApi={setApi}
-        className="w-full h-full"
-        opts={{
-          align: "center",
-          loop: true,
-        }}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-      >
+  return <div className="h-[90vh] relative overflow-hidden">
+      <Carousel setApi={setApi} className="w-full h-full" opts={{
+      align: "center",
+      loop: true
+    }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
         <CarouselContent className="h-full">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
               {/* Logo */}
               <div>
                 <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -194,17 +175,19 @@ export default function Dashboard() {
               <div className="w-full flex justify-center">
                 <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] max-w-[95%] w-full flex items-center justify-center" style={{
                 height: '250px'
-            }}>
+              }}>
                 <div className="text-center">
                   {loading ? <div className="text-7xl font-impact font-medium text-white">
                       Carregando...
-                    </div> : <div className="font-bahnschrift font-medium text-white" style={{ fontSize: '12rem' }}>
+                    </div> : <div className="font-bahnschrift font-medium text-white" style={{
+                    fontSize: '12rem'
+                  }}>
                       {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                  }).format(totalVendasMes)}
+                      style: 'currency',
+                      currency: 'BRL',
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0
+                    }).format(totalVendasMes)}
                     </div>}
                 </div>
                 </div>
@@ -345,16 +328,7 @@ export default function Dashboard() {
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1, 2].map(index => (
-          <button 
-            key={index} 
-            onClick={() => handleDotClick(index)} 
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'
-            }`} 
-          />
-        ))}
+        {[0, 1, 2].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
-    </div>
-  );
+    </div>;
 }
