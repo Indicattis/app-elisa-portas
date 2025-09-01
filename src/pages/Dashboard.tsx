@@ -2,24 +2,27 @@ import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSalesData, useSellersRanking, useDashboardRealtime } from '@/hooks/useDashboardData';
-
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
   posicao: number;
   foto_perfil_url?: string;
 }
-
 export default function Dashboard() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   // Use React Query hooks for data fetching
-  const { data: vendasData = [], isLoading: loadingVendas } = useSalesData();
-  const { data: vendedores = [], isLoading: loadingVendedores } = useSellersRanking();
-  
+  const {
+    data: vendasData = [],
+    isLoading: loadingVendas
+  } = useSalesData();
+  const {
+    data: vendedores = [],
+    isLoading: loadingVendedores
+  } = useSellersRanking();
+
   // Setup realtime updates
   useDashboardRealtime();
-  
   const loading = loadingVendas || loadingVendedores;
   const today = new Date();
 
@@ -125,8 +128,7 @@ export default function Dashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-  return (
-    <div className="h-[90vh] relative overflow-hidden">
+  return <div className="h-[90vh] relative overflow-hidden">
       {/* Slide Container */}
       <div className="flex h-full transition-transform duration-1000 ease-in-out" style={{
       transform: `translateX(-${currentSlide * 100}%)`
@@ -140,7 +142,7 @@ export default function Dashboard() {
             </div>
             
             {/* Título Faturamento */}
-            <h1 className="text-6xl font-bold text-foreground">Faturamento</h1>
+            <h1 className="font-bold text-foreground text-7xl">FATURAMENTO</h1>
             
             {/* Contador das vendas do mês */}
             <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl px-12 py-8 w-[90%] flex items-center justify-center" style={{
@@ -293,6 +295,5 @@ export default function Dashboard() {
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {[0, 1, 2].map(index => <button key={index} onClick={() => setCurrentSlide(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
-    </div>
-  );
+    </div>;
 }
