@@ -18,34 +18,10 @@ export interface TabAccess {
 export function useTabsAccess(tabGroup: string = 'sidebar') {
   const queryClient = useQueryClient();
 
-  // Set up real-time updates for permissions and tabs changes
+  // Set up real-time updates for tabs changes
   useEffect(() => {
     const channel = supabase
-      .channel('permissions-and-tabs-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'role_permissions'
-        },
-        () => {
-          // Invalidate tabs access cache when role permissions change
-          queryClient.invalidateQueries({ queryKey: ['tabs-access'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_tab_permissions'
-        },
-        () => {
-          // Invalidate tabs access cache when user-specific permissions change
-          queryClient.invalidateQueries({ queryKey: ['tabs-access'] });
-        }
-      )
+      .channel('tabs-changes')
       .on(
         'postgres_changes',
         {

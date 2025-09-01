@@ -11,8 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
-import { Search, Edit, Save, X, Settings } from "lucide-react";
-import { UserTabPermissionsModal } from "@/components/UserTabPermissionsModal";
+import { Search, Edit, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -34,8 +33,6 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
-  const [permissionsModalOpen, setPermissionsModalOpen] = useState(false);
-  const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<AdminUser | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -109,16 +106,6 @@ export default function Users() {
   const handleCancel = () => {
     setEditingUser(null);
     setEditForm({});
-  };
-
-  const handleOpenPermissionsModal = (user: AdminUser) => {
-    setSelectedUserForPermissions(user);
-    setPermissionsModalOpen(true);
-  };
-
-  const handleClosePermissionsModal = () => {
-    setPermissionsModalOpen(false);
-    setSelectedUserForPermissions(null);
   };
 
   const handleAvatarUpdate = (userId: string, newAvatarUrl: string | null) => {
@@ -328,14 +315,6 @@ export default function Users() {
                              >
                                <Edit className="w-4 h-4" />
                              </Button>
-                             <Button
-                               variant="outline"
-                               size="sm"
-                               onClick={() => handleOpenPermissionsModal(user)}
-                               title="Gerenciar permissões de abas"
-                             >
-                               <Settings className="w-4 h-4" />
-                             </Button>
                            </>
                          )}
                       </div>
@@ -347,15 +326,6 @@ export default function Users() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Modal de Permissões de Abas */}
-      {selectedUserForPermissions && (
-        <UserTabPermissionsModal
-          open={permissionsModalOpen}
-          onOpenChange={handleClosePermissionsModal}
-          user={selectedUserForPermissions}
-        />
-      )}
     </div>
   );
 }
