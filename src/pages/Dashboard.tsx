@@ -145,7 +145,7 @@ export default function Dashboard() {
             <h1 className="font-bold text-foreground text-7xl">FATURAMENTO</h1>
             
             {/* Contador das vendas do mês */}
-            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-2xl p-3 w-[90%] flex items-center justify-center" style={{
+            <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] w-[90%] flex items-center justify-center" style={{
             height: '120px'
           }}>
               <div className="text-center">
