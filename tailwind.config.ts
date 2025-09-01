@@ -21,6 +21,7 @@ export default {
 			fontFamily: {
 				'impact': ['Impact', 'Arial Black', 'sans-serif'],
 				'bahnschrift': ['Bahnschrift', 'Arial', 'sans-serif'],
+				'anton': ['Anton', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
