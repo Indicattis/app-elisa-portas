@@ -1,7 +1,15 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSalesData, useSellersRanking, useDashboardRealtime } from '@/hooks/useDashboardData';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -9,7 +17,9 @@ interface VendedorRanking {
   foto_perfil_url?: string;
 }
 export default function Dashboard() {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [api, setApi] = useState<CarouselApi>();
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
 
   // Use React Query hooks for data fetching
   const {
@@ -26,14 +36,42 @@ export default function Dashboard() {
   const loading = loadingVendas || loadingVendedores;
   const today = new Date();
 
-  // Auto-slide effect
+  // Setup autoplay effect
   useEffect(() => {
+    if (!api) return;
+
     const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % 3); // Cycle through 3 slides
+      if (!isHovering) {
+        api.scrollNext();
+      }
     }, 10000); // 10 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [api, isHovering]);
+
+  // Setup event listeners for carousel
+  useEffect(() => {
+    if (!api) return;
+
+    const onSelect = () => {
+      setSelectedIndex(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    api.on("reInit", onSelect);
+    onSelect();
+
+    return () => {
+      api.off("select", onSelect);
+      api.off("reInit", onSelect);
+    };
+  }, [api]);
+
+  const handleDotClick = useCallback((index: number) => {
+    if (api) {
+      api.scrollTo(index);
+    }
+  }, [api]);
   const totalVendasMes = useMemo(() => {
     return vendasData.reduce((sum, venda) => sum + venda.valor, 0);
   }, [vendasData]);
@@ -128,174 +166,195 @@ export default function Dashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-  return <div className="h-[90vh] relative overflow-hidden">
-      {/* Slide Container */}
-      <div className="flex h-full transition-transform duration-1000 ease-in-out" style={{
-      transform: `translateX(-${currentSlide * 100}%)`
-    }}>
-        {/* Slide 1: Faturamento */}
-        <div className="w-[90%] flex-shrink-0 mx-auto">
-          <div className="h-full flex flex-col items-center justify-center p-6 space-y-8">
-            {/* Logo */}
-            <div>
-              <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
-            </div>
-            
-            {/* Título Faturamento */}
-            <h1 className="font-anton text-foreground text-7xl">FATURAMENTO</h1>
-            
-            {/* Contador das vendas do mês */}
-            <div className="w-full flex justify-center">
-              <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] max-w-[95%] w-full flex items-center justify-center" style={{
-              height: '250px'
-          }}>
-              <div className="text-center">
-                {loading ? <div className="text-7xl font-impact font-medium text-white">
-                    Carregando...
-                  </div> : <div className="font-bahnschrift font-medium text-white" style={{ fontSize: '12rem' }}>
-                    {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0
-                }).format(totalVendasMes)}
-                  </div>}
-              </div>
-              </div>
-            </div>
-
-            {/* Data e hora atual */}
-            <div className="text-center text-muted-foreground space-y-3">
-              <div className="text-xl font-semibold uppercase ">
-                {format(today, "MMMM 'de' yyyy", {
-                locale: ptBR
-              })}
+  return (
+    <div className="h-[90vh] relative overflow-hidden">
+      <Carousel
+        setApi={setApi}
+        className="w-full h-full"
+        opts={{
+          align: "center",
+          loop: true,
+        }}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
+        <CarouselContent className="h-full">
+          {/* Slide 1: Faturamento */}
+          <CarouselItem className="h-full w-full flex items-center justify-center">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8">
+              {/* Logo */}
+              <div>
+                <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
               </div>
               
-              {/* Linha horizontal */}
-              <div className="w-32 h-0.5 bg-muted-foreground mx-auto"></div>
+              {/* Título Faturamento */}
+              <h1 className="font-anton text-foreground text-7xl">FATURAMENTO</h1>
               
-              <div className="text-lg">
-                {format(today, "dd/MM/yyyy - HH:mm", {
-                locale: ptBR
-              })}
+              {/* Contador das vendas do mês */}
+              <div className="w-full flex justify-center">
+                <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] max-w-[95%] w-full flex items-center justify-center" style={{
+                height: '250px'
+            }}>
+                <div className="text-center">
+                  {loading ? <div className="text-7xl font-impact font-medium text-white">
+                      Carregando...
+                    </div> : <div className="font-bahnschrift font-medium text-white" style={{ fontSize: '12rem' }}>
+                      {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(totalVendasMes)}
+                    </div>}
+                </div>
+                </div>
               </div>
-            </div>
 
-          </div>
-        </div>
-
-        {/* Slide 2: Ranking */}
-        <div className="w-[90%] flex-shrink-0 mx-auto">
-          <div className="h-full flex flex-col items-center justify-center p-6">
-            {/* Container principal com ranking */}
-            <div className="w-full max-w-4xl">
-              {/* Lista de ranking */}
-              <div className="space-y-4">
-                {vendedores.slice(0, 10).map(vendedor => {
-                const category = getVendedorCategory(vendedor.total_vendas);
-                return <div key={`${vendedor.nome}-${vendedor.posicao}`} className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg">
-                      <div className="flex items-center space-x-4">
-                        {/* Foto do vendedor com borda colorida */}
-                        <div className="relative">
-                          {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-16 h-16 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={e => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
-                      }} /> : null}
-                          <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
-                            {vendedor.nome.charAt(0).toUpperCase()}
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h3 className="text-xl font-bold text-foreground">
-                            {vendedor.nome}
-                          </h3>
-                          <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${category.color}`}>
-                            Vendedor {category.name}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-foreground">
-                          {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                      }).format(vendedor.total_vendas)}
-                        </div>
-                      </div>
-                    </div>;
-              })}
+              {/* Data e hora atual */}
+              <div className="text-center text-muted-foreground space-y-3">
+                <div className="text-xl font-semibold uppercase ">
+                  {format(today, "MMMM 'de' yyyy", {
+                  locale: ptBR
+                })}
+                </div>
                 
-                 {vendedores.length === 0 && <div className="text-center py-12">
-                    <p className="text-xl text-muted-foreground">Nenhuma venda registrada este mês</p>
-                  </div>}
+                {/* Linha horizontal */}
+                <div className="w-32 h-0.5 bg-muted-foreground mx-auto"></div>
+                
+                <div className="text-lg">
+                  {format(today, "dd/MM/yyyy - HH:mm", {
+                  locale: ptBR
+                })}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </CarouselItem>
 
-        {/* Slide 3: Metas Individuais Chart */}
-        <div className="w-[90%] flex-shrink-0 mx-auto">
-          <div className="h-full flex flex-col items-center justify-center p-6">
-            {/* Chart Layout */}
-            <div className="w-full max-w-7xl mt-12">
-              <div className="flex justify-center items-end gap-12 h-96 w-full">
-                {getAllCategories().map((category, index) => {
-                const vendedoresNaCategoria = vendedores.filter(v => {
-                  if (category.name === 'Orion') return v.total_vendas >= category.minValue;
-                  return v.total_vendas >= category.minValue && v.total_vendas < category.maxValue;
-                });
-                return <div key={category.name} className="flex flex-col items-center">
-                      {/* Fotos dos vendedores */}
-                      <div className="flex flex-col gap-2 mb-4 h-64 justify-end">
-                        {vendedoresNaCategoria.map((vendedor, vendedorIndex) => <div key={vendedor.nome} className="flex flex-col items-center">
-                            <div className="relative">
-                              {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-16 h-16 rounded-full object-cover border-3 ${category.border} shadow-md`} onError={e => {
+          {/* Slide 2: Ranking */}
+          <CarouselItem className="h-full w-full flex items-center justify-center">
+            <div className="h-full flex flex-col items-center justify-center p-6">
+              {/* Container principal com ranking */}
+              <div className="w-full max-w-4xl">
+                {/* Lista de ranking */}
+                <div className="space-y-4">
+                  {vendedores.slice(0, 10).map(vendedor => {
+                  const category = getVendedorCategory(vendedor.total_vendas);
+                  return <div key={`${vendedor.nome}-${vendedor.posicao}`} className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg">
+                        <div className="flex items-center space-x-4">
+                          {/* Foto do vendedor com borda colorida */}
+                          <div className="relative">
+                            {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-16 h-16 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={e => {
                           (e.target as HTMLImageElement).style.display = 'none';
                           (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                         }} /> : null}
-                              <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-lg shadow-md border-3 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
-                                {vendedor.nome.charAt(0).toUpperCase()}
-                              </div>
+                            <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                              {vendedor.nome.charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-xs text-foreground mt-1 text-center max-w-16 truncate">
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h3 className="text-xl font-bold text-foreground">
                               {vendedor.nome}
-                            </span>
-                          </div>)}
-                      </div>
-                      
-                      {/* Imagem da categoria */}
-                      <div className="w-24 h-20 flex items-center justify-center">
-                        {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-20 h-20 filter brightness-0 saturate-100 invert-[15%] sepia-[100%] saturate-[5000%] hue-rotate-[350deg] brightness-[95%] contrast-[100%]" />}
-                         {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-20 h-20" />}
-                         {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-20 h-20" />}
-                         {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-20 h-20" />}
-                         {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-20 h-20" />}
-                         {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-20 h-20" />}
-                         {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-20 h-20" />}
-                         {category.name === 'Iniciante' && <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center">
-                             <div className="w-10 h-10 bg-white/20 rounded-full"></div>
-                           </div>}
-                      </div>
-                      
-                      {/* Labels das faixas de valores */}
-                      <div className="text-xs text-muted-foreground text-center mt-2 max-w-20">
-                        {category.name === 'Orion' ? 'Acima R$ 1.5M' : category.name === 'Iniciante' ? 'Abaixo R$ 300k' : `R$ ${(category.minValue / 1000).toFixed(0)}k - R$ ${(category.maxValue / 1000).toFixed(0)}k`}
-                      </div>
-                    </div>;
-              })}
+                            </h3>
+                            <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${category.color}`}>
+                              Vendedor {category.name}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-foreground">
+                            {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                        }).format(vendedor.total_vendas)}
+                          </div>
+                        </div>
+                      </div>;
+                })}
+                  
+                   {vendedores.length === 0 && <div className="text-center py-12">
+                      <p className="text-xl text-muted-foreground">Nenhuma venda registrada este mês</p>
+                    </div>}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </CarouselItem>
+
+          {/* Slide 3: Metas Individuais Chart */}
+          <CarouselItem className="h-full w-full flex items-center justify-center">
+            <div className="h-full flex flex-col items-center justify-center p-6">
+              {/* Chart Layout */}
+              <div className="w-full max-w-7xl mt-12">
+                <div className="flex justify-center items-end gap-12 h-96 w-full">
+                  {getAllCategories().map((category, index) => {
+                  const vendedoresNaCategoria = vendedores.filter(v => {
+                    if (category.name === 'Orion') return v.total_vendas >= category.minValue;
+                    return v.total_vendas >= category.minValue && v.total_vendas < category.maxValue;
+                  });
+                  return <div key={category.name} className="flex flex-col items-center">
+                        {/* Fotos dos vendedores */}
+                        <div className="flex flex-col gap-2 mb-4 h-64 justify-end">
+                          {vendedoresNaCategoria.map((vendedor, vendedorIndex) => <div key={vendedor.nome} className="flex flex-col items-center">
+                              <div className="relative">
+                                {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-16 h-16 rounded-full object-cover border-3 ${category.border} shadow-md`} onError={e => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                          }} /> : null}
+                                <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-lg shadow-md border-3 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                                  {vendedor.nome.charAt(0).toUpperCase()}
+                                </div>
+                              </div>
+                              <span className="text-xs text-foreground mt-1 text-center max-w-16 truncate">
+                                {vendedor.nome}
+                              </span>
+                            </div>)}
+                        </div>
+                        
+                        {/* Imagem da categoria */}
+                        <div className="w-24 h-20 flex items-center justify-center">
+                          {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-20 h-20 filter brightness-0 saturate-100 invert-[15%] sepia-[100%] saturate-[5000%] hue-rotate-[350deg] brightness-[95%] contrast-[100%]" />}
+                           {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-20 h-20" />}
+                           {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-20 h-20" />}
+                           {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-20 h-20" />}
+                           {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-20 h-20" />}
+                           {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-20 h-20" />}
+                           {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-20 h-20" />}
+                           {category.name === 'Iniciante' && <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center">
+                               <div className="w-10 h-10 bg-white/20 rounded-full"></div>
+                             </div>}
+                        </div>
+                        
+                        {/* Labels das faixas de valores */}
+                        <div className="text-xs text-muted-foreground text-center mt-2 max-w-20">
+                          {category.name === 'Orion' ? 'Acima R$ 1.5M' : category.name === 'Iniciante' ? 'Abaixo R$ 300k' : `R$ ${(category.minValue / 1000).toFixed(0)}k - R$ ${(category.maxValue / 1000).toFixed(0)}k`}
+                        </div>
+                      </div>;
+                })}
+                </div>
+              </div>
+            </div>
+          </CarouselItem>
+        </CarouselContent>
+        
+        {/* Navigation arrows with responsive positioning */}
+        <CarouselPrevious className="left-2 sm:-left-12" />
+        <CarouselNext className="right-2 sm:-right-12" />
+      </Carousel>
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1, 2].map(index => <button key={index} onClick={() => setCurrentSlide(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
+        {[0, 1, 2].map(index => (
+          <button 
+            key={index} 
+            onClick={() => handleDotClick(index)} 
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'
+            }`} 
+          />
+        ))}
       </div>
-    </div>;
+    </div>
+  );
 }
