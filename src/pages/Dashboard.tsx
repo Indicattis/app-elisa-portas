@@ -274,7 +274,7 @@ export default function Dashboard() {
                          {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-20 h-20" />}
                          {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-20 h-20" />}
                          {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-20 h-20" />}
-                         {category.name === 'Iniciante' && <div className="w-20 h-20 bg-gradient-to-r from-slate-500 to-slate-400 rounded-full flex items-center justify-center">
+                         {category.name === 'Iniciante' && <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center">
                              <div className="w-10 h-10 bg-white/20 rounded-full"></div>
                            </div>}
                       </div>
