@@ -151,7 +151,7 @@ export default function Dashboard() {
               <div className="text-center">
                 {loading ? <div className="text-7xl font-impact font-medium text-white">
                     Carregando...
-                  </div> : <div className="text-7xl font-impact font-medium text-white">
+                  </div> : <div className="text-9xl font-impact font-medium text-white ">
                     {new Intl.NumberFormat('pt-BR', {
                   style: 'currency',
                   currency: 'BRL',
@@ -164,7 +164,7 @@ export default function Dashboard() {
 
             {/* Data e hora atual */}
             <div className="text-center text-muted-foreground space-y-3">
-              <div className="text-xl font-semibold">
+              <div className="text-xl font-semibold uppercase ">
                 {format(today, "MMMM 'de' yyyy", {
                 locale: ptBR
               })}
