@@ -169,7 +169,7 @@ export default function Dashboard() {
               </div>
               
               {/* Título Faturamento */}
-              <h1 className="font-anton text-foreground text-7xl">FATURAMENTO</h1>
+              <h1 className="font-anton w-full text-7xl">FATURAMENTO</h1>
               
               {/* Contador das vendas do mês */}
               <div className="w-full flex justify-center">
