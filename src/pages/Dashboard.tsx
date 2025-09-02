@@ -215,7 +215,7 @@ export default function Dashboard() {
 
           {/* Slide 2: Ranking */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full mt-40">
               {/* Container principal com ranking */}
               <div className="w-full max-w-4xl">
                 {/* Lista de ranking */}
@@ -267,7 +267,7 @@ export default function Dashboard() {
 
           {/* Slide 3: Metas Individuais Chart */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6">
+            <div className="h-full flex flex-col items-center justify-center p-6 mt-40">
               {/* Chart Layout */}
               <div className="w-full max-w-7xl mt-12">
                 <div className="flex justify-center items-end gap-12 h-96 w-full">
