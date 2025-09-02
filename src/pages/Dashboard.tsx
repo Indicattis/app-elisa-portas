@@ -179,7 +179,7 @@ export default function Dashboard() {
                 <div className="text-center">
                   {loading ? <div className="text-7xl font-rubik font-medium text-white">
                       Carregando...
-                    </div> : <div className="font-rubik font-medium text-white" style={{
+                    </div> : <div className="font-rubik font-bold text-white" style={{
                     fontSize: '12rem'
                   }}>
                       {new Intl.NumberFormat('pt-BR', {
