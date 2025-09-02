@@ -215,7 +215,7 @@ export default function Dashboard() {
 
           {/* Slide 2: Ranking */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
               {/* Container principal com ranking */}
               <div className="w-full max-w-4xl">
                 {/* Lista de ranking */}
