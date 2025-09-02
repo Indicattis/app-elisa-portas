@@ -159,7 +159,7 @@ export default function Dashboard() {
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-        <CarouselContent className="h-full w-full max-w-[95vw] flex items-center justify-center">
+        <CarouselContent className="h-full w-full max-w-[95vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
@@ -222,7 +222,7 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {vendedores.slice(0, 10).map(vendedor => {
                   const category = getVendedorCategory(vendedor.total_vendas);
-                  return <div key={`${vendedor.nome}-${vendedor.posicao}`} className="flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg">
+                  return <div key={`${vendedor.nome}-${vendedor.posicao}`} className="h-full flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg">
                         <div className="flex items-center space-x-4">
                           {/* Foto do vendedor com borda colorida */}
                           <div className="relative">
