@@ -162,7 +162,7 @@ export default function Dashboard() {
         <CarouselContent className="h-full w-full max-w-[95vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full mt-10">
               {/* Logo */}
               <div>
                 <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -174,7 +174,7 @@ export default function Dashboard() {
               {/* Contador das vendas do mês */}
               <div className="w-full flex justify-center">
                 <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] w-full flex items-center justify-center" style={{
-                height: '175px'
+                height: '200px'
               }}>
                 <div className="text-center">
                   {loading ? <div className="text-7xl font-impact font-medium text-white">
@@ -215,7 +215,7 @@ export default function Dashboard() {
 
           {/* Slide 2: Ranking */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full mt-40">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
               {/* Container principal com ranking */}
               <div className="w-full max-w-4xl">
                 {/* Lista de ranking */}
@@ -267,7 +267,7 @@ export default function Dashboard() {
 
           {/* Slide 3: Metas Individuais Chart */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 mt-40">
+            <div className="h-full flex flex-col items-center justify-center p-6">
               {/* Chart Layout */}
               <div className="w-full max-w-7xl mt-12">
                 <div className="flex justify-center items-end gap-12 h-96 w-full">
