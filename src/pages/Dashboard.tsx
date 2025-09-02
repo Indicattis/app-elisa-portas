@@ -154,12 +154,12 @@ export default function Dashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-  return <div className="h-[90vh] relative overflow-hidden">
+  return <div className="h-[90vh] relative overflow-hidden w-full">
       <Carousel setApi={setApi} className="w-full h-full" opts={{
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-        <CarouselContent className="h-full w-full max-w-[90vw]">
+        <CarouselContent className="h-full w-full max-w-[95vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
