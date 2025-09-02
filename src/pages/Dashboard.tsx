@@ -226,11 +226,11 @@ export default function Dashboard() {
                         <div className="flex items-center space-x-4">
                            {/* Foto do vendedor com borda colorida */}
                           <div className="relative">
-                            {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-24 h-24 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={e => {
+                            {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-32 h-32 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={e => {
                           (e.target as HTMLImageElement).style.display = 'none';
                           (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                         }} /> : null}
-                            <div className={`w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-2xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                            <div className={`w-32 h-32 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-3xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
                               {vendedor.nome.charAt(0).toUpperCase()}
                             </div>
                           </div>
@@ -245,7 +245,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-4xl font-bold text-foreground">
+                          <div className="text-6xl font-bold text-foreground">
                             {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL',
