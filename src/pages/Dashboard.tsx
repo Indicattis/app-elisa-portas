@@ -169,11 +169,11 @@ export default function Dashboard() {
               </div>
               
               {/* Título Faturamento */}
-              <h1 className="font-anton w-full text-7xl">FATURAMENTO</h1>
+              <h1 className="font-anton text-7xl">FATURAMENTO</h1>
               
               {/* Contador das vendas do mês */}
               <div className="w-full flex justify-center">
-                <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] max-w-[80%] w-full flex items-center justify-center" style={{
+                <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] max-w-[80vw] w-full flex items-center justify-center" style={{
                 height: '175px'
               }}>
                 <div className="text-center">
