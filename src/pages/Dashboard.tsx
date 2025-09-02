@@ -159,7 +159,7 @@ export default function Dashboard() {
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-        <CarouselContent className="h-full w-full">
+        <CarouselContent className="h-full w-full max-w-[80vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
@@ -173,7 +173,7 @@ export default function Dashboard() {
               
               {/* Contador das vendas do mês */}
               <div className="w-full flex justify-center">
-                <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] max-w-[80vw] w-full flex items-center justify-center" style={{
+                <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] w-full flex items-center justify-center" style={{
                 height: '175px'
               }}>
                 <div className="text-center">
