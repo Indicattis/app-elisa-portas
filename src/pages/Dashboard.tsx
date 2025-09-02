@@ -159,7 +159,7 @@ export default function Dashboard() {
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-        <CarouselContent className="h-full w-full max-w-screen">
+        <CarouselContent className="h-full w-full max-w-[90vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
