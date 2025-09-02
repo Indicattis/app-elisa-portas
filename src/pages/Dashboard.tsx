@@ -154,14 +154,14 @@ export default function Dashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-  return <div className="h-[90vh] relative overflow-hidden flex items-center justify-center">
+  return <div className="h-[90vh] relative overflow-hidden">
       <Carousel setApi={setApi} className="w-full h-full" opts={{
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-        <CarouselContent className="h-full w-full flex items-center justify-center">
+        <CarouselContent className="h-full w-full max-w-[80vw]">
           {/* Slide 1: Faturamento */}
-          <CarouselItem className="h-screen w-full flex items-center justify-center">
+          <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full ">
               {/* Logo */}
               <div>
