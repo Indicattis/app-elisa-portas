@@ -224,28 +224,28 @@ export default function Dashboard() {
                   const category = getVendedorCategory(vendedor.total_vendas);
                   return <div key={`${vendedor.nome}-${vendedor.posicao}`} className="h-full flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg">
                         <div className="flex items-center space-x-4">
-                          {/* Foto do vendedor com borda colorida */}
+                           {/* Foto do vendedor com borda colorida */}
                           <div className="relative">
-                            {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-16 h-16 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={e => {
+                            {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-24 h-24 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={e => {
                           (e.target as HTMLImageElement).style.display = 'none';
                           (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                         }} /> : null}
-                            <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                            <div className={`w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-2xl shadow-md border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
                               {vendedor.nome.charAt(0).toUpperCase()}
                             </div>
                           </div>
                           
                           <div className="space-y-2">
-                            <h3 className="text-xl font-bold text-foreground">
+                            <h3 className="text-3xl font-bold text-foreground">
                               {vendedor.nome}
                             </h3>
-                            <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${category.color}`}>
+                            <div className={`inline-block px-4 py-2 rounded-full text-lg font-semibold text-white bg-gradient-to-r ${category.color}`}>
                               Vendedor {category.name}
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-foreground">
+                          <div className="text-4xl font-bold text-foreground">
                             {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL',
