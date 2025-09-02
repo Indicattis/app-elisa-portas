@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useSalesData, useSellersRanking, useDashboardRealtime } from '@/hooks/useDashboardData';
+import { useSalesData, useSellersRanking, useDashboardRealtime, useWhatsAppRoulette } from '@/hooks/useDashboardData';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 interface VendedorRanking {
   nome: string;
@@ -23,10 +23,14 @@ export default function Dashboard() {
     data: vendedores = [],
     isLoading: loadingVendedores
   } = useSellersRanking();
+  const {
+    data: whatsappStats = [],
+    isLoading: loadingWhatsapp
+  } = useWhatsAppRoulette();
 
   // Setup realtime updates
   useDashboardRealtime();
-  const loading = loadingVendas || loadingVendedores;
+  const loading = loadingVendas || loadingVendedores || loadingWhatsapp;
   const today = new Date();
 
   // Setup autoplay effect
@@ -252,6 +256,9 @@ export default function Dashboard() {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0
                         }).format(vendedor.total_vendas)}
+                          </div>
+                          <div className="text-lg text-muted-foreground mt-2">
+                            {whatsappStats.find(w => w.nome === vendedor.nome)?.total_clicks || 0} leads WhatsApp
                           </div>
                         </div>
                       </div>;
