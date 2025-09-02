@@ -174,12 +174,12 @@ export default function Dashboard() {
               {/* Contador das vendas do mês */}
               <div className="w-full flex justify-center">
                 <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] shadow-2xl border-[3px] border-[#edd99e] p-[10px] w-full flex items-center justify-center" style={{
-                height: '200px'
+                height: '250px'
               }}>
                 <div className="text-center">
-                  {loading ? <div className="text-7xl font-impact font-medium text-white">
+                  {loading ? <div className="text-7xl font-rubik font-medium text-white">
                       Carregando...
-                    </div> : <div className="font-bahnschrift font-medium text-white" style={{
+                    </div> : <div className="font-rubik font-medium text-white" style={{
                     fontSize: '12rem'
                   }}>
                       {new Intl.NumberFormat('pt-BR', {
