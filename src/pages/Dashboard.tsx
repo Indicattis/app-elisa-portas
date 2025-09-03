@@ -181,9 +181,9 @@ export default function Dashboard() {
                 height: '250px'
               }}>
                 <div className="text-center">
-                  {loading ? <div className="text-7xl font-rubik font-medium text-white">
+                  {loading ? <div className="text-7xl font-inter font-medium text-white">
                       Carregando...
-                    </div> : <div className="font-rubik font-bold text-white" style={{
+                    </div> : <div className="font-inter font-bold text-white" style={{
                     fontSize: '12rem'
                   }}>
                       {new Intl.NumberFormat('pt-BR', {

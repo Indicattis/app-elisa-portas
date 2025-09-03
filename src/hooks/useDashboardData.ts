@@ -109,32 +109,8 @@ export const useWhatsAppRoulette = () => {
   return useQuery({
     queryKey: ['whatsapp-roulette-stats'],
     queryFn: async (): Promise<{ nome: string; total_clicks: number }[]> => {
-      const hoje = new Date();
-      const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-      const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-
-      const { data, error } = await supabase
-        .from('whatsapp_roulette_clicks')
-        .select('atendente_nome')
-        .gte('created_at', format(primeiroDiaDoMes, 'yyyy-MM-dd'))
-        .lte('created_at', format(ultimoDiaDoMes, 'yyyy-MM-dd'));
-
-      if (error) {
-        console.error('Erro ao buscar stats da roleta:', error);
-        throw error;
-      }
-
-      // Agrupar por atendente e contar
-      const clicksPorAtendente = (data || []).reduce((acc: { [key: string]: number }, click: any) => {
-        const nome = click.atendente_nome;
-        acc[nome] = (acc[nome] || 0) + 1;
-        return acc;
-      }, {});
-
-      return Object.entries(clicksPorAtendente).map(([nome, total_clicks]) => ({
-        nome,
-        total_clicks: total_clicks as number
-      }));
+      // Retorna array vazio temporariamente até a tabela ser criada
+      return [];
     },
     refetchInterval: 120000, // 2 minutes fallback
     refetchOnWindowFocus: true,
@@ -174,20 +150,6 @@ export const useDashboardRealtime = () => {
           // Debounced invalidation
           setTimeout(() => {
             queryClient.invalidateQueries({ queryKey: ['ranking-vendedores'] });
-          }, 500);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'whatsapp_roulette_clicks'
-        },
-        () => {
-          // Debounced invalidation
-          setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ['whatsapp-roulette-stats'] });
           }, 500);
         }
       )

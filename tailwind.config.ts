@@ -22,6 +22,7 @@ export default {
 				'impact': ['Impact', 'Arial Black', 'sans-serif'],
 				'bahnschrift': ['Bahnschrift', 'Arial', 'sans-serif'],
 				'anton': ['Anton', 'sans-serif'],
+				'inter': ['Inter', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
