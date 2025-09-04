@@ -166,7 +166,7 @@ export default function Dashboard() {
         <CarouselContent className="h-full w-full max-w-[95vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full mt-20">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full mt-40">
               {/* Logo */}
               <div>
                 <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
@@ -274,7 +274,7 @@ export default function Dashboard() {
 
           {/* Slide 3: Metas Individuais Chart */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 mt-40">
+            <div className="h-full flex flex-col items-center justify-center p-6 mt-86">
               {/* Chart Layout */}
               <div className="w-full max-w-7xl mt-12">
                 <div className="flex justify-center items-end gap-12 h-96 w-full">
