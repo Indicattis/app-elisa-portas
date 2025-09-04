@@ -274,10 +274,10 @@ export default function Dashboard() {
 
           {/* Slide 3: Metas Individuais Chart */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 mt-20">
+            <div className="h-full flex flex-col items-center justify-center p-6 mt-[25%]">
               {/* Chart Layout */}
               <div className="w-full max-w-7xl mt-12">
-                <div className="flex justify-center items-end gap-16 h-[500px] w-full">
+                <div className="flex justify-center items-end gap-12 h-96 w-full">
                   {getAllCategories().map((category, index) => {
                   const vendedoresNaCategoria = vendedores.filter(v => {
                     if (category.name === 'Orion') return v.total_vendas >= category.minValue;
@@ -285,36 +285,39 @@ export default function Dashboard() {
                   });
                   return <div key={category.name} className="flex flex-col items-center">
                         {/* Fotos dos vendedores */}
-                        <div className="flex flex-col gap-4 mb-6 h-80 justify-end">
+                        <div className="flex flex-col gap-2 mb-4 h-64 justify-end">
                           {vendedoresNaCategoria.map((vendedor, vendedorIndex) => <div key={vendedor.nome} className="flex flex-col items-center">
                               <div className="relative">
-                                {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-24 h-24 rounded-full object-cover border-4 ${category.border} shadow-lg`} onError={e => {
+                                {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-16 h-16 rounded-full object-cover border-3 ${category.border} shadow-md`} onError={e => {
                             (e.target as HTMLImageElement).style.display = 'none';
                             (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                           }} /> : null}
-                                <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-2xl shadow-lg border-4 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                                <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-lg shadow-md border-3 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
                                   {vendedor.nome.charAt(0).toUpperCase()}
                                 </div>
                               </div>
+                              <span className="text-xs text-foreground mt-1 text-center max-w-16 truncate">
+                                {vendedor.nome}
+                              </span>
                             </div>)}
                         </div>
                         
                         {/* Imagem da categoria */}
-                        <div className="w-[140px] h-[140px] flex items-center justify-center">
-                          {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-[140px] h-[140px] filter brightness-0 saturate-100 invert-[15%] sepia-[100%] saturate-[5000%] hue-rotate-[350deg] brightness-[95%] contrast-[100%]" />}
-                           {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-[140px] h-[140px]" />}
-                           {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-[140px] h-[140px]" />}
-                           {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-[140px] h-[140px]" />}
-                           {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-[140px] h-[140px]" />}
-                           {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-[140px] h-[140px]" />}
-                           {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-[140px] h-[140px]" />}
-                           {category.name === 'Iniciante' && <div className="w-[140px] h-[140px] bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center">
-                               <div className="w-16 h-16 bg-white/20 rounded-full"></div>
+                        <div className="w-[100px] h-[100px] flex items-center justify-center">
+                          {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-[100px] h-[100px] filter brightness-0 saturate-100 invert-[15%] sepia-[100%] saturate-[5000%] hue-rotate-[350deg] brightness-[95%] contrast-[100%]" />}
+                           {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-[100px] h-[100px]" />}
+                           {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-[100px] h-[100px]" />}
+                           {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-[100px] h-[100px]" />}
+                           {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-[100px] h-[100px]" />}
+                           {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-[100px] h-[100px]" />}
+                           {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-[100px] h-[100px]" />}
+                           {category.name === 'Iniciante' && <div className="w-[100px] h-[100px] bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center">
+                               <div className="w-12 h-12 bg-white/20 rounded-full"></div>
                              </div>}
                         </div>
                         
                         {/* Labels das faixas de valores */}
-                        <div className="text-xl text-muted-foreground text-center mt-4 max-w-32 font-semibold">
+                        <div className="text-base text-muted-foreground text-center mt-2 max-w-20">
                           {category.name === 'Orion' ? 'Acima R$ 1.5M' : category.name === 'Iniciante' ? 'Abaixo R$ 300k' : `R$ ${(category.minValue / 1000).toFixed(0)}k - R$ ${(category.maxValue / 1000).toFixed(0)}k`}
                         </div>
                       </div>;
