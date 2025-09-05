@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface AutorizadoForm {
@@ -23,6 +24,13 @@ interface AutorizadoForm {
   regiao: string;
   ativo: boolean;
   logo_url: string;
+  vendedor_id: string;
+}
+
+interface Vendedor {
+  id: string;
+  nome: string;
+  foto_perfil_url?: string;
 }
 
 export default function AutorizadoNovo() {
@@ -38,13 +46,35 @@ export default function AutorizadoNovo() {
     cep: "",
     regiao: "",
     ativo: true,
-    logo_url: ""
+    logo_url: "",
+    vendedor_id: ""
   });
+  
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchVendedores();
+  }, []);
+
+  const fetchVendedores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('id, nome, foto_perfil_url')
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) throw error;
+      setVendedores(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar vendedores:', error);
+    }
+  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -113,7 +143,8 @@ export default function AutorizadoNovo() {
           cep: form.cep.trim() || null,
           regiao: form.regiao.trim() || null,
           ativo: form.ativo,
-          logo_url: form.logo_url || null
+          logo_url: form.logo_url || null,
+          vendedor_id: form.vendedor_id || null
         });
 
       if (error) throw error;
@@ -297,6 +328,36 @@ export default function AutorizadoNovo() {
                   value={form.regiao}
                   onChange={(e) => setForm({ ...form, regiao: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="vendedor">Vendedor</Label>
+                <Select
+                  value={form.vendedor_id}
+                  onValueChange={(value) => setForm({ ...form, vendedor_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum vendedor</SelectItem>
+                    {vendedores.map((vendedor) => (
+                      <SelectItem key={vendedor.id} value={vendedor.id}>
+                        <div className="flex items-center space-x-2">
+                          {vendedor.foto_perfil_url ? (
+                            <img
+                              src={vendedor.foto_perfil_url}
+                              alt={vendedor.nome}
+                              className="w-4 h-4 rounded-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-4 w-4" />
+                          )}
+                          <span>{vendedor.nome}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

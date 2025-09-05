@@ -178,6 +178,7 @@ export type Database = {
           responsavel: string | null
           telefone: string | null
           updated_at: string
+          vendedor_id: string | null
           whatsapp: string | null
         }
         Insert: {
@@ -199,6 +200,7 @@ export type Database = {
           responsavel?: string | null
           telefone?: string | null
           updated_at?: string
+          vendedor_id?: string | null
           whatsapp?: string | null
         }
         Update: {
@@ -220,9 +222,18 @@ export type Database = {
           responsavel?: string | null
           telefone?: string | null
           updated_at?: string
+          vendedor_id?: string | null
           whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "autorizados_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calendario_cores: {
         Row: {
@@ -1984,6 +1995,38 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      whatsapp_roulette_clicks: {
+        Row: {
+          atendente_id: string | null
+          atendente_nome: string
+          atendente_telefone: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          atendente_id?: string | null
+          atendente_nome: string
+          atendente_telefone?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          atendente_id?: string | null
+          atendente_nome?: string
+          atendente_telefone?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_roulette_clicks_atendente_id_fkey"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

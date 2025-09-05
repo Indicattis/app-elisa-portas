@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, Map, List, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
 
 interface Autorizado {
@@ -37,6 +38,17 @@ interface Autorizado {
   geocode_precision?: string;
   created_at: string;
   updated_at: string;
+  vendedor_id?: string;
+  vendedor?: {
+    nome: string;
+    foto_perfil_url?: string;
+  };
+}
+
+interface Vendedor {
+  id: string;
+  nome: string;
+  foto_perfil_url?: string;
 }
 
 export default function Autorizados() {
@@ -48,11 +60,13 @@ export default function Autorizados() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [geocoding, setGeocoding] = useState<string | null>(null);
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchAutorizados();
+    fetchVendedores();
   }, []);
 
   useEffect(() => {
@@ -70,7 +84,10 @@ export default function Autorizados() {
       setLoading(true);
       const { data, error } = await supabase
         .from('autorizados')
-        .select('*')
+        .select(`
+          *,
+          vendedor:admin_users(nome, foto_perfil_url)
+        `)
         .order('nome');
 
       if (error) throw error;
@@ -84,6 +101,21 @@ export default function Autorizados() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVendedores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('id, nome, foto_perfil_url')
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) throw error;
+      setVendedores(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar vendedores:', error);
     }
   };
 
@@ -177,6 +209,7 @@ export default function Autorizados() {
           regiao: editingAutorizado.regiao,
           ativo: editingAutorizado.ativo,
           logo_url: editingAutorizado.logo_url,
+          vendedor_id: editingAutorizado.vendedor_id,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingAutorizado.id);
@@ -346,6 +379,7 @@ export default function Autorizados() {
               <TableRow>
                 <TableHead>Logo</TableHead>
                 <TableHead>Nome</TableHead>
+                <TableHead>Vendedor</TableHead>
                 <TableHead>Contato</TableHead>
                 <TableHead>Localização</TableHead>
                 <TableHead>Status</TableHead>
@@ -375,6 +409,26 @@ export default function Autorizados() {
                         <p className="text-sm text-muted-foreground">{autorizado.responsavel}</p>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {autorizado.vendedor ? (
+                      <div className="flex items-center space-x-2">
+                        {autorizado.vendedor.foto_perfil_url ? (
+                          <img
+                            src={autorizado.vendedor.foto_perfil_url}
+                            alt={autorizado.vendedor.nome}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                            <User className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        )}
+                        <span className="text-sm">{autorizado.vendedor.nome}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
@@ -574,15 +628,49 @@ export default function Autorizados() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="regiao">Região</Label>
-                <Input
-                  id="regiao"
-                  value={editingAutorizado.regiao || ""}
-                  onChange={(e) =>
-                    setEditingAutorizado({ ...editingAutorizado, regiao: e.target.value })
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="regiao">Região</Label>
+                  <Input
+                    id="regiao"
+                    value={editingAutorizado.regiao || ""}
+                    onChange={(e) =>
+                      setEditingAutorizado({ ...editingAutorizado, regiao: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vendedor">Vendedor</Label>
+                  <Select
+                    value={editingAutorizado.vendedor_id || ""}
+                    onValueChange={(value) =>
+                      setEditingAutorizado({ ...editingAutorizado, vendedor_id: value || undefined })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um vendedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Nenhum vendedor</SelectItem>
+                      {vendedores.map((vendedor) => (
+                        <SelectItem key={vendedor.id} value={vendedor.id}>
+                          <div className="flex items-center space-x-2">
+                            {vendedor.foto_perfil_url ? (
+                              <img
+                                src={vendedor.foto_perfil_url}
+                                alt={vendedor.nome}
+                                className="w-4 h-4 rounded-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-4 w-4" />
+                            )}
+                            <span>{vendedor.nome}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Seção de Upload de Imagem */}
