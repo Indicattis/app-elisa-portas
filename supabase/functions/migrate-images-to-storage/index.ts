@@ -35,11 +35,11 @@ serve(async (req) => {
     // Check if user is admin
     const { data: adminUser, error: adminError } = await supabase
       .from('admin_users')
-      .select('role')
+      .select('role, ativo')
       .eq('user_id', user.id)
       .single()
 
-    if (adminError || !adminUser || adminUser.role !== 'administrador') {
+    if (adminError || !adminUser || !adminUser.ativo) {
       throw new Error('Access denied - admin only')
     }
 
