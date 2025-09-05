@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CanaisAquisicaoManager } from "@/components/CanaisAquisicaoManager";
 import InvestmentManager from "@/components/InvestmentManager";
+import { StorageMigration } from "@/components/StorageMigration";
 import { Settings, Palette, Database, Users as UsersIcon, TrendingUp, Shield } from "lucide-react";
 import { useState } from "react";
 import Users from "@/pages/Users";
@@ -115,11 +116,13 @@ export default function Configuracoes() {
               <CardTitle>Configurações do Sistema</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-6">
                 Configurações gerais do sistema em breve...
               </p>
             </CardContent>
           </Card>
+
+          <StorageMigration />
         </TabsContent>
       </Tabs>
     </div>

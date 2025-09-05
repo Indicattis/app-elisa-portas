@@ -32,5 +32,8 @@ additional_redirect_urls = ["https://127.0.0.1:3000/**"]
 jwt_expiry = 3600
 enable_signup = true
 
-[functions.geocode-nominatim]
+[functions.migrate-images-to-storage]
+verify_jwt = false
+
+[functions.cleanup-database]
 verify_jwt = false

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -7,18 +6,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, Loader2 } from "lucide-react";
 
-interface AvatarUploadProps {
-  userId: string;
-  currentAvatarUrl?: string | null;
-  userName: string;
-  onAvatarUpdate: (url: string | null) => void;
+interface LogoUploadProps {
+  autorizadoId: string;
+  currentLogoUrl?: string | null;
+  autorizadoName: string;
+  onLogoUpdate: (url: string | null) => void;
 }
 
-export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdate }: AvatarUploadProps) {
+export function LogoUpload({ autorizadoId, currentLogoUrl, autorizadoName, onLogoUpdate }: LogoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadLogo = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
 
@@ -40,11 +39,11 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
 
       // Upload para Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `${autorizadoId}-${Date.now()}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('user-avatars')
+        .from('autorizados-logos')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) {
@@ -53,72 +52,72 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
 
       // Obter URL pública
       const { data: { publicUrl } } = supabase.storage
-        .from('user-avatars')
+        .from('autorizados-logos')
         .getPublicUrl(filePath);
 
       // Atualizar na base de dados com a URL do Storage
       const { error: updateError } = await supabase
-        .from('admin_users')
-        .update({ foto_perfil_url: publicUrl })
-        .eq('user_id', userId);
+        .from('autorizados')
+        .update({ logo_url: publicUrl })
+        .eq('id', autorizadoId);
 
       if (updateError) {
         throw updateError;
       }
 
-      onAvatarUpdate(publicUrl);
+      onLogoUpdate(publicUrl);
       
       toast({
         title: "Sucesso",
-        description: "Foto de perfil atualizada com sucesso",
+        description: "Logo atualizado com sucesso",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error?.message || "Erro ao fazer upload da foto",
+        description: error?.message || "Erro ao fazer upload do logo",
       });
     } finally {
       setUploading(false);
     }
   };
 
-  const removeAvatar = async () => {
+  const removeLogo = async () => {
     try {
       setUploading(true);
 
       // Se existe URL atual, tentar remover do storage
-      if (currentAvatarUrl && currentAvatarUrl.includes('user-avatars')) {
-        const filePath = currentAvatarUrl.split('/user-avatars/')[1];
+      if (currentLogoUrl && currentLogoUrl.includes('autorizados-logos')) {
+        const filePath = currentLogoUrl.split('/autorizados-logos/')[1];
         if (filePath) {
           await supabase.storage
-            .from('user-avatars')
-            .remove([`avatars/${filePath}`]);
+            .from('autorizados-logos')
+            .remove([`logos/${filePath}`]);
         }
       }
 
       // Remover da base de dados
       const { error: updateError } = await supabase
-        .from('admin_users')
-        .update({ foto_perfil_url: null })
-        .eq('user_id', userId);
+        .from('autorizados')
+        .update({ logo_url: null })
+        .eq('id', autorizadoId);
 
       if (updateError) {
         throw updateError;
       }
 
-      onAvatarUpdate(null);
+      onLogoUpdate(null);
       
       toast({
         title: "Sucesso",
-        description: "Foto de perfil removida com sucesso",
+        description: "Logo removido com sucesso",
       });
     } catch (error) {
-      console.error('Erro ao remover foto:', error);
+      console.error('Erro ao remover logo:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao remover foto",
+        description: "Erro ao remover logo",
       });
     } finally {
       setUploading(false);
@@ -138,11 +137,11 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
     <div className="flex items-center space-x-4">
       <Avatar className="w-16 h-16">
         <AvatarImage 
-          src={currentAvatarUrl || undefined} 
-          alt={userName} 
+          src={currentLogoUrl || undefined} 
+          alt={autorizadoName} 
         />
         <AvatarFallback className="text-lg">
-          {getInitials(userName)}
+          {getInitials(autorizadoName)}
         </AvatarFallback>
       </Avatar>
       
@@ -160,22 +159,22 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
               ) : (
                 <Camera className="w-4 h-4 mr-2" />
               )}
-              {uploading ? "Enviando..." : "Alterar Foto"}
+              {uploading ? "Enviando..." : "Alterar Logo"}
               <Input
                 type="file"
                 className="hidden"
                 accept="image/*"
-                onChange={uploadAvatar}
+                onChange={uploadLogo}
                 disabled={uploading}
               />
             </label>
           </Button>
           
-          {currentAvatarUrl && (
+          {currentLogoUrl && (
             <Button
               variant="outline"
               size="sm"
-              onClick={removeAvatar}
+              onClick={removeLogo}
               disabled={uploading}
             >
               Remover

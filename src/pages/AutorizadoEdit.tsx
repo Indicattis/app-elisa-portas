@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { LogoUpload } from "@/components/LogoUpload";
 import { ArrowLeft, Upload, X, User, MapPin, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -124,42 +125,9 @@ export default function AutorizadoEdit() {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Verificar tipo de arquivo
-      if (!file.type.startsWith('image/')) {
-        toast({
-          variant: 'destructive',
-          title: 'Erro',
-          description: 'Por favor, selecione apenas arquivos de imagem.'
-        });
-        return;
-      }
-
-      // Verificar tamanho do arquivo (máximo 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          variant: 'destructive',
-          title: 'Erro',
-          description: 'A imagem deve ter no máximo 5MB.'
-        });
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        setForm({ ...form, logo_url: base64 });
-        setImagePreview(base64);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = () => {
-    setForm({ ...form, logo_url: "" });
-    setImagePreview("");
+  const handleLogoUpdate = (url: string | null) => {
+    setForm({ ...form, logo_url: url || "" });
+    setImagePreview(url || "");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -311,44 +279,14 @@ export default function AutorizadoEdit() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Upload de Logo */}
             <div className="space-y-4">
               <Label>Logo do Autorizado</Label>
-              <div className="flex items-center gap-4">
-                {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-20 h-20 rounded object-cover border"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                      onClick={removeImage}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="w-20 h-20 border-2 border-dashed border-muted-foreground/25 rounded flex items-center justify-center">
-                    <Upload className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                )}
-                <div>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="max-w-sm"
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Formatos aceitos: JPG, PNG, GIF (máximo 5MB)
-                  </p>
-                </div>
-              </div>
+              <LogoUpload
+                autorizadoId={id!}
+                currentLogoUrl={form.logo_url}
+                autorizadoName={form.nome}
+                onLogoUpdate={handleLogoUpdate}
+              />
             </div>
 
             {/* Informações Básicas */}
