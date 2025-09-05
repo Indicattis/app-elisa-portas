@@ -209,7 +209,19 @@ export function StorageMigration() {
                     <div className="mt-2 space-y-1 text-xs">
                       {results.table_sizes.map((table: any, index: number) => (
                         <p key={index}>
-                          <strong>{table.tablename}:</strong> {table.size}
+                          <strong>{table.table_name}:</strong> {table.size_pretty}
+                        </p>
+                      ))}
+                    </div>
+                  </details>
+                )}
+                {results.remaining_base64_images && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer">Imagens base64 restantes</summary>
+                    <div className="mt-2 space-y-1 text-xs">
+                      {results.remaining_base64_images.map((count: any, index: number) => (
+                        <p key={index}>
+                          <strong>{count.table_name}:</strong> {count.base64_count} imagens
                         </p>
                       ))}
                     </div>
