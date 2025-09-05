@@ -449,7 +449,7 @@ const App = () => (
                 <Route
                   path="/dashboard/autorizados/:id/edit"
                   element={
-                    <ProtectedRoute requireAdmin={true}>
+                    <ProtectedRoute>
                       <DashboardLayout>
                         <AutorizadoEdit />
                       </DashboardLayout>
