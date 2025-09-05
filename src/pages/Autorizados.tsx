@@ -60,6 +60,7 @@ export default function Autorizados() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [geocoding, setGeocoding] = useState<string | null>(null);
+  const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -260,11 +261,11 @@ export default function Autorizados() {
   };
 
   const handleGeocode = async (autorizado: Autorizado) => {
-    if (!autorizado.endereco || !autorizado.cidade || !autorizado.estado) {
+    if (!autorizado.cidade || !autorizado.estado) {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Endereço, cidade e estado são obrigatórios para geocodificação.'
+        description: 'Cidade e estado são obrigatórios para geocodificação.'
       });
       return;
     }
@@ -275,7 +276,7 @@ export default function Autorizados() {
       const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
         body: {
           id: autorizado.id,
-          endereco: autorizado.endereco,
+          endereco: autorizado.endereco || '',
           cidade: autorizado.cidade,
           estado: autorizado.estado
         }
@@ -302,6 +303,69 @@ export default function Autorizados() {
     } finally {
       setGeocoding(null);
     }
+  };
+
+  const handleBatchGeocode = async () => {
+    const autorizadosToGeocode = autorizados.filter(autorizado => 
+      autorizado.ativo && 
+      autorizado.cidade && 
+      autorizado.estado && 
+      !autorizado.latitude && 
+      !autorizado.longitude
+    );
+
+    if (autorizadosToGeocode.length === 0) {
+      toast({
+        title: 'Info',
+        description: 'Nenhum autorizado encontrado para geocodificação.'
+      });
+      return;
+    }
+
+    setBatchGeocoding(true);
+    let success = 0;
+    let errors = 0;
+
+    toast({
+      title: 'Geocodificação em lote iniciada',
+      description: `Processando ${autorizadosToGeocode.length} autorizados...`
+    });
+
+    for (const autorizado of autorizadosToGeocode) {
+      try {
+        const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
+          body: {
+            id: autorizado.id,
+            endereco: autorizado.endereco || '',
+            cidade: autorizado.cidade,
+            estado: autorizado.estado
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+          success++;
+        } else {
+          errors++;
+        }
+      } catch (error) {
+        console.error(`Erro ao geocodificar ${autorizado.nome}:`, error);
+        errors++;
+      }
+
+      // Delay para respeitar limites da API do Nominatim
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    setBatchGeocoding(false);
+    
+    toast({
+      title: 'Geocodificação em lote concluída',
+      description: `${success} sucessos, ${errors} erros`
+    });
+
+    fetchAutorizados();
   };
 
   if (loading) {
@@ -345,10 +409,27 @@ export default function Autorizados() {
         <TabsContent value="map">
           <Card>
             <CardHeader>
-              <CardTitle>Mapa de Autorizados</CardTitle>
-              <CardDescription>
-                Visualize a localização dos autorizados no mapa do Brasil
-              </CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>Mapa de Autorizados</CardTitle>
+                  <CardDescription>
+                    Visualize a localização dos autorizados no mapa do Brasil
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={handleBatchGeocode}
+                  disabled={batchGeocoding}
+                  variant="outline"
+                  size="sm"
+                >
+                  {batchGeocoding ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Geocodificar todos
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <AutorizadosMapLeaflet autorizados={autorizados} />
@@ -359,18 +440,36 @@ export default function Autorizados() {
         <TabsContent value="list">
           <Card>
         <CardHeader>
-          <CardTitle>Lista de Autorizados</CardTitle>
-          <CardDescription>
-            {filteredAutorizados.length} autorizado(s) encontrado(s)
-          </CardDescription>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar por nome, email, cidade ou região..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex justify-between items-start">
+            <div className="space-y-2 flex-1">
+              <CardTitle>Lista de Autorizados</CardTitle>
+              <CardDescription>
+                {filteredAutorizados.length} autorizado(s) encontrado(s)
+              </CardDescription>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome, email, cidade ou região..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Button
+              onClick={handleBatchGeocode}
+              disabled={batchGeocoding}
+              variant="outline"
+              size="sm"
+              className="ml-4"
+            >
+              {batchGeocoding ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Geocodificar todos
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -475,7 +574,7 @@ export default function Autorizados() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      {autorizado.endereco && autorizado.cidade && autorizado.estado && (
+                      {autorizado.cidade && autorizado.estado && (
                         <Button
                           variant="outline"
                           size="sm"

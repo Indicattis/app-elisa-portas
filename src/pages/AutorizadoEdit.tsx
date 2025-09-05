@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Upload, X, User } from "lucide-react";
+import { ArrowLeft, Upload, X, User, MapPin, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 interface AutorizadoForm {
@@ -54,6 +54,7 @@ export default function AutorizadoEdit() {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -212,6 +213,53 @@ export default function AutorizadoEdit() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleGeocode = async () => {
+    if (!form.cidade || !form.estado) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Cidade e estado são obrigatórios para geocodificação.'
+      });
+      return;
+    }
+
+    try {
+      setGeocoding(true);
+      
+      const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
+        body: {
+          id: id,
+          endereco: form.endereco || '',
+          cidade: form.cidade,
+          estado: form.estado
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: 'Sucesso',
+          description: `Coordenadas obtidas: ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`
+        });
+        
+        // Atualizar os dados do formulário se necessário
+        await fetchAutorizado();
+      } else {
+        throw new Error(data.error || 'Erro ao geocodificar endereço');
+      }
+    } catch (error: any) {
+      console.error('Erro na geocodificação:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro na geocodificação',
+        description: error.message || 'Não foi possível geocodificar o endereço.'
+      });
+    } finally {
+      setGeocoding(false);
     }
   };
 
@@ -428,6 +476,26 @@ export default function AutorizadoEdit() {
                 </Select>
               </div>
             </div>
+
+            {/* Geocodificação */}
+            {form.cidade && form.estado && (
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGeocode}
+                  disabled={geocoding}
+                  size="sm"
+                >
+                  {geocoding ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <MapPin className="h-4 w-4 mr-2" />
+                  )}
+                  Obter coordenadas
+                </Button>
+              </div>
+            )}
 
             {/* Status */}
             <div className="flex items-center space-x-2">
