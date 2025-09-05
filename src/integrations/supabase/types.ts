@@ -2071,6 +2071,14 @@ export type Database = {
       }
     }
     Functions: {
+      analyze_database_storage: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          size_bytes: number
+          size_pretty: string
+          table_name: string
+        }[]
+      }
       aprovar_orcamento: {
         Args:
           | {
@@ -2093,6 +2101,13 @@ export type Database = {
       calcular_valor_produto_orcamento: {
         Args: { orcamento_uuid: string }
         Returns: number
+      }
+      count_base64_images: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          base64_count: number
+          table_name: string
+        }[]
       }
       criar_requisicao_venda: {
         Args: { orcamento_uuid: string }
@@ -2138,6 +2153,10 @@ export type Database = {
           nome: string
           numero_telefone: string
         }[]
+      }
+      perform_database_vacuum: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
     }
     Enums: {

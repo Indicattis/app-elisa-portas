@@ -69,11 +69,9 @@ async function vacuumDatabase(supabase: any) {
   console.log('Starting database vacuum...')
   
   try {
-    // Execute VACUUM FULL on tables that had large base64 data
-    const { error: vacuumError } = await supabase
-      .rpc('sql', {
-        query: 'VACUUM FULL admin_users, autorizados;'
-      })
+    // Call the database function to perform VACUUM
+    const { data: vacuumResult, error: vacuumError } = await supabase
+      .rpc('perform_database_vacuum')
 
     if (vacuumError) {
       throw new Error(`VACUUM failed: ${vacuumError.message}`)
@@ -82,6 +80,7 @@ async function vacuumDatabase(supabase: any) {
     return new Response(
       JSON.stringify({
         message: 'Database vacuum completed successfully',
+        result: vacuumResult,
         note: 'Space has been reclaimed from migrated base64 data'
       }),
       { 
@@ -97,42 +96,17 @@ async function analyzeStorage(supabase: any) {
   console.log('Analyzing storage usage...')
   
   try {
-    // Get table sizes
+    // Get table sizes using database function
     const { data: tableSizes, error: sizeError } = await supabase
-      .rpc('sql', {
-        query: `
-          SELECT 
-            schemaname,
-            tablename,
-            pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
-            pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
-          FROM pg_tables 
-          WHERE schemaname = 'public'
-          ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
-        `
-      })
+      .rpc('analyze_database_storage')
 
     if (sizeError) {
       throw new Error(`Storage analysis failed: ${sizeError.message}`)
     }
 
-    // Count remaining base64 images
+    // Count remaining base64 images using database function
     const { data: base64Count, error: countError } = await supabase
-      .rpc('sql', {
-        query: `
-          SELECT 
-            'admin_users' as table_name,
-            COUNT(*) as base64_count
-          FROM admin_users 
-          WHERE foto_perfil_url LIKE 'data:image%'
-          UNION ALL
-          SELECT 
-            'autorizados' as table_name,
-            COUNT(*) as base64_count
-          FROM autorizados 
-          WHERE logo_url LIKE 'data:image%';
-        `
-      })
+      .rpc('count_base64_images')
 
     if (countError) {
       throw new Error(`Base64 count failed: ${countError.message}`)
