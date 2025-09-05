@@ -37,3 +37,6 @@ verify_jwt = false
 
 [functions.cleanup-database]
 verify_jwt = false
+
+[functions.optimize-images]
+verify_jwt = false

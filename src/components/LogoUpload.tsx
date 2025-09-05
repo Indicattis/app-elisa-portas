@@ -44,7 +44,10 @@ export function LogoUpload({ autorizadoId, currentLogoUrl, autorizadoName, onLog
 
       const { error: uploadError } = await supabase.storage
         .from('autorizados-logos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { 
+          upsert: true,
+          cacheControl: '31536000' // 1 ano
+        });
 
       if (uploadError) {
         throw uploadError;

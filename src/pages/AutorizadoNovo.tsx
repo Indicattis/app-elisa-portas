@@ -76,7 +76,7 @@ export default function AutorizadoNovo() {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Verificar tipo de arquivo
@@ -99,13 +99,41 @@ export default function AutorizadoNovo() {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        setForm({ ...form, logo_url: base64 });
-        setImagePreview(base64);
-      };
-      reader.readAsDataURL(file);
+      try {
+        setSaving(true);
+        
+        // Upload para Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `temp-${Date.now()}.${fileExt}`;
+        const filePath = `logos/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('autorizados-logos')
+          .upload(filePath, file, { 
+            upsert: true,
+            cacheControl: '31536000' // 1 ano
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // Obter URL pública
+        const { data: { publicUrl } } = supabase.storage
+          .from('autorizados-logos')
+          .getPublicUrl(filePath);
+
+        setForm({ ...form, logo_url: publicUrl });
+        setImagePreview(publicUrl);
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro no upload',
+          description: error.message
+        });
+      } finally {
+        setSaving(false);
+      }
     }
   };
 

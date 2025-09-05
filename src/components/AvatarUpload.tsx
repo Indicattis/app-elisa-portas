@@ -45,7 +45,10 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
 
       const { error: uploadError } = await supabase.storage
         .from('user-avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { 
+          upsert: true,
+          cacheControl: '31536000' // 1 ano
+        });
 
       if (uploadError) {
         throw uploadError;

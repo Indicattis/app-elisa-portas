@@ -25,14 +25,18 @@ export function useLeads() {
     try {
       const { data, error } = await supabase
         .from("elisaportas_leads")
-        .select(`
-          *,
+       .select(`
+          id, nome, telefone, email, data_envio, novo_status, 
+          atendente_id, canal_aquisicao_id, cidade, tag_id,
+          motivo_perda, observacoes_perda, valor_orcamento, 
+          tipo_porta, data_inicio_atendimento, canal_aquisicao, observacoes,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
           )
         `)
-        .order("data_envio", { ascending: false });
+        .order("data_envio", { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       setLeads(data || []);

@@ -86,10 +86,14 @@ export default function Autorizados() {
       const { data, error } = await supabase
         .from('autorizados')
         .select(`
-          *,
+          id, nome, email, telefone, whatsapp, responsavel, endereco, 
+          cidade, estado, cep, regiao, ativo, logo_url, latitude, 
+          longitude, last_geocoded_at, geocode_precision, created_at, 
+          updated_at, vendedor_id,
           vendedor:admin_users(nome, foto_perfil_url)
         `)
-        .order('nome');
+        .order('nome')
+        .limit(50);
 
       if (error) throw error;
       setAutorizados(data || []);
@@ -145,18 +149,33 @@ export default function Autorizados() {
         throw new Error('A imagem deve ter no máximo 5MB.');
       }
 
-      // Converter imagem para base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        if (editingAutorizado) {
-          setEditingAutorizado({ 
-            ...editingAutorizado, 
-            logo_url: base64String 
-          });
-        }
-      };
-      reader.readAsDataURL(file);
+      if (!editingAutorizado) return;
+
+      // Upload para Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${editingAutorizado.id}-${Date.now()}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('autorizados-logos')
+        .upload(filePath, file, { 
+          upsert: true,
+          cacheControl: '31536000' // 1 ano
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('autorizados-logos')
+        .getPublicUrl(filePath);
+
+      setEditingAutorizado({ 
+        ...editingAutorizado, 
+        logo_url: publicUrl 
+      });
 
       toast({
         title: 'Sucesso',

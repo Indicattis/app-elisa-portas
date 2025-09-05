@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Database, Users, Building2, Trash2, BarChart3 } from "lucide-react";
+import { Loader2, Database, Users, Building2, Trash2, BarChart3, Image } from "lucide-react";
 
 export function StorageMigration() {
   const [migrating, setMigrating] = useState<string | null>(null);
@@ -70,6 +70,32 @@ export function StorageMigration() {
         variant: "destructive",
         title: "Erro na operação",
         description: error?.message || "Erro ao executar operação",
+      });
+    } finally {
+      setMigrating(null);
+    }
+  };
+
+  const optimizeImages = async () => {
+    try {
+      setMigrating('optimize_images');
+      const { data, error } = await supabase.functions.invoke('optimize-images', {
+        body: { action: 'optimize_images' }
+      });
+
+      if (error) throw error;
+
+      setResults(data);
+      toast({
+        title: "Sucesso",
+        description: "Imagens otimizadas com sucesso",
+      });
+    } catch (error: any) {
+      console.error('Erro ao otimizar imagens:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Falha ao otimizar imagens",
       });
     } finally {
       setMigrating(null);
@@ -189,6 +215,28 @@ export function StorageMigration() {
                 )}
               </Button>
             </div>
+
+            <div className="flex items-center justify-between p-3 border rounded">
+              <div className="flex items-center gap-2">
+                <Image className="w-4 h-4" />
+                <div>
+                  <p className="font-medium text-sm">Otimizar Imagens</p>
+                  <p className="text-xs text-muted-foreground">Configurar cache e otimizar armazenamento</p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={optimizeImages}
+                disabled={migrating !== null}
+              >
+                {migrating === 'optimize_images' ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  'Otimizar'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -199,8 +247,21 @@ export function StorageMigration() {
                 <p><strong>Resultados:</strong></p>
                 {results.results && (
                   <>
-                    <p>✅ Sucessos: {results.results.successful}</p>
-                    <p>❌ Falhas: {results.results.failed}</p>
+                    {results.results.successful !== undefined && (
+                      <p>✅ Sucessos: {results.results.successful}</p>
+                    )}
+                    {results.results.failed !== undefined && (
+                      <p>❌ Falhas: {results.results.failed}</p>
+                    )}
+                    {results.results.autorizados_optimized !== undefined && (
+                      <p>🖼️ Logos otimizados: {results.results.autorizados_optimized}</p>
+                    )}
+                    {results.results.avatars_optimized !== undefined && (
+                      <p>👤 Avatares otimizados: {results.results.avatars_optimized}</p>
+                    )}
+                    {results.results.errors !== undefined && results.results.errors > 0 && (
+                      <p>⚠️ Erros: {results.results.errors}</p>
+                    )}
                   </>
                 )}
                 {results.table_sizes && (
