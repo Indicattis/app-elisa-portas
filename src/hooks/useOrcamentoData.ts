@@ -43,7 +43,6 @@ export function useOrcamentoData() {
           created_at,
           updated_at,
           status,
-          usuario_id,
           lead_id,
           atendente_id,
           valor_produto,
