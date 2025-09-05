@@ -471,7 +471,7 @@ export default function Autorizados() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEdit(autorizado)}
+                        onClick={() => navigate(`/dashboard/autorizados/${autorizado.id}/edit`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>

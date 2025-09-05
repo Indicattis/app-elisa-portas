@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface AutorizadoForm {
   nome: string;
@@ -33,7 +33,8 @@ interface Vendedor {
   foto_perfil_url?: string;
 }
 
-export default function AutorizadoNovo() {
+export default function AutorizadoEdit() {
+  const { id } = useParams();
   const [form, setForm] = useState<AutorizadoForm>({
     nome: "",
     email: "",
@@ -51,15 +52,61 @@ export default function AutorizadoNovo() {
   });
   
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-  
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchVendedores();
-  }, []);
+    if (id) {
+      fetchAutorizado();
+      fetchVendedores();
+    }
+  }, [id]);
+
+  const fetchAutorizado = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('autorizados')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        setForm({
+          nome: data.nome || "",
+          email: data.email || "",
+          telefone: data.telefone || "",
+          whatsapp: data.whatsapp || "",
+          responsavel: data.responsavel || "",
+          endereco: data.endereco || "",
+          cidade: data.cidade || "",
+          estado: data.estado || "",
+          cep: data.cep || "",
+          regiao: data.regiao || "",
+          ativo: data.ativo,
+          logo_url: data.logo_url || "",
+          vendedor_id: data.vendedor_id || ""
+        });
+        
+        if (data.logo_url) {
+          setImagePreview(data.logo_url);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar autorizado:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao carregar dados do autorizado.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchVendedores = async () => {
     try {
@@ -131,7 +178,7 @@ export default function AutorizadoNovo() {
 
       const { error } = await supabase
         .from('autorizados')
-        .insert({
+        .update({
           nome: form.nome.trim(),
           email: form.email.trim() || null,
           telefone: form.telefone.trim() || null,
@@ -145,27 +192,48 @@ export default function AutorizadoNovo() {
           ativo: form.ativo,
           logo_url: form.logo_url || null,
           vendedor_id: form.vendedor_id === "none" ? null : form.vendedor_id || null
-        });
+        })
+        .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: 'Sucesso',
-        description: 'Autorizado criado com sucesso.'
+        description: 'Autorizado atualizado com sucesso.'
       });
 
       navigate('/dashboard/autorizados');
     } catch (error) {
-      console.error('Erro ao criar autorizado:', error);
+      console.error('Erro ao atualizar autorizado:', error);
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Erro ao criar autorizado.'
+        description: 'Erro ao atualizar autorizado.'
       });
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/dashboard/autorizados')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Carregando...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -179,9 +247,9 @@ export default function AutorizadoNovo() {
           Voltar
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Novo Autorizado</h1>
+          <h1 className="text-3xl font-bold text-foreground">Editar Autorizado</h1>
           <p className="text-muted-foreground">
-            Cadastre um novo autorizado na rede
+            Edite as informações do autorizado
           </p>
         </div>
       </div>
@@ -190,7 +258,7 @@ export default function AutorizadoNovo() {
         <CardHeader>
           <CardTitle>Informações do Autorizado</CardTitle>
           <CardDescription>
-            Preencha os dados do novo autorizado
+            Atualize os dados do autorizado
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -332,7 +400,7 @@ export default function AutorizadoNovo() {
               <div className="space-y-2">
                 <Label htmlFor="vendedor">Vendedor</Label>
                 <Select
-                  value={form.vendedor_id}
+                  value={form.vendedor_id || "none"}
                   onValueChange={(value) => setForm({ ...form, vendedor_id: value })}
                 >
                   <SelectTrigger>
@@ -381,7 +449,7 @@ export default function AutorizadoNovo() {
                 Cancelar
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? "Salvando..." : "Criar Autorizado"}
+                {saving ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </div>
           </form>

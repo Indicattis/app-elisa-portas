@@ -45,6 +45,7 @@ import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
 import AutorizadoNovo from "./pages/AutorizadoNovo";
+import AutorizadoEdit from "./pages/AutorizadoEdit";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
 import Pedidos from "./pages/Pedidos";
@@ -441,6 +442,16 @@ const App = () => (
                     <ProtectedRoute requireAdmin={true}>
                       <DashboardLayout>
                         <AutorizadoNovo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/autorizados/:id/edit"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <DashboardLayout>
+                        <AutorizadoEdit />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
