@@ -17,7 +17,8 @@ export type AppPermission =
   | 'users'
   | 'autorizados'
   | 'performance'
-  | 'tv_dashboard';
+  | 'tv_dashboard'
+  | 'instalacoes';
 
 export interface UserRoleAssignment {
   id: string;
@@ -126,6 +127,11 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'tv_dashboard',
     label: 'Modo TV',
     description: 'Acessar o dashboard em modo TV'
+  },
+  instalacoes: {
+    key: 'instalacoes',
+    label: 'Instalações',
+    description: 'Gerenciar cronograma e ordens de instalação'
   }
 };
 
