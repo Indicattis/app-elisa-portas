@@ -178,7 +178,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
 
   if (autorizadosWithCoords.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[600px] bg-muted/50 rounded-lg">
+      <div className="flex items-center justify-center h-full bg-muted/50 rounded-lg">
         <div className="text-center space-y-2">
           <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
           <h3 className="text-lg font-medium">Nenhum autorizado com localização</h3>
@@ -191,7 +191,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
   }
 
   return (
-    <div className="h-[600px] w-full rounded-lg overflow-hidden border relative">
+    <div className="h-full w-full rounded-lg overflow-hidden border relative">
       {/* Floating info panel */}
       {clickedPoint && (
         <div className="absolute top-4 left-4 z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto">

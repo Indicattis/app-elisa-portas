@@ -147,7 +147,7 @@ export default function MapaAutorizados() {
   }
 
   return (
-    <div className="relative h-screen w-full">
+    <div className="fixed inset-0 w-full h-full">
       {/* Botão fixo de geocodificação */}
       <div className="fixed z-50" style={{ top: '50px', right: '20px' }}>
         <Button
@@ -166,8 +166,8 @@ export default function MapaAutorizados() {
         </Button>
       </div>
 
-      {/* Mapa com margem superior e altura total */}
-      <div className="w-full" style={{ marginTop: '150px', height: 'calc(100vh - 150px)' }}>
+      {/* Mapa com margem superior e altura total relativa */}
+      <div className="absolute inset-0 w-full" style={{ paddingTop: '150px' }}>
         <AutorizadosMapLeaflet autorizados={autorizados} />
       </div>
     </div>
