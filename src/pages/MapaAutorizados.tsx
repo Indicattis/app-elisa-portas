@@ -147,44 +147,29 @@ export default function MapaAutorizados() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Mapa de Autorizados</h1>
-          <p className="text-muted-foreground">
-            Visualize a localização dos autorizados e calcule distâncias
-          </p>
-        </div>
+    <div className="relative h-full w-full">
+      {/* Botão fixo de geocodificação */}
+      <div className="fixed z-50" style={{ top: '100px', right: '20px' }}>
+        <Button
+          onClick={handleBatchGeocode}
+          disabled={batchGeocoding}
+          variant="default"
+          size="sm"
+          className="shadow-lg"
+        >
+          {batchGeocoding ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-2" />
+          )}
+          Geocodificar todos
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>Mapa Interativo</CardTitle>
-              <CardDescription>
-                Clique no mapa para calcular distâncias e valores de frete até os autorizados
-              </CardDescription>
-            </div>
-            <Button
-              onClick={handleBatchGeocode}
-              disabled={batchGeocoding}
-              variant="outline"
-              size="sm"
-            >
-              {batchGeocoding ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Geocodificar todos
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <AutorizadosMapLeaflet autorizados={autorizados} />
-        </CardContent>
-      </Card>
+      {/* Mapa ocupando todo o espaço */}
+      <div className="h-full w-full">
+        <AutorizadosMapLeaflet autorizados={autorizados} />
+      </div>
     </div>
   );
 }
