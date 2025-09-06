@@ -397,7 +397,7 @@ const App = () => (
                 <Route
                   path="/dashboard/marketing"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="marketing">
                       <DashboardLayout>
                         <Marketing />
                       </DashboardLayout>
@@ -427,7 +427,7 @@ const App = () => (
                 <Route
                   path="/dashboard/calendario"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="calendario">
                       <DashboardLayout>
                         <Calendario />
                       </DashboardLayout>
