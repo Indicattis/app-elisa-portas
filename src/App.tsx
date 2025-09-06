@@ -48,6 +48,7 @@ import AutorizadoNovo from "./pages/AutorizadoNovo";
 import AutorizadoEdit from "./pages/AutorizadoEdit";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
+import Forbidden from "./pages/Forbidden";
 import Pedidos from "./pages/Pedidos";
 import TvDashboard from "./pages/TvDashboard";
 import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
@@ -182,10 +183,11 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/forbidden" element={<Forbidden />} />
                 <Route
                   path="/dashboard"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="dashboard">
                       <DashboardLayout>
                         <Dashboard />
                       </DashboardLayout>
@@ -205,7 +207,7 @@ const App = () => (
                 <Route
                   path="/dashboard/leads"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="leads">
                       <DashboardLayout>
                         <Leads />
                       </DashboardLayout>
@@ -215,7 +217,7 @@ const App = () => (
                 <Route
                   path="/dashboard/leads/novo"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="leads">
                       <DashboardLayout>
                         <LeadNovo />
                       </DashboardLayout>
@@ -235,7 +237,7 @@ const App = () => (
                 <Route
                   path="/dashboard/orcamentos"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="orcamentos">
                       <DashboardLayout>
                         <Orcamentos />
                       </DashboardLayout>
@@ -265,7 +267,7 @@ const App = () => (
                 <Route
                   path="/dashboard/users"
                   element={
-                    <ProtectedRoute requireAdmin={true}>
+                    <ProtectedRoute requirePermission="users">
                       <DashboardLayout>
                         <Users />
                       </DashboardLayout>
@@ -365,7 +367,7 @@ const App = () => (
                 <Route
                   path="/dashboard/producao"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="producao">
                       <DashboardLayout>
                         <Producao />
                       </DashboardLayout>
@@ -465,7 +467,7 @@ const App = () => (
                 <Route
                   path="/dashboard/configuracoes"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="configuracoes">
                       <DashboardLayout>
                         <Configuracoes />
                       </DashboardLayout>

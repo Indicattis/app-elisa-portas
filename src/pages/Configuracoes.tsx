@@ -6,6 +6,7 @@ import { StorageMigration } from "@/components/StorageMigration";
 import { Settings, Palette, Database, Users as UsersIcon, TrendingUp, Shield } from "lucide-react";
 import { useState } from "react";
 import Users from "@/pages/Users";
+import { RolePermissionManager } from "@/components/RolePermissionManager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +36,7 @@ export default function Configuracoes() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="canais" className="flex items-center gap-2">
             <Database className="w-4 h-4" />
             Canais de Aquisição
@@ -51,6 +52,10 @@ export default function Configuracoes() {
           <TabsTrigger value="usuarios" className="flex items-center gap-2">
             <UsersIcon className="w-4 h-4" />
             Usuários
+          </TabsTrigger>
+          <TabsTrigger value="permissoes" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Permissões
           </TabsTrigger>
           <TabsTrigger value="sistema" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -108,6 +113,10 @@ export default function Configuracoes() {
 
         <TabsContent value="usuarios" className="space-y-6">
           <Users />
+        </TabsContent>
+
+        <TabsContent value="permissoes" className="space-y-6">
+          <RolePermissionManager />
         </TabsContent>
 
         <TabsContent value="sistema" className="space-y-6">

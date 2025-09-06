@@ -1,17 +1,23 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useHasPermission } from "@/hooks/usePermissions";
+import { AppPermission } from "@/types/permissions";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  requirePermission?: AppPermission;
 }
 
-export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireAdmin = false, requirePermission }: ProtectedRouteProps) {
   const { user, loading, isAdmin } = useAuth();
   const location = useLocation();
+  const { hasPermission, isLoading: permissionLoading } = useHasPermission(requirePermission!);
 
-  if (loading) {
+  const isLoadingPermissions = requirePermission && permissionLoading;
+
+  if (loading || isLoadingPermissions) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -25,16 +31,12 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
   // Verificação específica para páginas que requerem admin
   if (requireAdmin && !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Acesso Restrito</h1>
-          <p className="text-muted-foreground">
-            Esta página requer permissões de administrador.
-          </p>
-        </div>
-      </div>
-    );
+    return <Navigate to="/forbidden" replace />;
+  }
+
+  // Verificação de permissões específicas (admin sempre tem acesso)
+  if (requirePermission && !isAdmin && !hasPermission) {
+    return <Navigate to="/forbidden" replace />;
   }
 
   return <>{children}</>;

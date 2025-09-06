@@ -355,6 +355,13 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "contador_vendas_dias_atendente_id_fkey"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       contas_receber: {
@@ -621,6 +628,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_eventos_membros_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
         ]
@@ -1116,6 +1130,13 @@ export type Database = {
             columns: ["atendente_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "orcamentos_atendente_id_fkey"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
           {
@@ -2030,6 +2051,15 @@ export type Database = {
       }
     }
     Views: {
+      user_permissions: {
+        Row: {
+          ativo: boolean | null
+          permission: Database["public"]["Enums"]["app_permission"] | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       user_tab_access: {
         Row: {
           active: boolean | null
