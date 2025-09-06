@@ -191,49 +191,81 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
   }
 
   return (
-    <div className="space-y-4">
+    <div className="h-[600px] w-full rounded-lg overflow-hidden border relative">
+      {/* Floating info panel */}
       {clickedPoint && (
-        <div className="bg-muted/50 p-4 rounded-lg border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium flex items-center gap-2">
-              <Navigation className="h-4 w-4" />
-              Análise de Localização
-            </h3>
+        <div className="absolute top-4 left-4 z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto">
+          <div className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Navigation className="h-4 w-4 text-destructive" />
+                Análise de Localização
+              </h3>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setClickedPoint(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-3 text-sm">
+              <div className="p-3 bg-muted/50 rounded-md">
+                <p className="font-medium mb-1">Coordenadas:</p>
+                <p className="text-muted-foreground text-xs font-mono">
+                  {clickedPoint.lat.toFixed(6)}, {clickedPoint.lng.toFixed(6)}
+                </p>
+              </div>
+              
+              <div className="p-3 bg-muted/50 rounded-md">
+                <p className="font-medium mb-1">Distância até Matriz:</p>
+                <p className="text-muted-foreground">Caxias do Sul/RS</p>
+                <p className="text-lg font-semibold text-destructive">{clickedPoint.distanceToHQ.toFixed(1)} km</p>
+              </div>
+              
+              <div className="p-3 bg-muted/50 rounded-md">
+                <p className="font-medium mb-2">Autorizados mais próximos:</p>
+                <div className="space-y-2">
+                  {clickedPoint.nearestAutorizados.map((autorizado, index) => (
+                    <div key={autorizado.id} className="flex items-center gap-2 p-2 bg-background rounded border">
+                      <div className={`w-3 h-3 rounded-full ${
+                        index === 0 ? 'bg-green-500' : 
+                        index === 1 ? 'bg-yellow-500' : 
+                        'bg-red-500'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{autorizado.nome}</p>
+                        <p className="text-xs text-muted-foreground">{autorizado.cidade} - {autorizado.estado}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{autorizado.distance.toFixed(1)} km</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
             <Button 
-              variant="ghost" 
-              size="sm"
+              size="sm" 
+              variant="outline" 
               onClick={() => setClickedPoint(null)}
+              className="w-full"
             >
-              <X className="h-4 w-4" />
+              Limpar Ponto
             </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-medium mb-1">Distância até a Matriz (Caxias do Sul/RS):</p>
-              <p className="text-muted-foreground">{clickedPoint.distanceToHQ.toFixed(1)} km</p>
-            </div>
-            <div>
-              <p className="font-medium mb-1">3 Autorizados mais próximos:</p>
-              <ul className="space-y-1 text-muted-foreground">
-                {clickedPoint.nearestAutorizados.map((autorizado, index) => (
-                  <li key={autorizado.id}>
-                    {index + 1}. {autorizado.nome} - {autorizado.distance.toFixed(1)} km
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </div>
       )}
-      
-      <div className="h-[600px] w-full rounded-lg overflow-hidden border">
-        <MapContainer
-          ref={mapRef}
-          center={[-14.235, -51.9253]} // Center of Brazil
-          zoom={4}
-          style={{ height: '100%', width: '100%' }}
-          className="leaflet-container"
-        >
+
+      <MapContainer
+        ref={mapRef}
+        center={[-14.235, -51.9253]} // Center of Brazil
+        zoom={4}
+        style={{ height: '100%', width: '100%' }}
+        className="leaflet-container"
+      >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -342,50 +374,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
               <Marker
                 position={[clickedPoint.lat, clickedPoint.lng]}
                 icon={createClickedPointIcon()}
-              >
-                <Popup className="custom-popup" minWidth={300}>
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Navigation className="h-5 w-5 text-destructive" />
-                      <h3 className="font-semibold">Ponto Selecionado</h3>
-                    </div>
-                    
-                    <div className="space-y-3 text-sm">
-                      <div>
-                        <p className="font-medium">Coordenadas:</p>
-                        <p className="text-muted-foreground">
-                          {clickedPoint.lat.toFixed(6)}, {clickedPoint.lng.toFixed(6)}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium">Distância até Matriz (Caxias do Sul/RS):</p>
-                        <p className="text-muted-foreground">{clickedPoint.distanceToHQ.toFixed(1)} km</p>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium">Autorizados mais próximos:</p>
-                        <div className="space-y-1">
-                          {clickedPoint.nearestAutorizados.map((autorizado, index) => (
-                            <div key={autorizado.id} className="flex justify-between">
-                              <span className="text-muted-foreground">{index + 1}. {autorizado.nome}</span>
-                              <span className="text-muted-foreground">{autorizado.distance.toFixed(1)} km</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => setClickedPoint(null)}
-                    >
-                      Limpar Ponto
-                    </Button>
-                  </div>
-                </Popup>
-              </Marker>
+              />
               
               {/* Polylines to nearest autorizados */}
               {clickedPoint.nearestAutorizados.map((autorizado, index) => (
@@ -404,7 +393,6 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
             </>
           )}
         </MapContainer>
-      </div>
     </div>
   );
 };
