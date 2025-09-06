@@ -10,13 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, Map, List, RefreshCw } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
+
 
 interface Autorizado {
   id: string;
@@ -413,51 +413,7 @@ export default function Autorizados() {
         </Button>
       </div>
 
-      <Tabs defaultValue="map" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="map" className="flex items-center gap-2">
-            <Map className="h-4 w-4" />
-            Mapa
-          </TabsTrigger>
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            Lista
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="map">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>Mapa de Autorizados</CardTitle>
-                  <CardDescription>
-                    Visualize a localização dos autorizados no mapa do Brasil
-                  </CardDescription>
-                </div>
-                <Button
-                  onClick={handleBatchGeocode}
-                  disabled={batchGeocoding}
-                  variant="outline"
-                  size="sm"
-                >
-                  {batchGeocoding ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                  )}
-                  Geocodificar todos
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <AutorizadosMapLeaflet autorizados={autorizados} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="list">
-          <Card>
+      <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
             <div className="space-y-2 flex-1">
@@ -641,8 +597,6 @@ export default function Autorizados() {
           </Table>
         </CardContent>
       </Card>
-        </TabsContent>
-      </Tabs>
 
       {/* Dialog de Edição */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

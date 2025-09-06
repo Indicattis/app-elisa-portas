@@ -46,6 +46,7 @@ import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
 import AutorizadoNovo from "./pages/AutorizadoNovo";
 import AutorizadoEdit from "./pages/AutorizadoEdit";
+import MapaAutorizados from "./pages/MapaAutorizados";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
 import Forbidden from "./pages/Forbidden";
@@ -94,6 +95,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <Button variant="outline" size="sm" asChild>
                   <NavLink to="/tv-dashboard">
                     📺 Modo TV
+                  </NavLink>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <NavLink to="/dashboard/mapa-autorizados">
+                    🗺️ Mapa
                   </NavLink>
                 </Button>
                 <ThemeToggle />
@@ -460,6 +466,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <AutorizadoEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/mapa-autorizados"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <MapaAutorizados />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
