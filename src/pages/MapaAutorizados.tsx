@@ -89,6 +89,10 @@ export default function MapaAutorizados() {
 
     api.on("select", () => {
       setSelectedIndex(api.selectedScrollSnap());
+      // Force map resize when switching slides
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
     });
   }, [api]);
 
@@ -239,8 +243,10 @@ export default function MapaAutorizados() {
         <CarouselContent className="h-full">
           {/* Slide 1: Mapa */}
           <CarouselItem className="h-full">
-            <div className="absolute inset-0 w-full" style={{ paddingTop: '50px' }}>
-              <AutorizadosMapLeaflet autorizados={autorizados} />
+            <div className="relative h-full w-full bg-gray-100" style={{ paddingTop: '50px' }}>
+              <div style={{ position: 'absolute', top: '50px', left: 0, right: 0, bottom: 0 }}>
+                <AutorizadosMapLeaflet autorizados={autorizados} />
+              </div>
             </div>
           </CarouselItem>
 
