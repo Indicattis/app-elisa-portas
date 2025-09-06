@@ -167,7 +167,7 @@ export default function MapaAutorizados() {
       </div>
 
       {/* Mapa com margem superior e altura total relativa */}
-      <div className="absolute inset-0 w-full" style={{ paddingTop: '150px' }}>
+      <div className="absolute inset-0 w-full" style={{ paddingTop: '50px' }}>
         <AutorizadosMapLeaflet autorizados={autorizados} />
       </div>
     </div>
