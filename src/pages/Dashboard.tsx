@@ -2,7 +2,15 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSalesData, useSellersRanking, useDashboardRealtime, useWhatsAppRoulette } from '@/hooks/useDashboardData';
+import { useLeads } from "@/hooks/useLeads";
+import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LeadStats } from "@/components/LeadStats";
+import { OrcamentoStats } from "@/components/orcamentos/OrcamentoStats";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line } from "recharts";
+import { TrendingUp, Target, DollarSign } from "lucide-react";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -28,10 +36,24 @@ export default function Dashboard() {
     isLoading: loadingWhatsapp
   } = useWhatsAppRoulette();
 
+  const { leads } = useLeads();
+  const { orcamentos } = useOrcamentos();
+
   // Setup realtime updates
   useDashboardRealtime();
   const loading = loadingVendas || loadingVendedores || loadingWhatsapp;
   const today = new Date();
+
+  const chartConfig = {
+    vendas: {
+      label: "Vendas",
+      color: "hsl(var(--primary))",
+    },
+    meta: {
+      label: "Meta",
+      color: "hsl(var(--muted-foreground))",
+    },
+  };
 
   // Setup autoplay effect
   useEffect(() => {
@@ -67,6 +89,22 @@ export default function Dashboard() {
   const totalVendasMes = useMemo(() => {
     return vendasData.reduce((sum, venda) => sum + venda.valor, 0);
   }, [vendasData]);
+
+  const metaMensal = 500000; // Meta fictícia de R$ 500.000
+
+  // Dados para gráfico de vendas por dia
+  const vendasPorDia = vendasData?.map(item => ({
+    data: new Date(item.data).getDate().toString(),
+    vendas: item.valor,
+    meta: metaMensal / 30, // Meta diária
+  })) || [];
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
   const getVendedorCategory = (valor: number) => {
     if (valor >= 1500000) return {
       name: 'Orion',
@@ -158,8 +196,109 @@ export default function Dashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-  return <div className="h-[90vh] relative overflow-hidden w-full">
-      <Carousel setApi={setApi} className="w-full h-full" opts={{
+  return (
+    <div className="space-y-6">
+      {/* KPIs principais */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vendas do Mês</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(totalVendasMes)}</div>
+            <p className="text-xs text-muted-foreground">
+              +20.1% vs mês anterior
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Meta do Mês</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{((totalVendasMes / metaMensal) * 100).toFixed(1)}%</div>
+            <div className="w-full bg-muted rounded-full h-2 mt-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((totalVendasMes / metaMensal) * 100, 100)}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Leads Ativos</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{leads?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              +12% vs mês anterior
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Orçamentos</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{orcamentos?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {orcamentos?.filter(o => o.status === 'pendente').length || 0} pendentes
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráfico de vendas */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Vendas por Dia (Mês Atual)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={vendasPorDia}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="data" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey="vendas" 
+                  stroke="var(--color-vendas)" 
+                  strokeWidth={2}
+                  dot={{ fill: "var(--color-vendas)" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="meta" 
+                  stroke="var(--color-meta)" 
+                  strokeWidth={1}
+                  strokeDasharray="5 5"
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Estatísticas detalhadas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {leads && <LeadStats leads={leads} />}
+        {orcamentos && <OrcamentoStats orcamentos={orcamentos} />}
+      </div>
+
+      {/* Dashboard TV Original */}
+      <div className="h-[90vh] relative overflow-hidden w-full">
+        <Carousel setApi={setApi} className="w-full h-full" opts={{
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
@@ -330,5 +469,7 @@ export default function Dashboard() {
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {[0, 1, 2].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
-    </div>;
+      </div>
+    </div>
+  );
 }

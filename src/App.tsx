@@ -49,6 +49,7 @@ import AutorizadoEdit from "./pages/AutorizadoEdit";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
 import Pedidos from "./pages/Pedidos";
+import TvDashboard from "./pages/TvDashboard";
 import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
 import OrdemPinturaEdit from "./pages/OrdemPinturaEdit";
 import OrdemSeparacaoEdit from "./pages/OrdemSeparacaoEdit";
@@ -89,6 +90,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </div>
               
               <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" asChild>
+                  <NavLink to="/tv-dashboard">
+                    📺 Modo TV
+                  </NavLink>
+                </Button>
                 <ThemeToggle />
                 <HeaderUserInfo />
               </div>
@@ -547,6 +553,14 @@ const App = () => (
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route
+                  path="/tv-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <TvDashboard />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
