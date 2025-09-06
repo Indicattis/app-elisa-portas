@@ -14,7 +14,10 @@ export type AppPermission =
   | 'organograma'
   | 'contador_vendas'
   | 'configuracoes'
-  | 'users';
+  | 'users'
+  | 'autorizados'
+  | 'performance'
+  | 'tv_dashboard';
 
 export interface UserRoleAssignment {
   id: string;
@@ -108,6 +111,21 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'users',
     label: 'Usuários',
     description: 'Gerenciar usuários e permissões'
+  },
+  autorizados: {
+    key: 'autorizados',
+    label: 'Autorizados',
+    description: 'Gerenciar rede de autorizados'
+  },
+  performance: {
+    key: 'performance',
+    label: 'Performance',
+    description: 'Visualizar relatórios de performance'
+  },
+  tv_dashboard: {
+    key: 'tv_dashboard',
+    label: 'Modo TV',
+    description: 'Acessar o dashboard em modo TV'
   }
 };
 

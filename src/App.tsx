@@ -197,7 +197,7 @@ const App = () => (
                 <Route
                   path="/dashboard/performance"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="performance">
                       <DashboardLayout>
                         <Performance />
                       </DashboardLayout>
@@ -437,7 +437,7 @@ const App = () => (
                 <Route
                   path="/dashboard/autorizados"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
                         <Autorizados />
                       </DashboardLayout>
@@ -558,7 +558,7 @@ const App = () => (
                 <Route
                   path="/tv-dashboard"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="tv_dashboard">
                       <DashboardLayout>
                         <TvDashboard />
                       </DashboardLayout>
