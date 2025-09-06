@@ -2208,6 +2208,7 @@ export type Database = {
         | "autorizados"
         | "performance"
         | "tv_dashboard"
+        | "instalacoes"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -2395,6 +2396,7 @@ export const Constants = {
         "autorizados",
         "performance",
         "tv_dashboard",
+        "instalacoes",
       ],
       lead_status: [
         "aguardando_atendimento",
