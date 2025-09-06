@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useEffect, useRef, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { MapPin, Phone, Mail, User } from 'lucide-react';
+import { MapPin, Phone, Mail, User, Navigation, X } from 'lucide-react';
 
 // Fix for default markers in React Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -36,8 +36,22 @@ interface AutorizadosMapLeafletProps {
   autorizados: Autorizado[];
 }
 
+interface ClickedPoint {
+  lat: number;
+  lng: number;
+  nearestAutorizados: Array<Autorizado & { distance: number }>;
+  distanceToHQ: number;
+}
+
+// Headquarters coordinates (Caxias do Sul/RS)
+const HQ_COORDINATES = {
+  lat: -29.1678,
+  lng: -51.1794
+};
+
 const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizados }) => {
   const mapRef = useRef<L.Map | null>(null);
+  const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
 
   // Filter autorizados with valid coordinates
   const autorizadosWithCoords = autorizados.filter(
@@ -46,6 +60,19 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       autorizado.longitude && 
       autorizado.ativo
   );
+
+  // Calculate distance between two points using Haversine formula
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -56,6 +83,29 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       .slice(0, 2);
   };
 
+  const handleMapClick = (lat: number, lng: number) => {
+    // Calculate distances to all autorizados with coordinates
+    const autorizadosWithDistances = autorizadosWithCoords.map(autorizado => ({
+      ...autorizado,
+      distance: calculateDistance(lat, lng, autorizado.latitude!, autorizado.longitude!)
+    }));
+
+    // Sort by distance and get the 3 nearest
+    const nearestAutorizados = autorizadosWithDistances
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 3);
+
+    // Calculate distance to headquarters
+    const distanceToHQ = calculateDistance(lat, lng, HQ_COORDINATES.lat, HQ_COORDINATES.lng);
+
+    setClickedPoint({
+      lat,
+      lng,
+      nearestAutorizados,
+      distanceToHQ
+    });
+  };
+
   // Custom cluster icon
   const createClusterCustomIcon = (cluster: any) => {
     return L.divIcon({
@@ -63,6 +113,25 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       className: 'custom-marker-cluster',
       iconSize: L.point(40, 40, true),
     });
+  };
+
+  // Custom icon for clicked point
+  const createClickedPointIcon = () => {
+    return L.divIcon({
+      html: `<div class="clicked-point-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div>`,
+      className: 'custom-clicked-point',
+      iconSize: L.point(24, 24, true),
+    });
+  };
+
+  // Map click handler component
+  const MapClickHandler = () => {
+    useMapEvents({
+      click: (e) => {
+        handleMapClick(e.latlng.lat, e.latlng.lng);
+      },
+    });
+    return null;
   };
 
   useEffect(() => {
@@ -82,6 +151,14 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
         color: hsl(var(--primary-foreground));
         font-weight: bold;
         font-size: 14px;
+      }
+      .custom-clicked-point {
+        background: none;
+        border: none;
+      }
+      .clicked-point-icon {
+        color: hsl(var(--destructive));
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
       }
       .leaflet-popup-content-wrapper {
         border-radius: 8px;
@@ -114,114 +191,220 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
   }
 
   return (
-    <div className="h-[600px] w-full rounded-lg overflow-hidden border">
-      <MapContainer
-        ref={mapRef}
-        center={[-14.235, -51.9253]} // Center of Brazil
-        zoom={4}
-        style={{ height: '100%', width: '100%' }}
-        className="leaflet-container"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        <MarkerClusterGroup
-          chunkedLoading
-          iconCreateFunction={createClusterCustomIcon}
-          spiderfyOnMaxZoom={true}
-          showCoverageOnHover={false}
-          zoomToBoundsOnClick={true}
-          maxClusterRadius={50}
-        >
-          {autorizadosWithCoords.map((autorizado) => (
-            <Marker
-              key={autorizado.id}
-              position={[autorizado.latitude!, autorizado.longitude!]}
+    <div className="space-y-4">
+      {clickedPoint && (
+        <div className="bg-muted/50 p-4 rounded-lg border">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-medium flex items-center gap-2">
+              <Navigation className="h-4 w-4" />
+              Análise de Localização
+            </h3>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setClickedPoint(null)}
             >
-              <Popup className="custom-popup" minWidth={280}>
-                <div className="p-4 space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={autorizado.logo_url} alt={autorizado.nome} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {getInitials(autorizado.nome)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-base leading-tight">
-                        {autorizado.nome}
-                      </h3>
-                      <Badge variant="secondary" className="mt-1">
-                        Autorizado Elisa
-                      </Badge>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="font-medium mb-1">Distância até a Matriz (Caxias do Sul/RS):</p>
+              <p className="text-muted-foreground">{clickedPoint.distanceToHQ.toFixed(1)} km</p>
+            </div>
+            <div>
+              <p className="font-medium mb-1">3 Autorizados mais próximos:</p>
+              <ul className="space-y-1 text-muted-foreground">
+                {clickedPoint.nearestAutorizados.map((autorizado, index) => (
+                  <li key={autorizado.id}>
+                    {index + 1}. {autorizado.nome} - {autorizado.distance.toFixed(1)} km
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="h-[600px] w-full rounded-lg overflow-hidden border">
+        <MapContainer
+          ref={mapRef}
+          center={[-14.235, -51.9253]} // Center of Brazil
+          zoom={4}
+          style={{ height: '100%', width: '100%' }}
+          className="leaflet-container"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          <MapClickHandler />
+          
+          <MarkerClusterGroup
+            chunkedLoading
+            iconCreateFunction={createClusterCustomIcon}
+            spiderfyOnMaxZoom={true}
+            showCoverageOnHover={false}
+            zoomToBoundsOnClick={true}
+            maxClusterRadius={50}
+          >
+            {autorizadosWithCoords.map((autorizado) => (
+              <Marker
+                key={autorizado.id}
+                position={[autorizado.latitude!, autorizado.longitude!]}
+              >
+                <Popup className="custom-popup" minWidth={280}>
+                  <div className="p-4 space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={autorizado.logo_url} alt={autorizado.nome} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {getInitials(autorizado.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base leading-tight">
+                          {autorizado.nome}
+                        </h3>
+                        <Badge variant="secondary" className="mt-1">
+                          Autorizado Elisa
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="space-y-2 text-sm">
+                      {autorizado.responsavel && (
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span>{autorizado.responsavel}</span>
+                        </div>
+                      )}
+                      
+                      {autorizado.telefone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <span>{autorizado.telefone}</span>
+                        </div>
+                      )}
+                      
+                      {autorizado.email && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="truncate">{autorizado.email}</span>
+                        </div>
+                      )}
+                      
+                      {autorizado.endereco && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                          <span className="leading-tight">
+                            {autorizado.endereco}
+                            {autorizado.cidade && `, ${autorizado.cidade}`}
+                            {autorizado.estado && ` - ${autorizado.estado}`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
+                      {autorizado.whatsapp && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.open(`https://wa.me/55${autorizado.whatsapp?.replace(/\D/g, '')}`, '_blank')}
+                        >
+                          WhatsApp
+                        </Button>
+                      )}
+                      {autorizado.telefone && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.open(`tel:${autorizado.telefone}`, '_blank')}
+                        >
+                          Ligar
+                        </Button>
+                      )}
                     </div>
                   </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
 
-                  {/* Contact Info */}
-                  <div className="space-y-2 text-sm">
-                    {autorizado.responsavel && (
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{autorizado.responsavel}</span>
-                      </div>
-                    )}
+          {/* Clicked point marker */}
+          {clickedPoint && (
+            <>
+              <Marker
+                position={[clickedPoint.lat, clickedPoint.lng]}
+                icon={createClickedPointIcon()}
+              >
+                <Popup className="custom-popup" minWidth={300}>
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Navigation className="h-5 w-5 text-destructive" />
+                      <h3 className="font-semibold">Ponto Selecionado</h3>
+                    </div>
                     
-                    {autorizado.telefone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{autorizado.telefone}</span>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <p className="font-medium">Coordenadas:</p>
+                        <p className="text-muted-foreground">
+                          {clickedPoint.lat.toFixed(6)}, {clickedPoint.lng.toFixed(6)}
+                        </p>
                       </div>
-                    )}
+                      
+                      <div>
+                        <p className="font-medium">Distância até Matriz (Caxias do Sul/RS):</p>
+                        <p className="text-muted-foreground">{clickedPoint.distanceToHQ.toFixed(1)} km</p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium">Autorizados mais próximos:</p>
+                        <div className="space-y-1">
+                          {clickedPoint.nearestAutorizados.map((autorizado, index) => (
+                            <div key={autorizado.id} className="flex justify-between">
+                              <span className="text-muted-foreground">{index + 1}. {autorizado.nome}</span>
+                              <span className="text-muted-foreground">{autorizado.distance.toFixed(1)} km</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                     
-                    {autorizado.email && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{autorizado.email}</span>
-                      </div>
-                    )}
-                    
-                    {autorizado.endereco && (
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                        <span className="leading-tight">
-                          {autorizado.endereco}
-                          {autorizado.cidade && `, ${autorizado.cidade}`}
-                          {autorizado.estado && ` - ${autorizado.estado}`}
-                        </span>
-                      </div>
-                    )}
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setClickedPoint(null)}
+                    >
+                      Limpar Ponto
+                    </Button>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    {autorizado.whatsapp && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => window.open(`https://wa.me/55${autorizado.whatsapp?.replace(/\D/g, '')}`, '_blank')}
-                      >
-                        WhatsApp
-                      </Button>
-                    )}
-                    {autorizado.telefone && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => window.open(`tel:${autorizado.telefone}`, '_blank')}
-                      >
-                        Ligar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MarkerClusterGroup>
-      </MapContainer>
+                </Popup>
+              </Marker>
+              
+              {/* Polylines to nearest autorizados */}
+              {clickedPoint.nearestAutorizados.map((autorizado, index) => (
+                <Polyline
+                  key={autorizado.id}
+                  positions={[
+                    [clickedPoint.lat, clickedPoint.lng],
+                    [autorizado.latitude!, autorizado.longitude!]
+                  ]}
+                  color={index === 0 ? '#22c55e' : index === 1 ? '#f59e0b' : '#ef4444'}
+                  weight={3}
+                  opacity={0.7}
+                  dashArray={index === 0 ? undefined : "5, 10"}
+                />
+              ))}
+            </>
+          )}
+        </MapContainer>
+      </div>
     </div>
   );
 };
