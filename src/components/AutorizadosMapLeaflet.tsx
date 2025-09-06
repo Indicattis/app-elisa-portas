@@ -222,6 +222,10 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
                 <p className="font-medium mb-1">Distância até Matriz:</p>
                 <p className="text-muted-foreground">Caxias do Sul/RS</p>
                 <p className="text-lg font-semibold text-destructive">{clickedPoint.distanceToHQ.toFixed(1)} km</p>
+                <div className="mt-2 pt-2 border-t border-border">
+                  <p className="font-medium mb-1">Valor do Frete:</p>
+                  <p className="text-lg font-semibold text-primary">R$ {(clickedPoint.distanceToHQ * 12).toFixed(2)}</p>
+                </div>
               </div>
               
               <div className="p-3 bg-muted/50 rounded-md">
