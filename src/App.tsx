@@ -557,7 +557,9 @@ const App = () => (
                   path="/tv-dashboard"
                   element={
                     <ProtectedRoute>
-                      <TvDashboard />
+                      <DashboardLayout>
+                        <TvDashboard />
+                      </DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
