@@ -194,7 +194,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
     <div className="h-full w-full rounded-lg overflow-hidden border relative">
       {/* Floating info panel */}
       {clickedPoint && (
-        <div className="absolute top-4 left-4 z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto">
+        <div className="absolute z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto" style={{ top: '100px', right: '20px' }}>
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold flex items-center gap-2">
