@@ -149,7 +149,7 @@ export default function MapaAutorizados() {
   return (
     <div className="fixed inset-0 w-full h-full">
       {/* Botão fixo de geocodificação */}
-      <div className="fixed z-50" style={{ top: '50px', right: '20px' }}>
+      <div className="fixed z-[9999]" style={{ top: '50px', right: '20px' }}>
         <Button
           onClick={handleBatchGeocode}
           disabled={batchGeocoding}
