@@ -65,6 +65,18 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       autorizado.ativo
   );
 
+  // Count autorizados by state
+  const autorizadosPorEstado = autorizados
+    .filter(autorizado => autorizado.ativo && autorizado.estado)
+    .reduce((acc, autorizado) => {
+      const estado = autorizado.estado!;
+      acc[estado] = (acc[estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+  // Sort states by count (descending)
+  const estadosOrdenados = Object.entries(autorizadosPorEstado)
+    .sort(([, a], [, b]) => b - a);
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371; // Earth's radius in kilometers
@@ -263,6 +275,28 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
             >
               Limpar Ponto
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* State indicators */}
+      {estadosOrdenados.length > 0 && (
+        <div className="absolute z-[1000] bottom-4 right-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 max-w-xs">
+          <h4 className="text-sm font-semibold mb-2 text-center">Autorizados por Estado</h4>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {estadosOrdenados.map(([estado, count]) => (
+              <div key={estado} className="flex items-center justify-between bg-muted/50 rounded px-2 py-1">
+                <span className="font-medium">{estado}</span>
+                <Badge variant="secondary" className="h-5 text-xs">
+                  {count}
+                </Badge>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 pt-2 border-t border-border text-center">
+            <span className="text-xs text-muted-foreground">
+              Total: {autorizados.filter(a => a.ativo).length} autorizados
+            </span>
           </div>
         </div>
       )}
