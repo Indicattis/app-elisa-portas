@@ -30,6 +30,10 @@ interface Autorizado {
   latitude?: number;
   longitude?: number;
   ativo: boolean;
+  vendedor?: {
+    nome: string;
+    foto_perfil_url?: string;
+  };
 }
 
 interface AutorizadosMapLeafletProps {
@@ -310,14 +314,29 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
                       </div>
                     </div>
 
-                    {/* Contact Info */}
-                    <div className="space-y-2 text-sm">
-                      {autorizado.responsavel && (
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span>{autorizado.responsavel}</span>
-                        </div>
-                      )}
+                     {/* Contact Info */}
+                     <div className="space-y-2 text-sm">
+                       {autorizado.vendedor && (
+                         <div className="flex items-center gap-2">
+                           <Avatar className="h-4 w-4">
+                             <AvatarImage src={autorizado.vendedor.foto_perfil_url} alt={autorizado.vendedor.nome} />
+                             <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
+                               {getInitials(autorizado.vendedor.nome)}
+                             </AvatarFallback>
+                           </Avatar>
+                           <div>
+                             <span className="text-xs text-muted-foreground">Atendente:</span>
+                             <span className="ml-1 font-medium">{autorizado.vendedor.nome}</span>
+                           </div>
+                         </div>
+                       )}
+                       
+                       {autorizado.responsavel && (
+                         <div className="flex items-center gap-2">
+                           <User className="h-4 w-4 text-muted-foreground" />
+                           <span>{autorizado.responsavel}</span>
+                         </div>
+                       )}
                       
                       {autorizado.telefone && (
                         <div className="flex items-center gap-2">
