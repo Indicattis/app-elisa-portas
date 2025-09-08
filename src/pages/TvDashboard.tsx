@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useSalesData, useSellersRanking, useDashboardRealtime, useWhatsAppRoulette } from '@/hooks/useDashboardData';
+import { useSalesData, useSellersRanking, useDashboardRealtime, useWhatsAppRoulette, useAutorizadosPorAtendente } from '@/hooks/useDashboardData';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 
 interface VendedorRanking {
@@ -29,10 +29,14 @@ export default function TvDashboard() {
     data: whatsappStats = [],
     isLoading: loadingWhatsapp
   } = useWhatsAppRoulette();
+  const {
+    data: autorizadosStats = {},
+    isLoading: loadingAutorizados
+  } = useAutorizadosPorAtendente();
 
   // Setup realtime updates
   useDashboardRealtime();
-  const loading = loadingVendas || loadingVendedores || loadingWhatsapp;
+  const loading = loadingVendas || loadingVendedores || loadingWhatsapp || loadingAutorizados;
   const today = new Date();
 
   // Setup autoplay effect
@@ -265,8 +269,9 @@ export default function TvDashboard() {
                           maximumFractionDigits: 0
                         }).format(vendedor.total_vendas)}
                           </div>
-                          <div className="text-lg text-muted-foreground mt-2">
-                            {whatsappStats.find(w => w.nome === vendedor.nome)?.total_clicks || 0} leads WhatsApp
+                          <div className="text-lg text-muted-foreground mt-2 space-y-1">
+                            <div>{whatsappStats.find(w => w.nome === vendedor.nome)?.total_clicks || 0} leads WhatsApp</div>
+                            <div>{autorizadosStats[vendedor.nome] || 0} autorizados</div>
                           </div>
                         </div>
                       </div>;

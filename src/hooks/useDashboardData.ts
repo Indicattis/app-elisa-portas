@@ -158,6 +158,40 @@ export const useWhatsAppRoulette = () => {
   });
 };
 
+export const useAutorizadosPorAtendente = () => {
+  return useQuery({
+    queryKey: ['autorizados-por-atendente'],
+    queryFn: async (): Promise<{ [key: string]: number }> => {
+      const { data, error } = await supabase
+        .from('autorizados')
+        .select(`
+          vendedor_id,
+          admin_users!inner(nome)
+        `)
+        .eq('ativo', true);
+
+      if (error) {
+        console.error('Erro ao buscar autorizados:', error);
+        throw error;
+      }
+
+      // Agrupar por atendente e contar
+      const autorizadosPorAtendente = (data || []).reduce((acc: { [key: string]: number }, autorizado: any) => {
+        const nomeAtendente = autorizado.admin_users?.nome;
+        if (nomeAtendente) {
+          acc[nomeAtendente] = (acc[nomeAtendente] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      return autorizadosPorAtendente;
+    },
+    refetchInterval: 300000, // 5 minutes
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+};
+
 export const useDashboardRealtime = () => {
   const queryClient = useQueryClient();
 
@@ -190,6 +224,21 @@ export const useDashboardRealtime = () => {
           // Debounced invalidation
           setTimeout(() => {
             queryClient.invalidateQueries({ queryKey: ['ranking-vendedores'] });
+            queryClient.invalidateQueries({ queryKey: ['autorizados-por-atendente'] });
+          }, 500);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'autorizados'
+        },
+        () => {
+          // Debounced invalidation
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['autorizados-por-atendente'] });
           }, 500);
         }
       )
