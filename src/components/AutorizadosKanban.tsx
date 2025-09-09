@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, User, Phone, Mail, MapPin } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Edit, User, Phone, Mail, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { ETAPAS, ETAPA_COLORS, ETAPA_ORDER, AutorizadoEtapa } from "@/utils/etapas";
+import { StarRating } from "./StarRating";
+import { AddRatingDialog } from "./AddRatingDialog";
 
 interface Autorizado {
   id: string;
@@ -31,6 +33,8 @@ interface Autorizado {
   updated_at: string;
   vendedor_id?: string;
   etapa: AutorizadoEtapa;
+  average_rating?: number;
+  total_ratings?: number;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -213,15 +217,38 @@ export function AutorizadosKanban({ autorizados, onEtapaChange }: AutorizadosKan
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between mt-2">
-                      {autorizado.regiao && (
-                        <Badge variant="outline" className="text-xs">
-                          {autorizado.regiao}
-                        </Badge>
-                      )}
-                      <Badge variant={autorizado.ativo ? "default" : "secondary"} className="text-xs">
-                        {autorizado.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-2">
+                        {autorizado.average_rating ? (
+                          <StarRating 
+                            rating={autorizado.average_rating} 
+                            showValue 
+                            size={12} 
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sem avaliações</span>
+                        )}
+                        {autorizado.total_ratings && autorizado.total_ratings > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            ({autorizado.total_ratings})
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <AddRatingDialog autorizadoId={autorizado.id} autorizadoNome={autorizado.nome}>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Star className="h-3 w-3" />
+                          </Button>
+                        </AddRatingDialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/dashboard/autorizados/${autorizado.id}/edit`)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

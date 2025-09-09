@@ -238,6 +238,47 @@ export type Database = {
           },
         ]
       }
+      autorizados_ratings: {
+        Row: {
+          atendente_id: string
+          autorizado_id: string
+          categoria: Database["public"]["Enums"]["autorizado_rating_categoria"]
+          created_at: string
+          descricao: string | null
+          id: string
+          nota: number
+          updated_at: string
+        }
+        Insert: {
+          atendente_id: string
+          autorizado_id: string
+          categoria: Database["public"]["Enums"]["autorizado_rating_categoria"]
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nota: number
+          updated_at?: string
+        }
+        Update: {
+          atendente_id?: string
+          autorizado_id?: string
+          categoria?: Database["public"]["Enums"]["autorizado_rating_categoria"]
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nota?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autorizados_ratings_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendario_cores: {
         Row: {
           ativa: boolean
@@ -2245,6 +2286,7 @@ export type Database = {
         | "treinamento_ficha_tecnica"
         | "treinamento_instalacao"
         | "apto"
+      autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -2441,6 +2483,7 @@ export const Constants = {
         "treinamento_instalacao",
         "apto",
       ],
+      autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
       lead_status: [
         "aguardando_atendimento",
         "em_andamento",

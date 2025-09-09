@@ -22,6 +22,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ETAPAS, AutorizadoEtapa } from "@/utils/etapas";
+import { StarRating } from "@/components/StarRating";
+import { AddRatingDialog } from "@/components/AddRatingDialog";
+import { useAutorizadosWithRatings } from "@/hooks/useAutorizadosRatings";
 
 
 interface Autorizado {
@@ -46,6 +49,8 @@ interface Autorizado {
   updated_at: string;
   vendedor_id?: string;
   etapa: AutorizadoEtapa;
+  average_rating?: number;
+  total_ratings?: number;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -62,10 +67,9 @@ export default function Autorizados() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
+  const { data: autorizados = [], isLoading: loading, error } = useAutorizadosWithRatings();
   const [filteredAutorizados, setFilteredAutorizados] = useState<Autorizado[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
   const [editingAutorizado, setEditingAutorizado] = useState<Autorizado | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -75,7 +79,6 @@ export default function Autorizados() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
 
   useEffect(() => {
-    fetchAutorizados();
     fetchVendedores();
   }, []);
 
@@ -89,34 +92,7 @@ export default function Autorizados() {
     setFilteredAutorizados(filtered);
   }, [searchTerm, autorizados]);
 
-  const fetchAutorizados = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('autorizados')
-        .select(`
-          id, nome, email, telefone, whatsapp, responsavel, endereco, 
-          cidade, estado, cep, regiao, ativo, logo_url, latitude, 
-          longitude, last_geocoded_at, geocode_precision, created_at, 
-          updated_at, vendedor_id, etapa,
-          vendedor:admin_users(nome, foto_perfil_url)
-        `)
-        .order('nome')
-        .limit(50);
-
-      if (error) throw error;
-      setAutorizados(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar autorizados:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Erro ao buscar autorizados.'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Remove fetchAutorizados - now handled by useAutorizadosWithRatings hook
 
   const fetchVendedores = async () => {
     try {
@@ -253,7 +229,7 @@ export default function Autorizados() {
 
       setIsEditDialogOpen(false);
       setEditingAutorizado(null);
-      fetchAutorizados();
+        // Refresh will happen automatically via the hook
     } catch (error) {
       console.error('Erro ao atualizar autorizado:', error);
       toast({
@@ -278,7 +254,7 @@ export default function Autorizados() {
         description: 'Autorizado excluído com sucesso.'
       });
 
-      fetchAutorizados();
+        // Auto-refresh handled by the hook
     } catch (error) {
       console.error('Erro ao excluir autorizado:', error);
       toast({
@@ -318,7 +294,7 @@ export default function Autorizados() {
           title: 'Sucesso',
           description: `Coordenadas obtidas: ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`
         });
-        fetchAutorizados();
+      // Auto-refresh handled by the hook
       } else {
         throw new Error(data.error || 'Erro ao geocodificar endereço');
       }
@@ -394,7 +370,7 @@ export default function Autorizados() {
       description: `${success} sucessos, ${errors} erros`
     });
 
-    fetchAutorizados();
+    // Auto-refresh handled by the hook
   };
 
   const handleDownloadPDF = () => {
@@ -467,13 +443,7 @@ export default function Autorizados() {
   };
 
   const handleEtapaChange = (autorizadoId: string, novaEtapa: AutorizadoEtapa) => {
-    setAutorizados(prev => 
-      prev.map(autorizado => 
-        autorizado.id === autorizadoId 
-          ? { ...autorizado, etapa: novaEtapa }
-          : autorizado
-      )
-    );
+    // The data will be refreshed automatically by the hook
   };
 
   if (loading) {
@@ -569,6 +539,7 @@ export default function Autorizados() {
                   <TableHead>Contato</TableHead>
                   <TableHead>Localização</TableHead>
                   <TableHead>Etapa</TableHead>
+                  <TableHead>Rating</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -654,12 +625,31 @@ export default function Autorizados() {
                       </Badge>
                     </TableCell>
                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        {autorizado.average_rating ? (
+                          <StarRating 
+                            rating={autorizado.average_rating} 
+                            showValue 
+                            size={14} 
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sem avaliações</span>
+                        )}
+                        {autorizado.total_ratings && autorizado.total_ratings > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            ({autorizado.total_ratings})
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={autorizado.ativo ? "default" : "secondary"}>
                         {autorizado.ativo ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
+                        <AddRatingDialog autorizadoId={autorizado.id} autorizadoNome={autorizado.nome} />
                         <Button
                           variant="outline"
                           size="sm"
