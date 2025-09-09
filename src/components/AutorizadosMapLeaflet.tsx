@@ -300,7 +300,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
 
       {/* Attendant indicators */}
       {atendentesOrdenados.length > 0 && (
-        <div className="absolute z-[1000] bottom-4 left-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 max-w-xs">
+        <div className="absolute z-[1000] bottom-4 left-4 ml-[100px] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 max-w-xs">
           <h4 className="text-sm font-semibold mb-3 text-center">Autorizados por Atendente</h4>
           <div className="space-y-2">
             {atendentesOrdenados.map(([nome, { count, foto_perfil_url }]) => (
