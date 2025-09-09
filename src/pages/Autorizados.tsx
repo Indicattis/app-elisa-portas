@@ -4,21 +4,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AutorizadosKanban } from "@/components/AutorizadosKanban";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw, Download } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { ETAPAS, AutorizadoEtapa } from "@/utils/etapas";
 
 
 interface Autorizado {
@@ -42,6 +45,7 @@ interface Autorizado {
   created_at: string;
   updated_at: string;
   vendedor_id?: string;
+  etapa: AutorizadoEtapa;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -68,6 +72,7 @@ export default function Autorizados() {
   const [geocoding, setGeocoding] = useState<string | null>(null);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
 
   useEffect(() => {
     fetchAutorizados();
@@ -93,7 +98,7 @@ export default function Autorizados() {
           id, nome, email, telefone, whatsapp, responsavel, endereco, 
           cidade, estado, cep, regiao, ativo, logo_url, latitude, 
           longitude, last_geocoded_at, geocode_precision, created_at, 
-          updated_at, vendedor_id,
+          updated_at, vendedor_id, etapa,
           vendedor:admin_users(nome, foto_perfil_url)
         `)
         .order('nome')
@@ -234,6 +239,7 @@ export default function Autorizados() {
           ativo: editingAutorizado.ativo,
           logo_url: editingAutorizado.logo_url,
           vendedor_id: editingAutorizado.vendedor_id,
+          etapa: editingAutorizado.etapa,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingAutorizado.id);
@@ -414,12 +420,13 @@ export default function Autorizados() {
         autorizado.telefone || '-',
         autorizado.cidade || '-',
         autorizado.estado || '-',
+        ETAPAS[autorizado.etapa] || '-',
         autorizado.ativo ? 'Ativo' : 'Inativo'
       ];
     });
     
     // Cabeçalhos da tabela
-    const headers = [['Nome', 'Vendedor', 'Responsável', 'Telefone', 'Cidade', 'Estado', 'Status']];
+    const headers = [['Nome', 'Vendedor', 'Responsável', 'Telefone', 'Cidade', 'Estado', 'Etapa', 'Status']];
     
     // Gerar tabela
     autoTable(doc, {
@@ -439,13 +446,14 @@ export default function Autorizados() {
         fillColor: [245, 245, 245],
       },
       columnStyles: {
-        0: { cellWidth: 35 }, // Nome
-        1: { cellWidth: 30 }, // Vendedor
-        2: { cellWidth: 30 }, // Responsável
-        3: { cellWidth: 25 }, // Telefone
-        4: { cellWidth: 25 }, // Cidade
-        5: { cellWidth: 20 }, // Estado
-        6: { cellWidth: 20 }, // Status
+        0: { cellWidth: 30 }, // Nome
+        1: { cellWidth: 25 }, // Vendedor
+        2: { cellWidth: 25 }, // Responsável
+        3: { cellWidth: 22 }, // Telefone
+        4: { cellWidth: 22 }, // Cidade
+        5: { cellWidth: 15 }, // Estado
+        6: { cellWidth: 25 }, // Etapa
+        7: { cellWidth: 15 }, // Status
       },
     });
     
@@ -456,6 +464,16 @@ export default function Autorizados() {
       title: "PDF gerado",
       description: "O relatório de autorizados foi baixado com sucesso",
     });
+  };
+
+  const handleEtapaChange = (autorizadoId: string, novaEtapa: AutorizadoEtapa) => {
+    setAutorizados(prev => 
+      prev.map(autorizado => 
+        autorizado.id === autorizadoId 
+          ? { ...autorizado, etapa: novaEtapa }
+          : autorizado
+      )
+    );
   };
 
   if (loading) {
@@ -493,11 +511,27 @@ export default function Autorizados() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
-            <div className="space-y-2 flex-1">
-              <CardTitle>Lista de Autorizados</CardTitle>
-              <CardDescription>
-                {filteredAutorizados.length} autorizado(s) encontrado(s)
-              </CardDescription>
+            <div className="space-y-4 flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Lista de Autorizados</CardTitle>
+                  <CardDescription>
+                    {filteredAutorizados.length} autorizado(s) encontrado(s)
+                  </CardDescription>
+                </div>
+                <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'kanban')}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="table" className="flex items-center gap-2">
+                      <TableIcon className="h-4 w-4" />
+                      Tabela
+                    </TabsTrigger>
+                    <TabsTrigger value="kanban" className="flex items-center gap-2">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Kanban
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
@@ -525,155 +559,168 @@ export default function Autorizados() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Logo</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Vendedor</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Localização</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAutorizados.map((autorizado) => (
-                <TableRow key={autorizado.id}>
-                  <TableCell>
-                    {autorizado.logo_url ? (
-                      <img
-                        src={autorizado.logo_url}
-                        alt={`Logo ${autorizado.nome}`}
-                        className="w-10 h-10 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                        <User className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{autorizado.nome}</p>
-                      {autorizado.responsavel && (
-                        <p className="text-sm text-muted-foreground">{autorizado.responsavel}</p>
+          {viewMode === 'table' ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Logo</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Vendedor</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead>Localização</TableHead>
+                  <TableHead>Etapa</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAutorizados.map((autorizado) => (
+                  <TableRow key={autorizado.id}>
+                    <TableCell>
+                      {autorizado.logo_url ? (
+                        <img
+                          src={autorizado.logo_url}
+                          alt={`Logo ${autorizado.nome}`}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                          <User className="h-5 w-5 text-muted-foreground" />
+                        </div>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {autorizado.vendedor ? (
-                      <div className="flex items-center space-x-2">
-                        {autorizado.vendedor.foto_perfil_url ? (
-                          <img
-                            src={autorizado.vendedor.foto_perfil_url}
-                            alt={autorizado.vendedor.nome}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                            <User className="h-3 w-3 text-muted-foreground" />
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{autorizado.nome}</p>
+                        {autorizado.responsavel && (
+                          <p className="text-sm text-muted-foreground">{autorizado.responsavel}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {autorizado.vendedor ? (
+                        <div className="flex items-center space-x-2">
+                          {autorizado.vendedor.foto_perfil_url ? (
+                            <img
+                              src={autorizado.vendedor.foto_perfil_url}
+                              alt={autorizado.vendedor.nome}
+                              className="w-6 h-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                              <User className="h-3 w-3 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span className="text-sm">{autorizado.vendedor.nome}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {autorizado.email && (
+                          <div className="flex items-center text-sm">
+                            <Mail className="h-3 w-3 mr-1" />
+                            {autorizado.email}
                           </div>
                         )}
-                        <span className="text-sm">{autorizado.vendedor.nome}</span>
+                        {autorizado.telefone && (
+                          <div className="flex items-center text-sm">
+                            <Phone className="h-3 w-3 mr-1" />
+                            {autorizado.telefone}
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {autorizado.email && (
-                        <div className="flex items-center text-sm">
-                          <Mail className="h-3 w-3 mr-1" />
-                          {autorizado.email}
-                        </div>
-                      )}
-                      {autorizado.telefone && (
-                        <div className="flex items-center text-sm">
-                          <Phone className="h-3 w-3 mr-1" />
-                          {autorizado.telefone}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {autorizado.cidade && autorizado.estado && (
-                        <div className="flex items-center text-sm">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {autorizado.cidade}, {autorizado.estado}
-                        </div>
-                      )}
-                      {autorizado.regiao && (
-                        <Badge variant="outline" className="text-xs">
-                          {autorizado.regiao}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={autorizado.ativo ? "default" : "secondary"}>
-                      {autorizado.ativo ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/dashboard/autorizados/${autorizado.id}/edit`)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {autorizado.cidade && autorizado.estado && (
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {autorizado.cidade && autorizado.estado && (
+                          <div className="flex items-center text-sm">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {autorizado.cidade}, {autorizado.estado}
+                          </div>
+                        )}
+                        {autorizado.regiao && (
+                          <Badge variant="outline" className="text-xs">
+                            {autorizado.regiao}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {ETAPAS[autorizado.etapa]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={autorizado.ativo ? "default" : "secondary"}>
+                        {autorizado.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleGeocode(autorizado)}
-                          disabled={geocoding === autorizado.id}
-                          title={autorizado.latitude && autorizado.longitude ? 'Atualizar coordenadas' : 'Geocodificar endereço'}
+                          onClick={() => navigate(`/dashboard/autorizados/${autorizado.id}/edit`)}
                         >
-                          {geocoding === autorizado.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4" />
-                          )}
+                          <Edit className="h-4 w-4" />
                         </Button>
-                      )}
-                      {isAdmin && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o autorizado "{autorizado.nome}"?
-                                Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(autorizado.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                        {autorizado.cidade && autorizado.estado && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGeocode(autorizado)}
+                            disabled={geocoding === autorizado.id}
+                            title={autorizado.latitude && autorizado.longitude ? 'Atualizar coordenadas' : 'Geocodificar endereço'}
+                          >
+                            {geocoding === autorizado.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                        {isAdmin && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o autorizado "{autorizado.nome}"?
+                                  Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(autorizado.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <AutorizadosKanban 
+              autorizados={filteredAutorizados} 
+              onEtapaChange={handleEtapaChange}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -822,6 +869,27 @@ export default function Autorizados() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="etapa">Etapa</Label>
+                <Select
+                  value={editingAutorizado.etapa}
+                  onValueChange={(value: AutorizadoEtapa) =>
+                    setEditingAutorizado({ ...editingAutorizado, etapa: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ETAPAS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Seção de Upload de Imagem */}

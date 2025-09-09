@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ETAPAS, AutorizadoEtapa } from "@/utils/etapas";
 
 interface AutorizadoForm {
   nome: string;
@@ -25,6 +26,7 @@ interface AutorizadoForm {
   ativo: boolean;
   logo_url: string;
   vendedor_id: string;
+  etapa: AutorizadoEtapa;
 }
 
 interface Vendedor {
@@ -47,7 +49,8 @@ export default function AutorizadoNovo() {
     regiao: "",
     ativo: true,
     logo_url: "",
-    vendedor_id: ""
+    vendedor_id: "",
+    etapa: "integracao" as AutorizadoEtapa
   });
   
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -172,7 +175,8 @@ export default function AutorizadoNovo() {
           regiao: form.regiao.trim() || null,
           ativo: form.ativo,
           logo_url: form.logo_url || null,
-          vendedor_id: form.vendedor_id === "none" ? null : form.vendedor_id || null
+          vendedor_id: form.vendedor_id === "none" ? null : form.vendedor_id || null,
+          etapa: form.etapa
         });
 
       if (error) throw error;
@@ -382,6 +386,24 @@ export default function AutorizadoNovo() {
                           )}
                           <span>{vendedor.nome}</span>
                         </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="etapa">Etapa</Label>
+                <Select
+                  value={form.etapa}
+                  onValueChange={(value: AutorizadoEtapa) => setForm({ ...form, etapa: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ETAPAS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
                       </SelectItem>
                     ))}
                   </SelectContent>

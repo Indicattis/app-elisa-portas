@@ -167,6 +167,7 @@ export type Database = {
           email: string | null
           endereco: string | null
           estado: string | null
+          etapa: Database["public"]["Enums"]["autorizado_etapa"]
           geocode_precision: string | null
           id: string
           last_geocoded_at: string | null
@@ -189,6 +190,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          etapa?: Database["public"]["Enums"]["autorizado_etapa"]
           geocode_precision?: string | null
           id?: string
           last_geocoded_at?: string | null
@@ -211,6 +213,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          etapa?: Database["public"]["Enums"]["autorizado_etapa"]
           geocode_precision?: string | null
           id?: string
           last_geocoded_at?: string | null
@@ -2236,6 +2239,12 @@ export type Database = {
         | "performance"
         | "tv_dashboard"
         | "instalacoes"
+      autorizado_etapa:
+        | "integracao"
+        | "treinamento_comercial"
+        | "treinamento_ficha_tecnica"
+        | "treinamento_instalacao"
+        | "apto"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -2424,6 +2433,13 @@ export const Constants = {
         "performance",
         "tv_dashboard",
         "instalacoes",
+      ],
+      autorizado_etapa: [
+        "integracao",
+        "treinamento_comercial",
+        "treinamento_ficha_tecnica",
+        "treinamento_instalacao",
+        "apto",
       ],
       lead_status: [
         "aguardando_atendimento",

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LogoUpload } from "@/components/LogoUpload";
 import { ArrowLeft, Upload, X, User, MapPin, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ETAPAS, AutorizadoEtapa } from "@/utils/etapas";
 
 interface AutorizadoForm {
   nome: string;
@@ -26,6 +27,7 @@ interface AutorizadoForm {
   ativo: boolean;
   logo_url: string;
   vendedor_id: string;
+  etapa: AutorizadoEtapa;
 }
 
 interface Vendedor {
@@ -49,7 +51,8 @@ export default function AutorizadoEdit() {
     regiao: "",
     ativo: true,
     logo_url: "",
-    vendedor_id: ""
+    vendedor_id: "",
+    etapa: "integracao"
   });
   
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -91,7 +94,8 @@ export default function AutorizadoEdit() {
           regiao: data.regiao || "",
           ativo: data.ativo,
           logo_url: data.logo_url || "",
-          vendedor_id: data.vendedor_id || ""
+          vendedor_id: data.vendedor_id || "",
+          etapa: data.etapa || "integracao"
         });
         
         if (data.logo_url) {
@@ -160,7 +164,8 @@ export default function AutorizadoEdit() {
           regiao: form.regiao.trim() || null,
           ativo: form.ativo,
           logo_url: form.logo_url || null,
-          vendedor_id: form.vendedor_id === "none" ? null : form.vendedor_id || null
+          vendedor_id: form.vendedor_id === "none" ? null : form.vendedor_id || null,
+          etapa: form.etapa
         })
         .eq('id', id);
 
@@ -408,6 +413,24 @@ export default function AutorizadoEdit() {
                           )}
                           <span>{vendedor.nome}</span>
                         </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="etapa">Etapa</Label>
+                <Select
+                  value={form.etapa}
+                  onValueChange={(value: AutorizadoEtapa) => setForm({ ...form, etapa: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ETAPAS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
                       </SelectItem>
                     ))}
                   </SelectContent>
