@@ -14,9 +14,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 
 interface Autorizado {
@@ -389,6 +391,73 @@ export default function Autorizados() {
     fetchAutorizados();
   };
 
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório de Autorizados', 105, 20, { align: 'center' });
+    
+    // Data de geração
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 105, 30, { align: 'center' });
+    
+    // Preparar dados para a tabela
+    const tableData = filteredAutorizados.map(autorizado => {
+      const vendedor = vendedores.find(v => v.id === autorizado.vendedor_id);
+      return [
+        autorizado.nome,
+        vendedor?.nome || 'Sem vendedor',
+        autorizado.responsavel || '-',
+        autorizado.telefone || '-',
+        autorizado.cidade || '-',
+        autorizado.estado || '-',
+        autorizado.ativo ? 'Ativo' : 'Inativo'
+      ];
+    });
+    
+    // Cabeçalhos da tabela
+    const headers = [['Nome', 'Vendedor', 'Responsável', 'Telefone', 'Cidade', 'Estado', 'Status']];
+    
+    // Gerar tabela
+    (doc as any).autoTable({
+      head: headers,
+      body: tableData,
+      startY: 40,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      columnStyles: {
+        0: { cellWidth: 35 }, // Nome
+        1: { cellWidth: 30 }, // Vendedor
+        2: { cellWidth: 30 }, // Responsável
+        3: { cellWidth: 25 }, // Telefone
+        4: { cellWidth: 25 }, // Cidade
+        5: { cellWidth: 20 }, // Estado
+        6: { cellWidth: 20 }, // Status
+      },
+    });
+    
+    // Salvar o PDF
+    doc.save(`autorizados_${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    toast({
+      title: "PDF gerado",
+      description: "O relatório de autorizados foi baixado com sucesso",
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -409,10 +478,16 @@ export default function Autorizados() {
             Gerencie a rede de autorizados da empresa
           </p>
         </div>
-        <Button onClick={() => navigate('/dashboard/autorizados/novo')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Autorizado
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownloadPDF} disabled={loading}>
+            <Download className="h-4 w-4 mr-2" />
+            Baixar PDF
+          </Button>
+          <Button onClick={() => navigate('/dashboard/autorizados/novo')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Autorizado
+          </Button>
+        </div>
       </div>
 
       <Card>
