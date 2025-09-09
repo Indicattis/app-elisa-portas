@@ -125,7 +125,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <main className="flex-1 p-4 sm:p-6">
+          <main className="flex-1 p-4 sm:p-6 mt-15">
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
