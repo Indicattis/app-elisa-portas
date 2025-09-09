@@ -7,6 +7,7 @@ import { Edit, User, Phone, Mail, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { ETAPAS, ETAPA_COLORS, ETAPA_ORDER, AutorizadoEtapa } from "@/utils/etapas";
 import { StarRating } from "./StarRating";
 import { AddRatingDialog } from "./AddRatingDialog";
@@ -49,6 +50,7 @@ interface AutorizadosKanbanProps {
 export function AutorizadosKanban({ autorizados, onEtapaChange }: AutorizadosKanbanProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [draggedOver, setDraggedOver] = useState<AutorizadoEtapa | null>(null);
 
@@ -97,6 +99,9 @@ export function AutorizadosKanban({ autorizados, onEtapaChange }: AutorizadosKan
         .update({ etapa: novaEtapa })
         .eq('id', draggedItem);
 
+      // Invalidate the query cache to refresh the data immediately
+      queryClient.invalidateQueries({ queryKey: ['autorizados-with-ratings'] });
+      
       onEtapaChange(draggedItem, novaEtapa);
       
       toast({
