@@ -96,7 +96,8 @@ export function useAutorizadosWithRatings() {
         .from('autorizados')
         .select(`
           *,
-          ratings:autorizados_ratings(nota)
+          ratings:autorizados_ratings(nota),
+          vendedor:admin_users!vendedor_id(nome, foto_perfil_url)
         `)
         .order('nome');
 
