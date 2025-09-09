@@ -2023,21 +2023,48 @@ export type Database = {
           atendente_nome: string
           atendente_telefone: string | null
           created_at: string
+          fbclid: string | null
+          gclid: string | null
           id: string
+          page_url: string | null
+          referrer: string | null
+          source: string | null
+          traffic_channel: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           atendente_id?: string | null
           atendente_nome: string
           atendente_telefone?: string | null
           created_at?: string
+          fbclid?: string | null
+          gclid?: string | null
           id?: string
+          page_url?: string | null
+          referrer?: string | null
+          source?: string | null
+          traffic_channel?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           atendente_id?: string | null
           atendente_nome?: string
           atendente_telefone?: string | null
           created_at?: string
+          fbclid?: string | null
+          gclid?: string | null
           id?: string
+          page_url?: string | null
+          referrer?: string | null
+          source?: string | null
+          traffic_channel?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
