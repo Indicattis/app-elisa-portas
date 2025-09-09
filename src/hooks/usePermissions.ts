@@ -1,8 +1,34 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AppPermission } from '@/types/permissions';
+import { useEffect } from 'react';
 
 export function usePermissions() {
+  const queryClient = useQueryClient();
+
+  // Set up real-time updates for role permissions changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('role-permissions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'role_permissions'
+        },
+        () => {
+          // Invalidate user permissions cache when role permissions change
+          queryClient.invalidateQueries({ queryKey: ['user-permissions'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ['user-permissions'],
     queryFn: async () => {
@@ -18,7 +44,8 @@ export function usePermissions() {
 
       return data?.map(row => row.permission as AppPermission) || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 1000, // 10 seconds - reduced for faster updates
+    retry: 1,
   });
 }
 
