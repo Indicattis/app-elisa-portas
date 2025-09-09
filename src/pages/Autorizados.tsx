@@ -18,7 +18,7 @@ import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2,
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 
 interface Autorizado {
@@ -422,7 +422,7 @@ export default function Autorizados() {
     const headers = [['Nome', 'Vendedor', 'Responsável', 'Telefone', 'Cidade', 'Estado', 'Status']];
     
     // Gerar tabela
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: headers,
       body: tableData,
       startY: 40,
