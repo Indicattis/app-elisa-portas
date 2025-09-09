@@ -45,9 +45,10 @@ interface Autorizado {
 interface AutorizadosKanbanProps {
   autorizados: Autorizado[];
   onEtapaChange: (autorizadoId: string, novaEtapa: AutorizadoEtapa) => void;
+  onShowHistory: (autorizado: Autorizado) => void;
 }
 
-export function AutorizadosKanban({ autorizados, onEtapaChange }: AutorizadosKanbanProps) {
+export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory }: AutorizadosKanbanProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -157,6 +158,7 @@ export function AutorizadosKanban({ autorizados, onEtapaChange }: AutorizadosKan
                     draggable
                     onDragStart={(e) => handleDragStart(e, autorizado.id)}
                     onDragEnd={handleDragEnd}
+                    onDoubleClick={() => onShowHistory(autorizado)}
                     className={`p-3 rounded-lg border bg-card cursor-move hover:shadow-md transition-shadow ${
                       draggedItem === autorizado.id ? 'opacity-50' : ''
                     }`}

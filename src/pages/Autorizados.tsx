@@ -24,6 +24,7 @@ import autoTable from 'jspdf-autotable';
 import { ETAPAS, AutorizadoEtapa } from "@/utils/etapas";
 import { StarRating } from "@/components/StarRating";
 import { AddRatingDialog } from "@/components/AddRatingDialog";
+import { AutorizadoHistoryModal } from "@/components/AutorizadoHistoryModal";
 import { useAutorizadosWithRatings } from "@/hooks/useAutorizadosRatings";
 
 
@@ -77,6 +78,8 @@ export default function Autorizados() {
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+  const [historyAutorizado, setHistoryAutorizado] = useState<Autorizado | null>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   useEffect(() => {
     fetchVendedores();
@@ -446,6 +449,11 @@ export default function Autorizados() {
     // The data will be refreshed automatically by the hook
   };
 
+  const handleShowHistory = (autorizado: Autorizado) => {
+    setHistoryAutorizado(autorizado);
+    setIsHistoryModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -545,8 +553,12 @@ export default function Autorizados() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAutorizados.map((autorizado) => (
-                  <TableRow key={autorizado.id}>
+                 {filteredAutorizados.map((autorizado) => (
+                   <TableRow 
+                     key={autorizado.id}
+                     onDoubleClick={() => handleShowHistory(autorizado)}
+                     className="cursor-pointer hover:bg-muted/50"
+                   >
                     <TableCell>
                       {autorizado.logo_url ? (
                         <img
@@ -709,6 +721,7 @@ export default function Autorizados() {
             <AutorizadosKanban 
               autorizados={filteredAutorizados} 
               onEtapaChange={handleEtapaChange}
+              onShowHistory={handleShowHistory}
             />
           )}
         </CardContent>
@@ -956,6 +969,13 @@ export default function Autorizados() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Histórico */}
+      <AutorizadoHistoryModal 
+        autorizado={historyAutorizado}
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
     </div>
   );
 }
