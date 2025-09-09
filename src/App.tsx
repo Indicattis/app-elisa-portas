@@ -453,7 +453,7 @@ const App = () => (
                 <Route
                   path="/dashboard/autorizados/novo"
                   element={
-                    <ProtectedRoute requireAdmin={true}>
+                    <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
                         <AutorizadoNovo />
                       </DashboardLayout>
@@ -463,7 +463,7 @@ const App = () => (
                 <Route
                   path="/dashboard/autorizados/:id/edit"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
                         <AutorizadoEdit />
                       </DashboardLayout>
