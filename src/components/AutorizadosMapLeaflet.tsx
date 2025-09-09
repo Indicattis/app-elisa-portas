@@ -77,6 +77,25 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
   // Sort states by count (descending)
   const estadosOrdenados = Object.entries(autorizadosPorEstado)
     .sort(([, a], [, b]) => b - a);
+
+  // Count autorizados by attendant
+  const autorizadosPorAtendente = autorizados
+    .filter(autorizado => autorizado.ativo && autorizado.vendedor)
+    .reduce((acc, autorizado) => {
+      const vendedor = autorizado.vendedor!;
+      if (!acc[vendedor.nome]) {
+        acc[vendedor.nome] = {
+          count: 0,
+          foto_perfil_url: vendedor.foto_perfil_url
+        };
+      }
+      acc[vendedor.nome].count++;
+      return acc;
+    }, {} as Record<string, { count: number; foto_perfil_url?: string }>);
+
+  // Sort attendants by count (descending)
+  const atendentesOrdenados = Object.entries(autorizadosPorAtendente)
+    .sort(([, a], [, b]) => b.count - a.count);
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371; // Earth's radius in kilometers
@@ -275,6 +294,31 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
             >
               Limpar Ponto
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Attendant indicators */}
+      {atendentesOrdenados.length > 0 && (
+        <div className="absolute z-[1000] bottom-4 left-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 max-w-xs">
+          <h4 className="text-sm font-semibold mb-3 text-center">Autorizados por Atendente</h4>
+          <div className="space-y-2">
+            {atendentesOrdenados.map(([nome, { count, foto_perfil_url }]) => (
+              <div key={nome} className="flex items-center gap-3 bg-muted/50 rounded-lg p-2">
+                <Avatar className="h-8 w-8 border-2 border-primary/20">
+                  <AvatarImage src={foto_perfil_url} alt={nome} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    {getInitials(nome)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-xs truncate">{nome}</p>
+                  <Badge variant="secondary" className="h-4 text-xs mt-1">
+                    {count} autorizados
+                  </Badge>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
