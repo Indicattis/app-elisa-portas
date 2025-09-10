@@ -242,9 +242,11 @@ export type Database = {
         Row: {
           atendente_id: string
           autorizado_id: string
-          categoria: Database["public"]["Enums"]["autorizado_rating_categoria"]
+          categoria: Database["public"]["Enums"]["rating_categoria"]
           created_at: string
-          descricao: string | null
+          custo: number | null
+          data_evento: string | null
+          descricao: string
           id: string
           nota: number
           updated_at: string
@@ -252,9 +254,11 @@ export type Database = {
         Insert: {
           atendente_id: string
           autorizado_id: string
-          categoria: Database["public"]["Enums"]["autorizado_rating_categoria"]
+          categoria: Database["public"]["Enums"]["rating_categoria"]
           created_at?: string
-          descricao?: string | null
+          custo?: number | null
+          data_evento?: string | null
+          descricao: string
           id?: string
           nota: number
           updated_at?: string
@@ -262,9 +266,11 @@ export type Database = {
         Update: {
           atendente_id?: string
           autorizado_id?: string
-          categoria?: Database["public"]["Enums"]["autorizado_rating_categoria"]
+          categoria?: Database["public"]["Enums"]["rating_categoria"]
           created_at?: string
-          descricao?: string | null
+          custo?: number | null
+          data_evento?: string | null
+          descricao?: string
           id?: string
           nota?: number
           updated_at?: string
@@ -2306,6 +2312,7 @@ export type Database = {
         | "logistica"
         | "atendimento"
         | "produto"
+      rating_categoria: "instalacao" | "bos" | "visita_tecnica"
       status_visita: "agendada" | "concluida" | "cancelada"
       turno_visita: "manha" | "tarde" | "noite"
       user_role:
@@ -2506,6 +2513,7 @@ export const Constants = {
         "atendimento",
         "produto",
       ],
+      rating_categoria: ["instalacao", "bos", "visita_tecnica"],
       status_visita: ["agendada", "concluida", "cancelada"],
       turno_visita: ["manha", "tarde", "noite"],
       user_role: [

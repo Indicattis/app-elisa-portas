@@ -3,10 +3,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { StarRatingInput } from "./StarRatingInput";
 import { useAutorizadosRatings, CreateRatingData } from "@/hooks/useAutorizadosRatings";
-import { Star } from "lucide-react";
+import { Star, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface AddRatingDialogProps {
   autorizadoId: string;
@@ -16,26 +21,30 @@ interface AddRatingDialogProps {
 
 const categoriaLabels = {
   'instalacao': 'Instalação',
-  'suporte': 'Suporte',
-  'atendimento': 'Atendimento'
+  'bos': 'B.O\'s',
+  'visita_tecnica': 'Visita Técnica'
 } as const;
 
 export function AddRatingDialog({ autorizadoId, autorizadoNome, children }: AddRatingDialogProps) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
-  const [categoria, setCategoria] = useState<'instalacao' | 'suporte' | 'atendimento'>('instalacao');
+  const [categoria, setCategoria] = useState<'instalacao' | 'bos' | 'visita_tecnica'>('instalacao');
   const [descricao, setDescricao] = useState('');
+  const [dataEvento, setDataEvento] = useState<Date>();
+  const [custo, setCusto] = useState('');
 
   const { createRating, isCreating } = useAutorizadosRatings();
 
   const handleSubmit = () => {
-    if (rating === 0) return;
+    if (rating === 0 || !descricao.trim()) return;
 
     const ratingData: CreateRatingData = {
       autorizado_id: autorizadoId,
       categoria,
       nota: rating,
-      descricao: descricao.trim() || undefined,
+      descricao: descricao.trim(),
+      data_evento: dataEvento ? format(dataEvento, 'yyyy-MM-dd') : undefined,
+      custo: custo ? parseFloat(custo) : undefined,
     };
 
     createRating(ratingData, {
@@ -44,6 +53,8 @@ export function AddRatingDialog({ autorizadoId, autorizadoNome, children }: AddR
         setRating(0);
         setCategoria('instalacao');
         setDescricao('');
+        setDataEvento(undefined);
+        setCusto('');
       },
     });
   };
@@ -52,6 +63,8 @@ export function AddRatingDialog({ autorizadoId, autorizadoNome, children }: AddR
     setRating(0);
     setCategoria('instalacao');
     setDescricao('');
+    setDataEvento(undefined);
+    setCusto('');
   };
 
   return (
@@ -96,7 +109,49 @@ export function AddRatingDialog({ autorizadoId, autorizadoNome, children }: AddR
           </div>
 
           <div>
-            <Label htmlFor="descricao">Descrição (opcional)</Label>
+            <Label htmlFor="data-evento">Data do Evento</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="data-evento"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal mt-1",
+                    !dataEvento && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dataEvento ? format(dataEvento, "dd/MM/yyyy") : <span>Selecionar data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dataEvento}
+                  onSelect={setDataEvento}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div>
+            <Label htmlFor="custo">Custo (R$)</Label>
+            <Input
+              id="custo"
+              type="number"
+              value={custo}
+              onChange={(e) => setCusto(e.target.value)}
+              placeholder="0.00"
+              className="mt-1"
+              step="0.01"
+              min="0"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="descricao">Descrição *</Label>
             <Textarea
               id="descricao"
               value={descricao}
@@ -104,6 +159,7 @@ export function AddRatingDialog({ autorizadoId, autorizadoNome, children }: AddR
               placeholder="Descreva sua experiência..."
               className="mt-1"
               rows={3}
+              required
             />
           </div>
 
@@ -113,7 +169,7 @@ export function AddRatingDialog({ autorizadoId, autorizadoNome, children }: AddR
             </Button>
             <Button 
               onClick={handleSubmit} 
-              disabled={rating === 0 || isCreating}
+              disabled={rating === 0 || !descricao.trim() || isCreating}
             >
               {isCreating ? 'Salvando...' : 'Salvar Avaliação'}
             </Button>

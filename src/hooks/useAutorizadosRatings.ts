@@ -6,18 +6,22 @@ export interface AutorizadoRating {
   id: string;
   autorizado_id: string;
   atendente_id: string;
-  categoria: 'instalacao' | 'suporte' | 'atendimento';
+  categoria: 'instalacao' | 'bos' | 'visita_tecnica';
   nota: number;
-  descricao?: string;
+  descricao: string;
+  data_evento?: string;
+  custo?: number;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateRatingData {
   autorizado_id: string;
-  categoria: 'instalacao' | 'suporte' | 'atendimento';
+  categoria: 'instalacao' | 'bos' | 'visita_tecnica';
   nota: number;
-  descricao?: string;
+  descricao: string;
+  data_evento?: string;
+  custo?: number;
 }
 
 export function useAutorizadosRatings(autorizadoId?: string) {
