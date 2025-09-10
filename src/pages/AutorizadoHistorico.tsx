@@ -396,11 +396,6 @@ export default function AutorizadoHistorico() {
                           <Calendar className="h-3 w-3" />
                           <span>Registrado em: {format(new Date(rating.created_at), 'dd/MM/yyyy HH:mm')}</span>
                         </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          <span>Registrado por atendente</span>
-                        </div>
                       </div>
                     </div>
                   ))}

@@ -35,10 +35,7 @@ export function useAutorizadosRatings(autorizadoId?: string) {
       
       const { data, error } = await supabase
         .from('autorizados_ratings')
-        .select(`
-          *,
-          atendente:admin_users!atendente_id(nome)
-        `)
+        .select('*')
         .eq('autorizado_id', autorizadoId)
         .order('created_at', { ascending: false });
 
