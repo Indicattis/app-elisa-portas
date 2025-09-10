@@ -46,6 +46,7 @@ import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
 import AutorizadoNovo from "./pages/AutorizadoNovo";
 import AutorizadoEdit from "./pages/AutorizadoEdit";
+import AutorizadoHistorico from "./pages/AutorizadoHistorico";
 import MapaAutorizados from "./pages/MapaAutorizados";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
@@ -466,6 +467,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
                         <AutorizadoEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/autorizados/:id/historico"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <AutorizadoHistorico />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

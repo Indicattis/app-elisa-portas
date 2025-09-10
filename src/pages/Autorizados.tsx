@@ -556,7 +556,7 @@ export default function Autorizados() {
                  {filteredAutorizados.map((autorizado) => (
                    <TableRow 
                      key={autorizado.id}
-                     onDoubleClick={() => handleShowHistory(autorizado)}
+                     onDoubleClick={() => navigate(`/dashboard/autorizados/${autorizado.id}/historico`)}
                      className="cursor-pointer hover:bg-muted/50"
                    >
                     <TableCell>
@@ -722,6 +722,7 @@ export default function Autorizados() {
               autorizados={filteredAutorizados} 
               onEtapaChange={handleEtapaChange}
               onShowHistory={handleShowHistory}
+              onDoubleClick={(autorizado) => navigate(`/dashboard/autorizados/${autorizado.id}/historico`)}
             />
           )}
         </CardContent>
