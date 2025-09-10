@@ -22,13 +22,14 @@ interface AddRatingDialogProps {
 const categoriaLabels = {
   'instalacao': 'Instalação',
   'bos': 'B.O\'s',
-  'visita_tecnica': 'Visita Técnica'
+  'visita_tecnica': 'Visita Técnica',
+  'manutencao': 'Manutenção'
 } as const;
 
 export function AddRatingDialog({ autorizadoId, autorizadoNome, children }: AddRatingDialogProps) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
-  const [categoria, setCategoria] = useState<'instalacao' | 'bos' | 'visita_tecnica'>('instalacao');
+  const [categoria, setCategoria] = useState<'instalacao' | 'bos' | 'visita_tecnica' | 'manutencao'>('instalacao');
   const [descricao, setDescricao] = useState('');
   const [dataEvento, setDataEvento] = useState<Date>();
   const [custo, setCusto] = useState('');

@@ -6,7 +6,7 @@ export interface AutorizadoRating {
   id: string;
   autorizado_id: string;
   atendente_id: string;
-  categoria: 'instalacao' | 'bos' | 'visita_tecnica';
+  categoria: 'instalacao' | 'bos' | 'visita_tecnica' | 'manutencao';
   nota: number;
   descricao: string;
   data_evento?: string;
@@ -17,7 +17,7 @@ export interface AutorizadoRating {
 
 export interface CreateRatingData {
   autorizado_id: string;
-  categoria: 'instalacao' | 'bos' | 'visita_tecnica';
+  categoria: 'instalacao' | 'bos' | 'visita_tecnica' | 'manutencao';
   nota: number;
   descricao: string;
   data_evento?: string;

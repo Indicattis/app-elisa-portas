@@ -2312,7 +2312,7 @@ export type Database = {
         | "logistica"
         | "atendimento"
         | "produto"
-      rating_categoria: "instalacao" | "bos" | "visita_tecnica"
+      rating_categoria: "instalacao" | "bos" | "visita_tecnica" | "manutencao"
       status_visita: "agendada" | "concluida" | "cancelada"
       turno_visita: "manha" | "tarde" | "noite"
       user_role:
@@ -2513,7 +2513,7 @@ export const Constants = {
         "atendimento",
         "produto",
       ],
-      rating_categoria: ["instalacao", "bos", "visita_tecnica"],
+      rating_categoria: ["instalacao", "bos", "visita_tecnica", "manutencao"],
       status_visita: ["agendada", "concluida", "cancelada"],
       turno_visita: ["manha", "tarde", "noite"],
       user_role: [
