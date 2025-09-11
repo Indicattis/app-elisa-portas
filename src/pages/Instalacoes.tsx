@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { format, startOfWeek, addWeeks, subWeeks, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MapPin, Download } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { EditPontoSheet } from "@/components/cronograma/EditPontoSheet";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { usePontosInstalacao } from "@/hooks/usePontosInstalacao";
 import { useDragAndDrop } from "@/hooks/useDragAndDrop";
+import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
+import { useToast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
 export default function Instalacoes() {
@@ -28,6 +30,11 @@ export default function Instalacoes() {
   const touchEndX = useRef<number>(0);
   const swipeRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+
+  // Hooks para dados (precisamos dos dados para gerar o PDF)
+  const { equipes } = useEquipesInstalacao();
+  const { pontos } = usePontosInstalacao(currentWeek);
 
   // Navegação de dias e semanas
   const nextDay = () => setCurrentDate(prev => addDays(prev, 1));
@@ -80,11 +87,41 @@ export default function Instalacoes() {
     setShowEditPonto(true);
   };
 
+  const handleDownloadPDF = () => {
+    try {
+      baixarCronogramaPDF({
+        equipes,
+        pontos,
+        weekStart: currentWeek
+      });
+      
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: "O cronograma de instalações foi baixado.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o cronograma. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
         {/* Action buttons */}
         <div className="flex justify-end gap-2">
+          <Button 
+            onClick={handleDownloadPDF}
+            variant="outline" 
+            size={isMobile ? "sm" : "default"}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {!isMobile && "Baixar PDF"}
+          </Button>
           <Button 
             onClick={() => setShowFormPonto(true)} 
             variant="outline" 
