@@ -124,7 +124,7 @@ export default function Instalacoes() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-4 space-y-4">
+      <div className="md:container md:mx-auto px-0 md:px-4 py-4 space-y-4">
         {/* Mobile Day Navigation */}
         {isMobile ? (
           <Card>
