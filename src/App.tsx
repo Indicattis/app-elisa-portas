@@ -83,9 +83,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           <AppSidebar />
         </div>
 
-        <SidebarInset className="flex-1 flex flex-col md:flex-1">
-          {/* Header com botão de colapsar sidebar no desktop */}
-          <div className="hidden md:flex fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border/50 w-screen">
+        <SidebarInset className="flex-1 flex flex-col">
+          {/* Header desktop */}
+          <div className="hidden md:flex sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
             <div className="h-12 flex items-center justify-between px-4 w-full">
               <div className="flex items-center">
                 <SidebarTrigger className="-ml-1" />
@@ -109,8 +109,8 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Header mobile com botão de menu */}
-          <div className="md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/50">
+          {/* Header mobile */}
+          <div className="md:hidden sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
             <div className="h-12 flex items-center justify-between px-4">
               <Sheet>
                 <SheetTrigger asChild>
@@ -122,11 +122,15 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                   <AppSidebar />
                 </SheetContent>
               </Sheet>
-              <span className="text-sm font-medium">Menu</span>
+              
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <HeaderUserInfo />
+              </div>
             </div>
           </div>
 
-          <main className="flex-1 p-4 sm:p-6 mt-12 md:mt-15">
+          <main className="flex-1 p-4 sm:p-6">
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
