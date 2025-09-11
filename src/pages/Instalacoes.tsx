@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { format, startOfWeek, addWeeks, subWeeks, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, MapPin, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MapPin } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
@@ -20,24 +21,13 @@ export default function Instalacoes() {
   const [showFormPonto, setShowFormPonto] = useState(false);
   const [showEditPonto, setShowEditPonto] = useState(false);
   const [selectedPonto, setSelectedPonto] = useState<any>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
   const swipeRef = useRef<HTMLDivElement>(null);
-
-  // Detectar se é mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = useIsMobile();
 
   // Navegação de dias e semanas
   const nextDay = () => setCurrentDate(prev => addDays(prev, 1));
@@ -91,40 +81,29 @@ export default function Instalacoes() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header Mobile/Desktop */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b z-40">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-primary" />
-              <h1 className="text-lg md:text-2xl font-bold">Instalações</h1>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => setShowFormPonto(true)} 
-                variant="outline" 
-                size={isMobile ? "sm" : "default"}
-                className="gap-2"
-              >
-                <MapPin className="h-4 w-4" />
-                {!isMobile && "Novo Ponto"}
-              </Button>
-              <Button 
-                onClick={() => setShowEquipes(true)} 
-                size={isMobile ? "sm" : "default"}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                {!isMobile && "Equipes"}
-              </Button>
-            </div>
-          </div>
+    <>
+      <div className="space-y-6">
+        {/* Action buttons */}
+        <div className="flex justify-end gap-2">
+          <Button 
+            onClick={() => setShowFormPonto(true)} 
+            variant="outline" 
+            size={isMobile ? "sm" : "default"}
+            className="gap-2"
+          >
+            <MapPin className="h-4 w-4" />
+            {!isMobile && "Novo Ponto"}
+          </Button>
+          <Button 
+            onClick={() => setShowEquipes(true)} 
+            size={isMobile ? "sm" : "default"}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {!isMobile && "Equipes"}
+          </Button>
         </div>
-      </div>
-
-      <div className="md:container md:mx-auto px-0 md:px-4 py-4 space-y-4">
+        
         {/* Mobile Day Navigation */}
         {isMobile ? (
           <Card>
@@ -213,7 +192,7 @@ export default function Instalacoes() {
         ponto={selectedPonto}
         currentWeek={currentWeek}
       />
-    </div>
+    </>
   );
 }
 
