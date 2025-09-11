@@ -115,6 +115,11 @@ All colors MUST be HSL.
   .swipe-container {
     touch-action: pan-y;
     overflow-x: hidden;
+    will-change: transform;
+  }
+  
+  .swipe-animation {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .mobile-card {

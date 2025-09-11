@@ -21,6 +21,8 @@ export default function Instalacoes() {
   const [showEditPonto, setShowEditPonto] = useState(false);
   const [selectedPonto, setSelectedPonto] = useState<any>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
@@ -46,10 +48,19 @@ export default function Instalacoes() {
   // Gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
+    setIsAnimating(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartX.current) return;
+    
     touchEndX.current = e.targetTouches[0].clientX;
+    const diff = touchEndX.current - touchStartX.current;
+    
+    // Limit the swipe offset to prevent over-scrolling
+    const maxOffset = 100;
+    const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, diff));
+    setSwipeOffset(clampedOffset);
   };
 
   const handleTouchEnd = () => {
@@ -59,12 +70,19 @@ export default function Instalacoes() {
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
+    setIsAnimating(true);
+    
     if (isLeftSwipe) {
       nextDay();
-    }
-    if (isRightSwipe) {
+    } else if (isRightSwipe) {
       prevDay();
     }
+    
+    // Reset swipe offset with animation
+    setTimeout(() => {
+      setSwipeOffset(0);
+      setIsAnimating(false);
+    }, 300);
   };
 
   const handleEditPonto = (ponto: any) => {
@@ -138,6 +156,10 @@ export default function Instalacoes() {
             <CardContent 
               ref={swipeRef}
               className="p-0 swipe-container"
+              style={{
+                transform: `translateX(${swipeOffset}px)`,
+                transition: isAnimating ? 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+              }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
