@@ -164,12 +164,14 @@ export type Database = {
           cep: string | null
           cidade: string | null
           created_at: string
+          data_inativacao_automatica: string | null
           email: string | null
           endereco: string | null
           estado: string | null
           etapa: Database["public"]["Enums"]["autorizado_etapa"]
           geocode_precision: string | null
           id: string
+          inativado_automaticamente: boolean | null
           last_geocoded_at: string | null
           latitude: number | null
           logo_url: string | null
@@ -187,12 +189,14 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           created_at?: string
+          data_inativacao_automatica?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
           etapa?: Database["public"]["Enums"]["autorizado_etapa"]
           geocode_precision?: string | null
           id?: string
+          inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
           logo_url?: string | null
@@ -210,12 +214,14 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           created_at?: string
+          data_inativacao_automatica?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
           etapa?: Database["public"]["Enums"]["autorizado_etapa"]
           geocode_precision?: string | null
           id?: string
+          inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
           logo_url?: string | null
@@ -686,6 +692,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      inativacoes_automaticas_log: {
+        Row: {
+          autorizado_id: string
+          created_at: string | null
+          data_inativacao: string
+          dias_sem_avaliacao: number
+          executado_por: string | null
+          id: string
+          ultima_avaliacao_data: string | null
+        }
+        Insert: {
+          autorizado_id: string
+          created_at?: string | null
+          data_inativacao?: string
+          dias_sem_avaliacao: number
+          executado_por?: string | null
+          id?: string
+          ultima_avaliacao_data?: string | null
+        }
+        Update: {
+          autorizado_id?: string
+          created_at?: string | null
+          data_inativacao?: string
+          dias_sem_avaliacao?: number
+          executado_por?: string | null
+          id?: string
+          ultima_avaliacao_data?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inativacoes_automaticas_log_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inativacoes_automaticas_log_executado_por_fkey"
+            columns: ["executado_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
           },
         ]
       }

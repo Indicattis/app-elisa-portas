@@ -12,11 +12,14 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AutorizadosKanban } from "@/components/AutorizadosKanban";
+import { AutorizadosIndicadores } from "@/components/AutorizadosIndicadores";
+import { AutorizadosFiltros, FiltrosAutorizados } from "@/components/AutorizadosFiltros";
+import { InativacaoAutomaticaModal } from "@/components/InativacaoAutomaticaModal";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard, AlertTriangle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import jsPDF from 'jspdf';
@@ -25,7 +28,8 @@ import { ETAPAS, AutorizadoEtapa } from "@/utils/etapas";
 import { StarRating } from "@/components/StarRating";
 import { AddRatingDialog } from "@/components/AddRatingDialog";
 import { AutorizadoHistoryModal } from "@/components/AutorizadoHistoryModal";
-import { useAutorizadosWithRatings } from "@/hooks/useAutorizadosRatings";
+import { useAutorizadosPerformance } from "@/hooks/useAutorizadosPerformance";
+import { aplicarFiltros, formatarTempoUltimaAvaliacao, getStatusRiscoColor, getStatusRiscoLabel } from "@/utils/autorizadosFilters";
 
 
 interface Autorizado {
@@ -68,34 +72,46 @@ export default function Autorizados() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const { data: autorizados = [], isLoading: loading, error } = useAutorizadosWithRatings();
-  const [filteredAutorizados, setFilteredAutorizados] = useState<Autorizado[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [editingAutorizado, setEditingAutorizado] = useState<Autorizado | null>(null);
+  const { data: autorizados = [], isLoading: loading } = useAutorizadosPerformance();
+  const [filteredAutorizados, setFilteredAutorizados] = useState(autorizados);
+  const [editingAutorizado, setEditingAutorizado] = useState<any | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [geocoding, setGeocoding] = useState<string | null>(null);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
-  const [historyAutorizado, setHistoryAutorizado] = useState<Autorizado | null>(null);
+  const [historyAutorizado, setHistoryAutorizado] = useState<any | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isInativacaoModalOpen, setIsInativacaoModalOpen] = useState(false);
+  
+  // Estados dos filtros
+  const [filtros, setFiltros] = useState<FiltrosAutorizados>({
+    busca: '',
+    etapa: 'todos',
+    statusRisco: 'todos',
+    atendente: '',
+    faixaAvaliacao: 'todos',
+    tempoUltimaAvaliacao: 'todos'
+  });
 
   useEffect(() => {
     fetchVendedores();
   }, []);
 
-  useEffect(() => {
-    const filtered = autorizados.filter(autorizado =>
-      autorizado.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      autorizado.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      autorizado.cidade?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      autorizado.regiao?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+useEffect(() => {
+    const filtered = aplicarFiltros(autorizados, filtros);
     setFilteredAutorizados(filtered);
-  }, [searchTerm, autorizados]);
+  }, [autorizados, filtros]);
 
-  // Remove fetchAutorizados - now handled by useAutorizadosWithRatings hook
+  // Autorizados críticos para inativação
+  const autorizadosCriticos = autorizados
+    .filter(a => a.ativo && a.status_risco === 'critico')
+    .map(a => ({
+      nome: a.nome,
+      diasSemAvaliacao: a.dias_sem_avaliacao,
+      ultimaAvaliacao: a.ultima_avaliacao
+    }));
 
   const fetchVendedores = async () => {
     try {
@@ -486,6 +502,16 @@ export default function Autorizados() {
         </div>
       </div>
 
+      {/* Indicadores de Performance */}
+      <AutorizadosIndicadores />
+
+      {/* Filtros Avançados */}
+      <AutorizadosFiltros 
+        filtros={filtros}
+        onFiltrosChange={setFiltros}
+        atendentes={vendedores.map(v => ({ id: v.id, nome: v.nome }))}
+      />
+
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -512,12 +538,24 @@ export default function Autorizados() {
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nome, email, cidade ou região..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                        <div className="flex items-center gap-4">
+                          <Input
+                            placeholder="Buscar autorizados..."
+                            value={filtros.busca}
+                            onChange={(e) => setFiltros({ ...filtros, busca: e.target.value })}
+                            className="max-w-sm"
+                          />
+                          {isAdmin && autorizadosCriticos.length > 0 && (
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => setIsInativacaoModalOpen(true)}
+                            >
+                              <AlertTriangle className="h-4 w-4 mr-2" />
+                              Inativação Automática ({autorizadosCriticos.length})
+                            </Button>
+                          )}
+                        </div>
               </div>
             </div>
             <Button
