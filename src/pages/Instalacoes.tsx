@@ -167,6 +167,7 @@ export default function Instalacoes() {
               <MobileDayView 
                 currentDate={currentDate} 
                 onEditPonto={handleEditPonto}
+                onAddPonto={() => setShowFormPonto(true)}
               />
             </CardContent>
           </Card>
@@ -219,10 +220,12 @@ export default function Instalacoes() {
 // Componente para visualização mobile do dia
 function MobileDayView({ 
   currentDate, 
-  onEditPonto 
+  onEditPonto,
+  onAddPonto 
 }: { 
   currentDate: Date; 
   onEditPonto: (ponto: any) => void;
+  onAddPonto: () => void;
 }) {
   const { equipes } = useEquipesInstalacao();
   const { pontos, updatePonto, deletePonto } = usePontosInstalacao(startOfWeek(currentDate, { weekStartsOn: 1 }));
@@ -255,6 +258,7 @@ function MobileDayView({
             onDrop={handleDrop}
             onEditPonto={onEditPonto}
             onDeletePonto={deletePonto}
+            onAddPonto={onAddPonto}
             draggedItem={draggedItem}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
@@ -272,6 +276,7 @@ function MobileEquipeCard({
   onDrop, 
   onEditPonto, 
   onDeletePonto,
+  onAddPonto,
   draggedItem,
   onDragStart,
   onDragEnd
@@ -320,8 +325,18 @@ function MobileEquipeCard({
           style={{ backgroundColor: equipe.cor }}
         />
         <h3 className="font-semibold text-base">{equipe.nome}</h3>
-        <div className="ml-auto bg-muted rounded-full px-2 py-1">
-          <span className="text-xs font-medium">{pontos.length}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="bg-muted rounded-full px-2 py-1">
+            <span className="text-xs font-medium">{pontos.length}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 hover:bg-muted touch-manipulation"
+            onClick={onAddPonto}
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
         </div>
       </div>
 
@@ -330,7 +345,16 @@ function MobileEquipeCard({
         {pontos.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Nenhum ponto agendado</p>
+            <p className="text-sm mb-4">Nenhum ponto agendado</p>
+            <Button
+              onClick={onAddPonto}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Adicionar Ponto
+            </Button>
           </div>
         ) : (
           pontos.map((ponto: any) => (
