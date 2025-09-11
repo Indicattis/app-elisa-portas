@@ -97,9 +97,10 @@ export function useEquipesInstalacao() {
   useEffect(() => {
     fetchEquipes();
 
-    // Setup real-time subscription
+    // Setup real-time subscription with unique channel name
+    const channelName = `equipes-instalacao-${Date.now()}`;
     const channel = supabase
-      .channel('equipes-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {

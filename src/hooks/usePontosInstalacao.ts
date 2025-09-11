@@ -120,9 +120,11 @@ export function usePontosInstalacao(semanaInicio: Date) {
   useEffect(() => {
     fetchPontos();
 
-    // Setup real-time subscription
+    // Setup real-time subscription with unique channel name
+    const semanaFormatada = format(semanaInicio, 'yyyy-MM-dd');
+    const channelName = `pontos-instalacao-${semanaFormatada}-${Date.now()}`;
     const channel = supabase
-      .channel('pontos-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -132,7 +134,14 @@ export function usePontosInstalacao(semanaInicio: Date) {
         },
         (payload) => {
           console.log('Ponto changed:', payload);
-          fetchPontos();
+          // Only refetch if the change is for the current week
+          const newRecord = payload.new as PontoInstalacao | null;
+          const oldRecord = payload.old as PontoInstalacao | null;
+          
+          if (newRecord?.semana_inicio === semanaFormatada || 
+              oldRecord?.semana_inicio === semanaFormatada) {
+            fetchPontos();
+          }
         }
       )
       .subscribe();
