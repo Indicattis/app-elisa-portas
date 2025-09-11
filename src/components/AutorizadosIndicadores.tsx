@@ -88,7 +88,7 @@ export function AutorizadosIndicadores() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <StarRating rating={Number(item.rating)} size="sm" />
+                    <StarRating rating={Number(item.rating)} size={16} />
                     <span className="text-sm font-medium ml-1">{Number(item.rating).toFixed(1)}</span>
                   </div>
                 </div>
