@@ -253,7 +253,7 @@ export default function TvDashboard() {
                   </div>
                 </div>
                 
-                <div className="bg-transparent top-4 rounded-lg border-[2px] border-[#edd99e] shadow-lg bg-[#000a00]/0">
+                <div className="bg-transparent ">
                   <div className="space-y-3">
                     <Progress value={progressoMeta} className="h-6 bg-black/30 [&>div]:bg-gradient-to-r [&>div]:from-[#6d5e32] [&>div]:to-[#f0e0aa]" />
                     <div className="flex justify-between text-white font-semibold">
