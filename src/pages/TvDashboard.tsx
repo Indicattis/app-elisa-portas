@@ -258,7 +258,7 @@ export default function TvDashboard() {
                     <Progress value={progressoMeta} className="h-6 bg-black/30 [&>div]:bg-gradient-to-r [&>div]:from-[#6d5e32] [&>div]:to-[#f0e0aa]" />
                     <div className="flex justify-between text-white font-semibold">
                       <span>{progressoMeta.toFixed(1)}% da meta</span>
-                      <span>
+                      <span className="text-red-400 text-2xl font-bold">
                         Faltam: {new Intl.NumberFormat('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',
