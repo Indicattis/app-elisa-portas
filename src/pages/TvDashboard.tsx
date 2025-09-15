@@ -6,14 +6,12 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
   posicao: number;
   foto_perfil_url?: string;
 }
-
 export default function TvDashboard() {
   const [api, setApi] = useState<CarouselApi>();
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -48,22 +46,19 @@ export default function TvDashboard() {
       const inicioJulho = new Date(ano, 6, 1); // Julho é mês 6 (0-indexed)
       const fimSetembro = new Date(ano, 9, 0); // Último dia de setembro
 
-      const { data, error } = await supabase
-        .from('contador_vendas_dias')
-        .select('data, valor')
-        .gte('data', format(inicioJulho, 'yyyy-MM-dd'))
-        .lte('data', format(fimSetembro, 'yyyy-MM-dd'));
-
+      const {
+        data,
+        error
+      } = await supabase.from('contador_vendas_dias').select('data, valor').gte('data', format(inicioJulho, 'yyyy-MM-dd')).lte('data', format(fimSetembro, 'yyyy-MM-dd'));
       if (error) {
         console.error('Erro ao buscar vendas do trimestre:', error);
         throw error;
       }
-
       return data || [];
     },
     refetchInterval: 120000,
     refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnReconnect: true
   });
 
   // Setup realtime updates
@@ -97,25 +92,20 @@ export default function TvDashboard() {
       api.off("reInit", onSelect);
     };
   }, [api]);
-
   const handleDotClick = useCallback((index: number) => {
     if (api) {
       api.scrollTo(index);
     }
   }, [api]);
-
   const totalVendasMes = useMemo(() => {
     return vendasData.reduce((sum, venda) => sum + venda.valor, 0);
   }, [vendasData]);
-
   const totalVendasTrimestre = useMemo(() => {
     return vendasTrimestre.reduce((sum, venda) => sum + Number(venda.valor), 0);
   }, [vendasTrimestre]);
-
   const metaTrimestre = 3000000; // 3 milhões
   const faltaParaMeta = Math.max(0, metaTrimestre - totalVendasTrimestre);
-  const progressoMeta = Math.min(100, (totalVendasTrimestre / metaTrimestre) * 100);
-
+  const progressoMeta = Math.min(100, totalVendasTrimestre / metaTrimestre * 100);
   const getVendedorCategory = (valor: number) => {
     if (valor >= 1500000) return {
       name: 'Orion',
@@ -158,7 +148,6 @@ export default function TvDashboard() {
       border: 'border-slate-500'
     };
   };
-
   const getAllCategories = () => [{
     name: 'Iniciante',
     minValue: 0,
@@ -208,13 +197,11 @@ export default function TvDashboard() {
     color: 'from-slate-300 to-slate-100',
     border: 'border-slate-300'
   }];
-
-  return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+  return <div className="min-h-screen bg-black text-white relative overflow-hidden">
       <Carousel setApi={setApi} className="w-full h-full" opts={{
-        align: "center",
-        loop: true
-      }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+      align: "center",
+      loop: true
+    }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
         <CarouselContent className="h-[80vh] w-full max-w-[95vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
@@ -257,30 +244,27 @@ export default function TvDashboard() {
                     Faturamento Acumulado: {' '}
                     <span className="text-[#f0e0aa] font-bold">
                       {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                      }).format(totalVendasTrimestre)}
+                      style: 'currency',
+                      currency: 'BRL',
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0
+                    }).format(totalVendasTrimestre)}
                     </span>
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] p-4 rounded-lg border-[2px] border-[#edd99e] shadow-lg">
+                <div className="bg-transparent top-4 rounded-lg border-[2px] border-[#edd99e] shadow-lg bg-[#000a00]/0">
                   <div className="space-y-3">
-                    <Progress 
-                      value={progressoMeta} 
-                      className="h-6 bg-black/30 [&>div]:bg-gradient-to-r [&>div]:from-[#6d5e32] [&>div]:to-[#f0e0aa]"
-                    />
+                    <Progress value={progressoMeta} className="h-6 bg-black/30 [&>div]:bg-gradient-to-r [&>div]:from-[#6d5e32] [&>div]:to-[#f0e0aa]" />
                     <div className="flex justify-between text-white font-semibold">
                       <span>{progressoMeta.toFixed(1)}% da meta</span>
                       <span>
                         Faltam: {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0
-                        }).format(faltaParaMeta)}
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(faltaParaMeta)}
                       </span>
                     </div>
                     <div className="text-center text-white/90 text-sm">
@@ -424,6 +408,5 @@ export default function TvDashboard() {
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {[0, 1, 2].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
-    </div>
-  );
+    </div>;
 }
