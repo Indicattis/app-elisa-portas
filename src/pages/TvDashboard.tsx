@@ -3,6 +3,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSalesData, useSellersRanking, useDashboardRealtime, useWhatsAppRoulette, useAutorizadosPorAtendente } from '@/hooks/useDashboardData';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import { Progress } from "@/components/ui/progress";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VendedorRanking {
   nome: string;
@@ -34,9 +37,38 @@ export default function TvDashboard() {
     isLoading: loadingAutorizados
   } = useAutorizadosPorAtendente();
 
+  // Hook for quarterly sales data (July, August, September)
+  const {
+    data: vendasTrimestre = [],
+    isLoading: loadingVendasTrimestre
+  } = useQuery({
+    queryKey: ['vendas-trimestre'],
+    queryFn: async () => {
+      const ano = new Date().getFullYear();
+      const inicioJulho = new Date(ano, 6, 1); // Julho é mês 6 (0-indexed)
+      const fimSetembro = new Date(ano, 9, 0); // Último dia de setembro
+
+      const { data, error } = await supabase
+        .from('contador_vendas_dias')
+        .select('data, valor')
+        .gte('data', format(inicioJulho, 'yyyy-MM-dd'))
+        .lte('data', format(fimSetembro, 'yyyy-MM-dd'));
+
+      if (error) {
+        console.error('Erro ao buscar vendas do trimestre:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    refetchInterval: 120000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+
   // Setup realtime updates
   useDashboardRealtime();
-  const loading = loadingVendas || loadingVendedores || loadingWhatsapp || loadingAutorizados;
+  const loading = loadingVendas || loadingVendedores || loadingWhatsapp || loadingAutorizados || loadingVendasTrimestre;
   const today = new Date();
 
   // Setup autoplay effect
@@ -75,6 +107,14 @@ export default function TvDashboard() {
   const totalVendasMes = useMemo(() => {
     return vendasData.reduce((sum, venda) => sum + venda.valor, 0);
   }, [vendasData]);
+
+  const totalVendasTrimestre = useMemo(() => {
+    return vendasTrimestre.reduce((sum, venda) => sum + Number(venda.valor), 0);
+  }, [vendasTrimestre]);
+
+  const metaTrimestre = 3000000; // 3 milhões
+  const faltaParaMeta = Math.max(0, metaTrimestre - totalVendasTrimestre);
+  const progressoMeta = Math.min(100, (totalVendasTrimestre / metaTrimestre) * 100);
 
   const getVendedorCategory = (valor: number) => {
     if (valor >= 1500000) return {
@@ -206,6 +246,47 @@ export default function TvDashboard() {
                     }).format(totalVendasMes)}
                     </div>}
                 </div>
+                </div>
+              </div>
+
+              {/* Meta do Trimestre e Barra de Progresso */}
+              <div className="w-full max-w-4xl space-y-4">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold">META TRIMESTRE (JUL-AGO-SET)</h2>
+                  <div className="text-lg text-muted-foreground">
+                    Faturamento Acumulado: {' '}
+                    <span className="text-[#f0e0aa] font-bold">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(totalVendasTrimestre)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-r from-[#6d5e32] to-[#f0e0aa] p-4 rounded-lg border-[2px] border-[#edd99e] shadow-lg">
+                  <div className="space-y-3">
+                    <Progress 
+                      value={progressoMeta} 
+                      className="h-6 bg-black/30 [&>div]:bg-gradient-to-r [&>div]:from-[#6d5e32] [&>div]:to-[#f0e0aa]"
+                    />
+                    <div className="flex justify-between text-white font-semibold">
+                      <span>{progressoMeta.toFixed(1)}% da meta</span>
+                      <span>
+                        Faltam: {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                        }).format(faltaParaMeta)}
+                      </span>
+                    </div>
+                    <div className="text-center text-white/90 text-sm">
+                      Meta: R$ 3.000.000
+                    </div>
+                  </div>
                 </div>
               </div>
 
