@@ -239,7 +239,7 @@ export default function TvDashboard() {
               {/* Meta do Trimestre e Barra de Progresso */}
               <div className="w-full max-w-4xl space-y-4">
                 <div className="text-center space-y-2">
-                  <h2 className="text-2xl font-bold">META TRIMESTRE (JUL-AGO-SET)</h2>
+                  <h2 className="text-2xl font-bold">META GÊNESIS</h2>
                   <div className="text-lg text-muted-foreground">
                     Faturamento Acumulado: {' '}
                     <span className="text-[#f0e0aa] font-bold">
