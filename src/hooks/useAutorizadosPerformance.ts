@@ -18,6 +18,7 @@ export interface AutorizadoPerformance {
   };
   ativo: boolean;
   inativado_automaticamente: boolean;
+  data_inicio_contagem_inativacao?: string;
   // Propriedades adicionais para compatibilidade
   email?: string;
   telefone?: string;
@@ -121,9 +122,18 @@ export function useAutorizadosPerformance() {
       const hoje = new Date();
       const autorizadosComPerformance: AutorizadoPerformance[] = (autorizados || []).map(autorizado => {
         const ultimaAvaliacao = ultimasAvaliacoesMap.get(autorizado.id);
-        const diasSemAvaliacao = ultimaAvaliacao 
-          ? Math.floor((hoje.getTime() - new Date(ultimaAvaliacao).getTime()) / (1000 * 60 * 60 * 24))
-          : 999; // Nunca avaliado
+        
+        // Usar data_inicio_contagem_inativacao como base para cálculo de dias
+        let diasSemAvaliacao: number;
+        if (autorizado.data_inicio_contagem_inativacao) {
+          const dataInicio = new Date(autorizado.data_inicio_contagem_inativacao);
+          diasSemAvaliacao = Math.floor((hoje.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+        } else {
+          // Fallback para a lógica antiga se não houver data_inicio_contagem_inativacao
+          diasSemAvaliacao = ultimaAvaliacao 
+            ? Math.floor((hoje.getTime() - new Date(ultimaAvaliacao).getTime()) / (1000 * 60 * 60 * 24))
+            : 999; // Nunca avaliado
+        }
 
         const ratings = ratingsMapFinal.get(autorizado.id) || { average_rating: 0, total_ratings: 0 };
 
@@ -134,7 +144,8 @@ export function useAutorizadosPerformance() {
           ultima_avaliacao: ultimaAvaliacao,
           dias_sem_avaliacao: diasSemAvaliacao,
           status_risco: calcularStatusRisco(diasSemAvaliacao),
-          inativado_automaticamente: autorizado.inativado_automaticamente || false
+          inativado_automaticamente: autorizado.inativado_automaticamente || false,
+          data_inicio_contagem_inativacao: autorizado.data_inicio_contagem_inativacao
         };
       });
 
@@ -183,10 +194,10 @@ export function useIndicadoresDesempenho() {
 
 export async function executarInativacaoAutomatica(): Promise<{ inativados: number; autorizados: string[] }> {
   try {
-    // Buscar autorizados ativos
+    // Buscar autorizados ativos que não foram inativados automaticamente
     const { data: autorizados, error } = await supabase
       .from('autorizados')
-      .select('id, nome')
+      .select('id, nome, data_inicio_contagem_inativacao')
       .eq('ativo', true)
       .eq('inativado_automaticamente', false);
 
@@ -196,29 +207,16 @@ export async function executarInativacaoAutomatica(): Promise<{ inativados: numb
       return { inativados: 0, autorizados: [] };
     }
 
-    // Buscar últimas avaliações para cada autorizado
-    const { data: ultimasAvaliacoes, error: avaliacoesError } = await supabase
-      .from('autorizados_ratings')
-      .select('autorizado_id, created_at')
-      .in('autorizado_id', autorizados.map(a => a.id))
-      .order('created_at', { ascending: false });
-
-    if (avaliacoesError) throw avaliacoesError;
-
-    const ultimasAvaliacoesMap = new Map();
-    ultimasAvaliacoes?.forEach(avaliacao => {
-      if (!ultimasAvaliacoesMap.has(avaliacao.autorizado_id)) {
-        ultimasAvaliacoesMap.set(avaliacao.autorizado_id, avaliacao.created_at);
-      }
-    });
-
     const hoje = new Date();
     const autorizadosParaInativar = autorizados.filter(autorizado => {
-      const ultimaAvaliacao = ultimasAvaliacoesMap.get(autorizado.id);
-      if (!ultimaAvaliacao) return true; // Nunca avaliado
+      // Usar data_inicio_contagem_inativacao como referência
+      if (!autorizado.data_inicio_contagem_inativacao) {
+        return false; // Não inativar se não houver data de início da contagem
+      }
       
+      const dataInicio = new Date(autorizado.data_inicio_contagem_inativacao);
       const diasSemAvaliacao = Math.floor(
-        (hoje.getTime() - new Date(ultimaAvaliacao).getTime()) / (1000 * 60 * 60 * 24)
+        (hoje.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24)
       );
       
       return diasSemAvaliacao >= 90;
@@ -242,15 +240,13 @@ export async function executarInativacaoAutomatica(): Promise<{ inativados: numb
 
     // Registrar logs de inativação
     const logs = autorizadosParaInativar.map(autorizado => {
-      const ultimaAvaliacao = ultimasAvaliacoesMap.get(autorizado.id);
-      const diasSemAvaliacao = ultimaAvaliacao
-        ? Math.floor((hoje.getTime() - new Date(ultimaAvaliacao).getTime()) / (1000 * 60 * 60 * 24))
-        : 999;
+      const dataInicio = new Date(autorizado.data_inicio_contagem_inativacao!);
+      const diasSemAvaliacao = Math.floor((hoje.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
 
       return {
         autorizado_id: autorizado.id,
         dias_sem_avaliacao: diasSemAvaliacao,
-        ultima_avaliacao_data: ultimaAvaliacao || null
+        ultima_avaliacao_data: autorizado.data_inicio_contagem_inativacao
       };
     });
 

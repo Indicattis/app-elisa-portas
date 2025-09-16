@@ -46,9 +46,18 @@ function CountdownToInactivation({ autorizado }: CountdownToInactivationProps) {
         return;
       }
 
-      // Calcular dias restantes até 90 dias (limite para inativação automática)
       const diasLimite = 90;
-      const diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+      
+      // Usar data_inicio_contagem_inativacao se disponível, senão usar dias_sem_avaliacao como fallback
+      let diasSemAvaliacao = 0;
+      if (autorizado.data_inicio_contagem_inativacao) {
+        const dataInicio = new Date(autorizado.data_inicio_contagem_inativacao);
+        const agora = new Date();
+        diasSemAvaliacao = Math.floor((agora.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+      } else {
+        diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+      }
+      
       const diasRestantes = diasLimite - diasSemAvaliacao;
 
       if (diasRestantes <= 0) {
@@ -89,7 +98,17 @@ function CountdownToInactivation({ autorizado }: CountdownToInactivationProps) {
     if (!autorizado.ativo) return "text-muted-foreground";
     
     const diasLimite = 90;
-    const diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+    
+    // Usar data_inicio_contagem_inativacao se disponível
+    let diasSemAvaliacao = 0;
+    if (autorizado.data_inicio_contagem_inativacao) {
+      const dataInicio = new Date(autorizado.data_inicio_contagem_inativacao);
+      const agora = new Date();
+      diasSemAvaliacao = Math.floor((agora.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+    } else {
+      diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+    }
+    
     const diasRestantes = diasLimite - diasSemAvaliacao;
 
     if (diasRestantes <= 0) return "text-red-600 font-bold";
