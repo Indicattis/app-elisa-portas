@@ -165,6 +165,7 @@ export type Database = {
           cidade: string | null
           created_at: string
           data_inativacao_automatica: string | null
+          data_inicio_contagem_inativacao: string | null
           email: string | null
           endereco: string | null
           estado: string | null
@@ -190,6 +191,7 @@ export type Database = {
           cidade?: string | null
           created_at?: string
           data_inativacao_automatica?: string | null
+          data_inicio_contagem_inativacao?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -215,6 +217,7 @@ export type Database = {
           cidade?: string | null
           created_at?: string
           data_inativacao_automatica?: string | null
+          data_inicio_contagem_inativacao?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -1784,6 +1787,48 @@ export type Database = {
           },
         ]
       }
+      requisicoes_parceria: {
+        Row: {
+          cidade: string
+          cpf_cnpj: string
+          created_at: string
+          descricao_motivo: string
+          estado: string
+          id: string
+          nome_completo: string
+          status: string
+          telefone: string
+          tipo_parceria: Database["public"]["Enums"]["tipo_parceria"]
+          updated_at: string
+        }
+        Insert: {
+          cidade: string
+          cpf_cnpj: string
+          created_at?: string
+          descricao_motivo: string
+          estado: string
+          id?: string
+          nome_completo: string
+          status?: string
+          telefone: string
+          tipo_parceria: Database["public"]["Enums"]["tipo_parceria"]
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string
+          cpf_cnpj?: string
+          created_at?: string
+          descricao_motivo?: string
+          estado?: string
+          id?: string
+          nome_completo?: string
+          status?: string
+          telefone?: string
+          tipo_parceria?: Database["public"]["Enums"]["tipo_parceria"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       requisicoes_venda: {
         Row: {
           canal_aquisicao_id: string | null
@@ -2365,6 +2410,7 @@ export type Database = {
         | "produto"
       rating_categoria: "instalacao" | "bos" | "visita_tecnica" | "manutencao"
       status_visita: "agendada" | "concluida" | "cancelada"
+      tipo_parceria: "autorizado" | "representante" | "licenciado"
       turno_visita: "manha" | "tarde" | "noite"
       user_role:
         | "administrador"
@@ -2566,6 +2612,7 @@ export const Constants = {
       ],
       rating_categoria: ["instalacao", "bos", "visita_tecnica", "manutencao"],
       status_visita: ["agendada", "concluida", "cancelada"],
+      tipo_parceria: ["autorizado", "representante", "licenciado"],
       turno_visita: ["manha", "tarde", "noite"],
       user_role: [
         "administrador",
