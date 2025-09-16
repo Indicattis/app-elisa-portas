@@ -31,6 +31,80 @@ import { AutorizadoHistoryModal } from "@/components/AutorizadoHistoryModal";
 import { useAutorizadosPerformance } from "@/hooks/useAutorizadosPerformance";
 import { aplicarFiltros, formatarTempoUltimaAvaliacao, getStatusRiscoColor, getStatusRiscoLabel } from "@/utils/autorizadosFilters";
 
+// Componente para contagem regressiva até inativação
+interface CountdownToInactivationProps {
+  autorizado: any;
+}
+
+function CountdownToInactivation({ autorizado }: CountdownToInactivationProps) {
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      if (!autorizado.ativo) {
+        setTimeRemaining("Inativo");
+        return;
+      }
+
+      // Calcular dias restantes até 90 dias (limite para inativação automática)
+      const diasLimite = 90;
+      const diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+      const diasRestantes = diasLimite - diasSemAvaliacao;
+
+      if (diasRestantes <= 0) {
+        setTimeRemaining("Pode ser inativado");
+        return;
+      }
+
+      // Converter dias restantes para formato mais específico
+      if (diasRestantes >= 30) {
+        const meses = Math.floor(diasRestantes / 30);
+        const diasExcedentes = diasRestantes % 30;
+        if (diasExcedentes === 0) {
+          setTimeRemaining(`${meses} ${meses === 1 ? 'mês' : 'meses'}`);
+        } else {
+          setTimeRemaining(`${meses}m ${diasExcedentes}d`);
+        }
+      } else if (diasRestantes >= 7) {
+        const semanas = Math.floor(diasRestantes / 7);
+        const diasExcedentes = diasRestantes % 7;
+        if (diasExcedentes === 0) {
+          setTimeRemaining(`${semanas} ${semanas === 1 ? 'semana' : 'semanas'}`);
+        } else {
+          setTimeRemaining(`${semanas}s ${diasExcedentes}d`);
+        }
+      } else {
+        setTimeRemaining(`${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Atualiza a cada minuto
+
+    return () => clearInterval(interval);
+  }, [autorizado]);
+
+  // Determinar cor baseada no tempo restante
+  const getCountdownColor = () => {
+    if (!autorizado.ativo) return "text-muted-foreground";
+    
+    const diasLimite = 90;
+    const diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+    const diasRestantes = diasLimite - diasSemAvaliacao;
+
+    if (diasRestantes <= 0) return "text-red-600 font-bold";
+    if (diasRestantes <= 7) return "text-red-500 font-semibold";
+    if (diasRestantes <= 30) return "text-orange-500 font-medium";
+    return "text-green-600";
+  };
+
+  return (
+    <div className={`text-sm ${getCountdownColor()}`}>
+      {timeRemaining || "Calculando..."}
+    </div>
+  );
+}
+
 
 interface Autorizado {
   id: string;
@@ -587,6 +661,12 @@ useEffect(() => {
                   <TableHead>Etapa</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      Tempo até Inativação
+                    </div>
+                  </TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -696,6 +776,9 @@ useEffect(() => {
                       <Badge variant={autorizado.ativo ? "default" : "secondary"}>
                         {autorizado.ativo ? "Ativo" : "Inativo"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <CountdownToInactivation autorizado={autorizado} />
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
