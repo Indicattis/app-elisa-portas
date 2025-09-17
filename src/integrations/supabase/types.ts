@@ -465,6 +465,48 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos: {
+        Row: {
+          arquivo_url: string
+          ativo: boolean
+          categoria: Database["public"]["Enums"]["documento_categoria"]
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome_arquivo: string
+          tamanho_arquivo: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          ativo?: boolean
+          categoria?: Database["public"]["Enums"]["documento_categoria"]
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome_arquivo: string
+          tamanho_arquivo: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          ativo?: boolean
+          categoria?: Database["public"]["Enums"]["documento_categoria"]
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome_arquivo?: string
+          tamanho_arquivo?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       elisaportas_leads: {
         Row: {
           altura_porta: string | null
@@ -2390,6 +2432,13 @@ export type Database = {
         | "treinamento_instalacao"
         | "apto"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
+      documento_categoria:
+        | "manual"
+        | "procedimento"
+        | "formulario"
+        | "contrato"
+        | "politica"
+        | "outros"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -2590,6 +2639,14 @@ export const Constants = {
         "apto",
       ],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
+      documento_categoria: [
+        "manual",
+        "procedimento",
+        "formulario",
+        "contrato",
+        "politica",
+        "outros",
+      ],
       lead_status: [
         "aguardando_atendimento",
         "em_andamento",

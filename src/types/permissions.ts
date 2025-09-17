@@ -18,7 +18,8 @@ export type AppPermission =
   | 'autorizados'
   | 'performance'
   | 'tv_dashboard'
-  | 'instalacoes';
+  | 'instalacoes'
+  | 'documentos';
 
 export interface UserRoleAssignment {
   id: string;
@@ -132,6 +133,11 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'instalacoes',
     label: 'Instalações',
     description: 'Gerenciar cronograma e ordens de instalação'
+  },
+  documentos: {
+    key: 'documentos',
+    label: 'Documentos',
+    description: 'Gerenciar e visualizar documentos públicos'
   }
 };
 

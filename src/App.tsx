@@ -58,6 +58,8 @@ import OrdemPinturaEdit from "./pages/OrdemPinturaEdit";
 import OrdemSeparacaoEdit from "./pages/OrdemSeparacaoEdit";
 import OrdemPerfiladeiraEdit from "./pages/OrdemPerfiladeiraEdit";
 import OrdemInstalacaoEdit from "./pages/OrdemInstalacaoEdit";
+import Documentos from "./pages/Documentos";
+import DocumentoNovo from "./pages/DocumentoNovo";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -581,6 +583,26 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <OrdemInstalacaoEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/documentos"
+                  element={
+                    <ProtectedRoute requirePermission="documentos">
+                      <DashboardLayout>
+                        <Documentos />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/documentos/novo"
+                  element={
+                    <ProtectedRoute requirePermission="documentos">
+                      <DashboardLayout>
+                        <DocumentoNovo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
