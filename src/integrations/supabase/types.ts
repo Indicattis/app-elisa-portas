@@ -2382,6 +2382,7 @@ export type Database = {
         | "performance"
         | "tv_dashboard"
         | "instalacoes"
+        | "documentos"
       autorizado_etapa:
         | "integracao"
         | "treinamento_comercial"
@@ -2579,6 +2580,7 @@ export const Constants = {
         "performance",
         "tv_dashboard",
         "instalacoes",
+        "documentos",
       ],
       autorizado_etapa: [
         "integracao",
