@@ -64,13 +64,24 @@ export function useCreateDocumento() {
   });
 }
 
+// Função para sanitizar nome do arquivo
+function sanitizeFileName(fileName: string): string {
+  return fileName
+    .normalize('NFD') // Decompor caracteres acentuados
+    .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+    .replace(/[^\w\-_.]/g, '_') // Substituir caracteres especiais por underscore
+    .replace(/_{2,}/g, '_') // Substituir múltiplos underscores por um
+    .replace(/^_+|_+$/g, ''); // Remover underscores do início e fim
+}
+
 export function useUploadFile() {
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (file: File) => {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${file.name}`;
+      const sanitizedName = sanitizeFileName(file.name.replace(`.${fileExt}`, ''));
+      const fileName = `${Date.now()}-${sanitizedName}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
