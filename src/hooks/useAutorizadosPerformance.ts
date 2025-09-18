@@ -11,7 +11,7 @@ export interface AutorizadoPerformance {
   total_ratings: number;
   ultima_avaliacao: string | null;
   dias_sem_avaliacao: number;
-  status_risco: 'em_dia' | 'atencao' | 'critico';
+  tipo_parceiro?: TipoParceiro;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;

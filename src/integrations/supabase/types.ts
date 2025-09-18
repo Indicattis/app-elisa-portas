@@ -175,12 +175,19 @@ export type Database = {
           inativado_automaticamente: boolean | null
           last_geocoded_at: string | null
           latitude: number | null
+          licenciado_etapa:
+            | Database["public"]["Enums"]["licenciado_etapa"]
+            | null
           logo_url: string | null
           longitude: number | null
           nome: string
           regiao: string | null
+          representante_etapa:
+            | Database["public"]["Enums"]["representante_etapa"]
+            | null
           responsavel: string | null
           telefone: string | null
+          tipo_parceiro: Database["public"]["Enums"]["tipo_parceiro"]
           updated_at: string
           vendedor_id: string | null
           whatsapp: string | null
@@ -201,12 +208,19 @@ export type Database = {
           inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
+          licenciado_etapa?:
+            | Database["public"]["Enums"]["licenciado_etapa"]
+            | null
           logo_url?: string | null
           longitude?: number | null
           nome: string
           regiao?: string | null
+          representante_etapa?:
+            | Database["public"]["Enums"]["representante_etapa"]
+            | null
           responsavel?: string | null
           telefone?: string | null
+          tipo_parceiro?: Database["public"]["Enums"]["tipo_parceiro"]
           updated_at?: string
           vendedor_id?: string | null
           whatsapp?: string | null
@@ -227,12 +241,19 @@ export type Database = {
           inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
+          licenciado_etapa?:
+            | Database["public"]["Enums"]["licenciado_etapa"]
+            | null
           logo_url?: string | null
           longitude?: number | null
           nome?: string
           regiao?: string | null
+          representante_etapa?:
+            | Database["public"]["Enums"]["representante_etapa"]
+            | null
           responsavel?: string | null
           telefone?: string | null
+          tipo_parceiro?: Database["public"]["Enums"]["tipo_parceiro"]
           updated_at?: string
           vendedor_id?: string | null
           whatsapp?: string | null
@@ -2447,6 +2468,7 @@ export type Database = {
         | "aguardando_aprovacao_venda"
         | "venda_reprovada"
         | "venda_aprovada"
+      licenciado_etapa: "inicial" | "avaliacao" | "aprovacao" | "ativo"
       motivo_perda:
         | "desqualificado"
         | "perdido_por_preco"
@@ -2459,8 +2481,22 @@ export type Database = {
         | "logistica"
         | "atendimento"
         | "produto"
-      rating_categoria: "instalacao" | "bos" | "visita_tecnica" | "manutencao"
+      rating_categoria:
+        | "instalacao"
+        | "bos"
+        | "visita_tecnica"
+        | "manutencao"
+        | "representante_vendas"
+        | "representante_suporte"
+        | "licenciado_compliance"
+        | "licenciado_vendas"
+      representante_etapa:
+        | "inicial"
+        | "qualificacao"
+        | "proposta"
+        | "contratado"
       status_visita: "agendada" | "concluida" | "cancelada"
+      tipo_parceiro: "autorizado" | "representante" | "licenciado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
       turno_visita: "manha" | "tarde" | "noite"
       user_role:
@@ -2657,6 +2693,7 @@ export const Constants = {
         "venda_reprovada",
         "venda_aprovada",
       ],
+      licenciado_etapa: ["inicial", "avaliacao", "aprovacao", "ativo"],
       motivo_perda: [
         "desqualificado",
         "perdido_por_preco",
@@ -2671,8 +2708,24 @@ export const Constants = {
         "atendimento",
         "produto",
       ],
-      rating_categoria: ["instalacao", "bos", "visita_tecnica", "manutencao"],
+      rating_categoria: [
+        "instalacao",
+        "bos",
+        "visita_tecnica",
+        "manutencao",
+        "representante_vendas",
+        "representante_suporte",
+        "licenciado_compliance",
+        "licenciado_vendas",
+      ],
+      representante_etapa: [
+        "inicial",
+        "qualificacao",
+        "proposta",
+        "contratado",
+      ],
       status_visita: ["agendada", "concluida", "cancelada"],
+      tipo_parceiro: ["autorizado", "representante", "licenciado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],
       turno_visita: ["manha", "tarde", "noite"],
       user_role: [

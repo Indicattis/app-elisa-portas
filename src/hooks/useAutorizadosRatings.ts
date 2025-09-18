@@ -2,11 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export type RatingCategoria = 
+  | 'instalacao' | 'bos' | 'visita_tecnica' | 'manutencao'
+  | 'representante_vendas' | 'representante_suporte'
+  | 'licenciado_compliance' | 'licenciado_vendas';
+
 export interface AutorizadoRating {
   id: string;
   autorizado_id: string;
   atendente_id: string;
-  categoria: 'instalacao' | 'bos' | 'visita_tecnica' | 'manutencao';
+  categoria: RatingCategoria;
   nota: number;
   descricao: string;
   data_evento?: string;
@@ -17,7 +22,7 @@ export interface AutorizadoRating {
 
 export interface CreateRatingData {
   autorizado_id: string;
-  categoria: 'instalacao' | 'bos' | 'visita_tecnica' | 'manutencao';
+  categoria: RatingCategoria;
   nota: number;
   descricao: string;
   data_evento?: string;

@@ -452,7 +452,17 @@ const App = () => (
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
-                        <Autorizados />
+                        <Parceiros />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/parceiros"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <Parceiros />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
