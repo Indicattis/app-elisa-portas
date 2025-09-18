@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { ETAPAS, ETAPA_COLORS, ETAPA_ORDER, AutorizadoEtapa } from "@/utils/etapas";
+import { getEtapasByTipo, type TipoParceiro } from "@/utils/parceiros";
 import { StarRating } from "./StarRating";
 import { AddRatingDialog } from "./AddRatingDialog";
 
@@ -33,7 +33,8 @@ interface Autorizado {
   created_at: string;
   updated_at: string;
   vendedor_id?: string;
-  etapa: AutorizadoEtapa;
+  etapa: string;
+  tipo_parceiro: TipoParceiro;
   average_rating?: number;
   total_ratings?: number;
   vendedor?: {
@@ -44,16 +45,20 @@ interface Autorizado {
 
 interface AutorizadosKanbanProps {
   autorizados: Autorizado[];
-  onEtapaChange: (autorizadoId: string, novaEtapa: AutorizadoEtapa) => void;
+  tipoParceiro: TipoParceiro;
+  onEtapaChange: (autorizadoId: string, novaEtapa: string) => void;
   onShowHistory: (autorizado: Autorizado) => void;
   onDoubleClick?: (autorizado: Autorizado) => void;
 }
 
-export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, onDoubleClick }: AutorizadosKanbanProps) {
+export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, onShowHistory, onDoubleClick }: AutorizadosKanbanProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
-  const [draggedOver, setDraggedOver] = useState<AutorizadoEtapa | null>(null);
+  const [draggedOver, setDraggedOver] = useState<string | null>(null);
+
+  // Get dynamic stages based on partner type
+  const { etapas, order, colors } = getEtapasByTipo(tipoParceiro);
 
   const getInitials = (name: string) => {
     return name
@@ -74,7 +79,7 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
     setDraggedOver(null);
   };
 
-  const handleDragOver = (e: React.DragEvent, etapa: AutorizadoEtapa) => {
+  const handleDragOver = (e: React.DragEvent, etapa: string) => {
     e.preventDefault();
     setDraggedOver(etapa);
   };
@@ -83,7 +88,7 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
     setDraggedOver(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, novaEtapa: AutorizadoEtapa) => {
+  const handleDrop = async (e: React.DragEvent, novaEtapa: string) => {
     e.preventDefault();
     if (!draggedItem) return;
 
@@ -95,9 +100,13 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
     }
 
     try {
+      const updateField = tipoParceiro === 'autorizado' ? 'etapa' : 
+                         tipoParceiro === 'representante' ? 'representante_etapa' : 
+                         'licenciado_etapa';
+
       await supabase
         .from('autorizados')
-        .update({ etapa: novaEtapa })
+        .update({ [updateField]: novaEtapa })
         .eq('id', draggedItem);
 
       // Invalidate the query cache to refresh the data immediately
@@ -107,7 +116,7 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
       
       toast({
         title: 'Sucesso',
-        description: `${autorizado.nome} movido para ${ETAPAS[novaEtapa]}`
+        description: `${autorizado.nome} movido para ${etapas[novaEtapa as keyof typeof etapas]}`
       });
     } catch (error) {
       console.error('Erro ao atualizar etapa:', error);
@@ -122,13 +131,13 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
     setDraggedOver(null);
   };
 
-  const getAutorizadosPorEtapa = (etapa: AutorizadoEtapa) => {
+  const getAutorizadosPorEtapa = (etapa: string) => {
     return autorizados.filter(autorizado => autorizado.etapa === etapa);
   };
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
-      {ETAPA_ORDER.map((etapa) => {
+      {order.map((etapa) => {
         const autorizadosEtapa = getAutorizadosPorEtapa(etapa);
         const isDraggedOver = draggedOver === etapa;
         
@@ -143,8 +152,8 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
             <Card className="h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  <span style={{ color: ETAPA_COLORS[etapa] }}>
-                    {ETAPAS[etapa]}
+                  <span style={{ color: colors[etapa as keyof typeof colors] }}>
+                    {etapas[etapa as keyof typeof etapas]}
                   </span>
                   <Badge variant="secondary" className="text-xs">
                     {autorizadosEtapa.length}

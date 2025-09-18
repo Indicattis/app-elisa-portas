@@ -27,6 +27,7 @@ interface Autorizado {
   created_at: string;
   updated_at: string;
   vendedor_id?: string;
+  tipo_parceiro: 'autorizado' | 'representante' | 'licenciado';
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -52,7 +53,7 @@ export default function MapaAutorizados() {
           id, nome, email, telefone, whatsapp, responsavel, endereco, 
           cidade, estado, cep, regiao, ativo, logo_url, latitude, 
           longitude, last_geocoded_at, geocode_precision, created_at, 
-          updated_at, vendedor_id,
+          updated_at, vendedor_id, tipo_parceiro,
           vendedor:admin_users(nome, foto_perfil_url)
         `)
         .order('nome')

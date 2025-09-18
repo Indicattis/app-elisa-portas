@@ -7,6 +7,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { MapPin, Phone, Mail, User, Navigation, X } from 'lucide-react';
+import { getMarkerColorByTipo, TIPO_PARCEIRO_LABELS, type TipoParceiro } from '@/utils/parceiros';
 
 // Fix for default markers in React Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -30,6 +31,7 @@ interface Autorizado {
   latitude?: number;
   longitude?: number;
   ativo: boolean;
+  tipo_parceiro: TipoParceiro;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -65,21 +67,30 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       autorizado.ativo
   );
 
-  // Count autorizados by state
-  const autorizadosPorEstado = autorizados
+  // Count parceiros by state and type
+  const parceirosPorEstado = autorizados
     .filter(autorizado => autorizado.ativo && autorizado.estado)
     .reduce((acc, autorizado) => {
       const estado = autorizado.estado!;
-      acc[estado] = (acc[estado] || 0) + 1;
+      const tipo = autorizado.tipo_parceiro;
+      if (!acc[estado]) {
+        acc[estado] = { autorizado: 0, representante: 0, licenciado: 0 };
+      }
+      acc[estado][tipo] = (acc[estado][tipo] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, Record<TipoParceiro, number>>);
 
-  // Sort states by count (descending)
-  const estadosOrdenados = Object.entries(autorizadosPorEstado)
-    .sort(([, a], [, b]) => b - a);
+  // Convert to flat array for display
+  const estadosOrdenados = Object.entries(parceirosPorEstado)
+    .map(([estado, tipos]) => ({
+      estado,
+      total: Object.values(tipos).reduce((sum, count) => sum + count, 0),
+      tipos
+    }))
+    .sort((a, b) => b.total - a.total);
 
-  // Count autorizados by attendant
-  const autorizadosPorAtendente = autorizados
+  // Count parceiros by attendant
+  const parceirosPorAtendente = autorizados
     .filter(autorizado => autorizado.ativo && autorizado.vendedor)
     .reduce((acc, autorizado) => {
       const vendedor = autorizado.vendedor!;
@@ -94,8 +105,9 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
     }, {} as Record<string, { count: number; foto_perfil_url?: string }>);
 
   // Sort attendants by count (descending)
-  const atendentesOrdenados = Object.entries(autorizadosPorAtendente)
+  const atendentesOrdenados = Object.entries(parceirosPorAtendente)
     .sort(([, a], [, b]) => b.count - a.count);
+    
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371; // Earth's radius in kilometers
@@ -301,7 +313,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       {/* Attendant indicators */}
       {atendentesOrdenados.length > 0 && (
         <div className="absolute z-[1000] bottom-4 left-4 ml-[60px] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm">
-          <h4 className="text-base font-semibold mb-4 text-center">Autorizados por Atendente</h4>
+          <h4 className="text-base font-semibold mb-4 text-center">Parceiros por Atendente</h4>
           <div className="space-y-3">
             {atendentesOrdenados.map(([nome, { count, foto_perfil_url }]) => (
               <div key={nome} className="flex items-center gap-4 bg-muted/50 rounded-lg p-3">
@@ -314,7 +326,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{nome}</p>
                   <Badge variant="secondary" className="h-5 text-sm mt-1">
-                    {count} autorizados
+                    {count} parceiros
                   </Badge>
                 </div>
               </div>
@@ -326,20 +338,37 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       {/* State indicators */}
       {estadosOrdenados.length > 0 && (
         <div className="absolute z-[1000] bottom-4 right-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 max-w-xs">
-          <h4 className="text-sm font-semibold mb-2 text-center">Autorizados por Estado</h4>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {estadosOrdenados.map(([estado, count]) => (
-              <div key={estado} className="flex items-center justify-between bg-muted/50 rounded px-2 py-1">
-                <span className="font-medium">{estado}</span>
-                <Badge variant="secondary" className="h-5 text-xs">
-                  {count}
-                </Badge>
+          <h4 className="text-sm font-semibold mb-2 text-center">Parceiros por Estado</h4>
+          <div className="space-y-2 text-xs">
+            {estadosOrdenados.map(({ estado, total, tipos }) => (
+              <div key={estado} className="bg-muted/50 rounded p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium">{estado}</span>
+                  <Badge variant="secondary" className="h-5 text-xs">
+                    {total}
+                  </Badge>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {Object.entries(tipos).map(([tipo, count]) => (
+                    <Badge 
+                      key={tipo}
+                      variant="outline" 
+                      className="h-4 text-xs px-1"
+                      style={{
+                        borderColor: getMarkerColorByTipo(tipo as TipoParceiro) + '60',
+                        color: getMarkerColorByTipo(tipo as TipoParceiro)
+                      }}
+                    >
+                      {count} {TIPO_PARCEIRO_LABELS[tipo as TipoParceiro].toLowerCase()}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
           <div className="mt-2 pt-2 border-t border-border text-center">
             <span className="text-xs text-muted-foreground">
-              Total: {autorizados.filter(a => a.ativo).length} autorizados
+              Total: {autorizados.filter(a => a.ativo).length} parceiros
             </span>
           </div>
         </div>
@@ -386,8 +415,12 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
                         <h3 className="font-semibold text-base leading-tight">
                           {autorizado.nome}
                         </h3>
-                        <Badge variant="secondary" className="mt-1">
-                          Autorizado Elisa
+                        <Badge variant="secondary" className="mt-1" style={{
+                          backgroundColor: getMarkerColorByTipo(autorizado.tipo_parceiro) + '20',
+                          color: getMarkerColorByTipo(autorizado.tipo_parceiro),
+                          borderColor: getMarkerColorByTipo(autorizado.tipo_parceiro) + '40'
+                        }}>
+                          {TIPO_PARCEIRO_LABELS[autorizado.tipo_parceiro]}
                         </Badge>
                       </div>
                     </div>

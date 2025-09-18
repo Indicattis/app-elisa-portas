@@ -870,6 +870,7 @@ export default function Parceiros() {
               ) : (
                 <AutorizadosKanban 
                   autorizados={filteredAutorizados.map(a => ({ ...a, tipo_parceiro: a.tipo_parceiro || 'autorizado' }))} 
+                  tipoParceiro={tipoParceiro}
                   onEtapaChange={() => {}} 
                   onShowHistory={() => {}}
                 />
