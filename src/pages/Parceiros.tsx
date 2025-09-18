@@ -940,16 +940,16 @@ export default function Parceiros() {
               <div className="space-y-2">
                 <Label htmlFor="vendedor">Vendedor</Label>
                 <Select
-                  value={editingAutorizado.vendedor_id || ''}
+                  value={editingAutorizado.vendedor_id || 'none'}
                   onValueChange={(value) =>
-                    setEditingAutorizado({ ...editingAutorizado, vendedor_id: value || null })
+                    setEditingAutorizado({ ...editingAutorizado, vendedor_id: value === 'none' ? null : value })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um vendedor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem vendedor</SelectItem>
+                    <SelectItem value="none">Sem vendedor</SelectItem>
                     {vendedores.map((vendedor) => (
                       <SelectItem key={vendedor.id} value={vendedor.id}>
                         {vendedor.nome}
