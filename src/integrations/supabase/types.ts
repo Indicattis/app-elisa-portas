@@ -2431,6 +2431,7 @@ export type Database = {
         | "treinamento_ficha_tecnica"
         | "treinamento_instalacao"
         | "apto"
+        | "apresentacao_proposta"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
       documento_categoria:
         | "manual"
@@ -2637,6 +2638,7 @@ export const Constants = {
         "treinamento_ficha_tecnica",
         "treinamento_instalacao",
         "apto",
+        "apresentacao_proposta",
       ],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
       documento_categoria: [
