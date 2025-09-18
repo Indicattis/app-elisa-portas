@@ -145,4 +145,33 @@ All colors MUST be HSL.
   .swipe-hint {
     @apply animate-pulse;
   }
+  
+  /* Custom scrollbar for kanban columns */
+  .kanban-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+  
+  .kanban-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, User, Phone, Mail, MapPin, Star } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +50,6 @@ interface AutorizadosKanbanProps {
 }
 
 export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, onDoubleClick }: AutorizadosKanbanProps) {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -152,7 +151,7 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+              <CardContent className="space-y-3 max-h-[600px] overflow-y-auto kanban-scroll">
                 {autorizadosEtapa.map((autorizado) => (
                   <div
                     key={autorizado.id}
@@ -160,73 +159,39 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
                     onDragStart={(e) => handleDragStart(e, autorizado.id)}
                     onDragEnd={handleDragEnd}
                     onDoubleClick={() => onDoubleClick?.(autorizado)}
-                    className={`p-3 rounded-lg border bg-card cursor-move hover:shadow-md transition-shadow ${
-                      draggedItem === autorizado.id ? 'opacity-50' : ''
+                    className={`p-3 rounded-lg border bg-card cursor-move hover:shadow-md hover-scale transition-all duration-200 animate-fade-in ${
+                      draggedItem === autorizado.id ? 'opacity-50 scale-95' : ''
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={autorizado.logo_url} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(autorizado.nome)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{autorizado.nome}</p>
-                          {autorizado.responsavel && (
-                            <p className="text-xs text-muted-foreground">{autorizado.responsavel}</p>
-                          )}
-                        </div>
+                    {/* Header with logo and name */}
+                    <div className="flex items-center space-x-3 mb-2">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarImage src={autorizado.logo_url} />
+                        <AvatarFallback className="text-sm font-medium">
+                          {getInitials(autorizado.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{autorizado.nome}</p>
+                        {autorizado.responsavel && (
+                          <p className="text-xs text-muted-foreground truncate">{autorizado.responsavel}</p>
+                        )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/dashboard/autorizados/${autorizado.id}/edit`)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
                     </div>
 
-                    {autorizado.vendedor && (
-                      <div className="flex items-center space-x-2 mb-2">
-                        {autorizado.vendedor.foto_perfil_url ? (
-                          <img
-                            src={autorizado.vendedor.foto_perfil_url}
-                            alt={autorizado.vendedor.nome}
-                            className="w-4 h-4 rounded-full object-cover"
-                          />
-                        ) : (
-                          <User className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span className="text-xs text-muted-foreground">{autorizado.vendedor.nome}</span>
+                    {/* City */}
+                    {autorizado.cidade && (
+                      <div className="flex items-center text-xs text-muted-foreground mb-2">
+                        <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">
+                          {autorizado.cidade}{autorizado.estado && `, ${autorizado.estado}`}
+                        </span>
                       </div>
                     )}
 
-                    <div className="space-y-1">
-                      {autorizado.email && (
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Mail className="h-3 w-3 mr-1" />
-                          {autorizado.email}
-                        </div>
-                      )}
-                      {autorizado.telefone && (
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Phone className="h-3 w-3 mr-1" />
-                          {autorizado.telefone}
-                        </div>
-                      )}
-                      {autorizado.cidade && autorizado.estado && (
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {autorizado.cidade}, {autorizado.estado}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-2">
+                    {/* Rating */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-1">
                         {autorizado.average_rating ? (
                           <StarRating 
                             rating={autorizado.average_rating} 
@@ -242,21 +207,11 @@ export function AutorizadosKanban({ autorizados, onEtapaChange, onShowHistory, o
                           </span>
                         )}
                       </div>
-                      <div className="flex gap-1">
-                        <AddRatingDialog autorizadoId={autorizado.id} autorizadoNome={autorizado.nome}>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <Star className="h-3 w-3" />
-                          </Button>
-                        </AddRatingDialog>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/dashboard/autorizados/${autorizado.id}/edit`)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Edit className="h-3 w-3" />
+                      <AddRatingDialog autorizadoId={autorizado.id} autorizadoNome={autorizado.nome}>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-70 hover:opacity-100">
+                          <Star className="h-3 w-3" />
                         </Button>
-                      </div>
+                      </AddRatingDialog>
                     </div>
                   </div>
                 ))}
