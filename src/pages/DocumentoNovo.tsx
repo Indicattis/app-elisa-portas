@@ -43,10 +43,10 @@ export default function DocumentoNovo() {
         });
         return;
       }
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 20 * 1024 * 1024) { // 20MB limit
         toast({
           title: "Erro",
-          description: "Arquivo muito grande. Limite de 10MB.",
+          description: "Arquivo muito grande. Limite de 20MB.",
           variant: "destructive",
         });
         return;
@@ -179,7 +179,7 @@ export default function DocumentoNovo() {
                       className="hidden"
                     />
                     <p className="text-sm text-muted-foreground">
-                      Máximo 10MB • Apenas arquivos PDF
+                      Máximo 20MB • Apenas arquivos PDF
                     </p>
                   </div>
                 </div>
