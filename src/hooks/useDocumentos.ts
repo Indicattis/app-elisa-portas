@@ -38,9 +38,14 @@ export function useCreateDocumento() {
 
   return useMutation({
     mutationFn: async (documento: Omit<Documento, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('documentos')
-        .insert(documento)
+        .insert({
+          ...documento,
+          created_by: user?.id
+        })
         .select()
         .single();
       
