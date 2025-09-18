@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { useDocumentos } from '@/hooks/useDocumentos';
+import { useDocumentos, useDownloadFile } from '@/hooks/useDocumentos';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const CATEGORY_LABELS = {
@@ -38,6 +38,7 @@ export default function Documentos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const { data: documentos, isLoading } = useDocumentos();
+  const downloadFile = useDownloadFile();
 
   const filteredDocuments = documentos?.filter(doc => {
     const matchesSearch = doc.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,11 +142,15 @@ export default function Documentos() {
                   <span>{formatFileSize(documento.tamanho_arquivo)}</span>
                 </div>
                 <Button 
-                  onClick={() => window.open(documento.arquivo_url, '_blank')}
+                  onClick={() => downloadFile.mutate({ 
+                    url: documento.arquivo_url, 
+                    fileName: documento.nome_arquivo 
+                  })}
                   className="w-full"
+                  disabled={downloadFile.isPending}
                 >
                   <FileText className="h-4 w-4 mr-2" />
-                  Visualizar
+                  {downloadFile.isPending ? 'Baixando...' : 'Baixar'}
                 </Button>
               </CardContent>
             </Card>
