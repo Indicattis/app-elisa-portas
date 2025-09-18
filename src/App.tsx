@@ -18,12 +18,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Performance from "./pages/Performance";
-import Leads from "./pages/Leads";
-import LeadNovo from "./pages/LeadNovo";
 import Users from "./pages/Users";
-import LeadDetails from "./pages/LeadDetails";
-import LeadEdit from "./pages/LeadEdit";
-import LeadVenda from "./pages/LeadVenda";
 import VendaNova from "./pages/VendaNova";
 import VendaVinculacao from "./pages/VendaVinculacao";
 import VendaEdit from "./pages/VendaEdit";
@@ -218,36 +213,6 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/leads"
-                  element={
-                    <ProtectedRoute requirePermission="leads">
-                      <DashboardLayout>
-                        <Leads />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/leads/novo"
-                  element={
-                    <ProtectedRoute requirePermission="leads">
-                      <DashboardLayout>
-                        <LeadNovo />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/leads/:id"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <LeadDetails />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/dashboard/orcamentos"
                   element={
                     <ProtectedRoute requirePermission="orcamentos">
@@ -283,26 +248,6 @@ const App = () => (
                     <ProtectedRoute requirePermission="users">
                       <DashboardLayout>
                         <Users />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/leads/:id/edit"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <LeadEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/leads/:id/venda"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <LeadVenda />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

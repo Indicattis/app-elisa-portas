@@ -4,21 +4,19 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter, Search } from "lucide-react";
-import type { Lead } from "@/types/lead";
+
 
 interface Filters {
   search: string;
   status: string;
-  lead: string;
 }
 
 interface OrcamentoFiltersProps {
   filters: Filters;
   setFilters: (filters: Filters) => void;
-  leads: Lead[];
 }
 
-export function OrcamentoFilters({ filters, setFilters, leads }: OrcamentoFiltersProps) {
+export function OrcamentoFilters({ filters, setFilters }: OrcamentoFiltersProps) {
   return (
     <Card>
       <CardHeader>
@@ -28,7 +26,7 @@ export function OrcamentoFilters({ filters, setFilters, leads }: OrcamentoFilter
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Buscar</Label>
             <div className="relative">
@@ -52,22 +50,6 @@ export function OrcamentoFilters({ filters, setFilters, leads }: OrcamentoFilter
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="aprovado">Aprovado</SelectItem>
                 <SelectItem value="reprovado">Reprovado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Lead</Label>
-            <Select value={filters.lead} onValueChange={(value) => setFilters({ ...filters, lead: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os leads" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os leads</SelectItem>
-                {leads.map((lead) => (
-                  <SelectItem key={lead.id} value={lead.id}>
-                    {lead.nome}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>

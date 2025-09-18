@@ -1,2 +1,0 @@
-
-export { LeadTagManager } from "./LeadTagManager";

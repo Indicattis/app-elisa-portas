@@ -11,11 +11,10 @@ import { Plus, Minus, Download } from "lucide-react";
 // ProdutoForm removido - usando NovoOrcamentoForm
 import { generateOrcamentoPDF } from "@/utils/pdfGenerator";
 import { useToast } from "@/hooks/use-toast";
-import type { Lead } from "@/types/lead";
+
 import type { OrcamentoProduto } from "@/types/produto";
 
 interface OrcamentoFormProps {
-  leads: Lead[];
   formData: any;
   setFormData: (data: any) => void;
   camposPersonalizados: Array<{ nome: string; valor: string }>;
@@ -26,7 +25,6 @@ interface OrcamentoFormProps {
 }
 
 export function OrcamentoForm({
-  leads,
   formData,
   setFormData,
   camposPersonalizados,
@@ -88,27 +86,20 @@ export function OrcamentoForm({
     console.log('Produtos:', produtos);
     console.log('Calculated total:', calculatedTotal);
     
+    const dadosOrçamento = {
+      ...formData,
+      valor_total: calculatedTotal,
+    };
+    
     try {
-      const selectedLead = leads.find(lead => lead.id === formData.lead_id);
-      if (!selectedLead) {
-        console.log('Lead não encontrado');
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Selecione um lead para gerar o PDF",
-        });
-        return;
-      }
-
-      console.log('Lead selecionado:', selectedLead);
 
       const pdfData = {
         id: `ORD-${Date.now()}`,
         cliente: {
-          nome: selectedLead.nome,
-          telefone: selectedLead.telefone,
-          email: selectedLead.email || "",
-          cidade: selectedLead.cidade || "",
+          nome: formData.cliente_nome || "",
+          telefone: formData.cliente_telefone || "",
+          email: formData.cliente_email || "",
+          cidade: formData.cliente_cidade || "",
         },
         produtos: produtos || [],
         valor_pintura: parseFloat(formData.valor_pintura) || 0,
@@ -148,20 +139,20 @@ export function OrcamentoForm({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="lead">Lead</Label>
+              <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
               <Select
-                value={formData.lead_id}
-                onValueChange={(value) => setFormData({ ...formData, lead_id: value })}
+                value={formData.forma_pagamento}
+                onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o lead" />
+                  <SelectValue placeholder="Selecione a forma de pagamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  {leads.map((lead) => (
-                    <SelectItem key={lead.id} value={lead.id}>
-                      {lead.nome} - {lead.telefone}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="avista">À vista</SelectItem>
+                  <SelectItem value="credito">Cartão de crédito</SelectItem>
+                  <SelectItem value="debito">Cartão de débito</SelectItem>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="financiamento">Financiamento</SelectItem>
                 </SelectContent>
               </Select>
             </div>

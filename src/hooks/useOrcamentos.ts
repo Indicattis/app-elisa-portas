@@ -13,7 +13,7 @@ export function useOrcamentos() {
   const [loading, setLoading] = useState(false);
 
   // Sempre chame os hooks na mesma ordem, independente dos dados
-  const { leads, orcamentos, fetchOrcamentos } = useOrcamentoData();
+  const { orcamentos, fetchOrcamentos } = useOrcamentoData();
   const { formData, setFormData, camposPersonalizados, setCamposPersonalizados, produtos, setProdutos, resetForm } = useOrcamentoForm();
   const { filters, setFilters, filteredOrcamentos } = useOrcamentoFilters(orcamentos);
 
@@ -96,7 +96,6 @@ export function useOrcamentos() {
   };
 
   return {
-    leads,
     orcamentos,
     filteredOrcamentos,
     loading,

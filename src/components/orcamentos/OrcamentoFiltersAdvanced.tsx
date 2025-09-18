@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Filter, Search, Calendar, User, RotateCcw } from "lucide-react";
 import { useState } from "react";
-import type { Lead } from "@/types/lead";
+
 
 interface OrcamentoFiltersAdvanced {
   search: string;

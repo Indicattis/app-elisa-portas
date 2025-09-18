@@ -2,37 +2,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Lead } from "@/types/lead";
+
 
 export function useOrcamentoData() {
   const { toast } = useToast();
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [orcamentos, setOrcamentos] = useState<any[]>([]);
 
-  const fetchLeads = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("elisaportas_leads")
-        .select(`
-          id, nome, telefone, email, data_envio, novo_status, 
-          atendente_id, canal_aquisicao_id, cidade, tag_id,
-          motivo_perda, observacoes_perda, valor_orcamento, 
-          tipo_porta, data_inicio_atendimento, canal_aquisicao, observacoes
-        `)
-        .order("data_envio", { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setLeads(data || []);
-    } catch (error) {
-      console.error("Erro ao buscar leads:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao carregar leads",
-      });
-    }
-  };
 
   const fetchOrcamentos = async () => {
     try {
@@ -103,14 +78,11 @@ export function useOrcamentoData() {
   };
 
   useEffect(() => {
-    fetchLeads();
     fetchOrcamentos();
   }, []);
 
   return {
-    leads,
     orcamentos,
-    fetchLeads,
     fetchOrcamentos
   };
 }

@@ -2,11 +2,11 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSalesData, useSellersRanking, useDashboardRealtime, useWhatsAppRoulette } from '@/hooks/useDashboardData';
-import { useLeads } from "@/hooks/useLeads";
+
 import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LeadStats } from "@/components/LeadStats";
+
 import { OrcamentoStats } from "@/components/orcamentos/OrcamentoStats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -36,7 +36,7 @@ export default function Dashboard() {
     isLoading: loadingWhatsapp
   } = useWhatsAppRoulette();
 
-  const { leads } = useLeads();
+  
   const { orcamentos } = useOrcamentos();
 
   // Setup realtime updates
@@ -199,7 +199,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* KPIs principais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Vendas do Mês</CardTitle>
@@ -226,19 +226,6 @@ export default function Dashboard() {
                 style={{ width: `${Math.min((totalVendasMes / metaMensal) * 100, 100)}%` }}
               />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Leads Ativos</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{leads?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              +12% vs mês anterior
-            </p>
           </CardContent>
         </Card>
 
@@ -292,7 +279,6 @@ export default function Dashboard() {
 
       {/* Estatísticas detalhadas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {leads && <LeadStats leads={leads} />}
         {orcamentos && <OrcamentoStats orcamentos={orcamentos} />}
       </div>
 
@@ -397,7 +383,7 @@ export default function Dashboard() {
                         }).format(vendedor.total_vendas)}
                           </div>
                           <div className="text-lg text-muted-foreground mt-2">
-                            {whatsappStats.find(w => w.nome === vendedor.nome)?.total_clicks || 0} leads WhatsApp
+                            {whatsappStats.find(w => w.nome === vendedor.nome)?.total_clicks || 0} cliques WhatsApp
                           </div>
                         </div>
                       </div>;

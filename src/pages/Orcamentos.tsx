@@ -18,7 +18,6 @@ export default function Orcamentos() {
   const { toast } = useToast();
 
   const {
-    leads,
     orcamentos,
     fetchOrcamentos
   } = useOrcamentos();
