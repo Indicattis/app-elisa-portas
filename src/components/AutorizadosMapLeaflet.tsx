@@ -171,6 +171,23 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
     });
   };
 
+  // Custom marker icon based on partner type
+  const createPartnerIcon = (tipoParceiro: TipoParceiro) => {
+    const color = getMarkerColorByTipo(tipoParceiro);
+    return L.divIcon({
+      html: `
+        <div class="custom-partner-marker" style="background-color: ${color};">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+        </div>
+      `,
+      className: 'custom-partner-marker-container',
+      iconSize: L.point(32, 40),
+      iconAnchor: L.point(16, 40),
+    });
+  };
+
   // Map click handler component
   const MapClickHandler = () => {
     useMapEvents({
@@ -182,7 +199,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
   };
 
   useEffect(() => {
-    // Add custom CSS for clusters
+    // Add custom CSS for clusters and markers
     const style = document.createElement('style');
     style.textContent = `
       .custom-marker-cluster {
@@ -206,6 +223,27 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       .clicked-point-icon {
         color: hsl(var(--destructive));
         filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      }
+      .custom-partner-marker-container {
+        background: none;
+        border: none;
+      }
+      .custom-partner-marker {
+        width: 28px;
+        height: 34px;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .custom-partner-marker svg {
+        transform: rotate(45deg);
+        margin-top: -2px;
+        margin-left: -1px;
       }
       .leaflet-popup-content-wrapper {
         border-radius: 8px;
@@ -400,6 +438,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
               <Marker
                 key={autorizado.id}
                 position={[autorizado.latitude!, autorizado.longitude!]}
+                icon={createPartnerIcon(autorizado.tipo_parceiro)}
               >
                 <Popup className="custom-popup" minWidth={280}>
                   <div className="p-4 space-y-3">
