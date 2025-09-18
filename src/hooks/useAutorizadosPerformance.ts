@@ -120,6 +120,24 @@ export function useAutorizadosPerformance() {
       });
 
       const hoje = new Date();
+      
+      // Helper function to map old etapa values to new ones
+      const mapEtapaValue = (etapa: any): AutorizadoEtapa => {
+        switch (etapa) {
+          case 'integracao':
+          case 'treinamento_comercial':
+            return 'apresentacao_proposta';
+          case 'treinamento_ficha_tecnica':
+            return 'treinamento_ficha_tecnica';
+          case 'treinamento_instalacao':
+            return 'treinamento_instalacao';
+          case 'apto':
+            return 'apto';
+          default:
+            return 'apresentacao_proposta';
+        }
+      };
+      
       const autorizadosComPerformance: AutorizadoPerformance[] = (autorizados || []).map(autorizado => {
         const ultimaAvaliacao = ultimasAvaliacoesMap.get(autorizado.id);
         
@@ -139,6 +157,7 @@ export function useAutorizadosPerformance() {
 
         return {
           ...autorizado,
+          etapa: mapEtapaValue(autorizado.etapa),
           average_rating: ratings.average_rating,
           total_ratings: ratings.total_ratings,
           ultima_avaliacao: ultimaAvaliacao,

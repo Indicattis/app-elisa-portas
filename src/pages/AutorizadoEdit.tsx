@@ -36,6 +36,23 @@ interface Vendedor {
   foto_perfil_url?: string;
 }
 
+// Helper function to map old etapa values to new ones
+const mapEtapaValue = (etapa: any): AutorizadoEtapa => {
+  switch (etapa) {
+    case 'integracao':
+    case 'treinamento_comercial':
+      return 'apresentacao_proposta';
+    case 'treinamento_ficha_tecnica':
+      return 'treinamento_ficha_tecnica';
+    case 'treinamento_instalacao':
+      return 'treinamento_instalacao';
+    case 'apto':
+      return 'apto';
+    default:
+      return 'apresentacao_proposta';
+  }
+};
+
 export default function AutorizadoEdit() {
   const { id } = useParams();
   const [form, setForm] = useState<AutorizadoForm>({
@@ -52,7 +69,7 @@ export default function AutorizadoEdit() {
     ativo: true,
     logo_url: "",
     vendedor_id: "",
-    etapa: "integracao"
+    etapa: "apresentacao_proposta"
   });
   
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -95,7 +112,7 @@ export default function AutorizadoEdit() {
           ativo: data.ativo,
           logo_url: data.logo_url || "",
           vendedor_id: data.vendedor_id || "",
-          etapa: data.etapa || "integracao"
+          etapa: mapEtapaValue(data.etapa) || "apresentacao_proposta"
         });
         
         if (data.logo_url) {
