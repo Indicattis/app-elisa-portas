@@ -43,7 +43,7 @@ import Marketing from "./pages/Marketing";
 import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
-import Autorizados from "./pages/Autorizados";
+import Parceiros from "./pages/Parceiros";
 import AutorizadoNovo from "./pages/AutorizadoNovo";
 import AutorizadoEdit from "./pages/AutorizadoEdit";
 import AutorizadoHistorico from "./pages/AutorizadoHistorico";

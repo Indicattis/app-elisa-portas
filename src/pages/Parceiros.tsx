@@ -636,8 +636,8 @@ export default function Parceiros() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <AutorizadosFiltros 
                   filtros={filtros} 
-                  setFiltros={setFiltros} 
-                  vendedores={vendedores} 
+                  onFiltrosChange={setFiltros}
+                  atendentes={vendedores.map(v => ({ id: v.id, nome: v.nome }))} 
                 />
                 
                 <div className="flex flex-col sm:flex-row gap-2 min-w-0">
@@ -796,7 +796,7 @@ export default function Parceiros() {
                               )}
                               <AddRatingDialog 
                                 autorizadoId={autorizado.id}
-                                tipoParceiro={tipoParceiro}
+                                autorizadoNome={autorizado.nome}
                               />
                             </div>
                           </TableCell>
@@ -815,7 +815,7 @@ export default function Parceiros() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleEdit(autorizado)}
+                                onClick={() => handleEdit({ ...autorizado, tipo_parceiro: autorizado.tipo_parceiro || 'autorizado' })}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -823,7 +823,7 @@ export default function Parceiros() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleGeocode(autorizado)}
+                                  onClick={() => handleGeocode({ ...autorizado, tipo_parceiro: autorizado.tipo_parceiro || 'autorizado' })}
                                   disabled={geocoding === autorizado.id}
                                 >
                                   {geocoding === autorizado.id ? (
@@ -869,10 +869,9 @@ export default function Parceiros() {
                 </Table>
               ) : (
                 <AutorizadosKanban 
-                  autorizados={filteredAutorizados} 
+                  autorizados={filteredAutorizados.map(a => ({ ...a, tipo_parceiro: a.tipo_parceiro || 'autorizado' }))} 
                   onEtapaChange={() => {}} 
                   onShowHistory={() => {}}
-                  tipoParceiro={tipoParceiro}
                 />
               )}
             </CardContent>

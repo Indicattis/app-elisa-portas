@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AutorizadoEtapa } from '@/utils/etapas';
 
+import type { TipoParceiro } from '@/utils/parceiros';
+
 export interface AutorizadoPerformance {
   id: string;
   nome: string;
@@ -12,6 +14,7 @@ export interface AutorizadoPerformance {
   ultima_avaliacao: string | null;
   dias_sem_avaliacao: number;
   tipo_parceiro?: TipoParceiro;
+  status_risco: 'em_dia' | 'atencao' | 'critico';
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
