@@ -28,7 +28,7 @@ const filtrosIniciais: FiltrosAutorizados = {
   busca: '',
   etapa: 'todos',
   statusRisco: 'todos',
-  atendente: '',
+  atendente: 'todos',
   faixaAvaliacao: 'todos',
   tempoUltimaAvaliacao: 'todos'
 };
@@ -52,7 +52,7 @@ export function AutorizadosFiltros({ filtros, onFiltrosChange, atendentes }: Aut
     if (filtros.busca) count++;
     if (filtros.etapa !== 'todos') count++;
     if (filtros.statusRisco !== 'todos') count++;
-    if (filtros.atendente) count++;
+    if (filtros.atendente && filtros.atendente !== 'todos') count++;
     if (filtros.faixaAvaliacao !== 'todos') count++;
     if (filtros.tempoUltimaAvaliacao !== 'todos') count++;
     return count;
@@ -160,7 +160,7 @@ export function AutorizadosFiltros({ filtros, onFiltrosChange, atendentes }: Aut
                     <SelectValue placeholder="Selecionar atendente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os atendentes</SelectItem>
+                    <SelectItem value="todos">Todos os atendentes</SelectItem>
                     {atendentes.map((atendente) => (
                       <SelectItem key={atendente.id} value={atendente.id}>
                         {atendente.nome}

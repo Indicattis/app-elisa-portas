@@ -193,7 +193,7 @@ export default function Parceiros() {
     busca: '',
     etapa: 'todos',
     statusRisco: 'todos',
-    atendente: '',
+    atendente: 'todos',
     faixaAvaliacao: 'todos',
     tempoUltimaAvaliacao: 'todos'
   });

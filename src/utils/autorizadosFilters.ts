@@ -25,7 +25,7 @@ export function aplicarFiltros(
     }
 
     // Filtro de atendente
-    if (filtros.atendente && autorizado.vendedor?.nome !== filtros.atendente) {
+    if (filtros.atendente !== 'todos' && filtros.atendente && autorizado.vendedor?.nome !== filtros.atendente) {
       return false;
     }
 
