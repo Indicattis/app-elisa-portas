@@ -79,49 +79,6 @@ function sanitizeFileName(fileName: string): string {
     .replace(/^_+|_+$/g, ''); // Remover underscores do início e fim
 }
 
-export function useDownloadFile() {
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async ({ url, fileName }: { url: string; fileName: string }) => {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Falha ao baixar arquivo');
-        
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Limpar o URL temporário
-        window.URL.revokeObjectURL(downloadUrl);
-        
-        return true;
-      } catch (error) {
-        throw new Error('Erro ao baixar arquivo');
-      }
-    },
-    onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Download iniciado com sucesso!",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-}
-
 export function useUploadFile() {
   const { toast } = useToast();
 
