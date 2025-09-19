@@ -177,15 +177,20 @@ export function useAutorizadosPerformance() {
   });
 }
 
-export function useIndicadoresDesempenho() {
+export function useIndicadoresDesempenho(tipoParceiro?: TipoParceiro) {
   const { data: autorizados = [] } = useAutorizadosPerformance();
 
+  // Filtrar por tipo de parceiro se especificado
+  const autorizadosFiltrados = tipoParceiro 
+    ? autorizados.filter(a => a.tipo_parceiro === tipoParceiro)
+    : autorizados;
+
   return {
-    naoAptos: autorizados.filter(a => a.ativo && a.etapa !== 'apto').length,
-    zonaRisco: autorizados.filter(a => a.ativo && a.status_risco === 'atencao').length,
-    criticos: autorizados.filter(a => a.ativo && a.status_risco === 'critico').length,
-    totalAtivos: autorizados.filter(a => a.ativo).length,
-    ranking: autorizados
+    naoAptos: autorizadosFiltrados.filter(a => a.ativo && a.etapa !== 'apto').length,
+    zonaRisco: autorizadosFiltrados.filter(a => a.ativo && a.status_risco === 'atencao').length,
+    criticos: autorizadosFiltrados.filter(a => a.ativo && a.status_risco === 'critico').length,
+    totalAtivos: autorizadosFiltrados.filter(a => a.ativo).length,
+    ranking: autorizadosFiltrados
       .filter(a => a.ativo && a.total_ratings > 0)
       .sort((a, b) => b.average_rating - a.average_rating)
       .slice(0, 5)
@@ -194,7 +199,7 @@ export function useIndicadoresDesempenho() {
         rating: Number(a.average_rating.toFixed(1)),
         total_avaliacoes: a.total_ratings
       })),
-    distribuicaoPorAtendente: autorizados
+    distribuicaoPorAtendente: autorizadosFiltrados
       .filter(a => a.ativo && a.vendedor)
       .reduce((acc, autorizado) => {
         const nome = autorizado.vendedor!.nome;

@@ -39,8 +39,8 @@ import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
 import Parceiros from "./pages/Parceiros";
-import AutorizadoNovo from "./pages/AutorizadoNovo";
-import AutorizadoEdit from "./pages/AutorizadoEdit";
+import ParceiroNovo from "./pages/ParceiroNovo";
+import ParceiroEdit from "./pages/ParceiroEdit";
 import AutorizadoHistorico from "./pages/AutorizadoHistorico";
 import MapaAutorizados from "./pages/MapaAutorizados";
 import Configuracoes from "./pages/Configuracoes";
@@ -417,7 +417,17 @@ const App = () => (
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
-                        <AutorizadoNovo />
+                        <ParceiroNovo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/parceiros/novo/:tipoParceiro"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <ParceiroNovo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -427,7 +437,17 @@ const App = () => (
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
-                        <AutorizadoEdit />
+                        <ParceiroEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/parceiros/:id/edit/:tipoParceiro"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <ParceiroEdit />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

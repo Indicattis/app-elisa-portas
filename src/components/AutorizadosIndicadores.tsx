@@ -4,9 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIndicadoresDesempenho } from "@/hooks/useAutorizadosPerformance";
 import { AlertTriangle, CheckCircle, Users, Trophy, Clock } from "lucide-react";
 import { StarRating } from "./StarRating";
+import type { TipoParceiro } from "@/utils/parceiros";
 
-export function AutorizadosIndicadores() {
-  const indicadores = useIndicadoresDesempenho();
+interface AutorizadosIndicadoresProps {
+  tipoParceiro: TipoParceiro;
+}
+
+export function AutorizadosIndicadores({ tipoParceiro }: AutorizadosIndicadoresProps) {
+  const indicadores = useIndicadoresDesempenho(tipoParceiro);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);

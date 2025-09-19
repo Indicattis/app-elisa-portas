@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Plus, Search, Edit, Trash2, MapPin, Phone, Mail, User, Camera, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard, AlertTriangle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -174,6 +175,7 @@ export default function Parceiros() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const { data: autorizados = [], isLoading: loading } = useAutorizadosPerformance();
   const [filteredAutorizados, setFilteredAutorizados] = useState(autorizados);
   const [editingAutorizado, setEditingAutorizado] = useState<any | null>(null);
@@ -354,7 +356,9 @@ export default function Parceiros() {
 
       setIsEditDialogOpen(false);
       setEditingAutorizado(null);
-        // Refresh will happen automatically via the hook
+      
+      // Invalidar cache para atualizar a interface
+      queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
     } catch (error) {
       console.error('Erro ao atualizar parceiro:', error);
       toast({
@@ -379,7 +383,8 @@ export default function Parceiros() {
         description: 'Parceiro excluído com sucesso.'
       });
 
-        // Auto-refresh handled by the hook
+      // Invalidar cache para atualizar a interface
+      queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
     } catch (error) {
       console.error('Erro ao excluir parceiro:', error);
       toast({
@@ -578,7 +583,7 @@ export default function Parceiros() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Parceiros</h1>
         <Button
-          onClick={() => navigate('/dashboard/autorizados/novo')}
+          onClick={() => navigate(`/dashboard/parceiros/novo/${tipoParceiro}`)}
           size="sm"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -594,7 +599,7 @@ export default function Parceiros() {
         </TabsList>
 
         <TabsContent value={tipoParceiro}>
-          <AutorizadosIndicadores />
+          <AutorizadosIndicadores tipoParceiro={tipoParceiro} />
 
           <Card>
             <CardHeader>
@@ -815,7 +820,7 @@ export default function Parceiros() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleEdit({ ...autorizado, tipo_parceiro: autorizado.tipo_parceiro || 'autorizado' })}
+                                onClick={() => navigate(`/dashboard/parceiros/${autorizado.id}/edit/${tipoParceiro}`)}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
