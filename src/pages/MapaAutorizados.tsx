@@ -77,9 +77,7 @@ export default function MapaAutorizados() {
     const autorizadosToGeocode = autorizados.filter(autorizado => 
       autorizado.ativo && 
       autorizado.cidade && 
-      autorizado.estado && 
-      !autorizado.latitude && 
-      !autorizado.longitude
+      autorizado.estado
     );
 
     if (autorizadosToGeocode.length === 0) {

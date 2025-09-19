@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LogoUpload } from "@/components/LogoUpload";
-import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Loader2, RotateCcw } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   TipoParceiro, 
   TIPO_PARCEIRO_LABELS, 
@@ -67,9 +68,11 @@ export default function ParceiroEdit() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
+  const [resettingTime, setResettingTime] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     if (id) {
@@ -275,6 +278,48 @@ export default function ParceiroEdit() {
       });
     } finally {
       setGeocoding(false);
+    }
+  };
+
+  const handleResetTime = async () => {
+    if (!isAdmin) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Apenas administradores podem resetar o tempo de inativação.'
+      });
+      return;
+    }
+
+    try {
+      setResettingTime(true);
+      
+      const { error } = await supabase
+        .from('autorizados')
+        .update({ 
+          data_inicio_contagem_inativacao: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Tempo de inativação resetado com sucesso.'
+      });
+
+      // Invalidar cache para atualizar a interface
+      queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
+    } catch (error: any) {
+      console.error('Erro ao resetar tempo:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message || 'Não foi possível resetar o tempo de inativação.'
+      });
+    } finally {
+      setResettingTime(false);
     }
   };
 
@@ -530,6 +575,23 @@ export default function ParceiroEdit() {
                       <MapPin className="h-4 w-4 mr-2" />
                     )}
                     Obter coordenadas
+                  </Button>
+                )}
+                
+                {isAdmin && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleResetTime}
+                    disabled={resettingTime}
+                    className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                  >
+                    {resettingTime ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                    )}
+                    Resetar tempo
                   </Button>
                 )}
               </div>
