@@ -157,7 +157,7 @@ export default function MapaAutorizados() {
     <div className="fixed inset-0 w-full h-full">
       {/* Painel de estatísticas */}
       <div className="fixed z-[9999]" style={{ top: '70px', left: '20px' }}>
-        <Card className="min-w-[200px] shadow-lg bg-card/95 backdrop-blur">
+        <Card className="min-w-[200px] shadow-lg bg-card/95 backdrop-blur ml-[60px]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Estatísticas</CardTitle>
           </CardHeader>
