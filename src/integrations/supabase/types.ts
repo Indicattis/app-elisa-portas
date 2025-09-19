@@ -406,6 +406,7 @@ export type Database = {
           created_by: string
           data: string
           id: string
+          numero_vendas: number
           updated_at: string
           valor: number
         }
@@ -415,6 +416,7 @@ export type Database = {
           created_by: string
           data: string
           id?: string
+          numero_vendas?: number
           updated_at?: string
           valor?: number
         }
@@ -424,6 +426,7 @@ export type Database = {
           created_by?: string
           data?: string
           id?: string
+          numero_vendas?: number
           updated_at?: string
           valor?: number
         }

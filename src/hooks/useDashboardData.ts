@@ -6,11 +6,13 @@ import { format } from 'date-fns';
 interface DiaVenda {
   data: string;
   valor: number;
+  numero_vendas: number;
 }
 
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
+  numero_vendas: number;
   posicao: number;
   foto_perfil_url?: string;
 }
@@ -25,7 +27,7 @@ export const useSalesData = () => {
 
       const { data, error } = await supabase
         .from('contador_vendas_dias')
-        .select('data, valor')
+        .select('data, valor, numero_vendas')
         .gte('data', format(primeiroDiaDoMes, 'yyyy-MM-dd'))
         .lte('data', format(ultimoDiaDoMes, 'yyyy-MM-dd'));
 
@@ -35,15 +37,20 @@ export const useSalesData = () => {
       }
 
       // Agrupar por data e somar valores
-      const vendasPorDia = (data || []).reduce((acc: { [key: string]: number }, venda: any) => {
+      const vendasPorDia = (data || []).reduce((acc: { [key: string]: { valor: number; numero_vendas: number } }, venda: any) => {
         const dataKey = venda.data;
-        acc[dataKey] = (acc[dataKey] || 0) + Number(venda.valor);
+        if (!acc[dataKey]) {
+          acc[dataKey] = { valor: 0, numero_vendas: 0 };
+        }
+        acc[dataKey].valor += Number(venda.valor);
+        acc[dataKey].numero_vendas += Number(venda.numero_vendas || 0);
         return acc;
       }, {});
 
-      return Object.entries(vendasPorDia).map(([data, valor]) => ({
+      return Object.entries(vendasPorDia).map(([data, { valor, numero_vendas }]) => ({
         data,
-        valor: valor as number
+        valor,
+        numero_vendas
       }));
     },
     refetchInterval: 120000, // 2 minutes fallback
@@ -64,6 +71,7 @@ export const useSellersRanking = () => {
         .from('contador_vendas_dias')
         .select(`
           valor,
+          numero_vendas,
           atendente_id,
           admin_users!inner(nome, foto_perfil_url)
         `)
@@ -82,10 +90,12 @@ export const useSellersRanking = () => {
           acc[atendenteId] = {
             nome: venda.admin_users?.nome || 'N/A',
             foto_perfil_url: venda.admin_users?.foto_perfil_url,
-            total_vendas: 0
+            total_vendas: 0,
+            numero_vendas: 0
           };
         }
         acc[atendenteId].total_vendas += Number(venda.valor);
+        acc[atendenteId].numero_vendas += Number(venda.numero_vendas || 0);
         return acc;
       }, {});
 

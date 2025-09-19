@@ -13,12 +13,14 @@ interface DiaVenda {
   id?: string;
   data: string; // ISO date string
   valor: number;
+  numero_vendas: number;
 }
 
 interface VendaAtendente {
   atendente_id: string;
   nome: string;
   valor: number;
+  numero_vendas: number;
 }
 
 const getRangeStyle = (valor: number, weekend: boolean, isPastDate: boolean = false) => {
@@ -43,6 +45,7 @@ export default function ContadorVendas() {
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [inputValor, setInputValor] = useState<string>("");
+  const [inputNumeroVendas, setInputNumeroVendas] = useState<string>("");
   const [viewMode, setViewMode] = useState<'year' | 'month'>('month');
   const [vendasAtendentes, setVendasAtendentes] = useState<VendaAtendente[]>([]);
   const { toast } = useToast();
@@ -56,7 +59,7 @@ export default function ContadorVendas() {
     setLoading(true);
     const { data: rows, error } = await supabase
       .from("contador_vendas_dias")
-      .select("id, data, valor")
+      .select("id, data, valor, numero_vendas")
       .gte("data", `${y}-01-01`)
       .lte("data", `${y}-12-31`);
 
@@ -70,10 +73,12 @@ export default function ContadorVendas() {
     const map: Record<string, DiaVenda> = {};
     rows?.forEach((r: any) => {
       const existingValue = map[r.data]?.valor || 0;
+      const existingQuantity = map[r.data]?.numero_vendas || 0;
       map[r.data] = { 
         id: r.id, 
         data: r.data, 
-        valor: existingValue + Number(r.valor) 
+        valor: existingValue + Number(r.valor),
+        numero_vendas: existingQuantity + Number(r.numero_vendas || 0)
       };
     });
     setData(map);
@@ -103,6 +108,7 @@ export default function ContadorVendas() {
       .select(`
         atendente_id,
         valor,
+        numero_vendas,
         admin_users!atendente_id(nome)
       `)
       .eq("data", iso);
@@ -117,7 +123,8 @@ export default function ContadorVendas() {
       vendasMap.set(venda.atendente_id, {
         atendente_id: venda.atendente_id,
         nome: venda.admin_users?.nome || 'Atendente',
-        valor: venda.valor
+        valor: venda.valor,
+        numero_vendas: venda.numero_vendas || 0
       });
     });
     
@@ -126,6 +133,7 @@ export default function ContadorVendas() {
     
     setSelectedDate(date);
     setInputValor(vendaUsuario ? String(vendaUsuario.valor).replace(".", ",") : "");
+    setInputNumeroVendas(vendaUsuario ? String(vendaUsuario.numero_vendas) : "");
     setVendasAtendentes(Array.from(vendasMap.values()));
     setOpen(true);
   };
@@ -142,10 +150,18 @@ export default function ContadorVendas() {
       return;
     }
 
+    // Parse número de vendas
+    const numeroVendas = Number(inputNumeroVendas) || 0;
+    if (numeroVendas < 0) {
+      toast({ title: "Número inválido", description: "Insira um número de vendas válido." });
+      return;
+    }
+
     // Inserir ou atualizar a venda individual do atendente
     const payload = { 
       data: iso, 
       valor, 
+      numero_vendas: numeroVendas,
       created_by: user.id,
       atendente_id: user.id
     };
@@ -178,12 +194,30 @@ export default function ContadorVendas() {
     }, 0);
   }, [data]);
 
+  const monthSalesCount = useMemo(() => {
+    const start = startOfMonth(today);
+    const end = endOfMonth(today);
+    return Object.values(data).reduce((sum, d) => {
+      const dDate = new Date(d.data);
+      return (dDate >= start && dDate <= end) ? sum + d.numero_vendas : sum;
+    }, 0);
+  }, [data]);
+
   const weekSum = useMemo(() => {
     const start = startOfWeek(today, { weekStartsOn: 0 });
     const end = endOfWeek(today, { weekStartsOn: 0 });
     return Object.values(data).reduce((sum, d) => {
       const dDate = new Date(d.data);
       return (dDate >= start && dDate <= end) ? sum + d.valor : sum;
+    }, 0);
+  }, [data]);
+
+  const weekSalesCount = useMemo(() => {
+    const start = startOfWeek(today, { weekStartsOn: 0 });
+    const end = endOfWeek(today, { weekStartsOn: 0 });
+    return Object.values(data).reduce((sum, d) => {
+      const dDate = new Date(d.data);
+      return (dDate >= start && dDate <= end) ? sum + d.numero_vendas : sum;
     }, 0);
   }, [data]);
 
@@ -233,9 +267,14 @@ export default function ContadorVendas() {
                   title={registro ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor) : undefined}
                 >
                   <span className="text-sm opacity-90">{format(d, "d")}</span>
-                  <span className="text-base font-semibold">
-                    {registro ? `R$ ${new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(valor)}` : "-"}
-                  </span>
+                  <div className="text-center">
+                    <span className="text-sm font-semibold block">
+                      {registro ? `R$ ${new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(valor)}` : "-"}
+                    </span>
+                    <span className="text-xs opacity-75">
+                      {registro && registro.numero_vendas > 0 ? `${registro.numero_vendas} venda${registro.numero_vendas > 1 ? 's' : ''}` : ""}
+                    </span>
+                  </div>
                   {style.star && (
                     <Star className="absolute -top-1 -right-1 h-4 w-4 text-yellow-400 drop-shadow" />
                   )}
@@ -311,14 +350,28 @@ export default function ContadorVendas() {
         )}
       </section>
 
-      <aside className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <aside className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="p-6 rounded-xl border bg-card shadow-sm">
-          <h3 className="text-sm text-muted-foreground">Vendas deste mês</h3>
-          <p className="text-3xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthSum)}</p>
+          <h3 className="text-sm text-muted-foreground">Valor - Mês</h3>
+          <p className="text-2xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthSum)}</p>
+          <p className="text-sm text-muted-foreground">{monthSalesCount} vendas</p>
         </div>
         <div className="p-6 rounded-xl border bg-card shadow-sm">
-          <h3 className="text-sm text-muted-foreground">Vendas desta semana</h3>
-          <p className="text-3xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(weekSum)}</p>
+          <h3 className="text-sm text-muted-foreground">Valor - Semana</h3>
+          <p className="text-2xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(weekSum)}</p>
+          <p className="text-sm text-muted-foreground">{weekSalesCount} vendas</p>
+        </div>
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <h3 className="text-sm text-muted-foreground">Ticket Médio - Mês</h3>
+          <p className="text-2xl font-bold">
+            {monthSalesCount > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthSum / monthSalesCount) : 'R$ 0,00'}
+          </p>
+        </div>
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <h3 className="text-sm text-muted-foreground">Ticket Médio - Semana</h3>
+          <p className="text-2xl font-bold">
+            {weekSalesCount > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(weekSum / weekSalesCount) : 'R$ 0,00'}
+          </p>
         </div>
       </aside>
 
@@ -342,9 +395,14 @@ export default function ContadorVendas() {
                     .map((venda) => (
                       <div key={venda.atendente_id} className="flex justify-between items-center p-2 bg-muted rounded">
                         <span className="text-sm font-medium">{venda.nome}</span>
-                        <span className="text-sm">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor)}
-                        </span>
+                        <div className="text-right">
+                          <span className="text-sm block">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {venda.numero_vendas} venda{venda.numero_vendas !== 1 ? 's' : ''}
+                          </span>
+                        </div>
                       </div>
                     ))}
                 </div>
@@ -352,14 +410,27 @@ export default function ContadorVendas() {
             )}
             
             {/* Venda do usuário atual (editável) */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Sua venda (R$):</label>
-              <Input
-                value={inputValor}
-                onChange={(e) => setInputValor(e.target.value)}
-                placeholder="Ex: 45.000,00"
-                className="text-lg"
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Valor da venda (R$):</label>
+                <Input
+                  value={inputValor}
+                  onChange={(e) => setInputValor(e.target.value)}
+                  placeholder="Ex: 45.000,00"
+                  className="text-lg"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Número de vendas:</label>
+                <Input
+                  type="number"
+                  value={inputNumeroVendas}
+                  onChange={(e) => setInputNumeroVendas(e.target.value)}
+                  placeholder="Ex: 3"
+                  min="0"
+                  className="text-lg"
+                />
+              </div>
             </div>
           </div>
           
