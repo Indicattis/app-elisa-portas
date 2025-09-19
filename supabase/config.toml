@@ -40,3 +40,6 @@ verify_jwt = false
 
 [functions.optimize-images]
 verify_jwt = false
+
+[functions.geocode-nominatim]
+verify_jwt = false
