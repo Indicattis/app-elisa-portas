@@ -23,7 +23,6 @@ interface ParceiroForm {
   telefone: string;
   whatsapp: string;
   responsavel: string;
-  endereco: string;
   cidade: string;
   estado: string;
   cep: string;
@@ -54,7 +53,6 @@ export default function ParceiroEdit() {
     telefone: "",
     whatsapp: "",
     responsavel: "",
-    endereco: "",
     cidade: "",
     estado: "",
     cep: "",
@@ -98,7 +96,6 @@ export default function ParceiroEdit() {
           telefone: data.telefone || "",
           whatsapp: data.whatsapp || "",
           responsavel: data.responsavel || "",
-          endereco: data.endereco || "",
           cidade: data.cidade || "",
           estado: data.estado || "",
           cep: data.cep || "",
@@ -144,7 +141,6 @@ export default function ParceiroEdit() {
     
     // Campos obrigatórios
     if (!form.nome.trim()) newErrors.nome = "Nome é obrigatório";
-    if (!form.endereco.trim()) newErrors.endereco = "Endereço é obrigatório";
     if (!form.cidade.trim()) newErrors.cidade = "Cidade é obrigatória";
     if (!form.estado.trim()) newErrors.estado = "Estado é obrigatório";
     if (!form.cep.trim()) newErrors.cep = "CEP é obrigatório";
@@ -182,7 +178,6 @@ export default function ParceiroEdit() {
         telefone: form.telefone,
         whatsapp: form.whatsapp,
         responsavel: form.responsavel,
-        endereco: form.endereco,
         cidade: form.cidade,
         estado: form.estado,
         cep: form.cep,
@@ -429,17 +424,6 @@ export default function ParceiroEdit() {
 
               {/* Coluna Direita */}
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="endereco">Endereço *</Label>
-                  <Input
-                    id="endereco"
-                    placeholder="Rua, número, bairro"
-                    value={form.endereco}
-                    onChange={(e) => setForm({ ...form, endereco: e.target.value })}
-                    className={errors.endereco ? "border-red-500" : ""}
-                  />
-                  {errors.endereco && <p className="text-sm text-red-500">{errors.endereco}</p>}
-                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
