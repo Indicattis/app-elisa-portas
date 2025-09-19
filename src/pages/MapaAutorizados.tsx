@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { RefreshCw, Loader2, Eye, EyeOff } from "lucide-react";
 import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
 
 interface Autorizado {
@@ -38,6 +38,7 @@ export default function MapaAutorizados() {
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [loading, setLoading] = useState(true);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
+  const [showOverlays, setShowOverlays] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -155,58 +156,79 @@ export default function MapaAutorizados() {
 
   return (
     <div className="fixed inset-0 w-full h-full">
-      {/* Painel de estatísticas */}
-      <div className="fixed z-[9999]" style={{ top: '70px', left: '20px' }}>
-        <Card className="min-w-[200px] shadow-lg bg-card/95 backdrop-blur ml-[60px]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Estatísticas</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Total:</span>
-              <span className="font-medium">{stats.total}</span>
-            </div>
-            <div className="flex justify-between text-green-600">
-              <span>Ativos:</span>
-              <span className="font-medium">{stats.ativos}</span>
-            </div>
-            <div className="flex justify-between text-red-600">
-              <span>Inativos:</span>
-              <span className="font-medium">{stats.inativos}</span>
-            </div>
-            <div className="flex justify-between text-blue-600">
-              <span>Geocodificados:</span>
-              <span className="font-medium">{stats.geocodificados}</span>
-            </div>
-            <div className="flex justify-between text-orange-600">
-              <span>Não geocodificados:</span>
-              <span className="font-medium">{stats.naoGeocodificados}</span>
-            </div>
-            <div className="border-t pt-1 mt-1 flex justify-between text-primary font-medium">
-              <span>No mapa:</span>
-              <span>{stats.ativosComCoordenadas}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Botão fixo de geocodificação */}
-      <div className="fixed z-[9999]" style={{ top: '70px', right: '20px' }}>
+      {/* Botão toggle para mostrar/ocultar janelas sobrepostas */}
+      <div className="fixed z-[10000]" style={{ top: '20px', left: '20px' }}>
         <Button
-          onClick={handleBatchGeocode}
-          disabled={batchGeocoding}
-          variant="default"
+          onClick={() => setShowOverlays(!showOverlays)}
+          variant="outline"
           size="sm"
-          className="shadow-lg"
+          className="shadow-lg bg-background/95 backdrop-blur"
         >
-          {batchGeocoding ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          {showOverlays ? (
+            <EyeOff className="h-4 w-4 mr-2" />
           ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <Eye className="h-4 w-4 mr-2" />
           )}
-          Geocodificar todos
+          {showOverlays ? 'Ocultar' : 'Mostrar'} janelas
         </Button>
       </div>
+
+      {showOverlays && (
+        <>
+          {/* Painel de estatísticas */}
+          <div className="fixed z-[9999]" style={{ top: '70px', left: '20px' }}>
+            <Card className="min-w-[200px] shadow-lg bg-card/95 backdrop-blur ml-[60px]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Estatísticas</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span>Total:</span>
+                  <span className="font-medium">{stats.total}</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>Ativos:</span>
+                  <span className="font-medium">{stats.ativos}</span>
+                </div>
+                <div className="flex justify-between text-red-600">
+                  <span>Inativos:</span>
+                  <span className="font-medium">{stats.inativos}</span>
+                </div>
+                <div className="flex justify-between text-blue-600">
+                  <span>Geocodificados:</span>
+                  <span className="font-medium">{stats.geocodificados}</span>
+                </div>
+                <div className="flex justify-between text-orange-600">
+                  <span>Não geocodificados:</span>
+                  <span className="font-medium">{stats.naoGeocodificados}</span>
+                </div>
+                <div className="border-t pt-1 mt-1 flex justify-between text-primary font-medium">
+                  <span>No mapa:</span>
+                  <span>{stats.ativosComCoordenadas}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Botão fixo de geocodificação */}
+          <div className="fixed z-[9999]" style={{ top: '70px', right: '20px' }}>
+            <Button
+              onClick={handleBatchGeocode}
+              disabled={batchGeocoding}
+              variant="default"
+              size="sm"
+              className="shadow-lg"
+            >
+              {batchGeocoding ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Geocodificar todos
+            </Button>
+          </div>
+        </>
+      )}
 
       {/* Mapa com margem superior e altura total relativa */}
       <div className="absolute inset-0 w-full" style={{ paddingTop: '50px' }}>
