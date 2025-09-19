@@ -56,8 +56,7 @@ export default function MapaAutorizados() {
           updated_at, vendedor_id, tipo_parceiro,
           vendedor:admin_users(nome, foto_perfil_url)
         `)
-        .order('nome')
-        .limit(50);
+        .order('nome');
 
       if (error) throw error;
       setAutorizados(data || []);
@@ -133,6 +132,16 @@ export default function MapaAutorizados() {
     fetchAutorizados();
   };
 
+  // Calcular estatísticas dos parceiros
+  const stats = {
+    total: autorizados.length,
+    ativos: autorizados.filter(a => a.ativo).length,
+    inativos: autorizados.filter(a => !a.ativo).length,
+    geocodificados: autorizados.filter(a => a.latitude && a.longitude).length,
+    naoGeocodificados: autorizados.filter(a => !a.latitude || !a.longitude).length,
+    ativosComCoordenadas: autorizados.filter(a => a.ativo && a.latitude && a.longitude).length
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -146,6 +155,41 @@ export default function MapaAutorizados() {
 
   return (
     <div className="fixed inset-0 w-full h-full">
+      {/* Painel de estatísticas */}
+      <div className="fixed z-[9999]" style={{ top: '70px', left: '20px' }}>
+        <Card className="min-w-[200px] shadow-lg bg-card/95 backdrop-blur">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Estatísticas</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-1 text-xs">
+            <div className="flex justify-between">
+              <span>Total:</span>
+              <span className="font-medium">{stats.total}</span>
+            </div>
+            <div className="flex justify-between text-green-600">
+              <span>Ativos:</span>
+              <span className="font-medium">{stats.ativos}</span>
+            </div>
+            <div className="flex justify-between text-red-600">
+              <span>Inativos:</span>
+              <span className="font-medium">{stats.inativos}</span>
+            </div>
+            <div className="flex justify-between text-blue-600">
+              <span>Geocodificados:</span>
+              <span className="font-medium">{stats.geocodificados}</span>
+            </div>
+            <div className="flex justify-between text-orange-600">
+              <span>Não geocodificados:</span>
+              <span className="font-medium">{stats.naoGeocodificados}</span>
+            </div>
+            <div className="border-t pt-1 mt-1 flex justify-between text-primary font-medium">
+              <span>No mapa:</span>
+              <span>{stats.ativosComCoordenadas}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Botão fixo de geocodificação */}
       <div className="fixed z-[9999]" style={{ top: '70px', right: '20px' }}>
         <Button
