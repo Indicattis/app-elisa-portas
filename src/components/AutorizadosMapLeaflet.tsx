@@ -40,6 +40,7 @@ interface Autorizado {
 
 interface AutorizadosMapLeafletProps {
   autorizados: Autorizado[];
+  showOverlays?: boolean;
 }
 
 interface ClickedPoint {
@@ -55,7 +56,7 @@ const HQ_COORDINATES = {
   lng: -51.1794
 };
 
-const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizados }) => {
+const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizados, showOverlays = true }) => {
   const mapRef = useRef<L.Map | null>(null);
   const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
 
@@ -349,7 +350,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       )}
 
       {/* Attendant indicators */}
-      {atendentesOrdenados.length > 0 && (
+      {atendentesOrdenados.length > 0 && showOverlays && (
         <div className="absolute z-[1000] bottom-4 left-4 ml-[60px] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm">
           <h4 className="text-base font-semibold mb-4 text-center">Parceiros por Atendente</h4>
           <div className="space-y-3">
@@ -374,7 +375,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       )}
 
       {/* State indicators */}
-      {estadosOrdenados.length > 0 && (
+      {estadosOrdenados.length > 0 && showOverlays && (
         <div className="absolute z-[1000] bottom-4 right-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 max-w-xs">
           <h4 className="text-sm font-semibold mb-2 text-center">Parceiros por Estado</h4>
           <div className="space-y-2 text-xs">

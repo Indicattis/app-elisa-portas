@@ -156,23 +156,6 @@ export default function MapaAutorizados() {
 
   return (
     <div className="fixed inset-0 w-full h-full">
-      {/* Botão toggle para mostrar/ocultar janelas sobrepostas */}
-      <div className="fixed z-[10000]" style={{ top: '20px', left: '20px' }}>
-        <Button
-          onClick={() => setShowOverlays(!showOverlays)}
-          variant="outline"
-          size="sm"
-          className="shadow-lg bg-background/95 backdrop-blur"
-        >
-          {showOverlays ? (
-            <EyeOff className="h-4 w-4 mr-2" />
-          ) : (
-            <Eye className="h-4 w-4 mr-2" />
-          )}
-          {showOverlays ? 'Ocultar' : 'Mostrar'} janelas
-        </Button>
-      </div>
-
       {showOverlays && (
         <>
           {/* Painel de estatísticas */}
@@ -209,30 +192,44 @@ export default function MapaAutorizados() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Botão fixo de geocodificação */}
-          <div className="fixed z-[9999]" style={{ top: '70px', right: '20px' }}>
-            <Button
-              onClick={handleBatchGeocode}
-              disabled={batchGeocoding}
-              variant="default"
-              size="sm"
-              className="shadow-lg"
-            >
-              {batchGeocoding ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Geocodificar todos
-            </Button>
-          </div>
         </>
       )}
 
+      {/* Botões fixos de geocodificação e toggle */}
+      <div className="fixed z-[9999] flex flex-col gap-2" style={{ top: '70px', right: '20px' }}>
+        <Button
+          onClick={handleBatchGeocode}
+          disabled={batchGeocoding}
+          variant="default"
+          size="sm"
+          className="shadow-lg"
+        >
+          {batchGeocoding ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-2" />
+          )}
+          Geocodificar todos
+        </Button>
+        
+        <Button
+          onClick={() => setShowOverlays(!showOverlays)}
+          variant="outline"
+          size="sm"
+          className="shadow-lg bg-background/95 backdrop-blur"
+        >
+          {showOverlays ? (
+            <EyeOff className="h-4 w-4 mr-2" />
+          ) : (
+            <Eye className="h-4 w-4 mr-2" />
+          )}
+          {showOverlays ? 'Ocultar' : 'Mostrar'} dados
+        </Button>
+      </div>
+
       {/* Mapa com margem superior e altura total relativa */}
       <div className="absolute inset-0 w-full" style={{ paddingTop: '50px' }}>
-        <AutorizadosMapLeaflet autorizados={autorizados} />
+        <AutorizadosMapLeaflet autorizados={autorizados} showOverlays={showOverlays} />
       </div>
     </div>
   );
