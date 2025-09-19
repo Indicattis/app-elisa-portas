@@ -104,7 +104,6 @@ export default function MapaAutorizados() {
         const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
           body: {
             id: autorizado.id,
-            endereco: autorizado.endereco || '',
             cidade: autorizado.cidade,
             estado: autorizado.estado
           }

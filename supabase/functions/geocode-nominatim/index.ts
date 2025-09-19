@@ -10,7 +10,6 @@ interface NominatimResponse {
 
 interface GeocodeRequest {
   id: string;
-  endereco: string;
   cidade: string;
   estado: string;
 }
@@ -27,12 +26,12 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { id, endereco, cidade, estado }: GeocodeRequest = await req.json();
+    const { id, cidade, estado }: GeocodeRequest = await req.json();
     
-    console.log(`Geocoding autorizado ${id}: ${endereco}, ${cidade}, ${estado}`);
+    console.log(`Geocoding autorizado ${id}: ${cidade}, ${estado}`);
 
     // Build the search query
-    const addressParts = [endereco, cidade, estado, 'Brasil'].filter(Boolean);
+    const addressParts = [cidade, estado, 'Brasil'].filter(Boolean);
     const searchQuery = encodeURIComponent(addressParts.join(', '));
     
     // Call Nominatim API (OpenStreetMap's geocoding service)

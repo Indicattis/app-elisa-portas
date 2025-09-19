@@ -253,7 +253,6 @@ export default function ParceiroEdit() {
       const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
         body: {
           id,
-          endereco: form.endereco || '',
           cidade: form.cidade,
           estado: form.estado
         }
