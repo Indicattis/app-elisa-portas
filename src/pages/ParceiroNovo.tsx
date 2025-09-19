@@ -16,6 +16,7 @@ import {
   getEtapasByTipo 
 } from "@/utils/parceiros";
 import { LogoUpload } from "@/components/LogoUpload";
+import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 
 interface ParceiroForm {
   nome: string;
@@ -23,11 +24,9 @@ interface ParceiroForm {
   telefone: string;
   whatsapp: string;
   responsavel: string;
-  endereco: string;
   cidade: string;
   estado: string;
   cep: string;
-  regiao: string;
   ativo: boolean;
   logo_url: string;
   vendedor_id: string;
@@ -54,11 +53,9 @@ export default function ParceiroNovo() {
     telefone: "",
     whatsapp: "",
     responsavel: "",
-    endereco: "",
     cidade: "",
     estado: "",
     cep: "",
-    regiao: "",
     ativo: true,
     logo_url: "",
     vendedor_id: "",
@@ -67,6 +64,8 @@ export default function ParceiroNovo() {
     licenciado_etapa: tipoParceiroFinal === 'licenciado' ? order[0] : undefined,
     tipo_parceiro: tipoParceiroFinal
   });
+  
+  const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
   
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [saving, setSaving] = useState(false);
@@ -98,7 +97,6 @@ export default function ParceiroNovo() {
     
     // Campos obrigatórios
     if (!form.nome.trim()) newErrors.nome = "Nome é obrigatório";
-    if (!form.endereco.trim()) newErrors.endereco = "Endereço é obrigatório";
     if (!form.cidade.trim()) newErrors.cidade = "Cidade é obrigatória";
     if (!form.estado.trim()) newErrors.estado = "Estado é obrigatório";
     if (!form.cep.trim()) newErrors.cep = "CEP é obrigatório";
@@ -113,6 +111,11 @@ export default function ParceiroNovo() {
 
   const handleLogoUpdate = (logoUrl: string) => {
     setForm({ ...form, logo_url: logoUrl });
+  };
+
+  const handleEstadoChange = (estadoSigla: string) => {
+    setForm({ ...form, estado: estadoSigla, cidade: '' });
+    setCidadesDisponiveis(getCidadesPorEstado(estadoSigla));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,11 +139,11 @@ export default function ParceiroNovo() {
         telefone: form.telefone,
         whatsapp: form.whatsapp,
         responsavel: form.responsavel,
-        endereco: form.endereco,
+        endereco: null,
         cidade: form.cidade,
         estado: form.estado,
         cep: form.cep,
-        regiao: form.regiao || null,
+        regiao: null,
         ativo: form.ativo,
         logo_url: form.logo_url || null,
         vendedor_id: form.vendedor_id,
@@ -318,41 +321,43 @@ export default function ParceiroNovo() {
 
               {/* Coluna Direita */}
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="endereco">Endereço *</Label>
-                  <Input
-                    id="endereco"
-                    placeholder="Rua, número, bairro"
-                    value={form.endereco}
-                    onChange={(e) => setForm({ ...form, endereco: e.target.value })}
-                    className={errors.endereco ? "border-red-500" : ""}
-                  />
-                  {errors.endereco && <p className="text-sm text-red-500">{errors.endereco}</p>}
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade *</Label>
-                    <Input
-                      id="cidade"
-                      placeholder="Cidade"
-                      value={form.cidade}
-                      onChange={(e) => setForm({ ...form, cidade: e.target.value })}
-                      className={errors.cidade ? "border-red-500" : ""}
-                    />
-                    {errors.cidade && <p className="text-sm text-red-500">{errors.cidade}</p>}
+                    <Label htmlFor="estado">Estado *</Label>
+                    <Select value={form.estado} onValueChange={handleEstadoChange}>
+                      <SelectTrigger className={errors.estado ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Selecione o estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ESTADOS_BRASIL.map((estado) => (
+                          <SelectItem key={estado.sigla} value={estado.sigla}>
+                            {estado.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.estado && <p className="text-sm text-red-500">{errors.estado}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="estado">Estado *</Label>
-                    <Input
-                      id="estado"
-                      placeholder="Estado"
-                      value={form.estado}
-                      onChange={(e) => setForm({ ...form, estado: e.target.value })}
-                      className={errors.estado ? "border-red-500" : ""}
-                    />
-                    {errors.estado && <p className="text-sm text-red-500">{errors.estado}</p>}
+                    <Label htmlFor="cidade">Cidade *</Label>
+                    <Select 
+                      value={form.cidade} 
+                      onValueChange={(value) => setForm({ ...form, cidade: value })}
+                      disabled={!form.estado}
+                    >
+                      <SelectTrigger className={errors.cidade ? "border-red-500" : ""}>
+                        <SelectValue placeholder={form.estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cidadesDisponiveis.map((cidade) => (
+                          <SelectItem key={cidade} value={cidade}>
+                            {cidade}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.cidade && <p className="text-sm text-red-500">{errors.cidade}</p>}
                   </div>
                 </div>
 
@@ -366,16 +371,6 @@ export default function ParceiroNovo() {
                     className={errors.cep ? "border-red-500" : ""}
                   />
                   {errors.cep && <p className="text-sm text-red-500">{errors.cep}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="regiao">Região</Label>
-                  <Input
-                    id="regiao"
-                    placeholder="Região de atuação"
-                    value={form.regiao}
-                    onChange={(e) => setForm({ ...form, regiao: e.target.value })}
-                  />
                 </div>
 
                 <div className="space-y-2">

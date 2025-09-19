@@ -17,6 +17,7 @@ import {
   TIPO_PARCEIRO_LABELS, 
   getEtapasByTipo 
 } from "@/utils/parceiros";
+import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 
 interface ParceiroForm {
   nome: string;
@@ -27,7 +28,6 @@ interface ParceiroForm {
   cidade: string;
   estado: string;
   cep: string;
-  regiao: string;
   ativo: boolean;
   logo_url: string;
   vendedor_id: string;
@@ -57,12 +57,13 @@ export default function ParceiroEdit() {
     cidade: "",
     estado: "",
     cep: "",
-    regiao: "",
     ativo: true,
     logo_url: "",
     vendedor_id: "",
     tipo_parceiro: 'autorizado'
   });
+  
+  const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
   
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +103,6 @@ export default function ParceiroEdit() {
           cidade: data.cidade || "",
           estado: data.estado || "",
           cep: data.cep || "",
-          regiao: data.regiao || "",
           ativo: data.ativo,
           logo_url: data.logo_url || "",
           vendedor_id: data.vendedor_id || "",
@@ -111,6 +111,11 @@ export default function ParceiroEdit() {
           licenciado_etapa: data.licenciado_etapa,
           tipo_parceiro: data.tipo_parceiro || 'autorizado'
         });
+
+        // Load cities for the current state
+        if (data.estado) {
+          setCidadesDisponiveis(getCidadesPorEstado(data.estado));
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar parceiro:', error);
@@ -160,6 +165,11 @@ export default function ParceiroEdit() {
     setForm({ ...form, logo_url: logoUrl || "" });
   };
 
+  const handleEstadoChange = (estadoSigla: string) => {
+    setForm({ ...form, estado: estadoSigla, cidade: '' });
+    setCidadesDisponiveis(getCidadesPorEstado(estadoSigla));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -181,10 +191,11 @@ export default function ParceiroEdit() {
         telefone: form.telefone,
         whatsapp: form.whatsapp,
         responsavel: form.responsavel,
+        endereco: null,
         cidade: form.cidade,
         estado: form.estado,
         cep: form.cep,
-        regiao: form.regiao || null,
+        regiao: null,
         ativo: form.ativo,
         logo_url: form.logo_url || null,
         vendedor_id: form.vendedor_id,
@@ -472,27 +483,41 @@ export default function ParceiroEdit() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade *</Label>
-                    <Input
-                      id="cidade"
-                      placeholder="Cidade"
-                      value={form.cidade}
-                      onChange={(e) => setForm({ ...form, cidade: e.target.value })}
-                      className={errors.cidade ? "border-red-500" : ""}
-                    />
-                    {errors.cidade && <p className="text-sm text-red-500">{errors.cidade}</p>}
+                    <Label htmlFor="estado">Estado *</Label>
+                    <Select value={form.estado} onValueChange={handleEstadoChange}>
+                      <SelectTrigger className={errors.estado ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Selecione o estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ESTADOS_BRASIL.map((estado) => (
+                          <SelectItem key={estado.sigla} value={estado.sigla}>
+                            {estado.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.estado && <p className="text-sm text-red-500">{errors.estado}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="estado">Estado *</Label>
-                    <Input
-                      id="estado"
-                      placeholder="Estado"
-                      value={form.estado}
-                      onChange={(e) => setForm({ ...form, estado: e.target.value })}
-                      className={errors.estado ? "border-red-500" : ""}
-                    />
-                    {errors.estado && <p className="text-sm text-red-500">{errors.estado}</p>}
+                    <Label htmlFor="cidade">Cidade *</Label>
+                    <Select 
+                      value={form.cidade} 
+                      onValueChange={(value) => setForm({ ...form, cidade: value })}
+                      disabled={!form.estado}
+                    >
+                      <SelectTrigger className={errors.cidade ? "border-red-500" : ""}>
+                        <SelectValue placeholder={form.estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cidadesDisponiveis.map((cidade) => (
+                          <SelectItem key={cidade} value={cidade}>
+                            {cidade}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.cidade && <p className="text-sm text-red-500">{errors.cidade}</p>}
                   </div>
                 </div>
 
@@ -506,16 +531,6 @@ export default function ParceiroEdit() {
                     className={errors.cep ? "border-red-500" : ""}
                   />
                   {errors.cep && <p className="text-sm text-red-500">{errors.cep}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="regiao">Região</Label>
-                  <Input
-                    id="regiao"
-                    placeholder="Região de atuação"
-                    value={form.regiao}
-                    onChange={(e) => setForm({ ...form, regiao: e.target.value })}
-                  />
                 </div>
 
                 <div className="space-y-2">
