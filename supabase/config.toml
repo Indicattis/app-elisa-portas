@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.geocode-nominatim]
 verify_jwt = false
+
+[functions.batch-geocode-autorizados]
+verify_jwt = false

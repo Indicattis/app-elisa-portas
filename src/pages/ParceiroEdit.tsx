@@ -225,6 +225,22 @@ export default function ParceiroEdit() {
 
       if (error) throw error;
 
+      // Geocodificar automaticamente se cidade e estado estiverem presentes e mudaram
+      if (id && form.cidade && form.estado) {
+        try {
+          await supabase.functions.invoke('geocode-nominatim', {
+            body: {
+              id,
+              cidade: form.cidade,
+              estado: form.estado
+            }
+          });
+        } catch (geocodeError) {
+          console.warn('Erro na geocodificação automática:', geocodeError);
+          // Não falha o processo principal se a geocodificação falhar
+        }
+      }
+
       toast({
         title: 'Sucesso',
         description: `${TIPO_PARCEIRO_LABELS[tipoParceiroAtual]} atualizado com sucesso.`

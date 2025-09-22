@@ -161,11 +161,29 @@ export default function ParceiroNovo() {
         insertData.licenciado_etapa = form.licenciado_etapa;
       }
 
-      const { error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from('autorizados')
-        .insert([insertData]);
+        .insert([insertData])
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Geocodificar automaticamente se cidade e estado estiverem presentes
+      if (insertedData?.id && form.cidade && form.estado) {
+        try {
+          await supabase.functions.invoke('geocode-nominatim', {
+            body: {
+              id: insertedData.id,
+              cidade: form.cidade,
+              estado: form.estado
+            }
+          });
+        } catch (geocodeError) {
+          console.warn('Erro na geocodificação automática:', geocodeError);
+          // Não falha o processo principal se a geocodificação falhar
+        }
+      }
 
       toast({
         title: 'Sucesso',
