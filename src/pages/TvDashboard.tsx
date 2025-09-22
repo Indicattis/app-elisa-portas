@@ -391,6 +391,39 @@ export default function TvDashboard() {
                              </div>}
                         </div>
                         
+                        {/* Nome da categoria e valores das metas */}
+                        <div className="text-center mt-4 space-y-2">
+                          <h3 className={`text-lg font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent`}>
+                            {category.name}
+                          </h3>
+                          <div className="text-sm text-white/80">
+                            {category.name === 'Orion' ? (
+                              <span>
+                                ≥ {new Intl.NumberFormat('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL',
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0
+                                }).format(category.minValue)}
+                              </span>
+                            ) : (
+                              <span>
+                                {new Intl.NumberFormat('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL',
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0
+                                }).format(category.minValue)} - {new Intl.NumberFormat('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL',
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0
+                                }).format(category.maxValue)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
                       </div>;
                 })}
                 </div>
