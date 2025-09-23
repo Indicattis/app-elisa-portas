@@ -169,7 +169,7 @@ export type Database = {
           email: string | null
           endereco: string | null
           estado: string | null
-          etapa: Database["public"]["Enums"]["autorizado_etapa"]
+          etapa: Database["public"]["Enums"]["autorizado_etapa"] | null
           geocode_precision: string | null
           id: string
           inativado_automaticamente: boolean | null
@@ -202,7 +202,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
-          etapa?: Database["public"]["Enums"]["autorizado_etapa"]
+          etapa?: Database["public"]["Enums"]["autorizado_etapa"] | null
           geocode_precision?: string | null
           id?: string
           inativado_automaticamente?: boolean | null
@@ -235,7 +235,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
-          etapa?: Database["public"]["Enums"]["autorizado_etapa"]
+          etapa?: Database["public"]["Enums"]["autorizado_etapa"] | null
           geocode_precision?: string | null
           id?: string
           inativado_automaticamente?: boolean | null
@@ -2449,13 +2449,7 @@ export type Database = {
         | "tv_dashboard"
         | "instalacoes"
         | "documentos"
-      autorizado_etapa:
-        | "integracao"
-        | "treinamento_comercial"
-        | "treinamento_ficha_tecnica"
-        | "treinamento_instalacao"
-        | "apto"
-        | "apresentacao_proposta"
+      autorizado_etapa: "apresentacao_proposta" | "treinamentos_video" | "apto"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
       documento_categoria:
         | "manual"
@@ -2671,14 +2665,7 @@ export const Constants = {
         "instalacoes",
         "documentos",
       ],
-      autorizado_etapa: [
-        "integracao",
-        "treinamento_comercial",
-        "treinamento_ficha_tecnica",
-        "treinamento_instalacao",
-        "apto",
-        "apresentacao_proposta",
-      ],
+      autorizado_etapa: ["apresentacao_proposta", "treinamentos_video", "apto"],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
       documento_categoria: [
         "manual",

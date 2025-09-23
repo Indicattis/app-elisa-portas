@@ -131,9 +131,8 @@ export function useAutorizadosPerformance() {
           case 'treinamento_comercial':
             return 'apresentacao_proposta';
           case 'treinamento_ficha_tecnica':
-            return 'treinamento_ficha_tecnica';
           case 'treinamento_instalacao':
-            return 'treinamento_instalacao';
+            return 'treinamentos_video';
           case 'apto':
             return 'apto';
           default:

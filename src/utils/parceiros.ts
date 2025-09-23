@@ -1,13 +1,12 @@
 export type TipoParceiro = 'autorizado' | 'representante' | 'licenciado';
 export type RepresentanteEtapa = 'inicial' | 'qualificacao' | 'proposta' | 'contratado';
 export type LicenciadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
-export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamento_ficha_tecnica' | 'treinamento_instalacao' | 'apto';
+export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamentos_video' | 'apto';
 
 // Etapas para Autorizados
 export const ETAPAS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
   apresentacao_proposta: 'Apresentação Proposta',
-  treinamento_ficha_tecnica: 'Treinamento Ficha Técnica',
-  treinamento_instalacao: 'Treinamento Instalação',
+  treinamentos_video: 'Treinamentos em Vídeo',
   apto: 'Apto'
 };
 
@@ -30,8 +29,7 @@ export const ETAPAS_LICENCIADO: Record<LicenciadoEtapa, string> = {
 // Cores das etapas
 export const ETAPA_COLORS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
   apresentacao_proposta: 'hsl(var(--chart-1))',
-  treinamento_ficha_tecnica: 'hsl(var(--chart-2))',
-  treinamento_instalacao: 'hsl(var(--chart-3))',
+  treinamentos_video: 'hsl(var(--chart-2))',
   apto: 'hsl(var(--chart-4))'
 };
 
@@ -52,8 +50,7 @@ export const ETAPA_COLORS_LICENCIADO: Record<LicenciadoEtapa, string> = {
 // Ordenação das etapas
 export const ETAPA_ORDER_AUTORIZADO: AutorizadoEtapa[] = [
   'apresentacao_proposta',
-  'treinamento_ficha_tecnica',
-  'treinamento_instalacao',
+  'treinamentos_video',
   'apto'
 ];
 
