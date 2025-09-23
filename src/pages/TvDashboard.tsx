@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
+  numero_vendas: number;
   posicao: number;
   foto_perfil_url?: string;
 }
@@ -335,6 +336,7 @@ export default function TvDashboard() {
                         }).format(vendedor.total_vendas)}
                           </div>
                           <div className="text-lg text-muted-foreground mt-2 space-y-1">
+                            <div>{vendedor.numero_vendas} vendas realizadas</div>
                             <div>{whatsappStats.find(w => w.nome === vendedor.nome)?.total_clicks || 0} leads WhatsApp</div>
                             <div>{autorizadosStats[vendedor.nome] || 0} autorizados</div>
                           </div>
