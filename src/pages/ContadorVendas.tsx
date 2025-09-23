@@ -89,6 +89,15 @@ export default function ContadorVendas() {
     fetchYear(year);
   }, [year]);
 
+  // Atualizar dados a cada 1 hora
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchYear(year);
+    }, 60 * 60 * 1000); // 1 hora em milissegundos
+
+    return () => clearInterval(interval);
+  }, [year]);
+
   const handlePrevYear = () => setYear(y => y - 1);
   const handleNextYear = () => setYear(y => y + 1);
 
