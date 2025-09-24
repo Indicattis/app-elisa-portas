@@ -17,6 +17,7 @@ export default function TvDashboard() {
   const [api, setApi] = useState<CarouselApi>();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Use React Query hooks for data fetching
   const {
@@ -78,6 +79,27 @@ export default function TvDashboard() {
 
     return () => clearInterval(interval);
   }, [api, isHovering]);
+
+  // Setup progress bar effect
+  useEffect(() => {
+    if (!api || isHovering) return;
+    
+    const progressInterval = setInterval(() => {
+      setProgress(prevProgress => {
+        if (prevProgress >= 100) {
+          return 0; // Reset when reaching 100%
+        }
+        return prevProgress + 1; // Increment by 1% every 100ms (10s total)
+      });
+    }, 100); // Update every 100ms
+
+    return () => clearInterval(progressInterval);
+  }, [api, isHovering, selectedIndex]);
+
+  // Reset progress when slide changes
+  useEffect(() => {
+    setProgress(0);
+  }, [selectedIndex]);
 
   // Setup event listeners for carousel
   useEffect(() => {
@@ -438,6 +460,14 @@ export default function TvDashboard() {
         <CarouselPrevious className="left-2 sm:-left-12" />
         <CarouselNext className="right-2 sm:-right-12" />
       </Carousel>
+      
+      {/* Progress Bar */}
+      <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 w-80">
+        <Progress 
+          value={progress} 
+          className="h-2 bg-white/20 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-primary/80 [&>div]:transition-all [&>div]:duration-100" 
+        />
+      </div>
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
