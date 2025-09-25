@@ -376,23 +376,23 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
 
       {/* State indicators */}
       {estadosOrdenados.length > 0 && showOverlays && (
-        <div className="absolute z-[1000] bottom-4 right-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 max-w-xs">
-          <h4 className="text-sm font-semibold mb-2 text-center">Parceiros por Estado</h4>
-          <div className="space-y-2 text-xs">
+        <div className="absolute z-[1000] top-[100px] right-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-md">
+          <h4 className="text-lg font-semibold mb-4 text-center">Parceiros por Estado</h4>
+          <div className="space-y-3 text-sm">
             {estadosOrdenados.map(({ estado, total, tipos }) => (
-              <div key={estado} className="bg-muted/50 rounded p-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium">{estado}</span>
-                  <Badge variant="secondary" className="h-5 text-xs">
+              <div key={estado} className="bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-base">{estado}</span>
+                  <Badge variant="secondary" className="h-6 text-sm px-2">
                     {total}
                   </Badge>
                 </div>
-                <div className="flex gap-1 flex-wrap">
+                <div className="flex gap-2 flex-wrap">
                   {Object.entries(tipos).map(([tipo, count]) => (
                     <Badge 
                       key={tipo}
                       variant="outline" 
-                      className="h-4 text-xs px-1"
+                      className="h-5 text-xs px-2"
                       style={{
                         borderColor: getMarkerColorByTipo(tipo as TipoParceiro) + '60',
                         color: getMarkerColorByTipo(tipo as TipoParceiro)
@@ -405,8 +405,8 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
               </div>
             ))}
           </div>
-          <div className="mt-2 pt-2 border-t border-border text-center">
-            <span className="text-xs text-muted-foreground">
+          <div className="mt-3 pt-3 border-t border-border text-center">
+            <span className="text-sm text-muted-foreground">
               Total: {autorizados.filter(a => a.ativo).length} parceiros
             </span>
           </div>
