@@ -78,9 +78,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center justify-center px-2 py-4 max-h-[50px]">
-          <div className="w-full max-w-[120px]">
+      <SidebarHeader className="h-12">
+        <div className="flex items-center justify-center px-2 h-12">
+          <div className="w-full max-w-[120px] h-12 flex items-center justify-center">
             <img
               src={currentLogo}
               alt="Elisa Portas"
