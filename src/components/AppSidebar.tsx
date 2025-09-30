@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock } from "lucide-react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
 import { 
@@ -18,17 +18,31 @@ import { icons } from "lucide-react";
 
 // Mapeamento de ícones do Lucide
 const iconMap: Record<string, any> = {
+  Home,
   LayoutDashboard,
-  BarChart3, 
-  FileText,
-  Calculator,
-  Calendar,
-  Factory,
+  BarChart3,
   TrendingUp,
-  CreditCard,
+  UserPlus,
+  FileText,
+  FileSpreadsheet,
+  Calculator,
+  ShoppingCart,
+  Calendar,
   CalendarDays,
-  DollarSign,
+  MapPin,
+  Factory,
+  Cog,
   Users,
+  Handshake,
+  FolderOpen,
+  Wrench,
+  Receipt,
+  Megaphone,
+  CreditCard,
+  Banknote,
+  Network,
+  DollarSign,
+  Target,
   Settings,
 };
 
