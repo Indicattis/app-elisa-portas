@@ -84,7 +84,7 @@ export function AppSidebar() {
             <img
               src={currentLogo}
               alt="Elisa Portas"
-              className="w-full h-auto"
+              className="w-full h-auto max-h-[50px] object-contain"
             />
           </div>
         </div>
