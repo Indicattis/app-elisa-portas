@@ -465,15 +465,18 @@ export default function TvDashboard() {
               
               {/* Lista de vendedores com progresso */}
               <div className="w-full max-w-6xl space-y-4">
-                {vendedores
-                  .sort((a, b) => {
-                    const autorizadosA = autorizadosStats[a.nome] || 0;
-                    const autorizadosB = autorizadosStats[b.nome] || 0;
-                    return autorizadosB - autorizadosA;
-                  })
+                {Object.entries(autorizadosStats)
+                  .sort((a, b) => b[1] - a[1])
                   .slice(0, 8)
-                  .map(vendedor => {
-                  const autorizadosCount = autorizadosStats[vendedor.nome] || 0;
+                  .map(([nomeVendedor, qtdAutorizados]) => {
+                  const vendedor = vendedores.find(v => v.nome === nomeVendedor) || {
+                    nome: nomeVendedor,
+                    foto_perfil_url: undefined,
+                    total_vendas: 0,
+                    numero_vendas: 0,
+                    posicao: 0
+                  };
+                  const autorizadosCount = qtdAutorizados;
                   const progresso = Math.min(100, (autorizadosCount / 100) * 100);
                   
                   // Cor da barra baseada no progresso
