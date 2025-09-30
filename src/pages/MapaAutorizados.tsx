@@ -222,74 +222,74 @@ export default function MapaAutorizados() {
       )}
 
       {/* Painel de filtros */}
-      <div className="fixed z-[9999]" style={{ top: '370px', left: '20px' }}>
-        <Card className="min-w-[200px] shadow-lg bg-card/95 backdrop-blur ml-[60px]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-autorizados"
-                checked={filters.autorizados}
-                onCheckedChange={(checked) => 
-                  setFilters(prev => ({ ...prev, autorizados: checked as boolean }))
-                }
-              />
-              <Label 
-                htmlFor="filter-autorizados" 
-                className="text-sm font-normal cursor-pointer"
-              >
-                Autorizados
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-representantes"
-                checked={filters.representantes}
-                onCheckedChange={(checked) => 
-                  setFilters(prev => ({ ...prev, representantes: checked as boolean }))
-                }
-              />
-              <Label 
-                htmlFor="filter-representantes" 
-                className="text-sm font-normal cursor-pointer"
-              >
-                Representantes
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-licenciados"
-                checked={filters.licenciados}
-                onCheckedChange={(checked) => 
-                  setFilters(prev => ({ ...prev, licenciados: checked as boolean }))
-                }
-              />
-              <Label 
-                htmlFor="filter-licenciados" 
-                className="text-sm font-normal cursor-pointer"
-              >
-                Licenciados
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-instalacoes"
-                checked={filters.instalacoes}
-                onCheckedChange={(checked) => 
-                  setFilters(prev => ({ ...prev, instalacoes: checked as boolean }))
-                }
-              />
-              <Label 
-                htmlFor="filter-instalacoes" 
-                className="text-sm font-normal cursor-pointer"
-              >
-                Instalações
-              </Label>
+      <div className="fixed z-[9999] left-1/2 -translate-x-1/2" style={{ bottom: '20px' }}>
+        <Card className="shadow-2xl bg-card/95 backdrop-blur rounded-t-3xl rounded-b-none border-t border-x border-b-0">
+          <CardContent className="px-8 py-4">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 group cursor-pointer transition-transform duration-200 hover:scale-110">
+                <Checkbox 
+                  id="filter-autorizados"
+                  checked={filters.autorizados}
+                  onCheckedChange={(checked) => 
+                    setFilters(prev => ({ ...prev, autorizados: checked as boolean }))
+                  }
+                  className="rounded-full h-5 w-5 transition-transform duration-200 group-hover:scale-110"
+                />
+                <Label 
+                  htmlFor="filter-autorizados" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Autorizados
+                </Label>
+              </div>
+              <div className="flex items-center gap-2 group cursor-pointer transition-transform duration-200 hover:scale-110">
+                <Checkbox 
+                  id="filter-representantes"
+                  checked={filters.representantes}
+                  onCheckedChange={(checked) => 
+                    setFilters(prev => ({ ...prev, representantes: checked as boolean }))
+                  }
+                  className="rounded-full h-5 w-5 transition-transform duration-200 group-hover:scale-110"
+                />
+                <Label 
+                  htmlFor="filter-representantes" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Representantes
+                </Label>
+              </div>
+              <div className="flex items-center gap-2 group cursor-pointer transition-transform duration-200 hover:scale-110">
+                <Checkbox 
+                  id="filter-licenciados"
+                  checked={filters.licenciados}
+                  onCheckedChange={(checked) => 
+                    setFilters(prev => ({ ...prev, licenciados: checked as boolean }))
+                  }
+                  className="rounded-full h-5 w-5 transition-transform duration-200 group-hover:scale-110"
+                />
+                <Label 
+                  htmlFor="filter-licenciados" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Licenciados
+                </Label>
+              </div>
+              <div className="flex items-center gap-2 group cursor-pointer transition-transform duration-200 hover:scale-110">
+                <Checkbox 
+                  id="filter-instalacoes"
+                  checked={filters.instalacoes}
+                  onCheckedChange={(checked) => 
+                    setFilters(prev => ({ ...prev, instalacoes: checked as boolean }))
+                  }
+                  className="rounded-full h-5 w-5 transition-transform duration-200 group-hover:scale-110"
+                />
+                <Label 
+                  htmlFor="filter-instalacoes" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Instalações
+                </Label>
+              </div>
             </div>
           </CardContent>
         </Card>
