@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { RefreshCw, Loader2, Eye, EyeOff } from "lucide-react";
 import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
+import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 
 interface Autorizado {
   id: string;
@@ -39,6 +40,7 @@ export default function MapaAutorizados() {
   const [loading, setLoading] = useState(true);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [showOverlays, setShowOverlays] = useState(true);
+  const { instalacoes } = useInstalacoesCadastradas();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -140,7 +142,8 @@ export default function MapaAutorizados() {
     inativos: autorizados.filter(a => !a.ativo).length,
     geocodificados: autorizados.filter(a => a.latitude && a.longitude).length,
     naoGeocodificados: autorizados.filter(a => !a.latitude || !a.longitude).length,
-    ativosComCoordenadas: autorizados.filter(a => a.ativo && a.latitude && a.longitude).length
+    ativosComCoordenadas: autorizados.filter(a => a.ativo && a.latitude && a.longitude).length,
+    instalacoesGeocodificadas: instalacoes.filter(i => i.latitude && i.longitude).length
   };
 
   if (loading) {
@@ -189,6 +192,10 @@ export default function MapaAutorizados() {
                   <span>No mapa:</span>
                   <span>{stats.ativosComCoordenadas}</span>
                 </div>
+                <div className="flex justify-between text-red-600 font-medium">
+                  <span>Instalações:</span>
+                  <span>{stats.instalacoesGeocodificadas}</span>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -229,7 +236,11 @@ export default function MapaAutorizados() {
 
       {/* Mapa com margem superior e altura total relativa */}
       <div className="absolute inset-0 w-full" style={{ paddingTop: '50px' }}>
-        <AutorizadosMapLeaflet autorizados={autorizados} showOverlays={showOverlays} />
+        <AutorizadosMapLeaflet 
+          autorizados={autorizados} 
+          instalacoes={instalacoes}
+          showOverlays={showOverlays} 
+        />
       </div>
     </div>
   );

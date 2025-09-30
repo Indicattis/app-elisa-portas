@@ -6,8 +6,9 @@ import 'leaflet/dist/leaflet.css';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { MapPin, Phone, Mail, User, Navigation, X } from 'lucide-react';
+import { MapPin, Phone, Mail, User, Navigation, X, Home } from 'lucide-react';
 import { getMarkerColorByTipo, TIPO_PARCEIRO_LABELS, type TipoParceiro } from '@/utils/parceiros';
+import { InstalacaoCadastrada } from '@/hooks/useInstalacoesCadastradas';
 
 // Fix for default markers in React Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -40,6 +41,7 @@ interface Autorizado {
 
 interface AutorizadosMapLeafletProps {
   autorizados: Autorizado[];
+  instalacoes?: InstalacaoCadastrada[];
   showOverlays?: boolean;
 }
 
@@ -56,7 +58,7 @@ const HQ_COORDINATES = {
   lng: -51.1794
 };
 
-const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizados, showOverlays = true }) => {
+const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizados, instalacoes = [], showOverlays = true }) => {
   const mapRef = useRef<L.Map | null>(null);
   const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
 
@@ -66,6 +68,13 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
       autorizado.latitude && 
       autorizado.longitude && 
       autorizado.ativo
+  );
+
+  // Filter instalacoes with valid coordinates
+  const instalacoesWithCoords = instalacoes.filter(
+    instalacao => 
+      instalacao.latitude && 
+      instalacao.longitude
   );
 
   // Count parceiros by state and type
@@ -180,6 +189,22 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
         <div class="custom-partner-marker" style="background-color: ${color};">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+        </div>
+      `,
+      className: 'custom-partner-marker-container',
+      iconSize: L.point(32, 40),
+      iconAnchor: L.point(16, 40),
+    });
+  };
+
+  // Custom marker icon for instalacoes (red)
+  const createInstalacaoIcon = () => {
+    return L.divIcon({
+      html: `
+        <div class="custom-partner-marker" style="background-color: #ef4444;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
           </svg>
         </div>
       `,
@@ -541,6 +566,53 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
               </Marker>
             ))}
           </MarkerClusterGroup>
+
+          {/* Instalações markers (not clustered) */}
+          {instalacoesWithCoords.map((instalacao) => (
+            <Marker
+              key={`instalacao-${instalacao.id}`}
+              position={[instalacao.latitude!, instalacao.longitude!]}
+              icon={createInstalacaoIcon()}
+            >
+              <Popup className="custom-popup" minWidth={250}>
+                <div className="p-4 space-y-3">
+                  {/* Header */}
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                      <Home className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base leading-tight">
+                        {instalacao.nome_cliente}
+                      </h3>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                        <MapPin className="h-3 w-3" />
+                        <span>{instalacao.cidade}, {instalacao.estado}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="space-y-2 text-sm border-t pt-3">
+                    {instalacao.tamanho && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Tamanho:</span>
+                        <span className="font-medium">{instalacao.tamanho}</span>
+                      </div>
+                    )}
+                    {instalacao.geocode_precision && (
+                      <div className="text-xs text-muted-foreground border-t pt-2">
+                        <div className="flex items-start gap-1">
+                          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          <span className="leading-tight">{instalacao.geocode_precision}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
 
           {/* Clicked point marker */}
           {clickedPoint && (

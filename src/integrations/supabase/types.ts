@@ -809,6 +809,51 @@ export type Database = {
           },
         ]
       }
+      instalacoes_cadastradas: {
+        Row: {
+          cidade: string
+          created_at: string
+          created_by: string | null
+          estado: string
+          geocode_precision: string | null
+          id: string
+          last_geocoded_at: string | null
+          latitude: number | null
+          longitude: number | null
+          nome_cliente: string
+          tamanho: string | null
+          updated_at: string
+        }
+        Insert: {
+          cidade: string
+          created_at?: string
+          created_by?: string | null
+          estado: string
+          geocode_precision?: string | null
+          id?: string
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente: string
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string
+          created_at?: string
+          created_by?: string | null
+          estado?: string
+          geocode_precision?: string | null
+          id?: string
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente?: string
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lead_anexos: {
         Row: {
           created_at: string
