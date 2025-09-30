@@ -479,28 +479,28 @@ export default function TvDashboard() {
                   };
                   
                   return (
-                    <div key={vendedor.nome} className="bg-card/30 border border-border/50 rounded-lg p-6">
-                      <div className="flex items-center gap-6">
+                    <div key={vendedor.nome} className="bg-card/30 border border-border/50 rounded-lg p-4">
+                      <div className="flex items-center gap-4">
                         {/* Foto do vendedor */}
                         <div className="relative flex-shrink-0">
                           {vendedor.foto_perfil_url ? (
                             <img 
                               src={vendedor.foto_perfil_url} 
                               alt={`Foto de ${vendedor.nome}`} 
-                              className="w-20 h-20 rounded-full object-cover border-4 border-white/20 shadow-lg" 
+                              className="w-16 h-16 rounded-full object-cover border-4 border-white/20 shadow-lg" 
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                                 (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                               }} 
                             />
                           ) : null}
-                          <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-2xl shadow-lg border-4 border-white/20 ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                          <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-2xl shadow-lg border-4 border-white/20 ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
                             {vendedor.nome.charAt(0).toUpperCase()}
                           </div>
                         </div>
                         
                         {/* Informações e barra de progresso */}
-                        <div className="flex-1 space-y-3">
+                        <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
                             <h3 className="text-3xl font-bold text-white">{vendedor.nome}</h3>
                             <div className="text-right">
@@ -515,7 +515,7 @@ export default function TvDashboard() {
                           
                           {/* Barra de progresso grande */}
                           <div className="space-y-2">
-                            <div className="w-full bg-black/30 rounded-full h-8 border border-white/10">
+                            <div className="w-full bg-black/30 rounded-full h-6 border border-white/10">
                               <div 
                                 className={`h-full rounded-full ${getBarColor(progresso)} transition-all duration-1000 ease-in-out flex items-center justify-end pr-4`}
                                 style={{ width: `${progresso}%` }}
