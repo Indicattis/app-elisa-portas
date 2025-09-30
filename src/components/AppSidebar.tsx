@@ -2,6 +2,9 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
+import { useTheme } from "@/components/ThemeProvider";
+import logoDark from "@/assets/logo-dark.png";
+import logoLight from "@/assets/logo-light.png";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -51,6 +54,11 @@ export function AppSidebar() {
   const { signOut, user, isAdmin } = useAuth();
   const { state } = useSidebar();
   const { data: tabs = [], isLoading } = useTabsAccess('sidebar');
+  const { theme } = useTheme();
+  
+  // Determinar qual logo usar baseado no tema
+  const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const currentLogo = isDarkMode ? logoLight : logoDark;
 
   const isActive = (path: string) =>
     path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(path);
@@ -71,23 +79,12 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center justify-center gap-3 px-2 py-1">
-          {state === "expanded" ? (
-            <>
-              <img
-                src="/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png"
-                alt="Elisa Portas"
-                className="h-8 w-auto"
-              />
-              <span className="font-semibold text-sidebar-foreground">Elisa Portas</span>
-            </>
-          ) : (
-            <img
-              src="/lovable-uploads/9103e850-9847-4e49-8e7b-1423d2953fe8.png"
-              alt="Ícone da Empresa"
-              className="h-8 w-8"
-            />
-          )}
+        <div className="flex items-center justify-center px-2 py-4">
+          <img
+            src={currentLogo}
+            alt="Elisa Portas"
+            className={state === "expanded" ? "h-10 w-auto" : "h-8 w-8"}
+          />
         </div>
       </SidebarHeader>
 
