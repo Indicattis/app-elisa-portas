@@ -454,6 +454,93 @@ export default function TvDashboard() {
               </div>
             </div>
           </CarouselItem>
+          {/* Slide 4: Meta Parceiros Autorizados */}
+          <CarouselItem className="h-full w-full flex items-center justify-center">
+            <div className="h-full flex flex-col items-center justify-start p-6 space-y-6 w-full">
+              {/* Título */}
+              <div className="text-center">
+                <h1 className="font-anton text-6xl mb-2">META PARCEIROS</h1>
+                <p className="text-2xl text-muted-foreground">100 autorizados por vendedor</p>
+              </div>
+              
+              {/* Lista de vendedores com progresso */}
+              <div className="w-full max-w-6xl space-y-4">
+                {vendedores.slice(0, 8).map(vendedor => {
+                  const autorizadosCount = autorizadosStats[vendedor.nome] || 0;
+                  const progresso = Math.min(100, (autorizadosCount / 100) * 100);
+                  
+                  // Cor da barra baseada no progresso
+                  const getBarColor = (progress: number) => {
+                    if (progress >= 90) return 'bg-gradient-to-r from-green-500 to-green-400';
+                    if (progress >= 70) return 'bg-gradient-to-r from-lime-500 to-lime-400';
+                    if (progress >= 50) return 'bg-gradient-to-r from-yellow-500 to-yellow-400';
+                    if (progress >= 30) return 'bg-gradient-to-r from-orange-500 to-orange-400';
+                    return 'bg-gradient-to-r from-red-500 to-red-400';
+                  };
+                  
+                  return (
+                    <div key={vendedor.nome} className="bg-card/30 border border-border/50 rounded-lg p-6">
+                      <div className="flex items-center gap-6">
+                        {/* Foto do vendedor */}
+                        <div className="relative flex-shrink-0">
+                          {vendedor.foto_perfil_url ? (
+                            <img 
+                              src={vendedor.foto_perfil_url} 
+                              alt={`Foto de ${vendedor.nome}`} 
+                              className="w-20 h-20 rounded-full object-cover border-4 border-white/20 shadow-lg" 
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                              }} 
+                            />
+                          ) : null}
+                          <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-bold text-2xl shadow-lg border-4 border-white/20 ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
+                            {vendedor.nome.charAt(0).toUpperCase()}
+                          </div>
+                        </div>
+                        
+                        {/* Informações e barra de progresso */}
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-3xl font-bold text-white">{vendedor.nome}</h3>
+                            <div className="text-right">
+                              <div className="text-4xl font-bold text-white">
+                                {autorizadosCount}
+                              </div>
+                              <div className="text-lg text-muted-foreground">
+                                de 100
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Barra de progresso grande */}
+                          <div className="space-y-2">
+                            <div className="w-full bg-black/30 rounded-full h-8 border border-white/10">
+                              <div 
+                                className={`h-full rounded-full ${getBarColor(progresso)} transition-all duration-1000 ease-in-out flex items-center justify-end pr-4`}
+                                style={{ width: `${progresso}%` }}
+                              >
+                                <span className="text-white font-bold text-lg">
+                                  {progresso.toFixed(0)}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                              <span>0</span>
+                              <span>25</span>
+                              <span>50</span>
+                              <span>75</span>
+                              <span>100</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </CarouselItem>
         </CarouselContent>
         
         {/* Navigation arrows with responsive positioning */}
@@ -471,7 +558,7 @@ export default function TvDashboard() {
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1, 2].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
+        {[0, 1, 2, 3].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
     </div>;
 }
