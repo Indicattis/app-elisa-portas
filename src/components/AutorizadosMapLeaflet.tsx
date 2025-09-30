@@ -148,16 +148,17 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     return L.divIcon({
       html: `<span class="cluster-icon">${cluster.getChildCount()}</span>`,
       className: 'custom-marker-cluster',
-      iconSize: L.point(40, 40, true)
+      iconSize: L.point(32, 32, true)
     });
   };
 
   // Custom icon for clicked point
   const createClickedPointIcon = () => {
     return L.divIcon({
-      html: `<div class="clicked-point-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div>`,
+      html: `<div class="clicked-point-icon"></div>`,
       className: 'custom-clicked-point',
-      iconSize: L.point(24, 24, true)
+      iconSize: L.point(16, 16, true),
+      iconAnchor: L.point(8, 8)
     });
   };
 
@@ -165,32 +166,20 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   const createPartnerIcon = (tipoParceiro: TipoParceiro) => {
     const color = getMarkerColorByTipo(tipoParceiro);
     return L.divIcon({
-      html: `
-        <div class="custom-partner-marker" style="background-color: ${color};">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-          </svg>
-        </div>
-      `,
+      html: `<div class="custom-partner-marker" style="background-color: ${color};"></div>`,
       className: 'custom-partner-marker-container',
-      iconSize: L.point(32, 40),
-      iconAnchor: L.point(16, 40)
+      iconSize: L.point(14, 14),
+      iconAnchor: L.point(7, 7)
     });
   };
 
   // Custom marker icon for instalacoes (red)
   const createInstalacaoIcon = () => {
     return L.divIcon({
-      html: `
-        <div class="custom-partner-marker" style="background-color: #ef4444;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-          </svg>
-        </div>
-      `,
-      className: 'custom-partner-marker-container',
-      iconSize: L.point(32, 40),
-      iconAnchor: L.point(16, 40)
+      html: `<div class="custom-instalacao-marker"></div>`,
+      className: 'custom-instalacao-marker-container',
+      iconSize: L.point(12, 12),
+      iconAnchor: L.point(6, 6)
     });
   };
 
@@ -209,46 +198,68 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     style.textContent = `
       .custom-marker-cluster {
         background-color: hsl(var(--primary));
-        border: 3px solid hsl(var(--background));
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
       }
       .cluster-icon {
         color: hsl(var(--primary-foreground));
-        font-weight: bold;
-        font-size: 14px;
+        font-weight: 600;
+        font-size: 12px;
       }
       .custom-clicked-point {
         background: none;
         border: none;
       }
       .clicked-point-icon {
-        color: hsl(var(--destructive));
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        width: 16px;
+        height: 16px;
+        background-color: hsl(var(--destructive));
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
       }
       .custom-partner-marker-container {
         background: none;
         border: none;
       }
       .custom-partner-marker {
-        width: 28px;
-        height: 34px;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        transition: transform 0.2s ease;
       }
-      .custom-partner-marker svg {
-        transform: rotate(45deg);
-        margin-top: -2px;
-        margin-left: -1px;
+      .custom-partner-marker-container:hover .custom-partner-marker {
+        transform: scale(1.2);
+      }
+      .custom-instalacao-marker-container {
+        background: none;
+        border: none;
+      }
+      .custom-instalacao-marker {
+        width: 12px;
+        height: 12px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        transition: transform 0.2s ease;
+      }
+      .custom-instalacao-marker-container:hover .custom-instalacao-marker {
+        transform: scale(1.2);
       }
       .leaflet-popup-content-wrapper {
         border-radius: 8px;
