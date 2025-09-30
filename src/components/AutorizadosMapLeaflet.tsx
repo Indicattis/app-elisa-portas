@@ -337,51 +337,49 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       {atendentesOrdenados.length > 0 && showOverlays}
 
       {/* State indicators */}
-      {estadosOrdenados.length > 0 && showOverlays && <div className="fixed z-[1000] top-[50px] left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border-x border-b rounded-b-3xl rounded-t-none shadow-2xl p-4 min-w-[400px]">
-          <h4 className="text-lg font-semibold mb-4 text-center">Parceiros por Estado</h4>
-          
-          {/* Resumo geral com badges coloridos */}
-          <div className="flex items-center justify-center gap-3 mb-4 pb-4 border-b">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Autorizados</span>
-              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#3B82F6', color: 'white' }}>
+      {estadosOrdenados.length > 0 && showOverlays && <div className="fixed z-[1000] top-[50px] left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border-x border-b rounded-b-3xl rounded-t-none shadow-xl p-2 min-w-[300px]">
+          {/* Resumo compacto com badges */}
+          <div className="flex items-center justify-center gap-2 mb-2 pb-2 border-b">
+            <div className="flex items-center gap-1">
+              <span className="text-xs">Aut.</span>
+              <Badge className="rounded-full h-5 w-5 flex items-center justify-center p-0 text-xs" style={{ backgroundColor: '#3B82F6', color: 'white' }}>
                 {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'autorizado').length}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Representantes</span>
-              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#6B7280', color: 'white' }}>
+            <div className="flex items-center gap-1">
+              <span className="text-xs">Rep.</span>
+              <Badge className="rounded-full h-5 w-5 flex items-center justify-center p-0 text-xs" style={{ backgroundColor: '#6B7280', color: 'white' }}>
                 {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'representante').length}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Licenciados</span>
-              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#EAB308', color: 'white' }}>
+            <div className="flex items-center gap-1">
+              <span className="text-xs">Lic.</span>
+              <Badge className="rounded-full h-5 w-5 flex items-center justify-center p-0 text-xs" style={{ backgroundColor: '#EAB308', color: 'white' }}>
                 {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'licenciado').length}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Instalações</span>
-              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#EF4444', color: 'white' }}>
+            <div className="flex items-center gap-1">
+              <span className="text-xs">Inst.</span>
+              <Badge className="rounded-full h-5 w-5 flex items-center justify-center p-0 text-xs" style={{ backgroundColor: '#EF4444', color: 'white' }}>
                 {instalacoesWithCoords.length}
               </Badge>
             </div>
           </div>
           
-          <div className="space-y-3 text-sm max-h-[400px] overflow-y-auto">
+          <div className="space-y-2 text-xs max-h-[300px] overflow-y-auto">
             {estadosOrdenados.map(({
           estado,
           total,
           tipos
-        }) => <div key={estado} className="bg-muted/50 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-base">{estado}</span>
-                  <Badge variant="secondary" className="rounded-full h-6 w-6 flex items-center justify-center p-0 text-sm">
+        }) => <div key={estado} className="bg-muted/50 rounded-lg p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-xs">{estado}</span>
+                  <Badge variant="secondary" className="rounded-full h-5 w-5 flex items-center justify-center p-0 text-xs">
                     {total}
                   </Badge>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  {Object.entries(tipos).map(([tipo, count]) => <Badge key={tipo} variant="outline" className="rounded-full h-6 text-xs px-3" style={{
+                <div className="flex gap-1 flex-wrap">
+                  {Object.entries(tipos).map(([tipo, count]) => <Badge key={tipo} variant="outline" className="rounded-full h-5 text-xs px-2" style={{
               backgroundColor: getMarkerColorByTipo(tipo as TipoParceiro) + '20',
               borderColor: getMarkerColorByTipo(tipo as TipoParceiro) + '60',
               color: getMarkerColorByTipo(tipo as TipoParceiro)
