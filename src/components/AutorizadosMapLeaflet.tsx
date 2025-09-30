@@ -337,9 +337,38 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       {atendentesOrdenados.length > 0 && showOverlays}
 
       {/* State indicators */}
-      {estadosOrdenados.length > 0 && showOverlays && <div className="absolute z-[1000] top-[100px] right-4 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-md">
+      {estadosOrdenados.length > 0 && showOverlays && <div className="fixed z-[1000] top-[50px] left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border-x border-b rounded-b-3xl rounded-t-none shadow-2xl p-4 min-w-[400px]">
           <h4 className="text-lg font-semibold mb-4 text-center">Parceiros por Estado</h4>
-          <div className="space-y-3 text-sm">
+          
+          {/* Resumo geral com badges coloridos */}
+          <div className="flex items-center justify-center gap-3 mb-4 pb-4 border-b">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Autorizados</span>
+              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#3B82F6', color: 'white' }}>
+                {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'autorizado').length}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Representantes</span>
+              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#6B7280', color: 'white' }}>
+                {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'representante').length}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Licenciados</span>
+              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#EAB308', color: 'white' }}>
+                {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'licenciado').length}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Instalações</span>
+              <Badge className="rounded-full h-7 w-7 flex items-center justify-center p-0" style={{ backgroundColor: '#EF4444', color: 'white' }}>
+                {instalacoesWithCoords.length}
+              </Badge>
+            </div>
+          </div>
+          
+          <div className="space-y-3 text-sm max-h-[400px] overflow-y-auto">
             {estadosOrdenados.map(({
           estado,
           total,
@@ -347,12 +376,13 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
         }) => <div key={estado} className="bg-muted/50 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-base">{estado}</span>
-                  <Badge variant="secondary" className="h-6 text-sm px-2">
+                  <Badge variant="secondary" className="rounded-full h-6 w-6 flex items-center justify-center p-0 text-sm">
                     {total}
                   </Badge>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {Object.entries(tipos).map(([tipo, count]) => <Badge key={tipo} variant="outline" className="h-5 text-xs px-2" style={{
+                  {Object.entries(tipos).map(([tipo, count]) => <Badge key={tipo} variant="outline" className="rounded-full h-6 text-xs px-3" style={{
+              backgroundColor: getMarkerColorByTipo(tipo as TipoParceiro) + '20',
               borderColor: getMarkerColorByTipo(tipo as TipoParceiro) + '60',
               color: getMarkerColorByTipo(tipo as TipoParceiro)
             }}>
@@ -360,11 +390,6 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                     </Badge>)}
                 </div>
               </div>)}
-          </div>
-          <div className="mt-3 pt-3 border-t border-border text-center">
-            <span className="text-sm text-muted-foreground">
-              Total: {autorizados.filter(a => a.ativo).length} parceiros
-            </span>
           </div>
         </div>}
 
