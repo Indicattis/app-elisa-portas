@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Loader2, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, Loader2, Eye, EyeOff, Filter } from "lucide-react";
 import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 
@@ -40,6 +42,12 @@ export default function MapaAutorizados() {
   const [loading, setLoading] = useState(true);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [showOverlays, setShowOverlays] = useState(true);
+  const [filters, setFilters] = useState({
+    autorizados: true,
+    representantes: true,
+    licenciados: true,
+    instalacoes: true
+  });
   const { instalacoes } = useInstalacoesCadastradas();
   const { toast } = useToast();
 
@@ -135,6 +143,17 @@ export default function MapaAutorizados() {
     fetchAutorizados();
   };
 
+  // Filtrar autorizados baseado nas opções selecionadas
+  const filteredAutorizados = autorizados.filter(autorizado => {
+    if (autorizado.tipo_parceiro === 'autorizado') return filters.autorizados;
+    if (autorizado.tipo_parceiro === 'representante') return filters.representantes;
+    if (autorizado.tipo_parceiro === 'licenciado') return filters.licenciados;
+    return false;
+  });
+
+  // Filtrar instalações
+  const filteredInstalacoes = filters.instalacoes ? instalacoes : [];
+
   // Calcular estatísticas dos parceiros
   const stats = {
     total: autorizados.length,
@@ -202,6 +221,80 @@ export default function MapaAutorizados() {
         </>
       )}
 
+      {/* Painel de filtros */}
+      <div className="fixed z-[9999]" style={{ top: '370px', left: '20px' }}>
+        <Card className="min-w-[200px] shadow-lg bg-card/95 backdrop-blur ml-[60px]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              Filtros
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="filter-autorizados"
+                checked={filters.autorizados}
+                onCheckedChange={(checked) => 
+                  setFilters(prev => ({ ...prev, autorizados: checked as boolean }))
+                }
+              />
+              <Label 
+                htmlFor="filter-autorizados" 
+                className="text-sm font-normal cursor-pointer"
+              >
+                Autorizados
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="filter-representantes"
+                checked={filters.representantes}
+                onCheckedChange={(checked) => 
+                  setFilters(prev => ({ ...prev, representantes: checked as boolean }))
+                }
+              />
+              <Label 
+                htmlFor="filter-representantes" 
+                className="text-sm font-normal cursor-pointer"
+              >
+                Representantes
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="filter-licenciados"
+                checked={filters.licenciados}
+                onCheckedChange={(checked) => 
+                  setFilters(prev => ({ ...prev, licenciados: checked as boolean }))
+                }
+              />
+              <Label 
+                htmlFor="filter-licenciados" 
+                className="text-sm font-normal cursor-pointer"
+              >
+                Licenciados
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="filter-instalacoes"
+                checked={filters.instalacoes}
+                onCheckedChange={(checked) => 
+                  setFilters(prev => ({ ...prev, instalacoes: checked as boolean }))
+                }
+              />
+              <Label 
+                htmlFor="filter-instalacoes" 
+                className="text-sm font-normal cursor-pointer"
+              >
+                Instalações
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Botões fixos de geocodificação e toggle */}
       <div className="fixed z-[9999] flex flex-col gap-2" style={{ top: '70px', right: '20px' }}>
         <Button
@@ -237,8 +330,8 @@ export default function MapaAutorizados() {
       {/* Mapa com margem superior e altura total relativa */}
       <div className="absolute inset-0 w-full" style={{ paddingTop: '50px' }}>
         <AutorizadosMapLeaflet 
-          autorizados={autorizados} 
-          instalacoes={instalacoes}
+          autorizados={filteredAutorizados} 
+          instalacoes={filteredInstalacoes}
           showOverlays={showOverlays} 
         />
       </div>
