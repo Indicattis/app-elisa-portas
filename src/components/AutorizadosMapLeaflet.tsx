@@ -287,12 +287,12 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({ autorizad
     };
   }, []);
 
-  if (autorizadosWithCoords.length === 0) {
+  if (autorizadosWithCoords.length === 0 && instalacoesWithCoords.length === 0) {
     return (
       <div className="flex items-center justify-center h-full bg-muted/50 rounded-lg">
         <div className="text-center space-y-2">
           <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
-          <h3 className="text-lg font-medium">Nenhum autorizado com localização</h3>
+          <h3 className="text-lg font-medium">Nenhum ponto com localização</h3>
           <p className="text-sm text-muted-foreground">
             Os endereços precisam ser geocodificados para aparecer no mapa
           </p>
