@@ -465,7 +465,14 @@ export default function TvDashboard() {
               
               {/* Lista de vendedores com progresso */}
               <div className="w-full max-w-6xl space-y-4">
-                {vendedores.slice(0, 8).map(vendedor => {
+                {vendedores
+                  .sort((a, b) => {
+                    const autorizadosA = autorizadosStats[a.nome] || 0;
+                    const autorizadosB = autorizadosStats[b.nome] || 0;
+                    return autorizadosB - autorizadosA;
+                  })
+                  .slice(0, 8)
+                  .map(vendedor => {
                   const autorizadosCount = autorizadosStats[vendedor.nome] || 0;
                   const progresso = Math.min(100, (autorizadosCount / 100) * 100);
                   
