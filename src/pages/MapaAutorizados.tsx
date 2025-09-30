@@ -222,7 +222,7 @@ export default function MapaAutorizados() {
       )}
 
       {/* Painel de filtros */}
-      <div className="fixed z-[9999] left-1/2 -translate-x-1/2" style={{ bottom: '20px' }}>
+      <div className="fixed z-[9999] left-1/2 -translate-x-1/2 bottom-0">
         <Card className="shadow-2xl bg-card/95 backdrop-blur rounded-t-3xl rounded-b-none border-t border-x border-b-0">
           <CardContent className="px-8 py-4">
             <div className="flex items-center gap-6">
