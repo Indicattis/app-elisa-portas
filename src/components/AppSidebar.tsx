@@ -79,7 +79,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center justify-center px-2 py-4">
+        <div className="flex items-center justify-center px-2 py-4 max-h-[50px]">
           <div className="w-full max-w-[120px]">
             <img
               src={currentLogo}
