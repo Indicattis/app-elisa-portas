@@ -520,6 +520,20 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                         <span className="text-muted-foreground">Tamanho:</span>
                         <span className="font-medium">{instalacao.tamanho}</span>
                       </div>}
+                    {instalacao.criador && (
+                      <div className="flex items-center gap-2 py-2 border-t">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={instalacao.criador.foto_perfil_url} alt={instalacao.criador.nome} />
+                          <AvatarFallback className="text-xs">
+                            {instalacao.criador.nome.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs text-muted-foreground">Cadastrado por</span>
+                          <p className="text-sm font-medium truncate">{instalacao.criador.nome}</p>
+                        </div>
+                      </div>
+                    )}
                     {instalacao.geocode_precision && <div className="text-xs text-muted-foreground border-t pt-2">
                         <div className="flex items-start gap-1">
                           <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
