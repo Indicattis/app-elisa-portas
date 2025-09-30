@@ -12,7 +12,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Settings, LogOut } from "lucide-react";
+import { Menu, Settings, LogOut, Tv, Map } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -91,13 +91,15 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" asChild>
-                  <NavLink to="/tv-dashboard">
-                    📺 Modo TV
+                  <NavLink to="/tv-dashboard" className="flex items-center gap-2">
+                    <Tv className="h-4 w-4" />
+                    Modo TV
                   </NavLink>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
-                  <NavLink to="/dashboard/mapa-autorizados">
-                    🗺️ Mapa
+                  <NavLink to="/dashboard/mapa-autorizados" className="flex items-center gap-2">
+                    <Map className="h-4 w-4" />
+                    Mapa
                   </NavLink>
                 </Button>
                 <ThemeToggle />
