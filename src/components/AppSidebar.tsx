@@ -83,7 +83,7 @@ export function AppSidebar() {
           <img
             src={currentLogo}
             alt="Elisa Portas"
-            className={state === "expanded" ? "h-10 w-auto" : "h-8 w-8"}
+            className="h-10 w-auto"
           />
         </div>
       </SidebarHeader>
