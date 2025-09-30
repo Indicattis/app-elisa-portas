@@ -1,4 +1,4 @@
-import { MapPin, Trash2, Clock } from 'lucide-react';
+import { MapPin, Trash2, Clock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { InstalacaoCadastrada } from '@/hooks/useInstalacoesCadastradas';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -63,6 +64,19 @@ export const InstalacoesList = ({ instalacoes, onDelete }: InstalacaoListProps) 
                 <p className="text-sm">
                   <span className="font-medium">Tamanho:</span> {instalacao.tamanho}
                 </p>
+              )}
+              {instalacao.criador && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={instalacao.criador.foto_perfil_url} alt={instalacao.criador.nome} />
+                    <AvatarFallback className="text-xs">
+                      {instalacao.criador.nome.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-muted-foreground">
+                    Criado por <span className="font-medium text-foreground">{instalacao.criador.nome}</span>
+                  </span>
+                </div>
               )}
               <p className="text-sm text-muted-foreground">
                 Cadastrado em{' '}

@@ -15,6 +15,10 @@ export interface InstalacaoCadastrada {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  criador?: {
+    nome: string;
+    foto_perfil_url?: string;
+  };
 }
 
 export interface CreateInstalacaoData {
@@ -37,7 +41,27 @@ export const useInstalacoesCadastradas = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInstalacoes(data || []);
+      
+      // Buscar dados dos criadores manualmente
+      const instalacoesComCriadores: InstalacaoCadastrada[] = await Promise.all(
+        (data || []).map(async (instalacao) => {
+          if (instalacao.created_by) {
+            const { data: userData } = await supabase
+              .from('admin_users')
+              .select('nome, foto_perfil_url')
+              .eq('user_id', instalacao.created_by)
+              .single();
+            
+            return {
+              ...instalacao,
+              criador: userData || undefined
+            };
+          }
+          return instalacao;
+        })
+      );
+      
+      setInstalacoes(instalacoesComCriadores);
     } catch (error) {
       console.error('Error fetching instalações:', error);
       toast.error('Erro ao carregar instalações');
