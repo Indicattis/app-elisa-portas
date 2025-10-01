@@ -64,7 +64,8 @@ export default function MapaAutorizados() {
           id, nome, email, telefone, whatsapp, responsavel, endereco, 
           cidade, estado, cep, regiao, ativo, logo_url, latitude, 
           longitude, last_geocoded_at, geocode_precision, created_at, 
-          updated_at, vendedor_id, tipo_parceiro,
+          updated_at, vendedor_id, tipo_parceiro, etapa, 
+          representante_etapa, licenciado_etapa,
           vendedor:admin_users(nome, foto_perfil_url)
         `)
         .order('nome');
