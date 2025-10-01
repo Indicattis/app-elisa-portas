@@ -420,10 +420,10 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       </div>;
   }
   return <div className="h-full w-full rounded-lg overflow-hidden border relative flex">
-      {/* Sidebar fixa na esquerda */}
+      {/* Sidebar fixa na direita */}
       <div 
         className={cn(
-          "absolute left-0 top-0 bottom-0 z-[1000] bg-background border-r transition-all duration-300 ease-in-out",
+          "absolute right-0 top-0 bottom-0 z-[1000] bg-background border-l transition-all duration-300 ease-in-out",
           sidebarOpen ? "w-[320px]" : "w-0"
         )}
       >
@@ -664,26 +664,26 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
         )}
       </div>
       
-      {/* Botão de toggle no centro da lateral esquerda */}
+      {/* Botão de toggle no centro da lateral direita */}
       <Button
         variant="outline"
         size="icon"
         onClick={() => setSidebarOpen(!sidebarOpen)}
         className={cn(
           "absolute top-1/2 -translate-y-1/2 z-[1001] bg-background shadow-lg transition-all duration-300",
-          sidebarOpen ? "left-[310px]" : "left-2"
+          sidebarOpen ? "right-[310px]" : "right-2"
         )}
       >
         <ChevronRight className={cn(
           "h-4 w-4 transition-transform duration-300",
-          sidebarOpen && "rotate-180"
+          sidebarOpen ? "-rotate-180" : "rotate-0"
         )} />
       </Button>
       
       {/* Área do mapa */}
       <div className={cn(
         "flex-1 relative transition-all duration-300",
-        sidebarOpen && "ml-[320px]"
+        sidebarOpen && "mr-[320px]"
       )}>
 
       {/* Floating info panel */}
