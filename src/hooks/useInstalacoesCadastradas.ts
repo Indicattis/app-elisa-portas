@@ -109,7 +109,7 @@ export const useInstalacoesCadastradas = () => {
           tipo_instalacao: tipo_instalacao && tipo_instalacao.trim() !== ''
             ? tipo_instalacao
             : null,
-          responsavel_instalacao_id: responsavel_instalacao_id && responsavel_instalacao_id.trim() !== ''
+          responsavel_instalacao_id: responsavel_instalacao_id && responsavel_instalacao_id !== '' && responsavel_instalacao_id.trim() !== ''
             ? responsavel_instalacao_id
             : null,
           created_by: user.id,

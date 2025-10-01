@@ -71,7 +71,7 @@ export const CadastroInstalacaoForm = ({
       data_instalacao: undefined,
       status: 'pendente_producao',
       tipo_instalacao: undefined,
-      responsavel_instalacao_id: '',
+      responsavel_instalacao_id: undefined,
     },
   });
 
@@ -297,7 +297,7 @@ export const CadastroInstalacaoForm = ({
                   const actualValue = value === 'not_defined' ? '' : value;
                   field.onChange(actualValue);
                   setSelectedTipoInstalacao(actualValue);
-                  form.setValue('responsavel_instalacao_id', '');
+                  form.setValue('responsavel_instalacao_id', undefined);
                 }}
                 value={field.value || 'not_defined'}
               >
