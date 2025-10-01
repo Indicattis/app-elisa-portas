@@ -366,7 +366,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   }
   return <div className="h-full w-full rounded-lg overflow-hidden border relative">
       {/* Filters panel */}
-      <div className="absolute z-[1000] top-4 left-4">
+      <div className="absolute z-[1000] bottom-4 right-4">
         <Button
           variant="outline"
           size="sm"
