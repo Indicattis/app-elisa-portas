@@ -35,7 +35,7 @@ const formSchema = z.object({
   }),
   data_instalacao: z.string().optional(),
   status: z.enum(['pendente_producao', 'pronta_fabrica', 'finalizada']).optional(),
-  tipo_instalacao: z.enum(['elisa', 'autorizados']).optional(),
+  tipo_instalacao: z.string().optional(),
   responsavel_instalacao_id: z.string().optional(),
 });
 
@@ -97,13 +97,16 @@ export const CadastroInstalacaoForm = ({
         }
       }
       
-      // Convert empty string to null for date field
+      // Convert empty strings to null for optional fields
       const dataToSubmit = {
         ...values,
         responsavel_instalacao_nome,
         data_instalacao: values.data_instalacao && values.data_instalacao.trim() !== '' 
           ? values.data_instalacao 
           : null,
+        tipo_instalacao: values.tipo_instalacao && values.tipo_instalacao.trim() !== ''
+          ? values.tipo_instalacao as 'elisa' | 'autorizados'
+          : undefined,
       };
       
       await onSubmit(dataToSubmit);
@@ -285,7 +288,7 @@ export const CadastroInstalacaoForm = ({
           name="tipo_instalacao"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tipo de Instalação</FormLabel>
+              <FormLabel>Tipo de Instalação (Opcional)</FormLabel>
               <Select
                 onValueChange={(value) => {
                   field.onChange(value);
@@ -296,10 +299,11 @@ export const CadastroInstalacaoForm = ({
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
+                    <SelectValue placeholder="Ainda não definido" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="">Ainda não definido</SelectItem>
                   <SelectItem value="elisa">Instalação Elisa</SelectItem>
                   <SelectItem value="autorizados">Autorizados</SelectItem>
                 </SelectContent>

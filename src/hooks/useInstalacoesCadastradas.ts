@@ -97,7 +97,7 @@ export const useInstalacoesCadastradas = () => {
         return null;
       }
 
-      const { data_instalacao, ...restData } = data;
+      const { data_instalacao, tipo_instalacao, ...restData } = data;
       
       const { data: instalacao, error } = await supabase
         .from('instalacoes_cadastradas')
@@ -105,6 +105,9 @@ export const useInstalacoesCadastradas = () => {
           ...restData,
           data_instalacao: data_instalacao && data_instalacao.trim() !== '' 
             ? data_instalacao 
+            : null,
+          tipo_instalacao: tipo_instalacao && tipo_instalacao.trim() !== ''
+            ? tipo_instalacao
             : null,
           created_by: user.id,
         })
@@ -131,12 +134,17 @@ export const useInstalacoesCadastradas = () => {
 
   const updateInstalacao = async (id: string, data: Partial<CreateInstalacaoData>): Promise<boolean> => {
     try {
-      // Sanitize data_instalacao if present
+      // Sanitize optional fields if present
       const sanitizedData = {
         ...data,
         ...(data.data_instalacao !== undefined && {
           data_instalacao: data.data_instalacao && data.data_instalacao.trim() !== '' 
             ? data.data_instalacao 
+            : null
+        }),
+        ...(data.tipo_instalacao !== undefined && {
+          tipo_instalacao: data.tipo_instalacao && data.tipo_instalacao.trim() !== ''
+            ? data.tipo_instalacao
             : null
         })
       };
