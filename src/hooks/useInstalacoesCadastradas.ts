@@ -101,6 +101,9 @@ export const useInstalacoesCadastradas = () => {
         .from('instalacoes_cadastradas')
         .insert({
           ...data,
+          data_instalacao: data.data_instalacao && data.data_instalacao.trim() !== '' 
+            ? data.data_instalacao 
+            : null,
           created_by: user.id,
         })
         .select()
@@ -126,9 +129,19 @@ export const useInstalacoesCadastradas = () => {
 
   const updateInstalacao = async (id: string, data: Partial<CreateInstalacaoData>): Promise<boolean> => {
     try {
+      // Sanitize data_instalacao if present
+      const sanitizedData = {
+        ...data,
+        ...(data.data_instalacao !== undefined && {
+          data_instalacao: data.data_instalacao && data.data_instalacao.trim() !== '' 
+            ? data.data_instalacao 
+            : null
+        })
+      };
+      
       const { error } = await supabase
         .from('instalacoes_cadastradas')
-        .update(data)
+        .update(sanitizedData)
         .eq('id', id);
 
       if (error) throw error;
