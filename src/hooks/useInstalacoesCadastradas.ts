@@ -15,6 +15,9 @@ export interface InstalacaoCadastrada {
   geocode_precision: string | null;
   data_instalacao: string | null;
   status: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
+  tipo_instalacao: 'elisa' | 'autorizados' | null;
+  responsavel_instalacao_id: string | null;
+  responsavel_instalacao_nome: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -32,6 +35,9 @@ export interface CreateInstalacaoData {
   categoria: 'instalacao' | 'entrega' | 'correcao';
   data_instalacao?: string;
   status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
+  tipo_instalacao?: 'elisa' | 'autorizados';
+  responsavel_instalacao_id?: string;
+  responsavel_instalacao_nome?: string;
 }
 
 export const useInstalacoesCadastradas = () => {

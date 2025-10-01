@@ -125,6 +125,22 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                   })}
                 </p>
               )}
+              {instalacao.responsavel_instalacao_nome && (
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    Responsável:{' '}
+                    <span className="font-medium text-foreground">
+                      {instalacao.responsavel_instalacao_nome}
+                    </span>
+                    {instalacao.tipo_instalacao && (
+                      <Badge variant="outline" className="ml-2">
+                        {instalacao.tipo_instalacao === 'elisa' ? 'Equipe Elisa' : 'Autorizado'}
+                      </Badge>
+                    )}
+                  </span>
+                </div>
+              )}
               {instalacao.criador && (
                 <div className="flex items-center gap-2 text-sm">
                   <Avatar className="h-6 w-6">
@@ -188,6 +204,9 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                 categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
                 data_instalacao: editingInstalacao.data_instalacao || '',
                 status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
+                tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
+                responsavel_instalacao_id: editingInstalacao.responsavel_instalacao_id || undefined,
+                responsavel_instalacao_nome: editingInstalacao.responsavel_instalacao_nome || undefined,
               }}
               isEditing={true}
             />

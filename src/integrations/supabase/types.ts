@@ -823,8 +823,13 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           nome_cliente: string
+          responsavel_instalacao_id: string | null
+          responsavel_instalacao_nome: string | null
           status: string
           tamanho: string | null
+          tipo_instalacao:
+            | Database["public"]["Enums"]["tipo_instalacao_enum"]
+            | null
           updated_at: string
         }
         Insert: {
@@ -840,8 +845,13 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nome_cliente: string
+          responsavel_instalacao_id?: string | null
+          responsavel_instalacao_nome?: string | null
           status?: string
           tamanho?: string | null
+          tipo_instalacao?:
+            | Database["public"]["Enums"]["tipo_instalacao_enum"]
+            | null
           updated_at?: string
         }
         Update: {
@@ -857,8 +867,13 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nome_cliente?: string
+          responsavel_instalacao_id?: string | null
+          responsavel_instalacao_nome?: string | null
           status?: string
           tamanho?: string | null
+          tipo_instalacao?:
+            | Database["public"]["Enums"]["tipo_instalacao_enum"]
+            | null
           updated_at?: string
         }
         Relationships: []
@@ -2614,6 +2629,7 @@ export type Database = {
         | "proposta"
         | "contratado"
       status_visita: "agendada" | "concluida" | "cancelada"
+      tipo_instalacao_enum: "elisa" | "autorizados"
       tipo_parceiro: "autorizado" | "representante" | "licenciado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
       turno_visita: "manha" | "tarde" | "noite"
@@ -2841,6 +2857,7 @@ export const Constants = {
         "contratado",
       ],
       status_visita: ["agendada", "concluida", "cancelada"],
+      tipo_instalacao_enum: ["elisa", "autorizados"],
       tipo_parceiro: ["autorizado", "representante", "licenciado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],
       turno_visita: ["manha", "tarde", "noite"],
