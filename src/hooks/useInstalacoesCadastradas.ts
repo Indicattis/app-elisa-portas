@@ -97,12 +97,14 @@ export const useInstalacoesCadastradas = () => {
         return null;
       }
 
+      const { data_instalacao, ...restData } = data;
+      
       const { data: instalacao, error } = await supabase
         .from('instalacoes_cadastradas')
         .insert({
-          ...data,
-          data_instalacao: data.data_instalacao && data.data_instalacao.trim() !== '' 
-            ? data.data_instalacao 
+          ...restData,
+          data_instalacao: data_instalacao && data_instalacao.trim() !== '' 
+            ? data_instalacao 
             : null,
           created_by: user.id,
         })
