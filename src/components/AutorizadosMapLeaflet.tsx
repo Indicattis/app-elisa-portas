@@ -103,7 +103,10 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     if (etapaFilters.size > 0) {
       // Se for autorizado, verificar se a etapa está nos filtros
       if (autorizado.tipo_parceiro === 'autorizado') {
-        return etapaFilters.has(autorizado.etapa as AutorizadoEtapa);
+        console.log('Autorizado:', autorizado.nome, 'Etapa:', autorizado.etapa, 'Filtros:', Array.from(etapaFilters));
+        const hasEtapa = etapaFilters.has(autorizado.etapa as AutorizadoEtapa);
+        console.log('Tem etapa?', hasEtapa);
+        return hasEtapa;
       }
       // Se não for autorizado e há filtros de etapa, não mostrar (filtro é só para autorizados)
       return false;
