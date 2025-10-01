@@ -1735,6 +1735,69 @@ export type Database = {
         }
         Relationships: []
       }
+      parceiro_tag_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          parceiro_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parceiro_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parceiro_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parceiro_tag_assignments_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parceiro_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "parceiro_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parceiro_tags: {
+        Row: {
+          ativo: boolean
+          cor: string
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor: string
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pedidos_producao: {
         Row: {
           cliente_bairro: string | null
@@ -2497,7 +2560,11 @@ export type Database = {
         | "tv_dashboard"
         | "instalacoes"
         | "documentos"
-      autorizado_etapa: "apresentacao_proposta" | "treinamentos_video" | "apto"
+      autorizado_etapa:
+        | "apresentacao_proposta"
+        | "treinamentos_video"
+        | "apto"
+        | "premium"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
       documento_categoria:
         | "manual"
@@ -2713,7 +2780,12 @@ export const Constants = {
         "instalacoes",
         "documentos",
       ],
-      autorizado_etapa: ["apresentacao_proposta", "treinamentos_video", "apto"],
+      autorizado_etapa: [
+        "apresentacao_proposta",
+        "treinamentos_video",
+        "apto",
+        "premium",
+      ],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
       documento_categoria: [
         "manual",

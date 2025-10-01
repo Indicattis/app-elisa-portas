@@ -32,6 +32,7 @@ interface Autorizado {
   longitude?: number;
   ativo: boolean;
   tipo_parceiro: TipoParceiro;
+  etapa?: string;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -162,11 +163,14 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     });
   };
 
-  // Custom marker icon based on partner type
-  const createPartnerIcon = (tipoParceiro: TipoParceiro) => {
+  // Custom marker icon based on partner type and stage
+  const createPartnerIcon = (tipoParceiro: TipoParceiro, etapa?: string) => {
     const color = getMarkerColorByTipo(tipoParceiro);
+    const isPremium = etapa === 'premium';
+    const markerClass = isPremium ? 'custom-partner-marker premium-marker' : 'custom-partner-marker';
+    
     return L.divIcon({
-      html: `<div class="custom-partner-marker" style="background-color: ${color};"></div>`,
+      html: `<div class="${markerClass}" style="background-color: ${color};"></div>`,
       className: 'custom-partner-marker-container',
       iconSize: L.point(14, 14),
       iconAnchor: L.point(7, 7)
@@ -247,6 +251,19 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
         border: 2px solid white;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
         transition: transform 0.2s ease;
+      }
+      .custom-partner-marker.premium-marker {
+        border: 2px solid hsl(45, 100%, 51%);
+        box-shadow: 0 0 0 2px white, 0 0 8px 2px hsla(45, 100%, 51%, 0.5);
+        animation: premium-pulse 2s ease-in-out infinite;
+      }
+      @keyframes premium-pulse {
+        0%, 100% {
+          box-shadow: 0 0 0 2px white, 0 0 8px 2px hsla(45, 100%, 51%, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 0 2px white, 0 0 12px 3px hsla(45, 100%, 51%, 0.8);
+        }
       }
       .custom-partner-marker-container:hover .custom-partner-marker {
         transform: scale(1.2);
@@ -421,7 +438,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
           <MapClickHandler />
           
           <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon} spiderfyOnMaxZoom={true} showCoverageOnHover={false} zoomToBoundsOnClick={true} maxClusterRadius={50}>
-            {autorizadosWithCoords.map(autorizado => <Marker key={autorizado.id} position={[autorizado.latitude!, autorizado.longitude!]} icon={createPartnerIcon(autorizado.tipo_parceiro)}>
+            {autorizadosWithCoords.map(autorizado => <Marker key={autorizado.id} position={[autorizado.latitude!, autorizado.longitude!]} icon={createPartnerIcon(autorizado.tipo_parceiro, autorizado.etapa)}>
                 <Popup className="custom-popup" minWidth={280}>
                   <div className="p-4 space-y-3">
                     {/* Header */}

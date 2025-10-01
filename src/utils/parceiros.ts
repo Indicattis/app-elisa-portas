@@ -1,13 +1,14 @@
 export type TipoParceiro = 'autorizado' | 'representante' | 'licenciado';
 export type RepresentanteEtapa = 'inicial' | 'qualificacao' | 'proposta' | 'contratado';
 export type LicenciadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
-export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamentos_video' | 'apto';
+export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamentos_video' | 'apto' | 'premium';
 
 // Etapas para Autorizados
 export const ETAPAS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
   apresentacao_proposta: 'Apresentação Proposta',
   treinamentos_video: 'Treinamentos em Vídeo',
-  apto: 'Apto'
+  apto: 'Apto',
+  premium: 'Premium'
 };
 
 // Etapas para Representantes
@@ -30,7 +31,8 @@ export const ETAPAS_LICENCIADO: Record<LicenciadoEtapa, string> = {
 export const ETAPA_COLORS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
   apresentacao_proposta: 'hsl(var(--chart-1))',
   treinamentos_video: 'hsl(var(--chart-2))',
-  apto: 'hsl(var(--chart-4))'
+  apto: 'hsl(var(--chart-4))',
+  premium: 'hsl(45, 100%, 51%)' // Golden color
 };
 
 export const ETAPA_COLORS_REPRESENTANTE: Record<RepresentanteEtapa, string> = {
@@ -51,7 +53,8 @@ export const ETAPA_COLORS_LICENCIADO: Record<LicenciadoEtapa, string> = {
 export const ETAPA_ORDER_AUTORIZADO: AutorizadoEtapa[] = [
   'apresentacao_proposta',
   'treinamentos_video',
-  'apto'
+  'apto',
+  'premium'
 ];
 
 export const ETAPA_ORDER_REPRESENTANTE: RepresentanteEtapa[] = [
