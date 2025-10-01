@@ -60,7 +60,7 @@ export const InstalacoesList = ({ instalacoes, onDelete }: InstalacaoListProps) 
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge 
                   variant="outline"
                   className={
@@ -75,10 +75,32 @@ export const InstalacoesList = ({ instalacoes, onDelete }: InstalacaoListProps) 
                   {instalacao.categoria === 'entrega' && 'Entrega'}
                   {instalacao.categoria === 'correcao' && 'Correção'}
                 </Badge>
+                <Badge 
+                  variant="outline"
+                  className={
+                    instalacao.status === 'pendente_producao' 
+                      ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' 
+                      : instalacao.status === 'pronta_fabrica'
+                      ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                      : 'bg-green-500/10 text-green-600 border-green-500/20'
+                  }
+                >
+                  {instalacao.status === 'pendente_producao' && 'Pendente Produção'}
+                  {instalacao.status === 'pronta_fabrica' && 'Pronta Fábrica'}
+                  {instalacao.status === 'finalizada' && 'Finalizada'}
+                </Badge>
               </div>
               {instalacao.tamanho && (
                 <p className="text-sm">
                   <span className="font-medium">Tamanho:</span> {instalacao.tamanho}
+                </p>
+              )}
+              {instalacao.data_instalacao && (
+                <p className="text-sm">
+                  <span className="font-medium">Data da Instalação:</span>{' '}
+                  {format(new Date(instalacao.data_instalacao), "dd 'de' MMMM 'de' yyyy", {
+                    locale: ptBR,
+                  })}
                 </p>
               )}
               {instalacao.criador && (

@@ -31,6 +31,8 @@ const formSchema = z.object({
   categoria: z.enum(['instalacao', 'entrega', 'correcao'], {
     required_error: 'Selecione uma categoria',
   }),
+  data_instalacao: z.string().optional(),
+  status: z.enum(['pendente_producao', 'pronta_fabrica', 'finalizada']).optional(),
 });
 
 interface CadastroInstalacaoFormProps {
@@ -58,6 +60,8 @@ export const CadastroInstalacaoForm = ({
       cidade: '',
       tamanho: '',
       categoria: 'instalacao',
+      data_instalacao: '',
+      status: 'pendente_producao',
     },
   });
 
@@ -197,6 +201,45 @@ export const CadastroInstalacaoForm = ({
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="data_instalacao"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Data da Instalação (Opcional)</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="pendente_producao">Pendente Produção</SelectItem>
+                    <SelectItem value="pronta_fabrica">Pronta Fábrica</SelectItem>
+                    <SelectItem value="finalizada">Finalizada</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

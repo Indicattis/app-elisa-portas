@@ -68,8 +68,13 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   // Filter autorizados with valid coordinates
   const autorizadosWithCoords = autorizados.filter(autorizado => autorizado.latitude && autorizado.longitude && autorizado.ativo);
 
-  // Filter instalacoes with valid coordinates
-  const instalacoesWithCoords = instalacoes.filter(instalacao => instalacao.latitude && instalacao.longitude);
+  // Filter instalacoes with valid coordinates and exclude finalized ones
+  const instalacoesWithCoords = instalacoes.filter(
+    instalacao => 
+      instalacao.latitude && 
+      instalacao.longitude && 
+      instalacao.status !== 'finalizada'
+  );
 
   // Count parceiros by state and type
   const parceirosPorEstado = autorizados.filter(autorizado => autorizado.ativo && autorizado.estado).reduce((acc, autorizado) => {

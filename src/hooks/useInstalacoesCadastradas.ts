@@ -13,6 +13,8 @@ export interface InstalacaoCadastrada {
   longitude: number | null;
   last_geocoded_at: string | null;
   geocode_precision: string | null;
+  data_instalacao: string | null;
+  status: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -28,6 +30,8 @@ export interface CreateInstalacaoData {
   cidade: string;
   tamanho?: string;
   categoria: 'instalacao' | 'entrega' | 'correcao';
+  data_instalacao?: string;
+  status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
 }
 
 export const useInstalacoesCadastradas = () => {
@@ -57,12 +61,14 @@ export const useInstalacoesCadastradas = () => {
             return {
               ...instalacao,
               categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+              status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
               criador: userData || undefined
             };
           }
           return {
             ...instalacao,
-            categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao'
+            categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+            status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada'
           };
         })
       );

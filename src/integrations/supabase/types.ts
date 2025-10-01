@@ -815,6 +815,7 @@ export type Database = {
           cidade: string
           created_at: string
           created_by: string | null
+          data_instalacao: string | null
           estado: string
           geocode_precision: string | null
           id: string
@@ -822,6 +823,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           nome_cliente: string
+          status: string
           tamanho: string | null
           updated_at: string
         }
@@ -830,6 +832,7 @@ export type Database = {
           cidade: string
           created_at?: string
           created_by?: string | null
+          data_instalacao?: string | null
           estado: string
           geocode_precision?: string | null
           id?: string
@@ -837,6 +840,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nome_cliente: string
+          status?: string
           tamanho?: string | null
           updated_at?: string
         }
@@ -845,6 +849,7 @@ export type Database = {
           cidade?: string
           created_at?: string
           created_by?: string | null
+          data_instalacao?: string | null
           estado?: string
           geocode_precision?: string | null
           id?: string
@@ -852,6 +857,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nome_cliente?: string
+          status?: string
           tamanho?: string | null
           updated_at?: string
         }
