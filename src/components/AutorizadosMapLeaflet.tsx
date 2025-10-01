@@ -6,8 +6,10 @@ import 'leaflet/dist/leaflet.css';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { MapPin, Phone, Mail, User, Navigation, X, Home } from 'lucide-react';
-import { getMarkerColorByTipo, TIPO_PARCEIRO_LABELS, type TipoParceiro } from '@/utils/parceiros';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
+import { MapPin, Phone, Mail, User, Navigation, X, Home, Filter } from 'lucide-react';
+import { getMarkerColorByTipo, TIPO_PARCEIRO_LABELS, type TipoParceiro, ETAPAS_AUTORIZADO, type AutorizadoEtapa } from '@/utils/parceiros';
 import { InstalacaoCadastrada } from '@/hooks/useInstalacoesCadastradas';
 
 // Fix for default markers in React Leaflet
@@ -64,16 +66,38 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
 }) => {
   const mapRef = useRef<L.Map | null>(null);
   const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filtros de etapas de autorizados
+  const [etapaFilters, setEtapaFilters] = useState<Set<AutorizadoEtapa>>(new Set());
+  
+  // Filtros de tipos de instalação
+  const [tipoInstalacaoFilters, setTipoInstalacaoFilters] = useState<Set<'instalacao' | 'entrega' | 'correcao'>>(new Set());
 
   // Filter autorizados with valid coordinates
-  const autorizadosWithCoords = autorizados.filter(autorizado => autorizado.latitude && autorizado.longitude && autorizado.ativo);
+  const autorizadosWithCoords = autorizados.filter(autorizado => {
+    if (!autorizado.latitude || !autorizado.longitude || !autorizado.ativo) return false;
+    
+    // Se houver filtros de etapa selecionados, aplicar
+    if (etapaFilters.size > 0 && autorizado.tipo_parceiro === 'autorizado') {
+      return etapaFilters.has(autorizado.etapa as AutorizadoEtapa);
+    }
+    
+    return true;
+  });
 
   // Filter instalacoes with valid coordinates and exclude finalized ones
   const instalacoesWithCoords = instalacoes.filter(
-    instalacao => 
-      instalacao.latitude && 
-      instalacao.longitude && 
-      instalacao.status !== 'finalizada'
+    instalacao => {
+      if (!instalacao.latitude || !instalacao.longitude || instalacao.status === 'finalizada') return false;
+      
+      // Se houver filtros de tipo de instalação selecionados, aplicar
+      if (tipoInstalacaoFilters.size > 0) {
+        return tipoInstalacaoFilters.has(instalacao.categoria);
+      }
+      
+      return true;
+    }
   );
 
   // Count parceiros by state and type
@@ -341,6 +365,143 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       </div>;
   }
   return <div className="h-full w-full rounded-lg overflow-hidden border relative">
+      {/* Filters panel */}
+      <div className="absolute z-[1000] top-4 left-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowFilters(!showFilters)}
+          className="bg-background/95 backdrop-blur-sm shadow-lg"
+        >
+          <Filter className="h-4 w-4 mr-2" />
+          Filtros
+          {(etapaFilters.size > 0 || tipoInstalacaoFilters.size > 0) && (
+            <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+              {etapaFilters.size + tipoInstalacaoFilters.size}
+            </Badge>
+          )}
+        </Button>
+        
+        {showFilters && (
+          <div className="mt-2 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 w-64 space-y-4">
+            {/* Filtros de Etapas de Autorizados */}
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Etapas de Autorizados</h4>
+              <div className="space-y-2">
+                {(Object.entries(ETAPAS_AUTORIZADO) as [AutorizadoEtapa, string][]).map(([etapa, label]) => (
+                  <div key={etapa} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`etapa-${etapa}`}
+                      checked={etapaFilters.has(etapa)}
+                      onCheckedChange={(checked) => {
+                        const newFilters = new Set(etapaFilters);
+                        if (checked) {
+                          newFilters.add(etapa);
+                        } else {
+                          newFilters.delete(etapa);
+                        }
+                        setEtapaFilters(newFilters);
+                      }}
+                    />
+                    <Label
+                      htmlFor={`etapa-${etapa}`}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Filtros de Tipos de Instalação */}
+            <div className="border-t pt-4">
+              <h4 className="font-semibold text-sm mb-2">Tipos de Instalação</h4>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="tipo-instalacao"
+                    checked={tipoInstalacaoFilters.has('instalacao')}
+                    onCheckedChange={(checked) => {
+                      const newFilters = new Set(tipoInstalacaoFilters);
+                      if (checked) {
+                        newFilters.add('instalacao');
+                      } else {
+                        newFilters.delete('instalacao');
+                      }
+                      setTipoInstalacaoFilters(newFilters);
+                    }}
+                  />
+                  <Label
+                    htmlFor="tipo-instalacao"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Instalação
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="tipo-entrega"
+                    checked={tipoInstalacaoFilters.has('entrega')}
+                    onCheckedChange={(checked) => {
+                      const newFilters = new Set(tipoInstalacaoFilters);
+                      if (checked) {
+                        newFilters.add('entrega');
+                      } else {
+                        newFilters.delete('entrega');
+                      }
+                      setTipoInstalacaoFilters(newFilters);
+                    }}
+                  />
+                  <Label
+                    htmlFor="tipo-entrega"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Entrega
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="tipo-correcao"
+                    checked={tipoInstalacaoFilters.has('correcao')}
+                    onCheckedChange={(checked) => {
+                      const newFilters = new Set(tipoInstalacaoFilters);
+                      if (checked) {
+                        newFilters.add('correcao');
+                      } else {
+                        newFilters.delete('correcao');
+                      }
+                      setTipoInstalacaoFilters(newFilters);
+                    }}
+                  />
+                  <Label
+                    htmlFor="tipo-correcao"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Correção
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão para limpar filtros */}
+            {(etapaFilters.size > 0 || tipoInstalacaoFilters.size > 0) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEtapaFilters(new Set());
+                  setTipoInstalacaoFilters(new Set());
+                }}
+                className="w-full"
+              >
+                Limpar Filtros
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Floating info panel */}
       {clickedPoint && <div className="absolute z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto" style={{
       top: '100px',
