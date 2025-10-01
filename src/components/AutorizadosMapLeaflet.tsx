@@ -149,11 +149,20 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     });
   };
 
-  // Custom cluster icon
+  // Custom cluster icon for autorizados
   const createClusterCustomIcon = (cluster: any) => {
     return L.divIcon({
       html: `<span class="cluster-icon">${cluster.getChildCount()}</span>`,
       className: 'custom-marker-cluster',
+      iconSize: L.point(32, 32, true)
+    });
+  };
+
+  // Custom cluster icon for instalacoes
+  const createInstalacaoClusterIcon = (cluster: any) => {
+    return L.divIcon({
+      html: `<span class="instalacao-cluster-icon">${cluster.getChildCount()}</span>`,
+      className: 'custom-instalacao-cluster',
       iconSize: L.point(32, 32, true)
     });
   };
@@ -221,6 +230,20 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       }
       .cluster-icon {
         color: hsl(var(--primary-foreground));
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .custom-instalacao-cluster {
+        background-color: #ef4444;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        border: 2px solid white;
+      }
+      .instalacao-cluster-icon {
+        color: white;
         font-weight: 600;
         font-size: 12px;
       }
@@ -522,87 +545,96 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
               </Marker>)}
           </MarkerClusterGroup>
 
-          {/* Instalações markers (not clustered) */}
-          {instalacoesWithCoords.map(instalacao => <Marker key={`instalacao-${instalacao.id}`} position={[instalacao.latitude!, instalacao.longitude!]} icon={createInstalacaoIcon(instalacao.categoria)}>
-              <Popup className="custom-popup" minWidth={250}>
-                <div className="p-4 space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start gap-3">
-                    <div 
-                      className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{
-                        backgroundColor: instalacao.categoria === 'instalacao' 
-                          ? '#ef4444' 
-                          : instalacao.categoria === 'entrega'
-                          ? '#6b7280'
-                          : '#a855f7'
-                      }}
-                    >
-                      <Home className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-base leading-tight">
-                        {instalacao.nome_cliente}
-                      </h3>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{instalacao.cidade}, {instalacao.estado}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-2 text-sm border-t pt-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Categoria:</span>
-                      <span 
-                        className="font-medium px-2 py-1 rounded-md text-xs"
+          {/* Instalações markers with clustering */}
+          <MarkerClusterGroup
+            chunkedLoading
+            iconCreateFunction={createInstalacaoClusterIcon}
+            spiderfyOnMaxZoom={true}
+            showCoverageOnHover={false}
+            zoomToBoundsOnClick={true}
+            maxClusterRadius={50}
+          >
+            {instalacoesWithCoords.map(instalacao => <Marker key={`instalacao-${instalacao.id}`} position={[instalacao.latitude!, instalacao.longitude!]} icon={createInstalacaoIcon(instalacao.categoria)}>
+                <Popup className="custom-popup" minWidth={250}>
+                  <div className="p-4 space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start gap-3">
+                      <div 
+                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
                         style={{
                           backgroundColor: instalacao.categoria === 'instalacao' 
-                            ? '#fee2e2' 
+                            ? '#ef4444' 
                             : instalacao.categoria === 'entrega'
-                            ? '#f3f4f6'
-                            : '#f3e8ff',
-                          color: instalacao.categoria === 'instalacao' 
-                            ? '#dc2626' 
-                            : instalacao.categoria === 'entrega'
-                            ? '#4b5563'
-                            : '#9333ea'
+                            ? '#6b7280'
+                            : '#a855f7'
                         }}
                       >
-                        {instalacao.categoria === 'instalacao' && 'Instalação'}
-                        {instalacao.categoria === 'entrega' && 'Entrega'}
-                        {instalacao.categoria === 'correcao' && 'Correção'}
-                      </span>
-                    </div>
-                    {instalacao.tamanho && <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Tamanho:</span>
-                        <span className="font-medium">{instalacao.tamanho}</span>
-                      </div>}
-                    {instalacao.criador && (
-                      <div className="flex items-center gap-2 py-2 border-t">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={instalacao.criador.foto_perfil_url} alt={instalacao.criador.nome} />
-                          <AvatarFallback className="text-xs">
-                            {instalacao.criador.nome.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs text-muted-foreground">Cadastrado por</span>
-                          <p className="text-sm font-medium truncate">{instalacao.criador.nome}</p>
+                        <Home className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base leading-tight">
+                          {instalacao.nome_cliente}
+                        </h3>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{instalacao.cidade}, {instalacao.estado}</span>
                         </div>
                       </div>
-                    )}
-                    {instalacao.geocode_precision && <div className="text-xs text-muted-foreground border-t pt-2">
-                        <div className="flex items-start gap-1">
-                          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                          <span className="leading-tight">{instalacao.geocode_precision}</span>
+                    </div>
+
+                    {/* Details */}
+                    <div className="space-y-2 text-sm border-t pt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Categoria:</span>
+                        <span 
+                          className="font-medium px-2 py-1 rounded-md text-xs"
+                          style={{
+                            backgroundColor: instalacao.categoria === 'instalacao' 
+                              ? '#fee2e2' 
+                              : instalacao.categoria === 'entrega'
+                              ? '#f3f4f6'
+                              : '#f3e8ff',
+                            color: instalacao.categoria === 'instalacao' 
+                              ? '#dc2626' 
+                              : instalacao.categoria === 'entrega'
+                              ? '#4b5563'
+                              : '#9333ea'
+                          }}
+                        >
+                          {instalacao.categoria === 'instalacao' && 'Instalação'}
+                          {instalacao.categoria === 'entrega' && 'Entrega'}
+                          {instalacao.categoria === 'correcao' && 'Correção'}
+                        </span>
+                      </div>
+                      {instalacao.tamanho && <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Tamanho:</span>
+                          <span className="font-medium">{instalacao.tamanho}</span>
+                        </div>}
+                      {instalacao.criador && (
+                        <div className="flex items-center gap-2 py-2 border-t">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={instalacao.criador.foto_perfil_url} alt={instalacao.criador.nome} />
+                            <AvatarFallback className="text-xs">
+                              {instalacao.criador.nome.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs text-muted-foreground">Cadastrado por</span>
+                            <p className="text-sm font-medium truncate">{instalacao.criador.nome}</p>
+                          </div>
                         </div>
-                      </div>}
+                      )}
+                      {instalacao.geocode_precision && <div className="text-xs text-muted-foreground border-t pt-2">
+                          <div className="flex items-start gap-1">
+                            <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                            <span className="leading-tight">{instalacao.geocode_precision}</span>
+                          </div>
+                        </div>}
+                    </div>
                   </div>
-                </div>
-              </Popup>
-            </Marker>)}
+                </Popup>
+              </Marker>)}
+          </MarkerClusterGroup>
 
           {/* Clicked point marker */}
           {clickedPoint && <>
