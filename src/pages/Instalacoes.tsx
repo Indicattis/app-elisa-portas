@@ -40,7 +40,7 @@ export default function Instalacoes() {
   // Hooks para dados
   const { equipes } = useEquipesInstalacao();
   const { pontos } = usePontosInstalacao(currentWeek);
-  const { instalacoes, loading: loadingInstalacoes, createInstalacao, deleteInstalacao } = useInstalacoesCadastradas();
+  const { instalacoes, loading: loadingInstalacoes, createInstalacao, deleteInstalacao, updateInstalacao } = useInstalacoesCadastradas();
 
   // Navegação de dias e semanas
   const nextDay = () => setCurrentDate(prev => addDays(prev, 1));
@@ -259,6 +259,7 @@ export default function Instalacoes() {
                 <InstalacoesList
                   instalacoes={instalacoes}
                   onDelete={deleteInstalacao}
+                  onUpdate={updateInstalacao}
                 />
               </div>
             </div>

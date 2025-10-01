@@ -1,4 +1,5 @@
-import { MapPin, Trash2, Clock, User } from 'lucide-react';
+import { MapPin, Trash2, Clock, User, Pencil } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,16 +10,37 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { InstalacaoCadastrada } from '@/hooks/useInstalacoesCadastradas';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
+import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface InstalacaoListProps {
   instalacoes: InstalacaoCadastrada[];
   onDelete: (id: string) => void;
+  onUpdate: (id: string, data: CreateInstalacaoData) => Promise<boolean>;
 }
 
-export const InstalacoesList = ({ instalacoes, onDelete }: InstalacaoListProps) => {
+export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoListProps) => {
+  const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
+
+  const handleEdit = (instalacao: InstalacaoCadastrada) => {
+    setEditingInstalacao(instalacao);
+  };
+
+  const handleUpdate = async (data: CreateInstalacaoData) => {
+    if (editingInstalacao) {
+      await onUpdate(editingInstalacao.id, data);
+      setEditingInstalacao(null);
+    }
+  };
+
   if (instalacoes.length === 0) {
     return (
       <Card>
@@ -129,6 +151,14 @@ export const InstalacoesList = ({ instalacoes, onDelete }: InstalacaoListProps) 
               )}
               <div className="flex gap-2 pt-2">
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(instalacao)}
+                >
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Editar
+                </Button>
+                <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => onDelete(instalacao.id)}
@@ -141,6 +171,29 @@ export const InstalacoesList = ({ instalacoes, onDelete }: InstalacaoListProps) 
           </CardContent>
         </Card>
       ))}
+
+      <Dialog open={!!editingInstalacao} onOpenChange={() => setEditingInstalacao(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Instalação</DialogTitle>
+          </DialogHeader>
+          {editingInstalacao && (
+            <CadastroInstalacaoForm
+              onSubmit={handleUpdate}
+              initialData={{
+                nome_cliente: editingInstalacao.nome_cliente,
+                estado: editingInstalacao.estado,
+                cidade: editingInstalacao.cidade,
+                tamanho: editingInstalacao.tamanho || '',
+                categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+                data_instalacao: editingInstalacao.data_instalacao || '',
+                status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
+              }}
+              isEditing={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
