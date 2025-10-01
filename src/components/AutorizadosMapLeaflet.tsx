@@ -99,9 +99,14 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   const autorizadosWithCoords = autorizados.filter(autorizado => {
     if (!autorizado.latitude || !autorizado.longitude || !autorizado.ativo) return false;
     
-    // Se houver filtros de etapa selecionados, aplicar
-    if (etapaFilters.size > 0 && autorizado.tipo_parceiro === 'autorizado') {
-      return etapaFilters.has(autorizado.etapa as AutorizadoEtapa);
+    // Se houver filtros de etapa selecionados, aplicar APENAS para autorizados
+    if (etapaFilters.size > 0) {
+      // Se for autorizado, verificar se a etapa está nos filtros
+      if (autorizado.tipo_parceiro === 'autorizado') {
+        return etapaFilters.has(autorizado.etapa as AutorizadoEtapa);
+      }
+      // Se não for autorizado e há filtros de etapa, não mostrar (filtro é só para autorizados)
+      return false;
     }
     
     return true;
@@ -419,13 +424,30 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   const hasMapContent = autorizadosWithCoords.length > 0 || instalacoesWithCoords.length > 0;
   
   if (!hasMapContent) {
+    // Verificar se o problema é falta de dados ou filtros muito restritivos
+    const hasActiveFilters = activeFiltersCount > 0;
+    
     return <div className="flex items-center justify-center h-full bg-muted/50 rounded-lg">
         <div className="text-center space-y-2">
           <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
-          <h3 className="text-lg font-medium">Nenhum local com coordenadas</h3>
+          <h3 className="text-lg font-medium">
+            {hasActiveFilters ? 'Nenhum resultado encontrado' : 'Nenhum local com coordenadas'}
+          </h3>
           <p className="text-sm text-muted-foreground">
-            Os endereços precisam ser geocodificados para aparecer no mapa
+            {hasActiveFilters 
+              ? 'Tente ajustar ou limpar os filtros aplicados' 
+              : 'Os endereços precisam ser geocodificados para aparecer no mapa'}
           </p>
+          {hasActiveFilters && (
+            <Button 
+              variant="outline" 
+              onClick={clearAllFilters}
+              className="mt-4"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Limpar Filtros
+            </Button>
+          )}
         </div>
       </div>;
   }
