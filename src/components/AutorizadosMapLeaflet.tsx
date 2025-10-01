@@ -419,37 +419,25 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
         </div>
       </div>;
   }
-  return <div className="h-full w-full rounded-lg overflow-hidden border relative">
-      {/* Sidebar trigger button */}
-      <div className="absolute z-[1000] top-4 left-4">
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-background/95 backdrop-blur-sm shadow-lg"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filtros
-              {activeFiltersCount > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </SheetTrigger>
-          
-          <SheetContent side="left" className="w-[320px] sm:w-[400px] p-0">
-            <SheetHeader className="p-6 pb-4">
-              <SheetTitle>Filtros do Mapa</SheetTitle>
-              <SheetDescription>
-                Filtre autorizados e instalações no mapa
-              </SheetDescription>
-            </SheetHeader>
+  return <div className="h-full w-full rounded-lg overflow-hidden border relative flex">
+      {/* Sidebar fixa na esquerda */}
+      <div 
+        className={cn(
+          "absolute left-0 top-0 bottom-0 z-[1000] bg-background border-r transition-all duration-300 ease-in-out",
+          sidebarOpen ? "w-[320px]" : "w-0"
+        )}
+      >
+        {sidebarOpen && (
+          <div className="h-full flex flex-col">
+            <div className="p-6 pb-4 border-b">
+              <h3 className="font-semibold text-lg">Filtros do Mapa</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Filtre autorizados e instalações
+              </p>
+            </div>
             
-            <ScrollArea className="h-[calc(100vh-120px)] px-6">
-              <div className="space-y-6 pb-6">
+            <ScrollArea className="flex-1 px-6">
+              <div className="space-y-6 py-6">
                 {/* Filtros de Etapas de Autorizados */}
                 <div>
                   <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
@@ -661,7 +649,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
             
             {/* Footer com botão de limpar */}
             {activeFiltersCount > 0 && (
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
+              <div className="p-4 border-t">
                 <Button
                   variant="outline"
                   onClick={clearAllFilters}
@@ -672,9 +660,31 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                 </Button>
               </div>
             )}
-          </SheetContent>
-        </Sheet>
+          </div>
+        )}
       </div>
+      
+      {/* Botão de toggle no centro da lateral esquerda */}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className={cn(
+          "absolute top-1/2 -translate-y-1/2 z-[1001] bg-background shadow-lg transition-all duration-300",
+          sidebarOpen ? "left-[310px]" : "left-2"
+        )}
+      >
+        <ChevronRight className={cn(
+          "h-4 w-4 transition-transform duration-300",
+          sidebarOpen && "rotate-180"
+        )} />
+      </Button>
+      
+      {/* Área do mapa */}
+      <div className={cn(
+        "flex-1 relative transition-all duration-300",
+        sidebarOpen && "ml-[320px]"
+      )}>
 
       {/* Floating info panel */}
       {clickedPoint && <div className="absolute z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto" style={{
@@ -979,6 +989,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
               {clickedPoint.nearestAutorizados.map((autorizado, index) => <Polyline key={autorizado.id} positions={[[clickedPoint.lat, clickedPoint.lng], [autorizado.latitude!, autorizado.longitude!]]} color={index === 0 ? '#22c55e' : index === 1 ? '#f59e0b' : '#ef4444'} weight={3} opacity={0.7} dashArray={index === 0 ? undefined : "5, 10"} />)}
             </>}
         </MapContainer>
+      </div>
     </div>;
 };
 export default AutorizadosMapLeaflet;
