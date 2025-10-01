@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { getEtapasByTipo, type TipoParceiro } from "@/utils/parceiros";
+import { getEtapasByTipo, getCurrentEtapa, type TipoParceiro } from "@/utils/parceiros";
 import { StarRating } from "./StarRating";
 import { AddRatingDialog } from "./AddRatingDialog";
 
@@ -93,7 +93,9 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
     if (!draggedItem) return;
 
     const autorizado = autorizados.find(a => a.id === draggedItem);
-    if (!autorizado || autorizado.etapa === novaEtapa) {
+    const etapaAtual = autorizado ? getCurrentEtapa(autorizado) : null;
+    
+    if (!autorizado || etapaAtual === novaEtapa) {
       setDraggedItem(null);
       setDraggedOver(null);
       return;
@@ -104,15 +106,18 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
                          tipoParceiro === 'representante' ? 'representante_etapa' : 
                          'licenciado_etapa';
 
-      await supabase
+      const { error } = await supabase
         .from('autorizados')
         .update({ [updateField]: novaEtapa })
         .eq('id', draggedItem);
 
-      // Invalidate the query cache to refresh the data immediately
-      queryClient.invalidateQueries({ queryKey: ['autorizados-with-ratings'] });
-      
+      if (error) throw error;
+
+      // Call the onEtapaChange callback immediately for optimistic update
       onEtapaChange(draggedItem, novaEtapa);
+      
+      // Invalidate the query cache to refresh the data from server
+      await queryClient.invalidateQueries({ queryKey: ['autorizados-with-ratings'] });
       
       toast({
         title: 'Sucesso',
@@ -132,7 +137,7 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
   };
 
   const getAutorizadosPorEtapa = (etapa: string) => {
-    return autorizados.filter(autorizado => autorizado.etapa === etapa);
+    return autorizados.filter(autorizado => getCurrentEtapa(autorizado) === etapa);
   };
 
   return (
