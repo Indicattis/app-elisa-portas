@@ -291,11 +291,12 @@ export const CadastroInstalacaoForm = ({
               <FormLabel>Tipo de Instalação (Opcional)</FormLabel>
               <Select
                 onValueChange={(value) => {
-                  field.onChange(value);
-                  setSelectedTipoInstalacao(value);
+                  const actualValue = value === 'not_defined' ? '' : value;
+                  field.onChange(actualValue);
+                  setSelectedTipoInstalacao(actualValue);
                   form.setValue('responsavel_instalacao_id', '');
                 }}
-                value={field.value}
+                value={field.value || 'not_defined'}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -303,7 +304,7 @@ export const CadastroInstalacaoForm = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Ainda não definido</SelectItem>
+                  <SelectItem value="not_defined">Ainda não definido</SelectItem>
                   <SelectItem value="elisa">Instalação Elisa</SelectItem>
                   <SelectItem value="autorizados">Autorizados</SelectItem>
                 </SelectContent>
