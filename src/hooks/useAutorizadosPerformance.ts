@@ -126,27 +126,28 @@ export function useAutorizadosPerformance() {
       
       // Helper function to map old etapa values to new ones
 const mapEtapaValue = (etapa: any): AutorizadoEtapa => {
+  // Log temporário para debug
+  console.log('🔍 mapEtapaValue - Input:', etapa, 'Type:', typeof etapa);
+  
+  // Se já é um valor válido, retornar como está
+  const validValues: AutorizadoEtapa[] = ['apresentacao_proposta', 'treinamentos_video', 'apto', 'premium'];
+  if (validValues.includes(etapa as AutorizadoEtapa)) {
+    console.log('✅ mapEtapaValue - Valor válido preservado:', etapa);
+    return etapa as AutorizadoEtapa;
+  }
+  
+  // Mapear valores legados
   switch (etapa) {
-    // Valores legados que precisam ser mapeados
     case 'integracao':
     case 'treinamento_comercial':
+      console.log('🔄 mapEtapaValue - Mapeando legado para apresentacao_proposta');
       return 'apresentacao_proposta';
     case 'treinamento_ficha_tecnica':
     case 'treinamento_instalacao':
+      console.log('🔄 mapEtapaValue - Mapeando legado para treinamentos_video');
       return 'treinamentos_video';
-    
-    // Valores atuais válidos - retornar como estão
-    case 'apresentacao_proposta':
-      return 'apresentacao_proposta';
-    case 'treinamentos_video':
-      return 'treinamentos_video';
-    case 'apto':
-      return 'apto';
-    case 'premium':
-      return 'premium';
-    
-    // Default apenas para valores realmente inválidos
     default:
+      console.log('⚠️ mapEtapaValue - Valor inválido, usando default:', etapa);
       return 'apresentacao_proposta';
   }
 };
