@@ -8,9 +8,16 @@ import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
-import { MapPin, Phone, Mail, User, Navigation, X, Home, Filter } from 'lucide-react';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
+import { ScrollArea } from './ui/scroll-area';
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { MapPin, Phone, Mail, User, Navigation, X, Home, Filter, Calendar as CalendarIcon, ChevronRight } from 'lucide-react';
 import { getMarkerColorByTipo, TIPO_PARCEIRO_LABELS, type TipoParceiro, ETAPAS_AUTORIZADO, type AutorizadoEtapa } from '@/utils/parceiros';
 import { InstalacaoCadastrada } from '@/hooks/useInstalacoesCadastradas';
+import { format, startOfWeek, endOfWeek, addWeeks, isWithinInterval, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 // Fix for default markers in React Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -66,13 +73,17 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
 }) => {
   const mapRef = useRef<L.Map | null>(null);
   const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Filtros de etapas de autorizados
   const [etapaFilters, setEtapaFilters] = useState<Set<AutorizadoEtapa>>(new Set());
   
   // Filtros de tipos de instalação
   const [tipoInstalacaoFilters, setTipoInstalacaoFilters] = useState<Set<'instalacao' | 'entrega' | 'correcao'>>(new Set());
+  
+  // Filtros de data
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [quickDateFilter, setQuickDateFilter] = useState<'current_week' | 'next_week' | 'custom' | null>(null);
 
   // Filter autorizados with valid coordinates
   const autorizadosWithCoords = autorizados.filter(autorizado => {
@@ -91,14 +102,58 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     instalacao => {
       if (!instalacao.latitude || !instalacao.longitude || instalacao.status === 'finalizada') return false;
       
-      // Se houver filtros de tipo de instalação selecionados, aplicar
+      // Filtro de tipo de instalação
       if (tipoInstalacaoFilters.size > 0) {
-        return tipoInstalacaoFilters.has(instalacao.categoria);
+        if (!tipoInstalacaoFilters.has(instalacao.categoria)) return false;
+      }
+      
+      // Filtro de data
+      if (dateRange.from || dateRange.to) {
+        if (!instalacao.data_instalacao) return false;
+        
+        const instalacaoDate = parseISO(instalacao.data_instalacao);
+        
+        if (dateRange.from && dateRange.to) {
+          return isWithinInterval(instalacaoDate, { start: dateRange.from, end: dateRange.to });
+        } else if (dateRange.from) {
+          return instalacaoDate >= dateRange.from;
+        } else if (dateRange.to) {
+          return instalacaoDate <= dateRange.to;
+        }
       }
       
       return true;
     }
   );
+  
+  // Função para aplicar filtros rápidos de data
+  const applyQuickDateFilter = (filter: 'current_week' | 'next_week') => {
+    const now = new Date();
+    let from: Date, to: Date;
+    
+    if (filter === 'current_week') {
+      from = startOfWeek(now, { locale: ptBR });
+      to = endOfWeek(now, { locale: ptBR });
+    } else {
+      const nextWeek = addWeeks(now, 1);
+      from = startOfWeek(nextWeek, { locale: ptBR });
+      to = endOfWeek(nextWeek, { locale: ptBR });
+    }
+    
+    setDateRange({ from, to });
+    setQuickDateFilter(filter);
+  };
+  
+  // Função para limpar todos os filtros
+  const clearAllFilters = () => {
+    setEtapaFilters(new Set());
+    setTipoInstalacaoFilters(new Set());
+    setDateRange({});
+    setQuickDateFilter(null);
+  };
+  
+  // Contar filtros ativos
+  const activeFiltersCount = etapaFilters.size + tipoInstalacaoFilters.size + (dateRange.from || dateRange.to ? 1 : 0);
 
   // Count parceiros by state and type
   const parceirosPorEstado = autorizados.filter(autorizado => autorizado.ativo && autorizado.estado).reduce((acc, autorizado) => {
@@ -365,141 +420,260 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       </div>;
   }
   return <div className="h-full w-full rounded-lg overflow-hidden border relative">
-      {/* Filters panel */}
-      <div className="absolute z-[1000] bottom-4 right-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-          className="bg-background/95 backdrop-blur-sm shadow-lg"
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          Filtros
-          {(etapaFilters.size > 0 || tipoInstalacaoFilters.size > 0) && (
-            <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-              {etapaFilters.size + tipoInstalacaoFilters.size}
-            </Badge>
-          )}
-        </Button>
-        
-        {showFilters && (
-          <div className="mt-2 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 w-64 space-y-4">
-            {/* Filtros de Etapas de Autorizados */}
-            <div>
-              <h4 className="font-semibold text-sm mb-2">Etapas de Autorizados</h4>
-              <div className="space-y-2">
-                {(Object.entries(ETAPAS_AUTORIZADO) as [AutorizadoEtapa, string][]).map(([etapa, label]) => (
-                  <div key={etapa} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`etapa-${etapa}`}
-                      checked={etapaFilters.has(etapa)}
-                      onCheckedChange={(checked) => {
-                        const newFilters = new Set(etapaFilters);
-                        if (checked) {
-                          newFilters.add(etapa);
-                        } else {
-                          newFilters.delete(etapa);
-                        }
-                        setEtapaFilters(newFilters);
-                      }}
-                    />
-                    <Label
-                      htmlFor={`etapa-${etapa}`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {label}
-                    </Label>
+      {/* Sidebar trigger button */}
+      <div className="absolute z-[1000] top-4 left-4">
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-background/95 backdrop-blur-sm shadow-lg"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros
+              {activeFiltersCount > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </SheetTrigger>
+          
+          <SheetContent side="left" className="w-[320px] sm:w-[400px] p-0">
+            <SheetHeader className="p-6 pb-4">
+              <SheetTitle>Filtros do Mapa</SheetTitle>
+              <SheetDescription>
+                Filtre autorizados e instalações no mapa
+              </SheetDescription>
+            </SheetHeader>
+            
+            <ScrollArea className="h-[calc(100vh-120px)] px-6">
+              <div className="space-y-6 pb-6">
+                {/* Filtros de Etapas de Autorizados */}
+                <div>
+                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Etapas de Autorizados
+                  </h4>
+                  <div className="space-y-2.5">
+                    {(Object.entries(ETAPAS_AUTORIZADO) as [AutorizadoEtapa, string][]).map(([etapa, label]) => (
+                      <div key={etapa} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`etapa-${etapa}`}
+                          checked={etapaFilters.has(etapa)}
+                          onCheckedChange={(checked) => {
+                            const newFilters = new Set(etapaFilters);
+                            if (checked) {
+                              newFilters.add(etapa);
+                            } else {
+                              newFilters.delete(etapa);
+                            }
+                            setEtapaFilters(newFilters);
+                          }}
+                        />
+                        <Label
+                          htmlFor={`etapa-${etapa}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {label}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {/* Filtros de Tipos de Instalação */}
-            <div className="border-t pt-4">
-              <h4 className="font-semibold text-sm mb-2">Tipos de Instalação</h4>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="tipo-instalacao"
-                    checked={tipoInstalacaoFilters.has('instalacao')}
-                    onCheckedChange={(checked) => {
-                      const newFilters = new Set(tipoInstalacaoFilters);
-                      if (checked) {
-                        newFilters.add('instalacao');
-                      } else {
-                        newFilters.delete('instalacao');
-                      }
-                      setTipoInstalacaoFilters(newFilters);
-                    }}
-                  />
-                  <Label
-                    htmlFor="tipo-instalacao"
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    Instalação
-                  </Label>
+                {/* Filtros de Tipos de Instalação */}
+                <div className="border-t pt-6">
+                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <Home className="h-4 w-4" />
+                    Tipos de Instalação
+                  </h4>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-instalacao"
+                        checked={tipoInstalacaoFilters.has('instalacao')}
+                        onCheckedChange={(checked) => {
+                          const newFilters = new Set(tipoInstalacaoFilters);
+                          if (checked) {
+                            newFilters.add('instalacao');
+                          } else {
+                            newFilters.delete('instalacao');
+                          }
+                          setTipoInstalacaoFilters(newFilters);
+                        }}
+                      />
+                      <Label
+                        htmlFor="tipo-instalacao"
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        Instalação
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-entrega"
+                        checked={tipoInstalacaoFilters.has('entrega')}
+                        onCheckedChange={(checked) => {
+                          const newFilters = new Set(tipoInstalacaoFilters);
+                          if (checked) {
+                            newFilters.add('entrega');
+                          } else {
+                            newFilters.delete('entrega');
+                          }
+                          setTipoInstalacaoFilters(newFilters);
+                        }}
+                      />
+                      <Label
+                        htmlFor="tipo-entrega"
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        Entrega
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-correcao"
+                        checked={tipoInstalacaoFilters.has('correcao')}
+                        onCheckedChange={(checked) => {
+                          const newFilters = new Set(tipoInstalacaoFilters);
+                          if (checked) {
+                            newFilters.add('correcao');
+                          } else {
+                            newFilters.delete('correcao');
+                          }
+                          setTipoInstalacaoFilters(newFilters);
+                        }}
+                      />
+                      <Label
+                        htmlFor="tipo-correcao"
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        Correção
+                      </Label>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="tipo-entrega"
-                    checked={tipoInstalacaoFilters.has('entrega')}
-                    onCheckedChange={(checked) => {
-                      const newFilters = new Set(tipoInstalacaoFilters);
-                      if (checked) {
-                        newFilters.add('entrega');
-                      } else {
-                        newFilters.delete('entrega');
-                      }
-                      setTipoInstalacaoFilters(newFilters);
-                    }}
-                  />
-                  <Label
-                    htmlFor="tipo-entrega"
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    Entrega
-                  </Label>
+
+                {/* Filtros de Data */}
+                <div className="border-t pt-6">
+                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4" />
+                    Data da Instalação
+                  </h4>
+                  
+                  {/* Botões rápidos */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <Button
+                      variant={quickDateFilter === 'current_week' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => applyQuickDateFilter('current_week')}
+                      className="w-full"
+                    >
+                      Semana Atual
+                    </Button>
+                    <Button
+                      variant={quickDateFilter === 'next_week' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => applyQuickDateFilter('next_week')}
+                      className="w-full"
+                    >
+                      Próxima Semana
+                    </Button>
+                  </div>
+                  
+                  {/* Seletor de período customizado */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Período customizado</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !dateRange.from && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateRange.from ? (
+                            dateRange.to ? (
+                              <>
+                                {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                                {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                              </>
+                            ) : (
+                              format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                            )
+                          ) : (
+                            <span>Selecione o período</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="range"
+                          selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
+                          onSelect={(range) => {
+                            setDateRange(range || {});
+                            setQuickDateFilter('custom');
+                          }}
+                          numberOfMonths={1}
+                          locale={ptBR}
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  {(dateRange.from || dateRange.to) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDateRange({});
+                        setQuickDateFilter(null);
+                      }}
+                      className="w-full mt-2"
+                    >
+                      Limpar Período
+                    </Button>
+                  )}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="tipo-correcao"
-                    checked={tipoInstalacaoFilters.has('correcao')}
-                    onCheckedChange={(checked) => {
-                      const newFilters = new Set(tipoInstalacaoFilters);
-                      if (checked) {
-                        newFilters.add('correcao');
-                      } else {
-                        newFilters.delete('correcao');
-                      }
-                      setTipoInstalacaoFilters(newFilters);
-                    }}
-                  />
-                  <Label
-                    htmlFor="tipo-correcao"
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    Correção
-                  </Label>
+
+                {/* Estatísticas */}
+                <div className="border-t pt-6">
+                  <h4 className="font-semibold text-sm mb-3">Resultados</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Autorizados</p>
+                      <p className="text-2xl font-bold">{autorizadosWithCoords.length}</p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Instalações</p>
+                      <p className="text-2xl font-bold">{instalacoesWithCoords.length}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Botão para limpar filtros */}
-            {(etapaFilters.size > 0 || tipoInstalacaoFilters.size > 0) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setEtapaFilters(new Set());
-                  setTipoInstalacaoFilters(new Set());
-                }}
-                className="w-full"
-              >
-                Limpar Filtros
-              </Button>
+            </ScrollArea>
+            
+            {/* Footer com botão de limpar */}
+            {activeFiltersCount > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
+                <Button
+                  variant="outline"
+                  onClick={clearAllFilters}
+                  className="w-full"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Limpar Todos os Filtros
+                </Button>
+              </div>
             )}
-          </div>
-        )}
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Floating info panel */}
