@@ -874,8 +874,24 @@ export default function Parceiros() {
                 <AutorizadosKanban 
                   autorizados={filteredAutorizados.map(a => ({ ...a, tipo_parceiro: a.tipo_parceiro || 'autorizado' }))} 
                   tipoParceiro={tipoParceiro}
-                  onEtapaChange={() => {}} 
-                  onShowHistory={() => {}}
+                  onEtapaChange={(id, etapa) => {
+                    // Atualização otimista da interface
+                    setFilteredAutorizados(prev => 
+                      prev.map(a => {
+                        if (a.id === id) {
+                          const field = tipoParceiro === 'autorizado' ? 'etapa' : 
+                                       tipoParceiro === 'representante' ? 'representante_etapa' : 
+                                       'licenciado_etapa';
+                          return { ...a, [field]: etapa };
+                        }
+                        return a;
+                      })
+                    );
+                  }} 
+                  onShowHistory={(autorizado) => {
+                    setHistoryAutorizado(autorizado);
+                    setIsHistoryModalOpen(true);
+                  }}
                 />
               )}
             </CardContent>

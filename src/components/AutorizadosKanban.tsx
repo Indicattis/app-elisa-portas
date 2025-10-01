@@ -113,11 +113,8 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
 
       if (error) throw error;
 
-      // Call the onEtapaChange callback immediately for optimistic update
-      onEtapaChange(draggedItem, novaEtapa);
-      
       // Invalidate the query cache to refresh the data from server
-      await queryClient.invalidateQueries({ queryKey: ['autorizados-with-ratings'] });
+      await queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
       
       toast({
         title: 'Sucesso',
