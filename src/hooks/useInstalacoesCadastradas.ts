@@ -97,7 +97,7 @@ export const useInstalacoesCadastradas = () => {
         return null;
       }
 
-      const { data_instalacao, tipo_instalacao, ...restData } = data;
+      const { data_instalacao, tipo_instalacao, responsavel_instalacao_id, ...restData } = data;
       
       const { data: instalacao, error } = await supabase
         .from('instalacoes_cadastradas')
@@ -108,6 +108,9 @@ export const useInstalacoesCadastradas = () => {
             : null,
           tipo_instalacao: tipo_instalacao && tipo_instalacao.trim() !== ''
             ? tipo_instalacao
+            : null,
+          responsavel_instalacao_id: responsavel_instalacao_id && responsavel_instalacao_id.trim() !== ''
+            ? responsavel_instalacao_id
             : null,
           created_by: user.id,
         })
@@ -145,6 +148,11 @@ export const useInstalacoesCadastradas = () => {
         ...(data.tipo_instalacao !== undefined && {
           tipo_instalacao: data.tipo_instalacao && data.tipo_instalacao.trim() !== ''
             ? data.tipo_instalacao
+            : null
+        }),
+        ...(data.responsavel_instalacao_id !== undefined && {
+          responsavel_instalacao_id: data.responsavel_instalacao_id && data.responsavel_instalacao_id.trim() !== ''
+            ? data.responsavel_instalacao_id
             : null
         })
       };

@@ -107,6 +107,9 @@ export const CadastroInstalacaoForm = ({
         tipo_instalacao: values.tipo_instalacao && values.tipo_instalacao.trim() !== ''
           ? values.tipo_instalacao as 'elisa' | 'autorizados'
           : undefined,
+        responsavel_instalacao_id: values.responsavel_instalacao_id && values.responsavel_instalacao_id.trim() !== ''
+          ? values.responsavel_instalacao_id
+          : undefined,
       };
       
       await onSubmit(dataToSubmit);
