@@ -157,9 +157,14 @@ export function useAutorizadosPerformance() {
 
         const ratings = ratingsMapFinal.get(autorizado.id) || { average_rating: 0, total_ratings: 0 };
 
+        // Map etapa apenas se for o tipo 'autorizado', preservando as outras etapas específicas
+        const etapaProcessada = autorizado.tipo_parceiro === 'autorizado' 
+          ? mapEtapaValue(autorizado.etapa)
+          : autorizado.etapa;
+
         return {
           ...autorizado,
-          etapa: mapEtapaValue(autorizado.etapa),
+          etapa: etapaProcessada,
           average_rating: ratings.average_rating,
           total_ratings: ratings.total_ratings,
           ultima_avaliacao: ultimaAvaliacao,

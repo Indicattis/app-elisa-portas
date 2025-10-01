@@ -34,6 +34,8 @@ interface Autorizado {
   updated_at: string;
   vendedor_id?: string;
   etapa: string;
+  representante_etapa?: string;
+  licenciado_etapa?: string;
   tipo_parceiro: TipoParceiro;
   average_rating?: number;
   total_ratings?: number;
@@ -105,6 +107,9 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
       const updateField = tipoParceiro === 'autorizado' ? 'etapa' : 
                          tipoParceiro === 'representante' ? 'representante_etapa' : 
                          'licenciado_etapa';
+
+      // Call the onEtapaChange callback immediately for optimistic update
+      onEtapaChange(draggedItem, novaEtapa);
 
       const { error } = await supabase
         .from('autorizados')
