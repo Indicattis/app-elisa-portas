@@ -8,6 +8,7 @@ export interface InstalacaoCadastrada {
   estado: string;
   cidade: string;
   tamanho: string | null;
+  categoria: 'instalacao' | 'entrega' | 'correcao';
   latitude: number | null;
   longitude: number | null;
   last_geocoded_at: string | null;
@@ -26,6 +27,7 @@ export interface CreateInstalacaoData {
   estado: string;
   cidade: string;
   tamanho?: string;
+  categoria: 'instalacao' | 'entrega' | 'correcao';
 }
 
 export const useInstalacoesCadastradas = () => {
@@ -54,10 +56,14 @@ export const useInstalacoesCadastradas = () => {
             
             return {
               ...instalacao,
+              categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
               criador: userData || undefined
             };
           }
-          return instalacao;
+          return {
+            ...instalacao,
+            categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao'
+          };
         })
       );
       

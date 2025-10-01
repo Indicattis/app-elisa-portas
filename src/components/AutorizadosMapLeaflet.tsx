@@ -173,10 +173,16 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     });
   };
 
-  // Custom marker icon for instalacoes (red)
-  const createInstalacaoIcon = () => {
+  // Custom marker icon for instalacoes with color based on categoria
+  const createInstalacaoIcon = (categoria: 'instalacao' | 'entrega' | 'correcao' = 'instalacao') => {
+    const colors = {
+      instalacao: '#ef4444', // vermelho
+      entrega: '#6b7280',    // cinza
+      correcao: '#a855f7'    // roxo
+    };
+    
     return L.divIcon({
-      html: `<div class="custom-instalacao-marker"></div>`,
+      html: `<div class="custom-instalacao-marker" style="background-color: ${colors[categoria]};"></div>`,
       className: 'custom-instalacao-marker-container',
       iconSize: L.point(12, 12),
       iconAnchor: L.point(6, 6)
@@ -495,12 +501,21 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
           </MarkerClusterGroup>
 
           {/* Instalações markers (not clustered) */}
-          {instalacoesWithCoords.map(instalacao => <Marker key={`instalacao-${instalacao.id}`} position={[instalacao.latitude!, instalacao.longitude!]} icon={createInstalacaoIcon()}>
+          {instalacoesWithCoords.map(instalacao => <Marker key={`instalacao-${instalacao.id}`} position={[instalacao.latitude!, instalacao.longitude!]} icon={createInstalacaoIcon(instalacao.categoria)}>
               <Popup className="custom-popup" minWidth={250}>
                 <div className="p-4 space-y-3">
                   {/* Header */}
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                    <div 
+                      className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                      style={{
+                        backgroundColor: instalacao.categoria === 'instalacao' 
+                          ? '#ef4444' 
+                          : instalacao.categoria === 'entrega'
+                          ? '#6b7280'
+                          : '#a855f7'
+                      }}
+                    >
                       <Home className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -516,6 +531,28 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
 
                   {/* Details */}
                   <div className="space-y-2 text-sm border-t pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Categoria:</span>
+                      <span 
+                        className="font-medium px-2 py-1 rounded-md text-xs"
+                        style={{
+                          backgroundColor: instalacao.categoria === 'instalacao' 
+                            ? '#fee2e2' 
+                            : instalacao.categoria === 'entrega'
+                            ? '#f3f4f6'
+                            : '#f3e8ff',
+                          color: instalacao.categoria === 'instalacao' 
+                            ? '#dc2626' 
+                            : instalacao.categoria === 'entrega'
+                            ? '#4b5563'
+                            : '#9333ea'
+                        }}
+                      >
+                        {instalacao.categoria === 'instalacao' && 'Instalação'}
+                        {instalacao.categoria === 'entrega' && 'Entrega'}
+                        {instalacao.categoria === 'correcao' && 'Correção'}
+                      </span>
+                    </div>
                     {instalacao.tamanho && <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Tamanho:</span>
                         <span className="font-medium">{instalacao.tamanho}</span>

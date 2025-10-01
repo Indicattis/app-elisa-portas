@@ -60,6 +60,22 @@ export const InstalacoesList = ({ instalacoes, onDelete }: InstalacaoListProps) 
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant="outline"
+                  className={
+                    instalacao.categoria === 'instalacao' 
+                      ? 'bg-red-500/10 text-red-500 border-red-500/20' 
+                      : instalacao.categoria === 'entrega'
+                      ? 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                      : 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                  }
+                >
+                  {instalacao.categoria === 'instalacao' && 'Instalação'}
+                  {instalacao.categoria === 'entrega' && 'Entrega'}
+                  {instalacao.categoria === 'correcao' && 'Correção'}
+                </Badge>
+              </div>
               {instalacao.tamanho && (
                 <p className="text-sm">
                   <span className="font-medium">Tamanho:</span> {instalacao.tamanho}

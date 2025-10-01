@@ -28,6 +28,9 @@ const formSchema = z.object({
   estado: z.string().min(2, 'Selecione um estado'),
   cidade: z.string().min(2, 'Selecione uma cidade'),
   tamanho: z.string().optional(),
+  categoria: z.enum(['instalacao', 'entrega', 'correcao'], {
+    required_error: 'Selecione uma categoria',
+  }),
 });
 
 interface CadastroInstalacaoFormProps {
@@ -54,6 +57,7 @@ export const CadastroInstalacaoForm = ({
       estado: '',
       cidade: '',
       tamanho: '',
+      categoria: 'instalacao',
     },
   });
 
@@ -156,6 +160,29 @@ export const CadastroInstalacaoForm = ({
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="categoria"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Categoria</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="instalacao">Instalação</SelectItem>
+                  <SelectItem value="entrega">Entrega</SelectItem>
+                  <SelectItem value="correcao">Correção</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
