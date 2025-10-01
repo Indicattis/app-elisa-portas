@@ -68,7 +68,7 @@ export const CadastroInstalacaoForm = ({
       cidade: '',
       tamanho: '',
       categoria: 'instalacao',
-      data_instalacao: '',
+      data_instalacao: undefined,
       status: 'pendente_producao',
       tipo_instalacao: undefined,
       responsavel_instalacao_id: '',
@@ -97,10 +97,16 @@ export const CadastroInstalacaoForm = ({
         }
       }
       
-      await onSubmit({
+      // Convert empty string to null for date field
+      const dataToSubmit = {
         ...values,
         responsavel_instalacao_nome,
-      });
+        data_instalacao: values.data_instalacao && values.data_instalacao.trim() !== '' 
+          ? values.data_instalacao 
+          : null,
+      };
+      
+      await onSubmit(dataToSubmit);
       
       if (!isEditing) {
         form.reset();
