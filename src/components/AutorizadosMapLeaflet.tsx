@@ -782,13 +782,13 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       )}>
 
       {/* Floating info panel */}
-      {clickedPoint && <div className="absolute z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto" style={{
+      {clickedPoint && <div className="absolute z-[1000] bg-card border-border rounded-lg shadow-lg w-80 max-h-[calc(100%-2rem)] overflow-y-auto" style={{
       top: '100px',
       right: '20px'
     }}>
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center gap-2">
+              <h3 className="font-semibold text-card-foreground flex items-center gap-2">
                 <Navigation className="h-4 w-4 text-destructive" />
                 Análise de Localização
               </h3>
@@ -798,34 +798,34 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
             </div>
             
             <div className="space-y-3 text-sm">
-              <div className="p-3 bg-muted/50 rounded-md">
-                <p className="font-medium mb-1">Coordenadas:</p>
+              <div className="p-3 bg-muted rounded-md">
+                <p className="font-medium text-card-foreground mb-1">Coordenadas:</p>
                 <p className="text-muted-foreground text-xs font-mono">
                   {clickedPoint.lat.toFixed(6)}, {clickedPoint.lng.toFixed(6)}
                 </p>
               </div>
               
-              <div className="p-3 bg-muted/50 rounded-md">
-                <p className="font-medium mb-1">Distância até Matriz:</p>
+              <div className="p-3 bg-muted rounded-md">
+                <p className="font-medium text-card-foreground mb-1">Distância até Matriz:</p>
                 <p className="text-muted-foreground">Caxias do Sul/RS</p>
                 <p className="text-lg font-semibold text-destructive">{clickedPoint.distanceToHQ.toFixed(1)} km</p>
                 <div className="mt-2 pt-2 border-t border-border">
-                  <p className="font-medium mb-1">Valor do Frete:</p>
+                  <p className="font-medium text-card-foreground mb-1">Valor do Frete:</p>
                   <p className="text-lg font-semibold text-primary">R$ {(clickedPoint.distanceToHQ * 12).toFixed(2)}</p>
                 </div>
               </div>
               
-              <div className="p-3 bg-muted/50 rounded-md">
-                <p className="font-medium mb-2">Autorizados mais próximos:</p>
+              <div className="p-3 bg-muted rounded-md">
+                <p className="font-medium text-card-foreground mb-2">Autorizados mais próximos:</p>
                 <div className="space-y-2">
-                  {clickedPoint.nearestAutorizados.map((autorizado, index) => <div key={autorizado.id} className="flex items-center gap-2 p-2 bg-background rounded border">
+                  {clickedPoint.nearestAutorizados.map((autorizado, index) => <div key={autorizado.id} className="flex items-center gap-2 p-2 bg-card rounded border border-border">
                       <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-green-500' : index === 1 ? 'bg-yellow-500' : 'bg-red-500'}`} />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{autorizado.nome}</p>
+                        <p className="font-medium text-card-foreground truncate">{autorizado.nome}</p>
                         <p className="text-xs text-muted-foreground">{autorizado.cidade} - {autorizado.estado}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{autorizado.distance.toFixed(1)} km</p>
+                        <p className="font-semibold text-card-foreground">{autorizado.distance.toFixed(1)} km</p>
                       </div>
                     </div>)}
                 </div>
