@@ -448,43 +448,6 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
             
             <ScrollArea className="flex-1 px-6">
               <div className="space-y-6 py-6">
-                {/* Estatísticas */}
-                {stats && (
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <h4 className="font-semibold text-sm mb-3">Estatísticas</h4>
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span>Total:</span>
-                        <span className="font-medium">{stats.total}</span>
-                      </div>
-                      <div className="flex justify-between text-green-600">
-                        <span>Ativos:</span>
-                        <span className="font-medium">{stats.ativos}</span>
-                      </div>
-                      <div className="flex justify-between text-red-600">
-                        <span>Inativos:</span>
-                        <span className="font-medium">{stats.inativos}</span>
-                      </div>
-                      <div className="flex justify-between text-blue-600">
-                        <span>Geocodificados:</span>
-                        <span className="font-medium">{stats.geocodificados}</span>
-                      </div>
-                      <div className="flex justify-between text-orange-600">
-                        <span>Não geocodificados:</span>
-                        <span className="font-medium">{stats.naoGeocodificados}</span>
-                      </div>
-                      <div className="border-t pt-2 mt-2 flex justify-between text-primary font-medium">
-                        <span>No mapa:</span>
-                        <span>{stats.ativosComCoordenadas}</span>
-                      </div>
-                      <div className="flex justify-between text-red-600 font-medium">
-                        <span>Instalações:</span>
-                        <span>{stats.instalacoesGeocodificadas}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Resumo por Estado */}
                 {estadosOrdenados.length > 0 && (
                   <div className="bg-muted/50 rounded-lg p-4">
