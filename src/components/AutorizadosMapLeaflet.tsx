@@ -988,10 +988,62 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                           {instalacao.categoria === 'correcao' && 'Correção'}
                         </span>
                       </div>
-                      {instalacao.tamanho && <div className="flex items-center justify-between">
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Status:</span>
+                        <span 
+                          className="font-medium px-2 py-1 rounded-md text-xs"
+                          style={{
+                            backgroundColor: instalacao.status === 'finalizada' 
+                              ? '#dcfce7' 
+                              : instalacao.status === 'pronta_fabrica'
+                              ? '#dbeafe'
+                              : '#fef3c7',
+                            color: instalacao.status === 'finalizada' 
+                              ? '#16a34a' 
+                              : instalacao.status === 'pronta_fabrica'
+                              ? '#2563eb'
+                              : '#ca8a04'
+                          }}
+                        >
+                          {instalacao.status === 'finalizada' && 'Finalizada'}
+                          {instalacao.status === 'pronta_fabrica' && 'Pronta na Fábrica'}
+                          {instalacao.status === 'pendente_producao' && 'Pendente Produção'}
+                        </span>
+                      </div>
+
+                      {instalacao.tipo_instalacao && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Tipo:</span>
+                          <span className="font-medium">
+                            {instalacao.tipo_instalacao === 'elisa' ? 'Elisa' : 'Autorizados'}
+                          </span>
+                        </div>
+                      )}
+
+                      {instalacao.tamanho && (
+                        <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Tamanho:</span>
                           <span className="font-medium">{instalacao.tamanho}</span>
-                        </div>}
+                        </div>
+                      )}
+
+                      {instalacao.data_instalacao && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Data Instalação:</span>
+                          <span className="font-medium">
+                            {format(parseISO(instalacao.data_instalacao), 'dd/MM/yyyy', { locale: ptBR })}
+                          </span>
+                        </div>
+                      )}
+
+                      {instalacao.responsavel_instalacao_nome && (
+                        <div className="flex items-center justify-between border-t pt-2">
+                          <span className="text-muted-foreground">Responsável:</span>
+                          <span className="font-medium text-xs">{instalacao.responsavel_instalacao_nome}</span>
+                        </div>
+                      )}
+
                       {instalacao.criador && (
                         <div className="flex items-center gap-2 py-2 border-t">
                           <Avatar className="h-6 w-6">
@@ -1006,12 +1058,22 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                           </div>
                         </div>
                       )}
-                      {instalacao.geocode_precision && <div className="text-xs text-muted-foreground border-t pt-2">
+
+                      <div className="flex items-center justify-between border-t pt-2">
+                        <span className="text-muted-foreground">Data Cadastro:</span>
+                        <span className="font-medium text-xs">
+                          {format(parseISO(instalacao.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                        </span>
+                      </div>
+
+                      {instalacao.geocode_precision && (
+                        <div className="text-xs text-muted-foreground border-t pt-2">
                           <div className="flex items-start gap-1">
                             <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                             <span className="leading-tight">{instalacao.geocode_precision}</span>
                           </div>
-                        </div>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Popup>
