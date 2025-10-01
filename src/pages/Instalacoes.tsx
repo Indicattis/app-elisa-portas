@@ -17,6 +17,7 @@ import { usePontosInstalacao } from "@/hooks/usePontosInstalacao";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
+import { baixarInstalacoesPDF } from "@/utils/instalacoesPDFGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
@@ -112,6 +113,25 @@ export default function Instalacoes() {
     }
   };
 
+  const handleDownloadInstalacoesPDF = () => {
+    try {
+      baixarInstalacoesPDF({
+        instalacoes
+      });
+      
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: "O relatório de instalações foi baixado.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o relatório. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -154,6 +174,18 @@ export default function Instalacoes() {
                   {!isMobile && "Equipes"}
                 </Button>
               </div>
+            )}
+            
+            {activeTab === "cadastro" && (
+              <Button 
+                onClick={handleDownloadInstalacoesPDF}
+                variant="outline" 
+                size={isMobile ? "sm" : "default"}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {!isMobile && "Baixar PDF"}
+              </Button>
             )}
           </div>
 
