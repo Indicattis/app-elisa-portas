@@ -125,20 +125,31 @@ export function useAutorizadosPerformance() {
       const hoje = new Date();
       
       // Helper function to map old etapa values to new ones
-      const mapEtapaValue = (etapa: any): AutorizadoEtapa => {
-        switch (etapa) {
-          case 'integracao':
-          case 'treinamento_comercial':
-            return 'apresentacao_proposta';
-          case 'treinamento_ficha_tecnica':
-          case 'treinamento_instalacao':
-            return 'treinamentos_video';
-          case 'apto':
-            return 'apto';
-          default:
-            return 'apresentacao_proposta';
-        }
-      };
+const mapEtapaValue = (etapa: any): AutorizadoEtapa => {
+  switch (etapa) {
+    // Valores legados que precisam ser mapeados
+    case 'integracao':
+    case 'treinamento_comercial':
+      return 'apresentacao_proposta';
+    case 'treinamento_ficha_tecnica':
+    case 'treinamento_instalacao':
+      return 'treinamentos_video';
+    
+    // Valores atuais válidos - retornar como estão
+    case 'apresentacao_proposta':
+      return 'apresentacao_proposta';
+    case 'treinamentos_video':
+      return 'treinamentos_video';
+    case 'apto':
+      return 'apto';
+    case 'premium':
+      return 'premium';
+    
+    // Default apenas para valores realmente inválidos
+    default:
+      return 'apresentacao_proposta';
+  }
+};
       
       const autorizadosComPerformance: AutorizadoPerformance[] = (autorizados || []).map(autorizado => {
         const ultimaAvaliacao = ultimasAvaliacoesMap.get(autorizado.id);
