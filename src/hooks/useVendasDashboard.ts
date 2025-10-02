@@ -35,6 +35,7 @@ export const useVendasAgregadas = (year: number) => {
         .select(`
           data_venda,
           valor_venda,
+          valor_frete,
           atendente_id,
           admin_users!vendas_atendente_id_fkey(nome)
         `)
@@ -44,7 +45,7 @@ export const useVendasAgregadas = (year: number) => {
 
       if (error) throw error;
 
-      // Agregar por data
+      // Agregar por data (excluindo frete)
       const agregado = data.reduce((acc: Record<string, VendaDia>, venda) => {
         const data = venda.data_venda.split('T')[0];
         
@@ -56,7 +57,9 @@ export const useVendasAgregadas = (year: number) => {
           };
         }
         
-        acc[data].valor += venda.valor_venda || 0;
+        // Valor sem frete: valor_venda - valor_frete
+        const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+        acc[data].valor += valorSemFrete;
         acc[data].numero_vendas += 1;
         
         return acc;
@@ -112,13 +115,17 @@ export const useVendasMesAtual = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vendas')
-        .select('valor_venda')
+        .select('valor_venda, valor_frete')
         .gte('data_venda', inicio.toISOString())
         .lte('data_venda', fim.toISOString());
 
       if (error) throw error;
 
-      const total = data.reduce((sum, v) => sum + (v.valor_venda || 0), 0);
+      // Total sem frete
+      const total = data.reduce((sum, v) => {
+        const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0);
+        return sum + valorSemFrete;
+      }, 0);
       const quantidade = data.length;
 
       return { total, quantidade };
@@ -137,13 +144,17 @@ export const useVendasSemanaAtual = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vendas')
-        .select('valor_venda')
+        .select('valor_venda, valor_frete')
         .gte('data_venda', inicio.toISOString())
         .lte('data_venda', fim.toISOString());
 
       if (error) throw error;
 
-      const total = data.reduce((sum, v) => sum + (v.valor_venda || 0), 0);
+      // Total sem frete
+      const total = data.reduce((sum, v) => {
+        const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0);
+        return sum + valorSemFrete;
+      }, 0);
       const quantidade = data.length;
 
       return { total, quantidade };
@@ -163,6 +174,7 @@ export function useRankingVendedoresDia(data: string) {
         .select(`
           id,
           valor_venda,
+          valor_frete,
           atendente:admin_users!vendas_atendente_id_fkey(nome, foto_perfil_url),
           portas:portas_vendas(id)
         `)
@@ -192,7 +204,9 @@ export function useRankingVendedoresDia(data: string) {
         const vendedor = rankingMap.get(atendenteNome)!;
         vendedor.quantidade_vendas += 1;
         vendedor.quantidade_portas += quantidadePortas;
-        vendedor.valor_total += venda.valor_venda || 0;
+        // Valor sem frete
+        const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+        vendedor.valor_total += valorSemFrete;
       });
 
       // Ordenar por valor total

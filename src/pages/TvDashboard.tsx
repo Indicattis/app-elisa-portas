@@ -51,12 +51,29 @@ export default function TvDashboard() {
       const {
         data,
         error
-      } = await supabase.from('contador_vendas_dias').select('data, valor').gte('data', format(inicioJulho, 'yyyy-MM-dd')).lte('data', format(fimSetembro, 'yyyy-MM-dd'));
+      } = await supabase
+        .from('vendas')
+        .select('data_venda, valor_venda, valor_frete')
+        .gte('data_venda', format(inicioJulho, 'yyyy-MM-dd'))
+        .lte('data_venda', format(fimSetembro, 'yyyy-MM-dd'));
+        
       if (error) {
         console.error('Erro ao buscar vendas do trimestre:', error);
         throw error;
       }
-      return data || [];
+      
+      // Agrupar por data e calcular valor sem frete
+      const vendasPorDia = (data || []).reduce((acc: { [key: string]: number }, venda: any) => {
+        const dataKey = venda.data_venda.split('T')[0];
+        const valorSemFrete = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
+        acc[dataKey] = (acc[dataKey] || 0) + valorSemFrete;
+        return acc;
+      }, {});
+      
+      return Object.entries(vendasPorDia).map(([data, valor]) => ({
+        data,
+        valor
+      }));
     },
     refetchInterval: 120000,
     refetchOnWindowFocus: true,

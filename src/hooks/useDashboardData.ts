@@ -27,7 +27,7 @@ export const useSalesData = () => {
 
       const { data, error } = await supabase
         .from('vendas')
-        .select('data_venda, valor_venda')
+        .select('data_venda, valor_venda, valor_frete')
         .gte('data_venda', primeiroDiaDoMes.toISOString())
         .lte('data_venda', ultimoDiaDoMes.toISOString());
 
@@ -36,13 +36,15 @@ export const useSalesData = () => {
         throw error;
       }
 
-      // Agrupar por data e somar valores
+      // Agrupar por data e somar valores (excluindo frete)
       const vendasPorDia = (data || []).reduce((acc: { [key: string]: { valor: number; numero_vendas: number } }, venda: any) => {
         const dataKey = venda.data_venda.split('T')[0];
         if (!acc[dataKey]) {
           acc[dataKey] = { valor: 0, numero_vendas: 0 };
         }
-        acc[dataKey].valor += Number(venda.valor_venda || 0);
+        // Valor sem frete
+        const valorSemFrete = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
+        acc[dataKey].valor += valorSemFrete;
         acc[dataKey].numero_vendas += 1;
         return acc;
       }, {});
@@ -71,6 +73,7 @@ export const useSellersRanking = () => {
         .from('vendas')
         .select(`
           valor_venda,
+          valor_frete,
           atendente_id,
           admin_users!inner(nome, foto_perfil_url)
         `)
@@ -82,7 +85,7 @@ export const useSellersRanking = () => {
         throw error;
       }
 
-      // Agrupar por atendente e somar valores
+      // Agrupar por atendente e somar valores (excluindo frete)
       const vendasPorAtendente = (data || []).reduce((acc: { [key: string]: any }, venda: any) => {
         const atendenteId = venda.atendente_id;
         if (!acc[atendenteId]) {
@@ -93,7 +96,9 @@ export const useSellersRanking = () => {
             numero_vendas: 0
           };
         }
-        acc[atendenteId].total_vendas += Number(venda.valor_venda || 0);
+        // Valor sem frete
+        const valorSemFrete = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
+        acc[atendenteId].total_vendas += valorSemFrete;
         acc[atendenteId].numero_vendas += 1;
         return acc;
       }, {});
