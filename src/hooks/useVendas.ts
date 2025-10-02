@@ -26,6 +26,7 @@ export interface VendaFormData {
   data_venda?: string;
   valor_frete?: number;
   canal_aquisicao_id?: string;
+  data_prevista_entrega?: string;
 }
 
 export function useVendas() {
@@ -152,9 +153,14 @@ export function useVendas() {
       // 6. Atualizar tamanho da instalação com os tamanhos concatenados das portas
       const tamanhosConcatenados = portas.map(p => p.tamanho).join(', ');
       
+      const updateData: any = { tamanho: tamanhosConcatenados };
+      if (vendaData.data_prevista_entrega) {
+        updateData.data_instalacao = vendaData.data_prevista_entrega;
+      }
+      
       const { error: instalacaoError } = await supabase
         .from('instalacoes_cadastradas')
-        .update({ tamanho: tamanhosConcatenados })
+        .update(updateData)
         .eq('nome_cliente', venda.cliente_nome)
         .eq('telefone_cliente', venda.cliente_telefone)
         .order('created_at', { ascending: false })

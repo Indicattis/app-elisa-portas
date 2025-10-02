@@ -174,6 +174,7 @@ export default function Vendas() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Cidade/Estado</TableHead>
+                  <TableHead>Previsão Entrega</TableHead>
                   <TableHead className="text-center">Qtd Portas</TableHead>
                   <TableHead className="text-right">Valor Total</TableHead>
                   <TableHead>Atendente</TableHead>
@@ -183,7 +184,7 @@ export default function Vendas() {
               <TableBody>
                 {filteredVendas?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Nenhuma venda encontrada
                     </TableCell>
                   </TableRow>
@@ -196,6 +197,12 @@ export default function Vendas() {
                       <TableCell className="font-medium">{venda.cliente_nome}</TableCell>
                       <TableCell>{venda.cliente_telefone}</TableCell>
                       <TableCell>{venda.cidade}/{venda.estado}</TableCell>
+                      <TableCell>
+                        {venda.data_prevista_entrega 
+                          ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
+                          : '-'
+                        }
+                      </TableCell>
                       <TableCell className="text-center">{venda.portas?.length || 0}</TableCell>
                       <TableCell className="text-right font-semibold">
                         {formatCurrency(venda.valor_venda || 0)}

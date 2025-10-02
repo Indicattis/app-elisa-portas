@@ -34,7 +34,8 @@ export default function VendasNova() {
     publico_alvo: '',
     forma_pagamento: '',
     observacoes_venda: '',
-    valor_frete: 0
+    valor_frete: 0,
+    data_prevista_entrega: ''
   });
 
   const [portas, setPortas] = useState<PortaVenda[]>([]);
@@ -272,6 +273,16 @@ export default function VendasNova() {
                 min="0"
                 value={formData.valor_frete}
                 onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data_prevista_entrega">Previsão de Entrega</Label>
+              <Input
+                id="data_prevista_entrega"
+                type="date"
+                value={formData.data_prevista_entrega}
+                onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
               />
             </div>
 
