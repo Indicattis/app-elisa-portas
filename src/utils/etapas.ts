@@ -1,11 +1,30 @@
 export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamentos_video' | 'apto' | 'premium';
+export type RepresentanteEtapa = 'inicial' | 'qualificacao' | 'proposta' | 'contratado';
+export type LicenciadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
 
-export const ETAPAS: Record<AutorizadoEtapa, string> = {
+export const ETAPAS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
   apresentacao_proposta: 'Apresentação Proposta',
   treinamentos_video: 'Treinamentos em Vídeo',
   apto: 'Apto',
   premium: 'Premium'
 };
+
+export const ETAPAS_REPRESENTANTE: Record<RepresentanteEtapa, string> = {
+  inicial: 'Inicial',
+  qualificacao: 'Qualificação',
+  proposta: 'Proposta',
+  contratado: 'Contratado'
+};
+
+export const ETAPAS_LICENCIADO: Record<LicenciadoEtapa, string> = {
+  inicial: 'Inicial',
+  avaliacao: 'Avaliação',
+  aprovacao: 'Aprovação',
+  ativo: 'Ativo'
+};
+
+// Mantendo compatibilidade com código existente
+export const ETAPAS = ETAPAS_AUTORIZADO;
 
 export const ETAPA_COLORS: Record<AutorizadoEtapa, string> = {
   apresentacao_proposta: 'hsl(var(--chart-1))',

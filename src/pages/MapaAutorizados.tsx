@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Loader2, Eye, EyeOff, Filter } from "lucide-react";
 import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
+import { MapaFiltrosAvancados, MapaFiltros } from "@/components/MapaFiltrosAvancados";
+import { Badge } from "@/components/ui/badge";
+import { AutorizadoEtapa, RepresentanteEtapa, LicenciadoEtapa } from "@/utils/etapas";
 
 interface Autorizado {
   id: string;
@@ -31,6 +29,9 @@ interface Autorizado {
   updated_at: string;
   vendedor_id?: string;
   tipo_parceiro: 'autorizado' | 'representante' | 'licenciado';
+  etapa?: AutorizadoEtapa;
+  representante_etapa?: RepresentanteEtapa;
+  licenciado_etapa?: LicenciadoEtapa;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -40,13 +41,18 @@ interface Autorizado {
 export default function MapaAutorizados() {
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [loading, setLoading] = useState(true);
-  const [batchGeocoding, setBatchGeocoding] = useState(false);
-  const [showOverlays, setShowOverlays] = useState(true);
-  const [filters, setFilters] = useState({
+  const [filtros, setFiltros] = useState<MapaFiltros>({
     autorizados: true,
     representantes: true,
     licenciados: true,
-    instalacoes: true
+    etapasAutorizados: [],
+    etapasRepresentantes: [],
+    etapasLicenciados: [],
+    instalacoes: true,
+    statusInstalacoes: [],
+    tiposInstalacao: [],
+    apenasGeocodificados: false,
+    apenasAtivos: false,
   });
   const { instalacoes } = useInstalacoesCadastradas();
   const { toast } = useToast();
@@ -84,76 +90,74 @@ export default function MapaAutorizados() {
     }
   };
 
-  const handleBatchGeocode = async () => {
-    const autorizadosToGeocode = autorizados.filter(autorizado => 
-      autorizado.ativo && 
-      autorizado.cidade && 
-      autorizado.estado
-    );
-
-    if (autorizadosToGeocode.length === 0) {
-      toast({
-        title: 'Info',
-        description: 'Nenhum autorizado encontrado para geocodificação.'
-      });
-      return;
-    }
-
-    setBatchGeocoding(true);
-    let success = 0;
-    let errors = 0;
-
-    toast({
-      title: 'Geocodificação em lote iniciada',
-      description: `Processando ${autorizadosToGeocode.length} autorizados...`
-    });
-
-    for (const autorizado of autorizadosToGeocode) {
-      try {
-        const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
-          body: {
-            id: autorizado.id,
-            cidade: autorizado.cidade,
-            estado: autorizado.estado
-          }
-        });
-
-        if (error) throw error;
-
-        if (data.success) {
-          success++;
-        } else {
-          errors++;
-        }
-      } catch (error) {
-        console.error(`Erro ao geocodificar ${autorizado.nome}:`, error);
-        errors++;
-      }
-
-      // Delay para respeitar limites da API do Nominatim
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-
-    setBatchGeocoding(false);
-    
-    toast({
-      title: 'Geocodificação em lote concluída',
-      description: `${success} sucessos, ${errors} erros`
-    });
-
-    fetchAutorizados();
-  };
 
   // Filtrar autorizados baseado nas opções selecionadas
   const filteredAutorizados = autorizados.filter(autorizado => {
-    if (autorizado.tipo_parceiro === 'autorizado') return filters.autorizados;
-    if (autorizado.tipo_parceiro === 'representante') return filters.representantes;
-    if (autorizado.tipo_parceiro === 'licenciado') return filters.licenciados;
-    return false;
+    // Filtro de tipo de parceiro e etapas
+    let passaTipoParceiro = false;
+    
+    if (autorizado.tipo_parceiro === 'autorizado' && filtros.autorizados) {
+      if (filtros.etapasAutorizados.length === 0) {
+        passaTipoParceiro = true;
+      } else {
+        passaTipoParceiro = filtros.etapasAutorizados.includes(autorizado.etapa as AutorizadoEtapa);
+      }
+    }
+    
+    if (autorizado.tipo_parceiro === 'representante' && filtros.representantes) {
+      if (filtros.etapasRepresentantes.length === 0) {
+        passaTipoParceiro = true;
+      } else {
+        passaTipoParceiro = autorizado.representante_etapa 
+          ? filtros.etapasRepresentantes.includes(autorizado.representante_etapa as RepresentanteEtapa)
+          : false;
+      }
+    }
+    
+    if (autorizado.tipo_parceiro === 'licenciado' && filtros.licenciados) {
+      if (filtros.etapasLicenciados.length === 0) {
+        passaTipoParceiro = true;
+      } else {
+        passaTipoParceiro = autorizado.licenciado_etapa
+          ? filtros.etapasLicenciados.includes(autorizado.licenciado_etapa as LicenciadoEtapa)
+          : false;
+      }
+    }
+    
+    if (!passaTipoParceiro) return false;
+    
+    // Filtros adicionais
+    if (filtros.apenasGeocodificados && (!autorizado.latitude || !autorizado.longitude)) {
+      return false;
+    }
+    if (filtros.apenasAtivos && !autorizado.ativo) {
+      return false;
+    }
+    
+    return true;
   });
 
   // Filtrar instalações
-  const filteredInstalacoes = filters.instalacoes ? instalacoes : [];
+  const filteredInstalacoes = instalacoes.filter(instalacao => {
+    if (!filtros.instalacoes) return false;
+    
+    // Filtro de status
+    if (filtros.statusInstalacoes.length > 0 && !filtros.statusInstalacoes.includes(instalacao.status)) {
+      return false;
+    }
+    
+    // Filtro de categoria/tipo
+    if (filtros.tiposInstalacao.length > 0 && !filtros.tiposInstalacao.includes(instalacao.categoria)) {
+      return false;
+    }
+    
+    // Filtro de geocodificação
+    if (filtros.apenasGeocodificados && (!instalacao.latitude || !instalacao.longitude)) {
+      return false;
+    }
+    
+    return true;
+  });
 
   // Calcular estatísticas dos parceiros
   const stats = {
@@ -164,6 +168,13 @@ export default function MapaAutorizados() {
     naoGeocodificados: autorizados.filter(a => !a.latitude || !a.longitude).length,
     ativosComCoordenadas: autorizados.filter(a => a.ativo && a.latitude && a.longitude).length,
     instalacoesGeocodificadas: instalacoes.filter(i => i.latitude && i.longitude).length
+  };
+
+  const statsParaFiltros = {
+    totalAutorizados: autorizados.filter(a => a.tipo_parceiro === 'autorizado').length,
+    totalRepresentantes: autorizados.filter(a => a.tipo_parceiro === 'representante').length,
+    totalLicenciados: autorizados.filter(a => a.tipo_parceiro === 'licenciado').length,
+    totalInstalacoes: instalacoes.length,
   };
 
   if (loading) {
@@ -179,12 +190,26 @@ export default function MapaAutorizados() {
 
   return (
     <div className="fixed inset-0 w-full h-full">
+      {/* Indicador de contagem */}
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[1000]">
+        <Badge variant="secondary" className="text-sm px-4 py-2 shadow-lg">
+          Exibindo: {filteredAutorizados.length} parceiros, {filteredInstalacoes.length} instalações
+        </Badge>
+      </div>
+
+      {/* Componente de filtros */}
+      <MapaFiltrosAvancados
+        filtros={filtros}
+        onChange={setFiltros}
+        stats={statsParaFiltros}
+      />
+
       {/* Mapa em tela cheia */}
       <div className="absolute inset-0 w-full">
         <AutorizadosMapLeaflet 
           autorizados={filteredAutorizados} 
           instalacoes={filteredInstalacoes}
-          showOverlays={showOverlays}
+          showOverlays={true}
           stats={stats}
         />
       </div>
