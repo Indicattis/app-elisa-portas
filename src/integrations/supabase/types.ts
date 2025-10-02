@@ -2231,6 +2231,7 @@ export type Database = {
           created_at: string
           custo_pintura: number | null
           custo_produto: number | null
+          data_prevista_entrega: string | null
           data_venda: string
           estado: string | null
           forma_pagamento: string | null
@@ -2260,6 +2261,7 @@ export type Database = {
           created_at?: string
           custo_pintura?: number | null
           custo_produto?: number | null
+          data_prevista_entrega?: string | null
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
@@ -2289,6 +2291,7 @@ export type Database = {
           created_at?: string
           custo_pintura?: number | null
           custo_produto?: number | null
+          data_prevista_entrega?: string | null
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
