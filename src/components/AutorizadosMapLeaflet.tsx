@@ -967,6 +967,11 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                           <MapPin className="h-3 w-3" />
                           <span>{instalacao.cidade}, {instalacao.estado}</span>
                         </div>
+                        {instalacao.telefone_cliente && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                            📞 {instalacao.telefone_cliente}
+                          </div>
+                        )}
                       </div>
                     </div>
 

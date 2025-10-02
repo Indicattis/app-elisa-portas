@@ -827,6 +827,7 @@ export type Database = {
           responsavel_instalacao_nome: string | null
           status: string
           tamanho: string | null
+          telefone_cliente: string | null
           tipo_instalacao:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
@@ -849,6 +850,7 @@ export type Database = {
           responsavel_instalacao_nome?: string | null
           status?: string
           tamanho?: string | null
+          telefone_cliente?: string | null
           tipo_instalacao?:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
@@ -871,6 +873,7 @@ export type Database = {
           responsavel_instalacao_nome?: string | null
           status?: string
           tamanho?: string | null
+          telefone_cliente?: string | null
           tipo_instalacao?:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 export interface InstalacaoCadastrada {
   id: string;
   nome_cliente: string;
+  telefone_cliente: string | null;
   estado: string;
   cidade: string;
   tamanho: string | null;
@@ -29,6 +30,7 @@ export interface InstalacaoCadastrada {
 
 export interface CreateInstalacaoData {
   nome_cliente: string;
+  telefone_cliente?: string;
   estado: string;
   cidade: string;
   tamanho?: string;

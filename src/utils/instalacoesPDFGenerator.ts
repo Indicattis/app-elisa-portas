@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale';
 interface InstalacaoCadastrada {
   id: string;
   nome_cliente: string;
+  telefone_cliente?: string | null;
   cidade: string;
   estado: string;
   categoria: 'instalacao' | 'entrega' | 'correcao';
@@ -119,6 +120,7 @@ export const gerarInstalacoesPDF = (data: InstalacoesPDFData) => {
   const tableData = data.instalacoes.map(instalacao => {
     return [
       instalacao.nome_cliente,
+      instalacao.telefone_cliente || '-',
       `${instalacao.cidade}, ${instalacao.estado}`,
       getCategoriaLabel(instalacao.categoria),
       getStatusLabel(instalacao.status),
@@ -133,11 +135,11 @@ export const gerarInstalacoesPDF = (data: InstalacoesPDFData) => {
 
   // Gerar tabela principal
   autoTable(pdf, {
-    head: [['Cliente', 'Localização', 'Categoria', 'Status', 'Tamanho', 'Data Inst.', 'Responsável', 'Cadastro']],
+    head: [['Cliente', 'Telefone', 'Localização', 'Categoria', 'Status', 'Tamanho', 'Data Inst.', 'Responsável', 'Cadastro']],
     body: tableData,
     startY: yPosition,
     styles: {
-      fontSize: 8,
+      fontSize: 7,
       cellPadding: 2,
       valign: 'middle',
       lineColor: [200, 200, 200],
@@ -147,18 +149,19 @@ export const gerarInstalacoesPDF = (data: InstalacoesPDFData) => {
       fillColor: primaryColor,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 9,
+      fontSize: 8,
       halign: 'center',
     },
     columnStyles: {
-      0: { cellWidth: 35 }, // Cliente
-      1: { cellWidth: 30 }, // Localização
-      2: { cellWidth: 22 }, // Categoria
-      3: { cellWidth: 28 }, // Status
-      4: { cellWidth: 18 }, // Tamanho
-      5: { cellWidth: 22 }, // Data Instalação
-      6: { cellWidth: 25 }, // Responsável
-      7: { cellWidth: 18 }, // Cadastro
+      0: { cellWidth: 28 }, // Cliente
+      1: { cellWidth: 22 }, // Telefone
+      2: { cellWidth: 26 }, // Localização
+      3: { cellWidth: 18 }, // Categoria
+      4: { cellWidth: 24 }, // Status
+      5: { cellWidth: 16 }, // Tamanho
+      6: { cellWidth: 18 }, // Data Instalação
+      7: { cellWidth: 22 }, // Responsável
+      8: { cellWidth: 16 }, // Cadastro
     },
     margin: { left: margin, right: margin },
     theme: 'striped',

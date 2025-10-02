@@ -12,6 +12,7 @@ import { FormPonto } from "@/components/cronograma/FormPonto";
 import { EditPontoSheet } from "@/components/cronograma/EditPontoSheet";
 import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
 import { InstalacoesList } from "@/components/cadastro-instalacao/InstalacoesList";
+import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { usePontosInstalacao } from "@/hooks/usePontosInstalacao";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
@@ -141,7 +142,11 @@ export default function Instalacoes() {
             <div>
               <h1 className="text-2xl font-bold">Instalações</h1>
               <p className="text-sm text-muted-foreground">
-                {activeTab === "cronograma" ? "Gerencie cronogramas de instalação" : "Cadastre novas instalações"}
+                {activeTab === "cronograma" 
+                  ? "Gerencie cronogramas de instalação" 
+                  : activeTab === "cadastro"
+                  ? "Cadastre novas instalações"
+                  : "Visualize todas as instalações cadastradas"}
               </p>
             </div>
             
@@ -176,7 +181,7 @@ export default function Instalacoes() {
               </div>
             )}
             
-            {activeTab === "cadastro" && (
+            {(activeTab === "cadastro" || activeTab === "lista") && (
               <Button 
                 onClick={handleDownloadInstalacoesPDF}
                 variant="outline" 
@@ -189,11 +194,15 @@ export default function Instalacoes() {
             )}
           </div>
 
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-6">
             <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
             <TabsTrigger value="cadastro">
-              <MapPin className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Cadastro
+            </TabsTrigger>
+            <TabsTrigger value="lista">
+              <MapPin className="h-4 w-4 mr-2" />
+              Instalações
             </TabsTrigger>
           </TabsList>
 
@@ -295,6 +304,14 @@ export default function Instalacoes() {
                 />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="lista" className="mt-0">
+            <InstalacoesTabelaView
+              instalacoes={instalacoes}
+              onDelete={deleteInstalacao}
+              onUpdate={updateInstalacao}
+            />
           </TabsContent>
         </Tabs>
       </div>

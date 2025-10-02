@@ -63,6 +63,9 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                 <CardTitle className="text-lg">{instalacao.nome_cliente}</CardTitle>
                 <CardDescription>
                   {instalacao.cidade}, {instalacao.estado}
+                  {instalacao.telefone_cliente && (
+                    <span className="block text-xs mt-1">📞 {instalacao.telefone_cliente}</span>
+                  )}
                 </CardDescription>
               </div>
               <div className="flex gap-2">
@@ -198,6 +201,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
               onSubmit={handleUpdate}
               initialData={{
                 nome_cliente: editingInstalacao.nome_cliente,
+                telefone_cliente: editingInstalacao.telefone_cliente || '',
                 estado: editingInstalacao.estado,
                 cidade: editingInstalacao.cidade,
                 tamanho: editingInstalacao.tamanho || '',

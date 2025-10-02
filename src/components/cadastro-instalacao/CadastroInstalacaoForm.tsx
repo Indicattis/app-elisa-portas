@@ -27,6 +27,7 @@ import { useAutorizadosAptos } from '@/hooks/useAutorizadosAptos';
 
 const formSchema = z.object({
   nome_cliente: z.string().min(3, 'Nome do cliente deve ter no mínimo 3 caracteres'),
+  telefone_cliente: z.string().optional(),
   estado: z.string().min(2, 'Selecione um estado'),
   cidade: z.string().min(2, 'Selecione uma cidade'),
   tamanho: z.string().optional(),
@@ -64,6 +65,7 @@ export const CadastroInstalacaoForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       nome_cliente: '',
+      telefone_cliente: '',
       estado: '',
       cidade: '',
       tamanho: '',
@@ -142,6 +144,20 @@ export const CadastroInstalacaoForm = ({
               <FormLabel>Nome do Cliente</FormLabel>
               <FormControl>
                 <Input placeholder="Digite o nome do cliente" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="telefone_cliente"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telefone do Cliente (Opcional)</FormLabel>
+              <FormControl>
+                <Input placeholder="(00) 00000-0000" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
