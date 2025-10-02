@@ -2300,6 +2300,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "vendas_atendente_id_fkey"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vendas_canal_aquisicao_id_fkey"
             columns: ["canal_aquisicao_id"]
             isOneToOne: false
