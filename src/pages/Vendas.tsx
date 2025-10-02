@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,8 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Eye, Pencil, Trash2, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package } from 'lucide-react';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   AlertDialog,
@@ -23,9 +26,11 @@ import {
 
 export default function Vendas() {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, userRole } = useAuth();
   const { vendas, isLoading, deleteVenda } = useVendas();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroMinhasVendas, setFiltroMinhasVendas] = useState(true);
+  const [filtroVendasMes, setFiltroVendasMes] = useState(true);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -34,15 +39,41 @@ export default function Vendas() {
     }).format(value);
   };
 
-  const filteredVendas = vendas?.filter(venda => {
-    const search = searchTerm.toLowerCase();
-    return (
-      venda.cliente_nome?.toLowerCase().includes(search) ||
-      venda.cliente_telefone?.toLowerCase().includes(search) ||
-      venda.cidade?.toLowerCase().includes(search) ||
-      venda.estado?.toLowerCase().includes(search)
-    );
-  });
+  const filteredVendas = useMemo(() => {
+    return vendas?.filter(venda => {
+      // Filtro de busca textual
+      const search = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || (
+        venda.cliente_nome?.toLowerCase().includes(search) ||
+        venda.cliente_telefone?.toLowerCase().includes(search) ||
+        venda.cidade?.toLowerCase().includes(search) ||
+        venda.estado?.toLowerCase().includes(search)
+      );
+
+      // Filtro "Minhas Vendas"
+      const matchesMinhasVendas = !filtroMinhasVendas || venda.atendente_id === userRole?.id;
+
+      // Filtro "Vendas deste mês"
+      const hoje = new Date();
+      const inicioMes = startOfMonth(hoje);
+      const fimMes = endOfMonth(hoje);
+      const dataVenda = new Date(venda.data_venda);
+      const matchesVendasMes = !filtroVendasMes || (dataVenda >= inicioMes && dataVenda <= fimMes);
+
+      return matchesSearch && matchesMinhasVendas && matchesVendasMes;
+    });
+  }, [vendas, searchTerm, filtroMinhasVendas, filtroVendasMes, userRole?.id]);
+
+  // Estatísticas baseadas nos filtros
+  const stats = useMemo(() => {
+    if (!filteredVendas) return { totalVendas: 0, totalValor: 0, totalPortas: 0 };
+    
+    return {
+      totalVendas: filteredVendas.length,
+      totalValor: filteredVendas.reduce((sum, v) => sum + (v.valor_venda || 0), 0),
+      totalPortas: filteredVendas.reduce((sum, v) => sum + (v.portas?.length || 0), 0),
+    };
+  }, [filteredVendas]);
 
   if (isLoading) {
     return (
@@ -62,12 +93,68 @@ export default function Vendas() {
         </Button>
       </div>
 
+      {/* Cards de Estatísticas */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalVendas}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(stats.totalValor)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Portas</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalPortas}</div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Lista de Vendas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
+          <div className="mb-4 space-y-4">
+            {/* Filtros Rápidos */}
+            <div className="flex gap-6 p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="minhas-vendas"
+                  checked={filtroMinhasVendas}
+                  onCheckedChange={(checked) => setFiltroMinhasVendas(checked as boolean)}
+                />
+                <Label htmlFor="minhas-vendas" className="cursor-pointer">
+                  Minhas vendas
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="vendas-mes"
+                  checked={filtroVendasMes}
+                  onCheckedChange={(checked) => setFiltroVendasMes(checked as boolean)}
+                />
+                <Label htmlFor="vendas-mes" className="cursor-pointer">
+                  Vendas deste mês
+                </Label>
+              </div>
+            </div>
+
+            {/* Busca */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
@@ -113,7 +200,17 @@ export default function Vendas() {
                       <TableCell className="text-right font-semibold">
                         {formatCurrency(venda.valor_venda || 0)}
                       </TableCell>
-                      <TableCell>-</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={venda.atendente?.foto_perfil_url || ''} alt={venda.atendente?.nome || 'Atendente'} />
+                            <AvatarFallback>
+                              {venda.atendente?.nome?.charAt(0) || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{venda.atendente?.nome || 'N/A'}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
