@@ -61,7 +61,7 @@ export function useVendas() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      console.log('User ID from auth:', user.id);
+      console.log('🔍 User ID from auth:', user.id);
 
       // 2. Buscar admin_user correspondente
       const { data: adminUser, error: adminError } = await supabase
@@ -70,7 +70,17 @@ export function useVendas() {
         .eq('user_id', user.id)
         .maybeSingle();
       
-      console.log('Admin user found:', adminUser, 'Error:', adminError);
+      console.log('✅ Admin user found:', adminUser, 'Error:', adminError);
+      
+      // Verificar se o admin_user.id realmente existe na tabela
+      if (adminUser) {
+        const { data: verifyAdmin, error: verifyError } = await supabase
+          .from('admin_users')
+          .select('id, nome')
+          .eq('id', adminUser.id)
+          .maybeSingle();
+        console.log('🔎 Verification - Admin user exists:', verifyAdmin, 'Error:', verifyError);
+      }
       
       if (adminError) {
         throw new Error(`Erro ao buscar usuário: ${adminError.message}`);
