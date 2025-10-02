@@ -1988,6 +1988,69 @@ export type Database = {
           },
         ]
       }
+      portas_vendas: {
+        Row: {
+          cor_id: string | null
+          created_at: string | null
+          desconto_percentual: number | null
+          id: string
+          tamanho: string
+          updated_at: string | null
+          valor_frete: number
+          valor_instalacao: number
+          valor_pintura: number
+          valor_produto: number
+          valor_total: number
+          valor_total_sem_frete: number
+          venda_id: string
+        }
+        Insert: {
+          cor_id?: string | null
+          created_at?: string | null
+          desconto_percentual?: number | null
+          id?: string
+          tamanho: string
+          updated_at?: string | null
+          valor_frete?: number
+          valor_instalacao?: number
+          valor_pintura?: number
+          valor_produto?: number
+          valor_total?: number
+          valor_total_sem_frete?: number
+          venda_id: string
+        }
+        Update: {
+          cor_id?: string | null
+          created_at?: string | null
+          desconto_percentual?: number | null
+          id?: string
+          tamanho?: string
+          updated_at?: string | null
+          valor_frete?: number
+          valor_instalacao?: number
+          valor_pintura?: number
+          valor_produto?: number
+          valor_total?: number
+          valor_total_sem_frete?: number
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portas_vendas_cor_id_fkey"
+            columns: ["cor_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_cores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portas_vendas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requisicoes_parceria: {
         Row: {
           cidade: string

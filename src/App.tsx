@@ -55,6 +55,8 @@ import OrdemPerfiladeiraEdit from "./pages/OrdemPerfiladeiraEdit";
 import OrdemInstalacaoEdit from "./pages/OrdemInstalacaoEdit";
 import Documentos from "./pages/Documentos";
 import DocumentoNovo from "./pages/DocumentoNovo";
+import Vendas from "./pages/Vendas";
+import VendasNova from "./pages/VendasNova";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -265,11 +267,21 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/dashboard/vendas"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Vendas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/vendas/nova"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
-                        <VendaNova />
+                        <VendasNova />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
