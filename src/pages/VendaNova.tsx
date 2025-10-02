@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 
 interface Atendente {
-  user_id: string;
+  id: string;
   nome: string;
 }
 
@@ -63,7 +63,7 @@ export default function VendaNova() {
     try {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("user_id, nome")
+        .select("id, nome")
         .eq("ativo", true)
         .in("role", ["atendente", "gerente_comercial", "administrador"])
         .order("nome");
@@ -99,10 +99,10 @@ export default function VendaNova() {
       const vendaData = {
         atendente_id: formData.atendente_id,
         publico_alvo: formData.publico_alvo || null,
-        canal_aquisicao_id: formData.canal_aquisicao_id,
+        canal_aquisicao_id: formData.canal_aquisicao_id || null,
         estado: formData.estado || null,
         cidade: formData.cidade || null,
-        cep: formData.cep || null,
+        bairro: null,
         cliente_nome: formData.cliente_nome || null,
         cliente_telefone: formData.cliente_telefone || null,
         cliente_email: formData.cliente_email || null,
@@ -122,13 +122,20 @@ export default function VendaNova() {
         valor_entrada: parseFloat(formData.valor_entrada) || 0,
       };
 
+      console.log('Criando venda com dados:', vendaData);
+
       const { data: vendaResult, error } = await supabase
         .from("vendas")
         .insert(vendaData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar venda:', error);
+        throw error;
+      }
+
+      console.log('Venda criada com sucesso:', vendaResult);
 
       // Se for parcelado, criar as parcelas
       if (formData.forma_pagamento === "parcelado" && vendaResult) {
@@ -261,7 +268,7 @@ export default function VendaNova() {
                     </SelectTrigger>
                     <SelectContent>
                       {atendentes.map((atendente) => (
-                        <SelectItem key={atendente.user_id} value={atendente.user_id}>
+                        <SelectItem key={atendente.id} value={atendente.id}>
                           {atendente.nome}
                         </SelectItem>
                       ))}
