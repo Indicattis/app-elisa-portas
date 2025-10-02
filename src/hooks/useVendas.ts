@@ -104,18 +104,23 @@ export function useVendas() {
       });
 
       // 4. Criar venda com valores calculados
+      const vendaPayload = {
+        ...vendaData,
+        atendente_id: adminUser.id,
+        data_venda: vendaData.data_venda || new Date().toISOString(),
+        valor_produto: totais.valor_produto,
+        valor_pintura: totais.valor_pintura,
+        valor_instalacao: totais.valor_instalacao,
+        valor_frete: totais.valor_frete,
+        valor_venda: totais.valor_total
+      };
+
+      console.log('Venda payload:', vendaPayload);
+      console.log('atendente_id being sent:', adminUser.id);
+
       const { data: venda, error: vendaError } = await supabase
         .from('vendas')
-        .insert([{
-          ...vendaData,
-          atendente_id: adminUser.id,
-          data_venda: vendaData.data_venda || new Date().toISOString(),
-          valor_produto: totais.valor_produto,
-          valor_pintura: totais.valor_pintura,
-          valor_instalacao: totais.valor_instalacao,
-          valor_frete: totais.valor_frete,
-          valor_venda: totais.valor_total
-        }])
+        .insert([vendaPayload])
         .select()
         .single();
       
