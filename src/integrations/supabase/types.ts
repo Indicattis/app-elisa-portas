@@ -2241,6 +2241,7 @@ export type Database = {
           observacoes_venda: string | null
           publico_alvo: string | null
           resgate: boolean | null
+          tipo_entrega: string | null
           updated_at: string
           valor_entrada: number | null
           valor_frete: number | null
@@ -2271,6 +2272,7 @@ export type Database = {
           observacoes_venda?: string | null
           publico_alvo?: string | null
           resgate?: boolean | null
+          tipo_entrega?: string | null
           updated_at?: string
           valor_entrada?: number | null
           valor_frete?: number | null
@@ -2301,6 +2303,7 @@ export type Database = {
           observacoes_venda?: string | null
           publico_alvo?: string | null
           resgate?: boolean | null
+          tipo_entrega?: string | null
           updated_at?: string
           valor_entrada?: number | null
           valor_frete?: number | null

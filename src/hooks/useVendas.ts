@@ -27,6 +27,7 @@ export interface VendaFormData {
   valor_frete?: number;
   canal_aquisicao_id?: string;
   data_prevista_entrega?: string;
+  tipo_entrega?: string;
 }
 
 export function useVendas() {
@@ -156,6 +157,9 @@ export function useVendas() {
       const updateData: any = { tamanho: tamanhosConcatenados };
       if (vendaData.data_prevista_entrega) {
         updateData.data_instalacao = vendaData.data_prevista_entrega;
+      }
+      if (vendaData.tipo_entrega) {
+        updateData.categoria = vendaData.tipo_entrega.toLowerCase();
       }
       
       const { error: instalacaoError } = await supabase

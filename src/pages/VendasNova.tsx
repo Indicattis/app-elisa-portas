@@ -35,7 +35,8 @@ export default function VendasNova() {
     forma_pagamento: '',
     observacoes_venda: '',
     valor_frete: 0,
-    data_prevista_entrega: ''
+    data_prevista_entrega: '',
+    tipo_entrega: 'instalacao'
   });
 
   const [portas, setPortas] = useState<PortaVenda[]>([]);
@@ -284,6 +285,24 @@ export default function VendasNova() {
                 value={formData.data_prevista_entrega}
                 onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tipo_entrega">Tipo de Entrega *</Label>
+              <Select
+                value={formData.tipo_entrega}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entrega">Entrega</SelectItem>
+                  <SelectItem value="instalacao">Instalação</SelectItem>
+                  <SelectItem value="correcao">Correção</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">

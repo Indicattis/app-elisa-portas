@@ -64,13 +64,17 @@ export default function Vendas() {
     });
   }, [vendas, searchTerm, filtroMinhasVendas, filtroVendasMes, userRole?.id]);
 
-  // Estatísticas baseadas nos filtros
+  // Estatísticas baseadas nos filtros (excluindo frete)
   const stats = useMemo(() => {
     if (!filteredVendas) return { totalVendas: 0, totalValor: 0, totalPortas: 0 };
     
     return {
       totalVendas: filteredVendas.length,
-      totalValor: filteredVendas.reduce((sum, v) => sum + (v.valor_venda || 0), 0),
+      totalValor: filteredVendas.reduce((sum, v) => {
+        // Calcula o valor sem frete: valor_venda - valor_frete
+        const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0);
+        return sum + valorSemFrete;
+      }, 0),
       totalPortas: filteredVendas.reduce((sum, v) => sum + (v.portas?.length || 0), 0),
     };
   }, [filteredVendas]);
