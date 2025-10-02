@@ -37,9 +37,7 @@ export function PortaVendaForm({ onAddPorta }: PortaVendaFormProps) {
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = () => {
     if (!formData.tamanho) {
       return;
     }
@@ -64,7 +62,7 @@ export function PortaVendaForm({ onAddPorta }: PortaVendaFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-muted/50">
+    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
       <h3 className="font-semibold text-lg">Adicionar Porta de Enrolar</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -165,12 +163,12 @@ export function PortaVendaForm({ onAddPorta }: PortaVendaFormProps) {
         </div>
 
         <div className="flex items-end">
-          <Button type="submit" className="w-full">
+          <Button type="button" onClick={handleSubmit} className="w-full">
             <Plus className="w-4 h-4 mr-2" />
             Adicionar Porta
           </Button>
         </div>
       </div>
-    </form>
+    </div>
   );
 }
