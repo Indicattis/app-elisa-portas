@@ -53,6 +53,8 @@ export default function MapaAutorizados() {
     tiposInstalacao: [],
     apenasGeocodificados: false,
     apenasAtivos: false,
+    dataInicio: undefined,
+    dataFim: undefined,
   });
   const { instalacoes } = useInstalacoesCadastradas();
   const { toast } = useToast();
@@ -154,6 +156,19 @@ export default function MapaAutorizados() {
     // Filtro de geocodificação
     if (filtros.apenasGeocodificados && (!instalacao.latitude || !instalacao.longitude)) {
       return false;
+    }
+
+    // Filtro de data
+    if (filtros.dataInicio || filtros.dataFim) {
+      const dataInstalacao = instalacao.data_instalacao ? new Date(instalacao.data_instalacao) : null;
+      if (!dataInstalacao) return false;
+      
+      if (filtros.dataInicio && dataInstalacao < filtros.dataInicio) return false;
+      if (filtros.dataFim) {
+        const dataFimAjustada = new Date(filtros.dataFim);
+        dataFimAjustada.setHours(23, 59, 59, 999);
+        if (dataInstalacao > dataFimAjustada) return false;
+      }
     }
     
     return true;

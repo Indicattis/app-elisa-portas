@@ -84,91 +84,16 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   const mapRef = useRef<L.Map | null>(null);
   const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  // Filtros de etapas de autorizados
-  const [etapaFilters, setEtapaFilters] = useState<Set<AutorizadoEtapa>>(new Set());
-  
-  // Filtros de tipos de instalação
-  const [tipoInstalacaoFilters, setTipoInstalacaoFilters] = useState<Set<'instalacao' | 'entrega' | 'correcao'>>(new Set());
-  
-  // Filtros de data
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
-  const [quickDateFilter, setQuickDateFilter] = useState<'current_week' | 'next_week' | 'custom' | null>(null);
 
   // Filter autorizados with valid coordinates
   const autorizadosWithCoords = autorizados.filter(autorizado => {
-    if (!autorizado.latitude || !autorizado.longitude || !autorizado.ativo) return false;
-    
-    // Se houver filtros de etapa selecionados, aplicar APENAS para autorizados
-    if (etapaFilters.size > 0) {
-      // Se for autorizado, verificar se a etapa está nos filtros
-      if (autorizado.tipo_parceiro === 'autorizado') {
-        return etapaFilters.has(autorizado.etapa as AutorizadoEtapa);
-      }
-      // Se não for autorizado e há filtros de etapa, não mostrar (filtro é só para autorizados)
-      return false;
-    }
-    
-    return true;
+    return autorizado.latitude && autorizado.longitude && autorizado.ativo;
   });
 
-  // Filter instalacoes with valid coordinates and exclude finalized ones
-  const instalacoesWithCoords = instalacoes.filter(
-    instalacao => {
-      if (!instalacao.latitude || !instalacao.longitude || instalacao.status === 'finalizada') return false;
-      
-      // Filtro de tipo de instalação
-      if (tipoInstalacaoFilters.size > 0) {
-        if (!tipoInstalacaoFilters.has(instalacao.categoria)) return false;
-      }
-      
-      // Filtro de data
-      if (dateRange.from || dateRange.to) {
-        if (!instalacao.data_instalacao) return false;
-        
-        const instalacaoDate = parseISO(instalacao.data_instalacao);
-        
-        if (dateRange.from && dateRange.to) {
-          return isWithinInterval(instalacaoDate, { start: dateRange.from, end: dateRange.to });
-        } else if (dateRange.from) {
-          return instalacaoDate >= dateRange.from;
-        } else if (dateRange.to) {
-          return instalacaoDate <= dateRange.to;
-        }
-      }
-      
-      return true;
-    }
-  );
-  
-  // Função para aplicar filtros rápidos de data
-  const applyQuickDateFilter = (filter: 'current_week' | 'next_week') => {
-    const now = new Date();
-    let from: Date, to: Date;
-    
-    if (filter === 'current_week') {
-      from = startOfWeek(now, { locale: ptBR });
-      to = endOfWeek(now, { locale: ptBR });
-    } else {
-      const nextWeek = addWeeks(now, 1);
-      from = startOfWeek(nextWeek, { locale: ptBR });
-      to = endOfWeek(nextWeek, { locale: ptBR });
-    }
-    
-    setDateRange({ from, to });
-    setQuickDateFilter(filter);
-  };
-  
-  // Função para limpar todos os filtros
-  const clearAllFilters = () => {
-    setEtapaFilters(new Set());
-    setTipoInstalacaoFilters(new Set());
-    setDateRange({});
-    setQuickDateFilter(null);
-  };
-  
-  // Contar filtros ativos
-  const activeFiltersCount = etapaFilters.size + tipoInstalacaoFilters.size + (dateRange.from || dateRange.to ? 1 : 0);
+  // Filter instalacoes with valid coordinates
+  const instalacoesWithCoords = instalacoes.filter(instalacao => {
+    return instalacao.latitude && instalacao.longitude;
+  });
 
   // Count parceiros by state and type
   const parceirosPorEstado = autorizados.filter(autorizado => autorizado.ativo && autorizado.estado).reduce((acc, autorizado) => {
@@ -430,30 +355,13 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   const hasMapContent = autorizadosWithCoords.length > 0 || instalacoesWithCoords.length > 0;
   
   if (!hasMapContent) {
-    // Verificar se o problema é falta de dados ou filtros muito restritivos
-    const hasActiveFilters = activeFiltersCount > 0;
-    
     return <div className="flex items-center justify-center h-full bg-muted/50 rounded-lg">
         <div className="text-center space-y-2">
           <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
-          <h3 className="text-lg font-medium">
-            {hasActiveFilters ? 'Nenhum resultado encontrado' : 'Nenhum local com coordenadas'}
-          </h3>
+          <h3 className="text-lg font-medium">Nenhum local com coordenadas</h3>
           <p className="text-sm text-muted-foreground">
-            {hasActiveFilters 
-              ? 'Tente ajustar ou limpar os filtros aplicados' 
-              : 'Os endereços precisam ser geocodificados para aparecer no mapa'}
+            Os endereços precisam ser geocodificados para aparecer no mapa
           </p>
-          {hasActiveFilters && (
-            <Button 
-              variant="outline" 
-              onClick={clearAllFilters}
-              className="mt-4"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Limpar Filtros
-            </Button>
-          )}
         </div>
       </div>;
   }
@@ -468,9 +376,9 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
         {sidebarOpen && (
           <div className="h-full flex flex-col">
             <div className="p-6 pb-4 border-b">
-              <h3 className="font-semibold text-lg">Filtros do Mapa</h3>
+              <h3 className="font-semibold text-lg">Estatísticas do Mapa</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Filtre autorizados e instalações
+                Informações dos parceiros e instalações
               </p>
             </div>
             
@@ -539,198 +447,6 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                   </div>
                 )}
 
-                {/* Filtros de Etapas de Autorizados */}
-                <div>
-                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Etapas de Autorizados
-                  </h4>
-                  <div className="space-y-2.5">
-                    {(Object.entries(ETAPAS_AUTORIZADO) as [AutorizadoEtapa, string][]).map(([etapa, label]) => (
-                      <div key={etapa} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`etapa-${etapa}`}
-                          checked={etapaFilters.has(etapa)}
-                          onCheckedChange={(checked) => {
-                            const newFilters = new Set(etapaFilters);
-                            if (checked) {
-                              newFilters.add(etapa);
-                            } else {
-                              newFilters.delete(etapa);
-                            }
-                            setEtapaFilters(newFilters);
-                          }}
-                        />
-                        <Label
-                          htmlFor={`etapa-${etapa}`}
-                          className="text-sm font-normal cursor-pointer flex-1"
-                        >
-                          {label}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Filtros de Tipos de Instalação */}
-                <div className="border-t pt-6">
-                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                    <Home className="h-4 w-4" />
-                    Tipos de Instalação
-                  </h4>
-                  <div className="space-y-2.5">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="tipo-instalacao"
-                        checked={tipoInstalacaoFilters.has('instalacao')}
-                        onCheckedChange={(checked) => {
-                          const newFilters = new Set(tipoInstalacaoFilters);
-                          if (checked) {
-                            newFilters.add('instalacao');
-                          } else {
-                            newFilters.delete('instalacao');
-                          }
-                          setTipoInstalacaoFilters(newFilters);
-                        }}
-                      />
-                      <Label
-                        htmlFor="tipo-instalacao"
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        Instalação
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="tipo-entrega"
-                        checked={tipoInstalacaoFilters.has('entrega')}
-                        onCheckedChange={(checked) => {
-                          const newFilters = new Set(tipoInstalacaoFilters);
-                          if (checked) {
-                            newFilters.add('entrega');
-                          } else {
-                            newFilters.delete('entrega');
-                          }
-                          setTipoInstalacaoFilters(newFilters);
-                        }}
-                      />
-                      <Label
-                        htmlFor="tipo-entrega"
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        Entrega
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="tipo-correcao"
-                        checked={tipoInstalacaoFilters.has('correcao')}
-                        onCheckedChange={(checked) => {
-                          const newFilters = new Set(tipoInstalacaoFilters);
-                          if (checked) {
-                            newFilters.add('correcao');
-                          } else {
-                            newFilters.delete('correcao');
-                          }
-                          setTipoInstalacaoFilters(newFilters);
-                        }}
-                      />
-                      <Label
-                        htmlFor="tipo-correcao"
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        Correção
-                      </Label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Filtros de Data */}
-                <div className="border-t pt-6">
-                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4" />
-                    Data da Instalação
-                  </h4>
-                  
-                  {/* Botões rápidos */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <Button
-                      variant={quickDateFilter === 'current_week' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => applyQuickDateFilter('current_week')}
-                      className="w-full"
-                    >
-                      Semana Atual
-                    </Button>
-                    <Button
-                      variant={quickDateFilter === 'next_week' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => applyQuickDateFilter('next_week')}
-                      className="w-full"
-                    >
-                      Próxima Semana
-                    </Button>
-                  </div>
-                  
-                  {/* Seletor de período customizado */}
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Período customizado</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !dateRange.from && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dateRange.from ? (
-                            dateRange.to ? (
-                              <>
-                                {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                                {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-                              </>
-                            ) : (
-                              format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
-                            )
-                          ) : (
-                            <span>Selecione o período</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="range"
-                          selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
-                          onSelect={(range) => {
-                            setDateRange(range || {});
-                            setQuickDateFilter('custom');
-                          }}
-                          numberOfMonths={1}
-                          locale={ptBR}
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  {(dateRange.from || dateRange.to) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setDateRange({});
-                        setQuickDateFilter(null);
-                      }}
-                      className="w-full mt-2"
-                    >
-                      Limpar Período
-                    </Button>
-                  )}
-                </div>
-
                 {/* Estatísticas */}
                 <div className="border-t pt-6">
                   <h4 className="font-semibold text-sm mb-3">Resultados</h4>
@@ -747,20 +463,6 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                 </div>
               </div>
             </ScrollArea>
-            
-            {/* Footer com botão de limpar */}
-            {activeFiltersCount > 0 && (
-              <div className="p-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={clearAllFilters}
-                  className="w-full"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Limpar Todos os Filtros
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>

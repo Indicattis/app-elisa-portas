@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Filter, X, ChevronDown, ChevronUp, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Sheet,
   SheetContent,
@@ -35,6 +39,8 @@ export interface MapaFiltros {
   tiposInstalacao: string[];
   apenasGeocodificados: boolean;
   apenasAtivos: boolean;
+  dataInicio?: Date;
+  dataFim?: Date;
 }
 
 interface MapaFiltrosAvancadosProps {
@@ -66,6 +72,7 @@ export function MapaFiltrosAvancados({ filtros, onChange, stats }: MapaFiltrosAv
   const [secaoParceirosOpen, setSecaoParceirosOpen] = useState(true);
   const [secaoInstalacoesOpen, setSecaoInstalacoesOpen] = useState(true);
   const [secaoVisualizacaoOpen, setSecaoVisualizacaoOpen] = useState(true);
+  const [secaoDatasOpen, setSecaoDatasOpen] = useState(true);
 
   const filtrosAtivos = calcularFiltrosAtivos(filtros);
 
@@ -82,6 +89,8 @@ export function MapaFiltrosAvancados({ filtros, onChange, stats }: MapaFiltrosAv
       tiposInstalacao: [],
       apenasGeocodificados: false,
       apenasAtivos: false,
+      dataInicio: undefined,
+      dataFim: undefined,
     });
   };
 
@@ -319,6 +328,76 @@ export function MapaFiltrosAvancados({ filtros, onChange, stats }: MapaFiltrosAv
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Datas */}
+      <Collapsible open={secaoDatasOpen} onOpenChange={setSecaoDatasOpen}>
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded-md">
+          <span className="font-medium">Período de Instalação</span>
+          {secaoDatasOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-2">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Data de início</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {filtros.dataInicio ? format(filtros.dataInicio, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filtros.dataInicio}
+                  onSelect={(date) => onChange({ ...filtros, dataInicio: date })}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Data de fim</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {filtros.dataFim ? format(filtros.dataFim, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filtros.dataFim}
+                  onSelect={(date) => onChange({ ...filtros, dataFim: date })}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {(filtros.dataInicio || filtros.dataFim) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange({ ...filtros, dataInicio: undefined, dataFim: undefined })}
+              className="w-full"
+            >
+              Limpar Período
+            </Button>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Visualização */}
       <Collapsible open={secaoVisualizacaoOpen} onOpenChange={setSecaoVisualizacaoOpen}>
         <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded-md">
@@ -395,7 +474,7 @@ export function MapaFiltrosAvancados({ filtros, onChange, stats }: MapaFiltrosAv
   }
 
   return (
-    <Card className="fixed top-20 right-4 z-[1000] w-80 max-h-[calc(100vh-100px)] overflow-y-auto shadow-lg">
+    <Card className="fixed top-[120px] right-4 z-[1000] w-80 max-h-[calc(100vh-140px)] overflow-y-auto shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Filter className="h-5 w-5" />
@@ -440,6 +519,7 @@ function calcularFiltrosAtivos(filtros: MapaFiltros): number {
 
   if (filtros.apenasGeocodificados) count++;
   if (filtros.apenasAtivos) count++;
+  if (filtros.dataInicio || filtros.dataFim) count++;
 
   return count;
 }
