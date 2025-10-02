@@ -14,7 +14,16 @@ export interface VendaDetalhada {
   valor_venda: number;
   atendente_id: string;
   atendente_nome?: string;
+  atendente_foto?: string | null;
   data_venda: string;
+}
+
+export interface RankingVendedor {
+  atendente_nome: string;
+  foto_perfil_url: string | null;
+  quantidade_vendas: number;
+  quantidade_portas: number;
+  valor_total: number;
 }
 
 export const useVendasAgregadas = (year: number) => {
@@ -71,7 +80,7 @@ export const useVendasDoDia = (data: string) => {
           valor_venda,
           atendente_id,
           data_venda,
-          admin_users!vendas_atendente_id_fkey(nome)
+          admin_users!vendas_atendente_id_fkey(nome, foto_perfil_url)
         `)
         .gte('data_venda', `${data}T00:00:00`)
         .lte('data_venda', `${data}T23:59:59`)
@@ -85,7 +94,8 @@ export const useVendasDoDia = (data: string) => {
         valor_venda: v.valor_venda,
         atendente_id: v.atendente_id,
         data_venda: v.data_venda,
-        atendente_nome: v.admin_users?.nome
+        atendente_nome: v.admin_users?.nome,
+        atendente_foto: v.admin_users?.foto_perfil_url
       })) as VendaDetalhada[];
     },
     enabled: !!data,
@@ -141,3 +151,54 @@ export const useVendasSemanaAtual = () => {
     refetchInterval: 60000,
   });
 };
+
+export function useRankingVendedoresDia(data: string) {
+  return useQuery({
+    queryKey: ['ranking-vendedores-dia', data],
+    queryFn: async () => {
+      if (!data) return [];
+
+      const { data: vendas, error } = await supabase
+        .from('vendas')
+        .select(`
+          id,
+          valor_venda,
+          atendente:admin_users!vendas_atendente_id_fkey(nome, foto_perfil_url),
+          portas:portas_vendas(id)
+        `)
+        .gte('data_venda', `${data}T00:00:00`)
+        .lte('data_venda', `${data}T23:59:59`);
+
+      if (error) throw error;
+
+      // Agrupar por atendente
+      const rankingMap = new Map<string, RankingVendedor>();
+
+      vendas?.forEach((venda: any) => {
+        const atendenteNome = venda.atendente?.nome || 'Sem atendente';
+        const fotoPerfil = venda.atendente?.foto_perfil_url || null;
+        const quantidadePortas = venda.portas?.length || 0;
+
+        if (!rankingMap.has(atendenteNome)) {
+          rankingMap.set(atendenteNome, {
+            atendente_nome: atendenteNome,
+            foto_perfil_url: fotoPerfil,
+            quantidade_vendas: 0,
+            quantidade_portas: 0,
+            valor_total: 0
+          });
+        }
+
+        const vendedor = rankingMap.get(atendenteNome)!;
+        vendedor.quantidade_vendas += 1;
+        vendedor.quantidade_portas += quantidadePortas;
+        vendedor.valor_total += venda.valor_venda || 0;
+      });
+
+      // Ordenar por valor total
+      return Array.from(rankingMap.values()).sort((a, b) => b.valor_total - a.valor_total);
+    },
+    enabled: !!data,
+    refetchInterval: 30000
+  });
+}

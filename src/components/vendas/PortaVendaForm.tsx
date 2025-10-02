@@ -21,7 +21,6 @@ export function PortaVendaForm({ open, onOpenChange, onAddPorta }: PortaVendaFor
     cor_id: '',
     valor_produto: 0,
     valor_pintura: 0,
-    valor_frete: 0,
     valor_instalacao: 0,
     desconto_percentual: 0
   });
@@ -53,7 +52,6 @@ export function PortaVendaForm({ open, onOpenChange, onAddPorta }: PortaVendaFor
       cor_id: '',
       valor_produto: 0,
       valor_pintura: 0,
-      valor_frete: 0,
       valor_instalacao: 0,
       desconto_percentual: 0
     });
@@ -132,18 +130,6 @@ export function PortaVendaForm({ open, onOpenChange, onAddPorta }: PortaVendaFor
               min="0"
               value={formData.valor_pintura}
               onChange={(e) => handleNumberChange('valor_pintura', e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="valor_frete">Valor Frete (R$)</Label>
-            <Input
-              id="valor_frete"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.valor_frete}
-              onChange={(e) => handleNumberChange('valor_frete', e.target.value)}
             />
           </div>
 

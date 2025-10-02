@@ -17,13 +17,9 @@ export function PortasVendaTable({ portas, onRemovePorta, readOnly = false }: Po
     }).format(value);
   };
 
-  const calcularValorSemFrete = (porta: PortaVenda) => {
+  const calcularValorComDesconto = (porta: PortaVenda) => {
     const valorBase = porta.valor_produto + porta.valor_pintura + porta.valor_instalacao;
     return valorBase * (1 - (porta.desconto_percentual || 0) / 100);
-  };
-
-  const calcularValorTotal = (porta: PortaVenda) => {
-    return calcularValorSemFrete(porta) + porta.valor_frete;
   };
 
   if (portas.length === 0) {
@@ -43,10 +39,8 @@ export function PortasVendaTable({ portas, onRemovePorta, readOnly = false }: Po
             <TableHead>Cor</TableHead>
             <TableHead className="text-right">Vlr Produto</TableHead>
             <TableHead className="text-right">Vlr Pintura</TableHead>
-            <TableHead className="text-right">Vlr Frete</TableHead>
             <TableHead className="text-right">Vlr Instalação</TableHead>
             <TableHead className="text-right">Desconto %</TableHead>
-            <TableHead className="text-right">Total s/ Frete</TableHead>
             <TableHead className="text-right">Total</TableHead>
             {!readOnly && <TableHead className="text-right">Ações</TableHead>}
           </TableRow>
@@ -70,14 +64,10 @@ export function PortasVendaTable({ portas, onRemovePorta, readOnly = false }: Po
               </TableCell>
               <TableCell className="text-right">{formatCurrency(porta.valor_produto)}</TableCell>
               <TableCell className="text-right">{formatCurrency(porta.valor_pintura)}</TableCell>
-              <TableCell className="text-right">{formatCurrency(porta.valor_frete)}</TableCell>
               <TableCell className="text-right">{formatCurrency(porta.valor_instalacao)}</TableCell>
               <TableCell className="text-right">{porta.desconto_percentual}%</TableCell>
-              <TableCell className="text-right font-semibold">
-                {formatCurrency(calcularValorSemFrete(porta))}
-              </TableCell>
               <TableCell className="text-right font-bold">
-                {formatCurrency(calcularValorTotal(porta))}
+                {formatCurrency(calcularValorComDesconto(porta))}
               </TableCell>
               {!readOnly && (
                 <TableCell className="text-right">

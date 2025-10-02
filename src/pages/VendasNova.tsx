@@ -31,7 +31,8 @@ export default function VendasNova() {
     bairro: '',
     publico_alvo: '',
     forma_pagamento: '',
-    observacoes_venda: ''
+    observacoes_venda: '',
+    valor_frete: 0
   });
 
   const [portas, setPortas] = useState<PortaVenda[]>([]);
@@ -240,6 +241,18 @@ export default function VendasNova() {
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="valor_frete">Valor Frete Total (R$)</Label>
+              <Input
+                id="valor_frete"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valor_frete}
+                onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
+              />
+            </div>
+
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="observacoes_venda">Observações (opcional)</Label>
               <Textarea
@@ -279,7 +292,7 @@ export default function VendasNova() {
 
         {/* Resumo */}
         {portas.length > 0 && (
-          <VendaResumo portas={portas} />
+          <VendaResumo portas={portas} valorFrete={formData.valor_frete} />
         )}
 
         {/* Ações */}

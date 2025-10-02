@@ -8,7 +8,6 @@ export interface PortaVenda {
   cor_id?: string;
   valor_produto: number;
   valor_pintura: number;
-  valor_frete: number;
   valor_instalacao: number;
   desconto_percentual: number;
 }
@@ -25,6 +24,7 @@ export interface VendaFormData {
   forma_pagamento: string;
   observacoes_venda?: string;
   data_venda?: string;
+  valor_frete?: number;
 }
 
 export function useVendas() {
@@ -102,16 +102,16 @@ export function useVendas() {
           valor_produto: acc.valor_produto + porta.valor_produto,
           valor_pintura: acc.valor_pintura + porta.valor_pintura,
           valor_instalacao: acc.valor_instalacao + porta.valor_instalacao,
-          valor_frete: acc.valor_frete + porta.valor_frete,
-          valor_total: acc.valor_total + valorComDesconto + porta.valor_frete
+          valor_total: acc.valor_total + valorComDesconto
         };
       }, {
         valor_produto: 0,
         valor_pintura: 0,
         valor_instalacao: 0,
-        valor_frete: 0,
         valor_total: 0
       });
+
+      const valor_frete = vendaData.valor_frete || 0;
 
       // 4. Criar venda com valores calculados
       const vendaPayload = {
@@ -121,8 +121,8 @@ export function useVendas() {
         valor_produto: totais.valor_produto,
         valor_pintura: totais.valor_pintura,
         valor_instalacao: totais.valor_instalacao,
-        valor_frete: totais.valor_frete,
-        valor_venda: totais.valor_total
+        valor_frete: valor_frete,
+        valor_venda: totais.valor_total + valor_frete
       };
 
       console.log('Venda payload:', vendaPayload);
@@ -147,6 +147,47 @@ export function useVendas() {
         .insert(portasComVendaId);
       
       if (portasError) throw portasError;
+
+      // 6. Atualizar tamanho da instalação com os tamanhos concatenados das portas
+      const tamanhosConcatenados = portas.map(p => p.tamanho).join(', ');
+      
+      const { error: instalacaoError } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({ tamanho: tamanhosConcatenados })
+        .eq('nome_cliente', venda.cliente_nome)
+        .eq('telefone_cliente', venda.cliente_telefone)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (instalacaoError) {
+        console.error('Erro ao atualizar tamanho da instalação:', instalacaoError);
+      }
+
+      // 7. Buscar a instalação criada para geocodificar
+      const { data: instalacao } = await supabase
+        .from('instalacoes_cadastradas')
+        .select('id, cidade, estado')
+        .eq('nome_cliente', venda.cliente_nome)
+        .eq('telefone_cliente', venda.cliente_telefone)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      // 8. Chamar geocodificação
+      if (instalacao) {
+        try {
+          await supabase.functions.invoke('geocode-instalacao', {
+            body: {
+              id: instalacao.id,
+              cidade: instalacao.cidade,
+              estado: instalacao.estado
+            }
+          });
+        } catch (geoError) {
+          console.error('Erro na geocodificação:', geoError);
+          // Não bloquear a criação da venda por erro de geocodificação
+        }
+      }
 
       return venda;
     },

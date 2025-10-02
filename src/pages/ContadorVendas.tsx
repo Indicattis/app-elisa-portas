@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useVendasAgregadas, useVendasDoDia, useVendasMesAtual, useVendasSemanaAtual } from "@/hooks/useVendasDashboard";
+import { useVendasAgregadas, useVendasDoDia, useVendasMesAtual, useVendasSemanaAtual, useRankingVendedoresDia } from "@/hooks/useVendasDashboard";
 import { Link } from "react-router-dom";
 
 const getRangeStyle = (valor: number, weekend: boolean, isPastDate: boolean = false) => {
@@ -34,6 +34,9 @@ export default function ContadorVendas() {
   const { data: vendasMes } = useVendasMesAtual();
   const { data: vendasSemana } = useVendasSemanaAtual();
   const { data: vendasDoDia = [] } = useVendasDoDia(
+    selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ""
+  );
+  const { data: ranking = [], isLoading: isLoadingRanking } = useRankingVendedoresDia(
     selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ""
   );
 
@@ -227,51 +230,74 @@ export default function ContadorVendas() {
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Vendas do dia {selectedDate && format(selectedDate, "PPP", { locale: ptBR })}
+              Ranking de Vendedores - {selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: ptBR })}
             </DialogTitle>
           </DialogHeader>
-
-          {vendasDoDia.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhuma venda registrada neste dia.
+          
+          {isLoadingRanking ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {vendasDoDia.map((venda) => (
-                <Card key={venda.id} className="p-4 hover:bg-accent transition-colors">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1 space-y-1">
-                      <div className="font-semibold text-lg">{venda.cliente_nome}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Atendente: {venda.atendente_nome || "Não informado"}
-                      </div>
+          ) : ranking && ranking.length > 0 ? (
+            <div className="space-y-4">
+              {ranking.map((vendedor, index) => (
+                <Card key={vendedor.atendente_nome} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-lg">
+                      {index + 1}º
                     </div>
-                    <div className="text-right space-y-2">
-                      <div className="font-bold text-lg text-primary">
-                        {formatCurrency(venda.valor_venda)}
+                    
+                    {vendedor.foto_perfil_url && (
+                      <img 
+                        src={vendedor.foto_perfil_url} 
+                        alt={vendedor.atendente_nome}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    )}
+                    
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{vendedor.atendente_nome}</h3>
+                      <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Vendas</p>
+                          <p className="font-semibold">{vendedor.quantidade_vendas}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Portas</p>
+                          <p className="font-semibold">{vendedor.quantidade_portas}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Valor Total</p>
+                          <p className="font-semibold text-primary">{formatCurrency(vendedor.valor_total)}</p>
+                        </div>
                       </div>
-                      <Link to={`/dashboard/vendas/${venda.id}`}>
-                        <Button variant="outline" size="sm" className="gap-2">
-                          Ver Detalhes
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
-                      </Link>
                     </div>
                   </div>
                 </Card>
               ))}
               
-              <div className="border-t pt-4 mt-4">
-                <div className="flex justify-between items-center text-lg font-bold">
-                  <span>Total do dia:</span>
-                  <span className="text-primary">
-                    {formatCurrency(vendasDoDia.reduce((sum, v) => sum + v.valor_venda, 0))}
-                  </span>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1 text-right">
-                  {vendasDoDia.length} {vendasDoDia.length === 1 ? "venda" : "vendas"}
+              <div className="pt-4 border-t">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total de Vendas</p>
+                    <p className="text-lg font-bold">{ranking.reduce((sum, v) => sum + v.quantidade_vendas, 0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total de Portas</p>
+                    <p className="text-lg font-bold">{ranking.reduce((sum, v) => sum + v.quantidade_portas, 0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Faturamento Total</p>
+                    <p className="text-lg font-bold text-primary">
+                      {formatCurrency(ranking.reduce((sum, v) => sum + v.valor_total, 0))}
+                    </p>
+                  </div>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma venda registrada neste dia
             </div>
           )}
         </DialogContent>
