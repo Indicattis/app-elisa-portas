@@ -61,15 +61,23 @@ export function useVendas() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      console.log('User ID from auth:', user.id);
+
       // 2. Buscar admin_user correspondente
       const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
-        .select('id')
+        .select('id, user_id, nome')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (adminError || !adminUser) {
-        throw new Error('Usuário não encontrado no sistema');
+      console.log('Admin user found:', adminUser, 'Error:', adminError);
+      
+      if (adminError) {
+        throw new Error(`Erro ao buscar usuário: ${adminError.message}`);
+      }
+      
+      if (!adminUser) {
+        throw new Error('Usuário não encontrado no sistema. Por favor, entre em contato com o administrador.');
       }
 
       // 3. Calcular totais das portas
