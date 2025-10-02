@@ -10,12 +10,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { ArrowLeft, Plus, CalendarIcon } from 'lucide-react';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 import { PortaVendaForm } from '@/components/vendas/PortaVendaForm';
 import { PortasVendaTable } from '@/components/vendas/PortasVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export default function VendasNova() {
   const navigate = useNavigate();
@@ -40,6 +45,7 @@ export default function VendasNova() {
   });
 
   const [portas, setPortas] = useState<PortaVenda[]>([]);
+  const [dataVenda, setDataVenda] = useState<Date>();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: cores } = useQuery({
@@ -76,7 +82,14 @@ export default function VendasNova() {
     }
 
     try {
-      await createVenda({ vendaData: formData, portas });
+      await createVenda({ 
+        vendaData: {
+          ...formData,
+          // Usar a data selecionada ou a data atual
+          data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
+        }, 
+        portas 
+      });
       navigate('/dashboard/vendas');
     } catch (error) {
       console.error('Erro ao criar venda:', error);
@@ -208,6 +221,35 @@ export default function VendasNova() {
             <CardTitle>Dados da Venda</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="data_venda">Data da Venda</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dataVenda && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dataVenda ? format(dataVenda, "PPP", { locale: ptBR }) : <span>Data atual (se não selecionar)</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dataVenda}
+                    onSelect={setDataVenda}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="publico_alvo">Público Alvo *</Label>
               <Select
