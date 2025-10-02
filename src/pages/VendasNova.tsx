@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useVendas, VendaFormData, PortaVenda } from '@/hooks/useVendas';
+import { useVendas, VendaFormData, ProdutoVenda } from '@/hooks/useVendas';
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { ArrowLeft, Plus, CalendarIcon } from 'lucide-react';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
-import { PortaVendaForm } from '@/components/vendas/PortaVendaForm';
+import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { PortasVendaTable } from '@/components/vendas/PortasVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +44,7 @@ export default function VendasNova() {
     tipo_entrega: 'instalacao'
   });
 
-  const [portas, setPortas] = useState<PortaVenda[]>([]);
+  const [portas, setPortas] = useState<ProdutoVenda[]>([]);
   const [dataVenda, setDataVenda] = useState<Date>();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -61,8 +61,8 @@ export default function VendasNova() {
     }
   });
 
-  const handleAddPorta = (porta: PortaVenda) => {
-    setPortas(prev => [...prev, porta]);
+  const handleAddPorta = (produto: ProdutoVenda) => {
+    setPortas(prev => [...prev, produto]);
   };
 
   const handleRemovePorta = (index: number) => {
@@ -76,7 +76,7 @@ export default function VendasNova() {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'É necessário adicionar pelo menos uma porta'
+        description: 'É necessário adicionar pelo menos um produto'
       });
       return;
     }
@@ -359,23 +359,23 @@ export default function VendasNova() {
           </CardContent>
         </Card>
 
-        {/* Portas de Enrolar */}
+        {/* Produtos */}
         <Card>
           <CardHeader>
-            <CardTitle>Portas de Enrolar</CardTitle>
-            <CardDescription>Adicione as portas desta venda</CardDescription>
+            <CardTitle>Produtos</CardTitle>
+            <CardDescription>Adicione portas, acessórios e adicionais desta venda</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <Button type="button" onClick={() => setDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Porta
+                Adicionar Produto
               </Button>
-              <PortaVendaForm 
+              <ProdutoVendaForm 
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                onAddPorta={(porta) => {
-                  handleAddPorta(porta);
+                onAddProduto={(produto) => {
+                  handleAddPorta(produto);
                   setDialogOpen(false);
                 }} 
               />

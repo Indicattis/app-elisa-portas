@@ -1,76 +1,66 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PortaVenda } from '@/hooks/useVendas';
+import { ProdutoVenda } from '@/hooks/useVendas';
 
 interface VendaResumoProps {
-  portas: PortaVenda[];
+  portas: ProdutoVenda[];
   valorFrete?: number;
 }
 
 export function VendaResumo({ portas, valorFrete = 0 }: VendaResumoProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  const totais = portas.reduce((acc, produto) => {
+    const valorBase = (
+      produto.valor_produto + 
+      produto.valor_pintura + 
+      produto.valor_instalacao
+    ) * produto.quantidade;
+    
+    const descontoAplicado = produto.tipo_desconto === 'valor' 
+      ? produto.desconto_valor 
+      : valorBase * (produto.desconto_percentual / 100);
+    
+    const valorComDesconto = valorBase - descontoAplicado;
+    
+    return {
+      produto: acc.produto + (produto.valor_produto * produto.quantidade),
+      pintura: acc.pintura + (produto.valor_pintura * produto.quantidade),
+      instalacao: acc.instalacao + (produto.valor_instalacao * produto.quantidade),
+      total: acc.total + valorComDesconto
+    };
+  }, {
+    produto: 0,
+    pintura: 0,
+    instalacao: 0,
+    total: 0
+  });
 
-  const calcularTotais = () => {
-    return portas.reduce(
-      (acc, porta) => {
-        const valorBase = porta.valor_produto + porta.valor_pintura + porta.valor_instalacao;
-        const valorComDesconto = valorBase * (1 - (porta.desconto_percentual || 0) / 100);
-
-        return {
-          totalPortas: acc.totalPortas + 1,
-          totalProdutos: acc.totalProdutos + porta.valor_produto,
-          totalPintura: acc.totalPintura + porta.valor_pintura,
-          totalInstalacao: acc.totalInstalacao + porta.valor_instalacao,
-          valorTotal: acc.valorTotal + valorComDesconto
-        };
-      },
-      {
-        totalPortas: 0,
-        totalProdutos: 0,
-        totalPintura: 0,
-        totalInstalacao: 0,
-        valorTotal: 0
-      }
-    );
-  };
-
-  const totais = calcularTotais();
-  const valorTotalComFrete = totais.valorTotal + valorFrete;
+  const valorTotalComFrete = totais.total + valorFrete;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Resumo da Venda</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex justify-between items-center">
-          <span className="text-muted-foreground">Total de Portas:</span>
-          <span className="font-semibold">{totais.totalPortas}</span>
+      <CardContent className="space-y-2">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor Produtos:</span>
+          <span className="font-semibold">R$ {totais.produto.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-muted-foreground">Valor Total de Produtos:</span>
-          <span className="font-semibold">{formatCurrency(totais.totalProdutos)}</span>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor Pintura:</span>
+          <span className="font-semibold">R$ {totais.pintura.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-muted-foreground">Valor Total de Pintura:</span>
-          <span className="font-semibold">{formatCurrency(totais.totalPintura)}</span>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor Instalação:</span>
+          <span className="font-semibold">R$ {totais.instalacao.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-muted-foreground">Valor Total de Instalação:</span>
-          <span className="font-semibold">{formatCurrency(totais.totalInstalacao)}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-muted-foreground">Valor de Frete:</span>
-          <span className="font-semibold">{formatCurrency(valorFrete)}</span>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor Frete:</span>
+          <span className="font-semibold">R$ {valorFrete.toFixed(2)}</span>
         </div>
         <div className="h-px bg-border my-2" />
-        <div className="flex justify-between items-center">
-          <span className="text-lg font-semibold">Valor Total da Venda:</span>
-          <span className="text-2xl font-bold text-primary">{formatCurrency(valorTotalComFrete)}</span>
+        <div className="flex justify-between text-lg">
+          <span className="font-bold">Total:</span>
+          <span className="font-bold text-primary">R$ {valorTotalComFrete.toFixed(2)}</span>
         </div>
       </CardContent>
     </Card>

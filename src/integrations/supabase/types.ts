@@ -1998,11 +1998,18 @@ export type Database = {
       }
       portas_vendas: {
         Row: {
+          acessorio_id: string | null
+          adicional_id: string | null
           cor_id: string | null
           created_at: string | null
           desconto_percentual: number | null
+          desconto_valor: number | null
+          descricao: string | null
           id: string
+          quantidade: number | null
           tamanho: string
+          tipo_desconto: string | null
+          tipo_produto: string
           updated_at: string | null
           valor_frete: number
           valor_instalacao: number
@@ -2013,11 +2020,18 @@ export type Database = {
           venda_id: string
         }
         Insert: {
+          acessorio_id?: string | null
+          adicional_id?: string | null
           cor_id?: string | null
           created_at?: string | null
           desconto_percentual?: number | null
+          desconto_valor?: number | null
+          descricao?: string | null
           id?: string
+          quantidade?: number | null
           tamanho: string
+          tipo_desconto?: string | null
+          tipo_produto?: string
           updated_at?: string | null
           valor_frete?: number
           valor_instalacao?: number
@@ -2028,11 +2042,18 @@ export type Database = {
           venda_id: string
         }
         Update: {
+          acessorio_id?: string | null
+          adicional_id?: string | null
           cor_id?: string | null
           created_at?: string | null
           desconto_percentual?: number | null
+          desconto_valor?: number | null
+          descricao?: string | null
           id?: string
+          quantidade?: number | null
           tamanho?: string
+          tipo_desconto?: string | null
+          tipo_produto?: string
           updated_at?: string | null
           valor_frete?: number
           valor_instalacao?: number
@@ -2043,6 +2064,20 @@ export type Database = {
           venda_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "portas_vendas_acessorio_id_fkey"
+            columns: ["acessorio_id"]
+            isOneToOne: false
+            referencedRelation: "acessorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portas_vendas_adicional_id_fkey"
+            columns: ["adicional_id"]
+            isOneToOne: false
+            referencedRelation: "adicionais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "portas_vendas_cor_id_fkey"
             columns: ["cor_id"]

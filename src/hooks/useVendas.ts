@@ -2,15 +2,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export interface PortaVenda {
+export interface ProdutoVenda {
   id?: string;
-  tamanho: string;
+  tipo_produto: 'porta' | 'acessorio' | 'adicional';
+  tamanho?: string;
   cor_id?: string;
+  acessorio_id?: string;
+  adicional_id?: string;
   valor_produto: number;
   valor_pintura: number;
   valor_instalacao: number;
+  valor_frete: number;
+  tipo_desconto: 'percentual' | 'valor';
   desconto_percentual: number;
+  desconto_valor: number;
+  quantidade: number;
+  descricao?: string;
 }
+
+// Manter compatibilidade com código existente
+export type PortaVenda = ProdutoVenda;
 
 export interface VendaFormData {
   cliente_nome: string;
@@ -55,9 +66,9 @@ export function useVendas() {
   });
 
   const createVendaMutation = useMutation({
-    mutationFn: async ({ vendaData, portas }: { vendaData: VendaFormData, portas: PortaVenda[] }) => {
+    mutationFn: async ({ vendaData, portas }: { vendaData: VendaFormData, portas: ProdutoVenda[] }) => {
       if (portas.length === 0) {
-        throw new Error('É necessário adicionar pelo menos uma porta');
+        throw new Error('É necessário adicionar pelo menos um produto');
       }
 
       // 1. Obter usuário atual
@@ -93,18 +104,24 @@ export function useVendas() {
         throw new Error('Usuário não encontrado no sistema. Por favor, entre em contato com o administrador.');
       }
 
-      // 3. Calcular totais das portas
-      const totais = portas.reduce((acc, porta) => {
-        const valorComDesconto = (
-          porta.valor_produto + 
-          porta.valor_pintura + 
-          porta.valor_instalacao
-        ) * (1 - (porta.desconto_percentual || 0) / 100);
+      // 3. Calcular totais dos produtos
+      const totais = portas.reduce((acc, produto) => {
+        const valorBase = (
+          produto.valor_produto + 
+          produto.valor_pintura + 
+          produto.valor_instalacao
+        ) * (produto.quantidade || 1);
+        
+        const descontoAplicado = produto.tipo_desconto === 'valor' 
+          ? (produto.desconto_valor || 0)
+          : valorBase * ((produto.desconto_percentual || 0) / 100);
+        
+        const valorComDesconto = valorBase - descontoAplicado;
         
         return {
-          valor_produto: acc.valor_produto + porta.valor_produto,
-          valor_pintura: acc.valor_pintura + porta.valor_pintura,
-          valor_instalacao: acc.valor_instalacao + porta.valor_instalacao,
+          valor_produto: acc.valor_produto + (produto.valor_produto * (produto.quantidade || 1)),
+          valor_pintura: acc.valor_pintura + (produto.valor_pintura * (produto.quantidade || 1)),
+          valor_instalacao: acc.valor_instalacao + (produto.valor_instalacao * (produto.quantidade || 1)),
           valor_total: acc.valor_total + valorComDesconto
         };
       }, {
@@ -139,15 +156,28 @@ export function useVendas() {
       
       if (vendaError) throw vendaError;
 
-      // 5. Criar portas
-      const portasComVendaId = portas.map(porta => ({
-        ...porta,
-        venda_id: venda.id
+      // 5. Criar produtos da venda
+      const produtosComVendaId = portas.map(produto => ({
+        venda_id: venda.id,
+        tipo_produto: produto.tipo_produto,
+        tamanho: produto.tamanho || '',
+        cor_id: produto.cor_id || null,
+        acessorio_id: produto.acessorio_id || null,
+        adicional_id: produto.adicional_id || null,
+        valor_produto: produto.valor_produto,
+        valor_pintura: produto.valor_pintura,
+        valor_instalacao: produto.valor_instalacao,
+        valor_frete: produto.valor_frete,
+        tipo_desconto: produto.tipo_desconto,
+        desconto_percentual: produto.desconto_percentual,
+        desconto_valor: produto.desconto_valor,
+        quantidade: produto.quantidade,
+        descricao: produto.descricao || null
       }));
       
       const { error: portasError } = await supabase
         .from('portas_vendas')
-        .insert(portasComVendaId);
+        .insert(produtosComVendaId);
       
       if (portasError) throw portasError;
 
