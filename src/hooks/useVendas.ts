@@ -72,20 +72,48 @@ export function useVendas() {
         throw new Error('Usuário não encontrado no sistema');
       }
 
-      // 3. Criar venda
+      // 3. Calcular totais das portas
+      const totais = portas.reduce((acc, porta) => {
+        const valorComDesconto = (
+          porta.valor_produto + 
+          porta.valor_pintura + 
+          porta.valor_instalacao
+        ) * (1 - (porta.desconto_percentual || 0) / 100);
+        
+        return {
+          valor_produto: acc.valor_produto + porta.valor_produto,
+          valor_pintura: acc.valor_pintura + porta.valor_pintura,
+          valor_instalacao: acc.valor_instalacao + porta.valor_instalacao,
+          valor_frete: acc.valor_frete + porta.valor_frete,
+          valor_total: acc.valor_total + valorComDesconto + porta.valor_frete
+        };
+      }, {
+        valor_produto: 0,
+        valor_pintura: 0,
+        valor_instalacao: 0,
+        valor_frete: 0,
+        valor_total: 0
+      });
+
+      // 4. Criar venda com valores calculados
       const { data: venda, error: vendaError } = await supabase
         .from('vendas')
         .insert([{
           ...vendaData,
           atendente_id: adminUser.id,
-          data_venda: vendaData.data_venda || new Date().toISOString()
+          data_venda: vendaData.data_venda || new Date().toISOString(),
+          valor_produto: totais.valor_produto,
+          valor_pintura: totais.valor_pintura,
+          valor_instalacao: totais.valor_instalacao,
+          valor_frete: totais.valor_frete,
+          valor_venda: totais.valor_total
         }])
         .select()
         .single();
       
       if (vendaError) throw vendaError;
 
-      // 4. Criar portas
+      // 5. Criar portas
       const portasComVendaId = portas.map(porta => ({
         ...porta,
         venda_id: venda.id
