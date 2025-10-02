@@ -26,10 +26,10 @@ export const useSalesData = () => {
       const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
       const { data, error } = await supabase
-        .from('contador_vendas_dias')
-        .select('data, valor, numero_vendas')
-        .gte('data', format(primeiroDiaDoMes, 'yyyy-MM-dd'))
-        .lte('data', format(ultimoDiaDoMes, 'yyyy-MM-dd'));
+        .from('vendas')
+        .select('data_venda, valor_venda')
+        .gte('data_venda', primeiroDiaDoMes.toISOString())
+        .lte('data_venda', ultimoDiaDoMes.toISOString());
 
       if (error) {
         console.error('Erro ao buscar vendas:', error);
@@ -38,12 +38,12 @@ export const useSalesData = () => {
 
       // Agrupar por data e somar valores
       const vendasPorDia = (data || []).reduce((acc: { [key: string]: { valor: number; numero_vendas: number } }, venda: any) => {
-        const dataKey = venda.data;
+        const dataKey = venda.data_venda.split('T')[0];
         if (!acc[dataKey]) {
           acc[dataKey] = { valor: 0, numero_vendas: 0 };
         }
-        acc[dataKey].valor += Number(venda.valor);
-        acc[dataKey].numero_vendas += Number(venda.numero_vendas || 0);
+        acc[dataKey].valor += Number(venda.valor_venda || 0);
+        acc[dataKey].numero_vendas += 1;
         return acc;
       }, {});
 
@@ -53,7 +53,7 @@ export const useSalesData = () => {
         numero_vendas
       }));
     },
-    refetchInterval: 120000, // 2 minutes fallback
+    refetchInterval: 120000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
@@ -68,15 +68,14 @@ export const useSellersRanking = () => {
       const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
       const { data, error } = await supabase
-        .from('contador_vendas_dias')
+        .from('vendas')
         .select(`
-          valor,
-          numero_vendas,
+          valor_venda,
           atendente_id,
           admin_users!inner(nome, foto_perfil_url)
         `)
-        .gte('data', format(primeiroDiaDoMes, 'yyyy-MM-dd'))
-        .lte('data', format(ultimoDiaDoMes, 'yyyy-MM-dd'));
+        .gte('data_venda', primeiroDiaDoMes.toISOString())
+        .lte('data_venda', ultimoDiaDoMes.toISOString());
 
       if (error) {
         console.error('Erro ao buscar ranking:', error);
@@ -94,8 +93,8 @@ export const useSellersRanking = () => {
             numero_vendas: 0
           };
         }
-        acc[atendenteId].total_vendas += Number(venda.valor);
-        acc[atendenteId].numero_vendas += Number(venda.numero_vendas || 0);
+        acc[atendenteId].total_vendas += Number(venda.valor_venda || 0);
+        acc[atendenteId].numero_vendas += 1;
         return acc;
       }, {});
 
@@ -109,7 +108,7 @@ export const useSellersRanking = () => {
 
       return ranking;
     },
-    refetchInterval: 120000, // 2 minutes fallback
+    refetchInterval: 120000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
@@ -213,13 +212,16 @@ export const useDashboardRealtime = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'contador_vendas_dias'
+          table: 'vendas'
         },
         () => {
           // Debounced invalidation
           setTimeout(() => {
             queryClient.invalidateQueries({ queryKey: ['vendas-mes'] });
             queryClient.invalidateQueries({ queryKey: ['ranking-vendedores'] });
+            queryClient.invalidateQueries({ queryKey: ['vendas-agregadas'] });
+            queryClient.invalidateQueries({ queryKey: ['vendas-mes-atual'] });
+            queryClient.invalidateQueries({ queryKey: ['vendas-semana-atual'] });
           }, 500);
         }
       )

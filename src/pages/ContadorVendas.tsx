@@ -1,27 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { format, isSameMonth, isSameWeek, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, startOfYear, endOfYear, getYear, isWeekend, isSameDay } from "date-fns";
+import { format, isSameMonth, isSameWeek, startOfMonth, endOfMonth, startOfWeek, endOfWeek, getYear, isWeekend, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Star, ChevronLeft, ChevronRight } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Star, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-
-interface DiaVenda {
-  id?: string;
-  data: string; // ISO date string
-  valor: number;
-  numero_vendas: number;
-}
-
-interface VendaAtendente {
-  atendente_id: string;
-  nome: string;
-  valor: number;
-  numero_vendas: number;
-}
+import { useVendasAgregadas, useVendasDoDia, useVendasMesAtual, useVendasSemanaAtual } from "@/hooks/useVendasDashboard";
+import { Link } from "react-router-dom";
 
 const getRangeStyle = (valor: number, weekend: boolean, isPastDate: boolean = false) => {
   if (weekend) return { base: "bg-muted text-muted-foreground", star: false, ring: "" };
@@ -29,7 +15,6 @@ const getRangeStyle = (valor: number, weekend: boolean, isPastDate: boolean = fa
   if (valor >= 50001) return { base: "bg-green-600 text-white", star: false, ring: "" };
   if (valor >= 20001) return { base: "bg-yellow-500 text-black", star: false, ring: "" };
   if (valor > 0) return { base: "bg-red-600 text-white", star: false, ring: "" };
-  // Dias passados com valor 0 ou null ficam vermelhos
   if (isPastDate && (valor === 0 || valor === null || valor === undefined)) {
     return { base: "bg-red-600 text-white", star: false, ring: "" };
   }
@@ -40,202 +25,56 @@ const monthsInYear = Array.from({ length: 12 }, (_, i) => i);
 
 export default function ContadorVendas() {
   const [year, setYear] = useState(getYear(new Date()));
-  const [data, setData] = useState<Record<string, DiaVenda>>({});
-  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [inputValor, setInputValor] = useState<string>("");
-  const [inputNumeroVendas, setInputNumeroVendas] = useState<string>("");
   const [viewMode, setViewMode] = useState<'year' | 'month'>('month');
-  const [vendasAtendentes, setVendasAtendentes] = useState<VendaAtendente[]>([]);
   const { toast } = useToast();
-  const { user } = useAuth();
+
+  const { data: vendasAgregadas = [], isLoading: loading } = useVendasAgregadas(year);
+  const { data: vendasMes } = useVendasMesAtual();
+  const { data: vendasSemana } = useVendasSemanaAtual();
+  const { data: vendasDoDia = [] } = useVendasDoDia(
+    selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ""
+  );
+
+  // Converter array para objeto para compatibilidade com código existente
+  const data = useMemo(() => {
+    return vendasAgregadas.reduce((acc, venda) => {
+      acc[venda.data] = venda;
+      return acc;
+    }, {} as Record<string, { data: string; valor: number; numero_vendas: number }>);
+  }, [vendasAgregadas]);
 
   useEffect(() => {
     document.title = "Contador de vendas";
   }, []);
 
-  const fetchYear = async (y: number) => {
-    setLoading(true);
-    const { data: rows, error } = await supabase
-      .from("contador_vendas_dias")
-      .select("id, data, valor, numero_vendas")
-      .gte("data", `${y}-01-01`)
-      .lte("data", `${y}-12-31`);
-
-    if (error) {
-      toast({ title: "Erro ao carregar", description: error.message });
-      setLoading(false);
-      return;
-    }
-
-    // Agregar vendas por data (somar todos os atendentes)
-    const map: Record<string, DiaVenda> = {};
-    rows?.forEach((r: any) => {
-      const existingValue = map[r.data]?.valor || 0;
-      const existingQuantity = map[r.data]?.numero_vendas || 0;
-      map[r.data] = { 
-        id: r.id, 
-        data: r.data, 
-        valor: existingValue + Number(r.valor),
-        numero_vendas: existingQuantity + Number(r.numero_vendas || 0)
-      };
-    });
-    setData(map);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchYear(year);
-  }, [year]);
-
-  // Atualizar dados a cada 1 hora
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchYear(year);
-    }, 60 * 60 * 1000); // 1 hora em milissegundos
-
-    return () => clearInterval(interval);
-  }, [year]);
-
   const handlePrevYear = () => setYear(y => y - 1);
   const handleNextYear = () => setYear(y => y + 1);
 
-  const openModalForDate = async (date: Date) => {
-    if (isWeekend(date)) {
-      toast({ title: "Indisponível", description: "O contador funciona apenas de segunda a sexta." });
-      return;
-    }
-    
-    if (!user) return;
-    
-    const iso = format(date, "yyyy-MM-dd");
-    
-    // Buscar todas as vendas dos atendentes para este dia
-    const { data: vendasDia, error } = await supabase
-      .from("contador_vendas_dias")
-      .select(`
-        atendente_id,
-        valor,
-        numero_vendas,
-        admin_users!atendente_id(nome)
-      `)
-      .eq("data", iso);
-    
-    if (error) {
-      console.error("Erro ao buscar vendas do dia:", error);
-    }
-    
-    // Organizar dados dos atendentes
-    const vendasMap = new Map<string, VendaAtendente>();
-    vendasDia?.forEach((venda: any) => {
-      vendasMap.set(venda.atendente_id, {
-        atendente_id: venda.atendente_id,
-        nome: venda.admin_users?.nome || 'Atendente',
-        valor: venda.valor,
-        numero_vendas: venda.numero_vendas || 0
-      });
-    });
-    
-    // Buscar a venda específica do usuário atual
-    const vendaUsuario = vendasMap.get(user.id);
-    
+  const openModalForDate = (date: Date) => {
     setSelectedDate(date);
-    setInputValor(vendaUsuario ? String(vendaUsuario.valor).replace(".", ",") : "");
-    setInputNumeroVendas(vendaUsuario ? String(vendaUsuario.numero_vendas) : "");
-    setVendasAtendentes(Array.from(vendasMap.values()));
     setOpen(true);
   };
 
-  const saveValor = async () => {
-    if (!selectedDate || !user) return;
-    const iso = format(selectedDate, "yyyy-MM-dd");
-
-    // Parse valor from Brazilian format if typed with comma
-    const normalized = inputValor.replace(/\./g, "").replace(",", ".");
-    const valor = Number(normalized);
-    if (isNaN(valor) || valor < 0) {
-      toast({ title: "Valor inválido", description: "Insira um número válido." });
-      return;
-    }
-
-    // Parse número de vendas
-    const numeroVendas = Number(inputNumeroVendas) || 0;
-    if (numeroVendas < 0) {
-      toast({ title: "Número inválido", description: "Insira um número de vendas válido." });
-      return;
-    }
-
-    // Inserir ou atualizar a venda individual do atendente
-    const payload = { 
-      data: iso, 
-      valor, 
-      numero_vendas: numeroVendas,
-      created_by: user.id,
-      atendente_id: user.id
-    };
-    const { error } = await supabase
-      .from("contador_vendas_dias")
-      .upsert(payload, { 
-        onConflict: 'data,atendente_id',
-        ignoreDuplicates: false 
-      });
-
-    if (error) {
-      toast({ title: "Erro ao salvar", description: error.message });
-      return;
-    }
-
-    // Recarregar dados para mostrar o total agregado
-    await fetchYear(year);
-    
-    toast({ title: "Salvo!", description: `Sua venda de ${format(selectedDate, "PPP", { locale: ptBR })} foi registrada.` });
-    setOpen(false);
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
 
   const today = new Date();
-  const monthSum = useMemo(() => {
-    const start = startOfMonth(today);
-    const end = endOfMonth(today);
-    return Object.values(data).reduce((sum, d) => {
-      const dDate = new Date(d.data);
-      return (dDate >= start && dDate <= end) ? sum + d.valor : sum;
-    }, 0);
-  }, [data]);
-
-  const monthSalesCount = useMemo(() => {
-    const start = startOfMonth(today);
-    const end = endOfMonth(today);
-    return Object.values(data).reduce((sum, d) => {
-      const dDate = new Date(d.data);
-      return (dDate >= start && dDate <= end) ? sum + d.numero_vendas : sum;
-    }, 0);
-  }, [data]);
-
-  const weekSum = useMemo(() => {
-    const start = startOfWeek(today, { weekStartsOn: 0 });
-    const end = endOfWeek(today, { weekStartsOn: 0 });
-    return Object.values(data).reduce((sum, d) => {
-      const dDate = new Date(d.data);
-      return (dDate >= start && dDate <= end) ? sum + d.valor : sum;
-    }, 0);
-  }, [data]);
-
-  const weekSalesCount = useMemo(() => {
-    const start = startOfWeek(today, { weekStartsOn: 0 });
-    const end = endOfWeek(today, { weekStartsOn: 0 });
-    return Object.values(data).reduce((sum, d) => {
-      const dDate = new Date(d.data);
-      return (dDate >= start && dDate <= end) ? sum + d.numero_vendas : sum;
-    }, 0);
-  }, [data]);
+  const monthSum = vendasMes?.total || 0;
+  const monthSalesCount = vendasMes?.quantidade || 0;
+  const weekSum = vendasSemana?.total || 0;
+  const weekSalesCount = vendasSemana?.quantidade || 0;
 
   const renderMonth = (monthIndex: number, large = false) => {
     const firstDay = new Date(year, monthIndex, 1);
     const monthStart = startOfMonth(firstDay);
     const monthEnd = endOfMonth(firstDay);
 
-    // Build grid from Sunday to Saturday
     const startGrid = startOfWeek(monthStart, { weekStartsOn: 0 });
     const endGrid = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
@@ -273,7 +112,7 @@ export default function ContadorVendas() {
                   onClick={() => inMonth ? openModalForDate(d) : undefined}
                   disabled={!inMonth}
                   className={`relative ${daySize} rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 border border-sm ${style.base} ${style.ring} ${!inMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
-                  title={registro ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor) : undefined}
+                  title={registro ? formatCurrency(valor) : undefined}
                 >
                   <span className="text-sm opacity-90">{format(d, "d")}</span>
                   <div className="text-center">
@@ -301,7 +140,7 @@ export default function ContadorVendas() {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Contador de vendas</h1>
-          <p className="text-muted-foreground">Marque o valor vendido por dia (seg à sex). Azul é a cor primária do layout.</p>
+          <p className="text-muted-foreground">Visualize o valor vendido por dia com base nas vendas cadastradas.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handlePrevYear} className="hover-scale" aria-label="Ano anterior"><ChevronLeft /></Button>
@@ -347,7 +186,7 @@ export default function ContadorVendas() {
               <span className="text-sm text-muted-foreground font-medium">Lucro</span>
             </div>
           </div>
-          <div className="text-sm text-muted-foreground font-medium text-center">Cores aplicadas apenas de seg–sex. Dias passados sem valor também ficam vermelhos.</div>
+          <div className="text-sm text-muted-foreground font-medium text-center">Cores aplicadas de seg–sex. Dias passados sem vendas também ficam vermelhos.</div>
         </div>
       </section>
 
@@ -362,91 +201,79 @@ export default function ContadorVendas() {
       <aside className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="p-6 rounded-xl border bg-card shadow-sm">
           <h3 className="text-sm text-muted-foreground">Valor - Mês</h3>
-          <p className="text-2xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthSum)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(monthSum)}</p>
           <p className="text-sm text-muted-foreground">{monthSalesCount} vendas</p>
         </div>
         <div className="p-6 rounded-xl border bg-card shadow-sm">
           <h3 className="text-sm text-muted-foreground">Valor - Semana</h3>
-          <p className="text-2xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(weekSum)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(weekSum)}</p>
           <p className="text-sm text-muted-foreground">{weekSalesCount} vendas</p>
         </div>
         <div className="p-6 rounded-xl border bg-card shadow-sm">
           <h3 className="text-sm text-muted-foreground">Ticket Médio - Mês</h3>
           <p className="text-2xl font-bold">
-            {monthSalesCount > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthSum / monthSalesCount) : 'R$ 0,00'}
+            {monthSalesCount > 0 ? formatCurrency(monthSum / monthSalesCount) : 'R$ 0,00'}
           </p>
         </div>
         <div className="p-6 rounded-xl border bg-card shadow-sm">
           <h3 className="text-sm text-muted-foreground">Ticket Médio - Semana</h3>
           <p className="text-2xl font-bold">
-            {weekSalesCount > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(weekSum / weekSalesCount) : 'R$ 0,00'}
+            {weekSalesCount > 0 ? formatCurrency(weekSum / weekSalesCount) : 'R$ 0,00'}
           </p>
         </div>
       </aside>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Vendas do dia {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : ""}</DialogTitle>
-            <DialogDescription>
-              Registre o valor das suas vendas do dia. Você pode ver as vendas de outros atendentes para referência.
-            </DialogDescription>
+            <DialogTitle>
+              Vendas do dia {selectedDate && format(selectedDate, "PPP", { locale: ptBR })}
+            </DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-4">
-            {/* Vendas de outros atendentes (somente leitura) */}
-            {vendasAtendentes.filter(v => v.atendente_id !== user?.id).length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Vendas de outros atendentes:</label>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {vendasAtendentes
-                    .filter(v => v.atendente_id !== user?.id)
-                    .map((venda) => (
-                      <div key={venda.atendente_id} className="flex justify-between items-center p-2 bg-muted rounded">
-                        <span className="text-sm font-medium">{venda.nome}</span>
-                        <div className="text-right">
-                          <span className="text-sm block">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {venda.numero_vendas} venda{venda.numero_vendas !== 1 ? 's' : ''}
-                          </span>
-                        </div>
+
+          {vendasDoDia.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma venda registrada neste dia.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {vendasDoDia.map((venda) => (
+                <Card key={venda.id} className="p-4 hover:bg-accent transition-colors">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 space-y-1">
+                      <div className="font-semibold text-lg">{venda.cliente_nome}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Atendente: {venda.atendente_nome || "Não informado"}
                       </div>
-                    ))}
+                    </div>
+                    <div className="text-right space-y-2">
+                      <div className="font-bold text-lg text-primary">
+                        {formatCurrency(venda.valor_venda)}
+                      </div>
+                      <Link to={`/dashboard/vendas/${venda.id}`}>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          Ver Detalhes
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+              
+              <div className="border-t pt-4 mt-4">
+                <div className="flex justify-between items-center text-lg font-bold">
+                  <span>Total do dia:</span>
+                  <span className="text-primary">
+                    {formatCurrency(vendasDoDia.reduce((sum, v) => sum + v.valor_venda, 0))}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground mt-1 text-right">
+                  {vendasDoDia.length} {vendasDoDia.length === 1 ? "venda" : "vendas"}
                 </div>
               </div>
-            )}
-            
-            {/* Venda do usuário atual (editável) */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Valor da venda (R$):</label>
-                <Input
-                  value={inputValor}
-                  onChange={(e) => setInputValor(e.target.value)}
-                  placeholder="Ex: 45.000,00"
-                  className="text-lg"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Número de vendas:</label>
-                <Input
-                  type="number"
-                  value={inputNumeroVendas}
-                  onChange={(e) => setInputNumeroVendas(e.target.value)}
-                  placeholder="Ex: 3"
-                  min="0"
-                  className="text-lg"
-                />
-              </div>
             </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={saveValor}>Salvar Minha Venda</Button>
-          </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>
