@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 import { PortaVendaForm } from '@/components/vendas/PortaVendaForm';
 import { PortasVendaTable } from '@/components/vendas/PortasVendaTable';
@@ -31,10 +31,11 @@ export default function VendasNova() {
     bairro: '',
     publico_alvo: '',
     forma_pagamento: '',
-    observacoes: ''
+    observacoes_venda: ''
   });
 
   const [portas, setPortas] = useState<PortaVenda[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -240,11 +241,11 @@ export default function VendasNova() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="observacoes">Observações (opcional)</Label>
+              <Label htmlFor="observacoes_venda">Observações (opcional)</Label>
               <Textarea
-                id="observacoes"
-                value={formData.observacoes}
-                onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                id="observacoes_venda"
+                value={formData.observacoes_venda}
+                onChange={(e) => setFormData(prev => ({ ...prev, observacoes_venda: e.target.value }))}
                 rows={3}
               />
             </div>
@@ -258,7 +259,20 @@ export default function VendasNova() {
             <CardDescription>Adicione as portas desta venda</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <PortaVendaForm onAddPorta={handleAddPorta} />
+            <div className="space-y-4">
+              <Button type="button" onClick={() => setDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Porta
+              </Button>
+              <PortaVendaForm 
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                onAddPorta={(porta) => {
+                  handleAddPorta(porta);
+                  setDialogOpen(false);
+                }} 
+              />
+            </div>
             <PortasVendaTable portas={portas} onRemovePorta={handleRemovePorta} />
           </CardContent>
         </Card>

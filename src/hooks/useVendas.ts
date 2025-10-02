@@ -23,7 +23,7 @@ export interface VendaFormData {
   bairro?: string;
   publico_alvo: string;
   forma_pagamento: string;
-  observacoes?: string;
+  observacoes_venda?: string;
   data_venda?: string;
 }
 
