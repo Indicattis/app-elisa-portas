@@ -61,12 +61,23 @@ export function useVendas() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      // 2. Criar venda
+      // 2. Buscar admin_user correspondente
+      const { data: adminUser, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (adminError || !adminUser) {
+        throw new Error('Usuário não encontrado no sistema');
+      }
+
+      // 3. Criar venda
       const { data: venda, error: vendaError } = await supabase
         .from('vendas')
         .insert([{
           ...vendaData,
-          atendente_id: user.id,
+          atendente_id: adminUser.id,
           data_venda: vendaData.data_venda || new Date().toISOString()
         }])
         .select()
@@ -74,7 +85,7 @@ export function useVendas() {
       
       if (vendaError) throw vendaError;
 
-      // 3. Criar portas
+      // 4. Criar portas
       const portasComVendaId = portas.map(porta => ({
         ...porta,
         venda_id: venda.id
