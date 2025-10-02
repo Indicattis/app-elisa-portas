@@ -214,9 +214,9 @@ export default function VendasNova() {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="residencial">Residencial</SelectItem>
-                  <SelectItem value="comercial">Comercial</SelectItem>
-                  <SelectItem value="industrial">Industrial</SelectItem>
+                  <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                  <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                  <SelectItem value="empresa">Empresa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
