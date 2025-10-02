@@ -286,15 +286,21 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   };
 
   // Custom marker icon for instalacoes with color based on categoria
-  const createInstalacaoIcon = (categoria: 'instalacao' | 'entrega' | 'correcao' = 'instalacao') => {
+  const createInstalacaoIcon = (
+    categoria: 'instalacao' | 'entrega' | 'correcao' = 'instalacao',
+    status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada'
+  ) => {
     const colors = {
       instalacao: '#ef4444', // vermelho
       entrega: '#6b7280',    // cinza
       correcao: '#a855f7'    // roxo
     };
     
+    const borderColor = status === 'pronta_fabrica' ? '#22c55e' : 'white';
+    const borderWidth = status === 'pronta_fabrica' ? '3px' : '2px';
+    
     return L.divIcon({
-      html: `<div class="custom-instalacao-marker" style="background-color: ${colors[categoria]};"></div>`,
+      html: `<div class="custom-instalacao-marker" style="background-color: ${colors[categoria]}; border-color: ${borderColor}; border-width: ${borderWidth};"></div>`,
       className: 'custom-instalacao-marker-container',
       iconSize: L.point(12, 12),
       iconAnchor: L.point(6, 6)
@@ -936,7 +942,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
             zoomToBoundsOnClick={true}
             maxClusterRadius={50}
           >
-            {instalacoesWithCoords.map(instalacao => <Marker key={`instalacao-${instalacao.id}`} position={[instalacao.latitude!, instalacao.longitude!]} icon={createInstalacaoIcon(instalacao.categoria)}>
+            {instalacoesWithCoords.map(instalacao => <Marker key={`instalacao-${instalacao.id}`} position={[instalacao.latitude!, instalacao.longitude!]} icon={createInstalacaoIcon(instalacao.categoria, instalacao.status)}>
                 <Popup className="custom-popup" minWidth={250}>
                   <div className="p-4 space-y-3">
                     {/* Header */}
