@@ -25,6 +25,7 @@ export interface VendaFormData {
   observacoes_venda?: string;
   data_venda?: string;
   valor_frete?: number;
+  canal_aquisicao_id?: string;
 }
 
 export function useVendas() {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useVendas, VendaFormData, PortaVenda } from '@/hooks/useVendas';
+import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ export default function VendasNova() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createVenda, isCreating } = useVendas();
+  const { canais } = useCanaisAquisicao();
   
   const [formData, setFormData] = useState<VendaFormData>({
     cliente_nome: '',
@@ -218,6 +220,26 @@ export default function VendasNova() {
                   <SelectItem value="cliente_final">Cliente Final</SelectItem>
                   <SelectItem value="serralheiro">Serralheiro</SelectItem>
                   <SelectItem value="empresa">Empresa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="canal_aquisicao_id">Canal de Aquisição *</Label>
+              <Select
+                value={formData.canal_aquisicao_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {canais.map((canal) => (
+                    <SelectItem key={canal.id} value={canal.id}>
+                      {canal.nome}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
