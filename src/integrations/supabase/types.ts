@@ -2377,11 +2377,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "vendas_atendente_id_fkey"
+            foreignKeyName: "fk_vendas_atendente"
             columns: ["atendente_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_vendas_atendente"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "vendas_canal_aquisicao_id_fkey"
