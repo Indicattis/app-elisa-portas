@@ -404,6 +404,100 @@ export default function VendaEdit() {
             </div>
 
             <div className="space-y-2">
+              <h3 className="text-lg font-medium">Valores Financeiros</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valor_produto">Valor do Produto</Label>
+                  <Input
+                    id="valor_produto"
+                    placeholder="R$ 0,00"
+                    value={formatCurrency(formData.valor_produto)}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_produto: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_produto">Custo do Produto</Label>
+                  <Input
+                    id="custo_produto"
+                    placeholder="R$ 0,00"
+                    value={formatCurrency(formData.custo_produto)}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, custo_produto: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_pintura">Valor da Pintura</Label>
+                  <Input
+                    id="valor_pintura"
+                    placeholder="R$ 0,00"
+                    value={formatCurrency(formData.valor_pintura)}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_pintura: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custo_pintura">Custo da Pintura</Label>
+                  <Input
+                    id="custo_pintura"
+                    placeholder="R$ 0,00"
+                    value={formatCurrency(formData.custo_pintura)}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, custo_pintura: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_instalacao">Valor da Instalação</Label>
+                  <Input
+                    id="valor_instalacao"
+                    placeholder="R$ 0,00"
+                    value={formatCurrency(formData.valor_instalacao)}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_instalacao: numbers }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor_frete">Valor do Frete</Label>
+                  <Input
+                    id="valor_frete"
+                    placeholder="R$ 0,00"
+                    value={formatCurrency(formData.valor_frete)}
+                    onChange={(e) => {
+                      const numbers = e.target.value.replace(/\D/g, "");
+                      setFormData(prev => ({ ...prev, valor_frete: numbers }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox
+                  id="resgate"
+                  checked={formData.resgate}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, resgate: checked as boolean }))}
+                />
+                <Label htmlFor="resgate" className="cursor-pointer">
+                  Venda com resgate
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="observacoes_venda">Observações</Label>
               <Textarea
                 id="observacoes_venda"
