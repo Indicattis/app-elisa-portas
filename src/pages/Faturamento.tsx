@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -724,10 +724,10 @@ export default function Faturamento() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
-                                  onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
-                                  title="Editar venda"
+                                  onClick={() => navigate(`/dashboard/faturamento/${venda.id}/editar`)}
+                                  title="Editar faturamento"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Receipt className="w-4 h-4" />
                                 </Button>
                                <AlertDialog>
                                    <AlertDialogTrigger asChild>

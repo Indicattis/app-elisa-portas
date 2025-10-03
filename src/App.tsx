@@ -23,6 +23,7 @@ import VendaNova from "./pages/VendaNova";
 import VendaVinculacao from "./pages/VendaVinculacao";
 import VendaEdit from "./pages/VendaEdit";
 import Faturamento from "./pages/Faturamento";
+import FaturamentoEdit from "./pages/FaturamentoEdit";
 import Orcamentos from "./pages/Orcamentos";
 import NovoOrcamento from "./pages/NovoOrcamento";
 import OrcamentoEdit from "./pages/OrcamentoEdit";
@@ -299,9 +300,19 @@ const App = () => (
                 <Route
                   path="/dashboard/vendas/:id/editar"
                   element={
-                    <ProtectedRoute requireAdmin={true}>
+                    <ProtectedRoute>
                       <DashboardLayout>
                         <VendaEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/faturamento/:id/editar"
+                  element={
+                    <ProtectedRoute requirePermission="faturamento">
+                      <DashboardLayout>
+                        <FaturamentoEdit />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

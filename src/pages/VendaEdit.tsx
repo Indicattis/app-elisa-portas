@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useCanEditVenda } from "@/hooks/useCanEditVenda";
+import { CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
@@ -37,34 +39,26 @@ export default function VendaEdit() {
   const { portas, isLoading: isLoadingPortas, addPorta, deletePorta } = usePortasVenda(id);
   const { canais } = useCanaisAquisicao();
   const [formData, setFormData] = useState({
-    valor_venda: "",
-    forma_pagamento: "",
-    observacoes_venda: "",
-    canal_aquisicao_id: "",
     data_venda: "",
+    publico_alvo: "cliente_final",
+    canal_aquisicao_id: "",
+    forma_pagamento: "",
+    valor_entrada: "",
+    numero_parcelas: "",
+    data_prevista_entrega: "",
+    tipo_entrega: "instalacao",
+    cliente_nome: "",
+    cliente_telefone: "",
+    cliente_email: "",
     estado: "",
     cidade: "",
     bairro: "",
     cep: "",
-    publico_alvo: "cliente_final",
-    cliente_nome: "",
-    cliente_telefone: "",
-    cliente_email: "",
-    valor_produto: "",
-    custo_produto: "",
-    valor_pintura: "",
-    custo_pintura: "",
-    valor_instalacao: "",
-    valor_frete: "",
-    resgate: false,
-    valor_entrada: "",
-    numero_parcelas: "",
-    data_prevista_entrega: "",
-    tipo_entrega: "instalacao"
-    // Removido lucro_total pois é uma coluna gerada
+    observacoes_venda: "",
   });
 
-  const { isAdmin } = useAuth();
+  const { user } = useAuth();
+  const { canEdit } = useCanEditVenda(venda?.atendente_id);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -74,16 +68,6 @@ export default function VendaEdit() {
     }
   }, [id]);
 
-  useEffect(() => {
-    if (!isAdmin) {
-      toast({
-        variant: "destructive",
-        title: "Acesso negado",
-        description: "Apenas administradores podem editar vendas",
-      });
-      navigate("/dashboard/faturamento");
-    }
-  }, [isAdmin, navigate, toast]);
 
   const fetchVenda = async () => {
     if (!id) return;
@@ -99,31 +83,22 @@ export default function VendaEdit() {
       
       setVenda(vendaData);
       setFormData({
-        valor_venda: (vendaData.valor_venda ? vendaData.valor_venda * 100 : 0).toString(),
-        forma_pagamento: vendaData.forma_pagamento || "",
-        observacoes_venda: vendaData.observacoes_venda || "",
-        canal_aquisicao_id: vendaData.canal_aquisicao_id || "",
         data_venda: new Date(vendaData.data_venda).toISOString().slice(0, 16),
+        publico_alvo: vendaData.publico_alvo || "cliente_final",
+        canal_aquisicao_id: vendaData.canal_aquisicao_id || "",
+        forma_pagamento: vendaData.forma_pagamento || "",
+        valor_entrada: (vendaData.valor_entrada ? vendaData.valor_entrada * 100 : 0).toString(),
+        numero_parcelas: vendaData.numero_parcelas?.toString() || "",
+        data_prevista_entrega: vendaData.data_prevista_entrega || "",
+        tipo_entrega: vendaData.tipo_entrega || "instalacao",
+        cliente_nome: vendaData.cliente_nome || "",
+        cliente_telefone: vendaData.cliente_telefone || "",
+        cliente_email: vendaData.cliente_email || "",
         estado: vendaData.estado || "",
         cidade: vendaData.cidade || "",
         bairro: vendaData.bairro || "",
         cep: vendaData.cep || "",
-        publico_alvo: vendaData.publico_alvo || "cliente_final",
-        cliente_nome: vendaData.cliente_nome || "",
-        cliente_telefone: vendaData.cliente_telefone || "",
-        cliente_email: vendaData.cliente_email || "",
-        valor_produto: (vendaData.valor_produto ? vendaData.valor_produto * 100 : 0).toString(),
-        custo_produto: (vendaData.custo_produto ? vendaData.custo_produto * 100 : 0).toString(),
-        valor_pintura: (vendaData.valor_pintura ? vendaData.valor_pintura * 100 : 0).toString(),
-        custo_pintura: (vendaData.custo_pintura ? vendaData.custo_pintura * 100 : 0).toString(),
-        valor_instalacao: (vendaData.valor_instalacao ? vendaData.valor_instalacao * 100 : 0).toString(),
-        valor_frete: (vendaData.valor_frete ? vendaData.valor_frete * 100 : 0).toString(),
-        resgate: vendaData.resgate || false,
-        valor_entrada: (vendaData.valor_entrada ? vendaData.valor_entrada * 100 : 0).toString(),
-        numero_parcelas: vendaData.numero_parcelas?.toString() || "",
-        data_prevista_entrega: vendaData.data_prevista_entrega || "",
-        tipo_entrega: vendaData.tipo_entrega || "instalacao"
-        // Removido lucro_total pois é uma coluna gerada automaticamente
+        observacoes_venda: vendaData.observacoes_venda || "",
       });
 
       // Vendas table doesn't have lead_id, so skip lead lookup
@@ -141,77 +116,55 @@ export default function VendaEdit() {
     e.preventDefault();
     
     if (!id) return;
+
+    if (!canEdit) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Você não tem permissão para editar esta venda",
+      });
+      return;
+    }
     
     setLoading(true);
 
     try {
-      console.log("Iniciando atualização da venda:", id);
-      console.log("Dados a serem atualizados:", formData);
-
-      const valorProduto = parseFloat(formData.valor_produto) / 100;
-      const custoProduto = parseFloat(formData.custo_produto) / 100;
-      const valorPintura = parseFloat(formData.valor_pintura) / 100;
-      const custoPintura = parseFloat(formData.custo_pintura) / 100;
-      const valorInstalacao = parseFloat(formData.valor_instalacao) / 100;
-      const valorFrete = parseFloat(formData.valor_frete) / 100;
-      
-      const custoTotal = custoProduto + custoPintura;
-      const valorVenda = valorProduto + valorPintura + valorInstalacao + valorFrete;
-      const lucroTotal = valorVenda - custoTotal;
-
       const valorEntrada = parseFloat(formData.valor_entrada) / 100;
-      const valorAReceber = valorVenda - valorEntrada;
 
       const updateData = {
-        valor_venda: valorVenda,
-        forma_pagamento: formData.forma_pagamento || null,
-        observacoes_venda: formData.observacoes_venda || null,
-        canal_aquisicao_id: formData.canal_aquisicao_id || null,
         data_venda: new Date(formData.data_venda).toISOString(),
-        estado: formData.estado || null,
-        cidade: formData.cidade || null,
-        bairro: formData.bairro || null,
-        cep: formData.cep || null,
         publico_alvo: formData.publico_alvo,
-        cliente_nome: formData.cliente_nome || null,
-        cliente_telefone: formData.cliente_telefone || null,
-        cliente_email: formData.cliente_email || null,
-        valor_produto: valorProduto,
-        custo_produto: custoProduto,
-        valor_pintura: valorPintura,
-        custo_pintura: custoPintura,
-        valor_instalacao: valorInstalacao,
-        valor_frete: valorFrete,
-        resgate: formData.resgate,
+        canal_aquisicao_id: formData.canal_aquisicao_id || null,
+        forma_pagamento: formData.forma_pagamento || null,
         valor_entrada: valorEntrada,
         numero_parcelas: formData.numero_parcelas ? parseInt(formData.numero_parcelas) : null,
         data_prevista_entrega: formData.data_prevista_entrega || null,
         tipo_entrega: formData.tipo_entrega,
-        valor_a_receber: valorAReceber
-        // Removido lucro_total pois é uma coluna gerada automaticamente
+        cliente_nome: formData.cliente_nome || null,
+        cliente_telefone: formData.cliente_telefone || null,
+        cliente_email: formData.cliente_email || null,
+        estado: formData.estado || null,
+        cidade: formData.cidade || null,
+        bairro: formData.bairro || null,
+        cep: formData.cep || null,
+        observacoes_venda: formData.observacoes_venda || null,
       };
 
-      console.log("Update data processado:", updateData);
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("vendas")
         .update(updateData)
-        .eq("id", id)
-        .select();
+        .eq("id", id);
 
       if (error) {
-        console.error("Erro na atualização:", error);
         throw error;
       }
-
-      console.log("Venda atualizada com sucesso:", data);
 
       toast({
         title: "Sucesso",
         description: "Venda atualizada com sucesso",
       });
 
-      navigate("/dashboard/faturamento");
+      navigate("/dashboard/vendas");
     } catch (error) {
       console.error("Erro ao atualizar venda:", error);
       toast({
@@ -233,13 +186,19 @@ export default function VendaEdit() {
     });
   };
 
-  const handleValueChange = (value: string) => {
-    const numbers = value.replace(/\D/g, "");
-    setFormData(prev => ({ ...prev, valor_venda: numbers }));
-  };
-
-  if (!isAdmin) {
-    return null;
+  if (!canEdit && !loading) {
+    return (
+      <div className="container mx-auto py-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Acesso Negado</CardTitle>
+            <CardDescription>
+              Você não tem permissão para editar esta venda.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -464,100 +423,6 @@ export default function VendaEdit() {
                   value={formData.cep}
                   onChange={(e) => setFormData(prev => ({ ...prev, cep: e.target.value }))}
                 />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Valores Financeiros</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="valor_produto">Valor do Produto</Label>
-                  <Input
-                    id="valor_produto"
-                    placeholder="R$ 0,00"
-                    value={formatCurrency(formData.valor_produto)}
-                    onChange={(e) => {
-                      const numbers = e.target.value.replace(/\D/g, "");
-                      setFormData(prev => ({ ...prev, valor_produto: numbers }));
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="custo_produto">Custo do Produto</Label>
-                  <Input
-                    id="custo_produto"
-                    placeholder="R$ 0,00"
-                    value={formatCurrency(formData.custo_produto)}
-                    onChange={(e) => {
-                      const numbers = e.target.value.replace(/\D/g, "");
-                      setFormData(prev => ({ ...prev, custo_produto: numbers }));
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="valor_pintura">Valor da Pintura</Label>
-                  <Input
-                    id="valor_pintura"
-                    placeholder="R$ 0,00"
-                    value={formatCurrency(formData.valor_pintura)}
-                    onChange={(e) => {
-                      const numbers = e.target.value.replace(/\D/g, "");
-                      setFormData(prev => ({ ...prev, valor_pintura: numbers }));
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="custo_pintura">Custo da Pintura</Label>
-                  <Input
-                    id="custo_pintura"
-                    placeholder="R$ 0,00"
-                    value={formatCurrency(formData.custo_pintura)}
-                    onChange={(e) => {
-                      const numbers = e.target.value.replace(/\D/g, "");
-                      setFormData(prev => ({ ...prev, custo_pintura: numbers }));
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="valor_instalacao">Valor da Instalação</Label>
-                  <Input
-                    id="valor_instalacao"
-                    placeholder="R$ 0,00"
-                    value={formatCurrency(formData.valor_instalacao)}
-                    onChange={(e) => {
-                      const numbers = e.target.value.replace(/\D/g, "");
-                      setFormData(prev => ({ ...prev, valor_instalacao: numbers }));
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="valor_frete">Valor do Frete</Label>
-                  <Input
-                    id="valor_frete"
-                    placeholder="R$ 0,00"
-                    value={formatCurrency(formData.valor_frete)}
-                    onChange={(e) => {
-                      const numbers = e.target.value.replace(/\D/g, "");
-                      setFormData(prev => ({ ...prev, valor_frete: numbers }));
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 pt-2">
-                <Checkbox
-                  id="resgate"
-                  checked={formData.resgate}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, resgate: checked as boolean }))}
-                />
-                <Label htmlFor="resgate" className="cursor-pointer">
-                  Venda com resgate
-                </Label>
               </div>
             </div>
 
