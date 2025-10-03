@@ -19,6 +19,7 @@ import {
 import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { DataProducaoModal } from './DataProducaoModal';
+import { ResponsavelInstalacaoModal } from './ResponsavelInstalacaoModal';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,7 @@ interface InstalacaoListProps {
 export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoListProps) => {
   const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
+  const [responsavelInstalacao, setResponsavelInstalacao] = useState<InstalacaoCadastrada | null>(null);
 
   const handleEdit = (instalacao: InstalacaoCadastrada) => {
     setEditingInstalacao(instalacao);
@@ -77,6 +79,54 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
     } catch (error) {
       console.error('Erro ao atualizar data de produção:', error);
       toast.error('Erro ao atualizar data de produção');
+      throw error;
+    }
+  };
+
+  const handleSaveResponsavel = async (
+    instalacaoId: string,
+    tipoInstalacao: 'elisa' | 'autorizado',
+    responsavelId: string,
+    responsavelNome: string
+  ) => {
+    try {
+      // Ajustar o tipo para o formato esperado pelo banco
+      const tipoFormatado = tipoInstalacao === 'autorizado' ? 'autorizados' : 'elisa';
+      
+      const { error } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({
+          tipo_instalacao: tipoFormatado,
+          responsavel_instalacao_id: responsavelId,
+          responsavel_instalacao_nome: responsavelNome,
+        })
+        .eq('id', instalacaoId);
+
+      if (error) throw error;
+
+      toast.success('Responsável atualizado com sucesso!');
+      
+      // Atualizar a lista de instalações
+      const updatedInstalacao = instalacoes.find(i => i.id === instalacaoId);
+      if (updatedInstalacao) {
+        await onUpdate(instalacaoId, {
+          nome_cliente: updatedInstalacao.nome_cliente,
+          telefone_cliente: updatedInstalacao.telefone_cliente || '',
+          estado: updatedInstalacao.estado,
+          cidade: updatedInstalacao.cidade,
+          tamanho: updatedInstalacao.tamanho || '',
+          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+          data_instalacao: updatedInstalacao.data_instalacao || '',
+          status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
+          tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
+          responsavel_instalacao_id: responsavelId,
+          responsavel_instalacao_nome: responsavelNome,
+          saldo: updatedInstalacao.saldo || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar responsável:', error);
+      toast.error('Erro ao atualizar responsável');
       throw error;
     }
   };
@@ -209,7 +259,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                   </Button>
                 </div>
               )}
-              {instalacao.responsavel_instalacao_nome && (
+              {instalacao.responsavel_instalacao_nome ? (
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
@@ -223,6 +273,29 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                       </Badge>
                     )}
                   </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setResponsavelInstalacao(instalacao)}
+                    title="Editar Responsável"
+                    className="h-6 w-6 p-0"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Responsável:</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setResponsavelInstalacao(instalacao)}
+                    className="gap-1 h-7"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Inserir
+                  </Button>
                 </div>
               )}
               {instalacao.criador && (
@@ -306,6 +379,16 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
         instalacaoId={dataProducaoInstalacao?.id || ''}
         dataAtual={dataProducaoInstalacao?.data_producao}
         onSave={handleSaveDataProducao}
+      />
+
+      <ResponsavelInstalacaoModal
+        open={!!responsavelInstalacao}
+        onOpenChange={(open) => !open && setResponsavelInstalacao(null)}
+        instalacaoId={responsavelInstalacao?.id || ''}
+        tipoAtual={responsavelInstalacao?.tipo_instalacao}
+        responsavelIdAtual={responsavelInstalacao?.responsavel_instalacao_id}
+        responsavelNomeAtual={responsavelInstalacao?.responsavel_instalacao_nome}
+        onSave={handleSaveResponsavel}
       />
     </div>
   );
