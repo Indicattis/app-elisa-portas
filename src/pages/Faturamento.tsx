@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -26,6 +26,7 @@ import { StatusBadge } from "@/components/vendas/StatusBadge";
 import { QuickFiltersBar } from "@/components/vendas/QuickFiltersBar";
 import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
 import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
+import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 
 interface Venda {
   id: string;
@@ -331,77 +332,52 @@ export default function Faturamento() {
     }
   };
 
-  const exportarPDF = () => {
-    const doc = new jsPDF();
+  const handleGeneratePDF = () => {
+    // Validação: limite de 1000 registros
+    if (filteredVendas.length > 1000) {
+      toast({
+        variant: "destructive",
+        title: "Muitos registros",
+        description: "O PDF suporta no máximo 1000 registros. Por favor, aplique filtros para reduzir o número de vendas.",
+      });
+      return;
+    }
+
+    // Calcular estatísticas com base nas vendas filtradas
+    const vendasFaturadas = filteredVendas.filter(isFaturada);
+    
+    const stats = {
+      faturamentoTotal: filteredVendas.reduce((acc, v) => 
+        acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
+      custosProducao: vendasFaturadas.reduce((acc, v) => 
+        acc + (v.custo_produto || 0), 0),
+      custosPintura: vendasFaturadas.reduce((acc, v) => 
+        acc + (v.custo_pintura || 0), 0),
+      lucroBrutoTotal: 0, // Será calculado dentro do gerador
+      instalacoesTotais: filteredVendas.reduce((acc, v) => 
+        acc + (v.valor_instalacao || 0), 0),
+      fretesTotais: filteredVendas.reduce((acc, v) => 
+        acc + (v.valor_frete || 0), 0),
+    };
+
+    // Preparar dados do período
     const periodo = dateRange?.from && dateRange?.to 
       ? `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`
-      : 'Período não definido';
-    
-    // Cabeçalho
-    doc.setFontSize(20);
-    doc.text(`Relatório de Faturamento - ${periodo}`, 20, 20);
-    
-    // Resumo por estado
-    doc.setFontSize(14);
-    doc.text('Resumo por Estado', 20, 40);
-    
-    const resumoData = [
-      ['Métrica', 'RS', 'SC', 'Total'],
-      [
-        'Lucro Produtos',
-        `R$ ${stats.rs.lucroProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.sc.lucroProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.total.lucroProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      ],
-      [
-        'Lucro Pintura',
-        `R$ ${stats.rs.lucroPintura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.sc.lucroPintura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.total.lucroPintura.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      ],
-      [
-        'Total Instalações',
-        `R$ ${stats.rs.totalInstalacoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.sc.totalInstalacoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.total.totalInstalacoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      ],
-      [
-        'Total Fretes',
-        `R$ ${stats.rs.totalFretes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.sc.totalFretes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.total.totalFretes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      ],
-      [
-        'Lucro Total',
-        `R$ ${stats.rs.lucroTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.sc.lucroTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.total.lucroTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      ],
-      [
-        'Faturamento Total',
-        `R$ ${stats.rs.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.sc.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        `R$ ${stats.total.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      ]
-    ];
+      : undefined;
 
-    autoTable(doc, {
-      head: [resumoData[0]],
-      body: resumoData.slice(1),
-      startY: 50,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [66, 139, 202] }
+    // Chamar gerador
+    generateFaturamentoPDF({
+      vendas: filteredVendas,
+      stats,
+      filtros: {
+        tab: activeTab,
+        periodo,
+      }
     });
-
-    // Salvar arquivo
-    const fileName = dateRange?.from && dateRange?.to 
-      ? `relatorio-faturamento-${format(dateRange.from, "yyyy-MM-dd")}-${format(dateRange.to, "yyyy-MM-dd")}.pdf`
-      : `relatorio-faturamento-${format(new Date(), "yyyy-MM-dd")}.pdf`;
-    doc.save(fileName);
     
     toast({
-      title: "Sucesso",
-      description: "Relatório exportado com sucesso!",
+      title: "PDF gerado com sucesso!",
+      description: "O arquivo foi baixado automaticamente.",
     });
   };
 
@@ -523,9 +499,9 @@ export default function Faturamento() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={exportarPDF} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar PDF
+          <Button onClick={handleGeneratePDF} variant="outline" size="sm">
+            <FileText className="w-4 h-4 mr-2" />
+            Gerar Relatório PDF
           </Button>
           <Button onClick={() => navigate("/dashboard/vendas/nova")} size="sm">
             <Plus className="w-4 h-4 mr-2" />
