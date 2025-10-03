@@ -1,12 +1,13 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { ProdutoVenda } from '@/hooks/useVendas';
 
 interface PortasVendaTableProps {
   portas: ProdutoVenda[];
   onRemovePorta: (index: number) => void;
+  onEditPorta?: (index: number) => void;
 }
 
 const getTipoProdutoLabel = (tipo: string) => {
@@ -27,7 +28,7 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
   }
 };
 
-export function PortasVendaTable({ portas, onRemovePorta }: PortasVendaTableProps) {
+export function PortasVendaTable({ portas, onRemovePorta, onEditPorta }: PortasVendaTableProps) {
   if (portas.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/50">
@@ -46,7 +47,7 @@ export function PortasVendaTable({ portas, onRemovePorta }: PortasVendaTableProp
           <TableHead>Valor Unit.</TableHead>
           <TableHead>Desconto</TableHead>
           <TableHead>Total</TableHead>
-          <TableHead className="w-[80px]"></TableHead>
+          <TableHead className="w-[120px]">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -79,14 +80,28 @@ export function PortasVendaTable({ portas, onRemovePorta }: PortasVendaTableProp
               </TableCell>
               <TableCell className="font-semibold">R$ {valorTotal.toFixed(2)}</TableCell>
               <TableCell>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onRemovePorta(index)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2">
+                  {onEditPorta && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEditPorta(index)}
+                      title="Editar produto"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onRemovePorta(index)}
+                    title="Remover produto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           );

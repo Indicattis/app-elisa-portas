@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,9 +14,11 @@ interface ProdutoVendaFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddProduto: (produto: ProdutoVenda) => void;
+  produtoEditando?: ProdutoVenda;
+  indexEditando?: number;
 }
 
-export function ProdutoVendaForm({ open, onOpenChange, onAddProduto }: ProdutoVendaFormProps) {
+export function ProdutoVendaForm({ open, onOpenChange, onAddProduto, produtoEditando, indexEditando }: ProdutoVendaFormProps) {
   const [formData, setFormData] = useState<ProdutoVenda>({
     tipo_produto: 'porta',
     tamanho: '',
@@ -33,6 +35,31 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto }: ProdutoVe
     quantidade: 1,
     descricao: ''
   });
+
+  // Atualizar formulário quando um produto for passado para edição
+  useEffect(() => {
+    if (produtoEditando) {
+      setFormData(produtoEditando);
+    } else {
+      // Resetar formulário quando não há produto para editar
+      setFormData({
+        tipo_produto: 'porta',
+        tamanho: '',
+        cor_id: '',
+        acessorio_id: '',
+        adicional_id: '',
+        valor_produto: 0,
+        valor_pintura: 0,
+        valor_instalacao: 0,
+        valor_frete: 0,
+        tipo_desconto: 'percentual',
+        desconto_percentual: 0,
+        desconto_valor: 0,
+        quantidade: 1,
+        descricao: ''
+      });
+    }
+  }, [produtoEditando]);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -89,24 +116,6 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto }: ProdutoVe
     }
     
     onAddProduto(formData);
-    
-    // Reset form
-    setFormData({
-      tipo_produto: 'porta',
-      tamanho: '',
-      cor_id: '',
-      acessorio_id: '',
-      adicional_id: '',
-      valor_produto: 0,
-      valor_pintura: 0,
-      valor_instalacao: 0,
-      valor_frete: 0,
-      tipo_desconto: 'percentual',
-      desconto_percentual: 0,
-      desconto_valor: 0,
-      quantidade: 1,
-      descricao: ''
-    });
   };
 
   const handleNumberChange = (field: keyof ProdutoVenda, value: string) => {
@@ -141,7 +150,7 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto }: ProdutoVe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Adicionar Produto</DialogTitle>
+          <DialogTitle>{produtoEditando ? 'Editar Produto' : 'Adicionar Produto'}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -306,17 +315,6 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto }: ProdutoVe
               </>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="valor_frete">Valor Frete (R$)</Label>
-              <Input
-                id="valor_frete"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.valor_frete}
-                onChange={(e) => handleNumberChange('valor_frete', e.target.value)}
-              />
-            </div>
           </div>
 
           {/* Tipo de Desconto */}
@@ -380,7 +378,7 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto }: ProdutoVe
           </div>
 
           <Button type="submit" className="w-full">
-            Adicionar Produto
+            {produtoEditando ? 'Salvar Alterações' : 'Adicionar Produto'}
           </Button>
         </form>
       </DialogContent>

@@ -49,6 +49,8 @@ export default function VendasNova() {
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
   const [dataVenda, setDataVenda] = useState<Date>();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
+  const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -65,7 +67,17 @@ export default function VendasNova() {
 
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
-      const newPortas = [...prev, produto];
+      let newPortas;
+      
+      // Se está editando, substitui o produto na posição correta
+      if (indexEditando !== undefined) {
+        newPortas = [...prev];
+        newPortas[indexEditando] = produto;
+      } else {
+        // Caso contrário, adiciona um novo produto
+        newPortas = [...prev, produto];
+      }
+      
       const valorTotal = newPortas.reduce((acc, p) => {
         const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
         const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
@@ -77,8 +89,18 @@ export default function VendasNova() {
         valor_a_receber: valorTotal - (prev.valor_entrada || 0)
       }));
       
+      // Limpar estado de edição
+      setProdutoEditando(undefined);
+      setIndexEditando(undefined);
+      
       return newPortas;
     });
+  };
+
+  const handleEditPorta = (index: number) => {
+    setProdutoEditando(portas[index]);
+    setIndexEditando(index);
+    setDialogOpen(true);
   };
 
   const handleRemovePorta = (index: number) => {
@@ -422,20 +444,39 @@ export default function VendasNova() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              <Button type="button" onClick={() => setDialogOpen(true)}>
+              <Button 
+                type="button" 
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setDialogOpen(true);
+                }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Produto
               </Button>
               <ProdutoVendaForm 
                 open={dialogOpen}
-                onOpenChange={setDialogOpen}
+                onOpenChange={(open) => {
+                  setDialogOpen(open);
+                  if (!open) {
+                    setProdutoEditando(undefined);
+                    setIndexEditando(undefined);
+                  }
+                }}
                 onAddProduto={(produto) => {
                   handleAddPorta(produto);
                   setDialogOpen(false);
-                }} 
+                }}
+                produtoEditando={produtoEditando}
+                indexEditando={indexEditando}
               />
             </div>
-            <PortasVendaTable portas={portas} onRemovePorta={handleRemovePorta} />
+            <PortasVendaTable 
+              portas={portas} 
+              onRemovePorta={handleRemovePorta}
+              onEditPorta={handleEditPorta}
+            />
           </CardContent>
         </Card>
 
