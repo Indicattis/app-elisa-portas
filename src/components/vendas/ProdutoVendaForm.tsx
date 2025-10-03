@@ -272,18 +272,7 @@ export function ProdutoVendaForm({
             </div>
           )}
 
-          {/* Quantidade */}
-          <div className="space-y-2">
-            <Label htmlFor="quantidade">Quantidade *</Label>
-            <Input
-              id="quantidade"
-              type="number"
-              min="1"
-              value={formData.quantidade}
-              onChange={(e) => handleNumberChange('quantidade', e.target.value)}
-              required
-            />
-          </div>
+          {/* Campo de quantidade removido - quantidade será editada diretamente na tabela */}
 
           {/* Valores */}
           <div className="grid grid-cols-2 gap-4">
