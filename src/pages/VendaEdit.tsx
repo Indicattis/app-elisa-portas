@@ -379,7 +379,7 @@ export default function VendaEdit() {
                   onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o tipo de entrega" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="instalacao">Instalação</SelectItem>
