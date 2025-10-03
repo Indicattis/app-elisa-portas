@@ -12,6 +12,7 @@ import {
   AlertCircle,
   RefreshCw,
   Eye,
+  Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,9 +44,11 @@ import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { AlterarParaCorrecaoDialog } from './AlterarParaCorrecaoDialog';
 import { AlterarStatusDialog } from './AlterarStatusDialog';
 import { DetalhesInstalacaoDialog } from './DetalhesInstalacaoDialog';
+import { DataProducaoModal } from './DataProducaoModal';
 import { ESTADOS_BRASIL } from '@/utils/estadosCidades';
 import { baixarInstalacoesPDF } from '@/utils/instalacoesPDFGenerator';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InstalacoesTabelaViewProps {
   instalacoes: InstalacaoCadastrada[];
@@ -71,6 +74,7 @@ export const InstalacoesTabelaView = ({
   const [correcaoInstalacao, setCorrecaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [statusInstalacao, setStatusInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [detalhesInstalacao, setDetalhesInstalacao] = useState<InstalacaoCadastrada | null>(null);
+  const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategoria, setFilterCategoria] = useState<string>('all');
@@ -158,6 +162,42 @@ export const InstalacoesTabelaView = ({
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
       toast.error('Erro ao gerar PDF');
+    }
+  };
+
+  const handleSaveDataProducao = async (instalacaoId: string, dataProducao: string) => {
+    try {
+      const { error } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({ data_producao: dataProducao })
+        .eq('id', instalacaoId);
+
+      if (error) throw error;
+
+      toast.success('Data de produção atualizada com sucesso!');
+      
+      // Atualizar a lista de instalações
+      const updatedInstalacao = instalacoes.find(i => i.id === instalacaoId);
+      if (updatedInstalacao) {
+        await onUpdate(instalacaoId, {
+          nome_cliente: updatedInstalacao.nome_cliente,
+          telefone_cliente: updatedInstalacao.telefone_cliente || '',
+          estado: updatedInstalacao.estado,
+          cidade: updatedInstalacao.cidade,
+          tamanho: updatedInstalacao.tamanho || '',
+          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+          data_instalacao: updatedInstalacao.data_instalacao || '',
+          status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
+          tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
+          responsavel_instalacao_id: updatedInstalacao.responsavel_instalacao_id || undefined,
+          responsavel_instalacao_nome: updatedInstalacao.responsavel_instalacao_nome || undefined,
+          saldo: updatedInstalacao.saldo || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar data de produção:', error);
+      toast.error('Erro ao atualizar data de produção');
+      throw error;
     }
   };
 
@@ -375,9 +415,30 @@ export const InstalacoesTabelaView = ({
                             : '-'}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {instalacao.data_producao
-                            ? format(new Date(instalacao.data_producao), 'dd/MM/yyyy')
-                            : '-'}
+                          {instalacao.data_producao ? (
+                            <div className="flex items-center gap-2">
+                              <span>{format(new Date(instalacao.data_producao), 'dd/MM/yyyy')}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDataProducaoInstalacao(instalacao)}
+                                title="Editar Data de Produção"
+                                className="h-6 w-6 p-0"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setDataProducaoInstalacao(instalacao)}
+                              className="gap-1"
+                            >
+                              <Plus className="h-3 w-3" />
+                              Inserir
+                            </Button>
+                          )}
                         </TableCell>
                         <TableCell>
                           {instalacao.latitude && instalacao.longitude ? (
@@ -551,6 +612,14 @@ export const InstalacoesTabelaView = ({
         open={!!detalhesInstalacao}
         onOpenChange={(open) => !open && setDetalhesInstalacao(null)}
         instalacao={detalhesInstalacao}
+      />
+
+      <DataProducaoModal
+        open={!!dataProducaoInstalacao}
+        onOpenChange={(open) => !open && setDataProducaoInstalacao(null)}
+        instalacaoId={dataProducaoInstalacao?.id || ''}
+        dataAtual={dataProducaoInstalacao?.data_producao}
+        onSave={handleSaveDataProducao}
       />
     </div>
   );

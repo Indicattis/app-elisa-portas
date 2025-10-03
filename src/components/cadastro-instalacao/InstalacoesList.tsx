@@ -1,4 +1,4 @@
-import { MapPin, Trash2, Clock, User, Pencil } from 'lucide-react';
+import { MapPin, Trash2, Clock, User, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,8 +18,11 @@ import {
 } from '@/components/ui/dialog';
 import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
+import { DataProducaoModal } from './DataProducaoModal';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface InstalacaoListProps {
   instalacoes: InstalacaoCadastrada[];
@@ -29,6 +32,7 @@ interface InstalacaoListProps {
 
 export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoListProps) => {
   const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
+  const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
 
   const handleEdit = (instalacao: InstalacaoCadastrada) => {
     setEditingInstalacao(instalacao);
@@ -38,6 +42,42 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
     if (editingInstalacao) {
       await onUpdate(editingInstalacao.id, data);
       setEditingInstalacao(null);
+    }
+  };
+
+  const handleSaveDataProducao = async (instalacaoId: string, dataProducao: string) => {
+    try {
+      const { error } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({ data_producao: dataProducao })
+        .eq('id', instalacaoId);
+
+      if (error) throw error;
+
+      toast.success('Data de produção atualizada com sucesso!');
+      
+      // Atualizar a lista de instalações
+      const updatedInstalacao = instalacoes.find(i => i.id === instalacaoId);
+      if (updatedInstalacao) {
+        await onUpdate(instalacaoId, {
+          nome_cliente: updatedInstalacao.nome_cliente,
+          telefone_cliente: updatedInstalacao.telefone_cliente || '',
+          estado: updatedInstalacao.estado,
+          cidade: updatedInstalacao.cidade,
+          tamanho: updatedInstalacao.tamanho || '',
+          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+          data_instalacao: updatedInstalacao.data_instalacao || '',
+          status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
+          tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
+          responsavel_instalacao_id: updatedInstalacao.responsavel_instalacao_id || undefined,
+          responsavel_instalacao_nome: updatedInstalacao.responsavel_instalacao_nome || undefined,
+          saldo: updatedInstalacao.saldo || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar data de produção:', error);
+      toast.error('Erro ao atualizar data de produção');
+      throw error;
     }
   };
 
@@ -137,6 +177,38 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                   })}
                 </p>
               )}
+              {instalacao.data_producao ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-medium">Data de Produção:</span>
+                  <span>
+                    {format(new Date(instalacao.data_producao), "dd 'de' MMMM 'de' yyyy", {
+                      locale: ptBR,
+                    })}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDataProducaoInstalacao(instalacao)}
+                    title="Editar Data de Produção"
+                    className="h-6 w-6 p-0"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Data de Produção:</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDataProducaoInstalacao(instalacao)}
+                    className="gap-1 h-7"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Inserir
+                  </Button>
+                </div>
+              )}
               {instalacao.responsavel_instalacao_nome && (
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4 text-muted-foreground" />
@@ -227,6 +299,14 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           )}
         </DialogContent>
       </Dialog>
+
+      <DataProducaoModal
+        open={!!dataProducaoInstalacao}
+        onOpenChange={(open) => !open && setDataProducaoInstalacao(null)}
+        instalacaoId={dataProducaoInstalacao?.id || ''}
+        dataAtual={dataProducaoInstalacao?.data_producao}
+        onSave={handleSaveDataProducao}
+      />
     </div>
   );
 };
