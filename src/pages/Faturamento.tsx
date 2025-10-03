@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -26,6 +27,7 @@ interface Venda {
   id: string;
   data_venda: string;
   atendente_nome: string;
+  atendente_foto?: string | null;
   publico_alvo: string | null;
   canal_aquisicao_id: string | null;
   canais_aquisicao?: {
@@ -173,21 +175,22 @@ export default function Faturamento() {
       // Buscar todos os usuários ativos para mapear atendentes
       const { data: todosUsuarios } = await supabase
         .from("admin_users")
-        .select("user_id, nome")
+        .select("user_id, nome, foto_perfil_url")
         .eq("ativo", true);
 
       const atendenteMap = new Map();
       if (todosUsuarios) {
         todosUsuarios.forEach(user => {
-          atendenteMap.set(user.user_id, user.nome);
+          atendenteMap.set(user.user_id, { nome: user.nome, foto: user.foto_perfil_url });
         });
       }
 
       const vendasCompletas = vendasData.map((venda) => {
-        const atendenteNome = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
+        const atendenteData = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
         return {
           ...venda,
-          atendente_nome: atendenteNome || "Atendente não encontrado",
+          atendente_nome: atendenteData?.nome || "Atendente não encontrado",
+          atendente_foto: atendenteData?.foto || null,
         };
       });
 
@@ -653,7 +656,15 @@ export default function Faturamento() {
                           {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {venda.atendente_nome}
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={venda.atendente_foto || undefined} alt={venda.atendente_nome} />
+                              <AvatarFallback>
+                                {venda.atendente_nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{venda.atendente_nome}</span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div>
