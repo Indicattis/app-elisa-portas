@@ -51,6 +51,7 @@ export default function VendasNova() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
+  const [tipoInicial, setTipoInicial] = useState<'porta' | 'acessorio' | 'adicional' | undefined>(undefined);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -106,6 +107,28 @@ export default function VendasNova() {
   const handleRemovePorta = (index: number) => {
     setPortas(prev => {
       const newPortas = prev.filter((_, i) => i !== index);
+      const valorTotal = newPortas.reduce((acc, p) => {
+        const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+        const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+        return acc + valorBase - desconto;
+      }, 0) + (formData.valor_frete || 0);
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+      }));
+      
+      return newPortas;
+    });
+  };
+
+  const handleUpdateQuantidade = (index: number, novaQuantidade: number) => {
+    if (novaQuantidade < 1) return;
+    
+    setPortas(prev => {
+      const newPortas = [...prev];
+      newPortas[index] = { ...newPortas[index], quantidade: novaQuantidade };
+      
       const valorTotal = newPortas.reduce((acc, p) => {
         const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
         const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
@@ -444,40 +467,58 @@ export default function VendasNova() {
             <CardDescription>Adicione portas, acessórios e adicionais desta venda</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-4">
+            <div className="flex gap-2">
               <Button 
                 type="button" 
                 onClick={() => {
                   setProdutoEditando(undefined);
                   setIndexEditando(undefined);
+                  setTipoInicial('porta');
                   setDialogOpen(true);
                 }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Produto
+                Adicionar Porta
               </Button>
-              <ProdutoVendaForm 
-                open={dialogOpen}
-                onOpenChange={(open) => {
-                  setDialogOpen(open);
-                  if (!open) {
-                    setProdutoEditando(undefined);
-                    setIndexEditando(undefined);
-                  }
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('acessorio');
+                  setDialogOpen(true);
                 }}
-                onAddProduto={(produto) => {
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Acessório/Adicional
+              </Button>
+            </div>
+            <ProdutoVendaForm 
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial(undefined);
+                }
+              }}
+              tipoInicial={tipoInicial}
+              permitirTrocaTipo={tipoInicial !== 'porta'}
+              onAddProduto={(produto) => {
                   handleAddPorta(produto);
                   setDialogOpen(false);
                 }}
                 produtoEditando={produtoEditando}
                 indexEditando={indexEditando}
               />
-            </div>
-            <PortasVendaTable 
-              portas={portas} 
-              onRemovePorta={handleRemovePorta}
-              onEditPorta={handleEditPorta}
-            />
+              <PortasVendaTable
+                portas={portas}
+                onRemovePorta={handleRemovePorta}
+                onEditPorta={handleEditPorta}
+                onUpdateQuantidade={handleUpdateQuantidade}
+              />
           </CardContent>
         </Card>
 

@@ -16,11 +16,21 @@ interface ProdutoVendaFormProps {
   onAddProduto: (produto: ProdutoVenda) => void;
   produtoEditando?: ProdutoVenda;
   indexEditando?: number;
+  tipoInicial?: 'porta' | 'acessorio' | 'adicional';
+  permitirTrocaTipo?: boolean;
 }
 
-export function ProdutoVendaForm({ open, onOpenChange, onAddProduto, produtoEditando, indexEditando }: ProdutoVendaFormProps) {
+export function ProdutoVendaForm({ 
+  open, 
+  onOpenChange, 
+  onAddProduto,
+  produtoEditando,
+  indexEditando,
+  tipoInicial,
+  permitirTrocaTipo = true
+}: ProdutoVendaFormProps) {
   const [formData, setFormData] = useState<ProdutoVenda>({
-    tipo_produto: 'porta',
+    tipo_produto: tipoInicial || 'porta',
     tamanho: '',
     cor_id: '',
     acessorio_id: '',
@@ -43,7 +53,7 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto, produtoEdit
     } else {
       // Resetar formulário quando não há produto para editar
       setFormData({
-        tipo_produto: 'porta',
+        tipo_produto: tipoInicial || 'porta',
         tamanho: '',
         cor_id: '',
         acessorio_id: '',
@@ -59,7 +69,7 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto, produtoEdit
         descricao: ''
       });
     }
-  }, [produtoEditando]);
+  }, [produtoEditando, tipoInicial]);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -164,6 +174,7 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto, produtoEdit
               onValueChange={(value: 'porta' | 'acessorio' | 'adicional') => 
                 setFormData(prev => ({ ...prev, tipo_produto: value }))
               }
+              disabled={!permitirTrocaTipo}
             >
               <SelectTrigger>
                 <SelectValue />
