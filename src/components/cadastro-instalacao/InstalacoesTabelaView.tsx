@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, isPast, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   MapPin,
@@ -13,6 +13,8 @@ import {
   RefreshCw,
   Eye,
   Plus,
+  Clock,
+  UserX,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +83,7 @@ export const InstalacoesTabelaView = ({
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategoria, setFilterCategoria] = useState<string>('all');
   const [filterEstado, setFilterEstado] = useState<string>('all');
+  const [quickFilter, setQuickFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,6 +98,11 @@ export const InstalacoesTabelaView = ({
     }
   };
 
+  const isAtrasado = (instalacao: InstalacaoCadastrada) => {
+    if (!instalacao.data_instalacao || instalacao.status === 'finalizada') return false;
+    return isPast(startOfDay(new Date(instalacao.data_instalacao))) && startOfDay(new Date(instalacao.data_instalacao)) < startOfDay(new Date());
+  };
+
   const filteredAndSortedInstalacoes = useMemo(() => {
     let result = [...instalacoes];
 
@@ -105,6 +113,17 @@ export const InstalacoesTabelaView = ({
           inst.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
           inst.telefone_cliente?.toLowerCase().includes(searchTerm.toLowerCase())
       );
+    }
+
+    // Filtros rápidos
+    if (quickFilter === 'sem_responsavel') {
+      result = result.filter((inst) => !inst.responsavel_instalacao_id);
+    } else if (quickFilter === 'atrasados') {
+      result = result.filter((inst) => isAtrasado(inst));
+    } else if (quickFilter === 'pendente_producao') {
+      result = result.filter((inst) => inst.status === 'pendente_producao');
+    } else if (quickFilter === 'pronta_fabrica') {
+      result = result.filter((inst) => inst.status === 'pronta_fabrica');
     }
 
     // Filtrar por status
@@ -138,7 +157,7 @@ export const InstalacoesTabelaView = ({
     });
 
     return result;
-  }, [instalacoes, searchTerm, filterStatus, filterCategoria, filterEstado, sortField, sortOrder]);
+  }, [instalacoes, searchTerm, quickFilter, filterStatus, filterCategoria, filterEstado, sortField, sortOrder]);
 
   const paginatedInstalacoes = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -256,6 +275,7 @@ export const InstalacoesTabelaView = ({
     setFilterStatus('all');
     setFilterCategoria('all');
     setFilterEstado('all');
+    setQuickFilter('all');
   };
 
   const getCategoriaLabel = (categoria: string) => {
@@ -309,6 +329,49 @@ export const InstalacoesTabelaView = ({
           </div>
         </CardHeader>
         <CardContent>
+          {/* Filtros Rápidos */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button
+              variant={quickFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setQuickFilter('all')}
+            >
+              Todos
+            </Button>
+            <Button
+              variant={quickFilter === 'sem_responsavel' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setQuickFilter('sem_responsavel')}
+              className="gap-2"
+            >
+              <UserX className="h-4 w-4" />
+              Sem Responsável
+            </Button>
+            <Button
+              variant={quickFilter === 'atrasados' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setQuickFilter('atrasados')}
+              className="gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              Atrasados
+            </Button>
+            <Button
+              variant={quickFilter === 'pendente_producao' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setQuickFilter('pendente_producao')}
+            >
+              Pendente Produção
+            </Button>
+            <Button
+              variant={quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setQuickFilter('pronta_fabrica')}
+            >
+              Pronta Fábrica
+            </Button>
+          </div>
+
           {/* Filtros */}
           <div className="space-y-4 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -362,7 +425,7 @@ export const InstalacoesTabelaView = ({
               </Select>
             </div>
 
-            {(searchTerm || filterStatus !== 'all' || filterCategoria !== 'all' || filterEstado !== 'all') && (
+            {(searchTerm || filterStatus !== 'all' || filterCategoria !== 'all' || filterEstado !== 'all' || quickFilter !== 'all') && (
               <Button onClick={clearFilters} variant="ghost" size="sm" className="gap-2">
                 <X className="h-4 w-4" />
                 Limpar Filtros
@@ -407,6 +470,7 @@ export const InstalacoesTabelaView = ({
                       </TableHead>
                       <TableHead>Categoria</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Tags</TableHead>
                       <TableHead>Tamanho</TableHead>
                       <TableHead>
                         <Button
@@ -449,6 +513,22 @@ export const InstalacoesTabelaView = ({
                           <Badge variant="outline" className={getStatusVariant(instalacao.status)}>
                             {getStatusLabel(instalacao.status)}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {isAtrasado(instalacao) && (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 gap-1">
+                                <Clock className="h-3 w-3" />
+                                Atrasado
+                              </Badge>
+                            )}
+                            {!instalacao.responsavel_instalacao_id && (
+                              <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 gap-1">
+                                <UserX className="h-3 w-3" />
+                                Sem Responsável
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-sm">{instalacao.tamanho || '-'}</TableCell>
                         <TableCell className="text-sm">
