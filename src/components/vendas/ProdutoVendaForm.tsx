@@ -110,6 +110,16 @@ export function ProdutoVendaForm({
     }
   });
 
+  // Zerar valor de pintura se a cor for "Aço galvanizado"
+  useEffect(() => {
+    if (formData.cor_id && cores) {
+      const corSelecionada = cores.find(c => c.id === formData.cor_id);
+      if (corSelecionada && corSelecionada.nome.toLowerCase() === 'aço galvanizado') {
+        setFormData(prev => ({ ...prev, valor_pintura: 0 }));
+      }
+    }
+  }, [formData.cor_id, cores]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation(); // Impede a propagação para o formulário pai
@@ -300,7 +310,13 @@ export function ProdutoVendaForm({
                     min="0"
                     value={formData.valor_pintura}
                     onChange={(e) => handleNumberChange('valor_pintura', e.target.value)}
+                    disabled={cores?.find(c => c.id === formData.cor_id)?.nome.toLowerCase() === 'aço galvanizado'}
                   />
+                  {cores?.find(c => c.id === formData.cor_id)?.nome.toLowerCase() === 'aço galvanizado' && (
+                    <p className="text-xs text-muted-foreground">
+                      Valor de pintura não permitido para Aço galvanizado
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
