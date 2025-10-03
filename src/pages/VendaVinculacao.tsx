@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 
 interface Lead {
   id: string;
@@ -391,26 +392,11 @@ export default function VendaVinculacao() {
                 <Label htmlFor="resgate">Marcar como resgate</Label>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Select 
-                  value={formData.forma_pagamento}
-                  onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a forma de pagamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                    <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                    <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="transferencia">Transferência</SelectItem>
-                    <SelectItem value="boleto">Boleto</SelectItem>
-                    <SelectItem value="parcelado">Parcelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormaPagamentoSelect
+                value={formData.forma_pagamento}
+                onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
+                showLabel={true}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="observacoes_venda">Observações</Label>

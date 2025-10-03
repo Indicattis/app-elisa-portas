@@ -18,6 +18,7 @@ import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
 import { PortasVendaTable } from "@/components/vendas/PortasVendaTable";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
+import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 
 interface Lead {
   id: string;
@@ -328,15 +329,11 @@ export default function VendaEdit() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Input
-                  id="forma_pagamento"
-                  placeholder="Ex: PIX, Cartão, Boleto"
-                  value={formData.forma_pagamento}
-                  onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value }))}
-                />
-              </div>
+              <FormaPagamentoSelect
+                value={formData.forma_pagamento}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
+                showLabel={true}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="valor_entrada">Valor de Entrada</Label>

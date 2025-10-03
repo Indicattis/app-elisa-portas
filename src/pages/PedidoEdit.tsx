@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Package, Wrench, Flame, Scissors } from "lucide-react";
 import ProductionOrdersListNew from "@/components/production/ProductionOrdersListNew";
+import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 
 interface PedidoCompleto {
   id: string;
@@ -416,14 +417,10 @@ export default function PedidoEdit() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Input
-                  id="forma_pagamento"
-                  value={pedido.forma_pagamento || ""}
-                  onChange={(e) => handleInputChange("forma_pagamento", e.target.value)}
-                />
-              </div>
+              <FormaPagamentoSelect
+                value={pedido.forma_pagamento || ""}
+                onValueChange={(value) => handleInputChange("forma_pagamento", value)}
+              />
               <div>
                 <Label htmlFor="modalidade_instalacao">Modalidade de Instalação</Label>
                 <Select 

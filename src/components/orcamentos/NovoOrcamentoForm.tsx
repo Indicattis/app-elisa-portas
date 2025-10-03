@@ -14,6 +14,7 @@ import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import type { OrcamentoFormData, Acessorio, Adicional } from "@/types/orcamento";
 import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
+import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 interface Cor {
   id: string;
   nome: string;
@@ -696,25 +697,14 @@ export function NovoOrcamentoForm({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Forma de Pagamento</Label>
-              <Select value={formData.forma_pagamento} onValueChange={value => setFormData({
+            <FormaPagamentoSelect
+              value={formData.forma_pagamento}
+              onValueChange={(value) => setFormData({
                 ...formData,
                 forma_pagamento: value
-              })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a forma de pagamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="a_vista">À Vista</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                  <SelectItem value="boleto">Boleto</SelectItem>
-                  <SelectItem value="financiamento">Financiamento</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              })}
+              showLabel={true}
+            />
 
             <div className="space-y-2">
               <Label>Desconto Total (%)</Label>

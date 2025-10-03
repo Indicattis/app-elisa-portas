@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
+import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 
 interface Atendente {
   id: string;
@@ -477,26 +478,12 @@ export default function VendaNova() {
             {/* Dados Adicionais */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Dados Adicionais</h3>
-              <div className="space-y-2">
-                <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
-                <Select 
-                  value={formData.forma_pagamento}
-                  onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a forma de pagamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                    <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                    <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="transferencia">Transferência</SelectItem>
-                    <SelectItem value="boleto">Boleto</SelectItem>
-                    <SelectItem value="parcelado">Parcelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormaPagamentoSelect
+                value={formData.forma_pagamento}
+                onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
+                showLabel={true}
+                required={false}
+              />
 
               {/* Campos de Parcelamento */}
               {formData.forma_pagamento === "parcelado" && (
