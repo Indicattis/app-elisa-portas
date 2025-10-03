@@ -780,7 +780,9 @@ export default function Faturamento() {
                       <TableHead>Produtos</TableHead>
                       <TableHead className="text-right">Valor Produtos</TableHead>
                       <TableHead className="text-right">Descontos</TableHead>
+                      <TableHead className="text-right">% Desconto</TableHead>
                       <TableHead className="text-right">Custos</TableHead>
+                      <TableHead className="text-right">% Margem</TableHead>
                       <TableHead className="text-right">Instalação</TableHead>
                       <TableHead className="text-right">Frete</TableHead>
                       <TableHead className="text-right">Valor Final</TableHead>
@@ -831,10 +833,47 @@ export default function Faturamento() {
                         </TableCell>
 
                         <TableCell className="text-right">
+                          {(() => {
+                            const desconto = calculateTotalDiscount(venda);
+                            const valorProdutos = (venda.valor_produto || 0) + (venda.valor_pintura || 0);
+                            const valorOriginal = valorProdutos + desconto;
+                            const percentualDesconto = valorOriginal > 0 ? (desconto / valorOriginal) * 100 : 0;
+                            
+                            return desconto > 0 ? (
+                              <span className="font-medium text-red-600">
+                                {percentualDesconto.toFixed(1)}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            );
+                          })()}
+                        </TableCell>
+
+                        <TableCell className="text-right">
                           <span className="font-medium text-orange-600">
                             R$ {((venda.custo_produto || 0) + (venda.custo_pintura || 0))
                               .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </span>
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          {(() => {
+                            const custosTotais = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
+                            const valorFinal = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+                            const margem = custosTotais > 0 ? ((valorFinal - custosTotais) / custosTotais) * 100 : 0;
+                            
+                            if (custosTotais === 0) {
+                              return <span className="text-muted-foreground">-</span>;
+                            }
+                            
+                            const margemColor = margem >= 0 ? 'text-green-600' : 'text-red-600';
+                            
+                            return (
+                              <span className={`font-semibold ${margemColor}`}>
+                                {margem >= 0 ? '+' : ''}{margem.toFixed(1)}%
+                              </span>
+                            );
+                          })()}
                         </TableCell>
 
                         <TableCell className="text-right">
