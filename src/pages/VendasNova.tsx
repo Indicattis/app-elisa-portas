@@ -372,12 +372,13 @@ export default function VendasNova() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="data_prevista_entrega">Previsão de Entrega</Label>
+              <Label htmlFor="data_prevista_entrega">Previsão de Entrega *</Label>
               <Input
                 id="data_prevista_entrega"
                 type="date"
                 value={formData.data_prevista_entrega}
                 onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
+                required
               />
             </div>
 
