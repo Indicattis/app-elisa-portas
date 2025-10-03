@@ -404,140 +404,126 @@ export default function Faturamento() {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-6">
-          {/* Stats Cards por Estado */}
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* RS */}
+          {/* Indicadores Dinâmicos baseados nos filtros */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* Faturamento Total */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Rio Grande do Sul (RS)</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-blue-600" />
+                  Faturamento Total
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm">Lucro Produtos:</span>
-                  <span className="font-medium text-green-600">
-                    R$ {stats.rs.lucroProdutos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  R$ {filteredVendas.reduce((acc, v) => 
+                    acc + (v.valor_produto || 0) + (v.valor_pintura || 0) + 
+                    (v.valor_instalacao || 0) + (v.valor_frete || 0), 0)
+                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Lucro Pintura:</span>
-                  <span className="font-medium text-green-600">
-                    R$ {stats.rs.lucroPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Total Instalações:</span>
-                  <span className="font-medium">
-                    R$ {stats.rs.totalInstalacoes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Total Fretes:</span>
-                  <span className="font-medium">
-                    R$ {stats.rs.totalFretes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-sm font-medium">Lucro Total:</span>
-                  <span className="font-bold text-green-600">
-                    R$ {stats.rs.lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Faturamento:</span>
-                  <span className="font-bold text-blue-600">
-                    R$ {stats.rs.faturamentoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filteredVendas.length} vendas
+                </p>
               </CardContent>
             </Card>
 
-            {/* SC */}
+            {/* Custos de Produção */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Santa Catarina (SC)</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-orange-600" />
+                  Custos de Produção
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm">Lucro Produtos:</span>
-                  <span className="font-medium text-green-600">
-                    R$ {stats.sc.lucroProdutos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">
+                  R$ {filteredVendas.reduce((acc, v) => 
+                    acc + (v.custo_produto || 0), 0)
+                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Lucro Pintura:</span>
-                  <span className="font-medium text-green-600">
-                    R$ {stats.sc.lucroPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Total Instalações:</span>
-                  <span className="font-medium">
-                    R$ {stats.sc.totalInstalacoes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Total Fretes:</span>
-                  <span className="font-medium">
-                    R$ {stats.sc.totalFretes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-sm font-medium">Lucro Total:</span>
-                  <span className="font-bold text-green-600">
-                    R$ {stats.sc.lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Faturamento:</span>
-                  <span className="font-bold text-blue-600">
-                    R$ {stats.sc.faturamentoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Matéria-prima e fabricação
+                </p>
               </CardContent>
             </Card>
 
-            {/* TOTAL */}
-            <Card className="border-2 border-primary">
-              <CardHeader>
-                <CardTitle className="text-lg">TOTAL GERAL</CardTitle>
+            {/* Custos de Pintura */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-purple-600" />
+                  Custos de Pintura
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm">Lucro Produtos:</span>
-                  <span className="font-medium text-green-600">
-                    R$ {stats.total.lucroProdutos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  R$ {filteredVendas.reduce((acc, v) => 
+                    acc + (v.custo_pintura || 0), 0)
+                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Lucro Pintura:</span>
-                  <span className="font-medium text-green-600">
-                    R$ {stats.total.lucroPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tinta e mão de obra
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Fretes Totais */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-indigo-600" />
+                  Fretes Totais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-indigo-600">
+                  R$ {filteredVendas.reduce((acc, v) => 
+                    acc + (v.valor_frete || 0), 0)
+                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Total Instalações:</span>
-                  <span className="font-medium">
-                    R$ {stats.total.totalInstalacoes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Transporte e logística
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Instalações Totais */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4 text-cyan-600" />
+                  Instalações Totais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-cyan-600">
+                  R$ {filteredVendas.reduce((acc, v) => 
+                    acc + (v.valor_instalacao || 0), 0)
+                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Total Fretes:</span>
-                  <span className="font-medium">
-                    R$ {stats.total.totalFretes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Serviço de instalação
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Lucro Bruto Total */}
+            <Card className="border-2 border-green-600">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  Lucro Bruto Total
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  R$ {filteredVendas.reduce((acc, v) => 
+                    acc + (v.lucro_total || 0), 0)
+                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-sm font-medium">Lucro Total:</span>
-                  <span className="font-bold text-green-600 text-lg">
-                    R$ {stats.total.lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Faturamento:</span>
-                  <span className="font-bold text-blue-600 text-lg">
-                    R$ {stats.total.faturamentoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Receita menos custos
+                </p>
               </CardContent>
             </Card>
           </div>
