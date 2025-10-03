@@ -579,14 +579,14 @@ export default function Faturamento() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-blue-600" />
-                  Faturamento Total
+                  Faturamento Total (sem frete)
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
+                  {/* Faturamento = valor_venda - valor_frete (mesma fórmula das abas Vendas e TV Dashboard) */}
                   R$ {filteredVendas.reduce((acc, v) => 
-                    acc + (v.valor_produto || 0) + (v.valor_pintura || 0) + 
-                    (v.valor_instalacao || 0) + (v.valor_frete || 0), 0)
+                    acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
