@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BulkUploadVendas from "@/components/BulkUploadVendas";
@@ -22,6 +22,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/vendas/StatusBadge";
+import { QuickFiltersBar } from "@/components/vendas/QuickFiltersBar";
 
 interface Venda {
   id: string;
@@ -115,8 +117,24 @@ export default function Faturamento() {
   const [filterPublico, setFilterPublico] = useState("todos");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [activeTab, setActiveTab] = useState<'todas' | 'faturadas' | 'nao_faturadas'>('todas');
+  const [quickFilters, setQuickFilters] = useState({
+    naoFaturadas: false,
+    vendaMesAtual: false,
+    vendaMesPassado: false,
+    vendaAnoAtual: false,
+    estadoRS: false,
+    estadoSC: false,
+    serralheiro: false,
+    clienteFinal: false,
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Função para verificar se uma venda está faturada
+  const isFaturada = (venda: Venda) => {
+    return (venda.custo_produto || 0) > 0 || (venda.custo_pintura || 0) > 0;
+  };
 
   useEffect(() => {
     fetchVendas();
@@ -343,6 +361,46 @@ export default function Faturamento() {
   };
 
   const filteredVendas = vendas.filter(venda => {
+    // Filtro de aba
+    if (activeTab === 'faturadas' && !isFaturada(venda)) return false;
+    if (activeTab === 'nao_faturadas' && isFaturada(venda)) return false;
+
+    // Filtros rápidos
+    if (quickFilters.naoFaturadas && isFaturada(venda)) return false;
+    if (quickFilters.estadoRS && venda.estado !== 'RS') return false;
+    if (quickFilters.estadoSC && venda.estado !== 'SC') return false;
+    if (quickFilters.serralheiro && venda.publico_alvo !== 'Serralheiro') return false;
+    if (quickFilters.clienteFinal && venda.publico_alvo !== 'Cliente Final') return false;
+
+    // Filtro de vendas do mês atual
+    if (quickFilters.vendaMesAtual) {
+      const vendaDate = new Date(venda.data_venda);
+      const now = new Date();
+      if (vendaDate.getMonth() !== now.getMonth() || vendaDate.getFullYear() !== now.getFullYear()) {
+        return false;
+      }
+    }
+
+    // Filtro de vendas do mês passado
+    if (quickFilters.vendaMesPassado) {
+      const vendaDate = new Date(venda.data_venda);
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      if (vendaDate.getMonth() !== lastMonth.getMonth() || vendaDate.getFullYear() !== lastMonth.getFullYear()) {
+        return false;
+      }
+    }
+
+    // Filtro de vendas do ano atual
+    if (quickFilters.vendaAnoAtual) {
+      const vendaDate = new Date(venda.data_venda);
+      const now = new Date();
+      if (vendaDate.getFullYear() !== now.getFullYear()) {
+        return false;
+      }
+    }
+
+    // Filtros de busca e público
     const matchesSearch = 
       (venda.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (venda.atendente_nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -352,6 +410,43 @@ export default function Faturamento() {
 
     return matchesSearch && matchesPublico;
   });
+
+  // Separar vendas faturadas para cálculo de indicadores
+  const vendasFaturadas = filteredVendas.filter(isFaturada);
+
+  // Toggle de filtros rápidos
+  const handleQuickFilterToggle = (filterId: string) => {
+    setQuickFilters(prev => ({
+      ...prev,
+      [filterId]: !prev[filterId as keyof typeof prev]
+    }));
+  };
+
+  // Limpar todos os filtros rápidos
+  const handleClearQuickFilters = () => {
+    setQuickFilters({
+      naoFaturadas: false,
+      vendaMesAtual: false,
+      vendaMesPassado: false,
+      vendaAnoAtual: false,
+      estadoRS: false,
+      estadoSC: false,
+      serralheiro: false,
+      clienteFinal: false,
+    });
+  };
+
+  // Configuração dos filtros rápidos para o componente
+  const quickFiltersConfig = [
+    { id: 'naoFaturadas', label: 'Não Faturadas', active: quickFilters.naoFaturadas },
+    { id: 'vendaMesAtual', label: 'Vendas do Mês', active: quickFilters.vendaMesAtual },
+    { id: 'vendaMesPassado', label: 'Mês Passado', active: quickFilters.vendaMesPassado },
+    { id: 'vendaAnoAtual', label: 'Ano Atual', active: quickFilters.vendaAnoAtual },
+    { id: 'estadoRS', label: 'RS', active: quickFilters.estadoRS },
+    { id: 'estadoSC', label: 'SC', active: quickFilters.estadoSC },
+    { id: 'serralheiro', label: 'Serralheiro', active: quickFilters.serralheiro },
+    { id: 'clienteFinal', label: 'Cliente Final', active: quickFilters.clienteFinal },
+  ];
 
   const meses = [
     { value: 1, label: "Janeiro" }, { value: 2, label: "Fevereiro" },
@@ -404,6 +499,34 @@ export default function Faturamento() {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-6">
+          {/* Abas de Faturamento */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Status de Faturamento</CardTitle>
+                <div className="flex gap-2 text-sm text-muted-foreground">
+                  <span>{vendasFaturadas.length} faturadas</span>
+                  <span>•</span>
+                  <span>{filteredVendas.length - vendasFaturadas.length} não faturadas</span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="todas">
+                    Todas ({filteredVendas.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="faturadas">
+                    Faturadas ({vendasFaturadas.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="nao_faturadas">
+                    Não Faturadas ({filteredVendas.length - vendasFaturadas.length})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardContent>
+          </Card>
           {/* Indicadores Dinâmicos baseados nos filtros */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {/* Faturamento Total */}
@@ -427,7 +550,7 @@ export default function Faturamento() {
               </CardContent>
             </Card>
 
-            {/* Custos de Produção */}
+            {/* Custos de Produção - Apenas Faturadas */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -437,17 +560,17 @@ export default function Faturamento() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600">
-                  R$ {filteredVendas.reduce((acc, v) => 
+                  R$ {vendasFaturadas.reduce((acc, v) => 
                     acc + (v.custo_produto || 0), 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Matéria-prima e fabricação
+                  Apenas vendas faturadas
                 </p>
               </CardContent>
             </Card>
 
-            {/* Custos de Pintura */}
+            {/* Custos de Pintura - Apenas Faturadas */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -457,12 +580,12 @@ export default function Faturamento() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  R$ {filteredVendas.reduce((acc, v) => 
+                  R$ {vendasFaturadas.reduce((acc, v) => 
                     acc + (v.custo_pintura || 0), 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Tinta e mão de obra
+                  Apenas vendas faturadas
                 </p>
               </CardContent>
             </Card>
@@ -507,7 +630,7 @@ export default function Faturamento() {
               </CardContent>
             </Card>
 
-            {/* Lucro Bruto Total */}
+            {/* Lucro Bruto Total - Apenas Faturadas */}
             <Card className="border-2 border-green-600">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -517,16 +640,27 @@ export default function Faturamento() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  R$ {filteredVendas.reduce((acc, v) => 
+                  R$ {vendasFaturadas.reduce((acc, v) => 
                     acc + (v.lucro_total || 0), 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Receita menos custos
+                  Apenas vendas faturadas
                 </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Filtros Rápidos */}
+          <Card>
+            <CardContent className="pt-6">
+              <QuickFiltersBar
+                filters={quickFiltersConfig}
+                onFilterToggle={handleQuickFilterToggle}
+                onClearAll={handleClearQuickFilters}
+              />
+            </CardContent>
+          </Card>
 
           {/* Filters and Table */}
           <Card>
@@ -621,6 +755,7 @@ export default function Faturamento() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Atendente</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Público</TableHead>
@@ -640,6 +775,9 @@ export default function Faturamento() {
                       <TableRow key={venda.id}>
                         <TableCell>
                           {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge isFaturada={isFaturada(venda)} />
                         </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
