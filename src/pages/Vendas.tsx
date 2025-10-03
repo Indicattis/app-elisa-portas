@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -24,11 +24,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Vendas() {
   const navigate = useNavigate();
   const { isAdmin, userRole } = useAuth();
   const { vendas, isLoading, deleteVenda } = useVendas();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroMinhasVendas, setFiltroMinhasVendas] = useState(true);
   const [filtroVendasMes, setFiltroVendasMes] = useState(true);
@@ -40,6 +43,44 @@ export default function Vendas() {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const handleExportarPDF = () => {
+    try {
+      const vendasParaRelatorio = filteredVendas?.map(venda => ({
+        data_venda: venda.data_venda,
+        cliente_nome: venda.cliente_nome,
+        cliente_telefone: venda.cliente_telefone || '',
+        cidade: venda.cidade,
+        estado: venda.estado,
+        previsao_entrega: venda.data_prevista_entrega || '',
+        quantidade_portas: venda.portas?.length || 0,
+        valor_venda: venda.valor_venda || 0,
+        atendente_nome: venda.atendente?.nome || 'Não informado'
+      })) || [];
+
+      generateVendasRelatorioPDF({
+        vendas: vendasParaRelatorio,
+        stats,
+        filtros: {
+          minhasVendas: filtroMinhasVendas,
+          vendasMesAtual: filtroVendasMes,
+          busca: searchTerm
+        }
+      });
+
+      toast({
+        title: "Relatório gerado",
+        description: "O relatório foi exportado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      toast({
+        title: "Erro ao gerar relatório",
+        description: "Ocorreu um erro ao exportar o relatório.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredVendas = useMemo(() => {
@@ -94,10 +135,16 @@ export default function Vendas() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Vendas</h1>
-        <Button onClick={() => navigate('/dashboard/vendas/nova')}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Venda
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleExportarPDF} variant="outline">
+            <FileDown className="w-4 h-4 mr-2" />
+            Exportar Relatório PDF
+          </Button>
+          <Button onClick={() => navigate('/dashboard/vendas/nova')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Venda
+          </Button>
+        </div>
       </div>
 
       {/* Cards de Estatísticas */}
