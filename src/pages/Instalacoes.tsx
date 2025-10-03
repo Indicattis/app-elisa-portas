@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { format, startOfWeek, addWeeks, subWeeks, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, MapPin, Download, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Settings, MapPin } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,27 +10,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
-import { FormPonto } from "@/components/cronograma/FormPonto";
-import { EditPontoSheet } from "@/components/cronograma/EditPontoSheet";
 import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
-import { InstalacoesList } from "@/components/cadastro-instalacao/InstalacoesList";
 import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
-import { usePontosInstalacao } from "@/hooks/usePontosInstalacao";
+import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
-import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
 import { baixarInstalacoesPDF } from "@/utils/instalacoesPDFGenerator";
 import { useToast } from "@/hooks/use-toast";
-import { X } from "lucide-react";
 
 export default function Instalacoes() {
   const [currentDate, setCurrentDate] = useState(() => startOfDay(new Date()));
   const [currentWeek, setCurrentWeek] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showEquipes, setShowEquipes] = useState(false);
-  const [showFormPonto, setShowFormPonto] = useState(false);
-  const [showEditPonto, setShowEditPonto] = useState(false);
-  const [selectedPonto, setSelectedPonto] = useState<any>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeTab, setActiveTab] = useState("cronograma");
@@ -45,7 +37,7 @@ export default function Instalacoes() {
 
   // Hooks para dados
   const { equipes } = useEquipesInstalacao();
-  const { pontos } = usePontosInstalacao(currentWeek);
+  const { instalacoes: instalacoesSemanais } = useInstalacoesCronograma(currentWeek);
   const { 
     instalacoes, 
     loading: loadingInstalacoes, 
@@ -100,16 +92,11 @@ export default function Instalacoes() {
     }, 300);
   };
 
-  const handleEditPonto = (ponto: any) => {
-    setSelectedPonto(ponto);
-    setShowEditPonto(true);
-  };
-
   const handleDownloadPDF = () => {
     try {
       baixarCronogramaPDF({
         equipes,
-        pontos,
+        instalacoes: instalacoesSemanais,
         weekStart: currentWeek
       });
       
@@ -199,7 +186,7 @@ export default function Instalacoes() {
                     size={isMobile ? "sm" : "default"}
                     className="gap-2"
                   >
-                    <Plus className="h-4 w-4" />
+                    <MapPin className="h-4 w-4" />
                     {!isMobile && "Nova Instalação"}
                   </Button>
                 )}
@@ -256,9 +243,7 @@ export default function Instalacoes() {
                   onTouchEnd={handleTouchEnd}
                 >
                   <MobileDayView 
-                    currentDate={currentDate} 
-                    onEditPonto={handleEditPonto}
-                    onAddPonto={() => setShowFormPonto(true)}
+                    currentDate={currentDate}
                   />
                 </CardContent>
               </Card>
@@ -281,7 +266,7 @@ export default function Instalacoes() {
                 <CardContent className="p-0">
                   <CronogramaInstalacao 
                     currentWeek={currentWeek} 
-                    onEditPonto={handleEditPonto}
+                    onEditPonto={() => {}}
                   />
                 </CardContent>
               </Card>
@@ -290,13 +275,13 @@ export default function Instalacoes() {
 
           <TabsContent value="lista" className="mt-0">
             <InstalacoesTabelaView
-                  instalacoes={instalacoes}
-                  onDelete={deleteInstalacao}
-                  onUpdate={updateInstalacao}
-                  onAlterarParaCorrecao={alterarParaCorrecao}
-                  onUpdateStatus={updateStatus}
-                  isAdmin={isAdmin}
-                />
+              instalacoes={instalacoes}
+              onDelete={deleteInstalacao}
+              onUpdate={updateInstalacao}
+              onAlterarParaCorrecao={alterarParaCorrecao}
+              onUpdateStatus={updateStatus}
+              isAdmin={isAdmin}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -304,18 +289,6 @@ export default function Instalacoes() {
       <GerenciarEquipes 
         open={showEquipes} 
         onOpenChange={setShowEquipes} 
-      />
-
-      <FormPonto 
-        open={showFormPonto} 
-        onOpenChange={setShowFormPonto} 
-      />
-
-      <EditPontoSheet
-        open={showEditPonto}
-        onOpenChange={setShowEditPonto}
-        ponto={selectedPonto}
-        currentWeek={currentWeek}
       />
 
       <Dialog open={showCadastroModal} onOpenChange={setShowCadastroModal}>
@@ -340,233 +313,72 @@ export default function Instalacoes() {
 
 // Componente para visualização mobile do dia
 function MobileDayView({ 
-  currentDate, 
-  onEditPonto,
-  onAddPonto 
+  currentDate
 }: { 
   currentDate: Date; 
-  onEditPonto: (ponto: any) => void;
-  onAddPonto: () => void;
 }) {
   const { equipes } = useEquipesInstalacao();
-  const { pontos, updatePonto, deletePonto } = usePontosInstalacao(startOfWeek(currentDate, { weekStartsOn: 1 }));
-  const { draggedItem, handleDragStart, handleDragEnd } = useDragAndDrop();
+  const { instalacoes } = useInstalacoesCronograma(startOfWeek(currentDate, { weekStartsOn: 1 }));
   
   const dayOfWeek = currentDate.getDay();
-  const pontosNoDia = pontos.filter(p => p.dia_semana === dayOfWeek);
-
-  const handleDrop = async (equipId: string) => {
-    if (draggedItem && draggedItem.equipId !== equipId) {
-      await updatePonto(
-        draggedItem.id,
-        equipId,
-        draggedItem.cidade,
-        dayOfWeek
-      );
-    }
-  };
+  const instalacoesNoDia = instalacoes.filter(i => i.dia_semana === dayOfWeek);
 
   return (
     <div className="divide-y">
       {equipes.map((equipe) => {
-        const pontosEquipe = pontosNoDia.filter(p => p.equipe_id === equipe.id);
+        const instalacoesEquipe = instalacoesNoDia.filter(i => i.responsavel_instalacao_id === equipe.id);
         
         return (
-          <MobileEquipeCard
+          <div 
             key={equipe.id}
-            equipe={equipe}
-            pontos={pontosEquipe}
-            onDrop={handleDrop}
-            onEditPonto={onEditPonto}
-            onDeletePonto={deletePonto}
-            onAddPonto={onAddPonto}
-            draggedItem={draggedItem}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          />
+            className="p-4 border-l-4"
+            style={{ borderLeftColor: equipe.cor }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div 
+                className="w-4 h-4 rounded-full flex-shrink-0" 
+                style={{ backgroundColor: equipe.cor }}
+              />
+              <h3 className="font-semibold text-base">{equipe.nome}</h3>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="bg-muted rounded-full px-2 py-1">
+                  <span className="text-xs font-medium">{instalacoesEquipe.length}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {instalacoesEquipe.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Nenhuma instalação agendada</p>
+                </div>
+              ) : (
+                instalacoesEquipe.map((instalacao) => (
+                  <div
+                    key={instalacao.id}
+                    className="bg-card border border-border rounded-lg p-3"
+                    style={{ borderLeftColor: equipe.cor, borderLeftWidth: '4px' }}
+                  >
+                    <div className="font-semibold text-sm mb-1">
+                      {instalacao.nome_cliente}
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                      <MapPin className="h-3 w-3" />
+                      <span>{instalacao.cidade}</span>
+                    </div>
+                    {instalacao.tamanho && (
+                      <div className="text-xs text-muted-foreground">
+                        {instalacao.tamanho}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         );
       })}
-    </div>
-  );
-}
-
-// Card de equipe para mobile
-function MobileEquipeCard({ 
-  equipe, 
-  pontos, 
-  onDrop, 
-  onEditPonto, 
-  onDeletePonto,
-  onAddPonto,
-  draggedItem,
-  onDragStart,
-  onDragEnd
-}: any) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  
-  const canDrop = draggedItem && draggedItem.equipId !== equipe.id;
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (canDrop) {
-      e.preventDefault();
-      setIsDragOver(true);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (canDrop) {
-      onDrop(equipe.id);
-      setIsDragOver(false);
-    }
-  };
-
-  return (
-    <div 
-      className={`p-4 transition-all duration-200 ${
-        isDragOver && canDrop 
-          ? 'bg-primary/10 border-l-4 border-l-primary' 
-          : 'border-l-4'
-      }`}
-      style={{ 
-        borderLeftColor: isDragOver && canDrop ? undefined : equipe.cor 
-      }}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {/* Header da Equipe */}
-      <div className="flex items-center gap-3 mb-3">
-        <div 
-          className="w-4 h-4 rounded-full flex-shrink-0" 
-          style={{ backgroundColor: equipe.cor }}
-        />
-        <h3 className="font-semibold text-base">{equipe.nome}</h3>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="bg-muted rounded-full px-2 py-1">
-            <span className="text-xs font-medium">{pontos.length}</span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 hover:bg-muted touch-manipulation"
-            onClick={onAddPonto}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Pontos de Instalação */}
-      <div className="space-y-2">
-        {pontos.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm mb-4">Nenhum ponto agendado</p>
-            <Button
-              onClick={onAddPonto}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Adicionar Ponto
-            </Button>
-          </div>
-        ) : (
-          pontos.map((ponto: any) => (
-            <MobilePontoCard
-              key={ponto.id}
-              ponto={ponto}
-              cor={equipe.cor}
-              onEdit={() => onEditPonto(ponto)}
-              onDelete={() => onDeletePonto(ponto.id)}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Card de ponto para mobile
-function MobilePontoCard({ 
-  ponto, 
-  cor, 
-  onEdit, 
-  onDelete, 
-  onDragStart, 
-  onDragEnd 
-}: any) {
-  const [isPressed, setIsPressed] = useState(false);
-  
-  const handleDragStart = (e: React.DragEvent) => {
-    onDragStart({
-      id: ponto.id,
-      equipId: ponto.equipe_id,
-      cidade: ponto.cidade
-    });
-  };
-
-  const handleTouchStart = () => {
-    setIsPressed(true);
-    if ('vibrate' in navigator) {
-      navigator.vibrate(10);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsPressed(false);
-  };
-
-  return (
-    <div
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={onDragEnd}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      className={`mobile-point-card touch-manipulation ${isPressed ? 'scale-95' : ''}`}
-      style={{ 
-        borderLeftColor: cor, 
-        borderLeftWidth: '3px'
-      }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm truncate">{ponto.cidade}</h4>
-          {ponto.observacoes && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {ponto.observacoes}
-            </p>
-          )}
-        </div>
-        
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 hover:bg-muted touch-manipulation"
-            onClick={onEdit}
-          >
-            <MapPin className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 touch-manipulation"
-            onClick={onDelete}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

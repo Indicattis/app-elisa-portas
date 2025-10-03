@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { InstalacaoCronograma } from '@/hooks/useInstalacoesCronograma';
 
 interface EquipeInstalacao {
   id: string;
@@ -10,18 +11,9 @@ interface EquipeInstalacao {
   ativa: boolean;
 }
 
-interface PontoInstalacao {
-  id: string;
-  equipe_id: string;
-  cidade: string;
-  dia_semana: number;
-  observacoes?: string;
-  semana_inicio: string;
-}
-
 interface CronogramaPDFData {
   equipes: EquipeInstalacao[];
-  pontos: PontoInstalacao[];
+  instalacoes: InstalacaoCronograma[];
   weekStart: Date;
 }
 
@@ -34,6 +26,25 @@ const DIAS_SEMANA = [
   { label: "Sábado", value: 6 },
   { label: "Domingo", value: 0 },
 ];
+
+const getCategoriaLabel = (categoria: string) => {
+  switch (categoria) {
+    case 'instalacao': return 'Instalação';
+    case 'entrega': return 'Entrega';
+    case 'correcao': return 'Correção';
+    case 'carregamento_agendado': return 'Carregamento';
+    default: return categoria;
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'pendente_producao': return 'Pendente';
+    case 'pronta_fabrica': return 'Pronta';
+    case 'finalizada': return 'Finalizada';
+    default: return status;
+  }
+};
 
 export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
   const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
@@ -115,21 +126,23 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
     const row = [equipe.nome];
     
     DIAS_SEMANA.forEach(dia => {
-      const pontosNoDia = data.pontos.filter(
-        p => p.equipe_id === equipe.id && p.dia_semana === dia.value
+      const instalacoesNoDia = data.instalacoes.filter(
+        i => i.responsavel_instalacao_id === equipe.id && i.dia_semana === dia.value
       );
       
-      if (pontosNoDia.length === 0) {
+      if (instalacoesNoDia.length === 0) {
         row.push('-');
       } else {
-        const pontosTexto = pontosNoDia.map(ponto => {
-          let texto = ponto.cidade;
-          if (ponto.observacoes) {
-            texto += `\n(${ponto.observacoes})`;
+        const instalacoesTexto = instalacoesNoDia.map(instalacao => {
+          let texto = `${instalacao.nome_cliente}\n${instalacao.cidade}`;
+          texto += `\n[${getCategoriaLabel(instalacao.categoria)}]`;
+          texto += ` - ${getStatusLabel(instalacao.status)}`;
+          if (instalacao.tamanho) {
+            texto += `\n${instalacao.tamanho}`;
           }
           return texto;
         }).join('\n\n');
-        row.push(pontosTexto);
+        row.push(instalacoesTexto);
       }
     });
     
@@ -142,7 +155,7 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
     body: tableData,
     startY: yPosition,
     styles: {
-      fontSize: 8,
+      fontSize: 7,
       cellPadding: 3,
       valign: 'top',
       lineColor: [200, 200, 200],
@@ -180,7 +193,7 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
   let legendaY = finalY + 15;
 
   // Verificar se há espaço na página atual
-  if (legendaY + (data.equipes.length * 8) > pageHeight - 20) {
+  if (legendaY + (data.equipes.length * 8) + 50 > pageHeight - 20) {
     pdf.addPage();
     legendaY = 20;
   }
@@ -191,7 +204,7 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
   pdf.text('Legenda das Equipes:', margin, legendaY);
   legendaY += 10;
 
-  data.equipes.forEach((equipe, index) => {
+  data.equipes.forEach((equipe) => {
     // Quadrado colorido
     pdf.setFillColor(equipe.cor);
     pdf.rect(margin, legendaY - 3, 4, 4, 'F');
@@ -211,18 +224,36 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
   pdf.text('Resumo:', margin, legendaY);
   legendaY += 8;
 
-  const totalPontos = data.pontos.length;
+  const totalInstalacoes = data.instalacoes.length;
   const equipesAtivas = data.equipes.length;
-  const pontosPorDia = DIAS_SEMANA.map(dia => 
-    data.pontos.filter(p => p.dia_semana === dia.value).length
+  const instalacoesPorDia = DIAS_SEMANA.map(dia => 
+    data.instalacoes.filter(i => i.dia_semana === dia.value).length
   );
-  const diaMaisMovimentado = DIAS_SEMANA[pontosPorDia.indexOf(Math.max(...pontosPorDia))];
+  const diaMaisMovimentado = DIAS_SEMANA[instalacoesPorDia.indexOf(Math.max(...instalacoesPorDia))];
+
+  // Estatísticas por categoria
+  const porCategoria = {
+    instalacao: data.instalacoes.filter(i => i.categoria === 'instalacao').length,
+    entrega: data.instalacoes.filter(i => i.categoria === 'entrega').length,
+    correcao: data.instalacoes.filter(i => i.categoria === 'correcao').length,
+    carregamento_agendado: data.instalacoes.filter(i => i.categoria === 'carregamento_agendado').length,
+  };
 
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`• Total de pontos de instalação: ${totalPontos}`, margin, legendaY);
+  pdf.text(`• Total de instalações agendadas: ${totalInstalacoes}`, margin, legendaY);
   pdf.text(`• Equipes ativas: ${equipesAtivas}`, margin, legendaY + 6);
-  pdf.text(`• Dia mais movimentado: ${diaMaisMovimentado?.label} (${Math.max(...pontosPorDia)} pontos)`, margin, legendaY + 12);
+  pdf.text(`• Dia mais movimentado: ${diaMaisMovimentado?.label || 'N/A'} (${Math.max(...instalacoesPorDia)} instalações)`, margin, legendaY + 12);
+  
+  legendaY += 20;
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Por categoria:', margin, legendaY);
+  pdf.setFont('helvetica', 'normal');
+  legendaY += 6;
+  pdf.text(`• Instalações: ${porCategoria.instalacao}`, margin + 5, legendaY);
+  pdf.text(`• Entregas: ${porCategoria.entrega}`, margin + 5, legendaY + 6);
+  pdf.text(`• Correções: ${porCategoria.correcao}`, margin + 5, legendaY + 12);
+  pdf.text(`• Carregamentos: ${porCategoria.carregamento_agendado}`, margin + 5, legendaY + 18);
 
   // Rodapé
   const rodapeY = pageHeight - 15;

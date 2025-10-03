@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, getDay } from "date-fns";
+import { format, getDay, startOfWeek, endOfWeek } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { InstalacaoCadastrada } from "./useInstalacoesCadastradas";
@@ -16,17 +16,26 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
     try {
       setLoading(true);
       
-      // Buscar instalações que têm data_instalacao definida e são do tipo 'elisa'
+      // Calcular início e fim da semana
+      const inicioSemana = startOfWeek(semanaInicio, { weekStartsOn: 1 });
+      const fimSemana = endOfWeek(semanaInicio, { weekStartsOn: 1 });
+      
+      const inicioFormatado = format(inicioSemana, 'yyyy-MM-dd');
+      const fimFormatado = format(fimSemana, 'yyyy-MM-dd');
+      
+      // Buscar instalações da semana que têm data_instalacao definida e são do tipo 'elisa'
       const { data, error } = await supabase
         .from('instalacoes_cadastradas')
         .select('*')
         .not('data_instalacao', 'is', null)
         .eq('tipo_instalacao', 'elisa')
+        .gte('data_instalacao', inicioFormatado)
+        .lte('data_instalacao', fimFormatado)
         .order('data_instalacao');
 
       if (error) throw error;
 
-      // Filtrar e adicionar dia_semana para cada instalação
+      // Adicionar dia_semana para cada instalação
       const instalacoesComDia: InstalacaoCronograma[] = (data || [])
         .map(instalacao => {
           const dataInstalacao = new Date(instalacao.data_instalacao!);
