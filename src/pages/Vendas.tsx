@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
+import { VendaDetailsModal } from '@/components/vendas/VendaDetailsModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -31,6 +32,8 @@ export default function Vendas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroMinhasVendas, setFiltroMinhasVendas] = useState(true);
   const [filtroVendasMes, setFiltroVendasMes] = useState(true);
+  const [selectedVenda, setSelectedVenda] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -227,7 +230,10 @@ export default function Vendas() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
+                            onClick={() => {
+                              setSelectedVenda(venda);
+                              setDetailsModalOpen(true);
+                            }}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -273,6 +279,12 @@ export default function Vendas() {
           </div>
         </CardContent>
       </Card>
+
+      <VendaDetailsModal 
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        venda={selectedVenda}
+      />
     </div>
   );
 }
