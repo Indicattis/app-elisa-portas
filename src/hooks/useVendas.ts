@@ -191,7 +191,10 @@ export function useVendas() {
       // 6. Atualizar tamanho da instalação com os tamanhos concatenados das portas
       const tamanhosConcatenados = portas.map(p => p.tamanho).join(', ');
       
-      const updateData: any = { tamanho: tamanhosConcatenados };
+      const updateData: any = { 
+        tamanho: tamanhosConcatenados,
+        saldo: valor_a_receber // Transferir o valor a receber como saldo da instalação
+      };
       if (vendaData.data_prevista_entrega) {
         updateData.data_instalacao = vendaData.data_prevista_entrega;
       }
