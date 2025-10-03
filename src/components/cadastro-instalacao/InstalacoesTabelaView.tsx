@@ -187,7 +187,7 @@ export const InstalacoesTabelaView = ({
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
           tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
@@ -235,7 +235,7 @@ export const InstalacoesTabelaView = ({
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
           tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
@@ -263,6 +263,7 @@ export const InstalacoesTabelaView = ({
       instalacao: 'Instalação',
       entrega: 'Entrega',
       correcao: 'Correção',
+      carregamento_agendado: 'Carregamento Agendado',
     };
     return labels[categoria] || categoria;
   };
@@ -290,6 +291,7 @@ export const InstalacoesTabelaView = ({
       instalacao: 'bg-red-500/10 text-red-500 border-red-500/20',
       entrega: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
       correcao: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+      carregamento_agendado: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
     };
     return variants[categoria] || '';
   };
@@ -341,6 +343,7 @@ export const InstalacoesTabelaView = ({
                   <SelectItem value="instalacao">Instalação</SelectItem>
                   <SelectItem value="entrega">Entrega</SelectItem>
                   <SelectItem value="correcao">Correção</SelectItem>
+                  <SelectItem value="carregamento_agendado">Carregamento Agendado</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -650,7 +653,7 @@ export const InstalacoesTabelaView = ({
                 estado: editingInstalacao.estado,
                 cidade: editingInstalacao.cidade,
                 tamanho: editingInstalacao.tamanho || '',
-                categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+                categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
                 data_instalacao: editingInstalacao.data_instalacao || '',
                 data_producao: editingInstalacao.data_producao || '',
                 status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',

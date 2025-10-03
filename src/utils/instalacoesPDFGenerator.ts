@@ -9,7 +9,7 @@ interface InstalacaoCadastrada {
   telefone_cliente?: string | null;
   cidade: string;
   estado: string;
-  categoria: 'instalacao' | 'entrega' | 'correcao';
+  categoria: 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado';
   status: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
   tamanho?: string | null;
   data_instalacao?: string | null;

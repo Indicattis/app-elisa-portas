@@ -31,7 +31,7 @@ const formSchema = z.object({
   estado: z.string().min(2, 'Selecione um estado'),
   cidade: z.string().min(2, 'Selecione uma cidade'),
   tamanho: z.string().optional(),
-  categoria: z.enum(['instalacao', 'entrega', 'correcao'], {
+  categoria: z.enum(['instalacao', 'entrega', 'correcao', 'carregamento_agendado'], {
     required_error: 'Selecione uma categoria',
   }),
   data_instalacao: z.string().optional(),
@@ -247,6 +247,7 @@ export const CadastroInstalacaoForm = ({
                   <SelectItem value="instalacao">Instalação</SelectItem>
                   <SelectItem value="entrega">Entrega</SelectItem>
                   <SelectItem value="correcao">Correção</SelectItem>
+                  <SelectItem value="carregamento_agendado">Carregamento Agendado</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

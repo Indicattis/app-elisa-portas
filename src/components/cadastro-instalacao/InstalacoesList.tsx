@@ -67,7 +67,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
           tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
@@ -115,7 +115,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
           tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
@@ -183,12 +183,15 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                       ? 'bg-red-500/10 text-red-500 border-red-500/20' 
                       : instalacao.categoria === 'entrega'
                       ? 'bg-gray-500/10 text-gray-500 border-gray-500/20'
-                      : 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                      : instalacao.categoria === 'correcao'
+                      ? 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                      : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
                   }
                 >
                   {instalacao.categoria === 'instalacao' && 'Instalação'}
                   {instalacao.categoria === 'entrega' && 'Entrega'}
                   {instalacao.categoria === 'correcao' && 'Correção'}
+                  {instalacao.categoria === 'carregamento_agendado' && 'Carregamento Agendado'}
                 </Badge>
                 <Badge 
                   variant="outline"
@@ -359,7 +362,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                 estado: editingInstalacao.estado,
                 cidade: editingInstalacao.cidade,
                 tamanho: editingInstalacao.tamanho || '',
-                categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
+                categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
                 data_instalacao: editingInstalacao.data_instalacao || '',
                 status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,

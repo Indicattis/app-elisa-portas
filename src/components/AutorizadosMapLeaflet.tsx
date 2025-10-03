@@ -212,13 +212,14 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
 
   // Custom marker icon for instalacoes with color based on categoria
   const createInstalacaoIcon = (
-    categoria: 'instalacao' | 'entrega' | 'correcao' = 'instalacao',
+    categoria: 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado' = 'instalacao',
     status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada'
   ) => {
     const colors = {
       instalacao: '#ef4444', // vermelho
       entrega: '#6b7280',    // cinza
-      correcao: '#a855f7'    // roxo
+      correcao: '#a855f7',   // roxo
+      carregamento_agendado: '#f97316' // laranja
     };
     
     const borderColor = status === 'pronta_fabrica' ? '#22c55e' : 'white';

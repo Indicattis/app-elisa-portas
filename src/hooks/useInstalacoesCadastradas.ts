@@ -9,7 +9,7 @@ export interface InstalacaoCadastrada {
   estado: string;
   cidade: string;
   tamanho: string | null;
-  categoria: 'instalacao' | 'entrega' | 'correcao';
+  categoria: 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado';
   latitude: number | null;
   longitude: number | null;
   last_geocoded_at: string | null;
@@ -40,7 +40,7 @@ export interface CreateInstalacaoData {
   estado: string;
   cidade: string;
   tamanho?: string;
-  categoria: 'instalacao' | 'entrega' | 'correcao';
+  categoria: 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado';
   data_instalacao?: string;
   status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
   tipo_instalacao?: 'elisa' | 'autorizados';
