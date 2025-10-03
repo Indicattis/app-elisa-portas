@@ -14,6 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { canaisAquisicao } from "@/utils/canaisAquisicao";
 import type { Tables } from "@/integrations/supabase/types";
+import { usePortasVenda } from "@/hooks/usePortasVenda";
+import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
+import { PortasVendaTable } from "@/components/vendas/PortasVendaTable";
+import type { ProdutoVenda } from "@/hooks/useVendas";
 
 interface Lead {
   id: string;
@@ -28,6 +32,8 @@ export default function VendaEdit() {
   const [venda, setVenda] = useState<Tables<"vendas"> | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showProdutoForm, setShowProdutoForm] = useState(false);
+  const { portas, isLoading: isLoadingPortas, addPorta, deletePorta } = usePortasVenda(id);
   const [formData, setFormData] = useState({
     valor_venda: "",
     forma_pagamento: "",
@@ -513,6 +519,60 @@ export default function VendaEdit() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Produtos da Venda</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Button onClick={() => setShowProdutoForm(true)}>
+            Adicionar Produto
+          </Button>
+
+          <ProdutoVendaForm 
+            open={showProdutoForm}
+            onOpenChange={setShowProdutoForm}
+            onAddProduto={async (produto: ProdutoVenda) => {
+              await addPorta(produto);
+              setShowProdutoForm(false);
+            }}
+          />
+          
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Produtos Adicionados</h3>
+            {isLoadingPortas ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Carregando produtos...
+              </div>
+            ) : (
+              <PortasVendaTable 
+                portas={(portas || []).map(p => ({
+                  tipo_produto: p.tipo_produto as 'porta' | 'acessorio' | 'adicional',
+                  tamanho: p.tamanho || '',
+                  cor_id: p.cor_id || '',
+                  acessorio_id: p.acessorio_id || '',
+                  adicional_id: p.adicional_id || '',
+                  valor_produto: p.valor_produto,
+                  valor_pintura: p.valor_pintura,
+                  valor_instalacao: p.valor_instalacao,
+                  valor_frete: p.valor_frete,
+                  tipo_desconto: p.tipo_desconto as 'percentual' | 'valor',
+                  desconto_percentual: p.desconto_percentual,
+                  desconto_valor: p.desconto_valor,
+                  quantidade: p.quantidade,
+                  descricao: p.descricao || ''
+                }))} 
+                onRemovePorta={async (index: number) => {
+                  const produto = portas?.[index];
+                  if (produto?.id) {
+                    await deletePorta(produto.id);
+                  }
+                }}
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
