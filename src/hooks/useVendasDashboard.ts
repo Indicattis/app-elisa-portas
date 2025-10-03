@@ -37,7 +37,7 @@ export const useVendasAgregadas = (year: number) => {
           valor_venda,
           valor_frete,
           atendente_id,
-          admin_users!vendas_atendente_id_fkey(nome)
+          admin_users!fk_vendas_atendente(nome)
         `)
         .gte('data_venda', `${year}-01-01`)
         .lte('data_venda', `${year}-12-31`)
@@ -83,7 +83,7 @@ export const useVendasDoDia = (data: string) => {
           valor_venda,
           atendente_id,
           data_venda,
-          admin_users!vendas_atendente_id_fkey(nome, foto_perfil_url)
+          admin_users!fk_vendas_atendente(nome, foto_perfil_url)
         `)
         .gte('data_venda', `${data}T00:00:00`)
         .lte('data_venda', `${data}T23:59:59`)
@@ -175,7 +175,7 @@ export function useRankingVendedoresDia(data: string) {
           id,
           valor_venda,
           valor_frete,
-          atendente:admin_users!vendas_atendente_id_fkey(nome, foto_perfil_url),
+          atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url),
           portas:portas_vendas(id)
         `)
         .gte('data_venda', `${data}T00:00:00`)
