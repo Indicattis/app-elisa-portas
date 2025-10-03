@@ -95,7 +95,7 @@ export default function Vendas() {
       );
 
       // Filtro "Minhas Vendas"
-      const matchesMinhasVendas = !filtroMinhasVendas || venda.atendente_id === userRole?.id;
+      const matchesMinhasVendas = !filtroMinhasVendas || venda.atendente_id === userRole?.user_id;
 
       // Filtro "Vendas deste mês"
       const hoje = new Date();
