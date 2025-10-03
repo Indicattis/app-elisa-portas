@@ -64,7 +64,7 @@ export const useInstalacoesCadastradas = () => {
               .from('admin_users')
               .select('nome, foto_perfil_url')
               .eq('user_id', instalacao.created_by)
-              .single();
+              .maybeSingle();
             
             return {
               ...instalacao,
