@@ -48,7 +48,6 @@ export default function VendaNova() {
     custo_pintura: "",
     valor_instalacao: "",
     valor_frete: "",
-    resgate: false,
     forma_pagamento: "",
     observacoes_venda: "",
     atendente_id: "",
@@ -114,7 +113,6 @@ export default function VendaNova() {
         valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
         valor_frete: parseFloat(formData.valor_frete) || 0,
         valor_venda: valorTotal,
-        resgate: formData.resgate,
         forma_pagamento: formData.forma_pagamento || null,
         observacoes_venda: formData.observacoes_venda || null,
         data_venda: date.toISOString(),
@@ -461,17 +459,6 @@ export default function VendaNova() {
                     required
                   />
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="resgate"
-                  checked={formData.resgate}
-                  onChange={(e) => setFormData({ ...formData, resgate: e.target.checked })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="resgate">Marcar como resgate</Label>
               </div>
             </div>
 

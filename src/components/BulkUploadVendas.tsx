@@ -36,7 +36,6 @@ interface VendaUpload {
   valor_frete: number;
   valor_venda: number;
   lucro_total?: number; // Calculado automaticamente pelo banco
-  resgate?: boolean;
 }
 
 export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplete?: () => void }) {
@@ -66,11 +65,11 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
   }, []);
 
   const generateCSVTemplate = () => {
-    const headers = 'data_venda,atendente_id,publico_alvo,canal_aquisicao_id,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda,resgate';
+    const headers = 'data_venda,atendente_id,publico_alvo,canal_aquisicao_id,estado,cidade,cep,cliente_nome,cliente_telefone,cliente_email,valor_produto,custo_produto,valor_pintura,custo_pintura,valor_instalacao,valor_frete,valor_venda';
     
     const exampleRow = canais.length > 0 && atendentes.length > 0 
-      ? `2024-01-15T10:00:00Z,${atendentes[0].user_id},Residencial,${canais[0].id},RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false`
-      : `2024-01-15T10:00:00Z,SEU_ATENDENTE_ID,Residencial,SEU_CANAL_ID,RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00,false`;
+      ? `2024-01-15T10:00:00Z,${atendentes[0].user_id},Residencial,${canais[0].id},RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00`
+      : `2024-01-15T10:00:00Z,SEU_ATENDENTE_ID,Residencial,SEU_CANAL_ID,RS,Porto Alegre,90000-000,João Silva,51999999999,joao@email.com,5000.00,3000.00,800.00,400.00,500.00,200.00,6500.00`;
     
     return `${headers}\n${exampleRow}`;
   };
@@ -116,8 +115,7 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
         custo_pintura: 400.00,
         valor_instalacao: 500.00,
         valor_frete: 200.00,
-        valor_venda: 6500.00,
-        resgate: false
+        valor_venda: 6500.00
       },
       {
         data_venda: "2024-01-16T14:30:00Z",
@@ -134,8 +132,7 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
         custo_pintura: 600.00,
         valor_instalacao: 800.00,
         valor_frete: 300.00,
-        valor_venda: 10300.00,
-        resgate: true
+        valor_venda: 10300.00
       }
     ], null, 2)
   };
@@ -176,8 +173,6 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
         if (value) {
           if (['valor_produto', 'custo_produto', 'valor_pintura', 'custo_pintura', 'valor_instalacao', 'valor_frete', 'valor_venda'].includes(header)) {
             obj[header] = parseFloat(value);
-          } else if (header === 'resgate') {
-            obj[header] = value.toLowerCase() === 'true';
           } else {
             obj[header] = value;
           }
@@ -415,13 +410,10 @@ export default function BulkUploadVendas({ onUploadComplete }: { onUploadComplet
                 </ul>
               </div>
               <div>
-                <strong>Campos opcionais:</strong> publico_alvo, estado, cidade, bairro, cep, cliente_nome, cliente_telefone, cliente_email, valor_pintura, custo_pintura, valor_instalacao, valor_frete, resgate
+                <strong>Campos opcionais:</strong> publico_alvo, estado, cidade, bairro, cep, cliente_nome, cliente_telefone, cliente_email, valor_pintura, custo_pintura, valor_instalacao, valor_frete
               </div>
               <div>
                 <strong>Valores monetários:</strong> Use ponto (.) como separador decimal (ex: 1234.56)
-              </div>
-              <div>
-                <strong>Campo resgate:</strong> Use true/false (sem aspas no CSV)
               </div>
               <div>
                 <strong>Nota:</strong> O campo lucro_total é calculado automaticamente e não deve ser incluído

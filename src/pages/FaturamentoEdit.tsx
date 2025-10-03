@@ -41,7 +41,6 @@ export default function FaturamentoEdit() {
     custo_pintura: 0,
     valor_instalacao: 0,
     valor_frete: 0,
-    resgate: false,
     observacoes: "",
   });
   const [loading, setLoading] = useState(true);
@@ -74,7 +73,6 @@ export default function FaturamentoEdit() {
         custo_pintura: data.custo_pintura || 0,
         valor_instalacao: data.valor_instalacao || 0,
         valor_frete: data.valor_frete || 0,
-        resgate: data.resgate || false,
         observacoes: data.observacoes_venda || "",
       });
       setLoading(false);
@@ -354,20 +352,6 @@ export default function FaturamentoEdit() {
                   }
                 />
               </div>
-            </div>
-
-            {/* Resgate */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="resgate"
-                checked={formData.resgate}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, resgate: checked as boolean })
-                }
-              />
-              <Label htmlFor="resgate" className="cursor-pointer">
-                Venda com resgate
-              </Label>
             </div>
 
             {/* Observações */}

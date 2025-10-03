@@ -13,7 +13,6 @@ import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Down
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { RequisicoesVenda } from "@/components/RequisicoesVenda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BulkUploadVendas from "@/components/BulkUploadVendas";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +46,6 @@ interface Venda {
   valor_frete: number;
   valor_venda: number;
   lucro_total: number;
-  resgate: boolean;
 }
 
 interface VendaStats {
@@ -113,7 +111,6 @@ export default function Faturamento() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPublico, setFilterPublico] = useState("todos");
-  const [filterResgate, setFilterResgate] = useState("todos");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const { toast } = useToast();
@@ -148,7 +145,6 @@ export default function Faturamento() {
           valor_frete,
           valor_venda,
           lucro_total,
-          resgate,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -350,10 +346,8 @@ export default function Faturamento() {
       (venda.cidade?.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesPublico = filterPublico === "todos" || venda.publico_alvo === filterPublico;
-    const matchesResgate = filterResgate === "todos" || 
-      (filterResgate === "sim" ? venda.resgate : !venda.resgate);
 
-    return matchesSearch && matchesPublico && matchesResgate;
+    return matchesSearch && matchesPublico;
   });
 
   const meses = [
@@ -401,10 +395,9 @@ export default function Faturamento() {
       </div>
 
       <Tabs defaultValue="vendas" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="vendas">Vendas</TabsTrigger>
           <TabsTrigger value="upload">Upload</TabsTrigger>
-          <TabsTrigger value="requisicoes">Requisições</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-6">
@@ -631,17 +624,6 @@ export default function Faturamento() {
                     <SelectItem value="cliente_final">Cliente Final</SelectItem>
                   </SelectContent>
                 </Select>
-
-                <Select value={filterResgate} onValueChange={setFilterResgate}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Resgate" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="sim">Resgate</SelectItem>
-                    <SelectItem value="nao">Normal</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </CardHeader>
             <CardContent>
@@ -661,7 +643,6 @@ export default function Faturamento() {
                       <TableHead className="text-right">Frete</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Lucro</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -714,11 +695,6 @@ export default function Faturamento() {
                             R$ {(venda.lucro_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </span>
                         </TableCell>
-                        <TableCell>
-                          {venda.resgate && (
-                            <Badge variant="destructive">Resgate</Badge>
-                          )}
-                        </TableCell>
                          <TableCell>
                              <div className="flex items-center gap-2">
                                 <Button 
@@ -766,10 +742,6 @@ export default function Faturamento() {
             fetchVendas();
             fetchStats();
           }} />
-        </TabsContent>
-
-        <TabsContent value="requisicoes">
-          <RequisicoesVenda />
         </TabsContent>
       </Tabs>
     </div>
