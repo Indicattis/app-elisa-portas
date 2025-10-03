@@ -55,7 +55,11 @@ export default function VendaEdit() {
     custo_pintura: "",
     valor_instalacao: "",
     valor_frete: "",
-    resgate: false
+    resgate: false,
+    valor_entrada: "",
+    numero_parcelas: "",
+    data_prevista_entrega: "",
+    tipo_entrega: "instalacao"
     // Removido lucro_total pois é uma coluna gerada
   });
 
@@ -113,7 +117,11 @@ export default function VendaEdit() {
         custo_pintura: (vendaData.custo_pintura ? vendaData.custo_pintura * 100 : 0).toString(),
         valor_instalacao: (vendaData.valor_instalacao ? vendaData.valor_instalacao * 100 : 0).toString(),
         valor_frete: (vendaData.valor_frete ? vendaData.valor_frete * 100 : 0).toString(),
-        resgate: vendaData.resgate || false
+        resgate: vendaData.resgate || false,
+        valor_entrada: (vendaData.valor_entrada ? vendaData.valor_entrada * 100 : 0).toString(),
+        numero_parcelas: vendaData.numero_parcelas?.toString() || "",
+        data_prevista_entrega: vendaData.data_prevista_entrega || "",
+        tipo_entrega: vendaData.tipo_entrega || "instalacao"
         // Removido lucro_total pois é uma coluna gerada automaticamente
       });
 
@@ -150,6 +158,9 @@ export default function VendaEdit() {
       const valorVenda = valorProduto + valorPintura + valorInstalacao + valorFrete;
       const lucroTotal = valorVenda - custoTotal;
 
+      const valorEntrada = parseFloat(formData.valor_entrada) / 100;
+      const valorAReceber = valorVenda - valorEntrada;
+
       const updateData = {
         valor_venda: valorVenda,
         forma_pagamento: formData.forma_pagamento || null,
@@ -170,7 +181,12 @@ export default function VendaEdit() {
         custo_pintura: custoPintura,
         valor_instalacao: valorInstalacao,
         valor_frete: valorFrete,
-        resgate: formData.resgate
+        resgate: formData.resgate,
+        valor_entrada: valorEntrada,
+        numero_parcelas: formData.numero_parcelas ? parseInt(formData.numero_parcelas) : null,
+        data_prevista_entrega: formData.data_prevista_entrega || null,
+        tipo_entrega: formData.tipo_entrega,
+        valor_a_receber: valorAReceber
         // Removido lucro_total pois é uma coluna gerada automaticamente
       };
 
@@ -320,6 +336,57 @@ export default function VendaEdit() {
                   value={formData.forma_pagamento}
                   onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value }))}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="valor_entrada">Valor de Entrada</Label>
+                <Input
+                  id="valor_entrada"
+                  placeholder="R$ 0,00"
+                  value={formatCurrency(formData.valor_entrada)}
+                  onChange={(e) => {
+                    const numbers = e.target.value.replace(/\D/g, "");
+                    setFormData(prev => ({ ...prev, valor_entrada: numbers }));
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numero_parcelas">Número de Parcelas</Label>
+                <Input
+                  id="numero_parcelas"
+                  type="number"
+                  placeholder="Ex: 3"
+                  value={formData.numero_parcelas}
+                  onChange={(e) => setFormData(prev => ({ ...prev, numero_parcelas: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="data_prevista_entrega">Data Prevista de Entrega</Label>
+                <Input
+                  id="data_prevista_entrega"
+                  type="date"
+                  value={formData.data_prevista_entrega}
+                  onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tipo_entrega">Tipo de Entrega</Label>
+                <Select
+                  value={formData.tipo_entrega}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="instalacao">Instalação</SelectItem>
+                    <SelectItem value="retirada">Retirada</SelectItem>
+                    <SelectItem value="entrega">Entrega</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
