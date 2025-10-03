@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
-import { format, addDays } from "date-fns";
+import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
-import { usePontosInstalacao } from "@/hooks/usePontosInstalacao";
+import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
 import { PontoInstalacao } from "./PontoInstalacao";
 import { CelulaDia } from "./CelulaDia";
+import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
+import { useState } from "react";
 
 interface CronogramaInstalacaoProps {
   currentWeek: Date;
-  onEditPonto: (ponto: any) => void;
+  onEditPonto: (instalacao: any) => void;
 }
 
 const DIAS_SEMANA = [
@@ -24,16 +25,20 @@ const DIAS_SEMANA = [
 
 export function CronogramaInstalacao({ currentWeek, onEditPonto }: CronogramaInstalacaoProps) {
   const { equipes } = useEquipesInstalacao();
-  const { pontos, updatePonto, deletePonto } = usePontosInstalacao(currentWeek);
+  const { instalacoes, updateInstalacaoData } = useInstalacoesCronograma(currentWeek);
   const { draggedItem, handleDragStart, handleDragEnd } = useDragAndDrop();
+  const [selectedInstalacao, setSelectedInstalacao] = useState<any>(null);
 
   const handleDrop = async (equipId: string, diaSemana: number) => {
-    if (draggedItem && draggedItem.equipId === equipId) {
-      await updatePonto(
+    if (draggedItem && draggedItem.equipId !== equipId) {
+      // Calcular a nova data baseada no dia da semana
+      const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+      const novaData = addDays(weekStart, diaSemana === 0 ? 6 : diaSemana - 1);
+      
+      await updateInstalacaoData(
         draggedItem.id,
         equipId,
-        draggedItem.cidade,
-        diaSemana
+        novaData
       );
     }
   };
@@ -74,8 +79,8 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto }: CronogramaIns
 
               {/* Colunas dos dias */}
               {DIAS_SEMANA.map((dia) => {
-                const pontosNoDia = pontos.filter(
-                  p => p.equipe_id === equipe.id && p.dia_semana === dia.value
+                const instalacoesNoDia = instalacoes.filter(
+                  i => i.responsavel_instalacao_id === equipe.id && i.dia_semana === dia.value
                 );
 
                 return (
@@ -86,15 +91,14 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto }: CronogramaIns
                     onDrop={handleDrop}
                     draggedItem={draggedItem}
                   >
-                    {pontosNoDia.map((ponto) => (
+                    {instalacoesNoDia.map((instalacao) => (
                       <PontoInstalacao
-                        key={ponto.id}
-                        ponto={ponto}
+                        key={instalacao.id}
+                        instalacao={instalacao}
                         cor={equipe.cor}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
-                        onDelete={() => deletePonto(ponto.id)}
-                        onEdit={() => onEditPonto(ponto)}
+                        onEdit={() => setSelectedInstalacao(instalacao)}
                       />
                     ))}
                   </CelulaDia>
@@ -104,6 +108,14 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto }: CronogramaIns
           ))}
         </div>
       </div>
+
+      {selectedInstalacao && (
+        <DetalhesInstalacaoDialog
+          instalacao={selectedInstalacao}
+          open={!!selectedInstalacao}
+          onOpenChange={(open) => !open && setSelectedInstalacao(null)}
+        />
+      )}
     </div>
   );
 }

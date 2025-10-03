@@ -172,21 +172,12 @@ export default function Instalacoes() {
                   {!isMobile && "Baixar PDF"}
                 </Button>
                 <Button 
-                  onClick={() => setShowFormPonto(true)} 
-                  variant="outline" 
-                  size={isMobile ? "sm" : "default"}
-                  className="gap-2"
-                >
-                  <MapPin className="h-4 w-4" />
-                  {!isMobile && "Novo Ponto"}
-                </Button>
-                <Button 
                   onClick={() => setShowEquipes(true)} 
                   size={isMobile ? "sm" : "default"}
                   className="gap-2"
                 >
                   <Settings className="h-4 w-4" />
-                  {!isMobile && "Equipes"}
+                  {!isMobile && "Gerenciar Equipes"}
                 </Button>
               </div>
             )}
