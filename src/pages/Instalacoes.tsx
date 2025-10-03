@@ -171,15 +171,6 @@ export default function Instalacoes() {
             
             {activeTab === "lista" && (
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleDownloadInstalacoesPDF}
-                  variant="outline" 
-                  size={isMobile ? "sm" : "default"}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  {!isMobile && "Baixar PDF"}
-                </Button>
                 {isAdmin && (
                   <Button 
                     onClick={() => setShowCadastroModal(true)}
