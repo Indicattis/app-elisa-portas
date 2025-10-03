@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +24,8 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/vendas/StatusBadge";
 import { QuickFiltersBar } from "@/components/vendas/QuickFiltersBar";
+import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
+import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
 
 interface Venda {
   id: string;
@@ -50,6 +52,7 @@ interface Venda {
   valor_frete: number;
   valor_venda: number;
   lucro_total: number;
+  portas?: any[];
 }
 
 interface VendaStats {
@@ -128,12 +131,39 @@ export default function Faturamento() {
     serralheiro: false,
     clienteFinal: false,
   });
+  const [selectedVenda, setSelectedVenda] = useState<any>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   // Função para verificar se uma venda está faturada
   const isFaturada = (venda: Venda) => {
     return (venda.custo_produto || 0) > 0 || (venda.custo_pintura || 0) > 0;
+  };
+
+  // Função para calcular total de descontos
+  const calculateTotalDiscount = (venda: Venda) => {
+    const portas = venda.portas || [];
+    
+    let totalDescontoValor = 0;
+    
+    portas.forEach((produto: any) => {
+      if (produto.tipo_desconto === 'valor') {
+        totalDescontoValor += produto.desconto_valor || 0;
+      } else if (produto.tipo_desconto === 'percentual') {
+        const valorProduto = produto.valor_produto || 0;
+        const desconto = (valorProduto * (produto.desconto_percentual || 0)) / 100;
+        totalDescontoValor += desconto;
+      }
+    });
+    
+    return totalDescontoValor;
+  };
+
+  // Handler de double click
+  const handleRowDoubleClick = (venda: Venda) => {
+    setSelectedVenda(venda);
+    setIsDetailsModalOpen(true);
   };
 
   useEffect(() => {
@@ -168,6 +198,20 @@ export default function Faturamento() {
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
+          ),
+          portas_vendas (
+            id,
+            tipo_produto,
+            descricao,
+            valor_produto,
+            valor_pintura,
+            valor_instalacao,
+            valor_total,
+            quantidade,
+            desconto_percentual,
+            desconto_valor,
+            tipo_desconto,
+            tamanho
           )
         `)
         .order("data_venda", { ascending: false });
@@ -203,12 +247,13 @@ export default function Faturamento() {
         });
       }
 
-      const vendasCompletas = vendasData.map((venda) => {
+      const vendasCompletas = vendasData.map((venda: any) => {
         const atendenteData = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
         return {
           ...venda,
           atendente_nome: atendenteData?.nome || "Atendente não encontrado",
           atendente_foto: atendenteData?.foto || null,
+          portas: venda.portas_vendas || [],
         };
       });
 
@@ -754,32 +799,30 @@ export default function Faturamento() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Atendente</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Público</TableHead>
-                      <TableHead>Canal</TableHead>
-                      <TableHead>Localização</TableHead>
-                      <TableHead className="text-right">Produto</TableHead>
-                      <TableHead className="text-right">Pintura</TableHead>
+                      <TableHead>Produtos</TableHead>
+                      <TableHead className="text-right">Valor Produtos</TableHead>
+                      <TableHead className="text-right">Descontos</TableHead>
+                      <TableHead className="text-right">Custos</TableHead>
                       <TableHead className="text-right">Instalação</TableHead>
                       <TableHead className="text-right">Frete</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="text-right">Lucro</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredVendas.map((venda) => (
-                      <TableRow key={venda.id}>
-                        <TableCell>
-                          {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
+                      <TableRow 
+                        key={venda.id}
+                        onDoubleClick={() => handleRowDoubleClick(venda)}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        title="Clique duas vezes para ver todos os detalhes"
+                      >
                         <TableCell>
                           <StatusBadge isFaturada={isFaturada(venda)} />
                         </TableCell>
-                        <TableCell className="font-medium">
+                        
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={venda.atendente_foto || undefined} alt={venda.atendente_nome} />
@@ -787,82 +830,85 @@ export default function Faturamento() {
                                 {venda.atendente_nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span>{venda.atendente_nome}</span>
+                            <span className="text-sm font-medium">{venda.atendente_nome}</span>
                           </div>
                         </TableCell>
+
                         <TableCell>
-                          <div>
-                            <p className="font-medium">{venda.cliente_nome}</p>
-                            <p className="text-sm text-muted-foreground">{venda.cliente_telefone}</p>
-                          </div>
+                          <ProductIconsSummary venda={venda} />
                         </TableCell>
-                        <TableCell>
-                          {venda.publico_alvo && (
-                            <Badge variant={venda.publico_alvo === 'serralheiro' ? 'default' : 'secondary'}>
-                              {venda.publico_alvo === 'serralheiro' ? 'Serralheiro' : 'Cliente Final'}
+
+                        <TableCell className="text-right font-medium">
+                          R$ {((venda.valor_produto || 0) + (venda.valor_pintura || 0))
+                            .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          {calculateTotalDiscount(venda) > 0 ? (
+                            <Badge variant="destructive" className="font-medium">
+                              - R$ {calculateTotalDiscount(venda).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{venda.canais_aquisicao?.nome || 'Canal não especificado'}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {venda.cidade && venda.estado ? `${venda.cidade}, ${venda.estado}` : '-'}
-                        </TableCell>
+
                         <TableCell className="text-right">
-                          R$ {(venda.valor_produto || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          <span className="font-medium text-orange-600">
+                            R$ {((venda.custo_produto || 0) + (venda.custo_pintura || 0))
+                              .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </span>
                         </TableCell>
-                        <TableCell className="text-right">
-                          R$ {(venda.valor_pintura || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </TableCell>
+
                         <TableCell className="text-right">
                           R$ {(venda.valor_instalacao || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
+
                         <TableCell className="text-right">
                           R$ {(venda.valor_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          R$ {((venda.valor_produto || 0) + (venda.valor_pintura || 0) + 
-                            (venda.valor_instalacao || 0) + (venda.valor_frete || 0)).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className={venda.lucro_total > 0 ? "text-green-600 font-medium" : "text-red-600"}>
-                            R$ {(venda.lucro_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </span>
-                        </TableCell>
-                         <TableCell>
-                             <div className="flex items-center gap-2">
+
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/dashboard/faturamento/${venda.id}/editar`);
+                              }}
+                              title="Editar faturamento"
+                            >
+                              <Receipt className="w-4 h-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
                                 <Button 
                                   variant="ghost" 
-                                  size="sm"
-                                  onClick={() => navigate(`/dashboard/faturamento/${venda.id}/editar`)}
-                                  title="Editar faturamento"
+                                  size="sm" 
+                                  title="Excluir venda"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <Receipt className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4 text-red-500" />
                                 </Button>
-                               <AlertDialog>
-                                   <AlertDialogTrigger asChild>
-                                     <Button variant="ghost" size="sm" title="Excluir venda">
-                                       <Trash2 className="w-4 h-4 text-red-500" />
-                                     </Button>
-                                   </AlertDialogTrigger>
-                                   <AlertDialogContent>
-                                     <AlertDialogHeader>
-                                       <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                       <AlertDialogDescription>
-                                         Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
-                                       </AlertDialogDescription>
-                                     </AlertDialogHeader>
-                                     <AlertDialogFooter>
-                                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                       <AlertDialogAction onClick={() => handleDeleteVenda(venda.id)}>
-                                         Excluir
-                                       </AlertDialogAction>
-                                     </AlertDialogFooter>
-                                   </AlertDialogContent>
-                                 </AlertDialog>
-                            </div>
-                          </TableCell>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteVenda(venda.id)}>
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -872,6 +918,7 @@ export default function Faturamento() {
           </Card>
         </TabsContent>
 
+
         <TabsContent value="upload">
           <BulkUploadVendas onUploadComplete={() => {
             fetchVendas();
@@ -879,6 +926,12 @@ export default function Faturamento() {
           }} />
         </TabsContent>
       </Tabs>
+
+      <VendaDetailsModal
+        open={isDetailsModalOpen}
+        onOpenChange={setIsDetailsModalOpen}
+        venda={selectedVenda}
+      />
     </div>
   );
 }

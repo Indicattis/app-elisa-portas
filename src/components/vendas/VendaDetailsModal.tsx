@@ -2,7 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { User, MapPin, Calendar, DollarSign, FileText, Package, Phone, Mail } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { User, MapPin, Calendar, DollarSign, FileText, Package, Phone, Mail, Percent, Receipt, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -29,6 +30,30 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
   const formatDateOnly = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
   };
+
+  // Calcular total de descontos
+  const calculateTotalDiscount = () => {
+    const portas = venda.portas || [];
+    let totalDescontoValor = 0;
+    
+    portas.forEach((produto: any) => {
+      if (produto.tipo_desconto === 'valor') {
+        totalDescontoValor += produto.desconto_valor || 0;
+      } else if (produto.tipo_desconto === 'percentual') {
+        const valorProduto = produto.valor_produto || 0;
+        const desconto = (valorProduto * (produto.desconto_percentual || 0)) / 100;
+        totalDescontoValor += desconto;
+      }
+    });
+    
+    return totalDescontoValor;
+  };
+
+  const totalDesconto = calculateTotalDiscount();
+  const custosTotal = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
+  const receitaTotal = venda.valor_venda || 0;
+  const lucroBruto = receitaTotal - custosTotal;
+  const margemLucro = receitaTotal > 0 ? (lucroBruto / receitaTotal) * 100 : 0;
 
   // Calcular valor sem frete
   const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
@@ -144,6 +169,72 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
             </CardContent>
           </Card>
 
+          {/* Descontos Aplicados */}
+          {totalDesconto > 0 && (
+            <Card className="border-orange-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg text-orange-600">
+                  <Percent className="w-4 h-4" />
+                  Descontos Aplicados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {venda.portas?.map((produto: any, index: number) => {
+                    if ((produto.desconto_percentual || 0) === 0 && (produto.desconto_valor || 0) === 0) return null;
+                    
+                    const descontoProduto = produto.tipo_desconto === 'percentual'
+                      ? (produto.valor_produto * produto.desconto_percentual) / 100
+                      : produto.desconto_valor;
+                    
+                    return (
+                      <div key={index} className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">
+                          {produto.tipo_produto} - {produto.descricao || 'Sem descrição'}
+                        </span>
+                        <Badge variant="destructive" className="font-medium">
+                          - {formatCurrency(descontoProduto)}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                  <Separator />
+                  <div className="flex justify-between font-bold pt-2">
+                    <span>Total em Descontos:</span>
+                    <span className="text-orange-600">- {formatCurrency(totalDesconto)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Custos de Produção */}
+          <Card className="border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg text-purple-600">
+                <Receipt className="w-4 h-4" />
+                Custos de Produção
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Custo Produto:</span>
+                  <span className="font-medium">{formatCurrency(venda.custo_produto || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Custo Pintura:</span>
+                  <span className="font-medium">{formatCurrency(venda.custo_pintura || 0)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total Custos:</span>
+                  <span className="text-purple-600">{formatCurrency(custosTotal)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Informações da Venda */}
           <Card>
             <CardHeader>
@@ -205,6 +296,44 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
             </CardContent>
           </Card>
         </div>
+
+
+        {/* Análise de Lucro */}
+        <Card className="mt-4 border-2 border-green-600">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg text-green-600">
+              <TrendingUp className="w-4 h-4" />
+              Análise de Lucro
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Receita Total:</span>
+                <span className="font-medium">{formatCurrency(receitaTotal)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Custos Totais:</span>
+                <span className="font-medium text-red-600">
+                  - {formatCurrency(custosTotal)}
+                </span>
+              </div>
+              <Separator className="my-2" />
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-bold">Lucro Bruto:</span>
+                <span className={`text-2xl font-bold ${lucroBruto > 0 ? "text-green-600" : "text-red-600"}`}>
+                  {formatCurrency(lucroBruto)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Margem de Lucro:</span>
+                <Badge variant={margemLucro > 20 ? "default" : margemLucro > 10 ? "secondary" : "destructive"}>
+                  {margemLucro.toFixed(1)}%
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Produtos */}
         {venda.portas && venda.portas.length > 0 && (
