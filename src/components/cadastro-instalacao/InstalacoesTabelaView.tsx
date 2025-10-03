@@ -9,6 +9,8 @@ import {
   Search,
   X,
   ArrowUpDown,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
+import { AlterarParaCorrecaoDialog } from './AlterarParaCorrecaoDialog';
+import { AlterarStatusDialog } from './AlterarStatusDialog';
 import { ESTADOS_BRASIL } from '@/utils/estadosCidades';
 import { baixarInstalacoesPDF } from '@/utils/instalacoesPDFGenerator';
 import { toast } from 'sonner';
@@ -45,6 +49,9 @@ interface InstalacoesTabelaViewProps {
   instalacoes: InstalacaoCadastrada[];
   onDelete: (id: string) => void;
   onUpdate: (id: string, data: CreateInstalacaoData) => Promise<boolean>;
+  onAlterarParaCorrecao: (id: string, justificativa: string) => void;
+  onUpdateStatus: (id: string, status: string) => void;
+  isAdmin: boolean;
 }
 
 type SortField = 'nome_cliente' | 'cidade' | 'data_instalacao' | 'created_at';
@@ -54,8 +61,13 @@ export const InstalacoesTabelaView = ({
   instalacoes,
   onDelete,
   onUpdate,
+  onAlterarParaCorrecao,
+  onUpdateStatus,
+  isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
+  const [correcaoInstalacao, setCorrecaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
+  const [statusInstalacao, setStatusInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategoria, setFilterCategoria] = useState<string>('all');
@@ -313,6 +325,7 @@ export const InstalacoesTabelaView = ({
                       </TableHead>
                       <TableHead>Responsável</TableHead>
                       <TableHead>Saldo</TableHead>
+                      <TableHead>Data Produção</TableHead>
                       <TableHead>Geocodificação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -358,6 +371,11 @@ export const InstalacoesTabelaView = ({
                               }).format(instalacao.saldo)
                             : '-'}
                         </TableCell>
+                        <TableCell className="text-sm">
+                          {instalacao.data_producao
+                            ? format(new Date(instalacao.data_producao), 'dd/MM/yyyy')
+                            : '-'}
+                        </TableCell>
                         <TableCell>
                           {instalacao.latitude && instalacao.longitude ? (
                             <Badge variant="default" className="bg-green-500">
@@ -371,22 +389,47 @@ export const InstalacoesTabelaView = ({
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end">
+                          <div className="flex gap-1 justify-end flex-wrap">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleEdit(instalacao)}
+                              onClick={() => setStatusInstalacao(instalacao)}
+                              title="Alterar Status"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <RefreshCw className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onDelete(instalacao.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {isAdmin && instalacao.categoria !== 'correcao' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCorrecaoInstalacao(instalacao)}
+                                title="Alterar para Correção"
+                                className="text-orange-500 hover:text-orange-600"
+                              >
+                                <AlertCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {isAdmin && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(instalacao)}
+                                  title="Editar"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onDelete(instalacao.id)}
+                                  className="text-destructive hover:text-destructive"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -457,6 +500,7 @@ export const InstalacoesTabelaView = ({
                 tamanho: editingInstalacao.tamanho || '',
                 categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
                 data_instalacao: editingInstalacao.data_instalacao || '',
+                data_producao: editingInstalacao.data_producao || '',
                 status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
                 responsavel_instalacao_id: editingInstalacao.responsavel_instalacao_id || undefined,
@@ -468,6 +512,29 @@ export const InstalacoesTabelaView = ({
           )}
         </DialogContent>
       </Dialog>
+
+      <AlterarParaCorrecaoDialog
+        open={!!correcaoInstalacao}
+        onOpenChange={(open) => !open && setCorrecaoInstalacao(null)}
+        onConfirm={(justificativa) => {
+          if (correcaoInstalacao) {
+            onAlterarParaCorrecao(correcaoInstalacao.id, justificativa);
+          }
+        }}
+        instalacaoNome={correcaoInstalacao?.nome_cliente || ''}
+      />
+
+      <AlterarStatusDialog
+        open={!!statusInstalacao}
+        onOpenChange={(open) => !open && setStatusInstalacao(null)}
+        onConfirm={(status) => {
+          if (statusInstalacao) {
+            onUpdateStatus(statusInstalacao.id, status);
+          }
+        }}
+        currentStatus={statusInstalacao?.status || 'pendente_producao'}
+        instalacaoNome={statusInstalacao?.nome_cliente || ''}
+      />
     </div>
   );
 };

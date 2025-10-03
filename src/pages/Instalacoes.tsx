@@ -3,6 +3,7 @@ import { format, startOfWeek, addWeeks, subWeeks, addDays, startOfDay } from "da
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, MapPin, Download, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,11 +41,20 @@ export default function Instalacoes() {
   const swipeRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   // Hooks para dados
   const { equipes } = useEquipesInstalacao();
   const { pontos } = usePontosInstalacao(currentWeek);
-  const { instalacoes, loading: loadingInstalacoes, createInstalacao, deleteInstalacao, updateInstalacao } = useInstalacoesCadastradas();
+  const { 
+    instalacoes, 
+    loading: loadingInstalacoes, 
+    createInstalacao, 
+    deleteInstalacao, 
+    updateInstalacao,
+    alterarParaCorrecao,
+    updateStatus 
+  } = useInstalacoesCadastradas();
 
   // Navegação de dias e semanas
   const nextDay = () => setCurrentDate(prev => addDays(prev, 1));
@@ -192,14 +202,16 @@ export default function Instalacoes() {
                   <Download className="h-4 w-4" />
                   {!isMobile && "Baixar PDF"}
                 </Button>
-                <Button 
-                  onClick={() => setShowCadastroModal(true)}
-                  size={isMobile ? "sm" : "default"}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  {!isMobile && "Nova Instalação"}
-                </Button>
+                {isAdmin && (
+                  <Button 
+                    onClick={() => setShowCadastroModal(true)}
+                    size={isMobile ? "sm" : "default"}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {!isMobile && "Nova Instalação"}
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -287,10 +299,13 @@ export default function Instalacoes() {
 
           <TabsContent value="lista" className="mt-0">
             <InstalacoesTabelaView
-              instalacoes={instalacoes}
-              onDelete={deleteInstalacao}
-              onUpdate={updateInstalacao}
-            />
+                  instalacoes={instalacoes}
+                  onDelete={deleteInstalacao}
+                  onUpdate={updateInstalacao}
+                  onAlterarParaCorrecao={alterarParaCorrecao}
+                  onUpdateStatus={updateStatus}
+                  isAdmin={isAdmin}
+                />
           </TabsContent>
         </Tabs>
       </div>

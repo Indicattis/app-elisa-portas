@@ -811,14 +811,18 @@ export type Database = {
       }
       instalacoes_cadastradas: {
         Row: {
+          alterado_para_correcao_em: string | null
+          alterado_para_correcao_por: string | null
           categoria: string
           cidade: string
           created_at: string
           created_by: string | null
           data_instalacao: string | null
+          data_producao: string | null
           estado: string
           geocode_precision: string | null
           id: string
+          justificativa_correcao: string | null
           last_geocoded_at: string | null
           latitude: number | null
           longitude: number | null
@@ -836,14 +840,18 @@ export type Database = {
           valor_a_receber: number | null
         }
         Insert: {
+          alterado_para_correcao_em?: string | null
+          alterado_para_correcao_por?: string | null
           categoria?: string
           cidade: string
           created_at?: string
           created_by?: string | null
           data_instalacao?: string | null
+          data_producao?: string | null
           estado: string
           geocode_precision?: string | null
           id?: string
+          justificativa_correcao?: string | null
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -861,14 +869,18 @@ export type Database = {
           valor_a_receber?: number | null
         }
         Update: {
+          alterado_para_correcao_em?: string | null
+          alterado_para_correcao_por?: string | null
           categoria?: string
           cidade?: string
           created_at?: string
           created_by?: string | null
           data_instalacao?: string | null
+          data_producao?: string | null
           estado?: string
           geocode_precision?: string | null
           id?: string
+          justificativa_correcao?: string | null
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -885,7 +897,22 @@ export type Database = {
           updated_at?: string
           valor_a_receber?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "instalacoes_cadastradas_alterado_para_correcao_por_fkey"
+            columns: ["alterado_para_correcao_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "instalacoes_cadastradas_alterado_para_correcao_por_fkey"
+            columns: ["alterado_para_correcao_por"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       lead_anexos: {
         Row: {

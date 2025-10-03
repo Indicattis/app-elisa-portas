@@ -35,6 +35,7 @@ const formSchema = z.object({
     required_error: 'Selecione uma categoria',
   }),
   data_instalacao: z.string().optional(),
+  data_producao: z.string().optional(),
   status: z.enum(['pendente_producao', 'pronta_fabrica', 'finalizada']).optional(),
   tipo_instalacao: z.string().optional(),
   responsavel_instalacao_id: z.string().optional(),
@@ -72,6 +73,7 @@ export const CadastroInstalacaoForm = ({
       tamanho: '',
       categoria: 'instalacao',
       data_instalacao: undefined,
+      data_producao: undefined,
       status: 'pendente_producao',
       tipo_instalacao: undefined,
       responsavel_instalacao_id: undefined,
@@ -274,7 +276,7 @@ export const CadastroInstalacaoForm = ({
               <FormItem>
                 <FormLabel>Data da Instalação (Opcional)</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input type="date" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -283,27 +285,41 @@ export const CadastroInstalacaoForm = ({
 
           <FormField
             control={form.control}
-            name="status"
+            name="data_producao"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="pendente_producao">Pendente Produção</SelectItem>
-                    <SelectItem value="pronta_fabrica">Pronta Fábrica</SelectItem>
-                    <SelectItem value="finalizada">Finalizada</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormLabel>Data Produção (Opcional)</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} value={field.value || ''} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="pendente_producao">Pendente Produção</SelectItem>
+                  <SelectItem value="pronta_fabrica">Pronta Fábrica</SelectItem>
+                  <SelectItem value="finalizada">Finalizada</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

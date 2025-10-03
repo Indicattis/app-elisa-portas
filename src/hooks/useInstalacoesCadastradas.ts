@@ -20,6 +20,10 @@ export interface InstalacaoCadastrada {
   responsavel_instalacao_id: string | null;
   responsavel_instalacao_nome: string | null;
   saldo: number | null;
+  data_producao: string | null;
+  justificativa_correcao: string | null;
+  alterado_para_correcao_em: string | null;
+  alterado_para_correcao_por: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -42,6 +46,7 @@ export interface CreateInstalacaoData {
   responsavel_instalacao_id?: string;
   responsavel_instalacao_nome?: string;
   saldo?: number;
+  data_producao?: string;
 }
 
 export const useInstalacoesCadastradas = () => {
@@ -253,6 +258,48 @@ export const useInstalacoesCadastradas = () => {
     };
   }, []);
 
+  const alterarParaCorrecao = async (id: string, justificativa: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { error } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({
+          categoria: 'correcao',
+          justificativa_correcao: justificativa,
+          alterado_para_correcao_em: new Date().toISOString(),
+          alterado_para_correcao_por: user.id
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Instalação alterada para correção com sucesso');
+      await fetchInstalacoes();
+    } catch (error) {
+      console.error('Error alterando para correção:', error);
+      toast.error('Erro ao alterar a instalação para correção');
+    }
+  };
+
+  const updateStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Status atualizado com sucesso');
+      await fetchInstalacoes();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Erro ao atualizar o status');
+    }
+  };
+
   return {
     instalacoes,
     loading,
@@ -260,5 +307,7 @@ export const useInstalacoesCadastradas = () => {
     createInstalacao,
     updateInstalacao,
     deleteInstalacao,
+    alterarParaCorrecao,
+    updateStatus,
   };
 };
