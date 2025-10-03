@@ -12,12 +12,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { canaisAquisicao } from "@/utils/canaisAquisicao";
 import type { Tables } from "@/integrations/supabase/types";
 import { usePortasVenda } from "@/hooks/usePortasVenda";
 import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
 import { PortasVendaTable } from "@/components/vendas/PortasVendaTable";
 import type { ProdutoVenda } from "@/hooks/useVendas";
+import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 
 interface Lead {
   id: string;
@@ -34,11 +34,12 @@ export default function VendaEdit() {
   const [loading, setLoading] = useState(false);
   const [showProdutoForm, setShowProdutoForm] = useState(false);
   const { portas, isLoading: isLoadingPortas, addPorta, deletePorta } = usePortasVenda(id);
+  const { canais } = useCanaisAquisicao();
   const [formData, setFormData] = useState({
     valor_venda: "",
     forma_pagamento: "",
     observacoes_venda: "",
-    canal_aquisicao: "Google",
+    canal_aquisicao_id: "",
     data_venda: "",
     estado: "",
     cidade: "",
@@ -96,7 +97,7 @@ export default function VendaEdit() {
         valor_venda: (vendaData.valor_venda ? vendaData.valor_venda * 100 : 0).toString(),
         forma_pagamento: vendaData.forma_pagamento || "",
         observacoes_venda: vendaData.observacoes_venda || "",
-        canal_aquisicao: vendaData.canal_aquisicao_id || "Google",
+        canal_aquisicao_id: vendaData.canal_aquisicao_id || "",
         data_venda: new Date(vendaData.data_venda).toISOString().slice(0, 16),
         estado: vendaData.estado || "",
         cidade: vendaData.cidade || "",
@@ -153,7 +154,7 @@ export default function VendaEdit() {
         valor_venda: valorVenda,
         forma_pagamento: formData.forma_pagamento || null,
         observacoes_venda: formData.observacoes_venda || null,
-        canal_aquisicao_id: formData.canal_aquisicao,
+        canal_aquisicao_id: formData.canal_aquisicao_id || null,
         data_venda: new Date(formData.data_venda).toISOString(),
         estado: formData.estado || null,
         cidade: formData.cidade || null,
@@ -285,25 +286,26 @@ export default function VendaEdit() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="serralheiro">Serralheiro</SelectItem>
                     <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                    <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                    <SelectItem value="empresa">Empresa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="canal_aquisicao">Canal de Aquisição *</Label>
+                <Label htmlFor="canal_aquisicao_id">Canal de Aquisição *</Label>
                 <Select
-                  value={formData.canal_aquisicao}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao: value }))}
+                  value={formData.canal_aquisicao_id}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    {canaisAquisicao.map((canal) => (
-                      <SelectItem key={canal} value={canal}>
-                        {canal}
+                    {canais.map((canal) => (
+                      <SelectItem key={canal.id} value={canal.id}>
+                        {canal.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
