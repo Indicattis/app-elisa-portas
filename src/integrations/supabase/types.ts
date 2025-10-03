@@ -882,15 +882,7 @@ export type Database = {
           updated_at?: string
           valor_a_receber?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "instalacoes_cadastradas_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       lead_anexos: {
         Row: {
