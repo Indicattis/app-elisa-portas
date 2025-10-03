@@ -825,6 +825,7 @@ export type Database = {
           nome_cliente: string
           responsavel_instalacao_id: string | null
           responsavel_instalacao_nome: string | null
+          saldo: number | null
           status: string
           tamanho: string | null
           telefone_cliente: string | null
@@ -849,6 +850,7 @@ export type Database = {
           nome_cliente: string
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
+          saldo?: number | null
           status?: string
           tamanho?: string | null
           telefone_cliente?: string | null
@@ -873,6 +875,7 @@ export type Database = {
           nome_cliente?: string
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
+          saldo?: number | null
           status?: string
           tamanho?: string | null
           telefone_cliente?: string | null

@@ -38,6 +38,7 @@ const formSchema = z.object({
   status: z.enum(['pendente_producao', 'pronta_fabrica', 'finalizada']).optional(),
   tipo_instalacao: z.string().optional(),
   responsavel_instalacao_id: z.string().optional(),
+  saldo: z.string().optional(),
 });
 
 interface CadastroInstalacaoFormProps {
@@ -74,6 +75,7 @@ export const CadastroInstalacaoForm = ({
       status: 'pendente_producao',
       tipo_instalacao: undefined,
       responsavel_instalacao_id: undefined,
+      saldo: 0,
     },
   });
 
@@ -112,6 +114,7 @@ export const CadastroInstalacaoForm = ({
         responsavel_instalacao_id: values.responsavel_instalacao_id && values.responsavel_instalacao_id.trim() !== ''
           ? values.responsavel_instalacao_id
           : undefined,
+        saldo: values.saldo ? parseFloat(values.saldo as any) : 0,
       };
       
       await onSubmit(dataToSubmit);
@@ -380,6 +383,26 @@ export const CadastroInstalacaoForm = ({
             )}
           />
         )}
+
+        <FormField
+          control={form.control}
+          name="saldo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Saldo (Opcional)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="0.00" 
+                  {...field} 
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

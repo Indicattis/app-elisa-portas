@@ -6,6 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
 import { FormPonto } from "@/components/cronograma/FormPonto";
@@ -32,6 +33,7 @@ export default function Instalacoes() {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeTab, setActiveTab] = useState("cronograma");
+  const [showCadastroModal, setShowCadastroModal] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
@@ -144,8 +146,6 @@ export default function Instalacoes() {
               <p className="text-sm text-muted-foreground">
                 {activeTab === "cronograma" 
                   ? "Gerencie cronogramas de instalação" 
-                  : activeTab === "cadastro"
-                  ? "Cadastre novas instalações"
                   : "Visualize todas as instalações cadastradas"}
               </p>
             </div>
@@ -181,25 +181,31 @@ export default function Instalacoes() {
               </div>
             )}
             
-            {(activeTab === "cadastro" || activeTab === "lista") && (
-              <Button 
-                onClick={handleDownloadInstalacoesPDF}
-                variant="outline" 
-                size={isMobile ? "sm" : "default"}
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                {!isMobile && "Baixar PDF"}
-              </Button>
+            {activeTab === "lista" && (
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleDownloadInstalacoesPDF}
+                  variant="outline" 
+                  size={isMobile ? "sm" : "default"}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {!isMobile && "Baixar PDF"}
+                </Button>
+                <Button 
+                  onClick={() => setShowCadastroModal(true)}
+                  size={isMobile ? "sm" : "default"}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {!isMobile && "Nova Instalação"}
+                </Button>
+              </div>
             )}
           </div>
 
-          <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-6">
+          <TabsList className="grid w-full max-w-xl grid-cols-2 mb-6">
             <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
-            <TabsTrigger value="cadastro">
-              <Plus className="h-4 w-4 mr-2" />
-              Cadastro
-            </TabsTrigger>
             <TabsTrigger value="lista">
               <MapPin className="h-4 w-4 mr-2" />
               Instalações
@@ -279,33 +285,6 @@ export default function Instalacoes() {
             )}
           </TabsContent>
 
-          <TabsContent value="cadastro" className="mt-0">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Formulário */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Nova Instalação</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CadastroInstalacaoForm
-                    onSubmit={async (data) => {
-                      await createInstalacao(data);
-                    }}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Lista */}
-              <div>
-                <InstalacoesList
-                  instalacoes={instalacoes}
-                  onDelete={deleteInstalacao}
-                  onUpdate={updateInstalacao}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
           <TabsContent value="lista" className="mt-0">
             <InstalacoesTabelaView
               instalacoes={instalacoes}
@@ -332,6 +311,23 @@ export default function Instalacoes() {
         ponto={selectedPonto}
         currentWeek={currentWeek}
       />
+
+      <Dialog open={showCadastroModal} onOpenChange={setShowCadastroModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Cadastrar Nova Instalação</DialogTitle>
+            <DialogDescription>
+              Preencha os dados para cadastrar uma nova instalação
+            </DialogDescription>
+          </DialogHeader>
+          <CadastroInstalacaoForm 
+            onSubmit={async (data) => {
+              await createInstalacao(data);
+              setShowCadastroModal(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

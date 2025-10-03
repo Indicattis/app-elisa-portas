@@ -120,6 +120,15 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                   <span className="font-medium">Tamanho:</span> {instalacao.tamanho}
                 </p>
               )}
+              {instalacao.saldo !== null && instalacao.saldo !== undefined && instalacao.saldo > 0 && (
+                <p className="text-sm">
+                  <span className="font-medium">Saldo:</span>{' '}
+                  {new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                  }).format(instalacao.saldo)}
+                </p>
+              )}
               {instalacao.data_instalacao && (
                 <p className="text-sm">
                   <span className="font-medium">Data da Instalação:</span>{' '}
@@ -211,6 +220,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
                 responsavel_instalacao_id: editingInstalacao.responsavel_instalacao_id || undefined,
                 responsavel_instalacao_nome: editingInstalacao.responsavel_instalacao_nome || undefined,
+                saldo: editingInstalacao.saldo || 0,
               }}
               isEditing={true}
             />

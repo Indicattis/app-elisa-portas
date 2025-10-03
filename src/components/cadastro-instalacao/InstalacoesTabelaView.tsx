@@ -312,6 +312,8 @@ export const InstalacoesTabelaView = ({
                         </Button>
                       </TableHead>
                       <TableHead>Responsável</TableHead>
+                      <TableHead>Saldo</TableHead>
+                      <TableHead>Geocodificação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -327,9 +329,6 @@ export const InstalacoesTabelaView = ({
                             <span className="text-sm">
                               {instalacao.cidade}, {instalacao.estado}
                             </span>
-                            {instalacao.latitude && instalacao.longitude && (
-                              <MapPin className="h-3 w-3 text-green-500" />
-                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -350,6 +349,26 @@ export const InstalacoesTabelaView = ({
                         </TableCell>
                         <TableCell className="text-sm">
                           {instalacao.responsavel_instalacao_nome || '-'}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {instalacao.saldo 
+                            ? new Intl.NumberFormat('pt-BR', { 
+                                style: 'currency', 
+                                currency: 'BRL' 
+                              }).format(instalacao.saldo)
+                            : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {instalacao.latitude && instalacao.longitude ? (
+                            <Badge variant="default" className="bg-green-500">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              Geocodificado
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              Processando
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
@@ -442,6 +461,7 @@ export const InstalacoesTabelaView = ({
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
                 responsavel_instalacao_id: editingInstalacao.responsavel_instalacao_id || undefined,
                 responsavel_instalacao_nome: editingInstalacao.responsavel_instalacao_nome || undefined,
+                saldo: editingInstalacao.saldo || 0,
               }}
               isEditing={true}
             />

@@ -19,6 +19,7 @@ export interface InstalacaoCadastrada {
   tipo_instalacao: 'elisa' | 'autorizados' | null;
   responsavel_instalacao_id: string | null;
   responsavel_instalacao_nome: string | null;
+  saldo: number | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -40,6 +41,7 @@ export interface CreateInstalacaoData {
   tipo_instalacao?: 'elisa' | 'autorizados';
   responsavel_instalacao_id?: string;
   responsavel_instalacao_nome?: string;
+  saldo?: number;
 }
 
 export const useInstalacoesCadastradas = () => {
