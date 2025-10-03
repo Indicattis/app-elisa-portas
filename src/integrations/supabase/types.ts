@@ -832,6 +832,7 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
           updated_at: string
+          valor_a_receber: number | null
         }
         Insert: {
           categoria?: string
@@ -855,6 +856,7 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
           updated_at?: string
+          valor_a_receber?: number | null
         }
         Update: {
           categoria?: string
@@ -878,6 +880,7 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
           updated_at?: string
+          valor_a_receber?: number | null
         }
         Relationships: [
           {
@@ -2278,6 +2281,7 @@ export type Database = {
           resgate: boolean | null
           tipo_entrega: string | null
           updated_at: string
+          valor_a_receber: number | null
           valor_entrada: number | null
           valor_frete: number | null
           valor_instalacao: number | null
@@ -2309,6 +2313,7 @@ export type Database = {
           resgate?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
+          valor_a_receber?: number | null
           valor_entrada?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null
@@ -2340,6 +2345,7 @@ export type Database = {
           resgate?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
+          valor_a_receber?: number | null
           valor_entrada?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null

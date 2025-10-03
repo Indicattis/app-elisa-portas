@@ -40,6 +40,8 @@ export default function VendasNova() {
     forma_pagamento: '',
     observacoes_venda: '',
     valor_frete: 0,
+    valor_entrada: 0,
+    valor_a_receber: 0,
     data_prevista_entrega: '',
     tipo_entrega: 'instalacao'
   });
@@ -62,11 +64,39 @@ export default function VendasNova() {
   });
 
   const handleAddPorta = (produto: ProdutoVenda) => {
-    setPortas(prev => [...prev, produto]);
+    setPortas(prev => {
+      const newPortas = [...prev, produto];
+      const valorTotal = newPortas.reduce((acc, p) => {
+        const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+        const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+        return acc + valorBase - desconto;
+      }, 0) + (formData.valor_frete || 0);
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+      }));
+      
+      return newPortas;
+    });
   };
 
   const handleRemovePorta = (index: number) => {
-    setPortas(prev => prev.filter((_, i) => i !== index));
+    setPortas(prev => {
+      const newPortas = prev.filter((_, i) => i !== index);
+      const valorTotal = newPortas.reduce((acc, p) => {
+        const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+        const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+        return acc + valorBase - desconto;
+      }, 0) + (formData.valor_frete || 0);
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+      }));
+      
+      return newPortas;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -347,6 +377,31 @@ export default function VendasNova() {
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="valor_entrada">Valor de Entrada (R$)</Label>
+              <Input
+                id="valor_entrada"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valor_entrada}
+                onChange={(e) => {
+                  const entrada = parseFloat(e.target.value) || 0;
+                  const valorTotal = portas.reduce((acc, p) => {
+                    const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+                    const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+                    return acc + valorBase - desconto;
+                  }, 0) + (formData.valor_frete || 0);
+                  
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    valor_entrada: entrada,
+                    valor_a_receber: valorTotal - entrada
+                  }));
+                }}
+              />
+            </div>
+
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="observacoes_venda">Observações (opcional)</Label>
               <Textarea
@@ -386,7 +441,25 @@ export default function VendasNova() {
 
         {/* Resumo */}
         {portas.length > 0 && (
-          <VendaResumo portas={portas} valorFrete={formData.valor_frete} />
+          <>
+            <VendaResumo portas={portas} valorFrete={formData.valor_frete} />
+            {formData.valor_entrada > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 gap-4 text-lg">
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Valor de Entrada:</p>
+                      <p className="font-semibold text-green-600">R$ {formData.valor_entrada.toFixed(2)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Valor a Receber (após instalação):</p>
+                      <p className="font-semibold text-orange-600">R$ {formData.valor_a_receber?.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
 
         {/* Ações */}

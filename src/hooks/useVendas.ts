@@ -36,6 +36,8 @@ export interface VendaFormData {
   observacoes_venda?: string;
   data_venda?: string;
   valor_frete?: number;
+  valor_entrada?: number;
+  valor_a_receber?: number;
   canal_aquisicao_id?: string;
   data_prevista_entrega?: string;
   tipo_entrega?: string;
@@ -132,6 +134,9 @@ export function useVendas() {
       });
 
       const valor_frete = vendaData.valor_frete || 0;
+      const valor_total_venda = totais.valor_total + valor_frete;
+      const valor_entrada = vendaData.valor_entrada || 0;
+      const valor_a_receber = valor_total_venda - valor_entrada;
 
       // 4. Criar venda com valores calculados
       const vendaPayload = {
@@ -142,7 +147,9 @@ export function useVendas() {
         valor_pintura: totais.valor_pintura,
         valor_instalacao: totais.valor_instalacao,
         valor_frete: valor_frete,
-        valor_venda: totais.valor_total + valor_frete
+        valor_venda: valor_total_venda,
+        valor_entrada: valor_entrada,
+        valor_a_receber: valor_a_receber
       };
 
       console.log('Venda payload:', vendaPayload);
