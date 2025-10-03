@@ -401,6 +401,7 @@ export default function VendasNova() {
                 type="date"
                 value={formData.data_prevista_entrega}
                 onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
+                min={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>
