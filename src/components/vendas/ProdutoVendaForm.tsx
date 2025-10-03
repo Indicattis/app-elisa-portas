@@ -102,6 +102,7 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto, produtoEdit
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Impede a propagação para o formulário pai
     
     if (formData.tipo_produto === 'porta' && !formData.tamanho) {
       return;
@@ -116,6 +117,7 @@ export function ProdutoVendaForm({ open, onOpenChange, onAddProduto, produtoEdit
     }
     
     onAddProduto(formData);
+    onOpenChange(false); // Fecha o dialog após adicionar
   };
 
   const handleNumberChange = (field: keyof ProdutoVenda, value: string) => {
