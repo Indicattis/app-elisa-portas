@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 
 export default function VendasNova() {
   const navigate = useNavigate();
@@ -363,24 +364,13 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="forma_pagamento">Forma de Pagamento *</Label>
-              <Select
-                value={formData.forma_pagamento}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="a_vista">À vista</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="parcelado">Parcelado</SelectItem>
-                  <SelectItem value="boleto">Boleto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FormaPagamentoSelect
+              value={formData.forma_pagamento}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
+              showLabel={true}
+              required={true}
+              className="space-y-2"
+            />
 
             <div className="space-y-2">
               <Label htmlFor="valor_frete">Valor Frete Total (R$)</Label>
