@@ -20,6 +20,7 @@ export interface InstalacaoCadastrada {
   responsavel_instalacao_id: string | null;
   responsavel_instalacao_nome: string | null;
   saldo: number | null;
+  valor_a_receber: number | null;
   data_producao: string | null;
   justificativa_correcao: string | null;
   alterado_para_correcao_em: string | null;

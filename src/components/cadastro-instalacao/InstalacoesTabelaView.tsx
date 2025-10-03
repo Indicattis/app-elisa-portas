@@ -11,6 +11,7 @@ import {
   ArrowUpDown,
   AlertCircle,
   RefreshCw,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalaco
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { AlterarParaCorrecaoDialog } from './AlterarParaCorrecaoDialog';
 import { AlterarStatusDialog } from './AlterarStatusDialog';
+import { DetalhesInstalacaoDialog } from './DetalhesInstalacaoDialog';
 import { ESTADOS_BRASIL } from '@/utils/estadosCidades';
 import { baixarInstalacoesPDF } from '@/utils/instalacoesPDFGenerator';
 import { toast } from 'sonner';
@@ -68,6 +70,7 @@ export const InstalacoesTabelaView = ({
   const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [correcaoInstalacao, setCorrecaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [statusInstalacao, setStatusInstalacao] = useState<InstalacaoCadastrada | null>(null);
+  const [detalhesInstalacao, setDetalhesInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategoria, setFilterCategoria] = useState<string>('all');
@@ -393,6 +396,14 @@ export const InstalacoesTabelaView = ({
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => setDetalhesInstalacao(instalacao)}
+                              title="Ver Detalhes"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => setStatusInstalacao(instalacao)}
                               title="Alterar Status"
                             >
@@ -534,6 +545,12 @@ export const InstalacoesTabelaView = ({
         }}
         currentStatus={statusInstalacao?.status || 'pendente_producao'}
         instalacaoNome={statusInstalacao?.nome_cliente || ''}
+      />
+
+      <DetalhesInstalacaoDialog
+        open={!!detalhesInstalacao}
+        onOpenChange={(open) => !open && setDetalhesInstalacao(null)}
+        instalacao={detalhesInstalacao}
       />
     </div>
   );
