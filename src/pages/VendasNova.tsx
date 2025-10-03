@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
+import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
 
 export default function VendasNova() {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ export default function VendasNova() {
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
   const [dataVenda, setDataVenda] = useState<Date>();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
   const [tipoInicial, setTipoInicial] = useState<'porta' | 'acessorio' | 'adicional' | undefined>(undefined);
@@ -94,6 +96,25 @@ export default function VendasNova() {
       // Limpar estado de edição
       setProdutoEditando(undefined);
       setIndexEditando(undefined);
+      
+      return newPortas;
+    });
+  };
+
+  const handleAddAcessorios = (produtos: ProdutoVenda[]) => {
+    setPortas(prev => {
+      const newPortas = [...prev, ...produtos];
+      
+      const valorTotal = newPortas.reduce((acc, p) => {
+        const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+        const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+        return acc + valorBase - desconto;
+      }, 0) + (formData.valor_frete || 0);
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+      }));
       
       return newPortas;
     });
@@ -474,42 +495,44 @@ export default function VendasNova() {
               <Button 
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('acessorio');
-                  setDialogOpen(true);
-                }}
+                onClick={() => setAcessoriosModalOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Acessório/Adicional
               </Button>
             </div>
-            <ProdutoVendaForm 
-              open={dialogOpen}
-              onOpenChange={(open) => {
-                setDialogOpen(open);
-                if (!open) {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial(undefined);
-                }
-              }}
-              tipoInicial={tipoInicial}
-              permitirTrocaTipo={tipoInicial !== 'porta'}
-              onAddProduto={(produto) => {
-                  handleAddPorta(produto);
-                  setDialogOpen(false);
+              <ProdutoVendaForm 
+                open={dialogOpen}
+                onOpenChange={(open) => {
+                  setDialogOpen(open);
+                  if (!open) {
+                    setProdutoEditando(undefined);
+                    setIndexEditando(undefined);
+                    setTipoInicial(undefined);
+                  }
                 }}
-                produtoEditando={produtoEditando}
-                indexEditando={indexEditando}
-              />
-              <PortasVendaTable
-                portas={portas}
-                onRemovePorta={handleRemovePorta}
-                onEditPorta={handleEditPorta}
-                onUpdateQuantidade={handleUpdateQuantidade}
-              />
+                tipoInicial={tipoInicial}
+                permitirTrocaTipo={tipoInicial !== 'porta'}
+                onAddProduto={(produto) => {
+                    handleAddPorta(produto);
+                    setDialogOpen(false);
+                  }}
+                  produtoEditando={produtoEditando}
+                  indexEditando={indexEditando}
+                />
+                
+                <SelecionarAcessoriosModal
+                  open={acessoriosModalOpen}
+                  onOpenChange={setAcessoriosModalOpen}
+                  onConfirm={handleAddAcessorios}
+                />
+                
+                <PortasVendaTable
+                  portas={portas}
+                  onRemovePorta={handleRemovePorta}
+                  onEditPorta={handleEditPorta}
+                  onUpdateQuantidade={handleUpdateQuantidade}
+                />
           </CardContent>
         </Card>
 
