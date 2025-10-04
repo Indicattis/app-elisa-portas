@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 interface StatusBadgeProps {
   isFaturada: boolean;
@@ -8,17 +8,25 @@ interface StatusBadgeProps {
 export function StatusBadge({ isFaturada }: StatusBadgeProps) {
   if (isFaturada) {
     return (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-        <CheckCircle2 className="w-3 h-3 mr-1" />
-        Faturada
-      </Badge>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+            Faturada
+          </span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">
-      <XCircle className="w-3 h-3 mr-1" />
-      Não Faturada
-    </Badge>
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+        <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+          Não Faturada
+        </span>
+      </div>
+    </div>
   );
 }
