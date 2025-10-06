@@ -13,6 +13,7 @@ interface InstalacaoCadastrada {
   status: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
   tamanho?: string | null;
   data_instalacao?: string | null;
+  data_producao?: string | null;
   responsavel_instalacao_nome?: string | null;
   criador?: {
     nome: string;
@@ -128,14 +129,16 @@ export const gerarInstalacoesPDF = (data: InstalacoesPDFData) => {
       instalacao.data_instalacao 
         ? format(parseISO(instalacao.data_instalacao), 'dd/MM/yyyy', { locale: ptBR })
         : '-',
-      instalacao.responsavel_instalacao_nome || '-',
-      format(parseISO(instalacao.created_at), 'dd/MM/yy', { locale: ptBR })
+      instalacao.data_producao 
+        ? format(parseISO(instalacao.data_producao), 'dd/MM/yyyy', { locale: ptBR })
+        : '-',
+      instalacao.responsavel_instalacao_nome || '-'
     ];
   });
 
   // Gerar tabela principal
   autoTable(pdf, {
-    head: [['Cliente', 'Telefone', 'Localização', 'Categoria', 'Status', 'Tamanho', 'Data Inst.', 'Responsável', 'Cadastro']],
+    head: [['Cliente', 'Telefone', 'Localização', 'Categoria', 'Status', 'Tamanho', 'Data Inst.', 'Produção', 'Responsável']],
     body: tableData,
     startY: yPosition,
     styles: {
@@ -160,8 +163,8 @@ export const gerarInstalacoesPDF = (data: InstalacoesPDFData) => {
       4: { cellWidth: 24 }, // Status
       5: { cellWidth: 16 }, // Tamanho
       6: { cellWidth: 18 }, // Data Instalação
-      7: { cellWidth: 22 }, // Responsável
-      8: { cellWidth: 16 }, // Cadastro
+      7: { cellWidth: 18 }, // Data Produção
+      8: { cellWidth: 20 }, // Responsável
     },
     margin: { left: margin, right: margin },
     theme: 'striped',
