@@ -128,45 +128,39 @@ export const useWhatsAppRoulette = () => {
         const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
         const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
-        // Query SQL direta usando o client do Supabase
-        const query = `
-          SELECT atendente_nome, COUNT(*) as total_clicks
-          FROM whatsapp_roulette_clicks 
-          WHERE created_at >= '${format(primeiroDiaDoMes, 'yyyy-MM-dd')}'
-          AND created_at <= '${format(ultimoDiaDoMes, 'yyyy-MM-dd')}'
-          GROUP BY atendente_nome
-        `;
-
-        const { data, error } = await (supabase as any).from('whatsapp_roulette_clicks').select('atendente_nome, created_at');
+        const { data, error } = await supabase
+          .from('whatsapp_roulette_clicks')
+          .select('atendente_nome')
+          .gte('created_at', primeiroDiaDoMes.toISOString())
+          .lte('created_at', ultimoDiaDoMes.toISOString());
 
         if (error) {
           console.error('Erro ao buscar stats da roleta:', error);
           return [];
         }
 
-        // Filtrar por data e agrupar manualmente
-        const clicksNoMes = (data || []).filter((click: any) => {
-          const dataClick = new Date(click.created_at);
-          return dataClick >= primeiroDiaDoMes && dataClick <= ultimoDiaDoMes;
-        });
-
         // Agrupar por atendente e contar
-        const clicksPorAtendente = clicksNoMes.reduce((acc: { [key: string]: number }, click: any) => {
+        const clicksPorAtendente = (data || []).reduce((acc: { [key: string]: number }, click: any) => {
           const nome = click.atendente_nome;
-          acc[nome] = (acc[nome] || 0) + 1;
+          if (nome) {
+            acc[nome] = (acc[nome] || 0) + 1;
+          }
           return acc;
         }, {});
 
-        return Object.entries(clicksPorAtendente).map(([nome, total_clicks]) => ({
+        const resultado = Object.entries(clicksPorAtendente).map(([nome, total_clicks]) => ({
           nome,
           total_clicks: total_clicks as number
         }));
+
+        console.log('📊 WhatsApp Stats:', resultado);
+        return resultado;
       } catch (error) {
         console.error('Erro ao buscar stats da roleta WhatsApp:', error);
         return [];
       }
     },
-    refetchInterval: 120000, // 2 minutes fallback
+    refetchInterval: 120000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
