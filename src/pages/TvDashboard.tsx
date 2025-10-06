@@ -6,6 +6,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useInstalacoesCadastradas } from '@/hooks/useInstalacoesCadastradas';
+import { Package, Wrench, Clock } from "lucide-react";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -36,6 +38,9 @@ export default function TvDashboard() {
     data: autorizadosStats = {},
     isLoading: loadingAutorizados
   } = useAutorizadosPorAtendente();
+
+  // Hook for instalacoes data
+  const { instalacoes, loading: loadingInstalacoes } = useInstalacoesCadastradas();
 
   // Hook for quarterly sales data (July, August, September)
   const {
@@ -82,7 +87,7 @@ export default function TvDashboard() {
 
   // Setup realtime updates
   useDashboardRealtime();
-  const loading = loadingVendas || loadingVendedores || loadingWhatsapp || loadingAutorizados || loadingVendasTrimestre;
+  const loading = loadingVendas || loadingVendedores || loadingWhatsapp || loadingAutorizados || loadingVendasTrimestre || loadingInstalacoes;
   const today = new Date();
 
   // Setup autoplay effect
@@ -188,6 +193,22 @@ export default function TvDashboard() {
       border: 'border-slate-500'
     };
   };
+
+  // Calculate instalacoes stats
+  const instalacoesStats = useMemo(() => {
+    const totalInstalacoes = instalacoes.filter(i => i.categoria === 'instalacao').length;
+    const totalCorrecoes = instalacoes.filter(i => i.categoria === 'correcao').length;
+    const entregasPendentes = instalacoes.filter(i => 
+      i.categoria === 'entrega' && i.status !== 'finalizada'
+    ).length;
+
+    return {
+      totalInstalacoes,
+      totalCorrecoes,
+      entregasPendentes
+    };
+  }, [instalacoes]);
+
   const getAllCategories = () => [{
     name: 'Iniciante',
     minValue: 0,
@@ -471,7 +492,65 @@ export default function TvDashboard() {
               </div>
             </div>
           </CarouselItem>
-          {/* Slide 4: Meta Parceiros Autorizados */}
+          {/* Slide 4: Índices de Instalações */}
+          <CarouselItem className="h-full w-full flex items-center justify-center">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-10 w-full">
+              {/* Logo */}
+              <div>
+                <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
+              </div>
+
+              {/* Título */}
+              <div className="text-center">
+                <h1 className="font-anton text-7xl">INSTALAÇÕES</h1>
+                <p className="text-2xl text-muted-foreground mt-2">Indicadores de Produção</p>
+              </div>
+
+              {/* Cards de Indicadores */}
+              <div className="grid grid-cols-3 gap-8 w-full max-w-6xl">
+                {/* Instalações */}
+                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-2 border-blue-500 rounded-2xl p-8 shadow-2xl">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="bg-blue-500/30 p-6 rounded-full">
+                      <Package className="w-20 h-20 text-blue-300" />
+                    </div>
+                    <h3 className="text-3xl font-bold text-blue-300">Instalações</h3>
+                    <div className="text-8xl font-bold text-white">
+                      {instalacoesStats.totalInstalacoes}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Correções */}
+                <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-2 border-orange-500 rounded-2xl p-8 shadow-2xl">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="bg-orange-500/30 p-6 rounded-full">
+                      <Wrench className="w-20 h-20 text-orange-300" />
+                    </div>
+                    <h3 className="text-3xl font-bold text-orange-300">Correções</h3>
+                    <div className="text-8xl font-bold text-white">
+                      {instalacoesStats.totalCorrecoes}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Entregas Pendentes */}
+                <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border-2 border-yellow-500 rounded-2xl p-8 shadow-2xl">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="bg-yellow-500/30 p-6 rounded-full">
+                      <Clock className="w-20 h-20 text-yellow-300" />
+                    </div>
+                    <h3 className="text-3xl font-bold text-yellow-300">Pendentes</h3>
+                    <div className="text-8xl font-bold text-white">
+                      {instalacoesStats.entregasPendentes}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CarouselItem>
+
+          {/* Slide 5: Meta Parceiros Autorizados */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-start p-6 space-y-6 w-full">
               {/* Título */}
@@ -585,7 +664,7 @@ export default function TvDashboard() {
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1, 2, 3].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
+        {[0, 1, 2, 3, 4].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
     </div>;
 }
