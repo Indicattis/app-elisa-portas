@@ -141,7 +141,7 @@ export function useVendas() {
       // 4. Criar venda com valores calculados
       const vendaPayload = {
         ...vendaData,
-        atendente_id: adminUser.id,
+        atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
         valor_produto: totais.valor_produto,
         valor_pintura: totais.valor_pintura,
