@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useInstalacoesCadastradas } from '@/hooks/useInstalacoesCadastradas';
-import { Package, Wrench, Clock } from "lucide-react";
+import { Package, Wrench, Truck } from "lucide-react";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -538,7 +538,7 @@ export default function TvDashboard() {
                 <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border-2 border-yellow-500 rounded-2xl p-8 shadow-2xl">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="bg-yellow-500/30 p-6 rounded-full">
-                      <Clock className="w-20 h-20 text-yellow-300" />
+                      <Truck className="w-20 h-20 text-yellow-300" />
                     </div>
                     <h3 className="text-3xl font-bold text-yellow-300">Entregas</h3>
                     <div className="text-8xl font-bold text-white">
