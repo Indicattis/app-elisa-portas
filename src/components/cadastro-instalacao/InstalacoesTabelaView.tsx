@@ -15,6 +15,7 @@ import {
   Plus,
   Clock,
   UserX,
+  Map,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,7 @@ import { ESTADOS_BRASIL } from '@/utils/estadosCidades';
 import { baixarInstalacoesPDF } from '@/utils/instalacoesPDFGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface InstalacoesTabelaViewProps {
   instalacoes: InstalacaoCadastrada[];
@@ -73,6 +75,7 @@ export const InstalacoesTabelaView = ({
   onUpdateStatus,
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
+  const navigate = useNavigate();
   const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [correcaoInstalacao, setCorrecaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [statusInstalacao, setStatusInstalacao] = useState<InstalacaoCadastrada | null>(null);
@@ -625,6 +628,17 @@ export const InstalacoesTabelaView = ({
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            {instalacao.latitude && instalacao.longitude && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/dashboard/mapa-autorizados?instalacao=${instalacao.id}`)}
+                                title="Ver no Mapa"
+                                className="text-blue-500 hover:text-blue-600"
+                              >
+                                <Map className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"

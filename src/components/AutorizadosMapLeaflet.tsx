@@ -60,6 +60,12 @@ interface AutorizadosMapLeafletProps {
     ativosComCoordenadas: number;
     instalacoesGeocodificadas: number;
   };
+  centerOnCoordinates?: {
+    lat: number;
+    lng: number;
+    zoom?: number;
+    instalacaoId?: string;
+  };
 }
 interface ClickedPoint {
   lat: number;
@@ -79,11 +85,34 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   autorizados,
   instalacoes = [],
   showOverlays = true,
-  stats
+  stats,
+  centerOnCoordinates
 }) => {
   const mapRef = useRef<L.Map | null>(null);
   const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const instalacaoMarkerRefs = useRef<{ [key: string]: L.Marker | null }>({});
+
+  // Efeito para centralizar no mapa quando centerOnCoordinates mudar
+  useEffect(() => {
+    if (centerOnCoordinates && mapRef.current) {
+      const { lat, lng, zoom = 15, instalacaoId } = centerOnCoordinates;
+      mapRef.current.flyTo([lat, lng], zoom, {
+        duration: 1.5,
+        easeLinearity: 0.25
+      });
+
+      // Abrir popup da instalação selecionada após o flyTo
+      if (instalacaoId) {
+        setTimeout(() => {
+          const marker = instalacaoMarkerRefs.current[instalacaoId];
+          if (marker) {
+            marker.openPopup();
+          }
+        }, 1600);
+      }
+    }
+  }, [centerOnCoordinates]);
 
   // Filter autorizados with valid coordinates
   const autorizadosWithCoords = autorizados.filter(autorizado => {
@@ -213,7 +242,8 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   // Custom marker icon for instalacoes with color based on categoria
   const createInstalacaoIcon = (
     categoria: 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado' = 'instalacao',
-    status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada'
+    status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
+    isSelected?: boolean
   ) => {
     const colors = {
       instalacao: '#ef4444', // vermelho
@@ -224,12 +254,14 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
     
     const borderColor = status === 'pronta_fabrica' ? '#22c55e' : 'white';
     const borderWidth = status === 'pronta_fabrica' ? '3px' : '2px';
+    const size = isSelected ? 16 : 12;
+    const markerClass = isSelected ? 'custom-instalacao-marker selected-instalacao' : 'custom-instalacao-marker';
     
     return L.divIcon({
-      html: `<div class="custom-instalacao-marker" style="background-color: ${colors[categoria]}; border-color: ${borderColor}; border-width: ${borderWidth};"></div>`,
+      html: `<div class="${markerClass}" style="background-color: ${colors[categoria]}; border-color: ${borderColor}; border-width: ${borderWidth}; width: ${size}px; height: ${size}px;"></div>`,
       className: 'custom-instalacao-marker-container',
-      iconSize: L.point(12, 12),
-      iconAnchor: L.point(6, 6)
+      iconSize: L.point(size, size),
+      iconAnchor: L.point(size / 2, size / 2)
     });
   };
 
@@ -334,6 +366,18 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
         border: 2px solid white;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
         transition: transform 0.2s ease;
+      }
+      .custom-instalacao-marker.selected-instalacao {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5), 0 1px 4px rgba(0,0,0,0.25);
+        animation: selected-pulse 2s ease-in-out infinite;
+      }
+      @keyframes selected-pulse {
+        0%, 100% {
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5), 0 1px 4px rgba(0,0,0,0.25);
+        }
+        50% {
+          box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3), 0 1px 4px rgba(0,0,0,0.25);
+        }
       }
       .custom-instalacao-marker-container:hover .custom-instalacao-marker {
         transform: scale(1.2);
@@ -645,8 +689,21 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
             zoomToBoundsOnClick={true}
             maxClusterRadius={50}
           >
-            {instalacoesWithCoords.map(instalacao => <Marker key={`instalacao-${instalacao.id}`} position={[instalacao.latitude!, instalacao.longitude!]} icon={createInstalacaoIcon(instalacao.categoria, instalacao.status)}>
-                <Popup className="custom-popup" minWidth={250}>
+            {instalacoesWithCoords.map(instalacao => {
+              const isSelected = centerOnCoordinates?.instalacaoId === instalacao.id;
+              
+              return (
+                <Marker 
+                  key={`instalacao-${instalacao.id}`} 
+                  position={[instalacao.latitude!, instalacao.longitude!]} 
+                  icon={createInstalacaoIcon(instalacao.categoria, instalacao.status, isSelected)}
+                  ref={(ref) => {
+                    if (ref) {
+                      instalacaoMarkerRefs.current[instalacao.id] = ref;
+                    }
+                  }}
+                >
+                  <Popup className="custom-popup" minWidth={250}>
                   <div className="p-4 space-y-3">
                     {/* Header */}
                     <div className="flex items-start gap-3">
@@ -791,7 +848,9 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                     </div>
                   </div>
                 </Popup>
-              </Marker>)}
+              </Marker>
+            );
+          })}
           </MarkerClusterGroup>
 
           {/* Clicked point marker */}

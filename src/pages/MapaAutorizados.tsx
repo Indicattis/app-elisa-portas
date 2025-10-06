@@ -6,6 +6,9 @@ import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { MapaFiltrosAvancados, MapaFiltros } from "@/components/MapaFiltrosAvancados";
 import { Badge } from "@/components/ui/badge";
 import { AutorizadoEtapa, RepresentanteEtapa, LicenciadoEtapa } from "@/utils/etapas";
+import { useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface Autorizado {
   id: string;
@@ -39,6 +42,7 @@ interface Autorizado {
 }
 
 export default function MapaAutorizados() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState<MapaFiltros>({
@@ -58,6 +62,17 @@ export default function MapaAutorizados() {
   });
   const { instalacoes } = useInstalacoesCadastradas();
   const { toast } = useToast();
+
+  // Obter instalação selecionada da URL
+  const instalacaoId = searchParams.get('instalacao');
+  const instalacaoSelecionada = instalacaoId 
+    ? instalacoes.find(i => i.id === instalacaoId)
+    : null;
+
+  // Função para limpar seleção
+  const clearSelection = () => {
+    setSearchParams({});
+  };
 
   useEffect(() => {
     fetchAutorizados();
@@ -212,6 +227,21 @@ export default function MapaAutorizados() {
         </Badge>
       </div>
 
+      {/* Botão para limpar seleção quando há uma instalação selecionada */}
+      {instalacaoSelecionada && (
+        <div className="fixed top-4 right-4 z-[1000]">
+          <Button 
+            onClick={clearSelection}
+            variant="secondary"
+            size="sm"
+            className="gap-2 shadow-lg"
+          >
+            <X className="h-4 w-4" />
+            Limpar Seleção
+          </Button>
+        </div>
+      )}
+
       {/* Componente de filtros */}
       <MapaFiltrosAvancados
         filtros={filtros}
@@ -226,6 +256,16 @@ export default function MapaAutorizados() {
           instalacoes={filteredInstalacoes}
           showOverlays={true}
           stats={stats}
+          centerOnCoordinates={
+            instalacaoSelecionada?.latitude && instalacaoSelecionada?.longitude
+              ? {
+                  lat: instalacaoSelecionada.latitude,
+                  lng: instalacaoSelecionada.longitude,
+                  zoom: 15,
+                  instalacaoId: instalacaoSelecionada.id
+                }
+              : undefined
+          }
         />
       </div>
     </div>
