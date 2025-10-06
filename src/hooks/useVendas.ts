@@ -82,11 +82,12 @@ export function useVendas() {
       // 2. Buscar admin_user correspondente
       const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
-        .select('id, user_id, nome')
+        .select('id, user_id, nome, email')
         .eq('user_id', user.id)
         .maybeSingle();
       
       console.log('✅ Admin user found:', adminUser, 'Error:', adminError);
+      console.log('📧 Admin user details - ID:', adminUser?.id, 'User ID:', adminUser?.user_id, 'Email:', adminUser?.email);
       
       // Verificar se o admin_user.id realmente existe na tabela
       if (adminUser) {
@@ -152,8 +153,9 @@ export function useVendas() {
         valor_a_receber: valor_a_receber
       };
 
-      console.log('Venda payload:', vendaPayload);
-      console.log('atendente_id being sent:', adminUser.id);
+      console.log('📦 Venda payload:', vendaPayload);
+      console.log('👤 atendente_id being sent:', adminUser.user_id);
+      console.log('🔑 Type of atendente_id:', typeof adminUser.user_id);
 
       const { data: venda, error: vendaError } = await supabase
         .from('vendas')
