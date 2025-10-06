@@ -540,7 +540,7 @@ export default function TvDashboard() {
                     <div className="bg-yellow-500/30 p-6 rounded-full">
                       <Clock className="w-20 h-20 text-yellow-300" />
                     </div>
-                    <h3 className="text-3xl font-bold text-yellow-300">Pendentes</h3>
+                    <h3 className="text-3xl font-bold text-yellow-300">Entregas</h3>
                     <div className="text-8xl font-bold text-white">
                       {instalacoesStats.entregasPendentes}
                     </div>
