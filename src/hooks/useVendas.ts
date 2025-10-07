@@ -144,11 +144,10 @@ export function useVendas() {
         ...vendaData,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
-        valor_produto: totais.valor_produto,
-        valor_pintura: totais.valor_pintura,
-        valor_instalacao: totais.valor_instalacao,
+        valor_venda: valor_total_venda, // Soma de todos os produtos + frete
+        lucro_total: 0, // Inicialmente zero, será preenchido no faturamento
         valor_frete: valor_frete,
-        valor_venda: valor_total_venda,
+        valor_instalacao: totais.valor_instalacao,
         valor_entrada: valor_entrada,
         valor_a_receber: valor_a_receber
       };

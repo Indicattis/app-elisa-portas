@@ -43,12 +43,6 @@ export default function VendaNova() {
     cliente_nome: "",
     cliente_telefone: "",
     cliente_email: "",
-    valor_produto: "",
-    custo_produto: "",
-    valor_pintura: "",
-    custo_pintura: "",
-    valor_instalacao: "",
-    valor_frete: "",
     forma_pagamento: "",
     observacoes_venda: "",
     atendente_id: "",
@@ -92,12 +86,6 @@ export default function VendaNova() {
 
     setLoading(true);
     try {
-      const valorTotal = 
-        (parseFloat(formData.valor_produto) || 0) +
-        (parseFloat(formData.valor_pintura) || 0) +
-        (parseFloat(formData.valor_instalacao) || 0) +
-        (parseFloat(formData.valor_frete) || 0);
-
       const vendaData = {
         atendente_id: formData.atendente_id,
         publico_alvo: formData.publico_alvo || null,
@@ -108,13 +96,10 @@ export default function VendaNova() {
         cliente_nome: formData.cliente_nome || null,
         cliente_telefone: formData.cliente_telefone || null,
         cliente_email: formData.cliente_email || null,
-        valor_produto: parseFloat(formData.valor_produto) || 0,
-        custo_produto: parseFloat(formData.custo_produto) || 0,
-        valor_pintura: parseFloat(formData.valor_pintura) || 0,
-        custo_pintura: parseFloat(formData.custo_pintura) || 0,
-        valor_instalacao: parseFloat(formData.valor_instalacao) || 0,
-        valor_frete: parseFloat(formData.valor_frete) || 0,
-        valor_venda: valorTotal,
+        valor_venda: 0, // Será calculado pela trigger ao adicionar produtos
+        lucro_total: 0, // Será preenchido no faturamento
+        valor_frete: 0,
+        valor_instalacao: 0,
         forma_pagamento: formData.forma_pagamento || null,
         observacoes_venda: formData.observacoes_venda || null,
         data_venda: date.toISOString(),
@@ -142,8 +127,8 @@ export default function VendaNova() {
       // Se for parcelado, criar as parcelas
       if (formData.forma_pagamento === "parcelado" && vendaResult) {
         const numeroParcelas = parseInt(formData.numero_parcelas);
-        const valorEntrada = parseFloat(formData.valor_entrada);
-        const valorRestante = valorTotal - valorEntrada;
+        const valorEntrada = parseFloat(formData.valor_entrada) || 0;
+        const valorRestante = vendaResult.valor_venda - valorEntrada;
         const valorParcela = valorRestante / numeroParcelas;
 
         const parcelas = [];
@@ -381,89 +366,6 @@ export default function VendaNova() {
               </div>
             </div>
 
-            {/* Valores e Custos */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Valores e Custos</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="valor_produto">Valor do Produto *</Label>
-                  <Input
-                    id="valor_produto"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={formData.valor_produto}
-                    onChange={(e) => setFormData({ ...formData, valor_produto: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="custo_produto">Custo do Produto *</Label>
-                  <Input
-                    id="custo_produto"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={formData.custo_produto}
-                    onChange={(e) => setFormData({ ...formData, custo_produto: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="valor_pintura">Valor da Pintura *</Label>
-                  <Input
-                    id="valor_pintura"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={formData.valor_pintura}
-                    onChange={(e) => setFormData({ ...formData, valor_pintura: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="custo_pintura">Custo da Pintura *</Label>
-                  <Input
-                    id="custo_pintura"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={formData.custo_pintura}
-                    onChange={(e) => setFormData({ ...formData, custo_pintura: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="valor_instalacao">Valor da Instalação *</Label>
-                  <Input
-                    id="valor_instalacao"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={formData.valor_instalacao}
-                    onChange={(e) => setFormData({ ...formData, valor_instalacao: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="valor_frete">Valor do Frete *</Label>
-                  <Input
-                    id="valor_frete"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={formData.valor_frete}
-                    onChange={(e) => setFormData({ ...formData, valor_frete: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
 
             {/* Dados Adicionais */}
             <div className="space-y-4">
