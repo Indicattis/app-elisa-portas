@@ -187,8 +187,16 @@ export function RolePermissionManager() {
   // Render tab node recursively
   const renderTabNode = (node: TabNode, level = 0): JSX.Element => {
     const selected = isTabSelected(node);
-    const hasPermission = node.permission || node.children.some(c => c.permission);
     const isGroup = node.children.length > 0;
+    
+    // A node can be toggled if it has permission OR has children with permissions
+    const hasAnyPermission = node.permission || node.children.some(c => {
+      const checkRecursive = (n: TabNode): boolean => {
+        if (n.permission) return true;
+        return n.children.some(checkRecursive);
+      };
+      return checkRecursive(c);
+    });
     
     return (
       <div key={node.key}>
@@ -199,7 +207,7 @@ export function RolePermissionManager() {
           <Checkbox
             checked={selected}
             onCheckedChange={(checked) => handleTabToggle(node, checked)}
-            disabled={!hasPermission || updatePermissions.isPending || isLoading}
+            disabled={!hasAnyPermission || updatePermissions.isPending || isLoading}
           />
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -207,10 +215,20 @@ export function RolePermissionManager() {
               <label className={`text-sm font-medium cursor-pointer ${isGroup ? 'text-foreground' : 'text-foreground/90'}`}>
                 {node.label}
               </label>
+              {!hasAnyPermission && (
+                <span className="text-xs text-muted-foreground italic">
+                  (sem permissão definida)
+                </span>
+              )}
             </div>
             {node.permission && (
               <p className="text-xs text-muted-foreground mt-1">
                 Permissão: {node.permission}
+              </p>
+            )}
+            {!node.permission && hasAnyPermission && isGroup && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Grupo: controla {node.children.filter(c => c.permission).length} permissão(ões)
               </p>
             )}
           </div>
