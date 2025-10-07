@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -53,6 +54,7 @@ export default function VendaNova() {
     atendente_id: "",
     numero_parcelas: "1",
     valor_entrada: "",
+    nota_fiscal: true,
   });
 
   useEffect(() => {
@@ -119,6 +121,7 @@ export default function VendaNova() {
         lead_id: null,
         numero_parcelas: parseInt(formData.numero_parcelas) || 1,
         valor_entrada: parseFloat(formData.valor_entrada) || 0,
+        nota_fiscal: formData.nota_fiscal,
       };
 
       console.log('Criando venda com dados:', vendaData);
@@ -511,6 +514,17 @@ export default function VendaNova() {
                   onChange={(e) => setFormData({ ...formData, observacoes_venda: e.target.value })}
                   rows={3}
                 />
+              </div>
+
+              <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/50">
+                <Checkbox 
+                  id="nota_fiscal"
+                  checked={formData.nota_fiscal}
+                  onCheckedChange={(checked) => setFormData({ ...formData, nota_fiscal: checked as boolean })}
+                />
+                <Label htmlFor="nota_fiscal" className="cursor-pointer font-normal">
+                  Esta venda possui nota fiscal
+                </Label>
               </div>
             </div>
 

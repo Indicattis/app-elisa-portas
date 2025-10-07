@@ -230,6 +230,7 @@ export default function Vendas() {
                   <TableHead>Cidade/Estado</TableHead>
                   <TableHead>Previsão Entrega</TableHead>
                   <TableHead className="text-center">Qtd Portas</TableHead>
+                  <TableHead className="text-center">Nota Fiscal</TableHead>
                   <TableHead className="text-right">Valor Total</TableHead>
                   <TableHead>Atendente</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -238,7 +239,7 @@ export default function Vendas() {
               <TableBody>
                 {filteredVendas?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       Nenhuma venda encontrada
                     </TableCell>
                   </TableRow>
@@ -258,6 +259,13 @@ export default function Vendas() {
                         }
                       </TableCell>
                       <TableCell className="text-center">{venda.portas?.length || 0}</TableCell>
+                      <TableCell className="text-center">
+                        {venda.nota_fiscal ? (
+                          <span className="text-green-600 font-medium">Sim</span>
+                        ) : (
+                          <span className="text-muted-foreground">Não</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-semibold">
                         {formatCurrency(venda.valor_venda || 0)}
                       </TableCell>
