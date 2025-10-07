@@ -2317,6 +2317,8 @@ export type Database = {
           estado: string | null
           forma_pagamento: string | null
           id: string
+          lucro_pintura: number | null
+          lucro_produto: number | null
           lucro_total: number | null
           nota_fiscal: boolean
           numero_parcelas: number | null
@@ -2350,6 +2352,8 @@ export type Database = {
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
+          lucro_pintura?: number | null
+          lucro_produto?: number | null
           lucro_total?: number | null
           nota_fiscal?: boolean
           numero_parcelas?: number | null
@@ -2383,6 +2387,8 @@ export type Database = {
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
+          lucro_pintura?: number | null
+          lucro_produto?: number | null
           lucro_total?: number | null
           nota_fiscal?: boolean
           numero_parcelas?: number | null
