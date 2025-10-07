@@ -263,11 +263,27 @@ export default function Faturamento() {
 
       const vendasCompletas = vendasData.map((venda: any) => {
         const atendenteData = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
+        const portas = venda.portas_vendas || [];
+        
+        // Calcular valores agregados dos produtos
+        const valor_produto = portas.reduce((acc: number, p: any) => 
+          acc + (p.tipo_produto !== 'pintura_epoxi' ? (p.valor_produto || 0) * (p.quantidade || 1) : 0), 0);
+        const valor_pintura = portas.reduce((acc: number, p: any) => 
+          acc + (p.tipo_produto === 'pintura_epoxi' ? (p.valor_produto || 0) * (p.quantidade || 1) : 0), 0);
+        const custo_produto = portas.reduce((acc: number, p: any) => 
+          acc + ((p.custo_produto || 0) * (p.quantidade || 1)), 0);
+        const custo_pintura = portas.reduce((acc: number, p: any) => 
+          acc + ((p.custo_pintura || 0) * (p.quantidade || 1)), 0);
+        
         return {
           ...venda,
           atendente_nome: atendenteData?.nome || "Atendente não encontrado",
           atendente_foto: atendenteData?.foto || null,
-          portas: venda.portas_vendas || [],
+          portas,
+          valor_produto,
+          valor_pintura,
+          custo_produto,
+          custo_pintura,
         };
       });
 
