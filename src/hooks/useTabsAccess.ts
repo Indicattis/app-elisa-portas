@@ -12,6 +12,7 @@ export interface TabAccess {
   sort_order: number;
   active: boolean;
   icon: string | null;
+  parent_key: string | null;
   can_access: boolean;
 }
 

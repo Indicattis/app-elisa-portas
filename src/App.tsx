@@ -58,6 +58,12 @@ import Documentos from "./pages/Documentos";
 import DocumentoNovo from "./pages/DocumentoNovo";
 import Vendas from "./pages/Vendas";
 import VendasNova from "./pages/VendasNova";
+import Compras from "./pages/Compras";
+import Estoque from "./pages/Estoque";
+import RHAdmin from "./pages/RHAdmin";
+import Representantes from "./pages/Representantes";
+import Licenciados from "./pages/Licenciados";
+import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -603,6 +609,66 @@ const App = () => (
                     <ProtectedRoute requirePermission="documentos">
                       <DashboardLayout>
                         <DocumentoNovo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/compras"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Compras />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/estoque"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Estoque />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/rh-admin"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <RHAdmin />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/parceiros/representantes"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <Representantes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/parceiros/licenciados"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <Licenciados />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/cronograma"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <CronogramaInstalacoes />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

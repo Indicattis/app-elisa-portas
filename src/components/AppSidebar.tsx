@@ -1,7 +1,9 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
+import { useGroupedTabs } from "@/hooks/useGroupedTabs";
 import { useTheme } from "@/components/ThemeProvider";
 import logoDark from "@/assets/logo-dark.png";
 import logoLight from "@/assets/logo-light.png";
@@ -15,8 +17,13 @@ import {
   SidebarMenu, 
   SidebarMenuButton, 
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   useSidebar 
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 import { icons } from "lucide-react";
 
 // Mapeamento de ícones do Lucide
@@ -47,33 +54,60 @@ const iconMap: Record<string, any> = {
   DollarSign,
   Target,
   Settings,
+  Briefcase,
+  Package,
+  UserCog,
+  Award,
 };
 
 export function AppSidebar() {
   const location = useLocation();
-  const { signOut, user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { state } = useSidebar();
   const { data: tabs = [], isLoading } = useTabsAccess('sidebar');
+  const groupedTabs = useGroupedTabs(tabs);
   const { theme } = useTheme();
+  
+  // Persistir estado dos grupos no localStorage
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('sidebar-groups-state');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // Salvar estado quando mudar
+  useEffect(() => {
+    localStorage.setItem('sidebar-groups-state', JSON.stringify(openGroups));
+  }, [openGroups]);
+
+  // Auto-expandir grupo que contém a rota ativa
+  useEffect(() => {
+    groupedTabs.forEach(group => {
+      const hasActiveChild = group.children.some(child => 
+        location.pathname === child.href || location.pathname.startsWith(child.href + '/')
+      );
+      
+      if (hasActiveChild && !openGroups[group.key]) {
+        setOpenGroups(prev => ({ ...prev, [group.key]: true }));
+      }
+    });
+  }, [location.pathname, groupedTabs]);
   
   // Determinar qual logo usar baseado no tema
   const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const currentLogo = isDarkMode ? logoLight : logoDark;
 
-  const isActive = (path: string) =>
-    path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(path);
+  const isActive = (path: string) => {
+    if (path === '#') return false;
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
 
   const getIcon = (iconName: string | null) => {
     if (!iconName) return Settings;
     return iconMap[iconName] || icons[iconName as keyof typeof icons] || Settings;
   };
 
-  const handleTabClick = (e: React.MouseEvent, canAccess: boolean, href: string) => {
-    if (!canAccess) {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
+  const handleGroupToggle = (groupKey: string) => {
+    setOpenGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
   };
 
   return (
@@ -99,34 +133,64 @@ export function AppSidebar() {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                tabs.map((tab) => {
-                  const IconComponent = getIcon(tab.icon);
-                  const canAccess = tab.can_access;
+                groupedTabs.map((group) => {
+                  const GroupIcon = getIcon(group.icon);
+                  const isGroupOpen = openGroups[group.key] ?? false;
                   
                   return (
-                    <SidebarMenuItem key={tab.key}>
-                      <SidebarMenuButton 
-                        asChild={canAccess} 
-                        isActive={canAccess && isActive(tab.href)}
-                        className={!canAccess ? "opacity-50 cursor-not-allowed" : ""}
-                      >
-                        {canAccess ? (
-                          <NavLink to={tab.href}>
-                            <IconComponent className="h-5 w-5" />
-                            <span>{tab.label}</span>
-                          </NavLink>
-                        ) : (
-                          <div 
-                            className="flex items-center gap-2 w-full"
-                            onClick={(e) => handleTabClick(e, canAccess, tab.href)}
-                          >
-                            <IconComponent className="h-5 w-5" />
-                            <span>{tab.label}</span>
-                            <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
-                          </div>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <Collapsible
+                      key={group.key}
+                      open={isGroupOpen}
+                      onOpenChange={() => handleGroupToggle(group.key)}
+                    >
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton className="w-full">
+                            <GroupIcon className="h-5 w-5" />
+                            <span>{group.label}</span>
+                            <ChevronDown 
+                              className={cn(
+                                "ml-auto h-4 w-4 transition-transform duration-200",
+                                isGroupOpen && "rotate-180"
+                              )} 
+                            />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        
+                        <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                          <SidebarMenuSub>
+                            {group.children.map((subItem) => {
+                              const SubIcon = getIcon(subItem.icon);
+                              const canAccess = subItem.can_access;
+                              const itemIsActive = canAccess && isActive(subItem.href);
+                              
+                              return (
+                                <SidebarMenuSubItem key={subItem.key}>
+                                  <SidebarMenuSubButton 
+                                    asChild={canAccess}
+                                    isActive={itemIsActive}
+                                    className={!canAccess ? "opacity-50 cursor-not-allowed" : ""}
+                                  >
+                                    {canAccess ? (
+                                      <a href={subItem.href}>
+                                        <SubIcon className="h-4 w-4" />
+                                        <span>{subItem.label}</span>
+                                      </a>
+                                    ) : (
+                                      <div className="flex items-center gap-2 w-full">
+                                        <SubIcon className="h-4 w-4" />
+                                        <span>{subItem.label}</span>
+                                        <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
+                                      </div>
+                                    )}
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
                   );
                 })
               )}
