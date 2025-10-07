@@ -123,6 +123,7 @@ export type Database = {
           id: string
           key: string
           label: string
+          parent_key: string | null
           permission: Database["public"]["Enums"]["app_permission"] | null
           sort_order: number
           tab_group: string
@@ -137,6 +138,7 @@ export type Database = {
           id?: string
           key: string
           label: string
+          parent_key?: string | null
           permission?: Database["public"]["Enums"]["app_permission"] | null
           sort_order?: number
           tab_group?: string
@@ -151,6 +153,7 @@ export type Database = {
           id?: string
           key?: string
           label?: string
+          parent_key?: string | null
           permission?: Database["public"]["Enums"]["app_permission"] | null
           sort_order?: number
           tab_group?: string
@@ -2593,37 +2596,37 @@ export type Database = {
       }
       user_tab_access: {
         Row: {
-          active: boolean | null
           can_access: boolean | null
           href: string | null
           icon: string | null
           id: string | null
           key: string | null
           label: string | null
+          parent_key: string | null
           permission: Database["public"]["Enums"]["app_permission"] | null
           sort_order: number | null
           tab_group: string | null
         }
         Insert: {
-          active?: boolean | null
           can_access?: never
           href?: string | null
           icon?: string | null
           id?: string | null
           key?: string | null
           label?: string | null
+          parent_key?: string | null
           permission?: Database["public"]["Enums"]["app_permission"] | null
           sort_order?: number | null
           tab_group?: string | null
         }
         Update: {
-          active?: boolean | null
           can_access?: never
           href?: string | null
           icon?: string | null
           id?: string | null
           key?: string | null
           label?: string | null
+          parent_key?: string | null
           permission?: Database["public"]["Enums"]["app_permission"] | null
           sort_order?: number | null
           tab_group?: string | null
