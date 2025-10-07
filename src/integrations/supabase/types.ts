@@ -2044,6 +2044,7 @@ export type Database = {
           quantidade: number | null
           tamanho: string
           tipo_desconto: string | null
+          tipo_pintura: string | null
           tipo_produto: string
           updated_at: string | null
           valor_frete: number
@@ -2073,6 +2074,7 @@ export type Database = {
           quantidade?: number | null
           tamanho: string
           tipo_desconto?: string | null
+          tipo_pintura?: string | null
           tipo_produto?: string
           updated_at?: string | null
           valor_frete?: number
@@ -2102,6 +2104,7 @@ export type Database = {
           quantidade?: number | null
           tamanho?: string
           tipo_desconto?: string | null
+          tipo_pintura?: string | null
           tipo_produto?: string
           updated_at?: string | null
           valor_frete?: number

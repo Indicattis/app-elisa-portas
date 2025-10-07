@@ -16,7 +16,7 @@ interface ProdutoVendaFormProps {
   onAddProduto: (produto: ProdutoVenda) => void;
   produtoEditando?: ProdutoVenda;
   indexEditando?: number;
-  tipoInicial?: 'porta' | 'acessorio' | 'adicional';
+  tipoInicial?: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional';
   permitirTrocaTipo?: boolean;
 }
 
@@ -30,11 +30,12 @@ export function ProdutoVendaForm({
   permitirTrocaTipo = true
 }: ProdutoVendaFormProps) {
   const [formData, setFormData] = useState<ProdutoVenda>({
-    tipo_produto: tipoInicial || 'porta',
+    tipo_produto: tipoInicial || 'porta_enrolar',
     tamanho: '',
     cor_id: '',
     acessorio_id: '',
     adicional_id: '',
+    tipo_pintura: '',
     valor_produto: 0,
     valor_pintura: 0,
     valor_instalacao: 0,
@@ -53,11 +54,12 @@ export function ProdutoVendaForm({
     } else {
       // Resetar formulário quando não há produto para editar
       setFormData({
-        tipo_produto: tipoInicial || 'porta',
+        tipo_produto: tipoInicial || 'porta_enrolar',
         tamanho: '',
         cor_id: '',
         acessorio_id: '',
         adicional_id: '',
+        tipo_pintura: '',
         valor_produto: 0,
         valor_pintura: 0,
         valor_instalacao: 0,
@@ -124,7 +126,11 @@ export function ProdutoVendaForm({
     e.preventDefault();
     e.stopPropagation(); // Impede a propagação para o formulário pai
     
-    if (formData.tipo_produto === 'porta' && !formData.tamanho) {
+    if ((formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && !formData.tamanho) {
+      return;
+    }
+    
+    if (formData.tipo_produto === 'pintura_epoxi' && !formData.cor_id) {
       return;
     }
     
@@ -181,7 +187,7 @@ export function ProdutoVendaForm({
             <Label>Tipo de Produto *</Label>
             <Select
               value={formData.tipo_produto}
-              onValueChange={(value: 'porta' | 'acessorio' | 'adicional') => 
+              onValueChange={(value: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional') => 
                 setFormData(prev => ({ ...prev, tipo_produto: value }))
               }
               disabled={!permitirTrocaTipo}
@@ -190,7 +196,9 @@ export function ProdutoVendaForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="porta">Porta de Enrolar</SelectItem>
+                <SelectItem value="porta_enrolar">Porta de Enrolar</SelectItem>
+                <SelectItem value="porta_social">Porta Social</SelectItem>
+                <SelectItem value="pintura_epoxi">Pintura Eletrostática</SelectItem>
                 <SelectItem value="acessorio">Acessório</SelectItem>
                 <SelectItem value="adicional">Adicional</SelectItem>
               </SelectContent>
@@ -198,7 +206,7 @@ export function ProdutoVendaForm({
           </div>
 
           {/* Campos específicos por tipo */}
-          {formData.tipo_produto === 'porta' && (
+          {(formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="tamanho">Tamanho *</Label>
@@ -219,6 +227,48 @@ export function ProdutoVendaForm({
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma cor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cores?.map((cor) => (
+                      <SelectItem key={cor.id} value={cor.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded border"
+                            style={{ backgroundColor: cor.codigo_hex }}
+                          />
+                          {cor.nome}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="valor_instalacao">Valor Instalação (R$)</Label>
+                <Input
+                  id="valor_instalacao"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.valor_instalacao}
+                  onChange={(e) => handleNumberChange('valor_instalacao', e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
+          {formData.tipo_produto === 'pintura_epoxi' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="cor">Cor da Pintura *</Label>
+                <Select
+                  value={formData.cor_id}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, cor_id: value }))}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a cor" />
                   </SelectTrigger>
                   <SelectContent>
                     {cores?.map((cor) => (
@@ -285,54 +335,17 @@ export function ProdutoVendaForm({
           {/* Campo de quantidade removido - quantidade será editada diretamente na tabela */}
 
           {/* Valores */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="valor_produto">Valor Produto (R$) *</Label>
-              <Input
-                id="valor_produto"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.valor_produto}
-                onChange={(e) => handleNumberChange('valor_produto', e.target.value)}
-                required
-              />
-            </div>
-
-            {formData.tipo_produto === 'porta' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="valor_pintura">Valor Pintura (R$)</Label>
-                  <Input
-                    id="valor_pintura"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.valor_pintura}
-                    onChange={(e) => handleNumberChange('valor_pintura', e.target.value)}
-                    disabled={cores?.find(c => c.id === formData.cor_id)?.nome.toLowerCase() === 'aço galvanizado'}
-                  />
-                  {cores?.find(c => c.id === formData.cor_id)?.nome.toLowerCase() === 'aço galvanizado' && (
-                    <p className="text-xs text-muted-foreground">
-                      Valor de pintura não permitido para Aço galvanizado
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="valor_instalacao">Valor Instalação (R$)</Label>
-                  <Input
-                    id="valor_instalacao"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.valor_instalacao}
-                    onChange={(e) => handleNumberChange('valor_instalacao', e.target.value)}
-                  />
-                </div>
-              </>
-            )}
-
+          <div className="space-y-2">
+            <Label htmlFor="valor_produto">Valor {formData.tipo_produto === 'pintura_epoxi' ? 'da Pintura' : 'do Produto'} (R$) *</Label>
+            <Input
+              id="valor_produto"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.valor_produto}
+              onChange={(e) => handleNumberChange('valor_produto', e.target.value)}
+              required
+            />
           </div>
 
           {/* Tipo de Desconto */}

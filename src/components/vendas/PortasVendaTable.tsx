@@ -14,18 +14,26 @@ interface PortasVendaTableProps {
 
 const getTipoProdutoLabel = (tipo: string) => {
   switch (tipo) {
-    case 'porta': return 'Porta de Enrolar';
+    case 'porta_enrolar': return 'Porta de Enrolar';
+    case 'porta_social': return 'Porta Social';
+    case 'pintura_epoxi': return 'Pintura Eletrostática';
     case 'acessorio': return 'Acessório';
     case 'adicional': return 'Adicional';
+    // Retrocompatibilidade
+    case 'porta': return 'Porta de Enrolar';
     default: return tipo;
   }
 };
 
-const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline" => {
+const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline" | "destructive" => {
   switch (tipo) {
-    case 'porta': return 'default';
+    case 'porta_enrolar': return 'default';
+    case 'porta_social': return 'default';
+    case 'pintura_epoxi': return 'destructive';
     case 'acessorio': return 'secondary';
     case 'adicional': return 'outline';
+    // Retrocompatibilidade
+    case 'porta': return 'default';
     default: return 'default';
   }
 };
@@ -54,13 +62,14 @@ export function PortasVendaTable({ portas, onRemovePorta, onEditPorta, onUpdateQ
       </TableHeader>
       <TableBody>
         {portas.map((produto, index) => {
+          // Para pintura_epoxi, valor_pintura não deve ser somado (é 0)
           const valorBase = (produto.valor_produto + produto.valor_pintura + produto.valor_instalacao) * produto.quantidade;
           const descontoAplicado = produto.tipo_desconto === 'valor' 
             ? produto.desconto_valor 
             : valorBase * (produto.desconto_percentual / 100);
           const valorTotal = valorBase - descontoAplicado;
           
-          const detalhes = produto.tipo_produto === 'porta' 
+          const detalhes = (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social' || produto.tipo_produto === 'porta')
             ? produto.tamanho
             : produto.descricao || '-';
           

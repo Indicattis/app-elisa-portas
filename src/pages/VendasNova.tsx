@@ -54,7 +54,8 @@ export default function VendasNova() {
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
-  const [tipoInicial, setTipoInicial] = useState<'porta' | 'acessorio' | 'adicional' | undefined>(undefined);
+  const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | undefined>(undefined);
+  const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -485,12 +486,41 @@ export default function VendasNova() {
                 onClick={() => {
                   setProdutoEditando(undefined);
                   setIndexEditando(undefined);
-                  setTipoInicial('porta');
+                  setTipoInicial('porta_enrolar');
+                  setPermitirTrocaTipo(false);
                   setDialogOpen(true);
                 }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Porta
+                Porta de Enrolar
+              </Button>
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('porta_social');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Porta Social
+              </Button>
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('pintura_epoxi');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Pintura Eletrostática
               </Button>
               <Button 
                 type="button"
@@ -512,7 +542,7 @@ export default function VendasNova() {
                   }
                 }}
                 tipoInicial={tipoInicial}
-                permitirTrocaTipo={tipoInicial !== 'porta'}
+                permitirTrocaTipo={permitirTrocaTipo}
                 onAddProduto={(produto) => {
                     handleAddPorta(produto);
                     setDialogOpen(false);

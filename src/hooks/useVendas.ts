@@ -4,11 +4,12 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface ProdutoVenda {
   id?: string;
-  tipo_produto: 'porta' | 'acessorio' | 'adicional';
+  tipo_produto: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'porta';
   tamanho?: string;
   cor_id?: string;
   acessorio_id?: string;
   adicional_id?: string;
+  tipo_pintura?: string;
   valor_produto: number;
   valor_pintura: number;
   valor_instalacao: number;
