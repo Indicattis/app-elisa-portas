@@ -198,14 +198,11 @@ export default function Faturamento() {
           cliente_nome,
           cliente_telefone,
           cliente_email,
-          valor_produto,
-          custo_produto,
-          valor_pintura,
-          custo_pintura,
           valor_instalacao,
           valor_frete,
           valor_venda,
           lucro_total,
+          custo_total,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -291,7 +288,7 @@ export default function Faturamento() {
 
       const { data: vendasPeriodo, error } = await supabase
         .from("vendas")
-        .select("valor_produto, custo_produto, valor_pintura, custo_pintura, valor_instalacao, valor_frete, lucro_total, estado")
+        .select("valor_venda, custo_total, valor_instalacao, valor_frete, lucro_total, estado")
         .gte("data_venda", startDate + " 00:00:00")
         .lte("data_venda", endDate + " 23:59:59");
 
@@ -302,14 +299,12 @@ export default function Faturamento() {
       const todasVendas = vendasPeriodo || [];
 
       const calcularStats = (vendas: any[]) => ({
-        lucroProdutos: vendas.reduce((acc, v) => acc + ((v.valor_produto || 0) - (v.custo_produto || 0)), 0),
-        lucroPintura: vendas.reduce((acc, v) => acc + ((v.valor_pintura || 0) - (v.custo_pintura || 0)), 0),
+        lucroProdutos: 0,
+        lucroPintura: 0,
         totalInstalacoes: vendas.reduce((acc, v) => acc + (v.valor_instalacao || 0), 0),
         totalFretes: vendas.reduce((acc, v) => acc + (v.valor_frete || 0), 0),
         lucroTotal: vendas.reduce((acc, v) => acc + (v.lucro_total || 0), 0),
-        faturamentoTotal: vendas.reduce((acc, v) => 
-          acc + (v.valor_produto || 0) + (v.valor_pintura || 0) + 
-          (v.valor_instalacao || 0) + (v.valor_frete || 0), 0),
+        faturamentoTotal: vendas.reduce((acc, v) => acc + (v.valor_venda || 0), 0),
       });
 
       setStats({

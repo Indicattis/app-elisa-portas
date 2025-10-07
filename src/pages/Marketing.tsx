@@ -271,7 +271,7 @@ export default function Marketing() {
     let vendasQuery = supabase
       .from("vendas")
       .select(`
-        valor_venda, atendente_id, estado, canal_aquisicao_id, data_venda,
+        valor_venda, custo_total, atendente_id, estado, canal_aquisicao_id, data_venda,
         canais_aquisicao:canal_aquisicao_id (
           id,
           nome
@@ -527,8 +527,8 @@ export default function Marketing() {
           roi: 0
         };
 
-        const custo = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
-        const lucroVenda = venda.valor_venda - custo;
+        const custo = venda.custo_total || 0;
+        const lucroVenda = (venda.valor_venda || 0) - custo;
 
         regionMap.set(venda.estado, {
           ...current,

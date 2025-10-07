@@ -14,8 +14,6 @@ interface Venda {
   cliente_nome: string;
   cliente_telefone: string;
   valor_venda: number;
-  lucro_produto?: number;
-  lucro_pintura?: number;
 }
 
 export default function FaturamentoEdit() {
@@ -25,7 +23,7 @@ export default function FaturamentoEdit() {
   const [venda, setVenda] = useState<Venda | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const { portas, isLoading: loadingPortas, updateLucros, isUpdatingLucros } = usePortasVenda(id);
+  const { portas, isLoading: loadingPortas, updateLucroItem, isUpdatingLucros } = usePortasVenda(id);
 
   useEffect(() => {
     const fetchVenda = async () => {
@@ -54,8 +52,8 @@ export default function FaturamentoEdit() {
     fetchVenda();
   }, [id, toast]);
 
-  const handleSaveItemLucros = async (itemId: string, lucros: { lucro_produto: number; lucro_pintura: number }) => {
-    await updateLucros({ portaId: itemId, ...lucros });
+  const handleSaveItemLucro = async (itemId: string, lucro: number) => {
+    await updateLucroItem({ portaId: itemId, lucro_item: lucro });
   };
 
   if (loading || loadingPortas) {
@@ -79,16 +77,13 @@ export default function FaturamentoEdit() {
   }
 
   // Calcular totais agregados
-  const totalLucroProduto = portas?.reduce((acc, p) => acc + (p.lucro_produto || 0), 0) || 0;
-  const totalLucroPintura = portas?.reduce((acc, p) => acc + (p.lucro_pintura || 0), 0) || 0;
-  const totalLucro = totalLucroProduto + totalLucroPintura;
-  const totalCustoProduto = portas?.reduce((acc, p) => acc + (p.custo_produto || 0), 0) || 0;
-  const totalCustoPintura = portas?.reduce((acc, p) => acc + (p.custo_pintura || 0), 0) || 0;
-  const totalCustos = totalCustoProduto + totalCustoPintura;
-  const margemMedia = venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
+  const totalLucro = portas?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
+  const totalValor = portas?.reduce((acc, p) => acc + p.valor_total, 0) || 0;
+  const totalCusto = totalValor - totalLucro;
+  const margemMedia = totalValor > 0 ? (totalLucro / totalValor) * 100 : 0;
 
   // Contar itens faturados
-  const itensFaturados = portas?.filter(p => (p.lucro_produto || 0) > 0 || (p.lucro_pintura || 0) > 0).length || 0;
+  const itensFaturados = portas?.filter(p => (p.lucro_item || 0) > 0).length || 0;
   const totalItens = portas?.length || 0;
 
   return (
@@ -204,8 +199,15 @@ export default function FaturamentoEdit() {
             {portas.map((porta) => (
               <FaturamentoItemCard
                 key={porta.id}
-                item={porta}
-                onSave={handleSaveItemLucros}
+                item={{
+                  id: porta.id,
+                  tipo_produto: porta.tipo_produto,
+                  descricao: porta.descricao || 'Produto',
+                  quantidade: porta.quantidade,
+                  valor_total: porta.valor_total,
+                  lucro_item: porta.lucro_item,
+                }}
+                onSave={handleSaveItemLucro}
                 isSaving={isUpdatingLucros}
               />
             ))}
@@ -226,29 +228,23 @@ export default function FaturamentoEdit() {
           <CardDescription>Valores totais calculados automaticamente</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Custo Produto</p>
+              <p className="text-sm text-muted-foreground">Custo Total</p>
               <p className="text-lg font-semibold">
-                R$ {totalCustoProduto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ {totalCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Custo Pintura</p>
-              <p className="text-lg font-semibold">
-                R$ {totalCustoPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Lucro Produto</p>
+              <p className="text-sm text-muted-foreground">Lucro Total</p>
               <p className="text-lg font-semibold text-green-600">
-                R$ {totalLucroProduto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ {totalLucro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Lucro Pintura</p>
-              <p className="text-lg font-semibold text-green-600">
-                R$ {totalLucroPintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <p className="text-sm text-muted-foreground">Margem Média</p>
+              <p className={`text-lg font-semibold ${margemMedia >= 30 ? 'text-green-600' : margemMedia >= 15 ? 'text-yellow-600' : 'text-red-600'}`}>
+                {margemMedia.toFixed(1)}%
               </p>
             </div>
           </div>

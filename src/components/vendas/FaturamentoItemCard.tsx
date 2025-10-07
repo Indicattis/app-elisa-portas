@@ -1,209 +1,141 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronUp, Save, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Save, Loader2, DollarSign } from "lucide-react";
 
 interface FaturamentoItemCardProps {
   item: {
     id: string;
     tipo_produto: string;
     descricao: string;
-    valor_produto: number;
-    valor_pintura: number;
     quantidade: number;
-    lucro_produto?: number;
-    lucro_pintura?: number;
-    custo_produto?: number;
-    custo_pintura?: number;
-    margem_produto?: number;
-    margem_pintura?: number;
+    valor_total: number;
+    lucro_item?: number;
   };
-  onSave: (itemId: string, lucros: { lucro_produto: number; lucro_pintura: number }) => Promise<void>;
+  onSave: (itemId: string, lucro: number) => Promise<void>;
   isSaving: boolean;
 }
 
 export function FaturamentoItemCard({ item, onSave, isSaving }: FaturamentoItemCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [lucroProduto, setLucroProduto] = useState(item.lucro_produto || 0);
-  const [lucroPintura, setLucroPintura] = useState(item.lucro_pintura || 0);
+  const [lucroItem, setLucroItem] = useState(item.lucro_item || 0);
 
-  // Cálculos em tempo real
-  const custoProdutoCalc = item.valor_produto - lucroProduto;
-  const custoPinturaCalc = item.valor_pintura - lucroPintura;
-  const margemProdutoCalc = item.valor_produto > 0 ? (lucroProduto / item.valor_produto) * 100 : 0;
-  const margemPinturaCalc = item.valor_pintura > 0 ? (lucroPintura / item.valor_pintura) * 100 : 0;
-  const margemMediaCalc = ((margemProdutoCalc + margemPinturaCalc) / 2);
-
-  // Status de faturamento
-  const isFaturado = (item.lucro_produto || 0) > 0 || (item.lucro_pintura || 0) > 0;
-
-  // Cores baseadas na margem
-  const getMargemColor = (margem: number) => {
-    if (margem >= 30) return "text-green-600";
-    if (margem >= 15) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getMargemBadgeVariant = (margem: number) => {
-    if (margem >= 30) return "default";
-    if (margem >= 15) return "secondary";
-    return "destructive";
-  };
+  const custoItem = item.valor_total - lucroItem;
+  const margemItem = item.valor_total > 0 ? (lucroItem / item.valor_total) * 100 : 0;
 
   const handleSave = async () => {
-    await onSave(item.id, {
-      lucro_produto: lucroProduto,
-      lucro_pintura: lucroPintura,
-    });
+    await onSave(item.id, lucroItem);
   };
 
-  // Validações
-  const hasError = lucroProduto > item.valor_produto || lucroPintura > item.valor_pintura;
-  const hasNegativeCost = custoProdutoCalc < 0 || custoPinturaCalc < 0;
-
   return (
-    <Card className="relative">
-      <CardHeader 
-        className="cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center justify-between">
+    <Card>
+      <CardContent className="pt-6">
+        <div 
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-base font-medium">
-                {item.tipo_produto} - {item.descricao}
-              </CardTitle>
-              {!isFaturado && (
-                <Badge variant="outline" className="text-xs">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  Pendente
-                </Badge>
-              )}
-              {isFaturado && (
-                <Badge variant="default" className="text-xs bg-green-600">
-                  Faturado
-                </Badge>
-              )}
+              <h3 className="font-medium">{item.descricao}</h3>
+              <span className="text-sm text-muted-foreground">
+                ({item.quantidade}x)
+              </span>
             </div>
-            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-              <span>Qtd: {item.quantidade}</span>
-              <span>Valor Produto: R$ {item.valor_produto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-              <span>Valor Pintura: R$ {item.valor_pintura.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-              {isFaturado && (
-                <Badge variant={getMargemBadgeVariant(margemMediaCalc)}>
-                  Margem: {margemMediaCalc.toFixed(1)}%
-                </Badge>
+            <div className="flex items-center gap-4 mt-1">
+              <span className="text-sm text-muted-foreground">
+                Tipo: {item.tipo_produto}
+              </span>
+              <span className="text-sm font-medium">
+                Valor: R$ {item.valor_total.toFixed(2)}
+              </span>
+              {item.lucro_item && item.lucro_item > 0 && (
+                <span className="text-sm text-green-600">
+                  ✓ Faturado
+                </span>
               )}
             </div>
           </div>
-          <Button variant="ghost" size="sm">
-            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </Button>
+          
+          {isExpanded ? (
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+          )}
         </div>
-      </CardHeader>
 
       {isExpanded && (
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Produto */}
-            <div className="space-y-4 p-4 border rounded-lg">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                Produto
-              </h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor={`lucro_produto_${item.id}`}>Lucro Produto (R$) *</Label>
-                <Input
-                  id={`lucro_produto_${item.id}`}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max={item.valor_produto}
-                  value={lucroProduto}
-                  onChange={(e) => setLucroProduto(parseFloat(e.target.value) || 0)}
-                  className={hasError || lucroProduto > item.valor_produto ? "border-red-500" : ""}
-                />
-                {lucroProduto > item.valor_produto && (
-                  <p className="text-xs text-red-600">Lucro não pode ser maior que o valor de venda</p>
-                )}
-              </div>
-
-              <div className="space-y-2 bg-muted/30 p-3 rounded">
-                <Label className="text-xs text-muted-foreground">Custo Calculado</Label>
-                <p className={`text-lg font-semibold ${custoProdutoCalc < 0 ? 'text-red-600' : ''}`}>
-                  R$ {custoProdutoCalc.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-
-              <div className="space-y-2 bg-muted/30 p-3 rounded">
-                <Label className="text-xs text-muted-foreground">Margem Calculada</Label>
-                <p className={`text-lg font-semibold ${getMargemColor(margemProdutoCalc)}`}>
-                  {margemProdutoCalc.toFixed(1)}%
-                </p>
-              </div>
+        <div className="space-y-4 pt-4 border-t">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <h4 className="font-medium">Faturamento do Item</h4>
             </div>
-
-            {/* Pintura */}
-            <div className="space-y-4 p-4 border rounded-lg">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                Pintura
-              </h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor={`lucro_pintura_${item.id}`}>Lucro Pintura (R$) *</Label>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor={`lucro-item-${item.id}`}>Lucro Real (R$)</Label>
                 <Input
-                  id={`lucro_pintura_${item.id}`}
+                  id={`lucro-item-${item.id}`}
                   type="number"
                   step="0.01"
                   min="0"
-                  max={item.valor_pintura}
-                  value={lucroPintura}
-                  onChange={(e) => setLucroPintura(parseFloat(e.target.value) || 0)}
-                  className={hasError || lucroPintura > item.valor_pintura ? "border-red-500" : ""}
+                  max={item.valor_total}
+                  value={lucroItem}
+                  onChange={(e) => setLucroItem(parseFloat(e.target.value) || 0)}
+                  className={custoItem < 0 ? "border-destructive" : ""}
                 />
-                {lucroPintura > item.valor_pintura && (
-                  <p className="text-xs text-red-600">Lucro não pode ser maior que o valor de venda</p>
+                {custoItem < 0 && (
+                  <p className="text-sm text-destructive mt-1">
+                    Lucro não pode ser maior que o valor total do item
+                  </p>
                 )}
               </div>
 
-              <div className="space-y-2 bg-muted/30 p-3 rounded">
-                <Label className="text-xs text-muted-foreground">Custo Calculado</Label>
-                <p className={`text-lg font-semibold ${custoPinturaCalc < 0 ? 'text-red-600' : ''}`}>
-                  R$ {custoPinturaCalc.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-
-              <div className="space-y-2 bg-muted/30 p-3 rounded">
-                <Label className="text-xs text-muted-foreground">Margem Calculada</Label>
-                <p className={`text-lg font-semibold ${getMargemColor(margemPinturaCalc)}`}>
-                  {margemPinturaCalc.toFixed(1)}%
-                </p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Valor Total:</span>
+                  <span className="font-medium">R$ {item.valor_total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Custo Calculado:</span>
+                  <span className={`font-medium ${custoItem < 0 ? 'text-destructive' : ''}`}>
+                    R$ {custoItem.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Margem:</span>
+                  <span className={`font-medium ${margemItem < 0 ? 'text-destructive' : ''}`}>
+                    {margemItem.toFixed(2)}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {hasNegativeCost && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-              <AlertCircle className="w-4 h-4 inline mr-2" />
-              Atenção: Custo negativo detectado. Verifique os valores de lucro informados.
-            </div>
-          )}
-
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <Button 
               onClick={handleSave} 
-              disabled={isSaving || hasError || hasNegativeCost}
-              className="gap-2"
+              disabled={isSaving || custoItem < 0}
+              className="w-full md:w-auto"
             >
-              <Save className="w-4 h-4" />
-              {isSaving ? "Salvando..." : "Salvar Lucros"}
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Salvar Lucro
+                </>
+              )}
             </Button>
           </div>
-        </CardContent>
+        </div>
       )}
+      </CardContent>
     </Card>
   );
 }

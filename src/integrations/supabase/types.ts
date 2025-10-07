@@ -2036,6 +2036,7 @@ export type Database = {
           desconto_valor: number | null
           descricao: string | null
           id: string
+          lucro_item: number | null
           lucro_pintura: number | null
           lucro_produto: number | null
           margem_pintura: number | null
@@ -2064,6 +2065,7 @@ export type Database = {
           desconto_valor?: number | null
           descricao?: string | null
           id?: string
+          lucro_item?: number | null
           lucro_pintura?: number | null
           lucro_produto?: number | null
           margem_pintura?: number | null
@@ -2092,6 +2094,7 @@ export type Database = {
           desconto_valor?: number | null
           descricao?: string | null
           id?: string
+          lucro_item?: number | null
           lucro_pintura?: number | null
           lucro_produto?: number | null
           margem_pintura?: number | null
@@ -2310,29 +2313,23 @@ export type Database = {
           cliente_nome: string | null
           cliente_telefone: string | null
           created_at: string
-          custo_pintura: number | null
-          custo_produto: number | null
+          custo_total: number | null
           data_prevista_entrega: string | null
           data_venda: string
           estado: string | null
           forma_pagamento: string | null
           id: string
-          lucro_pintura: number | null
-          lucro_produto: number | null
           lucro_total: number | null
           nota_fiscal: boolean
           numero_parcelas: number | null
           observacoes_venda: string | null
           publico_alvo: string | null
-          resgate: boolean | null
           tipo_entrega: string | null
           updated_at: string
           valor_a_receber: number | null
           valor_entrada: number | null
           valor_frete: number | null
           valor_instalacao: number | null
-          valor_pintura: number | null
-          valor_produto: number | null
           valor_venda: number | null
         }
         Insert: {
@@ -2345,29 +2342,23 @@ export type Database = {
           cliente_nome?: string | null
           cliente_telefone?: string | null
           created_at?: string
-          custo_pintura?: number | null
-          custo_produto?: number | null
+          custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
-          lucro_pintura?: number | null
-          lucro_produto?: number | null
           lucro_total?: number | null
           nota_fiscal?: boolean
           numero_parcelas?: number | null
           observacoes_venda?: string | null
           publico_alvo?: string | null
-          resgate?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
           valor_entrada?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null
-          valor_pintura?: number | null
-          valor_produto?: number | null
           valor_venda?: number | null
         }
         Update: {
@@ -2380,29 +2371,23 @@ export type Database = {
           cliente_nome?: string | null
           cliente_telefone?: string | null
           created_at?: string
-          custo_pintura?: number | null
-          custo_produto?: number | null
+          custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
           id?: string
-          lucro_pintura?: number | null
-          lucro_produto?: number | null
           lucro_total?: number | null
           nota_fiscal?: boolean
           numero_parcelas?: number | null
           observacoes_venda?: string | null
           publico_alvo?: string | null
-          resgate?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
           valor_entrada?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null
-          valor_pintura?: number | null
-          valor_produto?: number | null
           valor_venda?: number | null
         }
         Relationships: [
