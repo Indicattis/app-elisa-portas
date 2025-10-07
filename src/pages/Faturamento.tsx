@@ -137,9 +137,19 @@ export default function Faturamento() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Função para verificar se uma venda está faturada
+  // Função para verificar se uma venda está faturada (agora baseado nos itens)
   const isFaturada = (venda: Venda) => {
-    return (venda.custo_produto || 0) > 0 || (venda.custo_pintura || 0) > 0;
+    const portas = venda.portas || [];
+    return portas.some((p: any) => (p.lucro_produto || 0) > 0 || (p.lucro_pintura || 0) > 0);
+  };
+
+  // Função para verificar se uma venda está parcialmente faturada
+  const isParcialmenteFaturada = (venda: Venda) => {
+    const portas = venda.portas || [];
+    if (portas.length === 0) return false;
+    
+    const faturados = portas.filter((p: any) => (p.lucro_produto || 0) > 0 || (p.lucro_pintura || 0) > 0).length;
+    return faturados > 0 && faturados < portas.length;
   };
 
   // Função para calcular total de descontos
@@ -212,7 +222,13 @@ export default function Faturamento() {
             desconto_percentual,
             desconto_valor,
             tipo_desconto,
-            tamanho
+            tamanho,
+            lucro_produto,
+            lucro_pintura,
+            custo_produto,
+            custo_pintura,
+            margem_produto,
+            margem_pintura
           )
         `)
         .order("data_venda", { ascending: false });

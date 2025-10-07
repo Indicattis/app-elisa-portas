@@ -82,13 +82,41 @@ export function usePortasVenda(vendaId: string | undefined) {
     }
   });
 
+  const updateLucrosMutation = useMutation({
+    mutationFn: async ({ portaId, lucro_produto, lucro_pintura }: { portaId: string; lucro_produto: number; lucro_pintura: number }) => {
+      const { error } = await supabase
+        .from('portas_vendas')
+        .update({ lucro_produto, lucro_pintura })
+        .eq('id', portaId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portas-venda', vendaId] });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      toast({
+        title: 'Lucros atualizados',
+        description: 'Os lucros foram salvos com sucesso',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao atualizar lucros',
+        description: error.message,
+      });
+    }
+  });
+
   return {
     portas,
     isLoading,
     refetch,
     addPorta: addPortaMutation.mutateAsync,
     deletePorta: deletePortaMutation.mutateAsync,
+    updateLucros: updateLucrosMutation.mutateAsync,
     isAdding: addPortaMutation.isPending,
-    isDeleting: deletePortaMutation.isPending
+    isDeleting: deletePortaMutation.isPending,
+    isUpdatingLucros: updateLucrosMutation.isPending
   };
 }
