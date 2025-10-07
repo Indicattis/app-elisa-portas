@@ -9,10 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AutorizadosKanban } from "@/components/AutorizadosKanban";
 import { AutorizadosIndicadores } from "@/components/AutorizadosIndicadores";
 import { AutorizadosFiltros, FiltrosAutorizados } from "@/components/AutorizadosFiltros";
+import { InativacaoAutomaticaModal } from "@/components/InativacaoAutomaticaModal";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, MapPin, Phone, Mail, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Plus, Edit, Trash2, MapPin, Phone, Mail, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard, AlertTriangle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import jsPDF from 'jspdf';
@@ -23,22 +25,113 @@ import { AddRatingDialog } from "@/components/AddRatingDialog";
 import { useAutorizadosPerformance } from "@/hooks/useAutorizadosPerformance";
 import { aplicarFiltros } from "@/utils/autorizadosFilters";
 
+// Componente para contagem regressiva até inativação
+interface CountdownToInactivationProps {
+  autorizado: any;
+}
+
+function CountdownToInactivation({ autorizado }: CountdownToInactivationProps) {
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      if (!autorizado.ativo) {
+        setTimeRemaining("Inativo");
+        return;
+      }
+
+      const diasLimite = 90;
+      
+      let diasSemAvaliacao = 0;
+      if (autorizado.data_inicio_contagem_inativacao) {
+        const dataInicio = new Date(autorizado.data_inicio_contagem_inativacao);
+        const agora = new Date();
+        diasSemAvaliacao = Math.floor((agora.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+      } else {
+        diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+      }
+      
+      const diasRestantes = diasLimite - diasSemAvaliacao;
+
+      if (diasRestantes <= 0) {
+        setTimeRemaining("Pode ser inativado");
+        return;
+      }
+
+      if (diasRestantes >= 30) {
+        const meses = Math.floor(diasRestantes / 30);
+        const diasExcedentes = diasRestantes % 30;
+        if (diasExcedentes === 0) {
+          setTimeRemaining(`${meses} ${meses === 1 ? 'mês' : 'meses'}`);
+        } else {
+          setTimeRemaining(`${meses}m ${diasExcedentes}d`);
+        }
+      } else if (diasRestantes >= 7) {
+        const semanas = Math.floor(diasRestantes / 7);
+        const diasExcedentes = diasRestantes % 7;
+        if (diasExcedentes === 0) {
+          setTimeRemaining(`${semanas} ${semanas === 1 ? 'semana' : 'semanas'}`);
+        } else {
+          setTimeRemaining(`${semanas}s ${diasExcedentes}d`);
+        }
+      } else {
+        setTimeRemaining(`${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000);
+
+    return () => clearInterval(interval);
+  }, [autorizado]);
+
+  const getCountdownColor = () => {
+    if (!autorizado.ativo) return "text-muted-foreground";
+    
+    const diasLimite = 90;
+    
+    let diasSemAvaliacao = 0;
+    if (autorizado.data_inicio_contagem_inativacao) {
+      const dataInicio = new Date(autorizado.data_inicio_contagem_inativacao);
+      const agora = new Date();
+      diasSemAvaliacao = Math.floor((agora.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+    } else {
+      diasSemAvaliacao = autorizado.dias_sem_avaliacao || 0;
+    }
+    
+    const diasRestantes = diasLimite - diasSemAvaliacao;
+
+    if (diasRestantes <= 0) return "text-red-600 font-bold";
+    if (diasRestantes <= 7) return "text-red-500 font-semibold";
+    if (diasRestantes <= 30) return "text-orange-500 font-medium";
+    return "text-green-600";
+  };
+
+  return (
+    <div className={`text-sm ${getCountdownColor()}`}>
+      {timeRemaining || "Calculando..."}
+    </div>
+  );
+}
+
 interface Vendedor {
   id: string;
   nome: string;
   foto_perfil_url?: string;
 }
 
-export default function Licenciados() {
+export default function Autorizados() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const { data: autorizados = [], isLoading: loading } = useAutorizadosPerformance();
-  const [filteredLicenciados, setFilteredLicenciados] = useState(autorizados);
+  const [filteredAutorizados, setFilteredAutorizados] = useState(autorizados);
   const [geocoding, setGeocoding] = useState<string | null>(null);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+  const [isInativacaoModalOpen, setIsInativacaoModalOpen] = useState(false);
   
   const [filtros, setFiltros] = useState<FiltrosAutorizados>({
     busca: '',
@@ -54,9 +147,17 @@ export default function Licenciados() {
   }, []);
 
   useEffect(() => {
-    const filtered = aplicarFiltros(autorizados.filter(a => a.tipo_parceiro === 'licenciado'), filtros);
-    setFilteredLicenciados(filtered);
+    const filtered = aplicarFiltros(autorizados.filter(a => a.tipo_parceiro === 'autorizado'), filtros);
+    setFilteredAutorizados(filtered);
   }, [autorizados, filtros]);
+
+  const autorizadosCriticos = autorizados
+    .filter(a => a.ativo && a.status_risco === 'critico' && a.tipo_parceiro === 'autorizado')
+    .map(a => ({
+      nome: a.nome,
+      diasSemAvaliacao: a.dias_sem_avaliacao,
+      ultimaAvaliacao: a.ultima_avaliacao
+    }));
 
   const fetchVendedores = async () => {
     try {
@@ -93,16 +194,16 @@ export default function Licenciados() {
 
       toast({
         title: 'Sucesso',
-        description: 'Licenciado excluído com sucesso.'
+        description: 'Autorizado excluído com sucesso.'
       });
 
       queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
     } catch (error) {
-      console.error('Erro ao excluir licenciado:', error);
+      console.error('Erro ao excluir autorizado:', error);
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Erro ao excluir licenciado.'
+        description: 'Erro ao excluir autorizado.'
       });
     }
   };
@@ -151,19 +252,19 @@ export default function Licenciados() {
   };
 
   const handleBatchGeocode = async () => {
-    const licenciadosToGeocode = autorizados.filter(autorizado => 
+    const autorizadosToGeocode = autorizados.filter(autorizado => 
       autorizado.ativo && 
-      autorizado.tipo_parceiro === 'licenciado' &&
+      autorizado.tipo_parceiro === 'autorizado' &&
       autorizado.cidade && 
       autorizado.estado && 
       !autorizado.latitude && 
       !autorizado.longitude
     );
 
-    if (licenciadosToGeocode.length === 0) {
+    if (autorizadosToGeocode.length === 0) {
       toast({
         title: 'Info',
-        description: 'Nenhum licenciado encontrado para geocodificação.'
+        description: 'Nenhum autorizado encontrado para geocodificação.'
       });
       return;
     }
@@ -174,10 +275,10 @@ export default function Licenciados() {
 
     toast({
       title: 'Geocodificação em lote iniciada',
-      description: `Processando ${licenciadosToGeocode.length} licenciados...`
+      description: `Processando ${autorizadosToGeocode.length} autorizados...`
     });
 
-    for (const autorizado of licenciadosToGeocode) {
+    for (const autorizado of autorizadosToGeocode) {
       try {
         const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
           body: {
@@ -215,26 +316,26 @@ export default function Licenciados() {
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('Relatório de Licenciados', 105, 20, { align: 'center' });
+    doc.text('Relatório de Autorizados', 105, 20, { align: 'center' });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 105, 30, { align: 'center' });
     
-    const { etapas } = getEtapasByTipo('licenciado');
+    const { etapas } = getEtapasByTipo('autorizado');
     
-    const tableData = filteredLicenciados.map(licenciado => {
-      const vendedor = vendedores.find(v => v.id === licenciado.vendedor_id);
-      const etapaAtual = getCurrentEtapa(licenciado);
+    const tableData = filteredAutorizados.map(autorizado => {
+      const vendedor = vendedores.find(v => v.id === autorizado.vendedor_id);
+      const etapaAtual = getCurrentEtapa(autorizado);
       return [
-        licenciado.nome,
+        autorizado.nome,
         vendedor?.nome || 'Sem vendedor',
-        licenciado.responsavel || '-',
-        licenciado.telefone || '-',
-        licenciado.cidade || '-',
-        licenciado.estado || '-',
+        autorizado.responsavel || '-',
+        autorizado.telefone || '-',
+        autorizado.cidade || '-',
+        autorizado.estado || '-',
         etapaAtual ? etapas[etapaAtual as keyof typeof etapas] || '-' : '-',
-        licenciado.ativo ? 'Ativo' : 'Inativo'
+        autorizado.ativo ? 'Ativo' : 'Inativo'
       ];
     });
     
@@ -268,7 +369,7 @@ export default function Licenciados() {
       },
     });
     
-    doc.save(`Licenciados-${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Autorizados-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   if (loading) {
@@ -282,25 +383,25 @@ export default function Licenciados() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Licenciados</h1>
+        <h1 className="text-3xl font-bold">Autorizados</h1>
         <Button
-          onClick={() => navigate('/dashboard/parceiros/novo/licenciado')}
+          onClick={() => navigate('/dashboard/parceiros/novo/autorizado')}
           size="sm"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Novo Licenciado
+          Novo Autorizado
         </Button>
       </div>
 
-      <AutorizadosIndicadores tipoParceiro="licenciado" />
+      <AutorizadosIndicadores tipoParceiro="autorizado" />
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Licenciados Cadastrados</CardTitle>
+              <CardTitle>Autorizados Cadastrados</CardTitle>
               <CardDescription>
-                Total de {filteredLicenciados.length} licenciados cadastrados
+                Total de {filteredAutorizados.length} autorizados cadastrados
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -339,12 +440,24 @@ export default function Licenciados() {
             />
             
             <div className="flex flex-col sm:flex-row gap-2 min-w-0">
-              <Input
-                placeholder="Buscar licenciados..."
-                value={filtros.busca}
-                onChange={(e) => setFiltros({ ...filtros, busca: e.target.value })}
-                className="max-w-sm"
-              />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Buscar autorizados..."
+                  value={filtros.busca}
+                  onChange={(e) => setFiltros({ ...filtros, busca: e.target.value })}
+                  className="max-w-sm"
+                />
+                {isAdmin && autorizadosCriticos.length > 0 && (
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => setIsInativacaoModalOpen(true)}
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Inativação Automática ({autorizadosCriticos.length})
+                  </Button>
+                )}
+              </div>
             </div>
             <Button
               onClick={handleBatchGeocode}
@@ -375,30 +488,36 @@ export default function Licenciados() {
                   <TableHead>Etapa</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      Tempo até Inativação
+                    </div>
+                  </TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLicenciados.map((licenciado) => {
-                  const vendedor = vendedores.find(v => v.id === licenciado.vendedor_id);
-                  const { etapas } = getEtapasByTipo('licenciado');
-                  const etapaAtual = getCurrentEtapa(licenciado);
+                {filteredAutorizados.map((autorizado) => {
+                  const vendedor = vendedores.find(v => v.id === autorizado.vendedor_id);
+                  const { etapas } = getEtapasByTipo('autorizado');
+                  const etapaAtual = getCurrentEtapa(autorizado);
                   
                   return (
-                    <TableRow key={licenciado.id}>
+                    <TableRow key={autorizado.id}>
                       <TableCell>
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={licenciado.logo_url} alt={licenciado.nome} />
+                          <AvatarImage src={autorizado.logo_url} alt={autorizado.nome} />
                           <AvatarFallback className="text-xs">
-                            {getInitials(licenciado.nome)}
+                            {getInitials(autorizado.nome)}
                           </AvatarFallback>
                         </Avatar>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{licenciado.nome}</div>
-                          {licenciado.responsavel && (
-                            <div className="text-sm text-muted-foreground">{licenciado.responsavel}</div>
+                          <div className="font-medium">{autorizado.nome}</div>
+                          {autorizado.responsavel && (
+                            <div className="text-sm text-muted-foreground">{autorizado.responsavel}</div>
                           )}
                         </div>
                       </TableCell>
@@ -419,34 +538,34 @@ export default function Licenciados() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {licenciado.telefone && (
+                          {autorizado.telefone && (
                             <div className="flex items-center gap-1 text-sm">
                               <Phone className="h-3 w-3" />
-                              {licenciado.telefone}
+                              {autorizado.telefone}
                             </div>
                           )}
-                          {licenciado.email && (
+                          {autorizado.email && (
                             <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3" />
-                              {licenciado.email}
+                              {autorizado.email}
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {licenciado.cidade && (
+                          {autorizado.cidade && (
                             <div className="flex items-center gap-1 text-sm">
                               <MapPin className="h-3 w-3" />
-                              {licenciado.cidade} - {licenciado.estado}
+                              {autorizado.cidade} - {autorizado.estado}
                             </div>
                           )}
-                          {licenciado.endereco && (
+                          {autorizado.endereco && (
                             <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                              {licenciado.endereco}
+                              {autorizado.endereco}
                             </div>
                           )}
-                          {licenciado.latitude && licenciado.longitude && (
+                          {autorizado.latitude && autorizado.longitude && (
                             <Badge variant="secondary" className="text-xs">
                               Geocodificado
                             </Badge>
@@ -464,44 +583,49 @@ export default function Licenciados() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {licenciado.average_rating !== undefined && licenciado.average_rating > 0 ? (
+                          {autorizado.average_rating !== undefined && autorizado.average_rating > 0 ? (
                             <div className="flex items-center gap-1">
-                              <StarRating rating={licenciado.average_rating} size={14} />
+                              <StarRating rating={autorizado.average_rating} size={14} />
                               <span className="text-xs text-muted-foreground">
-                                ({licenciado.total_ratings})
+                                ({autorizado.total_ratings})
                               </span>
                             </div>
                           ) : (
                             <span className="text-xs text-muted-foreground">Sem avaliação</span>
                           )}
                           <AddRatingDialog 
-                            autorizadoId={licenciado.id}
-                            autorizadoNome={licenciado.nome}
+                            autorizadoId={autorizado.id}
+                            autorizadoNome={autorizado.nome}
                           />
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={licenciado.ativo ? "default" : "secondary"}>
-                          {licenciado.ativo ? 'Ativo' : 'Inativo'}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={autorizado.ativo ? "default" : "secondary"}>
+                            {autorizado.ativo ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <CountdownToInactivation autorizado={autorizado} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/dashboard/parceiros/${licenciado.id}/edit/licenciado`)}
+                            onClick={() => navigate(`/dashboard/parceiros/${autorizado.id}/edit/autorizado`)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          {!licenciado.latitude && !licenciado.longitude && (
+                          {!autorizado.latitude && !autorizado.longitude && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleGeocode(licenciado)}
-                              disabled={geocoding === licenciado.id}
+                              onClick={() => handleGeocode(autorizado)}
+                              disabled={geocoding === autorizado.id}
                             >
-                              {geocoding === licenciado.id ? (
+                              {geocoding === autorizado.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <MapPin className="h-4 w-4" />
@@ -521,13 +645,13 @@ export default function Licenciados() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o licenciado "{licenciado.nome}"? Esta ação não pode ser desfeita.
+                                  Tem certeza que deseja excluir o autorizado "{autorizado.nome}"? Esta ação não pode ser desfeita.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDelete(licenciado.id)}
+                                  onClick={() => handleDelete(autorizado.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   Excluir
@@ -544,9 +668,9 @@ export default function Licenciados() {
             </Table>
           ) : (
             <AutorizadosKanban 
-              autorizados={filteredLicenciados.map(a => ({ ...a, tipo_parceiro: a.tipo_parceiro || 'licenciado' }))} 
-              tipoParceiro="licenciado"
-              onEtapaChange={() => {
+              autorizados={filteredAutorizados.map(a => ({ ...a, tipo_parceiro: a.tipo_parceiro || 'autorizado' }))} 
+              tipoParceiro="autorizado"
+              onEtapaChange={(id, etapa) => {
                 queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
               }} 
               onShowHistory={() => {}}
@@ -554,6 +678,12 @@ export default function Licenciados() {
           )}
         </CardContent>
       </Card>
+
+      <InativacaoAutomaticaModal
+        isOpen={isInativacaoModalOpen}
+        onClose={() => setIsInativacaoModalOpen(false)}
+        autorizadosCriticos={autorizadosCriticos}
+      />
     </div>
   );
 }

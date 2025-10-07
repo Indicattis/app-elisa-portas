@@ -39,7 +39,7 @@ import Marketing from "./pages/Marketing";
 import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
-import Parceiros from "./pages/Parceiros";
+import Autorizados from "./pages/Autorizados";
 import ParceiroNovo from "./pages/ParceiroNovo";
 import ParceiroEdit from "./pages/ParceiroEdit";
 import AutorizadoHistorico from "./pages/AutorizadoHistorico";
@@ -428,7 +428,7 @@ const App = () => (
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
-                        <Parceiros />
+                        <Autorizados />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -438,7 +438,27 @@ const App = () => (
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
-                        <Parceiros />
+                        <Autorizados />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/representantes"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <Representantes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/licenciados"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <Licenciados />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
