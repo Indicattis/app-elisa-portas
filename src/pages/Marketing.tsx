@@ -463,7 +463,7 @@ export default function Marketing() {
       // Buscar vendas por região aplicando todos os filtros
       let vendasQuery = supabase
         .from("vendas")
-        .select("valor_venda, estado, custo_produto, custo_pintura, atendente_id, canal_aquisicao_id")
+        .select("valor_venda, estado, custo_total, atendente_id, canal_aquisicao_id")
         .gte("data_venda", startDate)
         .lte("data_venda", endDate)
         .not("estado", "is", null);
