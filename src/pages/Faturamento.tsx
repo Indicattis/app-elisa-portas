@@ -137,10 +137,10 @@ export default function Faturamento() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Função para verificar se uma venda está faturada (agora baseado nos itens)
+  // Função para verificar se uma venda está faturada (baseado no lucro_item)
   const isFaturada = (venda: Venda) => {
     const portas = venda.portas || [];
-    return portas.some((p: any) => (p.lucro_produto || 0) > 0 || (p.lucro_pintura || 0) > 0);
+    return portas.some((p: any) => (p.lucro_item || 0) > 0);
   };
 
   // Função para verificar se uma venda está parcialmente faturada
@@ -148,7 +148,7 @@ export default function Faturamento() {
     const portas = venda.portas || [];
     if (portas.length === 0) return false;
     
-    const faturados = portas.filter((p: any) => (p.lucro_produto || 0) > 0 || (p.lucro_pintura || 0) > 0).length;
+    const faturados = portas.filter((p: any) => (p.lucro_item || 0) > 0).length;
     return faturados > 0 && faturados < portas.length;
   };
 
@@ -220,6 +220,7 @@ export default function Faturamento() {
             desconto_valor,
             tipo_desconto,
             tamanho,
+            lucro_item,
             lucro_produto,
             lucro_pintura,
             custo_produto,
