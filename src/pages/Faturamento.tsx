@@ -271,9 +271,12 @@ export default function Faturamento() {
           acc + (p.tipo_produto !== 'pintura_epoxi' ? (p.valor_produto || 0) * (p.quantidade || 1) : 0), 0);
         const valor_pintura = portas.reduce((acc: number, p: any) => 
           acc + (p.tipo_produto === 'pintura_epoxi' ? (p.valor_produto || 0) * (p.quantidade || 1) : 0), 0);
-        const custo_produto = portas.reduce((acc: number, p: any) => 
+        
+        // Corrigir cálculo de custos: devem vir dos produtos apenas se foram faturados (lucro_item > 0)
+        const portasFaturadas = portas.filter((p: any) => (p.lucro_item || 0) > 0);
+        const custo_produto = portasFaturadas.reduce((acc: number, p: any) => 
           acc + ((p.custo_produto || 0) * (p.quantidade || 1)), 0);
-        const custo_pintura = portas.reduce((acc: number, p: any) => 
+        const custo_pintura = portasFaturadas.reduce((acc: number, p: any) => 
           acc + ((p.custo_pintura || 0) * (p.quantidade || 1)), 0);
         
         return {
