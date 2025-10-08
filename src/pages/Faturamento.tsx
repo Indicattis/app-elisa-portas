@@ -682,27 +682,28 @@ export default function Faturamento() {
               </CardContent>
             </Card>
 
-            {/* Lucro Bruto Total - Apenas Faturadas */}
+            {/* Lucro Líquido Total - Apenas Faturadas */}
             <Card className="border-2 border-green-600">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-green-600" />
-                  Lucro Bruto Total
+                  Lucro Líquido Total
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
                   R$ {vendasFaturadas.reduce((acc, v) => {
-                    // Calcular lucro baseado nas portas faturadas
+                    // Calcular lucro líquido: soma dos lucros dos itens + instalação (sem frete)
                     const portas = v.portas || [];
-                    const lucroTotal = portas.reduce((sum: number, p: any) => 
+                    const lucroItens = portas.reduce((sum: number, p: any) => 
                       sum + ((p.lucro_item || 0) * (p.quantidade || 1)), 0);
-                    return acc + lucroTotal;
+                    const lucroLiquido = lucroItens + (v.valor_instalacao || 0);
+                    return acc + lucroLiquido;
                   }, 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Apenas vendas faturadas
+                  Lucro + Instalação (sem frete)
                 </p>
               </CardContent>
             </Card>
@@ -922,14 +923,18 @@ export default function Faturamento() {
                         </TableCell>
 
                         <TableCell className="text-right font-semibold text-green-600">
-                          {(() => {
-                            const portas = venda.portas || [];
-                            const lucroItens = portas.reduce((sum: number, p: any) => 
-                              sum + ((p.lucro_item || 0) * (p.quantidade || 1)), 0);
-                            const lucroLiquido = lucroItens + (venda.valor_instalacao || 0);
-                            
-                            return `R$ ${lucroLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-                          })()}
+                          {isFaturada(venda) ? (
+                            (() => {
+                              const portas = venda.portas || [];
+                              const lucroItens = portas.reduce((sum: number, p: any) => 
+                                sum + ((p.lucro_item || 0) * (p.quantidade || 1)), 0);
+                              const lucroLiquido = lucroItens + (venda.valor_instalacao || 0);
+                              
+                              return `R$ ${lucroLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+                            })()
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
 
                         <TableCell className="text-right font-semibold text-primary">
