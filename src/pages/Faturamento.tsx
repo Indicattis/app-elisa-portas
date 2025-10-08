@@ -821,6 +821,7 @@ export default function Faturamento() {
                       <TableHead className="text-right">% Margem</TableHead>
                       <TableHead className="text-right">Instalação</TableHead>
                       <TableHead className="text-right">Frete</TableHead>
+                      <TableHead className="text-right">Lucro Líquido</TableHead>
                       <TableHead className="text-right">Valor Final</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
@@ -918,6 +919,17 @@ export default function Faturamento() {
 
                         <TableCell className="text-right">
                           R$ {(venda.valor_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </TableCell>
+
+                        <TableCell className="text-right font-semibold text-green-600">
+                          {(() => {
+                            const portas = venda.portas || [];
+                            const lucroItens = portas.reduce((sum: number, p: any) => 
+                              sum + ((p.lucro_item || 0) * (p.quantidade || 1)), 0);
+                            const lucroLiquido = lucroItens + (venda.valor_instalacao || 0);
+                            
+                            return `R$ ${lucroLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+                          })()}
                         </TableCell>
 
                         <TableCell className="text-right font-semibold text-primary">
