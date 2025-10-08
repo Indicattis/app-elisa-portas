@@ -692,8 +692,13 @@ export default function Faturamento() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  R$ {vendasFaturadas.reduce((acc, v) => 
-                    acc + (v.lucro_total || 0), 0)
+                  R$ {vendasFaturadas.reduce((acc, v) => {
+                    // Calcular lucro baseado nas portas faturadas
+                    const portas = v.portas || [];
+                    const lucroTotal = portas.reduce((sum: number, p: any) => 
+                      sum + ((p.lucro_item || 0) * (p.quantidade || 1)), 0);
+                    return acc + lucroTotal;
+                  }, 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
