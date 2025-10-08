@@ -84,7 +84,7 @@ export function usePortasVenda(vendaId: string | undefined) {
 
   const updateLucroItemMutation = useMutation({
     mutationFn: async ({ portaId, lucro_item }: { portaId: string; lucro_item: number }) => {
-      // Buscar os dados da porta para calcular os custos
+      // Buscar os dados da porta para calcular a distribuição de lucro
       const { data: porta, error: fetchError } = await supabase
         .from('portas_vendas')
         .select('valor_total, valor_produto, valor_pintura, tipo_produto')
@@ -93,35 +93,33 @@ export function usePortasVenda(vendaId: string | undefined) {
       
       if (fetchError) throw fetchError;
       
-      // Calcular custo total
-      const custo_total = (porta.valor_total || 0) - lucro_item;
-      
-      // Distribuir custo entre produto e pintura proporcionalmente
-      let custo_produto = 0;
-      let custo_pintura = 0;
+      // Distribuir lucro entre produto e pintura proporcionalmente
+      let lucro_produto = 0;
+      let lucro_pintura = 0;
       
       if (porta.tipo_produto === 'pintura_epoxi') {
-        // Se for apenas pintura, todo o custo vai para pintura
-        custo_pintura = custo_total;
+        // Se for apenas pintura, todo o lucro vai para pintura
+        lucro_pintura = lucro_item;
       } else if (porta.valor_pintura && porta.valor_pintura > 0) {
         // Se tem produto e pintura, dividir proporcionalmente
         const totalValor = (porta.valor_produto || 0) + (porta.valor_pintura || 0);
         if (totalValor > 0) {
-          custo_produto = custo_total * ((porta.valor_produto || 0) / totalValor);
-          custo_pintura = custo_total * ((porta.valor_pintura || 0) / totalValor);
+          lucro_produto = lucro_item * ((porta.valor_produto || 0) / totalValor);
+          lucro_pintura = lucro_item * ((porta.valor_pintura || 0) / totalValor);
         }
       } else {
-        // Se for só produto, todo o custo vai para produto
-        custo_produto = custo_total;
+        // Se for só produto, todo o lucro vai para produto
+        lucro_produto = lucro_item;
       }
       
-      // Atualizar com lucro e custos
+      // Atualizar com lucro_item e distribuição de lucros
+      // Os custos serão calculados automaticamente como colunas geradas
       const { error } = await supabase
         .from('portas_vendas')
         .update({ 
           lucro_item,
-          custo_produto,
-          custo_pintura
+          lucro_produto,
+          lucro_pintura
         })
         .eq('id', portaId);
       
