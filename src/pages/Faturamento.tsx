@@ -483,6 +483,46 @@ export default function Faturamento() {
   // Separar vendas faturadas para cálculo de indicadores
   const vendasFaturadas = filteredVendas.filter(isFaturada);
 
+  // Calcular novos indicadores
+  const indicadores = {
+    quantidadePortas: vendasFaturadas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas.filter((p: any) => 
+        p.tipo_produto === 'porta' && (p.lucro_item || 0) > 0
+      ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
+    }, 0),
+    
+    lucroPintura: vendasFaturadas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas.reduce((sum: number, p: any) => 
+        sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
+    }, 0),
+    
+    lucroPortas: vendasFaturadas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas.reduce((sum: number, p: any) => 
+        sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
+    }, 0),
+    
+    lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas.reduce((sum: number, p: any) => {
+        const lucroProd = (p.lucro_produto || 0) * (p.quantidade || 1);
+        const lucroPint = (p.lucro_pintura || 0) * (p.quantidade || 1);
+        return sum + lucroProd + lucroPint;
+      }, 0);
+    }, 0),
+    
+    lucroInstalacoes: filteredVendas.reduce((acc, v) => 
+      acc + (v.valor_instalacao || 0), 0),
+    
+    faturamentoTotal: filteredVendas.reduce((acc, v) => 
+      acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
+    
+    fretesTotais: filteredVendas.reduce((acc, v) => 
+      acc + (v.valor_frete || 0), 0),
+  };
+
   // Toggle de filtros rápidos
   const handleQuickFilterToggle = (filterId: string) => {
     setQuickFilters(prev => ({
@@ -596,135 +636,148 @@ export default function Faturamento() {
               </Tabs>
             </CardContent>
           </Card>
-          {/* Indicadores Dinâmicos baseados nos filtros */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Faturamento Total */}
-            <Card>
+          {/* Indicador Principal - Faturamento Total (Destacado) */}
+          <div className="flex justify-center">
+            <Card className="w-full max-w-2xl border-2 border-blue-600 shadow-lg">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-blue-600" />
+                <CardTitle className="text-xl font-bold flex items-center justify-center gap-3">
+                  <DollarSign className="h-6 w-6 text-blue-600" />
                   Faturamento Total (sem frete)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {/* Faturamento = valor_venda - valor_frete (mesma fórmula das abas Vendas e TV Dashboard) */}
-                  R$ {filteredVendas.reduce((acc, v) => 
-                    acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0)
-                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                <div className="text-4xl font-bold text-blue-600 text-center">
+                  R$ {indicadores.faturamentoTotal.toLocaleString("pt-BR", { 
+                    minimumFractionDigits: 2 
+                  })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {filteredVendas.length} vendas
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Custos de Produção - Apenas Faturadas */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Receipt className="h-4 w-4 text-orange-600" />
-                  Custos de Produção
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
-                  R$ {vendasFaturadas.reduce((acc, v) => 
-                    acc + (v.custo_produto || 0), 0)
-                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Apenas vendas faturadas
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Custos de Pintura - Apenas Faturadas */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Receipt className="h-4 w-4 text-purple-600" />
-                  Custos de Pintura
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">
-                  R$ {vendasFaturadas.reduce((acc, v) => 
-                    acc + (v.custo_pintura || 0), 0)
-                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Apenas vendas faturadas
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Fretes Totais */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-indigo-600" />
-                  Fretes Totais
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-indigo-600">
-                  R$ {filteredVendas.reduce((acc, v) => 
-                    acc + (v.valor_frete || 0), 0)
-                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Transporte e logística
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Instalações Totais */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Users className="h-4 w-4 text-cyan-600" />
-                  Instalações Totais
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-cyan-600">
-                  R$ {filteredVendas.reduce((acc, v) => 
-                    acc + (v.valor_instalacao || 0), 0)
-                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Serviço de instalação
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Lucro Líquido Total - Apenas Faturadas */}
-            <Card className="border-2 border-green-600">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
-                  Lucro Líquido Total
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  R$ {vendasFaturadas.reduce((acc, v) => {
-                    // Calcular lucro líquido: soma dos lucros dos itens + instalação (sem frete)
-                    const portas = v.portas || [];
-                    const lucroItens = portas.reduce((sum: number, p: any) => 
-                      sum + ((p.lucro_item || 0) * (p.quantidade || 1)), 0);
-                    const lucroLiquido = lucroItens + (v.valor_instalacao || 0);
-                    return acc + lucroLiquido;
-                  }, 0)
-                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Lucro + Instalação (sem frete)
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  {filteredVendas.length} vendas no período
                 </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Indicadores Secundários - Grid Menor */}
+          <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+            {/* Quantidade de Portas Vendidas */}
+            <Card className="border-slate-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <DoorOpen className="h-3.5 w-3.5 text-slate-600" />
+                  Qtd Portas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold text-slate-700">
+                  {indicadores.quantidadePortas}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Portas vendidas
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Lucro de Pintura */}
+            <Card className="border-purple-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Palette className="h-3.5 w-3.5 text-purple-600" />
+                  Lucro Pintura
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold text-purple-600">
+                  R$ {indicadores.lucroPintura.toLocaleString("pt-BR", { 
+                    minimumFractionDigits: 2 
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Apenas faturadas
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Lucro de Portas */}
+            <Card className="border-amber-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <DoorOpen className="h-3.5 w-3.5 text-amber-600" />
+                  Lucro Portas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold text-amber-600">
+                  R$ {indicadores.lucroPortas.toLocaleString("pt-BR", { 
+                    minimumFractionDigits: 2 
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Apenas faturadas
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Lucro Bruto Total */}
+            <Card className="border-green-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+                  Lucro Bruto
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold text-green-600">
+                  R$ {indicadores.lucroBrutoTotal.toLocaleString("pt-BR", { 
+                    minimumFractionDigits: 2 
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Portas + Pintura
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Lucro Instalações (renomeado) */}
+            <Card className="border-cyan-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Wrench className="h-3.5 w-3.5 text-cyan-600" />
+                  Lucro Instalações
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold text-cyan-600">
+                  R$ {indicadores.lucroInstalacoes.toLocaleString("pt-BR", { 
+                    minimumFractionDigits: 2 
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Serviço instalação
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Card de Fretes Totais - Separado */}
+          <Card className="border-indigo-300 max-w-xs">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-indigo-600" />
+                Fretes Totais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold text-indigo-600">
+                R$ {indicadores.fretesTotais.toLocaleString("pt-BR", { 
+                  minimumFractionDigits: 2 
+                })}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Transporte e logística
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Filtros Rápidos */}
           <Card>
