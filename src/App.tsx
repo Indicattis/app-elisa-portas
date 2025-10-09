@@ -64,6 +64,7 @@ import RHAdmin from "./pages/RHAdmin";
 import Representantes from "./pages/Representantes";
 import Licenciados from "./pages/Licenciados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
+import ForcaVendas from "./pages/ForcaVendas";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -279,6 +280,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Vendas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vendas/forca-vendas"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <ForcaVendas />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

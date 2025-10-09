@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
@@ -184,6 +184,10 @@ export default function Vendas() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Vendas</h1>
         <div className="flex gap-2">
+          <Button onClick={() => navigate('/dashboard/vendas/forca-vendas')} variant="outline">
+            <Trophy className="w-4 h-4 mr-2" />
+            Força de Vendas
+          </Button>
           <Button onClick={handleExportarPDF} variant="outline">
             <FileDown className="w-4 h-4 mr-2" />
             Exportar Relatório PDF
