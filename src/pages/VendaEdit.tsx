@@ -60,7 +60,10 @@ export default function VendaEdit() {
   });
 
   const { user, isAdmin } = useAuth();
-  const { canEdit } = useCanEditVenda(venda?.atendente_id);
+  const { canEdit, loading: loadingPermission, isFaturada } = useCanEditVenda({
+    atendenteId: venda?.atendente_id,
+    vendaId: id,
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -197,14 +200,16 @@ export default function VendaEdit() {
     });
   };
 
-  if (!canEdit && !loading) {
+  if (!canEdit && !loading && !loadingPermission) {
     return (
       <div className="container mx-auto py-6">
         <Card>
           <CardHeader>
             <CardTitle>Acesso Negado</CardTitle>
             <CardDescription>
-              Você não tem permissão para editar esta venda.
+              {isFaturada 
+                ? "Esta venda já foi totalmente faturada e não pode mais ser editada por atendentes."
+                : "Você não tem permissão para editar esta venda."}
             </CardDescription>
           </CardHeader>
         </Card>
