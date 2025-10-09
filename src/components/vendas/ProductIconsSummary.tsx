@@ -9,7 +9,7 @@ export function ProductIconsSummary({ venda }: ProductIconsSummaryProps) {
   const portas = venda.portas || [];
   
   const hasPortas = portas.some((p: any) => 
-    ['porta_pivotante', 'porta_de_correr', 'porta_camarão', 'porta_de_enrolar'].includes(p.tipo_produto)
+    ['porta', 'porta_enrolar'].includes(p.tipo_produto)
   );
   
   const hasAcessoriosOuAdicionais = portas.some((p: any) => 
