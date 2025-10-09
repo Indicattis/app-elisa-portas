@@ -472,19 +472,19 @@ export default function Faturamento() {
       ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
     }, 0),
     
-    lucroPintura: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
+    lucroPintura: vendasParaIndicadores.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroPortas: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
+    lucroPortas: vendasParaIndicadores.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroInstalacoes: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => 
+    lucroInstalacoes: vendasParaIndicadores.reduce((acc, v) => 
       acc + (v.valor_instalacao || 0), 0),
     
     lucroBrutoTotal: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
@@ -503,7 +503,7 @@ export default function Faturamento() {
     faturamentoTotal: vendasParaIndicadores.reduce((acc, v) => 
       acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
     
-    fretesTotais: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => 
+    fretesTotais: vendasParaIndicadores.reduce((acc, v) => 
       acc + (v.valor_frete || 0), 0),
   };
 
