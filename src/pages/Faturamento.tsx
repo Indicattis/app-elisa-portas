@@ -482,13 +482,15 @@ export default function Faturamento() {
     
     lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
       const portas = v.portas || [];
-      const lucroPortasEPintura = portas.reduce((sum: number, p: any) => {
-        const lucroProd = (p.lucro_produto || 0) * (p.quantidade || 1);
-        const lucroPint = (p.lucro_pintura || 0) * (p.quantidade || 1);
-        return sum + lucroProd + lucroPint;
-      }, 0);
-      const lucroInstalacao = v.valor_instalacao || 0;
-      return acc + lucroPortasEPintura + lucroInstalacao;
+      // Lucro das portas + Lucro da pintura
+      const lucroPortas = portas.reduce((sum: number, p: any) => 
+        sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
+      const lucroPintura = portas.reduce((sum: number, p: any) => 
+        sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
+      // Valor das instalações
+      const valorInstalacoes = v.valor_instalacao || 0;
+      
+      return acc + lucroPortas + lucroPintura + valorInstalacoes;
     }, 0),
     
     faturamentoTotal: filteredVendas.reduce((acc, v) => 
