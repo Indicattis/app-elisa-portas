@@ -93,34 +93,37 @@ export function usePortasVenda(vendaId: string | undefined) {
       
       if (fetchError) throw fetchError;
       
-      // Distribuir lucro entre produto e pintura proporcionalmente
-      let lucro_produto = 0;
-      let lucro_pintura = 0;
+      // Preparar objeto de atualização
+      const updateData: any = {
+        lucro_item
+      };
       
+      // Distribuir lucro entre produto e pintura proporcionalmente
       if (porta.tipo_produto === 'pintura_epoxi') {
         // Se for apenas pintura, todo o lucro vai para pintura
-        lucro_pintura = lucro_item;
+        updateData.lucro_produto = null;
+        updateData.lucro_pintura = lucro_item;
       } else if (porta.valor_pintura && porta.valor_pintura > 0) {
         // Se tem produto e pintura, dividir proporcionalmente
         const totalValor = (porta.valor_produto || 0) + (porta.valor_pintura || 0);
         if (totalValor > 0) {
-          lucro_produto = lucro_item * ((porta.valor_produto || 0) / totalValor);
-          lucro_pintura = lucro_item * ((porta.valor_pintura || 0) / totalValor);
+          updateData.lucro_produto = lucro_item * ((porta.valor_produto || 0) / totalValor);
+          updateData.lucro_pintura = lucro_item * ((porta.valor_pintura || 0) / totalValor);
+        } else {
+          updateData.lucro_produto = 0;
+          updateData.lucro_pintura = null;
         }
       } else {
         // Se for só produto, todo o lucro vai para produto
-        lucro_produto = lucro_item;
+        updateData.lucro_produto = lucro_item;
+        updateData.lucro_pintura = null;
       }
       
       // Atualizar com lucro_item e distribuição de lucros
       // Os custos serão calculados automaticamente como colunas geradas
       const { error } = await supabase
         .from('portas_vendas')
-        .update({ 
-          lucro_item,
-          lucro_produto,
-          lucro_pintura
-        })
+        .update(updateData)
         .eq('id', portaId);
       
       if (error) throw error;
