@@ -841,6 +841,7 @@ export type Database = {
             | null
           updated_at: string
           valor_a_receber: number | null
+          venda_id: string | null
         }
         Insert: {
           alterado_para_correcao_em?: string | null
@@ -870,6 +871,7 @@ export type Database = {
             | null
           updated_at?: string
           valor_a_receber?: number | null
+          venda_id?: string | null
         }
         Update: {
           alterado_para_correcao_em?: string | null
@@ -899,6 +901,7 @@ export type Database = {
             | null
           updated_at?: string
           valor_a_receber?: number | null
+          venda_id?: string | null
         }
         Relationships: [
           {
@@ -914,6 +917,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "instalacoes_cadastradas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
           },
         ]
       }

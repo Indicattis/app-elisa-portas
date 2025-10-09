@@ -190,12 +190,13 @@ export function useVendas() {
       
       if (portasError) throw portasError;
 
-      // 6. Atualizar tamanho da instalação com os tamanhos concatenados das portas
+      // 6. Atualizar instalação criada automaticamente pelo trigger
+      // A instalação já foi criada com venda_id pelo trigger
       const tamanhosConcatenados = portas.map(p => p.tamanho).join(', ');
       
       const updateData: any = { 
         tamanho: tamanhosConcatenados,
-        saldo: valor_a_receber // Transferir o valor a receber como saldo da instalação
+        saldo: valor_a_receber
       };
       if (vendaData.data_prevista_entrega) {
         updateData.data_instalacao = vendaData.data_prevista_entrega;
@@ -207,23 +208,17 @@ export function useVendas() {
       const { error: instalacaoError } = await supabase
         .from('instalacoes_cadastradas')
         .update(updateData)
-        .eq('nome_cliente', venda.cliente_nome)
-        .eq('telefone_cliente', venda.cliente_telefone)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .eq('venda_id', venda.id);
 
       if (instalacaoError) {
-        console.error('Erro ao atualizar tamanho da instalação:', instalacaoError);
+        console.error('Erro ao atualizar instalação:', instalacaoError);
       }
 
-      // 7. Buscar a instalação criada para geocodificar
+      // 7. Buscar a instalação para geocodificar
       const { data: instalacao } = await supabase
         .from('instalacoes_cadastradas')
         .select('id, cidade, estado')
-        .eq('nome_cliente', venda.cliente_nome)
-        .eq('telefone_cliente', venda.cliente_telefone)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('venda_id', venda.id)
         .single();
 
       // 8. Chamar geocodificação
@@ -264,6 +259,7 @@ export function useVendas() {
 
   const deleteVendaMutation = useMutation({
     mutationFn: async (vendaId: string) => {
+      // A instalação será excluída automaticamente devido ao ON DELETE CASCADE
       const { error } = await supabase
         .from('vendas')
         .delete()
@@ -273,9 +269,10 @@ export function useVendas() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['instalacoes'] });
       toast({
         title: 'Sucesso',
-        description: 'Venda excluída com sucesso',
+        description: 'Venda e instalação excluídas com sucesso',
       });
     },
     onError: (error: Error) => {
