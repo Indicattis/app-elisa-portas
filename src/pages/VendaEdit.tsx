@@ -55,9 +55,11 @@ export default function VendaEdit() {
     bairro: "",
     cep: "",
     observacoes_venda: "",
+    valor_frete: "",
+    nota_fiscal: false,
   });
 
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { canEdit } = useCanEditVenda(venda?.atendente_id);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -99,6 +101,8 @@ export default function VendaEdit() {
         bairro: vendaData.bairro || "",
         cep: vendaData.cep || "",
         observacoes_venda: vendaData.observacoes_venda || "",
+        valor_frete: (vendaData.valor_frete ? vendaData.valor_frete * 100 : 0).toString(),
+        nota_fiscal: vendaData.nota_fiscal || false,
       });
 
       // Vendas table doesn't have lead_id, so skip lead lookup
@@ -130,9 +134,9 @@ export default function VendaEdit() {
 
     try {
       const valorEntrada = parseFloat(formData.valor_entrada) / 100;
+      const valorFrete = parseFloat(formData.valor_frete) / 100;
 
-      const updateData = {
-        data_venda: new Date(formData.data_venda).toISOString(),
+      const updateData: any = {
         publico_alvo: formData.publico_alvo,
         canal_aquisicao_id: formData.canal_aquisicao_id || null,
         forma_pagamento: formData.forma_pagamento || null,
@@ -148,7 +152,14 @@ export default function VendaEdit() {
         bairro: formData.bairro || null,
         cep: formData.cep || null,
         observacoes_venda: formData.observacoes_venda || null,
+        valor_frete: valorFrete,
+        nota_fiscal: formData.nota_fiscal,
       };
+
+      // Apenas admins podem editar a data da venda
+      if (isAdmin) {
+        updateData.data_venda = new Date(formData.data_venda).toISOString();
+      }
 
       const { error } = await supabase
         .from("vendas")
@@ -242,12 +253,15 @@ export default function VendaEdit() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="data_venda">Data da Venda *</Label>
+                <Label htmlFor="data_venda">
+                  Data da Venda * {!isAdmin && <span className="text-xs text-muted-foreground">(Somente admin pode editar)</span>}
+                </Label>
                 <Input
                   id="data_venda"
                   type="datetime-local"
                   value={formData.data_venda}
                   onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
+                  disabled={!isAdmin}
                   required
                 />
               </div>
@@ -319,6 +333,19 @@ export default function VendaEdit() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="valor_frete">Valor do Frete Total</Label>
+                <Input
+                  id="valor_frete"
+                  placeholder="R$ 0,00"
+                  value={formatCurrency(formData.valor_frete)}
+                  onChange={(e) => {
+                    const numbers = e.target.value.replace(/\D/g, "");
+                    setFormData(prev => ({ ...prev, valor_frete: numbers }));
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="data_prevista_entrega">Data Prevista de Entrega</Label>
                 <Input
                   id="data_prevista_entrega"
@@ -345,6 +372,21 @@ export default function VendaEdit() {
                     <SelectItem value="servico">Serviço</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="nota_fiscal"
+                    checked={formData.nota_fiscal}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, nota_fiscal: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="nota_fiscal" className="cursor-pointer">
+                    Nota Fiscal emitida
+                  </Label>
+                </div>
               </div>
             </div>
 
