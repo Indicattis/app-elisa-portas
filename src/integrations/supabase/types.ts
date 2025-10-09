@@ -2252,6 +2252,7 @@ export type Database = {
           data_venda: string
           estado: string | null
           forma_pagamento: string | null
+          frete_aprovado: boolean
           id: string
           lucro_total: number | null
           nota_fiscal: boolean
@@ -2281,6 +2282,7 @@ export type Database = {
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
+          frete_aprovado?: boolean
           id?: string
           lucro_total?: number | null
           nota_fiscal?: boolean
@@ -2310,6 +2312,7 @@ export type Database = {
           data_venda?: string
           estado?: string | null
           forma_pagamento?: string | null
+          frete_aprovado?: boolean
           id?: string
           lucro_total?: number | null
           nota_fiscal?: boolean

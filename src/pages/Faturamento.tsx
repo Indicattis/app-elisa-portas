@@ -53,6 +53,7 @@ interface Venda {
   valor_frete: number;
   valor_venda: number;
   lucro_total: number;
+  frete_aprovado?: boolean;
   portas?: any[];
 }
 
@@ -137,10 +138,19 @@ export default function Faturamento() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Função para verificar se uma venda está faturada (baseado no lucro_item)
+  // Função para verificar se uma venda está faturada (baseado no lucro_item e frete aprovado)
   const isFaturada = (venda: Venda) => {
     const portas = venda.portas || [];
-    return portas.some((p: any) => (p.lucro_item || 0) > 0);
+    if (portas.length === 0) return false;
+    
+    // Verifica se todos os produtos têm lucro definido
+    const todosProdutosFaturados = portas.every((p: any) => (p.lucro_item || 0) > 0);
+    
+    // Verifica se o frete foi aprovado
+    const freteAprovado = (venda as any).frete_aprovado === true;
+    
+    // Venda está faturada se todos os produtos têm lucro E o frete foi aprovado
+    return todosProdutosFaturados && freteAprovado;
   };
 
   // Função para verificar se uma venda está parcialmente faturada
@@ -148,8 +158,14 @@ export default function Faturamento() {
     const portas = venda.portas || [];
     if (portas.length === 0) return false;
     
-    const faturados = portas.filter((p: any) => (p.lucro_item || 0) > 0).length;
-    return faturados > 0 && faturados < portas.length;
+    const algunsProdutosFaturados = portas.some((p: any) => (p.lucro_item || 0) > 0);
+    const todosProdutosFaturados = portas.every((p: any) => (p.lucro_item || 0) > 0);
+    const freteAprovado = (venda as any).frete_aprovado === true;
+    
+    // Parcialmente faturada se:
+    // - Alguns (mas não todos) produtos têm lucro, OU
+    // - Todos os produtos têm lucro MAS o frete não foi aprovado
+    return algunsProdutosFaturados && (!todosProdutosFaturados || !freteAprovado);
   };
 
   // Função para calcular total de descontos
@@ -203,6 +219,7 @@ export default function Faturamento() {
           valor_venda,
           lucro_total,
           custo_total,
+          frete_aprovado,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -837,7 +854,10 @@ export default function Faturamento() {
                         title="Clique duas vezes para ver todos os detalhes"
                       >
                         <TableCell>
-                          <StatusBadge isFaturada={isFaturada(venda)} />
+                          <StatusBadge 
+                            isFaturada={isFaturada(venda)} 
+                            isParcial={isParcialmenteFaturada(venda)}
+                          />
                         </TableCell>
                         
                         <TableCell>

@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, DollarSign, TrendingUp, Package } from "lucide-react";
+import { ArrowLeft, DollarSign, TrendingUp, Package, Truck, CheckCircle2, AlertCircle } from "lucide-react";
 import { usePortasVenda } from "@/hooks/usePortasVenda";
 import { FaturamentoItemCard } from "@/components/vendas/FaturamentoItemCard";
 
@@ -14,6 +17,8 @@ interface Venda {
   cliente_nome: string;
   cliente_telefone: string;
   valor_venda: number;
+  valor_frete: number;
+  frete_aprovado: boolean;
 }
 
 export default function FaturamentoEdit() {
@@ -22,6 +27,8 @@ export default function FaturamentoEdit() {
   const { toast } = useToast();
   const [venda, setVenda] = useState<Venda | null>(null);
   const [loading, setLoading] = useState(true);
+  const [freteAprovado, setFreteAprovado] = useState(false);
+  const [isSavingFrete, setIsSavingFrete] = useState(false);
   
   const { portas, isLoading: loadingPortas, updateLucroItem, isUpdatingLucros } = usePortasVenda(id);
 
@@ -46,13 +53,53 @@ export default function FaturamentoEdit() {
       }
 
       setVenda(data);
+      setFreteAprovado(data.frete_aprovado || false);
       setLoading(false);
     };
 
     fetchVenda();
   }, [id, toast]);
 
+  const handleToggleFreteAprovado = async (checked: boolean) => {
+    if (!id) return;
+    
+    setIsSavingFrete(true);
+    try {
+      const { error } = await supabase
+        .from("vendas")
+        .update({ frete_aprovado: checked })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setFreteAprovado(checked);
+      toast({
+        title: checked ? "Frete aprovado" : "Aprovação removida",
+        description: checked 
+          ? "O valor do frete foi aprovado para faturamento" 
+          : "A aprovação do frete foi removida",
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar aprovação do frete:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível atualizar a aprovação do frete",
+      });
+    } finally {
+      setIsSavingFrete(false);
+    }
+  };
+
   const handleSaveItemLucro = async (itemId: string, lucro: number) => {
+    if (!freteAprovado) {
+      toast({
+        variant: "destructive",
+        title: "Frete não aprovado",
+        description: "É necessário aprovar o frete antes de faturar os produtos",
+      });
+      return;
+    }
     await updateLucroItem({ portaId: itemId, lucro_item: lucro });
   };
 
@@ -85,6 +132,8 @@ export default function FaturamentoEdit() {
   // Contar itens faturados
   const itensFaturados = portas?.filter(p => (p.lucro_item || 0) > 0).length || 0;
   const totalItens = portas?.length || 0;
+  const todosFaturados = itensFaturados === totalItens && totalItens > 0;
+  const vendaCompletamenteFaturada = todosFaturados && freteAprovado;
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -158,6 +207,68 @@ export default function FaturamentoEdit() {
         </Card>
       </div>
 
+      {/* Aprovação de Frete */}
+      <Card className="border-2">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Truck className="h-6 w-6 text-primary" />
+            <div>
+              <CardTitle>Aprovação de Frete</CardTitle>
+              <CardDescription>
+                O frete deve ser aprovado antes de faturar os produtos
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="frete-aprovado" className="text-base font-medium cursor-pointer">
+                  Valor do Frete
+                </Label>
+                {freteAprovado && (
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                )}
+              </div>
+              <p className="text-2xl font-bold text-primary">
+                R$ {(venda.valor_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id="frete-aprovado"
+                checked={freteAprovado}
+                onCheckedChange={handleToggleFreteAprovado}
+                disabled={isSavingFrete}
+                className="h-6 w-6"
+              />
+              <Label htmlFor="frete-aprovado" className="text-base font-medium cursor-pointer">
+                {freteAprovado ? "Frete Aprovado" : "Aprovar Frete"}
+              </Label>
+            </div>
+          </div>
+
+          {!freteAprovado && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                O frete precisa ser aprovado antes de faturar os produtos desta venda.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {vendaCompletamenteFaturada && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                ✓ Venda completamente faturada! Frete aprovado e todos os produtos com lucro definido.
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Informações da Venda */}
       <Card>
         <CardHeader>
@@ -209,6 +320,7 @@ export default function FaturamentoEdit() {
                 }}
                 onSave={handleSaveItemLucro}
                 isSaving={isUpdatingLucros}
+                freteAprovado={freteAprovado}
               />
             ))}
           </div>

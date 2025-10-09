@@ -16,9 +16,10 @@ interface FaturamentoItemCardProps {
   };
   onSave: (itemId: string, lucro: number) => Promise<void>;
   isSaving: boolean;
+  freteAprovado?: boolean;
 }
 
-export function FaturamentoItemCard({ item, onSave, isSaving }: FaturamentoItemCardProps) {
+export function FaturamentoItemCard({ item, onSave, isSaving, freteAprovado = true }: FaturamentoItemCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [lucroItem, setLucroItem] = useState(item.lucro_item || 0);
 
@@ -117,8 +118,9 @@ export function FaturamentoItemCard({ item, onSave, isSaving }: FaturamentoItemC
           <div className="flex justify-end pt-2">
             <Button 
               onClick={handleSave} 
-              disabled={isSaving || custoItem < 0}
+              disabled={isSaving || custoItem < 0 || !freteAprovado}
               className="w-full md:w-auto"
+              title={!freteAprovado ? "O frete precisa ser aprovado antes de salvar o lucro" : undefined}
             >
               {isSaving ? (
                 <>
