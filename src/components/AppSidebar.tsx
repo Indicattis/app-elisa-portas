@@ -111,7 +111,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="offcanvas" className="border-r">
       <SidebarHeader className="h-12">
         <div className="flex items-center justify-center px-2 h-12">
           <div className="w-full max-w-[120px] h-12 flex items-center justify-center">

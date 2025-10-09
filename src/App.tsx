@@ -85,54 +85,29 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
-        {/* Sidebar para desktop */}
-        <div className="hidden md:block">
-          <AppSidebar />
-        </div>
+        <AppSidebar />
 
         <SidebarInset className="flex-1 flex flex-col">
-          {/* Header desktop */}
-          <div className="hidden md:flex sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
+          <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
             <div className="h-12 flex items-center justify-between px-4 w-full">
               <div className="flex items-center">
                 <SidebarTrigger className="-ml-1" />
                 <div className="h-4 w-px bg-border mx-3" />
               </div>
               
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" asChild>
+              <div className="flex items-center gap-2 md:gap-3">
+                <Button variant="outline" size="sm" asChild className="hidden sm:flex">
                   <NavLink to="/tv-dashboard" className="flex items-center gap-2">
                     <Tv className="h-4 w-4" />
-                    Modo TV
+                    <span className="hidden lg:inline">Modo TV</span>
                   </NavLink>
                 </Button>
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" asChild className="hidden sm:flex">
                   <NavLink to="/dashboard/mapa-autorizados" className="flex items-center gap-2">
                     <Map className="h-4 w-4" />
-                    Mapa
+                    <span className="hidden lg:inline">Mapa</span>
                   </NavLink>
                 </Button>
-                <ThemeToggle />
-                <HeaderUserInfo />
-              </div>
-            </div>
-          </div>
-
-          {/* Header mobile */}
-          <div className="md:hidden sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
-            <div className="h-12 flex items-center justify-between px-4">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Abrir menu">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-72 sm:w-80">
-                  <AppSidebar />
-                </SheetContent>
-              </Sheet>
-              
-              <div className="flex items-center gap-2">
                 <ThemeToggle />
                 <HeaderUserInfo />
               </div>
