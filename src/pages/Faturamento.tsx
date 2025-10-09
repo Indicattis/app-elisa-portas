@@ -477,17 +477,19 @@ export default function Faturamento() {
         sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
+    lucroInstalacoes: filteredVendas.reduce((acc, v) => 
+      acc + (v.valor_instalacao || 0), 0),
+    
     lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas.reduce((sum: number, p: any) => {
+      const lucroPortasEPintura = portas.reduce((sum: number, p: any) => {
         const lucroProd = (p.lucro_produto || 0) * (p.quantidade || 1);
         const lucroPint = (p.lucro_pintura || 0) * (p.quantidade || 1);
         return sum + lucroProd + lucroPint;
       }, 0);
+      const lucroInstalacao = v.valor_instalacao || 0;
+      return acc + lucroPortasEPintura + lucroInstalacao;
     }, 0),
-    
-    lucroInstalacoes: filteredVendas.reduce((acc, v) => 
-      acc + (v.valor_instalacao || 0), 0),
     
     faturamentoTotal: filteredVendas.reduce((acc, v) => 
       acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
@@ -598,7 +600,7 @@ export default function Faturamento() {
             </Card>
           </div>
 
-          {/* Tabela de Indicadores */}
+          {/* Tabela de Indicadores em Colunas */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Indicadores do Período</CardTitle>
@@ -608,108 +610,82 @@ export default function Faturamento() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-semibold text-sm">Indicador</th>
-                      <th className="text-right py-3 px-4 font-semibold text-sm">Valor</th>
+                      <th className="text-center py-3 px-2 font-semibold text-sm">
+                        <div className="flex flex-col items-center gap-1">
+                          <DollarSign className="h-4 w-4 text-blue-600" />
+                          <span>Faturamento Total</span>
+                          <span className="text-xs font-normal text-muted-foreground">(sem frete)</span>
+                        </div>
+                      </th>
+                      <th className="text-center py-3 px-2 font-semibold text-sm">
+                        <div className="flex flex-col items-center gap-1">
+                          <DoorOpen className="h-4 w-4 text-slate-600" />
+                          <span>Qtd Portas</span>
+                        </div>
+                      </th>
+                      <th className="text-center py-3 px-2 font-semibold text-sm">
+                        <div className="flex flex-col items-center gap-1">
+                          <DoorOpen className="h-4 w-4 text-amber-600" />
+                          <span>Lucro Portas</span>
+                        </div>
+                      </th>
+                      <th className="text-center py-3 px-2 font-semibold text-sm">
+                        <div className="flex flex-col items-center gap-1">
+                          <Palette className="h-4 w-4 text-purple-600" />
+                          <span>Lucro Pintura</span>
+                        </div>
+                      </th>
+                      <th className="text-center py-3 px-2 font-semibold text-sm">
+                        <div className="flex flex-col items-center gap-1">
+                          <Wrench className="h-4 w-4 text-cyan-600" />
+                          <span>Instalações</span>
+                        </div>
+                      </th>
+                      <th className="text-center py-3 px-2 font-semibold text-sm">
+                        <div className="flex flex-col items-center gap-1">
+                          <TrendingUp className="h-4 w-4 text-indigo-600" />
+                          <span>Fretes</span>
+                        </div>
+                      </th>
+                      <th className="text-center py-3 px-2 font-semibold text-sm">
+                        <div className="flex flex-col items-center gap-1">
+                          <TrendingUp className="h-4 w-4 text-green-600" />
+                          <span>Lucro Bruto</span>
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Faturamento Total */}
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium">Faturamento Total (sem frete)</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-bold text-blue-600">
+                    <tr>
+                      <td className="text-center py-4 px-2 font-bold text-blue-600">
                         R$ {indicadores.faturamentoTotal.toLocaleString("pt-BR", { 
                           minimumFractionDigits: 2 
                         })}
                       </td>
-                    </tr>
-
-                    {/* Quantidade de Portas */}
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <DoorOpen className="h-4 w-4 text-slate-600" />
-                          <span>Quantidade de Portas Vendidas</span>
-                        </div>
+                      <td className="text-center py-4 px-2 font-semibold">
+                        {indicadores.quantidadePortas}
                       </td>
-                      <td className="py-3 px-4 text-right font-semibold">
-                        {indicadores.quantidadePortas} unidades
-                      </td>
-                    </tr>
-
-                    {/* Lucro das Portas */}
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <DoorOpen className="h-4 w-4 text-amber-600" />
-                          <span>Lucro das Portas Vendidas</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-semibold text-amber-600">
+                      <td className="text-center py-4 px-2 font-semibold text-amber-600">
                         R$ {indicadores.lucroPortas.toLocaleString("pt-BR", { 
                           minimumFractionDigits: 2 
                         })}
                       </td>
-                    </tr>
-
-                    {/* Lucro da Pintura */}
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Palette className="h-4 w-4 text-purple-600" />
-                          <span>Lucro da Pintura</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-semibold text-purple-600">
+                      <td className="text-center py-4 px-2 font-semibold text-purple-600">
                         R$ {indicadores.lucroPintura.toLocaleString("pt-BR", { 
                           minimumFractionDigits: 2 
                         })}
                       </td>
-                    </tr>
-
-                    {/* Valor das Instalações */}
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Wrench className="h-4 w-4 text-cyan-600" />
-                          <span>Valor das Instalações</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-semibold text-cyan-600">
+                      <td className="text-center py-4 px-2 font-semibold text-cyan-600">
                         R$ {indicadores.lucroInstalacoes.toLocaleString("pt-BR", { 
                           minimumFractionDigits: 2 
                         })}
                       </td>
-                    </tr>
-
-                    {/* Fretes Totais */}
-                    <tr className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-indigo-600" />
-                          <span>Fretes Totais</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-semibold text-indigo-600">
+                      <td className="text-center py-4 px-2 font-semibold text-indigo-600">
                         R$ {indicadores.fretesTotais.toLocaleString("pt-BR", { 
                           minimumFractionDigits: 2 
                         })}
                       </td>
-                    </tr>
-
-                    {/* Lucro Bruto Total */}
-                    <tr className="hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                          <span className="font-medium">Lucro Bruto Total</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-bold text-green-600 text-lg">
+                      <td className="text-center py-4 px-2 font-bold text-green-600 text-lg">
                         R$ {indicadores.lucroBrutoTotal.toLocaleString("pt-BR", { 
                           minimumFractionDigits: 2 
                         })}
