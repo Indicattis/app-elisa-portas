@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -552,32 +552,199 @@ export default function Faturamento() {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-6">
-          {/* Abas de Faturamento */}
+          {/* Filters and Table */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Status de Faturamento</CardTitle>
-                <div className="flex gap-2 text-sm text-muted-foreground">
-                  <span>{vendasFaturadas.length} faturadas</span>
-                  <span>•</span>
-                  <span>{filteredVendas.length - vendasFaturadas.length} não faturadas</span>
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <CardTitle>Histórico de Vendas</CardTitle>
+                  <CardDescription>
+                    {filteredVendas.length} vendas encontradas
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">Período:</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-64 justify-start text-left font-normal",
+                            !dateRange && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateRange?.from ? (
+                            dateRange.to ? (
+                              <>
+                                {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                                {format(dateRange.to, "dd/MM/yyyy")}
+                              </>
+                            ) : (
+                              format(dateRange.from, "dd/MM/yyyy")
+                            )
+                          ) : (
+                            <span>Selecione um período</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          initialFocus
+                          mode="range"
+                          defaultMonth={dateRange?.from}
+                          selected={dateRange}
+                          onSelect={(range) => {
+                            setDateRange(range);
+                          }}
+                          numberOfMonths={2}
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => {
+                        setLoading(true);
+                        fetchVendas();
+                        fetchStats();
+                      }}
+                    >
+                      Aplicar
+                    </Button>
+                  </div>
+
+                  <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Todos os atendentes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos os atendentes</SelectItem>
+                      {atendentes.map(atendente => (
+                        <SelectItem key={atendente.user_id} value={atendente.user_id}>
+                          {atendente.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+              
+              <div className="flex flex-wrap items-center gap-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <Search className="w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar cliente, atendente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                
+                <Select value={filterPublico} onValueChange={setFilterPublico}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Público" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                    <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Status de Faturamento - Botões Circulares */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Status de Faturamento</CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="todas">
-                    Todas ({filteredVendas.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="faturadas">
-                    Faturadas ({vendasFaturadas.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="nao_faturadas">
-                    Não Faturadas ({filteredVendas.length - vendasFaturadas.length})
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Botão: Todas */}
+                <button
+                  onClick={() => setActiveTab('todas')}
+                  className={cn(
+                    "flex flex-col items-center gap-3 p-6 rounded-lg transition-all",
+                    "hover:scale-105 hover:shadow-md",
+                    activeTab === 'todas' 
+                      ? "bg-blue-50 border-2 border-blue-600" 
+                      : "bg-card border-2 border-border hover:border-blue-300"
+                  )}
+                >
+                  <div className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center transition-all",
+                    activeTab === 'todas' 
+                      ? "bg-blue-600 text-white" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <Receipt className="w-8 h-8" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold text-sm">Todas</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ({filteredVendas.length})
+                    </p>
+                  </div>
+                </button>
+
+                {/* Botão: Faturadas */}
+                <button
+                  onClick={() => setActiveTab('faturadas')}
+                  className={cn(
+                    "flex flex-col items-center gap-3 p-6 rounded-lg transition-all",
+                    "hover:scale-105 hover:shadow-md",
+                    activeTab === 'faturadas' 
+                      ? "bg-green-50 border-2 border-green-600" 
+                      : "bg-card border-2 border-border hover:border-green-300"
+                  )}
+                >
+                  <div className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center transition-all",
+                    activeTab === 'faturadas' 
+                      ? "bg-green-600 text-white" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold text-sm">Faturadas</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ({vendasFaturadas.length})
+                    </p>
+                  </div>
+                </button>
+
+                {/* Botão: Não Faturadas */}
+                <button
+                  onClick={() => setActiveTab('nao_faturadas')}
+                  className={cn(
+                    "flex flex-col items-center gap-3 p-6 rounded-lg transition-all",
+                    "hover:scale-105 hover:shadow-md",
+                    activeTab === 'nao_faturadas' 
+                      ? "bg-amber-50 border-2 border-amber-600" 
+                      : "bg-card border-2 border-border hover:border-amber-300"
+                  )}
+                >
+                  <div className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center transition-all",
+                    activeTab === 'nao_faturadas' 
+                      ? "bg-amber-600 text-white" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <Clock className="w-8 h-8" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold text-sm">Não Faturadas</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ({filteredVendas.length - vendasFaturadas.length})
+                    </p>
+                  </div>
+                </button>
+              </div>
             </CardContent>
           </Card>
           {/* Indicador Principal - Faturamento Total (Destacado) */}
@@ -700,108 +867,9 @@ export default function Faturamento() {
           </Card>
 
 
-          {/* Filters and Table */}
+          {/* Tabela de Vendas */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Histórico de Vendas</CardTitle>
-                  <CardDescription>
-                    {filteredVendas.length} vendas encontradas
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium">Período:</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-64 justify-start text-left font-normal",
-                          !dateRange && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateRange?.from ? (
-                          dateRange.to ? (
-                            <>
-                              {format(dateRange.from, "dd/MM/yyyy")} -{" "}
-                              {format(dateRange.to, "dd/MM/yyyy")}
-                            </>
-                          ) : (
-                            format(dateRange.from, "dd/MM/yyyy")
-                          )
-                        ) : (
-                          <span>Selecione um período</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={dateRange?.from}
-                        selected={dateRange}
-                        onSelect={(range) => {
-                          setDateRange(range);
-                        }}
-                        numberOfMonths={2}
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      setLoading(true);
-                      fetchVendas();
-                      fetchStats();
-                    }}
-                  >
-                    Aplicar
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center space-x-2">
-                  <Search className="w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar cliente, atendente..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
-                  />
-                </div>
-                
-                <Select value={filterPublico} onValueChange={setFilterPublico}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Público" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="serralheiro">Serralheiro</SelectItem>
-                    <SelectItem value="cliente_final">Cliente Final</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Todos os atendentes" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os atendentes</SelectItem>
-                    {atendentes.map(atendente => (
-                      <SelectItem key={atendente.user_id} value={atendente.user_id}>
-                        {atendente.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
