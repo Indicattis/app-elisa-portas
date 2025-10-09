@@ -23,7 +23,7 @@ import autoTable from 'jspdf-autotable';
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/vendas/StatusBadge";
-import { QuickFiltersBar } from "@/components/vendas/QuickFiltersBar";
+
 import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
 import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
@@ -31,6 +31,7 @@ import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 interface Venda {
   id: string;
   data_venda: string;
+  atendente_id: string;
   atendente_nome: string;
   atendente_foto?: string | null;
   publico_alvo: string | null;
@@ -123,16 +124,8 @@ export default function Faturamento() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [activeTab, setActiveTab] = useState<'todas' | 'faturadas' | 'nao_faturadas'>('todas');
-  const [quickFilters, setQuickFilters] = useState({
-    naoFaturadas: false,
-    vendaMesAtual: false,
-    vendaMesPassado: false,
-    vendaAnoAtual: false,
-    estadoRS: false,
-    estadoSC: false,
-    serralheiro: false,
-    clienteFinal: false,
-  });
+  const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
+  const [atendentes, setAtendentes] = useState<any[]>([]);
   const [selectedVenda, setSelectedVenda] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const { toast } = useToast();
@@ -196,7 +189,17 @@ export default function Faturamento() {
   useEffect(() => {
     fetchVendas();
     fetchStats();
+    fetchAtendentes();
   }, [dateRange]);
+
+  const fetchAtendentes = async () => {
+    const { data } = await supabase
+      .from('admin_users')
+      .select('user_id, nome')
+      .eq('ativo', true)
+      .order('nome');
+    if (data) setAtendentes(data);
+  };
 
   const fetchVendas = async () => {
     try {
@@ -434,39 +437,9 @@ export default function Faturamento() {
     if (activeTab === 'faturadas' && !isFaturada(venda)) return false;
     if (activeTab === 'nao_faturadas' && isFaturada(venda)) return false;
 
-    // Filtros rápidos
-    if (quickFilters.naoFaturadas && isFaturada(venda)) return false;
-    if (quickFilters.estadoRS && venda.estado !== 'RS') return false;
-    if (quickFilters.estadoSC && venda.estado !== 'SC') return false;
-    if (quickFilters.serralheiro && venda.publico_alvo !== 'Serralheiro') return false;
-    if (quickFilters.clienteFinal && venda.publico_alvo !== 'Cliente Final') return false;
-
-    // Filtro de vendas do mês atual
-    if (quickFilters.vendaMesAtual) {
-      const vendaDate = new Date(venda.data_venda);
-      const now = new Date();
-      if (vendaDate.getMonth() !== now.getMonth() || vendaDate.getFullYear() !== now.getFullYear()) {
-        return false;
-      }
-    }
-
-    // Filtro de vendas do mês passado
-    if (quickFilters.vendaMesPassado) {
-      const vendaDate = new Date(venda.data_venda);
-      const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      if (vendaDate.getMonth() !== lastMonth.getMonth() || vendaDate.getFullYear() !== lastMonth.getFullYear()) {
-        return false;
-      }
-    }
-
-    // Filtro de vendas do ano atual
-    if (quickFilters.vendaAnoAtual) {
-      const vendaDate = new Date(venda.data_venda);
-      const now = new Date();
-      if (vendaDate.getFullYear() !== now.getFullYear()) {
-        return false;
-      }
+    // Filtro por atendente
+    if (selectedAtendente !== "todos" && venda.atendente_id !== selectedAtendente) {
+      return false;
     }
 
     // Filtros de busca e público
@@ -523,39 +496,6 @@ export default function Faturamento() {
       acc + (v.valor_frete || 0), 0),
   };
 
-  // Toggle de filtros rápidos
-  const handleQuickFilterToggle = (filterId: string) => {
-    setQuickFilters(prev => ({
-      ...prev,
-      [filterId]: !prev[filterId as keyof typeof prev]
-    }));
-  };
-
-  // Limpar todos os filtros rápidos
-  const handleClearQuickFilters = () => {
-    setQuickFilters({
-      naoFaturadas: false,
-      vendaMesAtual: false,
-      vendaMesPassado: false,
-      vendaAnoAtual: false,
-      estadoRS: false,
-      estadoSC: false,
-      serralheiro: false,
-      clienteFinal: false,
-    });
-  };
-
-  // Configuração dos filtros rápidos para o componente
-  const quickFiltersConfig = [
-    { id: 'naoFaturadas', label: 'Não Faturadas', active: quickFilters.naoFaturadas },
-    { id: 'vendaMesAtual', label: 'Vendas do Mês', active: quickFilters.vendaMesAtual },
-    { id: 'vendaMesPassado', label: 'Mês Passado', active: quickFilters.vendaMesPassado },
-    { id: 'vendaAnoAtual', label: 'Ano Atual', active: quickFilters.vendaAnoAtual },
-    { id: 'estadoRS', label: 'RS', active: quickFilters.estadoRS },
-    { id: 'estadoSC', label: 'SC', active: quickFilters.estadoSC },
-    { id: 'serralheiro', label: 'Serralheiro', active: quickFilters.serralheiro },
-    { id: 'clienteFinal', label: 'Cliente Final', active: quickFilters.clienteFinal },
-  ];
 
   const meses = [
     { value: 1, label: "Janeiro" }, { value: 2, label: "Fevereiro" },
@@ -779,16 +719,6 @@ export default function Faturamento() {
             </CardContent>
           </Card>
 
-          {/* Filtros Rápidos */}
-          <Card>
-            <CardContent className="pt-6">
-              <QuickFiltersBar
-                filters={quickFiltersConfig}
-                onFilterToggle={handleQuickFilterToggle}
-                onClearAll={handleClearQuickFilters}
-              />
-            </CardContent>
-          </Card>
 
           {/* Filters and Table */}
           <Card>
@@ -875,6 +805,20 @@ export default function Faturamento() {
                     <SelectItem value="cliente_final">Cliente Final</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Todos os atendentes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os atendentes</SelectItem>
+                    {atendentes.map(atendente => (
+                      <SelectItem key={atendente.user_id} value={atendente.user_id}>
+                        {atendente.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardHeader>
             <CardContent>
@@ -883,6 +827,7 @@ export default function Faturamento() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Status</TableHead>
+                      <TableHead>Cliente</TableHead>
                       <TableHead>Atendente</TableHead>
                       <TableHead>Produtos</TableHead>
                       <TableHead className="text-right">Valor Produtos</TableHead>
@@ -911,6 +856,10 @@ export default function Faturamento() {
                             isFaturada={isFaturada(venda)} 
                             isParcial={isParcialmenteFaturada(venda)}
                           />
+                        </TableCell>
+
+                        <TableCell>
+                          <span className="text-sm font-medium">{venda.cliente_nome || '-'}</span>
                         </TableCell>
                         
                         <TableCell>
