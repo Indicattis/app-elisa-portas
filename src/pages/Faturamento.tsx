@@ -663,30 +663,24 @@ export default function Faturamento() {
               <CardTitle>Status de Faturamento</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {/* Botão: Todas */}
                 <button
                   onClick={() => setActiveTab('todas')}
-                  className={cn(
-                    "flex flex-col items-center gap-3 p-6 rounded-lg transition-all",
-                    "hover:scale-105 hover:shadow-md",
-                    activeTab === 'todas' 
-                      ? "bg-blue-50 border-2 border-blue-600" 
-                      : "bg-card border-2 border-border hover:border-blue-300"
-                  )}
+                  className="flex flex-col items-center gap-3 p-4 rounded-lg transition-all hover:bg-muted/50"
                 >
                   <div className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center transition-all",
+                    "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
                     activeTab === 'todas' 
                       ? "bg-blue-600 text-white" 
                       : "bg-muted text-muted-foreground"
                   )}>
-                    <Receipt className="w-8 h-8" />
+                    <Receipt className="w-6 h-6" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-sm">Todas</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ({filteredVendas.length})
+                    <p className="font-medium text-sm">Todas</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {filteredVendas.length}
                     </p>
                   </div>
                 </button>
@@ -694,26 +688,20 @@ export default function Faturamento() {
                 {/* Botão: Faturadas */}
                 <button
                   onClick={() => setActiveTab('faturadas')}
-                  className={cn(
-                    "flex flex-col items-center gap-3 p-6 rounded-lg transition-all",
-                    "hover:scale-105 hover:shadow-md",
-                    activeTab === 'faturadas' 
-                      ? "bg-green-50 border-2 border-green-600" 
-                      : "bg-card border-2 border-border hover:border-green-300"
-                  )}
+                  className="flex flex-col items-center gap-3 p-4 rounded-lg transition-all hover:bg-muted/50"
                 >
                   <div className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center transition-all",
+                    "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
                     activeTab === 'faturadas' 
                       ? "bg-green-600 text-white" 
                       : "bg-muted text-muted-foreground"
                   )}>
-                    <CheckCircle2 className="w-8 h-8" />
+                    <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-sm">Faturadas</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ({vendasFaturadas.length})
+                    <p className="font-medium text-sm">Faturadas</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {vendasFaturadas.length}
                     </p>
                   </div>
                 </button>
@@ -721,53 +709,26 @@ export default function Faturamento() {
                 {/* Botão: Não Faturadas */}
                 <button
                   onClick={() => setActiveTab('nao_faturadas')}
-                  className={cn(
-                    "flex flex-col items-center gap-3 p-6 rounded-lg transition-all",
-                    "hover:scale-105 hover:shadow-md",
-                    activeTab === 'nao_faturadas' 
-                      ? "bg-amber-50 border-2 border-amber-600" 
-                      : "bg-card border-2 border-border hover:border-amber-300"
-                  )}
+                  className="flex flex-col items-center gap-3 p-4 rounded-lg transition-all hover:bg-muted/50"
                 >
                   <div className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center transition-all",
+                    "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
                     activeTab === 'nao_faturadas' 
-                      ? "bg-amber-600 text-white" 
+                      ? "bg-amber-500 text-white" 
                       : "bg-muted text-muted-foreground"
                   )}>
-                    <Clock className="w-8 h-8" />
+                    <Clock className="w-6 h-6" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-sm">Não Faturadas</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ({filteredVendas.length - vendasFaturadas.length})
+                    <p className="font-medium text-sm">Não Faturadas</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {filteredVendas.length - vendasFaturadas.length}
                     </p>
                   </div>
                 </button>
               </div>
             </CardContent>
           </Card>
-          {/* Indicador Principal - Faturamento Total (Destacado) */}
-          <div className="flex justify-center">
-            <Card className="w-full max-w-2xl border-2 border-blue-600 shadow-lg">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xl font-bold flex items-center justify-center gap-3">
-                  <DollarSign className="h-6 w-6 text-blue-600" />
-                  Faturamento Total (sem frete)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-blue-600 text-center">
-                  R$ {indicadores.faturamentoTotal.toLocaleString("pt-BR", { 
-                    minimumFractionDigits: 2 
-                  })}
-                </div>
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  {filteredVendas.length} vendas no período
-                </p>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Tabela de Indicadores em Colunas */}
           <Card>
