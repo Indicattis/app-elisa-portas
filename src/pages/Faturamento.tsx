@@ -455,32 +455,39 @@ export default function Faturamento() {
 
   // Separar vendas faturadas para cálculo de indicadores
   const vendasFaturadas = filteredVendas.filter(isFaturada);
+  const vendasNaoFaturadas = filteredVendas.filter(v => !isFaturada(v));
 
-  // Calcular novos indicadores
+  // Selecionar vendas com base no activeTab
+  const vendasParaIndicadores = 
+    activeTab === 'faturadas' ? vendasFaturadas :
+    activeTab === 'nao_faturadas' ? vendasNaoFaturadas :
+    filteredVendas; // todas
+
+  // Calcular novos indicadores baseados na seleção ativa
   const indicadores = {
-    quantidadePortas: vendasFaturadas.reduce((acc, v) => {
+    quantidadePortas: vendasParaIndicadores.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.filter((p: any) => 
         ['porta', 'porta_enrolar'].includes(p.tipo_produto)
       ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
     }, 0),
     
-    lucroPintura: vendasFaturadas.reduce((acc, v) => {
+    lucroPintura: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroPortas: vendasFaturadas.reduce((acc, v) => {
+    lucroPortas: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroInstalacoes: vendasFaturadas.reduce((acc, v) => 
+    lucroInstalacoes: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => 
       acc + (v.valor_instalacao || 0), 0),
     
-    lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
+    lucroBrutoTotal: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
       const portas = v.portas || [];
       // Lucro das portas + Lucro da pintura
       const lucroPortas = portas.reduce((sum: number, p: any) => 
@@ -493,10 +500,10 @@ export default function Faturamento() {
       return acc + lucroPortas + lucroPintura + valorInstalacoes;
     }, 0),
     
-    faturamentoTotal: filteredVendas.reduce((acc, v) => 
+    faturamentoTotal: vendasParaIndicadores.reduce((acc, v) => 
       acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
     
-    fretesTotais: vendasFaturadas.reduce((acc, v) => 
+    fretesTotais: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => 
       acc + (v.valor_frete || 0), 0),
   };
 
