@@ -824,6 +824,7 @@ export default function Faturamento() {
                       <TableHead className="text-right">Frete</TableHead>
                       <TableHead className="text-right">Lucro Líquido</TableHead>
                       <TableHead className="text-right">Valor Final</TableHead>
+                      <TableHead className="text-right">Valor Final c/ Frete</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -939,6 +940,11 @@ export default function Faturamento() {
 
                         <TableCell className="text-right font-semibold text-primary">
                           R$ {((venda.valor_venda || 0) - (venda.valor_frete || 0))
+                            .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </TableCell>
+
+                        <TableCell className="text-right font-semibold">
+                          R$ {(venda.valor_venda || 0)
                             .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
 
