@@ -30,9 +30,15 @@ export function usePortasVenda(vendaId: string | undefined) {
     mutationFn: async (portaData: any) => {
       if (!vendaId) throw new Error('ID da venda não fornecido');
       
+      // Limpar campos UUID vazios (converter string vazia para null)
+      const cleanedData = { ...portaData, venda_id: vendaId };
+      if (cleanedData.cor_id === '') cleanedData.cor_id = null;
+      if (cleanedData.acessorio_id === '') cleanedData.acessorio_id = null;
+      if (cleanedData.adicional_id === '') cleanedData.adicional_id = null;
+      
       const { data, error } = await supabase
         .from('portas_vendas')
-        .insert([{ ...portaData, venda_id: vendaId }])
+        .insert([cleanedData])
         .select()
         .single();
       
