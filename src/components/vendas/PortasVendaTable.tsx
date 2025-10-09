@@ -19,6 +19,7 @@ const getTipoProdutoLabel = (tipo: string) => {
     case 'pintura_epoxi': return 'Pintura Eletrostática';
     case 'acessorio': return 'Acessório';
     case 'adicional': return 'Adicional';
+    case 'manutencao': return 'Manutenção';
     // Retrocompatibilidade
     case 'porta': return 'Porta de Enrolar';
     default: return tipo;
@@ -32,6 +33,7 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
     case 'pintura_epoxi': return 'destructive';
     case 'acessorio': return 'secondary';
     case 'adicional': return 'outline';
+    case 'manutencao': return 'secondary';
     // Retrocompatibilidade
     case 'porta': return 'default';
     default: return 'default';

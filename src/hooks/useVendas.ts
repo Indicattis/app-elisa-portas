@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface ProdutoVenda {
   id?: string;
-  tipo_produto: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'porta';
+  tipo_produto: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'porta' | 'manutencao';
   tamanho?: string;
   cor_id?: string;
   acessorio_id?: string;

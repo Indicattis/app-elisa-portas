@@ -16,7 +16,7 @@ interface ProdutoVendaFormProps {
   onAddProduto: (produto: ProdutoVenda) => void;
   produtoEditando?: ProdutoVenda;
   indexEditando?: number;
-  tipoInicial?: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional';
+  tipoInicial?: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao';
   permitirTrocaTipo?: boolean;
 }
 
@@ -142,6 +142,10 @@ export function ProdutoVendaForm({
       return;
     }
     
+    if (formData.tipo_produto === 'manutencao' && !formData.descricao) {
+      return;
+    }
+    
     onAddProduto(formData);
     onOpenChange(false); // Fecha o dialog após adicionar
   };
@@ -187,7 +191,7 @@ export function ProdutoVendaForm({
             <Label>Tipo de Produto *</Label>
             <Select
               value={formData.tipo_produto}
-              onValueChange={(value: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional') => 
+              onValueChange={(value: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao') => 
                 setFormData(prev => ({ ...prev, tipo_produto: value }))
               }
               disabled={!permitirTrocaTipo}
@@ -201,6 +205,7 @@ export function ProdutoVendaForm({
                 <SelectItem value="pintura_epoxi">Pintura Eletrostática</SelectItem>
                 <SelectItem value="acessorio">Acessório</SelectItem>
                 <SelectItem value="adicional">Adicional</SelectItem>
+                <SelectItem value="manutencao">Manutenção</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -332,11 +337,27 @@ export function ProdutoVendaForm({
             </div>
           )}
 
+          {formData.tipo_produto === 'manutencao' && (
+            <div className="space-y-2">
+              <Label htmlFor="descricao_manutencao">Descrição do Serviço *</Label>
+              <Textarea
+                id="descricao_manutencao"
+                value={formData.descricao}
+                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                placeholder="Descreva o serviço de manutenção a ser realizado"
+                rows={3}
+                required
+              />
+            </div>
+          )}
+
           {/* Campo de quantidade removido - quantidade será editada diretamente na tabela */}
 
           {/* Valores */}
           <div className="space-y-2">
-            <Label htmlFor="valor_produto">Valor {formData.tipo_produto === 'pintura_epoxi' ? 'da Pintura' : 'do Produto'} (R$) *</Label>
+            <Label htmlFor="valor_produto">
+              Valor {formData.tipo_produto === 'pintura_epoxi' ? 'da Pintura' : formData.tipo_produto === 'manutencao' ? 'do Serviço' : 'do Produto'} (R$) *
+            </Label>
             <Input
               id="valor_produto"
               type="number"
@@ -397,16 +418,18 @@ export function ProdutoVendaForm({
             </div>
           )}
 
-          {/* Descrição */}
-          <div className="space-y-2">
-            <Label htmlFor="descricao">Descrição (opcional)</Label>
-            <Textarea
-              id="descricao"
-              value={formData.descricao}
-              onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-              rows={2}
-            />
-          </div>
+          {/* Descrição - ocultar se for manutenção pois já tem campo específico */}
+          {formData.tipo_produto !== 'manutencao' && (
+            <div className="space-y-2">
+              <Label htmlFor="descricao">Descrição (opcional)</Label>
+              <Textarea
+                id="descricao"
+                value={formData.descricao}
+                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                rows={2}
+              />
+            </div>
+          )}
 
           <Button type="submit" className="w-full">
             {produtoEditando ? 'Salvar Alterações' : 'Adicionar Produto'}

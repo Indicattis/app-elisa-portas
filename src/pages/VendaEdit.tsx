@@ -341,6 +341,8 @@ export default function VendaEdit() {
                     <SelectItem value="instalacao">Instalação</SelectItem>
                     <SelectItem value="retirada">Retirada</SelectItem>
                     <SelectItem value="entrega">Entrega</SelectItem>
+                    <SelectItem value="correcao">Correção</SelectItem>
+                    <SelectItem value="servico">Serviço</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

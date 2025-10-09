@@ -54,7 +54,7 @@ export default function VendasNova() {
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
-  const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | undefined>(undefined);
+  const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
   const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
 
   const { data: cores } = useQuery({
@@ -432,6 +432,7 @@ export default function VendasNova() {
                   <SelectItem value="entrega">Entrega</SelectItem>
                   <SelectItem value="instalacao">Instalação</SelectItem>
                   <SelectItem value="correcao">Correção</SelectItem>
+                  <SelectItem value="servico">Serviço</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -480,7 +481,7 @@ export default function VendasNova() {
             <CardDescription>Adicione portas, acessórios e adicionais desta venda</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 type="button" 
                 onClick={() => {
@@ -521,6 +522,20 @@ export default function VendasNova() {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Pintura Eletrostática
+              </Button>
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('manutencao');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Manutenção
               </Button>
               <Button 
                 type="button"
