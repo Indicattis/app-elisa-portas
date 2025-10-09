@@ -477,7 +477,7 @@ export default function Faturamento() {
         sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroInstalacoes: filteredVendas.reduce((acc, v) => 
+    lucroInstalacoes: vendasFaturadas.reduce((acc, v) => 
       acc + (v.valor_instalacao || 0), 0),
     
     lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
