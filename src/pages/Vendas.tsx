@@ -4,7 +4,7 @@ import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { VendaDetailsModal } from '@/components/vendas/VendaDetailsModal';
 import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
-import { QuickFiltersBar } from '@/components/vendas/QuickFiltersBar';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,15 +49,6 @@ export default function Vendas() {
     to: endOfMonth(new Date())
   });
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
-  const [quickFilters, setQuickFilters] = useState({
-    estadoRS: false,
-    estadoSC: false,
-    comNota: false,
-    semNota: false,
-    mesAtual: false,
-    mesPassado: false,
-    anoAtual: false
-  });
   const [sortByValue, setSortByValue] = useState<'desc' | 'asc' | 'none'>('none');
   const [filterPrevisaoEntrega, setFilterPrevisaoEntrega] = useState<DateRange | undefined>();
   const [atendentes, setAtendentes] = useState<any[]>([]);
@@ -101,7 +92,7 @@ export default function Vendas() {
         stats,
         filtros: {
           minhasVendas: selectedAtendente !== 'todos',
-          vendasMesAtual: quickFilters.mesAtual,
+          vendasMesAtual: false,
           busca: searchTerm
         }
       });
@@ -142,34 +133,6 @@ export default function Vendas() {
         return false;
       }
 
-      // Filtros rápidos de estado
-      if (quickFilters.estadoRS && venda.estado !== 'RS') return false;
-      if (quickFilters.estadoSC && venda.estado !== 'SC') return false;
-
-      // Filtros de nota fiscal
-      if (quickFilters.comNota && !venda.nota_fiscal) return false;
-      if (quickFilters.semNota && venda.nota_fiscal) return false;
-
-      // Filtros de data rápidos
-      const hoje = new Date();
-      const dataVenda = new Date(venda.data_venda);
-      
-      if (quickFilters.mesAtual) {
-        if (dataVenda.getMonth() !== hoje.getMonth() || 
-            dataVenda.getFullYear() !== hoje.getFullYear()) return false;
-      }
-      
-      if (quickFilters.mesPassado) {
-        const mesPassado = new Date(hoje);
-        mesPassado.setMonth(mesPassado.getMonth() - 1);
-        if (dataVenda.getMonth() !== mesPassado.getMonth() || 
-            dataVenda.getFullYear() !== mesPassado.getFullYear()) return false;
-      }
-      
-      if (quickFilters.anoAtual) {
-        if (dataVenda.getFullYear() !== hoje.getFullYear()) return false;
-      }
-
       // Filtro de previsão de entrega
       if (filterPrevisaoEntrega?.from && filterPrevisaoEntrega?.to && venda.data_prevista_entrega) {
         const previsao = new Date(venda.data_prevista_entrega);
@@ -191,7 +154,7 @@ export default function Vendas() {
     }
 
     return result;
-  }, [vendas, searchTerm, dateRange, selectedAtendente, quickFilters, sortByValue, filterPrevisaoEntrega]);
+  }, [vendas, searchTerm, dateRange, selectedAtendente, sortByValue, filterPrevisaoEntrega]);
 
   // Estatísticas baseadas nos filtros (excluindo frete)
   const stats = useMemo(() => {
@@ -404,35 +367,6 @@ export default function Vendas() {
                 </div>
               </div>
 
-              {/* Filtros Rápidos */}
-              <QuickFiltersBar
-                filters={[
-                  { id: 'mesAtual', label: 'Mês Atual', active: quickFilters.mesAtual },
-                  { id: 'mesPassado', label: 'Mês Passado', active: quickFilters.mesPassado },
-                  { id: 'anoAtual', label: 'Ano Atual', active: quickFilters.anoAtual },
-                  { id: 'estadoRS', label: 'RS', active: quickFilters.estadoRS },
-                  { id: 'estadoSC', label: 'SC', active: quickFilters.estadoSC },
-                  { id: 'comNota', label: 'Com Nota', active: quickFilters.comNota },
-                  { id: 'semNota', label: 'Sem Nota', active: quickFilters.semNota },
-                ]}
-                onFilterToggle={(filterId) => {
-                  setQuickFilters(prev => ({
-                    ...prev,
-                    [filterId]: !prev[filterId as keyof typeof prev]
-                  }));
-                }}
-                onClearAll={() => {
-                  setQuickFilters({
-                    estadoRS: false,
-                    estadoSC: false,
-                    comNota: false,
-                    semNota: false,
-                    mesAtual: false,
-                    mesPassado: false,
-                    anoAtual: false
-                  });
-                }}
-              />
 
               {/* Busca */}
               <div className="relative">
