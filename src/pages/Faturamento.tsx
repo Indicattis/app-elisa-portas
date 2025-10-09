@@ -268,9 +268,9 @@ export default function Faturamento() {
         
         // Calcular valores agregados dos produtos
         const valor_produto = portas.reduce((acc: number, p: any) => 
-          acc + (p.tipo_produto !== 'pintura_epoxi' ? (p.valor_produto || 0) * (p.quantidade || 1) : 0), 0);
+          acc + (p.valor_produto || 0) * (p.quantidade || 1), 0);
         const valor_pintura = portas.reduce((acc: number, p: any) => 
-          acc + (p.tipo_produto === 'pintura_epoxi' ? (p.valor_produto || 0) * (p.quantidade || 1) : 0), 0);
+          acc + (p.valor_pintura || 0) * (p.quantidade || 1), 0);
         
         // Corrigir cálculo de custos: devem vir dos produtos apenas se foram faturados (lucro_item > 0)
         const portasFaturadas = portas.filter((p: any) => (p.lucro_item || 0) > 0);
