@@ -461,7 +461,7 @@ export default function Faturamento() {
     quantidadePortas: vendasFaturadas.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.filter((p: any) => 
-        p.tipo_produto === 'porta' && (p.lucro_item || 0) > 0
+        ['porta', 'porta_enrolar'].includes(p.tipo_produto)
       ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
     }, 0),
     
@@ -598,124 +598,126 @@ export default function Faturamento() {
             </Card>
           </div>
 
-          {/* Indicadores Secundários - Grid Menor */}
-          <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-            {/* Quantidade de Portas Vendidas */}
-            <Card className="border-slate-300">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
-                  <DoorOpen className="h-3.5 w-3.5 text-slate-600" />
-                  Qtd Portas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-bold text-slate-700">
-                  {indicadores.quantidadePortas}
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Portas vendidas
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Lucro de Pintura */}
-            <Card className="border-purple-300">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
-                  <Palette className="h-3.5 w-3.5 text-purple-600" />
-                  Lucro Pintura
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-bold text-purple-600">
-                  R$ {indicadores.lucroPintura.toLocaleString("pt-BR", { 
-                    minimumFractionDigits: 2 
-                  })}
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Apenas faturadas
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Lucro de Portas */}
-            <Card className="border-amber-300">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
-                  <DoorOpen className="h-3.5 w-3.5 text-amber-600" />
-                  Lucro Portas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-bold text-amber-600">
-                  R$ {indicadores.lucroPortas.toLocaleString("pt-BR", { 
-                    minimumFractionDigits: 2 
-                  })}
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Apenas faturadas
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Lucro Bruto Total */}
-            <Card className="border-green-300">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
-                  <TrendingUp className="h-3.5 w-3.5 text-green-600" />
-                  Lucro Bruto
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-bold text-green-600">
-                  R$ {indicadores.lucroBrutoTotal.toLocaleString("pt-BR", { 
-                    minimumFractionDigits: 2 
-                  })}
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Portas + Pintura
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Lucro Instalações (renomeado) */}
-            <Card className="border-cyan-300">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
-                  <Wrench className="h-3.5 w-3.5 text-cyan-600" />
-                  Lucro Instalações
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-bold text-cyan-600">
-                  R$ {indicadores.lucroInstalacoes.toLocaleString("pt-BR", { 
-                    minimumFractionDigits: 2 
-                  })}
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Serviço instalação
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Card de Fretes Totais - Separado */}
-          <Card className="border-indigo-300 max-w-xs">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium flex items-center gap-1.5">
-                <TrendingUp className="h-3.5 w-3.5 text-indigo-600" />
-                Fretes Totais
-              </CardTitle>
+          {/* Tabela de Indicadores */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Indicadores do Período</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold text-indigo-600">
-                R$ {indicadores.fretesTotais.toLocaleString("pt-BR", { 
-                  minimumFractionDigits: 2 
-                })}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Indicador</th>
+                      <th className="text-right py-3 px-4 font-semibold text-sm">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Faturamento Total */}
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium">Faturamento Total (sem frete)</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-bold text-blue-600">
+                        R$ {indicadores.faturamentoTotal.toLocaleString("pt-BR", { 
+                          minimumFractionDigits: 2 
+                        })}
+                      </td>
+                    </tr>
+
+                    {/* Quantidade de Portas */}
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <DoorOpen className="h-4 w-4 text-slate-600" />
+                          <span>Quantidade de Portas Vendidas</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold">
+                        {indicadores.quantidadePortas} unidades
+                      </td>
+                    </tr>
+
+                    {/* Lucro das Portas */}
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <DoorOpen className="h-4 w-4 text-amber-600" />
+                          <span>Lucro das Portas Vendidas</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold text-amber-600">
+                        R$ {indicadores.lucroPortas.toLocaleString("pt-BR", { 
+                          minimumFractionDigits: 2 
+                        })}
+                      </td>
+                    </tr>
+
+                    {/* Lucro da Pintura */}
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Palette className="h-4 w-4 text-purple-600" />
+                          <span>Lucro da Pintura</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold text-purple-600">
+                        R$ {indicadores.lucroPintura.toLocaleString("pt-BR", { 
+                          minimumFractionDigits: 2 
+                        })}
+                      </td>
+                    </tr>
+
+                    {/* Valor das Instalações */}
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Wrench className="h-4 w-4 text-cyan-600" />
+                          <span>Valor das Instalações</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold text-cyan-600">
+                        R$ {indicadores.lucroInstalacoes.toLocaleString("pt-BR", { 
+                          minimumFractionDigits: 2 
+                        })}
+                      </td>
+                    </tr>
+
+                    {/* Fretes Totais */}
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-indigo-600" />
+                          <span>Fretes Totais</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold text-indigo-600">
+                        R$ {indicadores.fretesTotais.toLocaleString("pt-BR", { 
+                          minimumFractionDigits: 2 
+                        })}
+                      </td>
+                    </tr>
+
+                    {/* Lucro Bruto Total */}
+                    <tr className="hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-green-600" />
+                          <span className="font-medium">Lucro Bruto Total</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-bold text-green-600 text-lg">
+                        R$ {indicadores.lucroBrutoTotal.toLocaleString("pt-BR", { 
+                          minimumFractionDigits: 2 
+                        })}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
-                Transporte e logística
-              </p>
             </CardContent>
           </Card>
 
