@@ -496,7 +496,7 @@ export default function Faturamento() {
     faturamentoTotal: filteredVendas.reduce((acc, v) => 
       acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
     
-    fretesTotais: filteredVendas.reduce((acc, v) => 
+    fretesTotais: vendasFaturadas.reduce((acc, v) => 
       acc + (v.valor_frete || 0), 0),
   };
 
