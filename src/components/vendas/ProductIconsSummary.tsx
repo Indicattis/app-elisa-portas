@@ -1,4 +1,4 @@
-import { DoorOpen, Plus, Hammer, Palette } from "lucide-react";
+import { DoorOpen, Plus, Hammer, Palette, Wrench } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProductIconsSummaryProps {
@@ -16,6 +16,7 @@ export function ProductIconsSummary({ venda }: ProductIconsSummaryProps) {
     ['acessorio', 'adicional'].includes(p.tipo_produto)
   );
   
+  const hasManutencao = portas.some((p: any) => p.tipo_produto === 'manutencao');
   const hasInstalacao = (venda.valor_instalacao || 0) > 0;
   const hasPintura = (venda.valor_pintura || 0) > 0 || portas.some((p: any) => p.tipo_produto === 'pintura_epoxi');
   
@@ -70,7 +71,19 @@ export function ProductIconsSummary({ venda }: ProductIconsSummaryProps) {
           </Tooltip>
         )}
         
-        {!hasPortas && !hasAcessoriosOuAdicionais && !hasInstalacao && !hasPintura && (
+        {/* Ícone de Manutenção */}
+        {hasManutencao && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Wrench className="w-5 h-5 text-green-600" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Manutenção</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        
+        {!hasPortas && !hasAcessoriosOuAdicionais && !hasInstalacao && !hasPintura && !hasManutencao && (
           <span className="text-xs text-muted-foreground">-</span>
         )}
       </div>

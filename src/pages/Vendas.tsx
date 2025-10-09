@@ -1,18 +1,25 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { VendaDetailsModal } from '@/components/vendas/VendaDetailsModal';
+import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
+import { QuickFiltersBar } from '@/components/vendas/QuickFiltersBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,10 +40,40 @@ export default function Vendas() {
   const { vendas, isLoading, deleteVenda } = useVendas();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filtroMinhasVendas, setFiltroMinhasVendas] = useState(true);
-  const [filtroVendasMes, setFiltroVendasMes] = useState(true);
   const [selectedVenda, setSelectedVenda] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  
+  // Estados para filtros avançados
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
+  const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
+  const [quickFilters, setQuickFilters] = useState({
+    estadoRS: false,
+    estadoSC: false,
+    comNota: false,
+    semNota: false,
+    mesAtual: false,
+    mesPassado: false,
+    anoAtual: false
+  });
+  const [sortByValue, setSortByValue] = useState<'desc' | 'asc' | 'none'>('none');
+  const [filterPrevisaoEntrega, setFilterPrevisaoEntrega] = useState<DateRange | undefined>();
+  const [atendentes, setAtendentes] = useState<any[]>([]);
+
+  // Buscar lista de atendentes
+  useEffect(() => {
+    const fetchAtendentes = async () => {
+      const { data } = await supabase
+        .from('admin_users')
+        .select('id, nome, user_id')
+        .eq('ativo', true)
+        .order('nome');
+      if (data) setAtendentes(data);
+    };
+    fetchAtendentes();
+  }, []);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -63,8 +100,8 @@ export default function Vendas() {
         vendas: vendasParaRelatorio,
         stats,
         filtros: {
-          minhasVendas: filtroMinhasVendas,
-          vendasMesAtual: filtroVendasMes,
+          minhasVendas: selectedAtendente !== 'todos',
+          vendasMesAtual: quickFilters.mesAtual,
           busca: searchTerm
         }
       });
@@ -84,7 +121,7 @@ export default function Vendas() {
   };
 
   const filteredVendas = useMemo(() => {
-    return vendas?.filter(venda => {
+    let result = vendas?.filter(venda => {
       // Filtro de busca textual
       const search = searchTerm.toLowerCase();
       const matchesSearch = !searchTerm || (
@@ -94,19 +131,67 @@ export default function Vendas() {
         venda.estado?.toLowerCase().includes(search)
       );
 
-      // Filtro "Minhas Vendas"
-      const matchesMinhasVendas = !filtroMinhasVendas || venda.atendente_id === userRole?.user_id;
+      // Filtro de período de data
+      if (dateRange?.from && dateRange?.to) {
+        const dataVenda = new Date(venda.data_venda);
+        if (dataVenda < dateRange.from || dataVenda > dateRange.to) return false;
+      }
 
-      // Filtro "Vendas deste mês"
+      // Filtro por atendente
+      if (selectedAtendente !== "todos" && venda.atendente_id !== selectedAtendente) {
+        return false;
+      }
+
+      // Filtros rápidos de estado
+      if (quickFilters.estadoRS && venda.estado !== 'RS') return false;
+      if (quickFilters.estadoSC && venda.estado !== 'SC') return false;
+
+      // Filtros de nota fiscal
+      if (quickFilters.comNota && !venda.nota_fiscal) return false;
+      if (quickFilters.semNota && venda.nota_fiscal) return false;
+
+      // Filtros de data rápidos
       const hoje = new Date();
-      const inicioMes = startOfMonth(hoje);
-      const fimMes = endOfMonth(hoje);
       const dataVenda = new Date(venda.data_venda);
-      const matchesVendasMes = !filtroVendasMes || (dataVenda >= inicioMes && dataVenda <= fimMes);
+      
+      if (quickFilters.mesAtual) {
+        if (dataVenda.getMonth() !== hoje.getMonth() || 
+            dataVenda.getFullYear() !== hoje.getFullYear()) return false;
+      }
+      
+      if (quickFilters.mesPassado) {
+        const mesPassado = new Date(hoje);
+        mesPassado.setMonth(mesPassado.getMonth() - 1);
+        if (dataVenda.getMonth() !== mesPassado.getMonth() || 
+            dataVenda.getFullYear() !== mesPassado.getFullYear()) return false;
+      }
+      
+      if (quickFilters.anoAtual) {
+        if (dataVenda.getFullYear() !== hoje.getFullYear()) return false;
+      }
 
-      return matchesSearch && matchesMinhasVendas && matchesVendasMes;
-    });
-  }, [vendas, searchTerm, filtroMinhasVendas, filtroVendasMes, userRole?.id]);
+      // Filtro de previsão de entrega
+      if (filterPrevisaoEntrega?.from && filterPrevisaoEntrega?.to && venda.data_prevista_entrega) {
+        const previsao = new Date(venda.data_prevista_entrega);
+        if (previsao < filterPrevisaoEntrega.from || previsao > filterPrevisaoEntrega.to) {
+          return false;
+        }
+      }
+
+      return matchesSearch;
+    }) || [];
+
+    // Ordenação por valor
+    if (sortByValue !== 'none') {
+      result = [...result].sort((a, b) => {
+        const valorA = a.valor_venda || 0;
+        const valorB = b.valor_venda || 0;
+        return sortByValue === 'desc' ? valorB - valorA : valorA - valorB;
+      });
+    }
+
+    return result;
+  }, [vendas, searchTerm, dateRange, selectedAtendente, quickFilters, sortByValue, filterPrevisaoEntrega]);
 
   // Estatísticas baseadas nos filtros (excluindo frete)
   const stats = useMemo(() => {
@@ -169,7 +254,7 @@ export default function Vendas() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Portas</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Itens</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -184,39 +269,181 @@ export default function Vendas() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 space-y-4">
-            {/* Filtros Rápidos */}
-            <div className="flex gap-6 p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="minhas-vendas"
-                  checked={filtroMinhasVendas}
-                  onCheckedChange={(checked) => setFiltroMinhasVendas(checked as boolean)}
-                />
-                <Label htmlFor="minhas-vendas" className="cursor-pointer">
-                  Minhas vendas
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="vendas-mes"
-                  checked={filtroVendasMes}
-                  onCheckedChange={(checked) => setFiltroVendasMes(checked as boolean)}
-                />
-                <Label htmlFor="vendas-mes" className="cursor-pointer">
-                  Vendas deste mês
-                </Label>
-              </div>
-            </div>
+            {/* Filtros Avançados */}
+            <div className="space-y-4">
+              {/* Linha 1: Período, Atendente, Ordenação */}
+              <div className="flex flex-wrap gap-4">
+                {/* Seletor de Período */}
+                <div className="flex items-center gap-2">
+                  <Label>Período:</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-64 justify-start text-left font-normal",
+                          !dateRange && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                              {format(dateRange.to, "dd/MM/yyyy")}
+                            </>
+                          ) : (
+                            format(dateRange.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span>Selecione um período</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {dateRange && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDateRange(undefined)}
+                    >
+                      Limpar
+                    </Button>
+                  )}
+                </div>
 
-            {/* Busca */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Buscar por cliente, telefone, cidade..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                {/* Filtro por Atendente */}
+                <div className="flex items-center gap-2">
+                  <Label>Vendedor:</Label>
+                  <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos os vendedores</SelectItem>
+                      {atendentes.map(atendente => (
+                        <SelectItem key={atendente.user_id} value={atendente.user_id}>
+                          {atendente.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Ordenação por Valor */}
+                <div className="flex items-center gap-2">
+                  <Label>Ordenar por valor:</Label>
+                  <Select value={sortByValue} onValueChange={(v) => setSortByValue(v as any)}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Padrão (data)</SelectItem>
+                      <SelectItem value="desc">Maior valor</SelectItem>
+                      <SelectItem value="asc">Menor valor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filtro Previsão de Entrega */}
+                <div className="flex items-center gap-2">
+                  <Label>Previsão Entrega:</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-64 justify-start text-left font-normal",
+                          !filterPrevisaoEntrega && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filterPrevisaoEntrega?.from ? (
+                          filterPrevisaoEntrega.to ? (
+                            <>
+                              {format(filterPrevisaoEntrega.from, "dd/MM/yyyy")} -{" "}
+                              {format(filterPrevisaoEntrega.to, "dd/MM/yyyy")}
+                            </>
+                          ) : (
+                            format(filterPrevisaoEntrega.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span>Filtrar por previsão</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        selected={filterPrevisaoEntrega}
+                        onSelect={setFilterPrevisaoEntrega}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {filterPrevisaoEntrega && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFilterPrevisaoEntrega(undefined)}
+                    >
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filtros Rápidos */}
+              <QuickFiltersBar
+                filters={[
+                  { id: 'mesAtual', label: 'Mês Atual', active: quickFilters.mesAtual },
+                  { id: 'mesPassado', label: 'Mês Passado', active: quickFilters.mesPassado },
+                  { id: 'anoAtual', label: 'Ano Atual', active: quickFilters.anoAtual },
+                  { id: 'estadoRS', label: 'RS', active: quickFilters.estadoRS },
+                  { id: 'estadoSC', label: 'SC', active: quickFilters.estadoSC },
+                  { id: 'comNota', label: 'Com Nota', active: quickFilters.comNota },
+                  { id: 'semNota', label: 'Sem Nota', active: quickFilters.semNota },
+                ]}
+                onFilterToggle={(filterId) => {
+                  setQuickFilters(prev => ({
+                    ...prev,
+                    [filterId]: !prev[filterId as keyof typeof prev]
+                  }));
+                }}
+                onClearAll={() => {
+                  setQuickFilters({
+                    estadoRS: false,
+                    estadoSC: false,
+                    comNota: false,
+                    semNota: false,
+                    mesAtual: false,
+                    mesPassado: false,
+                    anoAtual: false
+                  });
+                }}
               />
+
+              {/* Busca */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Buscar por cliente, telefone, cidade..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
           </div>
 
@@ -229,7 +456,7 @@ export default function Vendas() {
                   <TableHead>Telefone</TableHead>
                   <TableHead>Cidade/Estado</TableHead>
                   <TableHead>Previsão Entrega</TableHead>
-                  <TableHead className="text-center">Qtd Portas</TableHead>
+                  <TableHead>Produtos</TableHead>
                   <TableHead className="text-center">Nota Fiscal</TableHead>
                   <TableHead className="text-right">Valor Total</TableHead>
                   <TableHead className="text-right">Valor Total c/ Frete</TableHead>
@@ -259,7 +486,9 @@ export default function Vendas() {
                           : '-'
                         }
                       </TableCell>
-                      <TableCell className="text-center">{venda.portas?.length || 0}</TableCell>
+                      <TableCell>
+                        <ProductIconsSummary venda={venda} />
+                      </TableCell>
                       <TableCell className="text-center">
                         {venda.nota_fiscal ? (
                           <span className="text-green-600 font-medium">Sim</span>
