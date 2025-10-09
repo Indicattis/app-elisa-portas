@@ -363,8 +363,15 @@ export function ProdutoVendaForm({
               type="number"
               step="0.01"
               min="0"
-              value={formData.valor_produto}
-              onChange={(e) => handleNumberChange('valor_produto', e.target.value)}
+              value={formData.tipo_produto === 'pintura_epoxi' ? formData.valor_pintura : formData.valor_produto}
+              onChange={(e) => {
+                const valor = parseFloat(e.target.value) || 0;
+                if (formData.tipo_produto === 'pintura_epoxi') {
+                  setFormData(prev => ({ ...prev, valor_pintura: valor, valor_produto: 0 }));
+                } else {
+                  setFormData(prev => ({ ...prev, valor_produto: valor }));
+                }
+              }}
               required
             />
           </div>

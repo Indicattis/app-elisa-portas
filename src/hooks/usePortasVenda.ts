@@ -100,9 +100,14 @@ export function usePortasVenda(vendaId: string | undefined) {
       
       // Distribuir lucro entre produto e pintura proporcionalmente
       if (porta.tipo_produto === 'pintura_epoxi') {
-        // Se for apenas pintura, todo o lucro vai para pintura
+        // Para pintura_epoxi, o valor pode estar em valor_produto (dados antigos) ou valor_pintura (correto)
+        const valorReal = porta.valor_pintura > 0 ? porta.valor_pintura : porta.valor_produto;
+        
+        // Garantir que lucro não excede o valor disponível
+        const lucroAjustado = Math.min(lucro_item, valorReal);
+        
         updateData.lucro_produto = null;
-        updateData.lucro_pintura = lucro_item;
+        updateData.lucro_pintura = lucroAjustado;
       } else if (porta.valor_pintura && porta.valor_pintura > 0) {
         // Se tem produto e pintura, dividir proporcionalmente
         const totalValor = (porta.valor_produto || 0) + (porta.valor_pintura || 0);
