@@ -3,9 +3,31 @@ import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEstoque } from "@/hooks/useEstoque";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+const CATEGORIAS = [
+  { value: "geral", label: "Geral", color: "bg-gray-500" },
+  { value: "ferragem", label: "Ferragem", color: "bg-blue-500" },
+  { value: "acessorio", label: "Acessório", color: "bg-purple-500" },
+  { value: "perfil", label: "Perfil", color: "bg-green-500" },
+  { value: "componente", label: "Componente", color: "bg-orange-500" },
+  { value: "consumivel", label: "Consumível", color: "bg-red-500" },
+];
+
+const getCategoriaColor = (categoria: string) => {
+  const cat = CATEGORIAS.find(c => c.value === categoria);
+  return cat?.color || "bg-gray-500";
+};
+
+const getCategoriaLabel = (categoria: string) => {
+  const cat = CATEGORIAS.find(c => c.value === categoria);
+  return cat?.label || categoria;
+};
 
 export default function Estoque() {
   const { produtos, loading, adicionarProduto } = useEstoque();
@@ -15,11 +37,18 @@ export default function Estoque() {
     descricao_produto: "",
     quantidade: 0,
     unidade: "UN",
+    categoria: "geral",
   });
 
   const handleSubmit = async () => {
     await adicionarProduto(formData);
-    setFormData({ nome_produto: "", descricao_produto: "", quantidade: 0, unidade: "UN" });
+    setFormData({ 
+      nome_produto: "", 
+      descricao_produto: "", 
+      quantidade: 0, 
+      unidade: "UN",
+      categoria: "geral",
+    });
     setModalAberto(false);
   };
 
@@ -40,26 +69,97 @@ export default function Estoque() {
           <DialogContent>
             <DialogHeader><DialogTitle>Adicionar Produto</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><Label>Nome</Label><Input value={formData.nome_produto} onChange={(e) => setFormData({...formData, nome_produto: e.target.value})} /></div>
-              <div><Label>Descrição</Label><Input value={formData.descricao_produto} onChange={(e) => setFormData({...formData, descricao_produto: e.target.value})} /></div>
-              <div><Label>Quantidade</Label><Input type="number" value={formData.quantidade} onChange={(e) => setFormData({...formData, quantidade: parseInt(e.target.value)})} /></div>
+              <div>
+                <Label>Nome</Label>
+                <Input 
+                  value={formData.nome_produto} 
+                  onChange={(e) => setFormData({...formData, nome_produto: e.target.value})} 
+                />
+              </div>
+              <div>
+                <Label>Descrição</Label>
+                <Input 
+                  value={formData.descricao_produto} 
+                  onChange={(e) => setFormData({...formData, descricao_produto: e.target.value})} 
+                />
+              </div>
+              <div>
+                <Label>Categoria</Label>
+                <Select 
+                  value={formData.categoria} 
+                  onValueChange={(value) => setFormData({...formData, categoria: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Quantidade</Label>
+                <Input 
+                  type="number" 
+                  value={formData.quantidade} 
+                  onChange={(e) => setFormData({...formData, quantidade: parseInt(e.target.value)})} 
+                />
+              </div>
               <Button onClick={handleSubmit} className="w-full">Adicionar</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {produtos.map((produto) => (
-          <Card key={produto.id}>
-            <CardHeader>
-              <CardTitle>{produto.nome_produto}</CardTitle>
-              <CardDescription>{produto.descricao_produto}</CardDescription>
-            </CardHeader>
-            <CardContent>Quantidade: {produto.quantidade} {produto.unidade}</CardContent>
-          </Card>
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Produtos em Estoque</CardTitle>
+          <CardDescription>Lista completa de produtos disponíveis</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Produto</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead className="text-right">Quantidade</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {produtos.map((produto) => (
+                <TableRow key={produto.id}>
+                  <TableCell className="font-medium">{produto.nome_produto}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {produto.descricao_produto || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getCategoriaColor(produto.categoria)}>
+                      {getCategoriaLabel(produto.categoria)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-semibold">
+                      {produto.quantidade} {produto.unidade}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {produtos.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    Nenhum produto cadastrado
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

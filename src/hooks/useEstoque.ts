@@ -9,6 +9,7 @@ export interface ProdutoEstoque {
   descricao_produto: string | null;
   quantidade: number;
   unidade: string;
+  categoria: string;
   ativo: boolean;
 }
 
@@ -17,6 +18,7 @@ export interface ProdutoEstoqueInput {
   descricao_produto?: string;
   quantidade: number;
   unidade?: string;
+  categoria?: string;
 }
 
 export const useEstoque = () => {
