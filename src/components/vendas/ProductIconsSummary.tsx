@@ -6,7 +6,7 @@ interface ProductIconsSummaryProps {
 }
 
 export function ProductIconsSummary({ venda }: ProductIconsSummaryProps) {
-  const produtos = venda.produtos_vendas || [];
+  const produtos = venda.produtos || [];
   
   const hasPortas = produtos.some((p: any) => 
     ['porta', 'porta_enrolar'].includes(p.tipo_produto)
