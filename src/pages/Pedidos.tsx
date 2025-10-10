@@ -5,6 +5,8 @@ import { useVendasPedidos } from "@/hooks/useVendasPedidos";
 import { VendasList } from "@/components/pedidos/VendasList";
 import { PedidoDetails } from "@/components/pedidos/PedidoDetails";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { generatePedidoPDF } from "@/utils/pedidoPDFGenerator";
 
 export default function Pedidos() {
   const { toast } = useToast();
@@ -27,6 +29,38 @@ export default function Pedidos() {
   const handleCriarPedido = async () => {
     if (!selectedVendaId) return;
     await criarPedidoPrincipal(selectedVendaId);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!pedidoAtual) return;
+
+    try {
+      // O pedido já tem todos os dados necessários
+      const pdfData = {
+        pedido: {
+          ...pedidoAtual,
+        },
+        vendaData: pedidoAtual.forma_pagamento ? {
+          forma_pagamento: pedidoAtual.forma_pagamento,
+          valor_venda: pedidoAtual.valor_venda,
+          valor_entrada: pedidoAtual.valor_entrada,
+          numero_parcelas: pedidoAtual.numero_parcelas,
+          observacoes_venda: pedidoAtual.observacoes_venda,
+        } : null,
+      };
+
+      generatePedidoPDF(pdfData);
+      toast({
+        title: "PDF gerado",
+        description: "O PDF do pedido foi gerado com sucesso!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao gerar PDF",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -68,7 +102,7 @@ export default function Pedidos() {
               onGerarOrdens={(tipos) => gerarOrdens({ pedidoId: pedidoAtual.id, tipos })}
               onConcluirOrdem={(ordemId, tipo) => concluirOrdem({ ordemId, tipo })}
               onDarBaixa={() => darBaixaPedido(pedidoAtual.id)}
-              onDownloadPDF={() => toast({ title: "PDF em desenvolvimento" })}
+              onDownloadPDF={handleDownloadPDF}
             />
           )}
         </div>

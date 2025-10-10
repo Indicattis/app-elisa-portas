@@ -27,13 +27,33 @@ export interface PedidoLinhaNova {
 
 export interface Pedido {
   id: string;
+  numero_pedido: string;
   venda_id: string;
   status: string;
   status_preenchimento: string;
   cliente_nome: string;
   cliente_telefone: string | null;
+  cliente_email: string | null;
+  cliente_cpf: string | null;
+  cliente_bairro: string | null;
   data_entrega: string | null;
   observacoes: string | null;
+  observacoes_venda: string | null;
+  endereco_rua: string | null;
+  endereco_numero: string | null;
+  endereco_bairro: string | null;
+  endereco_cidade: string | null;
+  endereco_estado: string | null;
+  endereco_cep: string | null;
+  forma_pagamento: string | null;
+  valor_venda: number | null;
+  valor_entrada: number | null;
+  numero_parcelas: number | null;
+  modalidade_instalacao: string | null;
+  valor_frete: number | null;
+  valor_instalacao: number | null;
+  created_at: string;
+  updated_at: string;
   pedido_linhas?: PedidoLinha[];
 }
 

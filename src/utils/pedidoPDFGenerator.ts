@@ -29,7 +29,7 @@ interface Pedido {
   modalidade_instalacao?: string;
   valor_frete?: number;
   valor_instalacao?: number;
-  produtos: any[];
+  pedido_linhas?: any[];
 }
 
 interface VendaData {
@@ -146,20 +146,20 @@ export const generatePedidoPDF = (data: PedidoPDFData) => {
   yPosition = (pdf as any).lastAutoTable.finalY + 20;
 
   // Produtos do pedido
-  if (data.pedido.produtos && Array.isArray(data.pedido.produtos) && data.pedido.produtos.length > 0) {
+  if (data.pedido.pedido_linhas && Array.isArray(data.pedido.pedido_linhas) && data.pedido.pedido_linhas.length > 0) {
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Produtos do Pedido', margin, yPosition);
     yPosition += 10;
 
-    const produtosTableData = data.pedido.produtos.map((produto: any) => [
-      produto.nome_produto || produto.tipo_produto || 'N/A',
-      produto.descricao_produto || produto.descricao || 'N/A',
-      produto.quantidade?.toString() || '1',
-      produto.tamanho || 'N/A',
-      produto.check_separacao ? '☑' : '☐',
-      produto.check_qualidade ? '☑' : '☐',
-      produto.check_coleta ? '☑' : '☐',
+    const produtosTableData = data.pedido.pedido_linhas.map((linha: any) => [
+      linha.nome_produto || 'N/A',
+      linha.descricao_produto || 'N/A',
+      linha.quantidade?.toString() || '1',
+      linha.tamanho || 'N/A',
+      linha.check_separacao ? '☑' : '☐',
+      linha.check_qualidade ? '☑' : '☐',
+      linha.check_coleta ? '☑' : '☐',
     ]);
 
     autoTable(pdf, {
