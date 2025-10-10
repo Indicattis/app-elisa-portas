@@ -679,6 +679,16 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/tv-dashboard"
+                  element={
+                    <ProtectedRoute requirePermission="tv_dashboard">
+                      <DashboardLayout>
+                        <TvDashboard />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/diario-bordo"
                   element={
                     <ProtectedRoute requirePermission="diario_bordo">
@@ -689,16 +699,6 @@ const App = () => (
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route
-                  path="/tv-dashboard"
-                  element={
-                    <ProtectedRoute requirePermission="tv_dashboard">
-                      <DashboardLayout>
-                        <TvDashboard />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
