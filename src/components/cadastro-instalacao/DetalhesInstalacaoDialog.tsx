@@ -210,6 +210,91 @@ export function DetalhesInstalacaoDialog({
 
           <Separator />
 
+          {/* Produtos */}
+          {instalacao.produtos && instalacao.produtos.length > 0 && (
+            <>
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Produtos da Instalação
+                </h3>
+                <div className="space-y-3">
+                  {instalacao.produtos.map((produto, index) => (
+                    <div 
+                      key={produto.id} 
+                      className="border rounded-lg p-3 bg-muted/30"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-xs">
+                              {produto.tipo_produto}
+                            </Badge>
+                            {produto.cor && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs"
+                                style={{
+                                  borderColor: produto.cor.codigo_hex,
+                                  color: produto.cor.codigo_hex
+                                }}
+                              >
+                                {produto.cor.nome}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium">{produto.descricao}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Quantidade</p>
+                          <p className="text-sm font-semibold">{produto.quantidade}x</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 text-xs mt-2 pt-2 border-t">
+                        {produto.medidas && (
+                          <div>
+                            <p className="text-muted-foreground">Medidas</p>
+                            <p className="font-medium">{produto.medidas}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-muted-foreground">Valor Total</p>
+                          <p className="font-medium">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(produto.valor_total)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold">Total de Produtos</span>
+                      <span className="text-sm font-semibold">
+                        {instalacao.produtos.reduce((sum, p) => sum + p.quantidade, 0)} unidades
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-sm font-semibold">Valor Total</span>
+                      <span className="text-sm font-semibold text-primary">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(instalacao.produtos.reduce((sum, p) => sum + p.valor_total, 0))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+            </>
+          )}
+
           {/* Valores */}
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">

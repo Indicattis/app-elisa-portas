@@ -2,6 +2,19 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface ProdutoInstalacao {
+  id: string;
+  tipo_produto: string;
+  descricao: string;
+  quantidade: number;
+  valor_total: number;
+  medidas?: string;
+  cor?: {
+    nome: string;
+    codigo_hex: string;
+  };
+}
+
 export interface InstalacaoCadastrada {
   id: string;
   nome_cliente: string;
@@ -28,6 +41,8 @@ export interface InstalacaoCadastrada {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  venda_id: string | null;
+  produtos?: ProdutoInstalacao[];
   criador?: {
     nome: string;
     foto_perfil_url?: string;
@@ -64,9 +79,13 @@ export const useInstalacoesCadastradas = () => {
 
       if (error) throw error;
       
-      // Buscar dados dos criadores manualmente
+      // Buscar dados dos criadores e produtos manualmente
       const instalacoesComCriadores: InstalacaoCadastrada[] = await Promise.all(
         (data || []).map(async (instalacao) => {
+          let criador = undefined;
+          let produtos: ProdutoInstalacao[] = [];
+
+          // Buscar criador
           if (instalacao.created_by) {
             const { data: userData } = await supabase
               .from('admin_users')
@@ -74,17 +93,43 @@ export const useInstalacoesCadastradas = () => {
               .eq('user_id', instalacao.created_by)
               .maybeSingle();
             
-            return {
-              ...instalacao,
-              categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
-              status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
-              criador: userData || undefined
-            };
+            criador = userData || undefined;
           }
+
+          // Buscar produtos da venda associada
+          if (instalacao.venda_id) {
+            const { data: produtosData } = await supabase
+              .from('produtos_vendas')
+              .select(`
+                id,
+                tipo_produto,
+                descricao,
+                quantidade,
+                valor_total,
+                medidas,
+                cor:catalogo_cores(nome, codigo_hex)
+              `)
+              .eq('venda_id', instalacao.venda_id);
+            
+            if (produtosData) {
+              produtos = produtosData.map((p: any) => ({
+                id: p.id,
+                tipo_produto: p.tipo_produto,
+                descricao: p.descricao,
+                quantidade: p.quantidade,
+                valor_total: p.valor_total,
+                medidas: p.medidas,
+                cor: p.cor
+              }));
+            }
+          }
+          
           return {
             ...instalacao,
             categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
-            status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada'
+            status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
+            produtos,
+            criador
           };
         })
       );

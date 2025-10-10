@@ -472,6 +472,7 @@ export const InstalacoesTabelaView = ({
                       <TableHead>Categoria</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Tamanho</TableHead>
+                      <TableHead>Produtos</TableHead>
                       <TableHead>
                         <Button
                           variant="ghost"
@@ -547,6 +548,30 @@ export const InstalacoesTabelaView = ({
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs py-2">{instalacao.tamanho || '-'}</TableCell>
+                        <TableCell className="py-2">
+                          {instalacao.produtos && instalacao.produtos.length > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              {instalacao.produtos.map((produto) => (
+                                <Badge 
+                                  key={produto.id} 
+                                  variant="outline" 
+                                  className="text-[10px] gap-1 justify-start"
+                                  style={produto.cor ? {
+                                    borderColor: produto.cor.codigo_hex,
+                                    color: produto.cor.codigo_hex
+                                  } : undefined}
+                                >
+                                  <span className="font-medium">{produto.quantidade}x</span>
+                                  <span className="truncate max-w-[120px]" title={produto.descricao}>
+                                    {produto.descricao}
+                                  </span>
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Sem produtos</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs py-2">
                           {instalacao.data_instalacao
                             ? format(new Date(instalacao.data_instalacao), 'dd/MM/yyyy')
