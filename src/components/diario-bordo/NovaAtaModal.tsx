@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Clock } from 'lucide-react';
+import { Clock, Play, Pause } from 'lucide-react';
 import { useCronometro } from '@/hooks/useCronometro';
 import { formatCronometro } from '@/utils/timeFormat';
 
@@ -34,7 +34,7 @@ export function NovaAtaModal({ open, onOpenChange, onFinalize }: NovaAtaModalPro
   const [assunto, setAssunto] = useState('');
   const [conteudo, setConteudo] = useState('');
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const { segundosDecorridos, isRunning, startTime, start } = useCronometro();
+  const { segundosDecorridos, isRunning, startTime, start, pause } = useCronometro();
 
   // Iniciar cronômetro automaticamente ao abrir
   useState(() => {
@@ -90,11 +90,32 @@ export function NovaAtaModal({ open, onOpenChange, onFinalize }: NovaAtaModalPro
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>Nova Ata de Reunião</DialogTitle>
-              <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
-                <Clock className={`h-5 w-5 ${segundosDecorridos > 3600 ? 'text-red-500' : 'text-primary'}`} />
-                <span className={`text-lg font-mono font-bold ${segundosDecorridos > 3600 ? 'text-red-500' : 'text-primary'}`}>
-                  {formatCronometro(segundosDecorridos)}
-                </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant={isRunning ? "destructive" : "default"}
+                  size="sm"
+                  onClick={isRunning ? pause : start}
+                  className="h-10"
+                >
+                  {isRunning ? (
+                    <>
+                      <Pause className="h-4 w-4 mr-2" />
+                      Pausar
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Iniciar
+                    </>
+                  )}
+                </Button>
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
+                  <Clock className={`h-5 w-5 ${segundosDecorridos > 3600 ? 'text-red-500' : 'text-primary'}`} />
+                  <span className={`text-lg font-mono font-bold ${segundosDecorridos > 3600 ? 'text-red-500' : 'text-primary'}`}>
+                    {formatCronometro(segundosDecorridos)}
+                  </span>
+                </div>
               </div>
             </div>
           </DialogHeader>
