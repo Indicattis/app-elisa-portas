@@ -122,8 +122,7 @@ export const useProdutosVenda = (vendaId?: string) => {
         .from('produtos_vendas')
         .update({ 
           lucro_item: lucroItem,
-          custo_producao: custoProducao,
-          custo_pintura: custoPintura || 0
+          custo_producao: custoProducao
         })
         .eq('id', produtoId)
         .select()
