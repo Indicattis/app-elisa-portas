@@ -794,6 +794,8 @@ export type Database = {
       }
       estoque_movimentacoes: {
         Row: {
+          categoria_anterior: string | null
+          categoria_nova: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -805,6 +807,8 @@ export type Database = {
           tipo_movimentacao: string
         }
         Insert: {
+          categoria_anterior?: string | null
+          categoria_nova?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -816,6 +820,8 @@ export type Database = {
           tipo_movimentacao: string
         }
         Update: {
+          categoria_anterior?: string | null
+          categoria_nova?: string | null
           created_at?: string
           created_by?: string | null
           id?: string

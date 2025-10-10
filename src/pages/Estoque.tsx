@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { HistoricoModal } from "@/components/estoque/HistoricoModal";
+import { AlterarCategoriaModal } from "@/components/estoque/AlterarCategoriaModal";
 
 const CATEGORIAS = [
   { value: "geral", label: "Geral", color: "bg-gray-500" },
@@ -32,10 +33,11 @@ const getCategoriaLabel = (categoria: string) => {
 };
 
 export default function Estoque() {
-  const { produtos, loading, adicionarProduto, movimentarEstoque, buscarMovimentacoes } = useEstoque();
+  const { produtos, loading, adicionarProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
   const [modalAberto, setModalAberto] = useState(false);
   const [movimentacaoModal, setMovimentacaoModal] = useState(false);
   const [historicoModal, setHistoricoModal] = useState(false);
+  const [categoriaModal, setCategoriaModal] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoEstoque | null>(null);
   const [formData, setFormData] = useState({
     nome_produto: "",
@@ -75,6 +77,19 @@ export default function Estoque() {
   const handleOpenHistorico = (produto: ProdutoEstoque) => {
     setProdutoSelecionado(produto);
     setHistoricoModal(true);
+  };
+
+  const handleOpenCategoria = (produto: ProdutoEstoque) => {
+    setProdutoSelecionado(produto);
+    setCategoriaModal(true);
+  };
+
+  const handleAlterarCategoria = async (novaCategoria: string) => {
+    if (!produtoSelecionado) return;
+    await alterarCategoria({
+      produtoId: produtoSelecionado.id,
+      novaCategoria,
+    });
   };
 
   const { data: movimentacoes = [], isLoading: loadingMovimentacoes } = 
@@ -167,7 +182,10 @@ export default function Estoque() {
                     {produto.descricao_produto || "—"}
                   </TableCell>
                   <TableCell>
-                    <Badge className={getCategoriaColor(produto.categoria)}>
+                    <Badge 
+                      className={`${getCategoriaColor(produto.categoria)} cursor-pointer hover:opacity-80 transition-opacity`}
+                      onClick={() => handleOpenCategoria(produto)}
+                    >
                       {getCategoriaLabel(produto.categoria)}
                     </Badge>
                   </TableCell>
@@ -222,6 +240,13 @@ export default function Estoque() {
         onOpenChange={setHistoricoModal}
         movimentacoes={movimentacoes}
         loading={loadingMovimentacoes}
+      />
+
+      <AlterarCategoriaModal
+        produto={produtoSelecionado}
+        open={categoriaModal}
+        onOpenChange={setCategoriaModal}
+        onAlterarCategoria={handleAlterarCategoria}
       />
     </div>
   );

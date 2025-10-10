@@ -6,11 +6,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export interface MovimentacaoEstoque {
   id: string;
   produto_id: string;
-  tipo_movimentacao: 'entrada' | 'saida';
+  tipo_movimentacao: 'entrada' | 'saida' | 'alteracao_categoria';
   quantidade: number;
   quantidade_anterior: number;
   quantidade_nova: number;
   observacoes: string | null;
+  categoria_anterior: string | null;
+  categoria_nova: string | null;
   created_by: string | null;
   created_at: string;
 }
@@ -164,6 +166,73 @@ export const useEstoque = () => {
     },
   });
 
+  const alterarCategoria = useMutation({
+    mutationFn: async ({ 
+      produtoId, 
+      novaCategoria 
+    }: { 
+      produtoId: string; 
+      novaCategoria: string;
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      
+      // Buscar categoria atual
+      const { data: produto, error: produtoError } = await supabase
+        .from("estoque")
+        .select("categoria")
+        .eq("id", produtoId)
+        .maybeSingle();
+
+      if (produtoError) throw produtoError;
+      if (!produto) throw new Error("Produto não encontrado");
+
+      const categoriaAnterior = produto.categoria;
+
+      if (categoriaAnterior === novaCategoria) {
+        throw new Error("A categoria selecionada já é a atual");
+      }
+
+      // Atualizar categoria
+      const { error: updateError } = await supabase
+        .from("estoque")
+        .update({ categoria: novaCategoria })
+        .eq("id", produtoId);
+
+      if (updateError) throw updateError;
+
+      // Registrar alteração no log
+      const { error: logError } = await supabase
+        .from("estoque_movimentacoes")
+        .insert({
+          produto_id: produtoId,
+          tipo_movimentacao: 'alteracao_categoria',
+          quantidade: 0,
+          quantidade_anterior: 0,
+          quantidade_nova: 0,
+          categoria_anterior: categoriaAnterior,
+          categoria_nova: novaCategoria,
+          created_by: userData?.user?.id,
+        });
+
+      if (logError) throw logError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+      queryClient.invalidateQueries({ queryKey: ["movimentacoes"] });
+      toast({
+        title: "Categoria alterada",
+        description: "A categoria do produto foi alterada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao alterar categoria",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const buscarMovimentacoes = (produtoId?: string) => {
     return useQuery({
       queryKey: ["movimentacoes", produtoId],
@@ -197,6 +266,7 @@ export const useEstoque = () => {
     buscarProdutos,
     adicionarProduto: adicionarProduto.mutateAsync,
     movimentarEstoque: movimentarEstoque.mutateAsync,
+    alterarCategoria: alterarCategoria.mutateAsync,
     buscarMovimentacoes,
   };
 };

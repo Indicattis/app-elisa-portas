@@ -2,9 +2,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ProdutoEstoque } from "@/hooks/useEstoque";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const CATEGORIAS = [
+  { value: "geral", label: "Geral", color: "bg-gray-500" },
+  { value: "ferragem", label: "Ferragem", color: "bg-blue-500" },
+  { value: "acessorio", label: "Acessório", color: "bg-purple-500" },
+  { value: "perfil", label: "Perfil", color: "bg-green-500" },
+  { value: "componente", label: "Componente", color: "bg-orange-500" },
+  { value: "consumivel", label: "Consumível", color: "bg-red-500" },
+];
+
+const getCategoriaColor = (categoria: string) => {
+  const cat = CATEGORIAS.find(c => c.value === categoria);
+  return cat?.color || "bg-gray-500";
+};
+
+const getCategoriaLabel = (categoria: string) => {
+  const cat = CATEGORIAS.find(c => c.value === categoria);
+  return cat?.label || categoria;
+};
 
 interface HistoricoModalProps {
   produto: ProdutoEstoque | null;
@@ -66,18 +85,40 @@ export function HistoricoModal({
                           <ArrowUp className="h-3 w-3" />
                           Entrada
                         </Badge>
-                      ) : (
+                      ) : mov.tipo_movimentacao === 'saida' ? (
                         <Badge className="bg-red-500 gap-1">
                           <ArrowDown className="h-3 w-3" />
                           Saída
                         </Badge>
+                      ) : (
+                        <Badge className="bg-blue-500 gap-1">
+                          <Tag className="h-3 w-3" />
+                          Categoria
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell className="font-semibold">
-                      {mov.tipo_movimentacao === 'entrada' ? '+' : '-'}{mov.quantidade}
+                      {mov.tipo_movimentacao === 'alteracao_categoria' ? (
+                        <div className="flex gap-2 items-center">
+                          <Badge className={getCategoriaColor(mov.categoria_anterior || '')}>
+                            {getCategoriaLabel(mov.categoria_anterior || '')}
+                          </Badge>
+                          <span>→</span>
+                          <Badge className={getCategoriaColor(mov.categoria_nova || '')}>
+                            {getCategoriaLabel(mov.categoria_nova || '')}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span>
+                          {mov.tipo_movimentacao === 'entrada' ? '+' : '-'}{mov.quantidade}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {mov.quantidade_anterior} → {mov.quantidade_nova}
+                      {mov.tipo_movimentacao !== 'alteracao_categoria' 
+                        ? `${mov.quantidade_anterior} → ${mov.quantidade_nova}`
+                        : '—'
+                      }
                     </TableCell>
                     <TableCell className="text-sm">
                       {mov.admin_users?.nome || "Sistema"}
