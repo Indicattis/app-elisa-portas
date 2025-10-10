@@ -96,16 +96,14 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </div>
               
               <div className="flex items-center gap-2 md:gap-3">
-                <Button variant="outline" size="sm" asChild className="hidden sm:flex">
-                  <NavLink to="/tv-dashboard" className="flex items-center gap-2">
+                <Button variant="outline" size="icon" asChild className="hidden sm:flex">
+                  <NavLink to="/tv-dashboard">
                     <Tv className="h-4 w-4" />
-                    <span className="hidden lg:inline">Modo TV</span>
                   </NavLink>
                 </Button>
-                <Button variant="outline" size="sm" asChild className="hidden sm:flex">
-                  <NavLink to="/dashboard/mapa-autorizados" className="flex items-center gap-2">
+                <Button variant="outline" size="icon" asChild className="hidden sm:flex">
+                  <NavLink to="/dashboard/mapa-autorizados">
                     <Map className="h-4 w-4" />
-                    <span className="hidden lg:inline">Mapa</span>
                   </NavLink>
                 </Button>
                 <ThemeToggle />
