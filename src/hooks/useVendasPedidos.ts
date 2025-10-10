@@ -64,7 +64,7 @@ export interface Venda {
   valor_venda: number;
   created_at: string;
   pedidos_producao?: Pedido[];
-  portas_vendas?: any[];
+  produtos_vendas?: any[];
 }
 
 export const useVendasPedidos = () => {

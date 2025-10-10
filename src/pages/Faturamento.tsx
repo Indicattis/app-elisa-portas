@@ -227,7 +227,7 @@ export default function Faturamento() {
             id,
             nome
           ),
-          portas_vendas (
+          produtos_vendas (
             id,
             tipo_produto,
             descricao,
@@ -284,7 +284,7 @@ export default function Faturamento() {
 
       const vendasCompletas = vendasData.map((venda: any) => {
         const atendenteData = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
-        const portas = venda.portas_vendas || [];
+        const portas = venda.produtos_vendas || [];
         
         // Calcular valores agregados dos produtos
         const valor_produto = portas.reduce((acc: number, p: any) => 

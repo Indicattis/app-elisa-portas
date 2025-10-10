@@ -35,8 +35,8 @@ export const VendasList = ({ vendas, selectedVendaId, onSelectVenda }: VendasLis
   const coresDisponiveis = useMemo(() => {
     const cores = new Set<string>();
     vendas.forEach((venda) => {
-      venda.portas_vendas?.forEach((porta) => {
-        if (porta.cor) cores.add(porta.cor);
+      venda.produtos_vendas?.forEach((produto) => {
+        if (produto.cor) cores.add(produto.cor);
       });
     });
     return Array.from(cores).sort();
@@ -57,16 +57,16 @@ export const VendasList = ({ vendas, selectedVendaId, onSelectVenda }: VendasLis
 
       // Filtro de portas de enrolar
       if (filtroPortasEnrolar) {
-        const temPortaEnrolar = venda.portas_vendas?.some(
-          (porta) => porta.tipo_produto?.toLowerCase().includes("enrolar")
+        const temPortaEnrolar = venda.produtos_vendas?.some(
+          (produto) => produto.tipo_produto?.toLowerCase().includes("enrolar")
         );
         if (!temPortaEnrolar) return false;
       }
 
       // Filtro de cor
       if (filtroCor) {
-        const temCor = venda.portas_vendas?.some(
-          (porta) => porta.cor?.toLowerCase() === filtroCor.toLowerCase()
+        const temCor = venda.produtos_vendas?.some(
+          (produto) => produto.cor?.toLowerCase() === filtroCor.toLowerCase()
         );
         if (!temCor) return false;
       }
@@ -244,9 +244,9 @@ export const VendasList = ({ vendas, selectedVendaId, onSelectVenda }: VendasLis
                     <span className="text-xs opacity-60">#{venda.id.slice(0, 8)}</span>
                   </div>
 
-                  {venda.portas_vendas && venda.portas_vendas.length > 0 && (
+                  {venda.produtos_vendas && venda.produtos_vendas.length > 0 && (
                     <div className="pt-1 border-t">
-                      <ProdutosIcons produtos={venda.portas_vendas} />
+                      <ProdutosIcons produtos={venda.produtos_vendas} />
                     </div>
                   )}
                 </div>

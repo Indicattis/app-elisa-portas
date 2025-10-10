@@ -176,7 +176,7 @@ export function useRankingVendedoresDia(data: string) {
           valor_venda,
           valor_frete,
           atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url),
-          portas:portas_vendas(id)
+          produtos:produtos_vendas(id)
         `)
         .gte('data_venda', `${data}T00:00:00`)
         .lte('data_venda', `${data}T23:59:59`);
@@ -189,7 +189,7 @@ export function useRankingVendedoresDia(data: string) {
       vendas?.forEach((venda: any) => {
         const atendenteNome = venda.atendente?.nome || 'Sem atendente';
         const fotoPerfil = venda.atendente?.foto_perfil_url || null;
-        const quantidadePortas = venda.portas?.length || 0;
+        const quantidadeProdutos = venda.produtos?.length || 0;
 
         if (!rankingMap.has(atendenteNome)) {
           rankingMap.set(atendenteNome, {
@@ -203,7 +203,7 @@ export function useRankingVendedoresDia(data: string) {
 
         const vendedor = rankingMap.get(atendenteNome)!;
         vendedor.quantidade_vendas += 1;
-        vendedor.quantidade_portas += quantidadePortas;
+        vendedor.quantidade_portas += quantidadeProdutos;
         // Valor sem frete
         const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
         vendedor.valor_total += valorSemFrete;
