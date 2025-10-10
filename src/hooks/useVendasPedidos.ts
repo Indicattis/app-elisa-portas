@@ -39,6 +39,7 @@ export interface Venda {
   valor_venda: number;
   created_at: string;
   pedidos_producao?: Pedido[];
+  portas_vendas?: any[];
 }
 
 export const useVendasPedidos = () => {
@@ -58,7 +59,8 @@ export const useVendasPedidos = () => {
           cliente_telefone,
           valor_venda,
           created_at,
-          pedidos_producao!left(id, status, status_preenchimento)
+          pedidos_producao!left(id, status, status_preenchimento),
+          portas_vendas(tipo_produto, cor)
         `)
         .order("created_at", { ascending: false });
 
