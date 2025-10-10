@@ -17,7 +17,7 @@ import {
 interface PedidoLinhasEditorProps {
   linhas: PedidoLinha[];
   isReadOnly: boolean;
-  onAdicionarLinha: (linha: PedidoLinhaNova) => Promise<void>;
+  onAdicionarLinha: (linha: PedidoLinhaNova) => Promise<any>;
   onRemoverLinha: (linhaId: string) => Promise<void>;
 }
 

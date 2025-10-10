@@ -10,7 +10,7 @@ import { OrdemCard } from "./OrdemCard";
 interface PedidoDetailsProps {
   pedido: Pedido;
   ordens: any[];
-  onAdicionarLinha: (linha: any) => Promise<void>;
+  onAdicionarLinha: (linha: any) => Promise<any>;
   onRemoverLinha: (linhaId: string) => Promise<void>;
   onConfirmarPreenchimento: () => Promise<void>;
   onGerarOrdens: (tipos: string[]) => Promise<void>;
