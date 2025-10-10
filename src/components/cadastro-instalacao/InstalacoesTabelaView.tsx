@@ -10,8 +10,6 @@ import {
   X,
   ArrowUpDown,
   AlertCircle,
-  RefreshCw,
-  Eye,
   Plus,
   Clock,
   UserX,
@@ -497,64 +495,87 @@ export const InstalacoesTabelaView = ({
                     {paginatedInstalacoes.map((instalacao) => (
                       <TableRow 
                         key={instalacao.id}
-                        className={
+                        onDoubleClick={() => setDetalhesInstalacao(instalacao)}
+                        className={`cursor-pointer ${
                           instalacao.status === 'finalizada'
                             ? 'bg-green-500/5 hover:bg-green-500/10'
                             : isAtrasado(instalacao)
                             ? 'bg-red-500/5 hover:bg-red-500/10'
                             : ''
-                        }
+                        }`}
                       >
-                        <TableCell className="font-medium">{instalacao.nome_cliente}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="font-medium text-xs py-2">{instalacao.nome_cliente}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground py-2">
                           {instalacao.telefone_cliente || '-'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm">
+                            <span className="text-xs">
                               {instalacao.cidade}, {instalacao.estado}
                             </span>
+                            {instalacao.latitude && instalacao.longitude && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/dashboard/mapa-autorizados?instalacao=${instalacao.id}`);
+                                }}
+                                title="Ver no Mapa"
+                                className="h-6 w-6 p-0 text-blue-500 hover:text-blue-600"
+                              >
+                                <Map className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={getCategoriaVariant(instalacao.categoria)}>
+                        <TableCell className="py-2">
+                          <Badge variant="outline" className={`text-xs ${getCategoriaVariant(instalacao.categoria)}`}>
                             {getCategoriaLabel(instalacao.categoria)}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={getStatusVariant(instalacao.status)}>
+                        <TableCell className="py-2">
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs cursor-pointer hover:opacity-80 ${getStatusVariant(instalacao.status)}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setStatusInstalacao(instalacao);
+                            }}
+                            title="Clique para alterar status"
+                          >
                             {getStatusLabel(instalacao.status)}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-2">
                           <div className="flex flex-wrap gap-1">
                             {isAtrasado(instalacao) && (
-                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 gap-1">
-                                <Clock className="h-3 w-3" />
+                              <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/20 gap-1">
+                                <Clock className="h-2.5 w-2.5" />
                                 Atrasado
                               </Badge>
                             )}
                             {!instalacao.responsavel_instalacao_id && (
-                              <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 gap-1">
-                                <UserX className="h-3 w-3" />
+                              <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20 gap-1">
+                                <UserX className="h-2.5 w-2.5" />
                                 Sem Responsável
                               </Badge>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">{instalacao.tamanho || '-'}</TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="text-xs py-2">{instalacao.tamanho || '-'}</TableCell>
+                        <TableCell className="text-xs py-2">
                           {instalacao.data_instalacao
                             ? format(new Date(instalacao.data_instalacao), 'dd/MM/yyyy')
                             : '-'}
                         </TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="text-xs py-2">
                           {instalacao.responsavel_instalacao_nome ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <div className="flex flex-col">
-                                <span>{instalacao.responsavel_instalacao_nome}</span>
+                                <span className="text-xs">{instalacao.responsavel_instalacao_nome}</span>
                                 {instalacao.tipo_instalacao && (
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-[10px] text-muted-foreground">
                                     {instalacao.tipo_instalacao === 'elisa' ? 'Equipe Elisa' : 'Autorizado'}
                                   </span>
                                 )}
@@ -562,26 +583,32 @@ export const InstalacoesTabelaView = ({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setResponsavelInstalacao(instalacao)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setResponsavelInstalacao(instalacao);
+                                }}
                                 title="Editar Responsável"
-                                className="h-6 w-6 p-0"
+                                className="h-5 w-5 p-0"
                               >
-                                <Pencil className="h-3 w-3" />
+                                <Pencil className="h-2.5 w-2.5" />
                               </Button>
                             </div>
                           ) : (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setResponsavelInstalacao(instalacao)}
-                              className="gap-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setResponsavelInstalacao(instalacao);
+                              }}
+                              className="gap-1 h-6 text-xs"
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-2.5 w-2.5" />
                               Inserir
                             </Button>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="text-xs py-2">
                           {instalacao.saldo 
                             ? new Intl.NumberFormat('pt-BR', { 
                                 style: 'currency', 
@@ -589,82 +616,64 @@ export const InstalacoesTabelaView = ({
                               }).format(instalacao.saldo)
                             : '-'}
                         </TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="text-xs py-2">
                           {instalacao.data_producao ? (
-                            <div className="flex items-center gap-2">
-                              <span>{format(new Date(instalacao.data_producao), 'dd/MM/yyyy')}</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs">{format(new Date(instalacao.data_producao), 'dd/MM/yyyy')}</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setDataProducaoInstalacao(instalacao)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDataProducaoInstalacao(instalacao);
+                                }}
                                 title="Editar Data de Produção"
-                                className="h-6 w-6 p-0"
+                                className="h-5 w-5 p-0"
                               >
-                                <Pencil className="h-3 w-3" />
+                                <Pencil className="h-2.5 w-2.5" />
                               </Button>
                             </div>
                           ) : (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setDataProducaoInstalacao(instalacao)}
-                              className="gap-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDataProducaoInstalacao(instalacao);
+                              }}
+                              className="gap-1 h-6 text-xs"
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-2.5 w-2.5" />
                               Inserir
                             </Button>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-2">
                           {instalacao.latitude && instalacao.longitude ? (
-                            <Badge variant="default" className="bg-green-500">
-                              <MapPin className="h-3 w-3 mr-1" />
+                            <Badge variant="default" className="text-xs bg-green-500">
+                              <MapPin className="h-2.5 w-2.5 mr-1" />
                               Geocodificado
                             </Badge>
                           ) : (
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="text-xs">
                               Processando
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right py-2">
                           <div className="flex gap-1 justify-end flex-wrap">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDetalhesInstalacao(instalacao)}
-                              title="Ver Detalhes"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {instalacao.latitude && instalacao.longitude && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/dashboard/mapa-autorizados?instalacao=${instalacao.id}`)}
-                                title="Ver no Mapa"
-                                className="text-blue-500 hover:text-blue-600"
-                              >
-                                <Map className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setStatusInstalacao(instalacao)}
-                              title="Alterar Status"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
                             {instalacao.categoria !== 'correcao' && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setCorrecaoInstalacao(instalacao)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCorrecaoInstalacao(instalacao);
+                                }}
                                 title="Alterar para Correção"
-                                className="text-orange-500 hover:text-orange-600"
+                                className="text-orange-500 hover:text-orange-600 h-6 w-6 p-0"
                               >
-                                <AlertCircle className="h-4 w-4" />
+                                <AlertCircle className="h-3 w-3" />
                               </Button>
                             )}
                             {isAdmin && (
@@ -672,19 +681,26 @@ export const InstalacoesTabelaView = ({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleEdit(instalacao)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(instalacao);
+                                  }}
                                   title="Editar"
+                                  className="h-6 w-6 p-0"
                                 >
-                                  <Pencil className="h-4 w-4" />
+                                  <Pencil className="h-3 w-3" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => onDelete(instalacao.id)}
-                                  className="text-destructive hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(instalacao.id);
+                                  }}
+                                  className="text-destructive hover:text-destructive h-6 w-6 p-0"
                                   title="Excluir"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3 w-3" />
                                 </Button>
                               </>
                             )}
