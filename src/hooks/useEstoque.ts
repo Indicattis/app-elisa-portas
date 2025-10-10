@@ -25,6 +25,7 @@ export interface ProdutoEstoque {
   unidade: string;
   categoria: string;
   ativo: boolean;
+  preco_unitario: number;
 }
 
 export interface ProdutoEstoqueInput {
@@ -33,6 +34,7 @@ export interface ProdutoEstoqueInput {
   quantidade: number;
   unidade?: string;
   categoria?: string;
+  preco_unitario?: number;
 }
 
 export const useEstoque = () => {
@@ -256,6 +258,34 @@ export const useEstoque = () => {
     });
   };
 
+  const editarProduto = useMutation({
+    mutationFn: async ({ id, ...produto }: ProdutoEstoqueInput & { id: string }) => {
+      const { data, error } = await supabase
+        .from("estoque")
+        .update(produto)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+      toast({
+        title: "Produto atualizado",
+        description: "O produto foi atualizado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar produto",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const buscarProdutos = async (termo: string) => {
     setSearchTerm(termo);
   };
@@ -265,6 +295,7 @@ export const useEstoque = () => {
     loading: isLoading,
     buscarProdutos,
     adicionarProduto: adicionarProduto.mutateAsync,
+    editarProduto: editarProduto.mutateAsync,
     movimentarEstoque: movimentarEstoque.mutateAsync,
     alterarCategoria: alterarCategoria.mutateAsync,
     buscarMovimentacoes,

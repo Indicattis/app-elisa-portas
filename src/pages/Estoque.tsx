@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Plus, ArrowUpDown, History, Settings } from "lucide-react";
+import { Package, Plus, ArrowUpDown, History, Settings, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +14,13 @@ import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { HistoricoModal } from "@/components/estoque/HistoricoModal";
 import { AlterarCategoriaModal } from "@/components/estoque/AlterarCategoriaModal";
 import { GerenciarCategoriasModal } from "@/components/estoque/GerenciarCategoriasModal";
+import { EditarProdutoModal } from "@/components/estoque/EditarProdutoModal";
 
 export default function Estoque() {
-  const { produtos, loading, adicionarProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
+  const { produtos, loading, adicionarProduto, editarProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
   const { categorias } = useCategorias();
   const [modalAberto, setModalAberto] = useState(false);
+  const [editarModal, setEditarModal] = useState(false);
   const [categoriasModal, setCategoriasModal] = useState(false);
   const [movimentacaoModal, setMovimentacaoModal] = useState(false);
   const [historicoModal, setHistoricoModal] = useState(false);
@@ -30,6 +32,7 @@ export default function Estoque() {
     quantidade: 0,
     unidade: "UN",
     categoria: "geral",
+    preco_unitario: 0,
   });
 
   const getCategoriaColor = (categoriaValue: string) => {
@@ -50,6 +53,7 @@ export default function Estoque() {
       quantidade: 0, 
       unidade: "UN",
       categoria: "geral",
+      preco_unitario: 0,
     });
     setModalAberto(false);
   };
@@ -85,6 +89,15 @@ export default function Estoque() {
       produtoId: produtoSelecionado.id,
       novaCategoria,
     });
+  };
+
+  const handleEditarProduto = async (id: string, data: any) => {
+    await editarProduto({ id, ...data });
+  };
+
+  const handleOpenEditar = (produto: ProdutoEstoque) => {
+    setProdutoSelecionado(produto);
+    setEditarModal(true);
   };
 
   const { data: movimentacoes = [], isLoading: loadingMovimentacoes } = 
@@ -149,7 +162,16 @@ export default function Estoque() {
                   <Input 
                     type="number" 
                     value={formData.quantidade} 
-                    onChange={(e) => setFormData({...formData, quantidade: parseInt(e.target.value)})} 
+                    onChange={(e) => setFormData({...formData, quantidade: parseInt(e.target.value) || 0})} 
+                  />
+                </div>
+                <div>
+                  <Label>Preço Unitário</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    value={formData.preco_unitario} 
+                    onChange={(e) => setFormData({...formData, preco_unitario: parseFloat(e.target.value) || 0})} 
                   />
                 </div>
                 <Button onClick={handleSubmit} className="w-full">Adicionar</Button>
@@ -172,6 +194,7 @@ export default function Estoque() {
                 <TableHead>Descrição</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
+                <TableHead className="text-right">Preço Unit.</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -196,14 +219,25 @@ export default function Estoque() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
+                    <span className="font-medium">
+                      R$ {produto.preco_unitario.toFixed(2)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenEditar(produto)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenMovimentacao(produto)}
                       >
-                        <ArrowUpDown className="h-4 w-4 mr-1" />
-                        Movimentar
+                        <ArrowUpDown className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
@@ -218,7 +252,7 @@ export default function Estoque() {
               ))}
               {produtos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     Nenhum produto cadastrado
                   </TableCell>
                 </TableRow>
@@ -253,6 +287,13 @@ export default function Estoque() {
         open={categoriaModal}
         onOpenChange={setCategoriaModal}
         onAlterarCategoria={handleAlterarCategoria}
+      />
+
+      <EditarProdutoModal
+        produto={produtoSelecionado}
+        open={editarModal}
+        onOpenChange={setEditarModal}
+        onEditar={handleEditarProduto}
       />
     </div>
   );

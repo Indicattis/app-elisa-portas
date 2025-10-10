@@ -762,6 +762,7 @@ export type Database = {
           descricao_produto: string | null
           id: string
           nome_produto: string
+          preco_unitario: number
           quantidade: number
           unidade: string | null
           updated_at: string | null
@@ -774,6 +775,7 @@ export type Database = {
           descricao_produto?: string | null
           id?: string
           nome_produto: string
+          preco_unitario?: number
           quantidade?: number
           unidade?: string | null
           updated_at?: string | null
@@ -786,6 +788,7 @@ export type Database = {
           descricao_produto?: string | null
           id?: string
           nome_produto?: string
+          preco_unitario?: number
           quantidade?: number
           unidade?: string | null
           updated_at?: string | null
