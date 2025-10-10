@@ -2294,6 +2294,7 @@ export type Database = {
           cor_id: string | null
           created_at: string | null
           custo_pintura: number | null
+          custo_producao: number | null
           custo_produto: number | null
           desconto_percentual: number | null
           desconto_valor: number | null
@@ -2324,6 +2325,7 @@ export type Database = {
           cor_id?: string | null
           created_at?: string | null
           custo_pintura?: number | null
+          custo_producao?: number | null
           custo_produto?: number | null
           desconto_percentual?: number | null
           desconto_valor?: number | null
@@ -2354,6 +2356,7 @@ export type Database = {
           cor_id?: string | null
           created_at?: string | null
           custo_pintura?: number | null
+          custo_producao?: number | null
           custo_produto?: number | null
           desconto_percentual?: number | null
           desconto_valor?: number | null
