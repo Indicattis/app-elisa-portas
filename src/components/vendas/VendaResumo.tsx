@@ -2,11 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProdutoVenda } from '@/hooks/useVendas';
 
 interface VendaResumoProps {
-  portas: ProdutoVenda[];
+  produtos: ProdutoVenda[];
   valorFrete?: number;
 }
 
-export function VendaResumo({ portas, valorFrete = 0 }: VendaResumoProps) {
+export function VendaResumo({ produtos, valorFrete = 0 }: VendaResumoProps) {
   const totais = portas.reduce((acc, produto) => {
     const valorBase = (
       produto.valor_produto + 

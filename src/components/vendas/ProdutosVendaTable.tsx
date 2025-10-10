@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Trash2, Pencil } from 'lucide-react';
 import { ProdutoVenda } from '@/hooks/useVendas';
 
-interface PortasVendaTableProps {
-  portas: ProdutoVenda[];
-  onRemovePorta: (index: number) => void;
-  onEditPorta?: (index: number) => void;
+interface ProdutosVendaTableProps {
+  produtos: ProdutoVenda[];
+  onRemoveProduto: (index: number) => void;
+  onEditProduto?: (index: number) => void;
   onUpdateQuantidade?: (index: number, quantidade: number) => void;
 }
 
@@ -40,8 +40,8 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
   }
 };
 
-export function PortasVendaTable({ portas, onRemovePorta, onEditPorta, onUpdateQuantidade }: PortasVendaTableProps) {
-  if (portas.length === 0) {
+export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade }: ProdutosVendaTableProps) {
+  if (produtos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/50">
         Nenhum produto adicionado
@@ -63,7 +63,7 @@ export function PortasVendaTable({ portas, onRemovePorta, onEditPorta, onUpdateQ
         </TableRow>
       </TableHeader>
       <TableBody>
-        {portas.map((produto, index) => {
+        {produtos.map((produto, index) => {
           // Para pintura_epoxi, valor_pintura não deve ser somado (é 0)
           const valorBase = (produto.valor_produto + produto.valor_pintura + produto.valor_instalacao) * produto.quantidade;
           const descontoAplicado = produto.tipo_desconto === 'valor' 
@@ -111,12 +111,12 @@ export function PortasVendaTable({ portas, onRemovePorta, onEditPorta, onUpdateQ
               <TableCell className="font-semibold">R$ {valorTotal.toFixed(2)}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  {onEditPorta && (
+                  {onEditProduto && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => onEditPorta(index)}
+                      onClick={() => onEditProduto(index)}
                       title="Editar produto"
                     >
                       <Pencil className="w-4 h-4" />
@@ -126,7 +126,7 @@ export function PortasVendaTable({ portas, onRemovePorta, onEditPorta, onUpdateQ
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => onRemovePorta(index)}
+                    onClick={() => onRemoveProduto(index)}
                     title="Remover produto"
                   >
                     <Trash2 className="w-4 h-4" />

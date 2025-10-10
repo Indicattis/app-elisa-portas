@@ -2287,7 +2287,7 @@ export type Database = {
           },
         ]
       }
-      portas_vendas: {
+      produtos_vendas: {
         Row: {
           acessorio_id: string | null
           adicional_id: string | null

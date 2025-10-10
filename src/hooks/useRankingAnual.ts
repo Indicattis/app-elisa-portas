@@ -23,7 +23,7 @@ export const useRankingAnual = (year: number) => {
           valor_frete,
           data_venda,
           admin_users!fk_vendas_atendente(nome, foto_perfil_url),
-          portas_vendas(id)
+          produtos_vendas(id)
         `)
         .gte('data_venda', `${year}-01-01`)
         .lte('data_venda', `${year}-12-31`);
@@ -37,7 +37,7 @@ export const useRankingAnual = (year: number) => {
         const atendenteId = venda.atendente_id;
         const atendenteNome = venda.admin_users?.nome || 'Sem atendente';
         const fotoPerfil = venda.admin_users?.foto_perfil_url || null;
-        const quantidadePortas = venda.portas_vendas?.length || 0;
+        const quantidadeProdutos = venda.produtos_vendas?.length || 0;
         const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
 
         if (!rankingMap.has(atendenteId)) {
@@ -53,7 +53,7 @@ export const useRankingAnual = (year: number) => {
 
         const vendedor = rankingMap.get(atendenteId)!;
         vendedor.quantidade_vendas += 1;
-        vendedor.quantidade_portas += quantidadePortas;
+        vendedor.quantidade_portas += quantidadeProdutos;
         vendedor.valor_total += valorSemFrete;
       });
 
