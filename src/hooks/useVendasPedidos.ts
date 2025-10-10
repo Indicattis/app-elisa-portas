@@ -136,16 +136,21 @@ export const useVendasPedidos = () => {
 
       if (!venda) throw new Error("Venda não encontrada");
 
-      // Gerar número do pedido
-      const { data: numeroData } = await supabase.rpc("gerar_proximo_numero", {
+      // Gerar número do pedido com timestamp para garantir unicidade
+      const { data: numeroData, error: rpcError } = await supabase.rpc("gerar_proximo_numero", {
         tipo_documento: "pedido_producao",
       });
+
+      if (rpcError) throw rpcError;
+
+      const timestamp = Date.now().toString().slice(-6);
+      const numeroPedido = `PP-${numeroData}-${timestamp}`;
 
       const { data, error } = await supabase
         .from("pedidos_producao")
         .insert([{
           venda_id: vendaId,
-          numero_pedido: `PP-${numeroData}`,
+          numero_pedido: numeroPedido,
           cliente_nome: venda.cliente_nome,
           cliente_telefone: venda.cliente_telefone,
           status: "pendente",
