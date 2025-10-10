@@ -2951,6 +2951,16 @@ export type Database = {
         | "instalacoes"
         | "documentos"
         | "diario_bordo"
+        | "estoque"
+        | "compras"
+        | "cronograma_instalacoes"
+        | "rh_admin"
+        | "representantes"
+        | "licenciados"
+        | "investimentos"
+        | "pedidos"
+        | "canais_aquisicao"
+        | "forca_vendas"
       autorizado_etapa:
         | "apresentacao_proposta"
         | "treinamentos_video"
@@ -3172,6 +3182,16 @@ export const Constants = {
         "instalacoes",
         "documentos",
         "diario_bordo",
+        "estoque",
+        "compras",
+        "cronograma_instalacoes",
+        "rh_admin",
+        "representantes",
+        "licenciados",
+        "investimentos",
+        "pedidos",
+        "canais_aquisicao",
+        "forca_vendas",
       ],
       autorizado_etapa: [
         "apresentacao_proposta",

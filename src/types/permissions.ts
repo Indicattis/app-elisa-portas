@@ -20,7 +20,17 @@ export type AppPermission =
   | 'tv_dashboard'
   | 'instalacoes'
   | 'documentos'
-  | 'diario_bordo';
+  | 'diario_bordo'
+  | 'estoque'
+  | 'compras'
+  | 'cronograma_instalacoes'
+  | 'rh_admin'
+  | 'representantes'
+  | 'licenciados'
+  | 'investimentos'
+  | 'pedidos'
+  | 'canais_aquisicao'
+  | 'forca_vendas';
 
 export interface UserRoleAssignment {
   id: string;
@@ -144,6 +154,56 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'diario_bordo',
     label: 'Diário de Bordo',
     description: 'Registrar e visualizar atas de reuniões'
+  },
+  estoque: {
+    key: 'estoque',
+    label: 'Estoque',
+    description: 'Gerenciar produtos e controle de estoque'
+  },
+  compras: {
+    key: 'compras',
+    label: 'Compras',
+    description: 'Gestão de compras e fornecedores'
+  },
+  cronograma_instalacoes: {
+    key: 'cronograma_instalacoes',
+    label: 'Cronograma de Instalações',
+    description: 'Visualizar e gerenciar cronograma de instalações'
+  },
+  rh_admin: {
+    key: 'rh_admin',
+    label: 'RH Admin',
+    description: 'Administração de recursos humanos'
+  },
+  representantes: {
+    key: 'representantes',
+    label: 'Representantes',
+    description: 'Gerenciar representantes comerciais'
+  },
+  licenciados: {
+    key: 'licenciados',
+    label: 'Licenciados',
+    description: 'Gerenciar rede de licenciados'
+  },
+  investimentos: {
+    key: 'investimentos',
+    label: 'Investimentos',
+    description: 'Acompanhar investimentos da empresa'
+  },
+  pedidos: {
+    key: 'pedidos',
+    label: 'Pedidos',
+    description: 'Gerenciar pedidos de produção'
+  },
+  canais_aquisicao: {
+    key: 'canais_aquisicao',
+    label: 'Canais de Aquisição',
+    description: 'Gerenciar canais de aquisição de clientes'
+  },
+  forca_vendas: {
+    key: 'forca_vendas',
+    label: 'Força de Vendas',
+    description: 'Acompanhar desempenho da força de vendas'
   }
 };
 
