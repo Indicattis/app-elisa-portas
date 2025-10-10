@@ -6,19 +6,19 @@ interface ProductIconsSummaryProps {
 }
 
 export function ProductIconsSummary({ venda }: ProductIconsSummaryProps) {
-  const portas = venda.portas || [];
+  const produtos = venda.produtos_vendas || [];
   
-  const hasPortas = portas.some((p: any) => 
+  const hasPortas = produtos.some((p: any) => 
     ['porta', 'porta_enrolar'].includes(p.tipo_produto)
   );
   
-  const hasAcessoriosOuAdicionais = portas.some((p: any) => 
+  const hasAcessoriosOuAdicionais = produtos.some((p: any) => 
     ['acessorio', 'adicional'].includes(p.tipo_produto)
   );
   
-  const hasManutencao = portas.some((p: any) => p.tipo_produto === 'manutencao');
+  const hasManutencao = produtos.some((p: any) => p.tipo_produto === 'manutencao');
   const hasInstalacao = (venda.valor_instalacao || 0) > 0;
-  const hasPintura = (venda.valor_pintura || 0) > 0 || portas.some((p: any) => p.tipo_produto === 'pintura_epoxi');
+  const hasPintura = (venda.valor_pintura || 0) > 0 || produtos.some((p: any) => p.tipo_produto === 'pintura_epoxi');
   
   return (
     <TooltipProvider>
