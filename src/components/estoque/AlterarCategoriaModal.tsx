@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ProdutoEstoque } from "@/hooks/useEstoque";
+import { useCategorias } from "@/hooks/useCategorias";
 import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -36,6 +37,9 @@ export function AlterarCategoriaModal({
 }: AlterarCategoriaModalProps) {
   const [novaCategoria, setNovaCategoria] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const { categorias } = useCategorias();
+
+  const getCategoriaColor = (cor: string) => `bg-${cor}-500`;
 
   const handleSubmit = async () => {
     if (!produto || !novaCategoria) return;
@@ -66,8 +70,8 @@ export function AlterarCategoriaModal({
             <p className="font-semibold">{produto.nome_produto}</p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-sm text-muted-foreground">Categoria atual:</span>
-              <Badge className={CATEGORIAS.find(c => c.value === produto.categoria)?.color}>
-                {getCategoriaLabel(produto.categoria)}
+              <Badge>
+                {produto.categoria}
               </Badge>
             </div>
           </div>
@@ -79,19 +83,19 @@ export function AlterarCategoriaModal({
               onValueChange={setNovaCategoria}
               className="mt-2"
             >
-              {CATEGORIAS.map((cat) => (
+              {categorias.map((cat) => (
                 <div 
-                  key={cat.value}
+                  key={cat.id}
                   className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-accent"
                 >
-                  <RadioGroupItem value={cat.value} id={cat.value} />
+                  <RadioGroupItem value={cat.nome.toLowerCase()} id={cat.id} />
                   <label 
-                    htmlFor={cat.value} 
+                    htmlFor={cat.id} 
                     className="flex items-center gap-2 cursor-pointer flex-1"
                   >
                     <Tag className="h-4 w-4" />
-                    <Badge className={cat.color}>
-                      {cat.label}
+                    <Badge className={getCategoriaColor(cat.cor)}>
+                      {cat.nome}
                     </Badge>
                   </label>
                 </div>
