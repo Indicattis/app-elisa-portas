@@ -78,7 +78,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
           responsavel_instalacao_id: updatedInstalacao.responsavel_instalacao_id || undefined,
           responsavel_instalacao_nome: updatedInstalacao.responsavel_instalacao_nome || undefined,
-          saldo: updatedInstalacao.saldo || 0,
         });
       }
     } catch (error) {
@@ -126,7 +125,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
           responsavel_instalacao_id: responsavelId,
           responsavel_instalacao_nome: responsavelNome,
-          saldo: updatedInstalacao.saldo || 0,
         });
       }
     } catch (error) {
@@ -225,15 +223,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
               {instalacao.tamanho && (
                 <p className="text-sm">
                   <span className="font-medium">Tamanho:</span> {instalacao.tamanho}
-                </p>
-              )}
-              {instalacao.saldo !== null && instalacao.saldo !== undefined && instalacao.saldo > 0 && (
-                <p className="text-sm">
-                  <span className="font-medium">Saldo:</span>{' '}
-                  {new Intl.NumberFormat('pt-BR', { 
-                    style: 'currency', 
-                    currency: 'BRL' 
-                  }).format(instalacao.saldo)}
                 </p>
               )}
               {instalacao.data_instalacao && (
@@ -382,7 +371,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
                 responsavel_instalacao_id: editingInstalacao.responsavel_instalacao_id || undefined,
                 responsavel_instalacao_nome: editingInstalacao.responsavel_instalacao_nome || undefined,
-                saldo: editingInstalacao.saldo || 0,
               }}
               isEditing={true}
             />

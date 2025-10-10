@@ -49,6 +49,7 @@ export default function VendaNova() {
     numero_parcelas: "1",
     valor_entrada: "",
     nota_fiscal: true,
+    pagamento_na_entrega: false,
   });
 
   useEffect(() => {
@@ -107,6 +108,7 @@ export default function VendaNova() {
         numero_parcelas: parseInt(formData.numero_parcelas) || 1,
         valor_entrada: parseFloat(formData.valor_entrada) || 0,
         nota_fiscal: formData.nota_fiscal,
+        pagamento_na_entrega: formData.pagamento_na_entrega,
       };
 
       console.log('Criando venda com dados:', vendaData);
@@ -426,6 +428,22 @@ export default function VendaNova() {
                 />
                 <Label htmlFor="nota_fiscal" className="cursor-pointer font-normal">
                   Esta venda possui nota fiscal
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/50">
+                <Checkbox 
+                  id="pagamento_na_entrega"
+                  checked={formData.pagamento_na_entrega}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, pagamento_na_entrega: checked as boolean })
+                  }
+                />
+                <Label htmlFor="pagamento_na_entrega" className="cursor-pointer">
+                  <span className="font-medium">Pagamento na Entrega</span>
+                  <p className="text-sm text-muted-foreground font-normal mt-1">
+                    O valor a receber será cobrado no momento da instalação/entrega
+                  </p>
                 </Label>
               </div>
             </div>

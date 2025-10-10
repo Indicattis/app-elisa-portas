@@ -213,7 +213,6 @@ export const InstalacoesTabelaView = ({
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
           responsavel_instalacao_id: updatedInstalacao.responsavel_instalacao_id || undefined,
           responsavel_instalacao_nome: updatedInstalacao.responsavel_instalacao_nome || undefined,
-          saldo: updatedInstalacao.saldo || 0,
         });
       }
     } catch (error) {
@@ -261,7 +260,6 @@ export const InstalacoesTabelaView = ({
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
           responsavel_instalacao_id: responsavelId,
           responsavel_instalacao_nome: responsavelNome,
-          saldo: updatedInstalacao.saldo || 0,
         });
       }
     } catch (error) {
@@ -485,7 +483,6 @@ export const InstalacoesTabelaView = ({
                         </Button>
                       </TableHead>
                       <TableHead>Responsável</TableHead>
-                      <TableHead>Saldo</TableHead>
                       <TableHead>Data Produção</TableHead>
                       <TableHead>Geocodificação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -615,14 +612,6 @@ export const InstalacoesTabelaView = ({
                               Inserir
                             </Button>
                           )}
-                        </TableCell>
-                        <TableCell className="text-xs py-2">
-                          {instalacao.saldo 
-                            ? new Intl.NumberFormat('pt-BR', { 
-                                style: 'currency', 
-                                currency: 'BRL' 
-                              }).format(instalacao.saldo)
-                            : '-'}
                         </TableCell>
                         <TableCell className="text-xs py-2">
                           {instalacao.data_producao ? (
@@ -787,7 +776,6 @@ export const InstalacoesTabelaView = ({
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
                 responsavel_instalacao_id: editingInstalacao.responsavel_instalacao_id || undefined,
                 responsavel_instalacao_nome: editingInstalacao.responsavel_instalacao_nome || undefined,
-                saldo: editingInstalacao.saldo || 0,
               }}
               isEditing={true}
             />

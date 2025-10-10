@@ -1019,7 +1019,6 @@ export type Database = {
           nome_cliente: string
           responsavel_instalacao_id: string | null
           responsavel_instalacao_nome: string | null
-          saldo: number | null
           status: string
           tamanho: string | null
           telefone_cliente: string | null
@@ -1027,7 +1026,6 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
           updated_at: string
-          valor_a_receber: number | null
           venda_id: string | null
         }
         Insert: {
@@ -1049,7 +1047,6 @@ export type Database = {
           nome_cliente: string
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
-          saldo?: number | null
           status?: string
           tamanho?: string | null
           telefone_cliente?: string | null
@@ -1057,7 +1054,6 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
           updated_at?: string
-          valor_a_receber?: number | null
           venda_id?: string | null
         }
         Update: {
@@ -1079,7 +1075,6 @@ export type Database = {
           nome_cliente?: string
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
-          saldo?: number | null
           status?: string
           tamanho?: string | null
           telefone_cliente?: string | null
@@ -1087,7 +1082,6 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
           updated_at?: string
-          valor_a_receber?: number | null
           venda_id?: string | null
         }
         Relationships: [
@@ -2524,6 +2518,7 @@ export type Database = {
           nota_fiscal: boolean
           numero_parcelas: number | null
           observacoes_venda: string | null
+          pagamento_na_entrega: boolean | null
           publico_alvo: string | null
           tipo_entrega: string | null
           updated_at: string
@@ -2554,6 +2549,7 @@ export type Database = {
           nota_fiscal?: boolean
           numero_parcelas?: number | null
           observacoes_venda?: string | null
+          pagamento_na_entrega?: boolean | null
           publico_alvo?: string | null
           tipo_entrega?: string | null
           updated_at?: string
@@ -2584,6 +2580,7 @@ export type Database = {
           nota_fiscal?: boolean
           numero_parcelas?: number | null
           observacoes_venda?: string | null
+          pagamento_na_entrega?: boolean | null
           publico_alvo?: string | null
           tipo_entrega?: string | null
           updated_at?: string

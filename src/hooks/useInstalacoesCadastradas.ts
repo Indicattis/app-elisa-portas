@@ -43,8 +43,6 @@ export interface InstalacaoCadastrada {
   tipo_instalacao: 'elisa' | 'autorizados' | null;
   responsavel_instalacao_id: string | null;
   responsavel_instalacao_nome: string | null;
-  saldo: number | null;
-  valor_a_receber: number | null;
   data_producao: string | null;
   justificativa_correcao: string | null;
   alterado_para_correcao_em: string | null;
@@ -55,6 +53,12 @@ export interface InstalacaoCadastrada {
   venda_id: string | null;
   produtos?: ProdutoInstalacao[];
   parcelas?: ParcelaInstalacao[];
+  venda?: {
+    valor_a_receber: number;
+    pagamento_na_entrega: boolean;
+    forma_pagamento: string;
+    observacoes_venda: string | null;
+  };
   criador?: {
     nome: string;
     foto_perfil_url?: string;
@@ -73,7 +77,6 @@ export interface CreateInstalacaoData {
   tipo_instalacao?: 'elisa' | 'autorizados';
   responsavel_instalacao_id?: string;
   responsavel_instalacao_nome?: string;
-  saldo?: number;
   data_producao?: string;
 }
 
@@ -91,12 +94,13 @@ export const useInstalacoesCadastradas = () => {
 
       if (error) throw error;
       
-      // Buscar dados dos criadores e produtos manualmente
+      // Buscar dados dos criadores, produtos e venda manualmente
       const instalacoesComCriadores: InstalacaoCadastrada[] = await Promise.all(
         (data || []).map(async (instalacao) => {
           let criador = undefined;
           let produtos: ProdutoInstalacao[] = [];
           let parcelas: ParcelaInstalacao[] = [];
+          let venda = undefined;
 
           // Buscar criador
           if (instalacao.created_by) {
@@ -109,8 +113,18 @@ export const useInstalacoesCadastradas = () => {
             criador = userData || undefined;
           }
 
-          // Buscar produtos da venda associada
+          // Buscar dados da venda associada
           if (instalacao.venda_id) {
+            // Buscar informações da venda
+            const { data: vendaData } = await supabase
+              .from('vendas')
+              .select('valor_a_receber, pagamento_na_entrega, forma_pagamento, observacoes_venda')
+              .eq('id', instalacao.venda_id)
+              .maybeSingle();
+            
+            venda = vendaData || undefined;
+
+            // Buscar produtos da venda
             const { data: produtosData } = await supabase
               .from('produtos_vendas')
               .select(`
@@ -163,6 +177,7 @@ export const useInstalacoesCadastradas = () => {
             status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
             produtos,
             parcelas,
+            venda,
             criador
           };
         })

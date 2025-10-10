@@ -183,33 +183,45 @@ export function DetalhesInstalacaoDialog({
           )}
 
           {/* Informações Financeiras */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Informações Financeiras</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              {instalacao.valor_a_receber !== null && instalacao.valor_a_receber > 0 && (
-                <div className="p-4 bg-blue-500/5 rounded-lg border border-blue-500/20">
-                  <p className="text-xs text-muted-foreground mb-1">Valor a Receber</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(instalacao.valor_a_receber)}
-                  </p>
+          {instalacao.venda && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Informações Financeiras</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {instalacao.venda.pagamento_na_entrega && (
+                  <div className="col-span-2">
+                    <Badge className="bg-orange-500 text-white">
+                      Pagamento na Entrega
+                    </Badge>
+                  </div>
+                )}
+                
+                {instalacao.venda.valor_a_receber > 0 && (
+                  <div className="p-4 bg-blue-500/5 rounded-lg border border-blue-500/20">
+                    <p className="text-xs text-muted-foreground mb-1">Valor a Receber</p>
+                    <p className="text-xl font-bold text-blue-600">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(instalacao.venda.valor_a_receber)}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs text-muted-foreground">Forma de Pagamento</p>
+                  <p className="font-medium">{instalacao.venda.forma_pagamento || 'Não informado'}</p>
                 </div>
-              )}
-              {instalacao.saldo !== null && instalacao.saldo > 0 && (
-                <div className="p-4 bg-orange-500/5 rounded-lg border border-orange-500/20">
-                  <p className="text-xs text-muted-foreground mb-1">Saldo Pendente</p>
-                  <p className="text-xl font-bold text-orange-600">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(instalacao.saldo)}
-                  </p>
-                </div>
-              )}
-            </div>
+
+                {instalacao.venda.observacoes_venda && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground">Observações da Venda</p>
+                    <p className="text-sm bg-muted p-2 rounded-md mt-1">
+                      {instalacao.venda.observacoes_venda}
+                    </p>
+                  </div>
+                )}
+              </div>
 
             {/* Parcelas de Pagamento */}
             {instalacao.parcelas && instalacao.parcelas.length > 0 && (
@@ -265,7 +277,8 @@ export function DetalhesInstalacaoDialog({
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Informações de Correção */}
           {instalacao.categoria === 'correcao' && instalacao.justificativa_correcao && (
