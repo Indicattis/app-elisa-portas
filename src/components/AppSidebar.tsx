@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,10 +63,15 @@ const iconMap: Record<string, any> = {
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { state } = useSidebar();
   const { data: tabs = [], isLoading } = useTabsAccess('sidebar');
-  const groupedTabs = useGroupedTabs(tabs);
+  
+  // Filtrar o diário de bordo dos tabs normais
+  const filteredTabs = tabs.filter(tab => tab.key !== 'diario_bordo');
+  const diarioBordoTab = tabs.find(tab => tab.key === 'diario_bordo');
+  const groupedTabs = useGroupedTabs(filteredTabs);
   const { theme } = useTheme();
   
   // Persistir estado dos grupos no localStorage
@@ -200,7 +205,23 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter />
+      <SidebarFooter className="p-4">
+        {diarioBordoTab && diarioBordoTab.can_access && (
+          <button
+            onClick={() => navigate('/dashboard/diario-bordo')}
+            className={cn(
+              "w-full flex items-center gap-3 px-4 py-3 rounded-lg",
+              "bg-primary text-primary-foreground font-medium",
+              "hover:bg-primary/90 transition-all duration-200",
+              "shadow-md hover:shadow-lg",
+              isActive('/dashboard/diario-bordo') && "ring-2 ring-primary-foreground/20"
+            )}
+          >
+            <BookOpen className="h-5 w-5" />
+            <span className="text-sm">Diário de Bordo</span>
+          </button>
+        )}
+      </SidebarFooter>
     </Sidebar>
   );
 }
