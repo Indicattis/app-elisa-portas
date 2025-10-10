@@ -27,22 +27,22 @@ export function useCanEditVenda(params?: UseCanEditVendaParams | string) {
         // Buscar a venda com seus produtos
         const { data: venda, error } = await supabase
           .from('vendas')
-          .select('*, portas_vendas(lucro_item, quantidade), frete_aprovado')
+          .select('*, produtos_vendas(lucro_item, quantidade), frete_aprovado')
           .eq('id', vendaId)
           .single();
 
         if (error) throw error;
 
-        const portas = venda.portas_vendas || [];
+        const produtos = venda.produtos_vendas || [];
         
-        if (portas.length === 0) {
+        if (produtos.length === 0) {
           setIsFaturada(false);
           setLoading(false);
           return;
         }
 
         // Verifica se todos os produtos têm lucro definido
-        const todosProdutosFaturados = portas.every((p: any) => (p.lucro_item || 0) > 0);
+        const todosProdutosFaturados = Array.isArray(produtos) && produtos.every((p: any) => (p.lucro_item || 0) > 0);
         
         // Verifica se o frete foi aprovado
         const freteAprovado = venda.frete_aprovado === true;

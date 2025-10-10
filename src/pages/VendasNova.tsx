@@ -15,7 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { ArrowLeft, Plus, CalendarIcon } from 'lucide-react';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
-import { PortasVendaTable } from '@/components/vendas/PortasVendaTable';
+import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -572,10 +572,10 @@ export default function VendasNova() {
                   onConfirm={handleAddAcessorios}
                 />
                 
-                <PortasVendaTable
-                  portas={portas}
-                  onRemovePorta={handleRemovePorta}
-                  onEditPorta={handleEditPorta}
+                <ProdutosVendaTable
+                  produtos={portas}
+                  onRemoveProduto={handleRemovePorta}
+                  onEditProduto={handleEditPorta}
                   onUpdateQuantidade={handleUpdateQuantidade}
                 />
           </CardContent>
@@ -584,7 +584,7 @@ export default function VendasNova() {
         {/* Resumo */}
         {portas.length > 0 && (
           <>
-            <VendaResumo portas={portas} valorFrete={formData.valor_frete} />
+            <VendaResumo produtos={portas} valorFrete={formData.valor_frete} />
             {formData.valor_entrada > 0 && (
               <Card>
                 <CardContent className="pt-6">

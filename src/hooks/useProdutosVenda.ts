@@ -30,9 +30,10 @@ export const useProdutosVenda = (vendaId?: string) => {
   // Adicionar produto
   const addProdutoMutation = useMutation({
     mutationFn: async (produto: ProdutoVenda & { venda_id: string }) => {
-      // Limpar campos UUID vazios
+      // Limpar campos UUID vazios e garantir valores default
       const produtoLimpo = {
         ...produto,
+        tamanho: produto.tamanho || '',
         cor_id: produto.cor_id || null,
         acessorio_id: produto.acessorio_id || null,
         adicional_id: produto.adicional_id || null,

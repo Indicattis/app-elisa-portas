@@ -82,7 +82,7 @@ export default function Vendas() {
         cidade: venda.cidade,
         estado: venda.estado,
         previsao_entrega: venda.data_prevista_entrega || '',
-        quantidade_portas: venda.portas?.length || 0,
+        quantidade_produtos: venda.produtos?.length || 0,
         valor_venda: venda.valor_venda || 0,
         atendente_nome: venda.atendente?.nome || 'Não informado'
       })) || [];
@@ -158,7 +158,7 @@ export default function Vendas() {
 
   // Estatísticas baseadas nos filtros (excluindo frete)
   const stats = useMemo(() => {
-    if (!filteredVendas) return { totalVendas: 0, totalValor: 0, totalPortas: 0 };
+    if (!filteredVendas) return { totalVendas: 0, totalValor: 0, totalProdutos: 0 };
     
     return {
       totalVendas: filteredVendas.length,
@@ -167,7 +167,7 @@ export default function Vendas() {
         const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0);
         return sum + valorSemFrete;
       }, 0),
-      totalPortas: filteredVendas.reduce((sum, v) => sum + (v.portas?.length || 0), 0),
+      totalProdutos: filteredVendas.reduce((sum, v) => sum + (v.produtos?.length || 0), 0),
     };
   }, [filteredVendas]);
 
@@ -225,7 +225,7 @@ export default function Vendas() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPortas}</div>
+            <div className="text-2xl font-bold">{stats.totalProdutos}</div>
           </CardContent>
         </Card>
       </div>

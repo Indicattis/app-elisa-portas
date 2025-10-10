@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, DollarSign, TrendingUp, Package, Truck, CheckCircle2, AlertCircle } from "lucide-react";
-import { usePortasVenda } from "@/hooks/usePortasVenda";
+import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { FaturamentoItemCard } from "@/components/vendas/FaturamentoItemCard";
 
 interface Venda {
@@ -41,7 +41,7 @@ export default function FaturamentoEdit() {
   const [freteAprovado, setFreteAprovado] = useState(false);
   const [isSavingFrete, setIsSavingFrete] = useState(false);
   
-  const { portas, isLoading: loadingPortas, updateLucroItem, isUpdatingLucros } = usePortasVenda(id);
+  const { produtos, isLoading: loadingProdutos, updateLucroItem, isUpdatingLucros } = useProdutosVenda(id);
   const [canalAquisicao, setCanalAquisicao] = useState<string>('');
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function FaturamentoEdit() {
     }
   };
 
-  const handleSaveItemLucro = async (itemId: string, lucro: number) => {
+  const handleSaveItemLucro = async (itemId: string, custoProducao: number, custoPintura?: number) => {
     if (!freteAprovado) {
       toast({
         variant: "destructive",
@@ -118,10 +118,10 @@ export default function FaturamentoEdit() {
       });
       return;
     }
-    await updateLucroItem({ portaId: itemId, lucro_item: lucro });
+    await updateLucroItem({ produtoId: itemId, custoProducao, custoPintura });
   };
 
-  if (loading || loadingPortas) {
+  if (loading || loadingProdutos) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -142,14 +142,14 @@ export default function FaturamentoEdit() {
   }
 
   // Calcular totais agregados
-  const totalLucro = portas?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
-  const totalValor = portas?.reduce((acc, p) => acc + p.valor_total, 0) || 0;
+  const totalLucro = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
+  const totalValor = produtos?.reduce((acc, p) => acc + p.valor_total, 0) || 0;
   const totalCusto = totalValor - totalLucro;
   const margemMedia = totalValor > 0 ? (totalLucro / totalValor) * 100 : 0;
 
   // Contar itens faturados
-  const itensFaturados = portas?.filter(p => (p.lucro_item || 0) > 0).length || 0;
-  const totalItens = portas?.length || 0;
+  const itensFaturados = produtos?.filter(p => (p.lucro_item || 0) > 0).length || 0;
+  const totalItens = produtos?.length || 0;
   const todosFaturados = itensFaturados === totalItens && totalItens > 0;
   const vendaCompletamenteFaturada = todosFaturados && freteAprovado;
 
@@ -389,18 +389,18 @@ export default function FaturamentoEdit() {
           )}
         </div>
 
-        {portas && portas.length > 0 ? (
+        {produtos && produtos.length > 0 ? (
           <div className="space-y-3">
-            {portas.map((porta) => (
+            {produtos.map((produto) => (
               <FaturamentoItemCard
-                key={porta.id}
+                key={produto.id}
                 item={{
-                  id: porta.id,
-                  tipo_produto: porta.tipo_produto,
-                  descricao: porta.descricao || 'Produto',
-                  quantidade: porta.quantidade,
-                  valor_total: porta.valor_total,
-                  lucro_item: porta.lucro_item,
+                  id: produto.id,
+                  tipo_produto: produto.tipo_produto,
+                  descricao: produto.descricao || 'Produto',
+                  quantidade: produto.quantidade,
+                  valor_total: produto.valor_total,
+                  lucro_item: produto.lucro_item,
                 }}
                 onSave={handleSaveItemLucro}
                 isSaving={isUpdatingLucros}

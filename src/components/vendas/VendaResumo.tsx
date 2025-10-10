@@ -7,7 +7,7 @@ interface VendaResumoProps {
 }
 
 export function VendaResumo({ produtos, valorFrete = 0 }: VendaResumoProps) {
-  const totais = portas.reduce((acc, produto) => {
+  const totais = produtos.reduce((acc, produto) => {
     const valorBase = (
       produto.valor_produto + 
       produto.valor_pintura + 

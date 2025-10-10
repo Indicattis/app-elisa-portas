@@ -15,9 +15,9 @@ import { CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
-import { usePortasVenda } from "@/hooks/usePortasVenda";
+import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
-import { PortasVendaTable } from "@/components/vendas/PortasVendaTable";
+import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
@@ -36,7 +36,7 @@ export default function VendaEdit() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
   const [showProdutoForm, setShowProdutoForm] = useState(false);
-  const { portas, isLoading: isLoadingPortas, addPorta, deletePorta } = usePortasVenda(id);
+  const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
   const [formData, setFormData] = useState({
     data_venda: "",
@@ -515,20 +515,21 @@ export default function VendaEdit() {
             open={showProdutoForm}
             onOpenChange={setShowProdutoForm}
             onAddProduto={async (produto: ProdutoVenda) => {
-              await addPorta(produto);
+              if (!id) return;
+              await addProduto({ ...produto, venda_id: id });
               setShowProdutoForm(false);
             }}
           />
           
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Produtos Adicionados</h3>
-            {isLoadingPortas ? (
+            {isLoadingProdutos ? (
               <div className="text-center py-8 text-muted-foreground">
                 Carregando produtos...
               </div>
             ) : (
-              <PortasVendaTable 
-                portas={(portas || []).map(p => ({
+              <ProdutosVendaTable 
+                produtos={(produtos || []).map(p => ({
                   tipo_produto: p.tipo_produto as 'porta' | 'acessorio' | 'adicional',
                   tamanho: p.tamanho || '',
                   cor_id: p.cor_id || '',
@@ -544,10 +545,10 @@ export default function VendaEdit() {
                   quantidade: p.quantidade,
                   descricao: p.descricao || ''
                 }))} 
-                onRemovePorta={async (index: number) => {
-                  const produto = portas?.[index];
+                onRemoveProduto={async (index: number) => {
+                  const produto = produtos?.[index];
                   if (produto?.id) {
-                    await deletePorta(produto.id);
+                    await deleteProduto(produto.id);
                   }
                 }}
               />

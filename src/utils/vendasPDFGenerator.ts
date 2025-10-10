@@ -10,7 +10,7 @@ interface VendaRelatorio {
   cidade: string;
   estado: string;
   previsao_entrega: string;
-  quantidade_portas: number;
+  quantidade_produtos: number;
   valor_venda: number;
   atendente_nome: string;
 }
@@ -26,7 +26,7 @@ interface VendasRelatorioPDFData {
   stats: {
     totalVendas: number;
     totalValor: number;
-    totalPortas: number;
+    totalProdutos: number;
   };
   filtros: FiltrosAtivos;
 }
@@ -112,12 +112,12 @@ export const generateVendasRelatorioPDF = (data: VendasRelatorioPDFData) => {
     yPos + 12
   );
   
-  // Card 3: Total de Portas
+  // Card 3: Total de Produtos
   doc.setFontSize(10);
   doc.rect(cardX3, yPos, cardWidth, 15, 'F');
-  doc.text('Total de Portas', cardX3 + 2, yPos + 6);
+  doc.text('Total de Produtos', cardX3 + 2, yPos + 6);
   doc.setFontSize(14);
-  doc.text(data.stats.totalPortas.toString(), cardX3 + 2, yPos + 12);
+  doc.text(data.stats.totalProdutos.toString(), cardX3 + 2, yPos + 12);
   
   yPos += 20;
   
@@ -128,14 +128,14 @@ export const generateVendasRelatorioPDF = (data: VendasRelatorioPDFData) => {
     venda.cliente_telefone || '-',
     `${venda.cidade}/${venda.estado}`,
     venda.previsao_entrega ? format(new Date(venda.previsao_entrega), 'dd/MM/yyyy', { locale: ptBR }) : '-',
-    venda.quantidade_portas.toString(),
+    venda.quantidade_produtos.toString(),
     venda.valor_venda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
     venda.atendente_nome
   ]);
   
   autoTable(doc, {
     startY: yPos,
-    head: [['Data', 'Cliente', 'Telefone', 'Cidade/UF', 'Prev. Entrega', 'Portas', 'Valor', 'Atendente']],
+    head: [['Data', 'Cliente', 'Telefone', 'Cidade/UF', 'Prev. Entrega', 'Produtos', 'Valor', 'Atendente']],
     body: tableData,
     theme: 'striped',
     headStyles: {
@@ -157,7 +157,7 @@ export const generateVendasRelatorioPDF = (data: VendasRelatorioPDFData) => {
       2: { cellWidth: 25 }, // Telefone
       3: { cellWidth: 25 }, // Cidade/UF
       4: { cellWidth: 20 }, // Prev. Entrega
-      5: { cellWidth: 12, halign: 'center' }, // Portas
+      5: { cellWidth: 12, halign: 'center' }, // Produtos
       6: { cellWidth: 25, halign: 'right' }, // Valor
       7: { cellWidth: 30 } // Atendente
     },

@@ -55,7 +55,7 @@ export function useVendas() {
         .from('vendas')
         .select(`
           *,
-          portas:portas_vendas(
+          produtos:produtos_vendas(
             *,
             cor:catalogo_cores(nome, codigo_hex)
           ),
@@ -184,11 +184,11 @@ export function useVendas() {
         descricao: produto.descricao || null
       }));
       
-      const { error: portasError } = await supabase
-        .from('portas_vendas')
+      const { error: produtosError } = await supabase
+        .from('produtos_vendas')
         .insert(produtosComVendaId);
       
-      if (portasError) throw portasError;
+      if (produtosError) throw produtosError;
 
       // 6. Atualizar instalação criada automaticamente pelo trigger
       // A instalação já foi criada com venda_id pelo trigger
