@@ -50,7 +50,7 @@ export default function CronogramaInstalacoes() {
       
       baixarCronogramaPDF({
         instalacoes,
-        equipes,
+        equipes: equipesFiltradas,
         weekStart: weekStartDate
       });
       
