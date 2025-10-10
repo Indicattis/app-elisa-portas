@@ -161,6 +161,71 @@ export type Database = {
         }
         Relationships: []
       }
+      atas_participantes: {
+        Row: {
+          ata_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          ata_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          ata_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atas_participantes_ata_id_fkey"
+            columns: ["ata_id"]
+            isOneToOne: false
+            referencedRelation: "atas_reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atas_reuniao: {
+        Row: {
+          assunto: string
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          data_fim: string
+          data_inicio: string
+          duracao_segundos: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          assunto: string
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          data_fim: string
+          data_inicio: string
+          duracao_segundos: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          assunto?: string
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string
+          data_inicio?: string
+          duracao_segundos?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       autorizados: {
         Row: {
           ativo: boolean
@@ -2700,6 +2765,7 @@ export type Database = {
         | "tv_dashboard"
         | "instalacoes"
         | "documentos"
+        | "diario_bordo"
       autorizado_etapa:
         | "apresentacao_proposta"
         | "treinamentos_video"
@@ -2920,6 +2986,7 @@ export const Constants = {
         "tv_dashboard",
         "instalacoes",
         "documentos",
+        "diario_bordo",
       ],
       autorizado_etapa: [
         "apresentacao_proposta",

@@ -65,6 +65,7 @@ import Representantes from "./pages/Representantes";
 import Licenciados from "./pages/Licenciados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
 import ForcaVendas from "./pages/ForcaVendas";
+import DiarioBordo from "./pages/DiarioBordo";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -673,6 +674,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="instalacoes">
                       <DashboardLayout>
                         <CronogramaInstalacoes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/diario-bordo"
+                  element={
+                    <ProtectedRoute requirePermission="diario_bordo">
+                      <DashboardLayout>
+                        <DiarioBordo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

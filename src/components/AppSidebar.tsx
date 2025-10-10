@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown } from "lucide-react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
 import { useGroupedTabs } from "@/hooks/useGroupedTabs";
@@ -58,6 +58,7 @@ const iconMap: Record<string, any> = {
   Package,
   UserCog,
   Award,
+  BookOpen,
 };
 
 export function AppSidebar() {

@@ -19,7 +19,8 @@ export type AppPermission =
   | 'performance'
   | 'tv_dashboard'
   | 'instalacoes'
-  | 'documentos';
+  | 'documentos'
+  | 'diario_bordo';
 
 export interface UserRoleAssignment {
   id: string;
@@ -138,6 +139,11 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'documentos',
     label: 'Documentos',
     description: 'Gerenciar e visualizar documentos públicos'
+  },
+  diario_bordo: {
+    key: 'diario_bordo',
+    label: 'Diário de Bordo',
+    description: 'Registrar e visualizar atas de reuniões'
   }
 };
 
