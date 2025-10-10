@@ -71,9 +71,9 @@ export default function MarketingAnalise() {
     from: startOfYear(new Date()),
     to: endOfYear(new Date())
   });
-  const [selectedVendedor, setSelectedVendedor] = useState<string>("");
-  const [selectedRegiao, setSelectedRegiao] = useState<string>("");
-  const [selectedCanalAquisicao, setSelectedCanalAquisicao] = useState<string>("");
+  const [selectedVendedor, setSelectedVendedor] = useState<string>("all");
+  const [selectedRegiao, setSelectedRegiao] = useState<string>("all");
+  const [selectedCanalAquisicao, setSelectedCanalAquisicao] = useState<string>("all");
   const [investimentos, setInvestimentos] = useState<MarketingInvestment[]>([]);
   const [metrics, setMetrics] = useState<MarketingMetrics>({
     totalInvestimento: 0,
@@ -96,7 +96,7 @@ export default function MarketingAnalise() {
   const { canais } = useCanaisAquisicao();
   const [newInvestment, setNewInvestment] = useState({
     mes: format(new Date(), "yyyy-MM"),
-    regiao: "",
+    regiao: "geral",
     investimento_google_ads: 0,
     investimento_meta_ads: 0,
     investimento_linkedin_ads: 0,
@@ -213,7 +213,7 @@ export default function MarketingAnalise() {
       .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
       .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
 
-    if (selectedRegiao) {
+    if (selectedRegiao && selectedRegiao !== "all") {
       investimentosQuery = investimentosQuery.eq("regiao", selectedRegiao);
     }
 
@@ -254,7 +254,7 @@ export default function MarketingAnalise() {
       .gte("data_venda", startDate)
       .lte("data_venda", endDate);
 
-    if (selectedCanalAquisicao) {
+    if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
       vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
     } else {
       const { data: canaisGoogleMeta } = await supabase
@@ -269,11 +269,11 @@ export default function MarketingAnalise() {
       }
     }
 
-    if (selectedVendedor) {
+    if (selectedVendedor && selectedVendedor !== "all") {
       vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
     }
 
-    if (selectedRegiao) {
+    if (selectedRegiao && selectedRegiao !== "all") {
       vendasQuery = vendasQuery.eq("estado", selectedRegiao);
     }
 
@@ -285,7 +285,7 @@ export default function MarketingAnalise() {
       .gte("created_at", startDate)
       .lte("created_at", endDate);
     
-    if (selectedCanalAquisicao) {
+    if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
       leadsQuery = leadsQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
     } else {
       const { data: canaisGoogleMeta } = await supabase
@@ -300,11 +300,11 @@ export default function MarketingAnalise() {
       }
     }
 
-    if (selectedVendedor) {
+    if (selectedVendedor && selectedVendedor !== "all") {
       leadsQuery = leadsQuery.eq("atendente_id", selectedVendedor);
     }
 
-    if (selectedRegiao) {
+    if (selectedRegiao && selectedRegiao !== "all") {
       leadsQuery = leadsQuery.eq("endereco_estado", selectedRegiao);
     }
 
@@ -347,15 +347,15 @@ export default function MarketingAnalise() {
         .gte("data_venda", startDate)
         .lte("data_venda", endDate);
 
-      if (selectedVendedor) {
+      if (selectedVendedor && selectedVendedor !== "all") {
         vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
       }
 
-      if (selectedRegiao) {
+      if (selectedRegiao && selectedRegiao !== "all") {
         vendasQuery = vendasQuery.eq("estado", selectedRegiao);
       }
 
-      if (selectedCanalAquisicao) {
+      if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
         vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
       }
 
@@ -418,15 +418,15 @@ export default function MarketingAnalise() {
         .lte("data_venda", endDate)
         .not("estado", "is", null);
 
-      if (selectedCanalAquisicao) {
+      if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
         vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
       }
 
-      if (selectedVendedor) {
+      if (selectedVendedor && selectedVendedor !== "all") {
         vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
       }
 
-      if (selectedRegiao) {
+      if (selectedRegiao && selectedRegiao !== "all") {
         vendasQuery = vendasQuery.eq("estado", selectedRegiao);
       }
 
@@ -438,7 +438,7 @@ export default function MarketingAnalise() {
         .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
         .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
 
-      if (selectedRegiao) {
+      if (selectedRegiao && selectedRegiao !== "all") {
         investimentosQuery = investimentosQuery.eq("regiao", selectedRegiao);
       }
 
@@ -505,9 +505,15 @@ export default function MarketingAnalise() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      const investmentData = {
+        ...newInvestment,
+        regiao: newInvestment.regiao === "geral" ? null : newInvestment.regiao,
+        created_by: user.id
+      };
+
       const { error } = await supabase
         .from("marketing_investimentos")
-        .insert([{ ...newInvestment, created_by: user.id }]);
+        .insert([investmentData]);
 
       if (error) throw error;
 
@@ -521,7 +527,7 @@ export default function MarketingAnalise() {
       fetchMetrics();
       setNewInvestment({
         mes: format(new Date(), "yyyy-MM"),
-        regiao: "",
+        regiao: "geral",
         investimento_google_ads: 0,
         investimento_meta_ads: 0,
         investimento_linkedin_ads: 0,
@@ -550,7 +556,7 @@ export default function MarketingAnalise() {
           investimento_linkedin_ads: editingInvestimento.investimento_linkedin_ads,
           outros_investimentos: editingInvestimento.outros_investimentos,
           observacoes: editingInvestimento.observacoes,
-          regiao: editingInvestimento.regiao
+          regiao: editingInvestimento.regiao === "geral" ? null : editingInvestimento.regiao
         })
         .eq("id", editingInvestimento.id);
 
@@ -576,7 +582,10 @@ export default function MarketingAnalise() {
   };
 
   const handleEdit = (investimento: MarketingInvestment) => {
-    setEditingInvestimento(investimento);
+    setEditingInvestimento({
+      ...investimento,
+      regiao: investimento.regiao || "geral"
+    });
     setDialogOpen(true);
   };
 
@@ -639,7 +648,7 @@ export default function MarketingAnalise() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {vendedores.map((vendedor) => (
                     <SelectItem key={vendedor.id} value={vendedor.id}>
                       {vendedor.nome}
@@ -656,7 +665,7 @@ export default function MarketingAnalise() {
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   {regioes.map((regiao) => (
                     <SelectItem key={regiao} value={regiao}>
                       {regiao}
@@ -673,7 +682,7 @@ export default function MarketingAnalise() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {canais.map((canal) => (
                     <SelectItem key={canal.id} value={canal.id}>
                       {canal.nome}
@@ -978,7 +987,7 @@ export default function MarketingAnalise() {
                 <div className="space-y-2">
                   <Label>Região (opcional)</Label>
                   <Select 
-                    value={editingInvestimento?.regiao || newInvestment.regiao}
+                    value={editingInvestimento?.regiao || newInvestment.regiao || "geral"}
                     onValueChange={(value) => editingInvestimento
                       ? setEditingInvestimento({...editingInvestimento, regiao: value})
                       : setNewInvestment({...newInvestment, regiao: value})
@@ -988,7 +997,7 @@ export default function MarketingAnalise() {
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Geral</SelectItem>
+                      <SelectItem value="geral">Geral</SelectItem>
                       {regioes.map((regiao) => (
                         <SelectItem key={regiao} value={regiao}>
                           {regiao}
