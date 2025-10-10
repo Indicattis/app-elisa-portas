@@ -156,36 +156,37 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
     startY: yPosition,
     styles: {
       fontSize: 7,
-      cellPadding: 3,
+      cellPadding: 2,
       valign: 'top',
       lineColor: [200, 200, 200],
       lineWidth: 0.5,
+      overflow: 'linebreak',
     },
     headStyles: {
       fillColor: primaryColor,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 9,
+      fontSize: 8,
       halign: 'center',
     },
     columnStyles: {
       0: { 
-        cellWidth: 30,
+        cellWidth: 28,
         fontStyle: 'bold',
         fillColor: [245, 245, 245],
         halign: 'left'
       },
-      1: { cellWidth: 35 },
-      2: { cellWidth: 35 },
-      3: { cellWidth: 35 },
-      4: { cellWidth: 35 },
-      5: { cellWidth: 35 },
-      6: { cellWidth: 35 },
-      7: { cellWidth: 35 },
+      1: { cellWidth: 33 },
+      2: { cellWidth: 33 },
+      3: { cellWidth: 33 },
+      4: { cellWidth: 33 },
+      5: { cellWidth: 33 },
+      6: { cellWidth: 33 },
+      7: { cellWidth: 33 },
     },
     margin: { left: margin, right: margin },
     theme: 'grid',
-    tableWidth: 'auto'
+    tableWidth: 'wrap'
   });
 
   // Adicionar legenda das equipes com cores
