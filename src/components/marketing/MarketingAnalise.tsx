@@ -149,7 +149,7 @@ export default function MarketingAnalise() {
       
       // Filtrar manualmente para evitar erro de tipos profundos
       return (data || []).filter((v: any) => 
-        v.status === "faturada" &&
+        v.custo_total !== null && v.custo_total > 0 &&
         v.data_venda >= startDate &&
         v.data_venda <= endDate
       );
@@ -362,7 +362,7 @@ export default function MarketingAnalise() {
       const { data: allVendas, error } = await supabase
         .from("vendas")
         .select(`
-          valor_venda, publico_alvo, canal_aquisicao_id, atendente_id, estado, data_venda, status,
+          valor_venda, publico_alvo, canal_aquisicao_id, atendente_id, estado, data_venda, custo_total,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -373,7 +373,7 @@ export default function MarketingAnalise() {
 
       // Filtrar manualmente para evitar erro de tipos profundos
       let vendasData = (allVendas || []).filter((v: any) => 
-        v.status === "faturada" &&
+        v.custo_total !== null && v.custo_total > 0 &&
         v.data_venda >= startDate &&
         v.data_venda <= endDate
       );
@@ -442,13 +442,13 @@ export default function MarketingAnalise() {
     try {
       const { data: allVendas, error: vendasError } = await supabase
         .from("vendas")
-        .select("valor_venda, estado, custo_total, atendente_id, canal_aquisicao_id, data_venda, status");
+        .select("valor_venda, estado, custo_total, atendente_id, canal_aquisicao_id, data_venda");
 
       if (vendasError) throw vendasError;
 
       // Filtrar manualmente para evitar erro de tipos profundos
       let vendasData = (allVendas || []).filter((v: any) => 
-        v.status === "faturada" &&
+        v.custo_total !== null && v.custo_total > 0 &&
         v.data_venda >= startDate &&
         v.data_venda <= endDate &&
         v.estado !== null
