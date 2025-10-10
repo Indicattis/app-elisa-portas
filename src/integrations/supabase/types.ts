@@ -753,6 +753,42 @@ export type Database = {
           },
         ]
       }
+      estoque: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          created_by: string | null
+          descricao_produto: string | null
+          id: string
+          nome_produto: string
+          quantidade: number
+          unidade: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao_produto?: string | null
+          id?: string
+          nome_produto: string
+          quantidade?: number
+          unidade?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao_produto?: string | null
+          id?: string
+          nome_produto?: string
+          quantidade?: number
+          unidade?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       eventos_calendario: {
         Row: {
           categoria: string
@@ -1933,6 +1969,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pedido_linhas: {
+        Row: {
+          created_at: string | null
+          descricao_produto: string | null
+          estoque_id: string | null
+          id: string
+          nome_produto: string
+          ordem: number
+          pedido_id: string
+          quantidade: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          descricao_produto?: string | null
+          estoque_id?: string | null
+          id?: string
+          nome_produto: string
+          ordem?: number
+          pedido_id: string
+          quantidade?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          descricao_produto?: string | null
+          estoque_id?: string | null
+          id?: string
+          nome_produto?: string
+          ordem?: number
+          pedido_id?: string
+          quantidade?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_linhas_estoque_id_fkey"
+            columns: ["estoque_id"]
+            isOneToOne: false
+            referencedRelation: "estoque"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_linhas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos_producao: {
         Row: {
           cliente_bairro: string | null
@@ -1964,6 +2051,7 @@ export type Database = {
           produtos: Json | null
           status: string
           status_ordens: Json | null
+          status_preenchimento: string | null
           updated_at: string
           valor_entrada: number | null
           valor_frete: number | null
@@ -2001,6 +2089,7 @@ export type Database = {
           produtos?: Json | null
           status?: string
           status_ordens?: Json | null
+          status_preenchimento?: string | null
           updated_at?: string
           valor_entrada?: number | null
           valor_frete?: number | null
@@ -2038,6 +2127,7 @@ export type Database = {
           produtos?: Json | null
           status?: string
           status_ordens?: Json | null
+          status_preenchimento?: string | null
           updated_at?: string
           valor_entrada?: number | null
           valor_frete?: number | null
