@@ -11,6 +11,7 @@ import { useState } from "react";
 interface CronogramaInstalacaoProps {
   currentWeek: Date;
   onEditPonto: (instalacao: any) => void;
+  equipesFiltradas?: any[];
 }
 
 const DIAS_SEMANA = [
@@ -23,11 +24,13 @@ const DIAS_SEMANA = [
   { label: "Domingo", value: 0 },
 ];
 
-export function CronogramaInstalacao({ currentWeek, onEditPonto }: CronogramaInstalacaoProps) {
+export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltradas }: CronogramaInstalacaoProps) {
   const { equipes } = useEquipesInstalacao();
   const { instalacoes, updateInstalacaoData } = useInstalacoesCronograma(currentWeek);
   const { draggedItem, handleDragStart, handleDragEnd } = useDragAndDrop();
   const [selectedInstalacao, setSelectedInstalacao] = useState<any>(null);
+
+  const equipesParaExibir = equipesFiltradas || equipes;
 
   const handleDrop = async (equipId: string, diaSemana: number) => {
     if (draggedItem && draggedItem.equipId !== equipId) {
@@ -64,7 +67,7 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto }: CronogramaIns
 
         {/* Grid com equipes e pontos */}
         <div className="divide-y">
-          {equipes.map((equipe) => (
+          {equipesParaExibir.map((equipe) => (
             <div key={equipe.id} className="grid grid-cols-8 min-h-[100px]">
               {/* Coluna da equipe */}
               <div className="p-4 border-r bg-muted/30 flex items-center">

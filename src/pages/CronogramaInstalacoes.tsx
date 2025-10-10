@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, Plus } from "lucide-react";
+import { Calendar, Download, Plus, Filter } from "lucide-react";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
 import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
@@ -10,13 +10,39 @@ import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 export default function CronogramaInstalacoes() {
   const [equipesModalOpen, setEquipesModalOpen] = useState(false);
   const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [equipesSelecionadas, setEquipesSelecionadas] = useState<string[]>([]);
 
   const { instalacoes, loading } = useInstalacoesCronograma(weekStartDate);
   const { equipes, loading: equipesLoading } = useEquipesInstalacao();
+
+  const equipesFiltradas = equipesSelecionadas.length > 0 
+    ? equipes.filter(eq => equipesSelecionadas.includes(eq.id))
+    : equipes;
+
+  const toggleEquipe = (equipeId: string) => {
+    setEquipesSelecionadas(prev =>
+      prev.includes(equipeId)
+        ? prev.filter(id => id !== equipeId)
+        : [...prev, equipeId]
+    );
+  };
+
+  const limparFiltros = () => {
+    setEquipesSelecionadas([]);
+  };
 
   const handleDownloadPDF = () => {
     try {
@@ -68,7 +94,7 @@ export default function CronogramaInstalacoes() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
           <Button variant="outline" onClick={handlePreviousWeek}>
             Anterior
           </Button>
@@ -78,6 +104,53 @@ export default function CronogramaInstalacoes() {
           <Button variant="outline" onClick={handleNextWeek}>
             Próxima
           </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                Equipes
+                {equipesSelecionadas.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {equipesSelecionadas.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Filtrar por Equipes</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {equipes.map((equipe) => (
+                <DropdownMenuCheckboxItem
+                  key={equipe.id}
+                  checked={equipesSelecionadas.includes(equipe.id)}
+                  onCheckedChange={() => toggleEquipe(equipe.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: equipe.cor }}
+                    />
+                    {equipe.nome}
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+              {equipesSelecionadas.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={limparFiltros}
+                  >
+                    Limpar Filtros
+                  </Button>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button onClick={() => setEquipesModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Gerenciar Equipes
@@ -97,6 +170,7 @@ export default function CronogramaInstalacoes() {
           <CronogramaInstalacao
             currentWeek={weekStartDate}
             onEditPonto={() => {}}
+            equipesFiltradas={equipesFiltradas}
           />
         </CardContent>
       </Card>
