@@ -372,6 +372,7 @@ export default function VendaNova() {
             {/* Dados Adicionais */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Dados Adicionais</h3>
+              
               <FormaPagamentoSelect
                 value={formData.forma_pagamento}
                 onValueChange={(value) => setFormData({ ...formData, forma_pagamento: value })}
@@ -420,31 +421,35 @@ export default function VendaNova() {
                 />
               </div>
 
-              <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/50">
-                <Checkbox 
-                  id="nota_fiscal"
-                  checked={formData.nota_fiscal}
-                  onCheckedChange={(checked) => setFormData({ ...formData, nota_fiscal: checked as boolean })}
-                />
-                <Label htmlFor="nota_fiscal" className="cursor-pointer font-normal">
-                  Esta venda possui nota fiscal
-                </Label>
-              </div>
+              {/* Checkboxes de Configuração */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-4 border rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
+                  <Checkbox 
+                    id="nota_fiscal"
+                    checked={formData.nota_fiscal}
+                    onCheckedChange={(checked) => setFormData({ ...formData, nota_fiscal: checked as boolean })}
+                  />
+                  <Label htmlFor="nota_fiscal" className="cursor-pointer font-normal flex-1">
+                    Esta venda possui nota fiscal
+                  </Label>
+                </div>
 
-              <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/50">
-                <Checkbox 
-                  id="pagamento_na_entrega"
-                  checked={formData.pagamento_na_entrega}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, pagamento_na_entrega: checked as boolean })
-                  }
-                />
-                <Label htmlFor="pagamento_na_entrega" className="cursor-pointer">
-                  <span className="font-medium">Pagamento na Entrega</span>
-                  <p className="text-sm text-muted-foreground font-normal mt-1">
-                    O valor a receber será cobrado no momento da instalação/entrega
-                  </p>
-                </Label>
+                <div className="flex items-start space-x-3 p-4 border rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
+                  <Checkbox 
+                    id="pagamento_na_entrega"
+                    checked={formData.pagamento_na_entrega}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, pagamento_na_entrega: checked as boolean })
+                    }
+                    className="mt-1"
+                  />
+                  <Label htmlFor="pagamento_na_entrega" className="cursor-pointer flex-1">
+                    <span className="font-medium">Pagamento na Entrega</span>
+                    <p className="text-sm text-muted-foreground font-normal mt-1">
+                      O valor a receber será cobrado no momento da instalação/entrega
+                    </p>
+                  </Label>
+                </div>
               </div>
             </div>
 
