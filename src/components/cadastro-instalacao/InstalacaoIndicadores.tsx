@@ -1,0 +1,165 @@
+import { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Package, Truck, Wrench, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
+import { InstalacaoCadastrada } from '@/hooks/useInstalacoesCadastradas';
+import { isPast, startOfDay } from 'date-fns';
+
+interface InstalacaoIndicadoresProps {
+  instalacoes: InstalacaoCadastrada[];
+}
+
+export const InstalacaoIndicadores = ({ instalacoes }: InstalacaoIndicadoresProps) => {
+  const stats = useMemo(() => {
+    const categorias = {
+      instalacao: 0,
+      entrega: 0,
+      correcao: 0,
+      carregamento_agendado: 0,
+    };
+
+    const status = {
+      pendente_producao: 0,
+      pronta_fabrica: 0,
+      finalizada: 0,
+    };
+
+    let atrasadas = 0;
+
+    instalacoes.forEach((inst) => {
+      // Contar por categoria
+      if (inst.categoria in categorias) {
+        categorias[inst.categoria as keyof typeof categorias]++;
+      }
+
+      // Contar por status
+      if (inst.status in status) {
+        status[inst.status as keyof typeof status]++;
+      }
+
+      // Contar atrasadas
+      if (
+        inst.data_instalacao &&
+        inst.status !== 'finalizada' &&
+        isPast(startOfDay(new Date(inst.data_instalacao))) &&
+        startOfDay(new Date(inst.data_instalacao)) < startOfDay(new Date())
+      ) {
+        atrasadas++;
+      }
+    });
+
+    return {
+      categorias,
+      status,
+      atrasadas,
+      total: instalacoes.length,
+    };
+  }, [instalacoes]);
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      {/* Categoria: Instalações */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Package className="h-4 w-4 text-red-500" />
+            Instalações
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.categorias.instalacao}</div>
+        </CardContent>
+      </Card>
+
+      {/* Categoria: Entregas */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Truck className="h-4 w-4 text-gray-500" />
+            Entregas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.categorias.entrega}</div>
+        </CardContent>
+      </Card>
+
+      {/* Categoria: Correções */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-purple-500" />
+            Correções
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.categorias.correcao}</div>
+        </CardContent>
+      </Card>
+
+      {/* Categoria: Carregamento Agendado */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-orange-500" />
+            Agendados
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.categorias.carregamento_agendado}</div>
+        </CardContent>
+      </Card>
+
+      {/* Status: Pendente Produção */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Clock className="h-4 w-4 text-yellow-500" />
+            Pendente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.status.pendente_producao}</div>
+        </CardContent>
+      </Card>
+
+      {/* Status: Pronta Fábrica */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-blue-500" />
+            Pronta
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.status.pronta_fabrica}</div>
+        </CardContent>
+      </Card>
+
+      {/* Status: Finalizadas */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            Finalizadas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.status.finalizada}</div>
+        </CardContent>
+      </Card>
+
+      {/* Atrasadas */}
+      <Card className="border-red-500/20 bg-red-500/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            Atrasadas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-red-500">{stats.atrasadas}</div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

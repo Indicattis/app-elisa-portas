@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
 import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
+import { InstalacaoIndicadores } from "@/components/cadastro-instalacao/InstalacaoIndicadores";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 
 export default function Instalacoes() {
@@ -48,6 +49,8 @@ export default function Instalacoes() {
             )}
           </div>
         </div>
+
+        <InstalacaoIndicadores instalacoes={instalacoes} />
 
         <InstalacoesTabelaView
           instalacoes={instalacoes}
