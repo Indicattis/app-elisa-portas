@@ -140,24 +140,42 @@ export default function MarketingAnalise() {
 
   // Helper para evitar erro de tipos profundos do Supabase
   const fetchVendasFaturadas = async (startDate: string, endDate: string): Promise<any[]> => {
-    const result: any = await supabase
-      .from("vendas")
-      .select("valor_venda, custo_total, atendente_id, estado, canal_aquisicao_id, data_venda")
-      .eq("status", "faturada")
-      .gte("data_venda", startDate)
-      .lte("data_venda", endDate);
-    
-    return result.data || [];
+    try {
+      const { data, error } = await supabase
+        .from("vendas")
+        .select("valor_venda, custo_total, atendente_id, estado, canal_aquisicao_id, data_venda");
+      
+      if (error) throw error;
+      
+      // Filtrar manualmente para evitar erro de tipos profundos
+      return (data || []).filter((v: any) => 
+        v.status === "faturada" &&
+        v.data_venda >= startDate &&
+        v.data_venda <= endDate
+      );
+    } catch (error) {
+      console.error("Erro ao buscar vendas faturadas:", error);
+      return [];
+    }
   };
 
   const fetchLeadsData = async (startDate: string, endDate: string): Promise<any[]> => {
-    const result: any = await supabase
-      .from("elisaportas_leads")
-      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao_id")
-      .gte("created_at", startDate)
-      .lte("created_at", endDate);
-    
-    return result.data || [];
+    try {
+      const { data, error } = await supabase
+        .from("elisaportas_leads")
+        .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao_id, created_at");
+      
+      if (error) throw error;
+      
+      // Filtrar manualmente para evitar erro de tipos profundos
+      return (data || []).filter((l: any) =>
+        l.created_at >= startDate &&
+        l.created_at <= endDate
+      );
+    } catch (error) {
+      console.error("Erro ao buscar leads:", error);
+      return [];
+    }
   };
 
   const fetchData = async () => {
@@ -341,37 +359,41 @@ export default function MarketingAnalise() {
     const endDate = format(dateRange.to, "yyyy-MM-dd");
 
     try {
-      let vendasQuery = supabase
+      const { data: allVendas, error } = await supabase
         .from("vendas")
         .select(`
-          valor_venda, publico_alvo, canal_aquisicao_id,
+          valor_venda, publico_alvo, canal_aquisicao_id, atendente_id, estado, data_venda, status,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
           )
-        `)
-        .eq("status", "faturada")
-        .gte("data_venda", startDate)
-        .lte("data_venda", endDate);
+        `);
+
+      if (error) throw error;
+
+      // Filtrar manualmente para evitar erro de tipos profundos
+      let vendasData = (allVendas || []).filter((v: any) => 
+        v.status === "faturada" &&
+        v.data_venda >= startDate &&
+        v.data_venda <= endDate
+      );
 
       if (selectedVendedor && selectedVendedor !== "all") {
-        vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
+        vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
       }
 
       if (selectedRegiao && selectedRegiao !== "all") {
-        vendasQuery = vendasQuery.eq("estado", selectedRegiao);
+        vendasData = vendasData.filter((v: any) => v.estado === selectedRegiao);
       }
 
       if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-        vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
+        vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
       }
-
-      const { data: vendasData } = await vendasQuery;
 
       if (vendasData) {
         const publicoAlvoMap = new Map<string, { value: number; vendas: number }>();
         
-        vendasData.forEach(venda => {
+        vendasData.forEach((venda: any) => {
           const publico = venda.publico_alvo || 'Não informado';
           const current = publicoAlvoMap.get(publico) || { value: 0, vendas: 0 };
           publicoAlvoMap.set(publico, {
@@ -388,7 +410,7 @@ export default function MarketingAnalise() {
 
         const canalMap = new Map<string, { value: number; vendas: number }>();
         
-        vendasData.forEach(venda => {
+        vendasData.forEach((venda: any) => {
           const canal = venda.canais_aquisicao?.nome || 'Não informado';
           const current = canalMap.get(canal) || { value: 0, vendas: 0 };
           canalMap.set(canal, {
@@ -418,27 +440,31 @@ export default function MarketingAnalise() {
     const endDate = format(dateRange.to, "yyyy-MM-dd");
 
     try {
-      let vendasQuery = supabase
+      const { data: allVendas, error: vendasError } = await supabase
         .from("vendas")
-        .select("valor_venda, estado, custo_total, atendente_id, canal_aquisicao_id")
-        .eq("status", "faturada")
-        .gte("data_venda", startDate)
-        .lte("data_venda", endDate)
-        .not("estado", "is", null);
+        .select("valor_venda, estado, custo_total, atendente_id, canal_aquisicao_id, data_venda, status");
+
+      if (vendasError) throw vendasError;
+
+      // Filtrar manualmente para evitar erro de tipos profundos
+      let vendasData = (allVendas || []).filter((v: any) => 
+        v.status === "faturada" &&
+        v.data_venda >= startDate &&
+        v.data_venda <= endDate &&
+        v.estado !== null
+      );
 
       if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-        vendasQuery = vendasQuery.eq("canal_aquisicao_id", selectedCanalAquisicao);
+        vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
       }
 
       if (selectedVendedor && selectedVendedor !== "all") {
-        vendasQuery = vendasQuery.eq("atendente_id", selectedVendedor);
+        vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
       }
 
       if (selectedRegiao && selectedRegiao !== "all") {
-        vendasQuery = vendasQuery.eq("estado", selectedRegiao);
+        vendasData = vendasData.filter((v: any) => v.estado === selectedRegiao);
       }
-
-      const { data: vendasData } = await vendasQuery;
 
       let investimentosQuery = supabase
         .from("marketing_investimentos")
@@ -454,7 +480,7 @@ export default function MarketingAnalise() {
 
       const regionMap = new Map<string, RegionPerformanceData>();
 
-      vendasData?.forEach(venda => {
+      vendasData?.forEach((venda: any) => {
         const regiao = venda.estado;
         if (!regionMap.has(regiao)) {
           regionMap.set(regiao, {
