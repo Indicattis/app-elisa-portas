@@ -471,7 +471,6 @@ export const InstalacoesTabelaView = ({
                       </TableHead>
                       <TableHead>Categoria</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Tags</TableHead>
                       <TableHead>Tamanho</TableHead>
                       <TableHead>
                         <Button
@@ -546,22 +545,6 @@ export const InstalacoesTabelaView = ({
                           >
                             {getStatusLabel(instalacao.status)}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div className="flex flex-wrap gap-1">
-                            {isAtrasado(instalacao) && (
-                              <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/20 gap-1">
-                                <Clock className="h-2.5 w-2.5" />
-                                Atrasado
-                              </Badge>
-                            )}
-                            {!instalacao.responsavel_instalacao_id && (
-                              <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20 gap-1">
-                                <UserX className="h-2.5 w-2.5" />
-                                Sem Responsável
-                              </Badge>
-                            )}
-                          </div>
                         </TableCell>
                         <TableCell className="text-xs py-2">{instalacao.tamanho || '-'}</TableCell>
                         <TableCell className="text-xs py-2">
