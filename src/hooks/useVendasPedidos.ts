@@ -60,7 +60,7 @@ export const useVendasPedidos = () => {
           valor_venda,
           created_at,
           pedidos_producao!left(id, status, status_preenchimento),
-          portas_vendas(tipo_produto, cor)
+          portas_vendas(tipo_produto, cor:catalogo_cores(nome, codigo_hex))
         `)
         .order("created_at", { ascending: false });
 
