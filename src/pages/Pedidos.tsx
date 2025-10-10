@@ -17,6 +17,7 @@ export default function Pedidos() {
     criarPedidoPrincipal,
     adicionarLinha,
     removerLinha,
+    atualizarCheckbox,
     confirmarPreenchimento,
     gerarOrdens,
   } = useVendasPedidos();
@@ -60,6 +61,7 @@ export default function Pedidos() {
               ordens={ordens}
               onAdicionarLinha={(linha) => adicionarLinha({ pedidoId: pedidoAtual.id, linha })}
               onRemoverLinha={removerLinha}
+              onAtualizarCheckbox={(linhaId, campo, valor) => atualizarCheckbox({ linhaId, campo, valor })}
               onConfirmarPreenchimento={() => confirmarPreenchimento(pedidoAtual.id)}
               onGerarOrdens={(tipos) => gerarOrdens({ pedidoId: pedidoAtual.id, tipos })}
               onDownloadPDF={() => toast({ title: "PDF em desenvolvimento" })}

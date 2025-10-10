@@ -11,6 +11,10 @@ export interface PedidoLinha {
   descricao_produto: string | null;
   quantidade: number;
   ordem: number;
+  tamanho: string | null;
+  check_separacao: boolean;
+  check_qualidade: boolean;
+  check_coleta: boolean;
 }
 
 export interface PedidoLinhaNova {
@@ -18,6 +22,7 @@ export interface PedidoLinhaNova {
   nome_produto: string;
   descricao_produto?: string;
   quantidade: number;
+  tamanho?: string;
 }
 
 export interface Pedido {
@@ -233,6 +238,28 @@ export const useVendasPedidos = () => {
     },
   });
 
+  // Atualizar checkbox de linha
+  const atualizarCheckbox = useMutation({
+    mutationFn: async ({ linhaId, campo, valor }: { linhaId: string; campo: string; valor: boolean }) => {
+      const { error } = await supabase
+        .from("pedido_linhas")
+        .update({ [campo]: valor })
+        .eq("id", linhaId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pedido-venda"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Confirmar preenchimento do pedido
   const confirmarPreenchimento = useMutation({
     mutationFn: async (pedidoId: string) => {
@@ -314,6 +341,7 @@ export const useVendasPedidos = () => {
     criarPedidoPrincipal: criarPedidoPrincipal.mutateAsync,
     adicionarLinha: adicionarLinha.mutateAsync,
     removerLinha: removerLinha.mutateAsync,
+    atualizarCheckbox: atualizarCheckbox.mutateAsync,
     confirmarPreenchimento: confirmarPreenchimento.mutateAsync,
     gerarOrdens: gerarOrdens.mutateAsync,
   };

@@ -153,26 +153,36 @@ export const generatePedidoPDF = (data: PedidoPDFData) => {
     yPosition += 10;
 
     const produtosTableData = data.pedido.produtos.map((produto: any) => [
-      produto.tipo_produto || 'N/A',
-      produto.descricao || 'N/A',
-      produto.medidas || 'N/A',
-      produto.cor || 'N/A',
+      produto.nome_produto || produto.tipo_produto || 'N/A',
+      produto.descricao_produto || produto.descricao || 'N/A',
       produto.quantidade?.toString() || '1',
-      produto.valor ? `R$ ${produto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/A'
+      produto.tamanho || 'N/A',
+      produto.check_separacao ? '☑' : '☐',
+      produto.check_qualidade ? '☑' : '☐',
+      produto.check_coleta ? '☑' : '☐',
     ]);
 
     autoTable(pdf, {
-      head: [['Tipo', 'Descrição', 'Medidas', 'Cor', 'Qtd', 'Valor Unit.']],
+      head: [['Produto', 'Descrição', 'Qtd', 'Tamanho', 'Sep.', 'Qual.', 'Col.']],
       body: produtosTableData,
       startY: yPosition,
       styles: { 
-        fontSize: 9,
+        fontSize: 8,
         cellPadding: 2
       },
       headStyles: {
         fillColor: [41, 128, 185],
         textColor: [255, 255, 255],
         fontStyle: 'bold'
+      },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 50 },
+        2: { cellWidth: 15, halign: 'center' },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 15, halign: 'center' },
+        5: { cellWidth: 15, halign: 'center' },
+        6: { cellWidth: 15, halign: 'center' },
       },
       margin: { left: margin, right: margin },
       theme: 'striped'

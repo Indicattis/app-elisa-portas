@@ -1971,6 +1971,9 @@ export type Database = {
       }
       pedido_linhas: {
         Row: {
+          check_coleta: boolean | null
+          check_qualidade: boolean | null
+          check_separacao: boolean | null
           created_at: string | null
           descricao_produto: string | null
           estoque_id: string | null
@@ -1979,9 +1982,13 @@ export type Database = {
           ordem: number
           pedido_id: string
           quantidade: number
+          tamanho: string | null
           updated_at: string | null
         }
         Insert: {
+          check_coleta?: boolean | null
+          check_qualidade?: boolean | null
+          check_separacao?: boolean | null
           created_at?: string | null
           descricao_produto?: string | null
           estoque_id?: string | null
@@ -1990,9 +1997,13 @@ export type Database = {
           ordem?: number
           pedido_id: string
           quantidade?: number
+          tamanho?: string | null
           updated_at?: string | null
         }
         Update: {
+          check_coleta?: boolean | null
+          check_qualidade?: boolean | null
+          check_separacao?: boolean | null
           created_at?: string | null
           descricao_produto?: string | null
           estoque_id?: string | null
@@ -2001,6 +2012,7 @@ export type Database = {
           ordem?: number
           pedido_id?: string
           quantidade?: number
+          tamanho?: string | null
           updated_at?: string | null
         }
         Relationships: [

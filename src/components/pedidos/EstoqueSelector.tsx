@@ -20,6 +20,7 @@ export const EstoqueSelector = ({ onSelect }: EstoqueSelectorProps) => {
     nome_produto: "",
     descricao_produto: "",
     quantidade: 1,
+    tamanho: "",
   });
 
   const handleSearch = (value: string) => {
@@ -33,6 +34,7 @@ export const EstoqueSelector = ({ onSelect }: EstoqueSelectorProps) => {
       nome_produto: produto.nome_produto,
       descricao_produto: produto.descricao_produto || "",
       quantidade: 1,
+      tamanho: "",
     });
     setModoManual(true);
   };
@@ -40,7 +42,7 @@ export const EstoqueSelector = ({ onSelect }: EstoqueSelectorProps) => {
   const handleSubmit = () => {
     if (formData.nome_produto && formData.quantidade > 0) {
       onSelect(formData);
-      setFormData({ nome_produto: "", descricao_produto: "", quantidade: 1 });
+      setFormData({ nome_produto: "", descricao_produto: "", quantidade: 1, tamanho: "" });
       setModoManual(false);
       setSearchTerm("");
     }
@@ -77,12 +79,21 @@ export const EstoqueSelector = ({ onSelect }: EstoqueSelectorProps) => {
           />
         </div>
 
+        <div className="space-y-2">
+          <Label>Tamanho</Label>
+          <Input
+            value={formData.tamanho}
+            onChange={(e) => setFormData({ ...formData, tamanho: e.target.value })}
+            placeholder="Ex: 2,00m x 2,20m"
+          />
+        </div>
+
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => {
               setModoManual(false);
-              setFormData({ nome_produto: "", descricao_produto: "", quantidade: 1 });
+              setFormData({ nome_produto: "", descricao_produto: "", quantidade: 1, tamanho: "" });
             }}
             className="flex-1"
           >
@@ -152,7 +163,7 @@ export const EstoqueSelector = ({ onSelect }: EstoqueSelectorProps) => {
         className="w-full"
         onClick={() => {
           setModoManual(true);
-          setFormData({ nome_produto: searchTerm, descricao_produto: "", quantidade: 1 });
+          setFormData({ nome_produto: searchTerm, descricao_produto: "", quantidade: 1, tamanho: "" });
         }}
       >
         <Plus className="h-4 w-4 mr-2" />

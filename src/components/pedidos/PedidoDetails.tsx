@@ -12,6 +12,7 @@ interface PedidoDetailsProps {
   ordens: any[];
   onAdicionarLinha: (linha: any) => Promise<any>;
   onRemoverLinha: (linhaId: string) => Promise<void>;
+  onAtualizarCheckbox: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
   onConfirmarPreenchimento: () => Promise<void>;
   onGerarOrdens: (tipos: string[]) => Promise<void>;
   onDownloadPDF: () => void;
@@ -22,6 +23,7 @@ export const PedidoDetails = ({
   ordens,
   onAdicionarLinha,
   onRemoverLinha,
+  onAtualizarCheckbox,
   onConfirmarPreenchimento,
   onGerarOrdens,
   onDownloadPDF,
@@ -29,6 +31,7 @@ export const PedidoDetails = ({
   const isPendente = pedido.status_preenchimento === "pendente";
   const isPreenchido = pedido.status_preenchimento === "preenchido";
   const temLinhas = pedido.pedido_linhas && pedido.pedido_linhas.length > 0;
+  const todasOrdensConcluidas = ordens.length > 0 && ordens.every((o) => o.status === "concluido");
 
   return (
     <div className="space-y-4">
@@ -85,8 +88,10 @@ export const PedidoDetails = ({
             <PedidoLinhasEditor
               linhas={pedido.pedido_linhas || []}
               isReadOnly={isPreenchido}
+              todasOrdensConcluidas={todasOrdensConcluidas}
               onAdicionarLinha={onAdicionarLinha}
               onRemoverLinha={onRemoverLinha}
+              onAtualizarCheckbox={onAtualizarCheckbox}
             />
 
             {isPendente && temLinhas && (
