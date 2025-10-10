@@ -8,7 +8,7 @@ import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { gerarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
+import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
 import { toast } from "sonner";
 
 export default function CronogramaInstalacoes() {
@@ -22,7 +22,7 @@ export default function CronogramaInstalacoes() {
     try {
       toast.loading("Gerando PDF do cronograma...");
       
-      gerarCronogramaPDF({
+      baixarCronogramaPDF({
         instalacoes,
         equipes,
         weekStart: weekStartDate
