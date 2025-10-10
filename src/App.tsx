@@ -36,6 +36,7 @@ import Instalacoes from "./pages/Instalacoes";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
+import CanaisAquisicao from "./pages/CanaisAquisicao";
 import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
@@ -374,6 +375,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="marketing">
                       <DashboardLayout>
                         <Marketing />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/canais-aquisicao"
+                  element={
+                    <ProtectedRoute requirePermission="marketing">
+                      <DashboardLayout>
+                        <CanaisAquisicao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
