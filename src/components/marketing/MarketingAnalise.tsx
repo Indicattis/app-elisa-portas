@@ -138,6 +138,28 @@ export default function MarketingAnalise() {
     };
   }, [selectedVendedor, selectedRegiao, selectedCanalAquisicao, dateRange]);
 
+  // Helper para evitar erro de tipos profundos do Supabase
+  const fetchVendasFaturadas = async (startDate: string, endDate: string): Promise<any[]> => {
+    const result: any = await supabase
+      .from("vendas")
+      .select("valor_venda, custo_total, atendente_id, estado, canal_aquisicao_id, data_venda")
+      .eq("status", "faturada")
+      .gte("data_venda", startDate)
+      .lte("data_venda", endDate);
+    
+    return result.data || [];
+  };
+
+  const fetchLeadsData = async (startDate: string, endDate: string): Promise<any[]> => {
+    const result: any = await supabase
+      .from("elisaportas_leads")
+      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao_id")
+      .gte("created_at", startDate)
+      .lte("created_at", endDate);
+    
+    return result.data || [];
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -207,13 +229,13 @@ export default function MarketingAnalise() {
   };
 
   const fetchRegioes = async () => {
-    const { data, error }: any = await supabase
+    const { data, error } = await (supabase
       .from("vendas")
       .select("estado")
-      .not("estado", "is", null);
+      .not("estado", "is", null) as any);
 
     if (error) throw error;
-    const regionesUnicas: string[] = [...new Set(data?.map((v: any) => v.estado))];
+    const regionesUnicas = [...new Set(data?.map((v: any) => v.estado))] as string[];
     setRegioes(regionesUnicas);
   };
 
@@ -223,30 +245,34 @@ export default function MarketingAnalise() {
     const startDate = format(dateRange.from, "yyyy-MM-dd");
     const endDate = format(dateRange.to, "yyyy-MM-dd");
 
-    const investQuery: any = supabase
+    // Buscar investimentos
+    const { data: investimentosData } = await (supabase
       .from("marketing_investimentos")
       .select("*")
       .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
-      .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
+      .lte("mes", format(dateRange.to, "yyyy-MM") + "-01") as any);
 
-    const { data: investimentosData }: any = await investQuery;
+    // Filtrar por região se necessário
+    const investimentosFiltrados = (selectedRegiao && selectedRegiao !== "all")
+      ? investimentosData?.filter((inv: any) => inv.regiao === selectedRegiao)
+      : investimentosData;
 
     let totalInvestimento = 0;
     const canalSelecionadoNome = canais.find(c => c.id === selectedCanalAquisicao)?.nome;
-    if (investimentosData && investimentosData.length > 0) {
+    if (investimentosFiltrados && investimentosFiltrados.length > 0) {
       if (selectedCanalAquisicao && canalSelecionadoNome) {
         const nomeLower = canalSelecionadoNome.toLowerCase();
         if (nomeLower.includes('google')) {
-          totalInvestimento = investimentosData.reduce((total: number, inv: any) => total + Number(inv.investimento_google_ads || 0), 0);
+          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_google_ads || 0), 0);
         } else if (nomeLower.includes('meta')) {
-          totalInvestimento = investimentosData.reduce((total: number, inv: any) => total + Number(inv.investimento_meta_ads || 0), 0);
+          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_meta_ads || 0), 0);
         } else if (nomeLower.includes('linkedin')) {
-          totalInvestimento = investimentosData.reduce((total: number, inv: any) => total + Number(inv.investimento_linkedin_ads || 0), 0);
+          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_linkedin_ads || 0), 0);
         } else {
-          totalInvestimento = investimentosData.reduce((total: number, inv: any) => total + Number(inv.outros_investimentos || 0), 0);
+          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.outros_investimentos || 0), 0);
         }
       } else {
-        totalInvestimento = investimentosData.reduce((total: number, inv: any) =>
+        totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) =>
           total + Number(inv.investimento_google_ads || 0) +
                   Number(inv.investimento_meta_ads || 0) +
                   Number(inv.investimento_linkedin_ads || 0) +
@@ -254,16 +280,11 @@ export default function MarketingAnalise() {
       }
     }
 
-    // Buscar vendas FATURADAS
-    const { data: allVendas }: any = await supabase
-      .from("vendas")
-      .select("valor_venda, custo_total, atendente_id, estado, canal_aquisicao_id, data_venda")
-      .eq("status", "faturada")
-      .gte("data_venda", startDate)
-      .lte("data_venda", endDate);
+    // Buscar vendas FATURADAS usando helper
+    const allVendas = await fetchVendasFaturadas(startDate, endDate);
 
     // Aplicar filtros manualmente
-    let vendasData = allVendas || [];
+    let vendasData = allVendas;
     
     if (selectedVendedor && selectedVendedor !== "all") {
       vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
@@ -277,28 +298,23 @@ export default function MarketingAnalise() {
       vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
     }
 
-    const { data: leadsData }: any = await supabase
-      .from("elisaportas_leads")
-      .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao_id")
-      .gte("created_at", startDate)
-      .lte("created_at", endDate)
-      .then((res: any) => {
-        let filtered = res.data || [];
-        
-        if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-          filtered = filtered.filter((lead: any) => lead.canal_aquisicao_id === selectedCanalAquisicao);
-        }
-        
-        if (selectedVendedor && selectedVendedor !== "all") {
-          filtered = filtered.filter((lead: any) => lead.atendente_id === selectedVendedor);
-        }
-        
-        if (selectedRegiao && selectedRegiao !== "all") {
-          filtered = filtered.filter((lead: any) => lead.endereco_estado === selectedRegiao);
-        }
-        
-        return { data: filtered };
-      });
+    // Buscar leads usando helper
+    const allLeads = await fetchLeadsData(startDate, endDate);
+
+    // Aplicar filtros aos leads
+    let leadsData = allLeads;
+    
+    if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
+      leadsData = leadsData.filter((lead: any) => lead.canal_aquisicao_id === selectedCanalAquisicao);
+    }
+    
+    if (selectedVendedor && selectedVendedor !== "all") {
+      leadsData = leadsData.filter((lead: any) => lead.atendente_id === selectedVendedor);
+    }
+    
+    if (selectedRegiao && selectedRegiao !== "all") {
+      leadsData = leadsData.filter((lead: any) => lead.endereco_estado === selectedRegiao);
+    }
 
     const totalVendas = vendasData?.reduce((sum: number, venda: any) => sum + Number(venda.valor_venda), 0) || 0;
     const totalLeads = leadsData?.length || 0;
