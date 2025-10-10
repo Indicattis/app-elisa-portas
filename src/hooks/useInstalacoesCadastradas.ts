@@ -15,6 +15,17 @@ export interface ProdutoInstalacao {
   };
 }
 
+export interface ParcelaInstalacao {
+  id: string;
+  numero_parcela: number;
+  valor_parcela: number;
+  valor_pago: number;
+  data_vencimento: string;
+  data_pagamento: string | null;
+  status: string;
+  observacoes: string | null;
+}
+
 export interface InstalacaoCadastrada {
   id: string;
   nome_cliente: string;
@@ -43,6 +54,7 @@ export interface InstalacaoCadastrada {
   created_by: string | null;
   venda_id: string | null;
   produtos?: ProdutoInstalacao[];
+  parcelas?: ParcelaInstalacao[];
   criador?: {
     nome: string;
     foto_perfil_url?: string;
@@ -84,6 +96,7 @@ export const useInstalacoesCadastradas = () => {
         (data || []).map(async (instalacao) => {
           let criador = undefined;
           let produtos: ProdutoInstalacao[] = [];
+          let parcelas: ParcelaInstalacao[] = [];
 
           // Buscar criador
           if (instalacao.created_by) {
@@ -122,6 +135,26 @@ export const useInstalacoesCadastradas = () => {
                 cor: p.cor
               }));
             }
+
+            // Buscar parcelas de pagamento da venda
+            const { data: parcelasData } = await supabase
+              .from('contas_receber')
+              .select('*')
+              .eq('venda_id', instalacao.venda_id)
+              .order('numero_parcela', { ascending: true });
+            
+            if (parcelasData) {
+              parcelas = parcelasData.map((p: any) => ({
+                id: p.id,
+                numero_parcela: p.numero_parcela,
+                valor_parcela: p.valor_parcela,
+                valor_pago: p.valor_pago || 0,
+                data_vencimento: p.data_vencimento,
+                data_pagamento: p.data_pagamento,
+                status: p.status,
+                observacoes: p.observacoes
+              }));
+            }
           }
           
           return {
@@ -129,6 +162,7 @@ export const useInstalacoesCadastradas = () => {
             categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
             status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
             produtos,
+            parcelas,
             criador
           };
         })
