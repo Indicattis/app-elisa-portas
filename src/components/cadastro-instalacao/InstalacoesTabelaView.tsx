@@ -495,7 +495,16 @@ export const InstalacoesTabelaView = ({
                   </TableHeader>
                   <TableBody>
                     {paginatedInstalacoes.map((instalacao) => (
-                      <TableRow key={instalacao.id}>
+                      <TableRow 
+                        key={instalacao.id}
+                        className={
+                          instalacao.status === 'finalizada'
+                            ? 'bg-green-500/5 hover:bg-green-500/10'
+                            : isAtrasado(instalacao)
+                            ? 'bg-red-500/5 hover:bg-red-500/10'
+                            : ''
+                        }
+                      >
                         <TableCell className="font-medium">{instalacao.nome_cliente}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {instalacao.telefone_cliente || '-'}

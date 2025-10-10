@@ -20,7 +20,7 @@ import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalaco
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { DataProducaoModal } from './DataProducaoModal';
 import { ResponsavelInstalacaoModal } from './ResponsavelInstalacaoModal';
-import { format } from 'date-fns';
+import { format, isPast, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -35,6 +35,11 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
   const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [responsavelInstalacao, setResponsavelInstalacao] = useState<InstalacaoCadastrada | null>(null);
+
+  const isAtrasado = (instalacao: InstalacaoCadastrada) => {
+    if (!instalacao.data_instalacao || instalacao.status === 'finalizada') return false;
+    return isPast(startOfDay(new Date(instalacao.data_instalacao))) && startOfDay(new Date(instalacao.data_instalacao)) < startOfDay(new Date());
+  };
 
   const handleEdit = (instalacao: InstalacaoCadastrada) => {
     setEditingInstalacao(instalacao);
@@ -146,7 +151,16 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
   return (
     <div className="space-y-4">
       {instalacoes.map((instalacao) => (
-        <Card key={instalacao.id}>
+        <Card 
+          key={instalacao.id}
+          className={
+            instalacao.status === 'finalizada'
+              ? 'bg-green-500/5 border-green-500/20'
+              : isAtrasado(instalacao)
+              ? 'bg-red-500/5 border-red-500/20'
+              : ''
+          }
+        >
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="space-y-1">
