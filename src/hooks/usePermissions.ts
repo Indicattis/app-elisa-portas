@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppPermission } from '@/types/permissions';
 import { useEffect } from 'react';
 
-export function usePermissions() {
+export function usePermissions(userId?: string) {
   const queryClient = useQueryClient();
 
   // Set up real-time updates for role permissions changes
@@ -30,12 +30,16 @@ export function usePermissions() {
   }, [queryClient]);
 
   return useQuery({
-    queryKey: ['user-permissions'],
+    queryKey: ['user-permissions', userId],
     queryFn: async () => {
+      if (!userId) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('user_permissions')
         .select('permission')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error fetching user permissions:', error);
@@ -44,13 +48,14 @@ export function usePermissions() {
 
       return data?.map(row => row.permission as AppPermission) || [];
     },
+    enabled: !!userId,
     staleTime: 10 * 1000, // 10 seconds - reduced for faster updates
     retry: 1,
   });
 }
 
-export function useHasPermission(permission: AppPermission) {
-  const { data: permissions = [], isLoading } = usePermissions();
+export function useHasPermission(permission: AppPermission, userId?: string) {
+  const { data: permissions = [], isLoading } = usePermissions(userId);
   return {
     hasPermission: permissions.includes(permission),
     isLoading

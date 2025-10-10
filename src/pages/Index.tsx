@@ -4,7 +4,7 @@ import { useTabsAccess } from "@/hooks/useTabsAccess";
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const { data: tabs, isLoading: tabsLoading } = useTabsAccess('sidebar');
+  const { data: tabs, isLoading: tabsLoading } = useTabsAccess('sidebar', user?.id);
 
   if (loading || tabsLoading) {
     return (

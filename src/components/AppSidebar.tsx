@@ -66,7 +66,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { state } = useSidebar();
-  const { data: tabs = [], isLoading } = useTabsAccess('sidebar');
+  const { data: tabs = [], isLoading } = useTabsAccess('sidebar', user?.id);
   
   // Filtrar o diário de bordo dos tabs normais
   const filteredTabs = tabs.filter(tab => tab.key !== 'diario_bordo');

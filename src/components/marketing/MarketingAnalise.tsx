@@ -105,13 +105,37 @@ export default function MarketingAnalise() {
   });
 
   useEffect(() => {
-    fetchData();
+    let isMounted = true;
+    
+    const loadData = async () => {
+      if (!isMounted) return;
+      await fetchData();
+    };
+    
+    loadData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
-    fetchMetrics();
-    fetchChartData();
-    fetchRegionPerformance();
+    let isMounted = true;
+    
+    const loadMetrics = async () => {
+      if (!isMounted) return;
+      await Promise.all([
+        fetchMetrics(),
+        fetchChartData(),
+        fetchRegionPerformance()
+      ]);
+    };
+    
+    loadMetrics();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [selectedVendedor, selectedRegiao, selectedCanalAquisicao, dateRange]);
 
   const fetchData = async () => {
@@ -157,7 +181,6 @@ export default function MarketingAnalise() {
 
       if (error) {
         console.error("Erro ao buscar investimentos:", error);
-        setInvestimentos([]);
         return;
       }
       
@@ -165,7 +188,6 @@ export default function MarketingAnalise() {
       setInvestimentos(data || []);
     } catch (error) {
       console.error("Erro ao buscar investimentos:", error);
-      setInvestimentos([]);
     }
   };
 
@@ -178,7 +200,6 @@ export default function MarketingAnalise() {
 
       if (error) {
         console.error("Erro ao buscar vendedores:", error);
-        setVendedores([]);
         return;
       }
 
@@ -186,7 +207,6 @@ export default function MarketingAnalise() {
       setVendedores(data?.map(v => ({ id: v.user_id, nome: v.nome })) || []);
     } catch (error) {
       console.error("Erro ao buscar vendedores:", error);
-      setVendedores([]);
     }
   };
 
@@ -767,38 +787,44 @@ export default function MarketingAnalise() {
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={publicoAlvoData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => 
-                    chartMode === 'quantidade' 
-                      ? `${entry.vendas} vendas`
-                      : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
-                >
-                  {publicoAlvoData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any, name: string, props: any) => {
-                    if (chartMode === 'quantidade') {
-                      return [`${value} vendas`, props.payload.name];
-                    } else {
-                      return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, props.payload.name];
+            {publicoAlvoData && publicoAlvoData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={publicoAlvoData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => 
+                      chartMode === 'quantidade' 
+                        ? `${entry.vendas} vendas`
+                        : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
                     }
-                  }}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
+                  >
+                    {publicoAlvoData.map((entry, index) => (
+                      <Cell key={`publico-${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: string, props: any) => {
+                      if (chartMode === 'quantidade') {
+                        return [`${value} vendas`, props.payload.name];
+                      } else {
+                        return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, props.payload.name];
+                      }
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                Nenhum dado disponível para o período selecionado
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -807,38 +833,44 @@ export default function MarketingAnalise() {
             <CardTitle>Vendas por Canal de Aquisição</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={canalAquisicaoData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => 
-                    chartMode === 'quantidade' 
-                      ? `${entry.vendas} vendas`
-                      : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
-                >
-                  {canalAquisicaoData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any, name: string, props: any) => {
-                    if (chartMode === 'quantidade') {
-                      return [`${value} vendas`, props.payload.name];
-                    } else {
-                      return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, props.payload.name];
+            {canalAquisicaoData && canalAquisicaoData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={canalAquisicaoData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => 
+                      chartMode === 'quantidade' 
+                        ? `${entry.vendas} vendas`
+                        : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
                     }
-                  }}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
+                  >
+                    {canalAquisicaoData.map((entry, index) => (
+                      <Cell key={`canal-${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: string, props: any) => {
+                      if (chartMode === 'quantidade') {
+                        return [`${value} vendas`, props.payload.name];
+                      } else {
+                        return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, props.payload.name];
+                      }
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                Nenhum dado disponível para o período selecionado
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

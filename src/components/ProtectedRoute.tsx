@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, requireAdmin = false, requirePermission }: ProtectedRouteProps) {
   const { user, loading, isAdmin } = useAuth();
   const location = useLocation();
-  const { hasPermission, isLoading: permissionLoading } = useHasPermission(requirePermission!);
+  const { hasPermission, isLoading: permissionLoading } = useHasPermission(requirePermission!, user?.id);
 
   const isLoadingPermissions = requirePermission && permissionLoading;
 

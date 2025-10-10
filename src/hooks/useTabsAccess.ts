@@ -16,7 +16,7 @@ export interface TabAccess {
   can_access: boolean;
 }
 
-export function useTabsAccess(tabGroup: string = 'sidebar') {
+export function useTabsAccess(tabGroup: string = 'sidebar', userId?: string) {
   const queryClient = useQueryClient();
 
   // Set up real-time updates for tabs and role permissions changes
@@ -56,7 +56,7 @@ export function useTabsAccess(tabGroup: string = 'sidebar') {
   }, [queryClient]);
 
   return useQuery({
-    queryKey: ['tabs-access', tabGroup],
+    queryKey: ['tabs-access', tabGroup, userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_tab_access')
@@ -71,6 +71,7 @@ export function useTabsAccess(tabGroup: string = 'sidebar') {
 
       return data as TabAccess[];
     },
+    enabled: !!userId,
     staleTime: 10 * 1000, // 10 seconds - reduced for faster updates
     retry: 1,
   });
