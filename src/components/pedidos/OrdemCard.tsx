@@ -5,6 +5,7 @@ import { FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface OrdemCardProps {
   ordem: any;
+  onConcluir?: (ordemId: string, tipo: string) => void;
 }
 
 const ORDEM_CONFIG = {
@@ -58,10 +59,11 @@ const STATUS_CONFIG = {
   },
 };
 
-export const OrdemCard = ({ ordem }: OrdemCardProps) => {
+export const OrdemCard = ({ ordem, onConcluir }: OrdemCardProps) => {
   const config = ORDEM_CONFIG[ordem.tipo as keyof typeof ORDEM_CONFIG] || ORDEM_CONFIG.perfiladeira;
   const statusConfig = STATUS_CONFIG[ordem.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pendente;
   const StatusIcon = statusConfig.icon;
+  const isConcluido = ordem.status === "concluido";
 
   return (
     <Card
@@ -113,6 +115,17 @@ export const OrdemCard = ({ ordem }: OrdemCardProps) => {
               <span className="text-muted-foreground">Conclusão:</span>
               <span>{new Date(ordem.data_conclusao).toLocaleDateString("pt-BR")}</span>
             </div>
+          )}
+
+          {!isConcluido && onConcluir && (
+            <Button
+              size="sm"
+              className="w-full mt-2"
+              onClick={() => onConcluir(ordem.id, ordem.tipo)}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Concluir Ordem
+            </Button>
           )}
 
           <Button

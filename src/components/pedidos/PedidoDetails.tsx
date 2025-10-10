@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, Calendar, User, Phone, FileText, Plus } from "lucide-react";
+import { Package, Calendar, User, Phone, FileText, Plus, CheckCircle2 } from "lucide-react";
 import { Pedido } from "@/hooks/useVendasPedidos";
 import { PedidoLinhasEditor } from "./PedidoLinhasEditor";
 import { GerarOrdemButton } from "./GerarOrdemButton";
@@ -15,6 +15,8 @@ interface PedidoDetailsProps {
   onAtualizarCheckbox: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
   onConfirmarPreenchimento: () => Promise<void>;
   onGerarOrdens: (tipos: string[]) => Promise<void>;
+  onConcluirOrdem: (ordemId: string, tipo: string) => Promise<void>;
+  onDarBaixa: () => Promise<void>;
   onDownloadPDF: () => void;
 }
 
@@ -26,12 +28,18 @@ export const PedidoDetails = ({
   onAtualizarCheckbox,
   onConfirmarPreenchimento,
   onGerarOrdens,
+  onConcluirOrdem,
+  onDarBaixa,
   onDownloadPDF,
 }: PedidoDetailsProps) => {
   const isPendente = pedido.status_preenchimento === "pendente";
   const isPreenchido = pedido.status_preenchimento === "preenchido";
   const temLinhas = pedido.pedido_linhas && pedido.pedido_linhas.length > 0;
   const todasOrdensConcluidas = ordens.length > 0 && ordens.every((o) => o.status === "concluido");
+  const todosChecksMarcados = pedido.pedido_linhas?.every(
+    (l) => l.check_separacao && l.check_qualidade && l.check_coleta
+  ) || false;
+  const podedarBaixa = todasOrdensConcluidas && todosChecksMarcados && pedido.status !== "concluido";
 
   return (
     <div className="space-y-4">
@@ -115,11 +123,44 @@ export const PedidoDetails = ({
           </div>
 
           {ordens.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ordens.map((ordem) => (
-                <OrdemCard key={ordem.id} ordem={ordem} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ordens.map((ordem) => (
+                  <OrdemCard 
+                    key={ordem.id} 
+                    ordem={ordem} 
+                    onConcluir={onConcluirOrdem}
+                  />
+                ))}
+              </div>
+
+              {podedarBaixa && (
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={onDarBaixa}
+                >
+                  <CheckCircle2 className="h-5 w-5 mr-2" />
+                  Dar Baixa no Pedido
+                </Button>
+              )}
+
+              {!podedarBaixa && todasOrdensConcluidas && (
+                <Card className="p-4 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    ⚠️ Para dar baixa no pedido, marque todos os checkboxes de Separação, Qualidade e Coleta nas linhas do pedido acima.
+                  </p>
+                </Card>
+              )}
+
+              {!todasOrdensConcluidas && (
+                <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    ℹ️ Conclua todas as ordens de produção para liberar os checkboxes de verificação e poder dar baixa no pedido.
+                  </p>
+                </Card>
+              )}
+            </>
           ) : (
             <Card className="p-6 text-center text-muted-foreground">
               <p>Nenhuma ordem de produção gerada ainda.</p>

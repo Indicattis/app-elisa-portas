@@ -20,6 +20,8 @@ export default function Pedidos() {
     atualizarCheckbox,
     confirmarPreenchimento,
     gerarOrdens,
+    concluirOrdem,
+    darBaixaPedido,
   } = useVendasPedidos();
 
   const handleCriarPedido = async () => {
@@ -64,6 +66,8 @@ export default function Pedidos() {
               onAtualizarCheckbox={(linhaId, campo, valor) => atualizarCheckbox({ linhaId, campo, valor })}
               onConfirmarPreenchimento={() => confirmarPreenchimento(pedidoAtual.id)}
               onGerarOrdens={(tipos) => gerarOrdens({ pedidoId: pedidoAtual.id, tipos })}
+              onConcluirOrdem={(ordemId, tipo) => concluirOrdem({ ordemId, tipo })}
+              onDarBaixa={() => darBaixaPedido(pedidoAtual.id)}
               onDownloadPDF={() => toast({ title: "PDF em desenvolvimento" })}
             />
           )}

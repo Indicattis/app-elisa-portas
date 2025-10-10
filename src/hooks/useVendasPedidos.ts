@@ -336,6 +336,72 @@ export const useVendasPedidos = () => {
     },
   });
 
+  // Concluir ordem de produção
+  const concluirOrdem = useMutation({
+    mutationFn: async ({ ordemId, tipo }: { ordemId: string; tipo: string }) => {
+      let tableName = "";
+      if (tipo === "perfiladeira") tableName = "ordens_perfiladeira";
+      else if (tipo === "separacao") tableName = "ordens_separacao";
+      else if (tipo === "soldagem") tableName = "ordens_soldagem";
+      else if (tipo === "pintura") tableName = "ordens_pintura";
+      else if (tipo === "instalacao") tableName = "ordens_instalacao";
+
+      const { error } = await supabase
+        .from(tableName as any)
+        .update({
+          status: "concluido",
+          data_conclusao: new Date().toISOString(),
+        })
+        .eq("id", ordemId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ordens-pedido"] });
+      toast({
+        title: "Ordem concluída",
+        description: "Ordem marcada como concluída!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao concluir ordem",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Dar baixa no pedido
+  const darBaixaPedido = useMutation({
+    mutationFn: async (pedidoId: string) => {
+      const { error } = await supabase
+        .from("pedidos_producao")
+        .update({
+          status: "concluido",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", pedidoId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pedido-venda"] });
+      queryClient.invalidateQueries({ queryKey: ["vendas-pedidos"] });
+      toast({
+        title: "Baixa efetuada",
+        description: "Pedido finalizado com sucesso!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao dar baixa",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     vendas,
     selectedVendaId,
@@ -349,5 +415,7 @@ export const useVendasPedidos = () => {
     atualizarCheckbox: atualizarCheckbox.mutateAsync,
     confirmarPreenchimento: confirmarPreenchimento.mutateAsync,
     gerarOrdens: gerarOrdens.mutateAsync,
+    concluirOrdem: concluirOrdem.mutateAsync,
+    darBaixaPedido: darBaixaPedido.mutateAsync,
   };
 };
