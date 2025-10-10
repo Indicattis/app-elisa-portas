@@ -792,6 +792,50 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_movimentacoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          observacoes: string | null
+          produto_id: string
+          quantidade: number
+          quantidade_anterior: number
+          quantidade_nova: number
+          tipo_movimentacao: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacoes?: string | null
+          produto_id: string
+          quantidade: number
+          quantidade_anterior: number
+          quantidade_nova: number
+          tipo_movimentacao: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacoes?: string | null
+          produto_id?: string
+          quantidade?: number
+          quantidade_anterior?: number
+          quantidade_nova?: number
+          tipo_movimentacao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_movimentacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "estoque"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eventos_calendario: {
         Row: {
           categoria: string

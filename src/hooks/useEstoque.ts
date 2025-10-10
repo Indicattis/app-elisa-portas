@@ -3,6 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+export interface MovimentacaoEstoque {
+  id: string;
+  produto_id: string;
+  tipo_movimentacao: 'entrada' | 'saida';
+  quantidade: number;
+  quantidade_anterior: number;
+  quantidade_nova: number;
+  observacoes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface ProdutoEstoque {
   id: string;
   nome_produto: string;
@@ -80,6 +92,101 @@ export const useEstoque = () => {
     },
   });
 
+  const movimentarEstoque = useMutation({
+    mutationFn: async ({ 
+      produtoId, 
+      tipo, 
+      quantidade, 
+      observacoes 
+    }: { 
+      produtoId: string; 
+      tipo: 'entrada' | 'saida'; 
+      quantidade: number; 
+      observacoes?: string;
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      
+      // Buscar quantidade atual
+      const { data: produto, error: produtoError } = await supabase
+        .from("estoque")
+        .select("quantidade")
+        .eq("id", produtoId)
+        .single();
+
+      if (produtoError) throw produtoError;
+
+      const quantidadeAnterior = produto.quantidade;
+      const quantidadeNova = tipo === 'entrada' 
+        ? quantidadeAnterior + quantidade 
+        : quantidadeAnterior - quantidade;
+
+      if (quantidadeNova < 0) {
+        throw new Error("Quantidade insuficiente em estoque");
+      }
+
+      // Atualizar estoque
+      const { error: updateError } = await supabase
+        .from("estoque")
+        .update({ quantidade: quantidadeNova })
+        .eq("id", produtoId);
+
+      if (updateError) throw updateError;
+
+      // Registrar movimentação
+      const { error: movError } = await supabase
+        .from("estoque_movimentacoes")
+        .insert({
+          produto_id: produtoId,
+          tipo_movimentacao: tipo,
+          quantidade,
+          quantidade_anterior: quantidadeAnterior,
+          quantidade_nova: quantidadeNova,
+          observacoes,
+          created_by: userData?.user?.id,
+        });
+
+      if (movError) throw movError;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+      queryClient.invalidateQueries({ queryKey: ["movimentacoes"] });
+      toast({
+        title: "Movimentação registrada",
+        description: `${variables.tipo === 'entrada' ? 'Entrada' : 'Saída'} de ${variables.quantidade} unidades registrada com sucesso.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro na movimentação",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const buscarMovimentacoes = (produtoId?: string) => {
+    return useQuery({
+      queryKey: ["movimentacoes", produtoId],
+      queryFn: async () => {
+        let query = supabase
+          .from("estoque_movimentacoes")
+          .select(`
+            *,
+            admin_users!estoque_movimentacoes_created_by_fkey(nome, email)
+          `)
+          .order("created_at", { ascending: false });
+
+        if (produtoId) {
+          query = query.eq("produto_id", produtoId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data as MovimentacaoEstoque[];
+      },
+    });
+  };
+
   const buscarProdutos = async (termo: string) => {
     setSearchTerm(termo);
   };
@@ -89,5 +196,7 @@ export const useEstoque = () => {
     loading: isLoading,
     buscarProdutos,
     adicionarProduto: adicionarProduto.mutateAsync,
+    movimentarEstoque: movimentarEstoque.mutateAsync,
+    buscarMovimentacoes,
   };
 };
