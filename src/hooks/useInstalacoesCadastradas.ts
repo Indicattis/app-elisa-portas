@@ -8,7 +8,7 @@ export interface ProdutoInstalacao {
   descricao: string;
   quantidade: number;
   valor_total: number;
-  medidas?: string;
+  tamanho?: string;
   cor?: {
     nome: string;
     codigo_hex: string;
@@ -106,7 +106,7 @@ export const useInstalacoesCadastradas = () => {
                 descricao,
                 quantidade,
                 valor_total,
-                medidas,
+                tamanho,
                 cor:catalogo_cores(nome, codigo_hex)
               `)
               .eq('venda_id', instalacao.venda_id);
@@ -118,7 +118,7 @@ export const useInstalacoesCadastradas = () => {
                 descricao: p.descricao,
                 quantidade: p.quantidade,
                 valor_total: p.valor_total,
-                medidas: p.medidas,
+                tamanho: p.tamanho,
                 cor: p.cor
               }));
             }

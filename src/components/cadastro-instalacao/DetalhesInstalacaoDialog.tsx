@@ -252,10 +252,10 @@ export function DetalhesInstalacaoDialog({
                       </div>
                       
                       <div className="grid grid-cols-2 gap-3 text-xs mt-2 pt-2 border-t">
-                        {produto.medidas && (
+                        {produto.tamanho && (
                           <div>
-                            <p className="text-muted-foreground">Medidas</p>
-                            <p className="font-medium">{produto.medidas}</p>
+                            <p className="text-muted-foreground">Tamanho</p>
+                            <p className="font-medium">{produto.tamanho}</p>
                           </div>
                         )}
                         <div>
