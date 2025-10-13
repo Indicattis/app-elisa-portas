@@ -142,6 +142,38 @@ export const useProdutosVenda = (vendaId?: string) => {
     },
   });
 
+  // Mutation para finalizar faturamento da venda
+  const finalizarFaturamentoMutation = useMutation({
+    mutationFn: async ({ 
+      vendaId, 
+      custoTotal, 
+      lucroTotal 
+    }: { 
+      vendaId: string; 
+      custoTotal: number; 
+      lucroTotal: number;
+    }) => {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ 
+          custo_total: custoTotal,
+          lucro_total: lucroTotal
+        })
+        .eq('id', vendaId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
+      toast.success("Faturamento finalizado com sucesso!");
+    },
+    onError: (error: any) => {
+      console.error('Erro ao finalizar faturamento:', error);
+      toast.error("Erro ao finalizar faturamento");
+    },
+  });
+
   return {
     produtos: produtos || [],
     isLoading,
@@ -151,6 +183,8 @@ export const useProdutosVenda = (vendaId?: string) => {
     deleteProduto: deleteProdutoMutation.mutate,
     isDeleting: deleteProdutoMutation.isPending,
     updateLucroItem: updateLucroItemMutation.mutate,
-    isUpdatingLucros: updateLucroItemMutation.isPending,
+    isUpdatingLucro: updateLucroItemMutation.isPending,
+    finalizarFaturamento: finalizarFaturamentoMutation.mutate,
+    isFinalizandoFaturamento: finalizarFaturamentoMutation.isPending,
   };
 };

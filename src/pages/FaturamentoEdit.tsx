@@ -1,35 +1,24 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, DollarSign, TrendingUp, Percent, Package, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useProdutosVenda } from "@/hooks/useProdutosVenda";
+import { LucroItemModal } from "@/components/vendas/LucroItemModal";
+import { FaturamentoProdutoCard } from "@/components/vendas/FaturamentoProdutoCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, DollarSign, TrendingUp, Package, Truck, CheckCircle2, AlertCircle } from "lucide-react";
-import { useProdutosVenda } from "@/hooks/useProdutosVenda";
-import { FaturamentoItemCard } from "@/components/vendas/FaturamentoItemCard";
 
 interface Venda {
   id: string;
-  data_venda: string;
+  numero_venda?: number;
   cliente_nome: string;
-  cliente_telefone: string;
-  cliente_email?: string;
-  estado?: string;
-  cidade?: string;
-  bairro?: string;
-  cep?: string;
   valor_venda: number;
   valor_frete: number;
-  valor_instalacao?: number;
-  valor_entrada?: number;
-  forma_pagamento?: string;
-  publico_alvo?: string;
-  data_prevista_entrega?: string;
+  lucro_total: number;
   frete_aprovado: boolean;
-  canal_aquisicao_id?: string;
 }
 
 export default function FaturamentoEdit() {
@@ -39,142 +28,134 @@ export default function FaturamentoEdit() {
   const [venda, setVenda] = useState<Venda | null>(null);
   const [loading, setLoading] = useState(true);
   const [freteAprovado, setFreteAprovado] = useState(false);
-  const [isSavingFrete, setIsSavingFrete] = useState(false);
-  
-  const { produtos, isLoading: loadingProdutos, updateLucroItem, isUpdatingLucros } = useProdutosVenda(id);
-  const [canalAquisicao, setCanalAquisicao] = useState<string>('');
-  const [lucrosItens, setLucrosItens] = useState<Record<string, number>>({});
+  const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
+
+  const {
+    produtos,
+    isLoading: isLoadingProdutos,
+    updateLucroItem,
+    isUpdatingLucro,
+    finalizarFaturamento,
+    isFinalizandoFaturamento,
+  } = useProdutosVenda(id);
 
   useEffect(() => {
-    const fetchVenda = async () => {
-      if (!id) return;
+    if (id) {
+      fetchVenda();
+    }
+  }, [id]);
 
+  useEffect(() => {
+    if (venda) {
+      setFreteAprovado(venda.frete_aprovado || false);
+    }
+  }, [venda]);
+
+  const fetchVenda = async () => {
+    try {
+      setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select(`
-          *,
-          canal_aquisicao:canais_aquisicao(nome)
-        `)
+        .select("*")
         .eq("id", id)
         .single();
 
-      if (error) {
-        console.error("Erro ao buscar venda:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Erro ao carregar venda",
-        });
-        return;
-      }
-
-      setVenda(data);
-      setFreteAprovado(data.frete_aprovado || false);
-      if (data.canal_aquisicao) {
-        setCanalAquisicao((data.canal_aquisicao as any)?.nome || '');
-      }
-      setLoading(false);
-    };
-
-    fetchVenda();
-  }, [id, toast]);
-
-  // Inicializar lucros quando os produtos forem carregados
-  useEffect(() => {
-    if (produtos && produtos.length > 0) {
-      const lucrosIniciais: Record<string, number> = {};
-      produtos.forEach(p => {
-        lucrosIniciais[p.id] = p.lucro_item || 0;
-      });
-      setLucrosItens(lucrosIniciais);
-    }
-  }, [produtos]);
-
-  const handleToggleFreteAprovado = async (checked: boolean) => {
-    if (!id) return;
-    
-    setIsSavingFrete(true);
-    try {
-      const { error } = await supabase
-        .from("vendas")
-        .update({ frete_aprovado: checked })
-        .eq("id", id);
-
       if (error) throw error;
-
-      setFreteAprovado(checked);
-      toast({
-        title: checked ? "Frete aprovado" : "Aprovação removida",
-        description: checked 
-          ? "O valor do frete foi aprovado para faturamento" 
-          : "A aprovação do frete foi removida",
-      });
+      setVenda(data);
     } catch (error) {
-      console.error("Erro ao atualizar aprovação do frete:", error);
+      console.error("Erro ao buscar venda:", error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível atualizar a aprovação do frete",
+        title: "Erro ao carregar venda",
       });
     } finally {
-      setIsSavingFrete(false);
+      setLoading(false);
     }
   };
 
-  const handleLucroChange = (itemId: string, lucro: number) => {
-    setLucrosItens(prev => ({ ...prev, [itemId]: lucro }));
+  const handleSaveLucroItem = async (produtoId: string, lucro: number) => {
+    const produto = produtos?.find(p => p.id === produtoId);
+    if (!produto) return;
+
+    const custoCalculado = produto.valor_total - lucro;
+    await updateLucroItem({ produtoId, custoProducao: custoCalculado });
   };
 
-  const handleSaveItemLucro = async (itemId: string, lucroItem: number) => {
+  const handleSalvarTudo = async () => {
+    if (!venda || !produtos) return;
+
+    // Validar se todos os produtos estão faturados
+    const todosFaturados = produtos.every(p => (p.lucro_item || 0) > 0);
+    if (!todosFaturados) {
+      toast({
+        variant: "destructive",
+        title: "Produtos pendentes",
+        description: "Todos os produtos devem ter lucro informado antes de salvar",
+      });
+      return;
+    }
+
+    // Validar se frete está aprovado
     if (!freteAprovado) {
       toast({
         variant: "destructive",
         title: "Frete não aprovado",
-        description: "É necessário aprovar o frete antes de faturar os produtos",
+        description: "Confirme o valor do frete antes de salvar",
       });
       return;
     }
-    const produto = produtos?.find(p => p.id === itemId);
-    if (!produto) return;
-    
-    const custoCalculado = produto.valor_total - lucroItem;
-    await updateLucroItem({ produtoId: itemId, custoProducao: custoCalculado });
+
+    // Calcular totais
+    const custoTotal = produtos.reduce((acc, p) => 
+      acc + ((p.custo_producao || 0) * p.quantidade), 0
+    );
+    const lucroTotal = produtos.reduce((acc, p) => 
+      acc + ((p.lucro_item || 0) * p.quantidade), 0
+    );
+
+    // Salvar faturamento
+    await finalizarFaturamento({
+      vendaId: venda.id,
+      custoTotal,
+      lucroTotal,
+    });
+
+    // Atualizar frete aprovado
+    await supabase
+      .from('vendas')
+      .update({ frete_aprovado: true })
+      .eq('id', venda.id);
+
+    // Redirecionar
+    navigate('/dashboard/faturamento');
   };
 
-  if (loading || loadingProdutos) {
+  // Cálculos
+  const todosProdutosFaturados = produtos?.every(p => (p.lucro_item || 0) > 0) || false;
+  const totalLucro = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
+  const totalCusto = produtos?.reduce((acc, p) => acc + ((p.custo_producao || 0) * p.quantidade), 0) || 0;
+  const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
+  const produtosFaturados = produtos?.filter(p => (p.lucro_item || 0) > 0).length || 0;
+  const totalProdutos = produtos?.length || 0;
+
+  if (loading || isLoadingProdutos) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!venda) {
     return (
-      <div className="container mx-auto py-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Venda não encontrada</CardTitle>
-          </CardHeader>
-        </Card>
+      <div className="p-8 text-center">
+        <h2 className="text-2xl font-bold">Venda não encontrada</h2>
       </div>
     );
   }
 
-  // Calcular totais agregados
-  const totalLucro = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
-  const totalValor = produtos?.reduce((acc, p) => acc + p.valor_total, 0) || 0;
-  const totalCusto = totalValor - totalLucro;
-  const margemMedia = totalValor > 0 ? (totalLucro / totalValor) * 100 : 0;
-
-  // Contar itens faturados
-  const itensFaturados = produtos?.filter(p => (p.lucro_item || 0) > 0).length || 0;
-  const totalItens = produtos?.length || 0;
-  const todosFaturados = itensFaturados === totalItens && totalItens > 0;
-  const vendaCompletamenteFaturada = todosFaturados && freteAprovado;
-
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6 p-6">
       <Button
         variant="ghost"
         onClick={() => navigate("/dashboard/faturamento")}
@@ -185,9 +166,9 @@ export default function FaturamentoEdit() {
       </Button>
 
       <div>
-        <h1 className="text-3xl font-bold">Faturamento por Item</h1>
+        <h1 className="text-3xl font-bold">Faturamento - Venda {venda.numero_venda ? `#${venda.numero_venda}` : ''}</h1>
         <p className="text-muted-foreground">
-          Informe o lucro real de cada produto vendido
+          Cliente: {venda.cliente_nome}
         </p>
       </div>
 
@@ -200,31 +181,31 @@ export default function FaturamentoEdit() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              R$ {venda.valor_venda.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              R$ {venda.valor_venda.toFixed(2)}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lucro Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Lucro Bruto</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totalLucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              R$ {totalLucro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            <div className="text-2xl font-bold text-green-600">
+              R$ {totalLucro.toFixed(2)}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Margem Média</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Margem</CardTitle>
+            <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${margemMedia >= 30 ? 'text-green-600' : margemMedia >= 15 ? 'text-yellow-600' : 'text-red-600'}`}>
-              {margemMedia.toFixed(1)}%
+            <div className="text-2xl font-bold text-blue-600">
+              {margem.toFixed(2)}%
             </div>
           </CardContent>
         </Card>
@@ -236,239 +217,80 @@ export default function FaturamentoEdit() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {itensFaturados}/{totalItens}
+              {produtosFaturados}/{totalProdutos}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Itens faturados
+            <p className="text-xs text-muted-foreground">
+              Produtos faturados
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Aprovação de Frete */}
-      <Card className="border-2">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Truck className="h-6 w-6 text-primary" />
-            <div>
-              <CardTitle>Aprovação de Frete</CardTitle>
-              <CardDescription>
-                O frete deve ser aprovado antes de faturar os produtos
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="frete-aprovado" className="text-base font-medium cursor-pointer">
-                  Valor do Frete
-                </Label>
-                {freteAprovado && (
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                )}
-              </div>
-              <p className="text-2xl font-bold text-primary">
-                R$ {(venda.valor_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Checkbox
-                id="frete-aprovado"
-                checked={freteAprovado}
-                onCheckedChange={handleToggleFreteAprovado}
-                disabled={isSavingFrete}
-                className="h-6 w-6"
-              />
-              <Label htmlFor="frete-aprovado" className="text-base font-medium cursor-pointer">
-                {freteAprovado ? "Frete Aprovado" : "Aprovar Frete"}
-              </Label>
-            </div>
-          </div>
-
-          {!freteAprovado && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                O frete precisa ser aprovado antes de faturar os produtos desta venda.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {vendaCompletamenteFaturada && (
-            <Alert className="bg-green-50 border-green-200">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
-                ✓ Venda completamente faturada! Frete aprovado e todos os produtos com lucro definido.
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Informações da Venda */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações da Venda</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 text-sm">
-            <div>
-              <p className="text-muted-foreground text-xs">Cliente</p>
-              <p className="font-medium">{venda.cliente_nome}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Telefone</p>
-              <p className="font-medium">{venda.cliente_telefone}</p>
-            </div>
-            {venda.cliente_email && (
-              <div>
-                <p className="text-muted-foreground text-xs">E-mail</p>
-                <p className="font-medium">{venda.cliente_email}</p>
-              </div>
-            )}
-            {venda.cidade && (
-              <div>
-                <p className="text-muted-foreground text-xs">Cidade/Estado</p>
-                <p className="font-medium">{venda.cidade}/{venda.estado}</p>
-              </div>
-            )}
-            {venda.bairro && (
-              <div>
-                <p className="text-muted-foreground text-xs">Bairro</p>
-                <p className="font-medium">{venda.bairro}</p>
-              </div>
-            )}
-            {venda.cep && (
-              <div>
-                <p className="text-muted-foreground text-xs">CEP</p>
-                <p className="font-medium">{venda.cep}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-muted-foreground text-xs">Data da Venda</p>
-              <p className="font-medium">
-                {new Date(venda.data_venda).toLocaleDateString("pt-BR")}
-              </p>
-            </div>
-            {venda.data_prevista_entrega && (
-              <div>
-                <p className="text-muted-foreground text-xs">Previsão de Entrega</p>
-                <p className="font-medium">
-                  {new Date(venda.data_prevista_entrega).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-            )}
-            {venda.forma_pagamento && (
-              <div>
-                <p className="text-muted-foreground text-xs">Forma de Pagamento</p>
-                <p className="font-medium">{venda.forma_pagamento}</p>
-              </div>
-            )}
-            {venda.valor_entrada !== undefined && venda.valor_entrada > 0 && (
-              <div>
-                <p className="text-muted-foreground text-xs">Valor de Entrada</p>
-                <p className="font-medium">
-                  R$ {venda.valor_entrada.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-            )}
-            {venda.valor_instalacao !== undefined && venda.valor_instalacao > 0 && (
-              <div>
-                <p className="text-muted-foreground text-xs">Valor de Instalação</p>
-                <p className="font-medium">
-                  R$ {venda.valor_instalacao.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-            )}
-            {canalAquisicao && (
-              <div>
-                <p className="text-muted-foreground text-xs">Canal de Aquisição</p>
-                <p className="font-medium">{canalAquisicao}</p>
-              </div>
-            )}
-            {venda.publico_alvo && (
-              <div>
-                <p className="text-muted-foreground text-xs">Público Alvo</p>
-                <p className="font-medium">{venda.publico_alvo}</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista de Produtos */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Produtos da Venda</h2>
-          {itensFaturados < totalItens && (
-            <p className="text-sm text-muted-foreground">
-              {totalItens - itensFaturados} {totalItens - itensFaturados === 1 ? 'item pendente' : 'itens pendentes'}
-            </p>
-          )}
+      {/* Grid de Produtos */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Produtos da Venda</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {produtos?.map((produto) => (
+            <FaturamentoProdutoCard
+              key={produto.id}
+              produto={produto}
+              onClick={() => setSelectedProduto(produto)}
+            />
+          ))}
         </div>
-
-        {produtos && produtos.length > 0 ? (
-          <div className="space-y-3">
-            {produtos.map((produto) => (
-              <FaturamentoItemCard
-                key={produto.id}
-                item={{
-                  id: produto.id,
-                  tipo_produto: produto.tipo_produto,
-                  descricao: produto.descricao || 'Produto',
-                  quantidade: produto.quantidade,
-                  valor_total: produto.valor_total,
-                  lucro_item: produto.lucro_item,
-                  custo_producao: produto.custo_producao,
-                }}
-                lucroItem={lucrosItens[produto.id] || 0}
-                onLucroChange={handleLucroChange}
-                onSave={handleSaveItemLucro}
-                isSaving={isUpdatingLucros}
-                freteAprovado={freteAprovado}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              Nenhum produto encontrado nesta venda
-            </CardContent>
-          </Card>
-        )}
       </div>
 
-      {/* Resumo Final */}
-      <Card className="border-2">
+      {/* Confirmação de Frete */}
+      <Card className={!todosProdutosFaturados ? "opacity-50" : ""}>
         <CardHeader>
-          <CardTitle>Resumo de Custos e Lucros</CardTitle>
-          <CardDescription>Valores totais calculados automaticamente</CardDescription>
+          <CardTitle>Confirmação de Frete</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Custo Total</p>
-              <p className="text-lg font-semibold">
-                R$ {totalCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Lucro Total</p>
-              <p className="text-lg font-semibold text-green-600">
-                R$ {totalLucro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Margem Média</p>
-              <p className={`text-lg font-semibold ${margemMedia >= 30 ? 'text-green-600' : margemMedia >= 15 ? 'text-yellow-600' : 'text-red-600'}`}>
-                {margemMedia.toFixed(1)}%
-              </p>
-            </div>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="frete"
+              checked={freteAprovado}
+              onCheckedChange={(checked) => setFreteAprovado(checked as boolean)}
+              disabled={!todosProdutosFaturados}
+            />
+            <Label
+              htmlFor="frete"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Confirmar valor do frete: R$ {(venda.valor_frete || 0).toFixed(2)}
+            </Label>
           </div>
+          {!todosProdutosFaturados && (
+            <p className="text-sm text-muted-foreground">
+              Fature todos os produtos para habilitar a confirmação de frete
+            </p>
+          )}
         </CardContent>
       </Card>
+
+      {/* Botão Salvar Tudo */}
+      <div className="flex justify-end">
+        <Button
+          size="lg"
+          onClick={handleSalvarTudo}
+          disabled={!todosProdutosFaturados || !freteAprovado || isFinalizandoFaturamento}
+          className="gap-2"
+        >
+          <Save className="h-5 w-5" />
+          {isFinalizandoFaturamento ? "Salvando..." : "Salvar Tudo"}
+        </Button>
+      </div>
+
+      {/* Modal de Lucro */}
+      {selectedProduto && (
+        <LucroItemModal
+          isOpen={!!selectedProduto}
+          onClose={() => setSelectedProduto(null)}
+          produto={selectedProduto}
+          onSave={handleSaveLucroItem}
+          isSaving={isUpdatingLucro}
+        />
+      )}
     </div>
   );
 }
