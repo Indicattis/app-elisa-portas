@@ -89,7 +89,7 @@ export default function FaturamentoEdit() {
     if (!venda || !produtos) return;
 
     // Validar se todos os produtos estão faturados
-    const todosFaturados = produtos.every(p => (p.lucro_item || 0) > 0);
+    const todosFaturados = produtos.every(p => p.lucro_item !== null && p.lucro_item !== undefined);
     if (!todosFaturados) {
       toast({
         variant: "destructive",
@@ -135,11 +135,11 @@ export default function FaturamentoEdit() {
   };
 
   // Cálculos
-  const todosProdutosFaturados = produtos?.every(p => (p.lucro_item || 0) > 0) || false;
+  const todosProdutosFaturados = produtos?.every(p => p.lucro_item !== null && p.lucro_item !== undefined) || false;
   const totalLucro = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
   const totalCusto = produtos?.reduce((acc, p) => acc + ((p.custo_producao || 0) * p.quantidade), 0) || 0;
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
-  const produtosFaturados = produtos?.filter(p => (p.lucro_item || 0) > 0).length || 0;
+  const produtosFaturados = produtos?.filter(p => p.lucro_item !== null && p.lucro_item !== undefined).length || 0;
   const totalProdutos = produtos?.length || 0;
 
   if (loading || isLoadingProdutos) {
