@@ -131,18 +131,25 @@ export default function Faturamento() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Função para verificar se uma venda está faturada (baseado no campo faturamento e frete aprovado)
+  // Função para verificar se uma venda está faturada
   const isFaturada = (venda: Venda) => {
     const portas = venda.portas || [];
     if (portas.length === 0) return false;
     
-    // Verifica se TODOS os produtos têm o campo faturamento = true
+    // PRIMEIRO: verificar os indicadores da venda
+    const freteAprovado = (venda as any).frete_aprovado === true;
+    const temCustoTotal = ((venda as any).custo_total || 0) > 0;
+    
+    // Se a venda não foi processada, NÃO está faturada
+    // (independente do campo faturamento dos produtos)
+    if (!freteAprovado || !temCustoTotal) {
+      return false;
+    }
+    
+    // SEGUNDO: verificar se todos os produtos têm faturamento = true
     const todosProdutosFaturados = portas.every((p: any) => p.faturamento === true);
     
-    // Verifica se o frete foi aprovado
-    const freteAprovado = (venda as any).frete_aprovado === true;
-    
-    return todosProdutosFaturados && freteAprovado;
+    return todosProdutosFaturados;
   };
 
 
