@@ -13,8 +13,11 @@ import { Edit, CheckCircle2 } from "lucide-react";
 
 interface Produto {
   id: string;
+  tipo_produto?: string;
   descricao: string;
   medidas?: string;
+  desconto_percentual?: number;
+  desconto_valor?: number;
   valor_instalacao?: number;
   valor_total: number;
   quantidade: number;
@@ -33,16 +36,31 @@ export function FaturamentoProdutosTable({
   valorFrete,
   onEditLucro,
 }: FaturamentoProdutosTableProps) {
+  const getTipoProdutoLabel = (tipo?: string) => {
+    const tipos: Record<string, string> = {
+      'porta_enrolar': 'Porta Enrolar',
+      'porta_social': 'Porta Social',
+      'acessorio': 'Acessório',
+      'manutencao': 'Manutenção',
+      'adicional': 'Adicional',
+      'pintura_epoxi': 'Pintura Epóxi',
+    };
+    return tipos[tipo || ''] || tipo || '-';
+  };
+
   return (
     <ScrollArea className="w-full rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Tipo</TableHead>
             <TableHead>Produto</TableHead>
-            <TableHead>Detalhes</TableHead>
-            <TableHead className="text-right">Instalação</TableHead>
+            <TableHead>Tamanho</TableHead>
+            <TableHead className="text-right">Desconto</TableHead>
             <TableHead className="text-right">Valor Unit.</TableHead>
             <TableHead className="text-center">Qtd</TableHead>
+            <TableHead className="text-right">Valor Total</TableHead>
+            <TableHead className="text-right">Instalação</TableHead>
             <TableHead className="text-right">Lucro Informado</TableHead>
             <TableHead className="text-center">Ações</TableHead>
           </TableRow>
@@ -50,25 +68,40 @@ export function FaturamentoProdutosTable({
         <TableBody>
           {produtos?.map((produto) => {
             const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
+            const valorTotalLinha = produto.valor_total * produto.quantidade;
+            const desconto = produto.desconto_percentual 
+              ? `${produto.desconto_percentual}%` 
+              : produto.desconto_valor 
+                ? `R$ ${produto.desconto_valor.toFixed(2)}`
+                : '-';
             
             return (
               <TableRow key={produto.id}>
+                <TableCell className="text-sm">
+                  {getTipoProdutoLabel(produto.tipo_produto)}
+                </TableCell>
                 <TableCell className="font-medium">
                   {produto.descricao}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {produto.medidas || "-"}
                 </TableCell>
-                <TableCell className="text-right">
-                  {produto.valor_instalacao 
-                    ? `R$ ${produto.valor_instalacao.toFixed(2)}` 
-                    : "-"}
+                <TableCell className="text-right text-orange-600">
+                  {desconto}
                 </TableCell>
                 <TableCell className="text-right">
                   R$ {produto.valor_total.toFixed(2)}
                 </TableCell>
                 <TableCell className="text-center">
                   {produto.quantidade}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  R$ {valorTotalLinha.toFixed(2)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {produto.valor_instalacao 
+                    ? `R$ ${produto.valor_instalacao.toFixed(2)}` 
+                    : "-"}
                 </TableCell>
                 <TableCell className="text-right">
                   {temLucro ? (
@@ -99,14 +132,13 @@ export function FaturamentoProdutosTable({
 
           {/* Linha do Frete */}
           <TableRow className="bg-muted/50 font-medium">
-            <TableCell colSpan={3}>
+            <TableCell colSpan={6}>
               <span className="text-sm font-semibold">Frete</span>
             </TableCell>
-            <TableCell className="text-right">
+            <TableCell className="text-right font-semibold">
               R$ {valorFrete.toFixed(2)}
             </TableCell>
-            <TableCell className="text-center">-</TableCell>
-            <TableCell colSpan={2} className="text-muted-foreground text-sm">
+            <TableCell colSpan={3} className="text-muted-foreground text-sm">
               Apenas visualização
             </TableCell>
           </TableRow>
