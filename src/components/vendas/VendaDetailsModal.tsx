@@ -32,8 +32,9 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
   };
 
   // Calcular valores da venda
-  const valorProdutos = (venda.portas || []).reduce((acc: number, p: any) => 
-    acc + (p.valor_produto || 0) + (p.valor_pintura || 0), 0
+  const produtos = venda.produtos_vendas || venda.portas || [];
+  const valorProdutos = produtos.reduce((acc: number, p: any) => 
+    acc + ((p.valor_produto || 0) + (p.valor_pintura || 0)) * (p.quantidade || 1), 0
   );
   const valorInstalacao = venda.valor_instalacao || 0;
   const valorFrete = venda.valor_frete || 0;
@@ -90,17 +91,17 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
         </div>
 
         {/* Produtos - Seção Principal */}
-        {venda.portas && venda.portas.length > 0 && (
+        {produtos && produtos.length > 0 && (
           <Card className="mb-6">
             <CardHeader className="bg-muted/50">
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                Produtos da Venda ({venda.portas.length})
+                Produtos da Venda ({produtos.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
-                {venda.portas.map((produto: any, index: number) => (
+                {produtos.map((produto: any, index: number) => (
                   <div key={index} className="border-2 rounded-lg p-4 hover:border-primary/50 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
