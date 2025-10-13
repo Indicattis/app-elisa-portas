@@ -1,12 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 interface StatusBadgeProps {
   isFaturada: boolean;
-  isParcial?: boolean;
 }
 
-export function StatusBadge({ isFaturada, isParcial = false }: StatusBadgeProps) {
+export function StatusBadge({ isFaturada }: StatusBadgeProps) {
   if (isFaturada) {
     return (
       <div className="flex items-center gap-2">
@@ -18,22 +17,11 @@ export function StatusBadge({ isFaturada, isParcial = false }: StatusBadgeProps)
     );
   }
 
-  if (isParcial) {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Parcial</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
         <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-        <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Pendente</span>
+        <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Não Faturada</span>
       </div>
     </div>
   );

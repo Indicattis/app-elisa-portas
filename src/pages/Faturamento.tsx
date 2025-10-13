@@ -145,17 +145,6 @@ export default function Faturamento() {
     return todosProdutosFaturados && freteAprovado;
   };
 
-  // Função para verificar se uma venda está parcialmente faturada
-  const isParcialmenteFaturada = (venda: Venda) => {
-    const portas = venda.portas || [];
-    if (portas.length === 0) return false;
-    
-    const algunsProdutosFaturados = portas.some((p: any) => p.faturamento === true);
-    const todosProdutosFaturados = portas.every((p: any) => p.faturamento === true);
-    const freteAprovado = (venda as any).frete_aprovado === true;
-    
-    return algunsProdutosFaturados && (!todosProdutosFaturados || !freteAprovado);
-  };
 
   // Função para calcular total de descontos
   const calculateTotalDiscount = (venda: Venda) => {
@@ -866,8 +855,7 @@ export default function Faturamento() {
                       >
                         <TableCell>
                           <StatusBadge 
-                            isFaturada={isFaturada(venda)} 
-                            isParcial={isParcialmenteFaturada(venda)}
+                            isFaturada={isFaturada(venda)}
                           />
                         </TableCell>
 
