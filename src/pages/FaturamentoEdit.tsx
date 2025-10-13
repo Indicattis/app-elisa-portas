@@ -43,7 +43,7 @@ export default function FaturamentoEdit() {
   
   const { produtos, isLoading: loadingProdutos, updateLucroItem, isUpdatingLucros } = useProdutosVenda(id);
   const [canalAquisicao, setCanalAquisicao] = useState<string>('');
-  const [custosProducao, setCustosProducao] = useState<Record<string, number>>({});
+  const [lucrosItens, setLucrosItens] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchVenda = async () => {
@@ -79,16 +79,14 @@ export default function FaturamentoEdit() {
     fetchVenda();
   }, [id, toast]);
 
-  // Inicializar custos quando os produtos forem carregados
+  // Inicializar lucros quando os produtos forem carregados
   useEffect(() => {
     if (produtos && produtos.length > 0) {
-      const custosIniciais: Record<string, number> = {};
+      const lucrosIniciais: Record<string, number> = {};
       produtos.forEach(p => {
-        // Usar custo existente ou calcular a partir do lucro
-        const custoExistente = p.custo_producao || (p.valor_total - (p.lucro_item || 0));
-        custosIniciais[p.id] = custoExistente || 0;
+        lucrosIniciais[p.id] = p.lucro_item || 0;
       });
-      setCustosProducao(custosIniciais);
+      setLucrosItens(lucrosIniciais);
     }
   }, [produtos]);
 
@@ -123,11 +121,11 @@ export default function FaturamentoEdit() {
     }
   };
 
-  const handleCustoChange = (itemId: string, custo: number) => {
-    setCustosProducao(prev => ({ ...prev, [itemId]: custo }));
+  const handleLucroChange = (itemId: string, lucro: number) => {
+    setLucrosItens(prev => ({ ...prev, [itemId]: lucro }));
   };
 
-  const handleSaveItemLucro = async (itemId: string, custoProducao: number) => {
+  const handleSaveItemLucro = async (itemId: string, lucroItem: number) => {
     if (!freteAprovado) {
       toast({
         variant: "destructive",
@@ -136,7 +134,11 @@ export default function FaturamentoEdit() {
       });
       return;
     }
-    await updateLucroItem({ produtoId: itemId, custoProducao });
+    const produto = produtos?.find(p => p.id === itemId);
+    if (!produto) return;
+    
+    const custoCalculado = produto.valor_total - lucroItem;
+    await updateLucroItem({ produtoId: itemId, custoProducao: custoCalculado });
   };
 
   if (loading || loadingProdutos) {
@@ -421,8 +423,8 @@ export default function FaturamentoEdit() {
                   lucro_item: produto.lucro_item,
                   custo_producao: produto.custo_producao,
                 }}
-                custoProducao={custosProducao[produto.id] || 0}
-                onCustoChange={handleCustoChange}
+                lucroItem={lucrosItens[produto.id] || 0}
+                onLucroChange={handleLucroChange}
                 onSave={handleSaveItemLucro}
                 isSaving={isUpdatingLucros}
                 freteAprovado={freteAprovado}

@@ -15,29 +15,29 @@ interface FaturamentoItemCardProps {
     lucro_item?: number;
     custo_producao?: number;
   };
-  custoProducao: number;
-  onCustoChange: (itemId: string, custo: number) => void;
-  onSave: (itemId: string, custo: number) => Promise<void>;
+  lucroItem: number;
+  onLucroChange: (itemId: string, lucro: number) => void;
+  onSave: (itemId: string, lucro: number) => Promise<void>;
   isSaving: boolean;
   freteAprovado?: boolean;
 }
 
 export function FaturamentoItemCard({ 
   item, 
-  custoProducao,
-  onCustoChange,
+  lucroItem,
+  onLucroChange,
   onSave, 
   isSaving, 
   freteAprovado = true 
 }: FaturamentoItemCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Calcular lucro automaticamente
-  const lucroCalculado = item.valor_total - custoProducao;
-  const margemItem = item.valor_total > 0 ? (lucroCalculado / item.valor_total) * 100 : 0;
+  // Calcular custo automaticamente
+  const custoCalculado = item.valor_total - lucroItem;
+  const margemItem = item.valor_total > 0 ? (lucroItem / item.valor_total) * 100 : 0;
 
   const handleSave = async () => {
-    await onSave(item.id, custoProducao);
+    await onSave(item.id, lucroItem);
   };
 
   return (
@@ -86,20 +86,20 @@ export function FaturamentoItemCard({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor={`custo-${item.id}`}>Custo de Produção (R$)</Label>
+                <Label htmlFor={`lucro-${item.id}`}>Lucro Real (R$)</Label>
                 <Input
-                  id={`custo-${item.id}`}
+                  id={`lucro-${item.id}`}
                   type="number"
                   step="0.01"
                   min="0"
                   max={item.valor_total}
-                  value={custoProducao}
-                  onChange={(e) => onCustoChange(item.id, parseFloat(e.target.value) || 0)}
-                  className={custoProducao > item.valor_total ? "border-destructive" : ""}
+                  value={lucroItem}
+                  onChange={(e) => onLucroChange(item.id, parseFloat(e.target.value) || 0)}
+                  className={lucroItem > item.valor_total ? "border-destructive" : ""}
                 />
-                {custoProducao > item.valor_total && (
+                {lucroItem > item.valor_total && (
                   <p className="text-sm text-destructive mt-1">
-                    Custo não pode ser maior que o valor total
+                    Lucro não pode ser maior que o valor total
                   </p>
                 )}
               </div>
@@ -110,13 +110,13 @@ export function FaturamentoItemCard({
                   <span className="font-medium">R$ {item.valor_total.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Custo:</span>
-                  <span className="font-medium">R$ {custoProducao.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Lucro:</span>
+                  <span className="font-medium">R$ {lucroItem.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Lucro Calculado:</span>
-                  <span className={`font-medium ${lucroCalculado < 0 ? 'text-destructive' : 'text-green-600'}`}>
-                    R$ {lucroCalculado.toFixed(2)}
+                  <span className="text-muted-foreground">Custo Calculado:</span>
+                  <span className={`font-medium ${custoCalculado < 0 ? 'text-destructive' : ''}`}>
+                    R$ {custoCalculado.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -132,9 +132,9 @@ export function FaturamentoItemCard({
           <div className="flex justify-end pt-2">
             <Button 
               onClick={handleSave} 
-              disabled={isSaving || custoProducao > item.valor_total || !freteAprovado}
+              disabled={isSaving || lucroItem > item.valor_total || !freteAprovado}
               className="w-full md:w-auto"
-              title={!freteAprovado ? "O frete precisa ser aprovado antes de salvar o custo" : undefined}
+              title={!freteAprovado ? "O frete precisa ser aprovado antes de salvar o lucro" : undefined}
             >
               {isSaving ? (
                 <>
