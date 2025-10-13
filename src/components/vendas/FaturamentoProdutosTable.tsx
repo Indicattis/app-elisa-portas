@@ -23,6 +23,7 @@ interface Produto {
   quantidade: number;
   lucro_item?: number;
   custo_producao?: number;
+  faturamento?: boolean;
 }
 
 interface FaturamentoProdutosTableProps {
@@ -104,15 +105,17 @@ export function FaturamentoProdutosTable({
                     : "-"}
                 </TableCell>
                 <TableCell className="text-right">
-                  {temLucro ? (
-                    <div className="flex items-center justify-end gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-600">
-                        R$ {(produto.lucro_item! * produto.quantidade).toFixed(2)}
-                      </span>
-                    </div>
+                  {produto.faturamento ? (
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Faturado
+                    </Badge>
+                  ) : temLucro ? (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      R$ {(produto.lucro_item! * produto.quantidade).toFixed(2)}
+                    </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
                       Pendente
                     </Badge>
                   )}

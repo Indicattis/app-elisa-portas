@@ -2293,6 +2293,7 @@ export type Database = {
           desconto_percentual: number | null
           desconto_valor: number | null
           descricao: string | null
+          faturamento: boolean | null
           id: string
           lucro_item: number | null
           lucro_pintura: number | null
@@ -2324,6 +2325,7 @@ export type Database = {
           desconto_percentual?: number | null
           desconto_valor?: number | null
           descricao?: string | null
+          faturamento?: boolean | null
           id?: string
           lucro_item?: number | null
           lucro_pintura?: number | null
@@ -2355,6 +2357,7 @@ export type Database = {
           desconto_percentual?: number | null
           desconto_valor?: number | null
           descricao?: string | null
+          faturamento?: boolean | null
           id?: string
           lucro_item?: number | null
           lucro_pintura?: number | null

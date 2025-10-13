@@ -121,13 +121,16 @@ export const useProdutosVenda = (vendaId?: string) => {
     mutationFn: async ({ 
       vendaId, 
       custoTotal, 
-      lucroTotal 
+      lucroTotal,
+      produtosIds
     }: { 
       vendaId: string; 
       custoTotal: number; 
       lucroTotal: number;
+      produtosIds: string[];
     }) => {
-      const { error } = await supabase
+      // Atualizar venda
+      const { error: vendaError } = await supabase
         .from('vendas')
         .update({ 
           custo_total: custoTotal,
@@ -136,7 +139,15 @@ export const useProdutosVenda = (vendaId?: string) => {
         })
         .eq('id', vendaId);
 
-      if (error) throw error;
+      if (vendaError) throw vendaError;
+
+      // Marcar TODOS os produtos como faturados
+      const { error: produtosError } = await supabase
+        .from('produtos_vendas')
+        .update({ faturamento: true })
+        .in('id', produtosIds);
+
+      if (produtosError) throw produtosError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendas'] });

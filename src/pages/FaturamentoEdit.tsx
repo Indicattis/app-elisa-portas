@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { FaturamentoProdutosTable } from "@/components/vendas/FaturamentoProdutosTable";
+import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
 
 interface Venda {
   id: string;
@@ -26,6 +27,7 @@ export default function FaturamentoEdit() {
   const [venda, setVenda] = useState<Venda | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const {
     produtos,
@@ -79,23 +81,42 @@ export default function FaturamentoEdit() {
 
   const handleFaturar = async () => {
     if (!venda || !produtos) return;
+    
+    // Verificar se há produtos com lucro = 0
+    const produtosComLucroZero = produtos.filter(p => 
+      (p.lucro_item === 0 || p.lucro_item === null || p.lucro_item === undefined)
+    );
+    
+    // Se houver produtos com lucro zero, mostrar confirmação
+    if (produtosComLucroZero.length > 0) {
+      setShowConfirmDialog(true);
+      return;
+    }
+    
+    // Se não houver, prosseguir diretamente
+    await executarFaturamento();
+  };
 
-    // Calcular totais apenas dos produtos que têm lucro definido
+  const executarFaturamento = async () => {
+    if (!venda || !produtos) return;
+    
     const custoTotal = produtos.reduce((acc, p) => 
       acc + ((p.custo_producao || 0) * p.quantidade), 0
     );
     const lucroTotal = produtos.reduce((acc, p) => 
       acc + ((p.lucro_item || 0) * p.quantidade), 0
     );
-
-    // Salvar faturamento
+    
+    const produtosIds = produtos.map(p => p.id);
+    
     await finalizarFaturamento({
       vendaId: venda.id,
       custoTotal,
       lucroTotal,
+      produtosIds,
     });
-
-    // Redirecionar
+    
+    setShowConfirmDialog(false);
     navigate('/dashboard/faturamento');
   };
 
@@ -224,6 +245,16 @@ export default function FaturamentoEdit() {
           isSaving={isUpdatingLucro}
         />
       )}
+
+      {/* Modal de Confirmação */}
+      <ConfirmarFaturamentoDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        produtosComLucroZero={produtos?.filter(p => 
+          (p.lucro_item === 0 || p.lucro_item === null || p.lucro_item === undefined)
+        ).length || 0}
+        onConfirmar={executarFaturamento}
+      />
     </div>
   );
 }

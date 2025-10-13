@@ -131,18 +131,17 @@ export default function Faturamento() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Função para verificar se uma venda está faturada (baseado no lucro_item e frete aprovado)
+  // Função para verificar se uma venda está faturada (baseado no campo faturamento e frete aprovado)
   const isFaturada = (venda: Venda) => {
     const portas = venda.portas || [];
     if (portas.length === 0) return false;
     
-    // Verifica se todos os produtos têm lucro definido
-    const todosProdutosFaturados = portas.every((p: any) => (p.lucro_item || 0) > 0);
+    // Verifica se TODOS os produtos têm o campo faturamento = true
+    const todosProdutosFaturados = portas.every((p: any) => p.faturamento === true);
     
     // Verifica se o frete foi aprovado
     const freteAprovado = (venda as any).frete_aprovado === true;
     
-    // Venda está faturada se todos os produtos têm lucro E o frete foi aprovado
     return todosProdutosFaturados && freteAprovado;
   };
 
@@ -151,13 +150,10 @@ export default function Faturamento() {
     const portas = venda.portas || [];
     if (portas.length === 0) return false;
     
-    const algunsProdutosFaturados = portas.some((p: any) => (p.lucro_item || 0) > 0);
-    const todosProdutosFaturados = portas.every((p: any) => (p.lucro_item || 0) > 0);
+    const algunsProdutosFaturados = portas.some((p: any) => p.faturamento === true);
+    const todosProdutosFaturados = portas.every((p: any) => p.faturamento === true);
     const freteAprovado = (venda as any).frete_aprovado === true;
     
-    // Parcialmente faturada se:
-    // - Alguns (mas não todos) produtos têm lucro, OU
-    // - Todos os produtos têm lucro MAS o frete não foi aprovado
     return algunsProdutosFaturados && (!todosProdutosFaturados || !freteAprovado);
   };
 
@@ -246,7 +242,8 @@ export default function Faturamento() {
             custo_produto,
             custo_pintura,
             margem_produto,
-            margem_pintura
+            margem_pintura,
+            faturamento
           )
         `)
         .order("data_venda", { ascending: false });
