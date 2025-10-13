@@ -131,7 +131,8 @@ export const useProdutosVenda = (vendaId?: string) => {
         .from('vendas')
         .update({ 
           custo_total: custoTotal,
-          lucro_total: lucroTotal
+          lucro_total: lucroTotal,
+          frete_aprovado: true
         })
         .eq('id', vendaId);
 
