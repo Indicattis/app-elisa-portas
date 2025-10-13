@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HandHeart } from "lucide-react";
 
 interface LucroItemModalProps {
   isOpen: boolean;
@@ -46,6 +47,11 @@ export function LucroItemModal({
   const handleSave = async () => {
     if (isLucroInvalido) return;
     await onSave(produto.id, lucro);
+    onClose();
+  };
+
+  const handleLuva = async () => {
+    await onSave(produto.id, 0);
     onClose();
   };
 
@@ -120,20 +126,32 @@ export function LucroItemModal({
         </div>
 
         {/* Botões */}
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-between gap-3">
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={handleLuva}
             disabled={isSaving}
+            className="gap-2"
           >
-            Cancelar
+            <HandHeart className="h-4 w-4" />
+            Luva (R$ 0)
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isLucroInvalido || isSaving}
-          >
-            {isSaving ? "Salvando..." : "Salvar Lucro"}
-          </Button>
+          
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isSaving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isLucroInvalido || isSaving}
+            >
+              {isSaving ? "Salvando..." : "Salvar Lucro"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
