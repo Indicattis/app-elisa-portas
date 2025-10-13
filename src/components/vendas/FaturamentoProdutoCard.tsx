@@ -22,8 +22,8 @@ export function FaturamentoProdutoCard({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all hover:shadow-lg hover:scale-105",
-        isFaturado ? "border-green-500 bg-green-50/50" : "border-yellow-500 bg-yellow-50/50"
+        "cursor-pointer transition-all hover:shadow-lg hover:scale-105 rounded-md",
+        isFaturado ? "border-green-500" : "border-yellow-500"
       )}
       onClick={onClick}
     >
