@@ -84,41 +84,15 @@ export const useProdutosVenda = (vendaId?: string) => {
   const updateLucroItemMutation = useMutation({
     mutationFn: async ({ 
       produtoId, 
-      custoProducao, 
-      custoPintura 
+      lucroItem,
+      custoProducao
     }: { 
       produtoId: string; 
-      custoProducao: number; 
-      custoPintura?: number;
+      lucroItem: number;
+      custoProducao: number;
     }) => {
-      // Buscar dados do produto
-      const { data: produto, error: fetchError } = await supabase
-        .from('produtos_vendas')
-        .select('*')
-        .eq('id', produtoId)
-        .single();
-
-      if (fetchError) throw fetchError;
-      if (!produto) throw new Error('Produto não encontrado');
-
-      // Calcular lucro baseado no tipo de produto
-      let lucroItem = 0;
-      
-      if (produto.tipo_produto === 'pintura_epoxi') {
-        // Para pintura eletrostática, só há custo de pintura
-        lucroItem = (produto.valor_pintura || 0) - (custoPintura || 0);
-      } else if (produto.valor_pintura && produto.valor_pintura > 0) {
-        // Para portas com pintura, distribuir lucro entre produto e pintura
-        const lucroProducao = (produto.valor_produto || 0) - custoProducao;
-        const lucroPintura = (produto.valor_pintura || 0) - (custoPintura || 0);
-        lucroItem = lucroProducao + lucroPintura;
-      } else {
-        // Para produtos sem pintura (incluindo porta galvanizada)
-        lucroItem = (produto.valor_produto || 0) - custoProducao;
-      }
-
-      // Atualizar lucro
-      const { data, error: updateError } = await supabase
+      // Simplesmente atualizar os valores sem recalcular
+      const { data, error } = await supabase
         .from('produtos_vendas')
         .update({ 
           lucro_item: lucroItem,
@@ -128,7 +102,7 @@ export const useProdutosVenda = (vendaId?: string) => {
         .select()
         .single();
 
-      if (updateError) throw updateError;
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {

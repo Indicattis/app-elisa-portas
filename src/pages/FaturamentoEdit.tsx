@@ -78,7 +78,11 @@ export default function FaturamentoEdit() {
     if (!produto) return;
 
     const custoCalculado = produto.valor_total - lucro;
-    await updateLucroItem({ produtoId, custoProducao: custoCalculado });
+    await updateLucroItem({ 
+      produtoId, 
+      lucroItem: lucro,
+      custoProducao: custoCalculado 
+    });
   };
 
   const handleSalvarTudo = async () => {
