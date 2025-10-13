@@ -43,6 +43,7 @@ export default function FaturamentoEdit() {
   
   const { produtos, isLoading: loadingProdutos, updateLucroItem, isUpdatingLucros } = useProdutosVenda(id);
   const [canalAquisicao, setCanalAquisicao] = useState<string>('');
+  const [custosProducao, setCustosProducao] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchVenda = async () => {
@@ -78,6 +79,19 @@ export default function FaturamentoEdit() {
     fetchVenda();
   }, [id, toast]);
 
+  // Inicializar custos quando os produtos forem carregados
+  useEffect(() => {
+    if (produtos && produtos.length > 0) {
+      const custosIniciais: Record<string, number> = {};
+      produtos.forEach(p => {
+        // Usar custo existente ou calcular a partir do lucro
+        const custoExistente = p.custo_producao || (p.valor_total - (p.lucro_item || 0));
+        custosIniciais[p.id] = custoExistente || 0;
+      });
+      setCustosProducao(custosIniciais);
+    }
+  }, [produtos]);
+
   const handleToggleFreteAprovado = async (checked: boolean) => {
     if (!id) return;
     
@@ -109,7 +123,11 @@ export default function FaturamentoEdit() {
     }
   };
 
-  const handleSaveItemLucro = async (itemId: string, custoProducao: number, custoPintura?: number) => {
+  const handleCustoChange = (itemId: string, custo: number) => {
+    setCustosProducao(prev => ({ ...prev, [itemId]: custo }));
+  };
+
+  const handleSaveItemLucro = async (itemId: string, custoProducao: number) => {
     if (!freteAprovado) {
       toast({
         variant: "destructive",
@@ -118,7 +136,7 @@ export default function FaturamentoEdit() {
       });
       return;
     }
-    await updateLucroItem({ produtoId: itemId, custoProducao, custoPintura });
+    await updateLucroItem({ produtoId: itemId, custoProducao });
   };
 
   if (loading || loadingProdutos) {
@@ -401,7 +419,10 @@ export default function FaturamentoEdit() {
                   quantidade: produto.quantidade,
                   valor_total: produto.valor_total,
                   lucro_item: produto.lucro_item,
+                  custo_producao: produto.custo_producao,
                 }}
+                custoProducao={custosProducao[produto.id] || 0}
+                onCustoChange={handleCustoChange}
                 onSave={handleSaveItemLucro}
                 isSaving={isUpdatingLucros}
                 freteAprovado={freteAprovado}
