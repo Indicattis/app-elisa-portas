@@ -3,13 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, DollarSign, TrendingUp, Percent, Package, Save } from "lucide-react";
+import { DollarSign, TrendingUp, Percent, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { FaturamentoProdutoCard } from "@/components/vendas/FaturamentoProdutoCard";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 
 interface Venda {
   id: string;
@@ -27,7 +25,6 @@ export default function FaturamentoEdit() {
   const { toast } = useToast();
   const [venda, setVenda] = useState<Venda | null>(null);
   const [loading, setLoading] = useState(true);
-  const [freteAprovado, setFreteAprovado] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
 
   const {
@@ -45,11 +42,6 @@ export default function FaturamentoEdit() {
     }
   }, [id]);
 
-  useEffect(() => {
-    if (venda) {
-      setFreteAprovado(venda.frete_aprovado || false);
-    }
-  }, [venda]);
 
   const fetchVenda = async () => {
     try {
@@ -85,31 +77,10 @@ export default function FaturamentoEdit() {
     });
   };
 
-  const handleSalvarTudo = async () => {
+  const handleFaturar = async () => {
     if (!venda || !produtos) return;
 
-    // Validar se todos os produtos estão faturados
-    const todosFaturados = produtos.every(p => p.lucro_item !== null && p.lucro_item !== undefined);
-    if (!todosFaturados) {
-      toast({
-        variant: "destructive",
-        title: "Produtos pendentes",
-        description: "Todos os produtos devem ter lucro informado antes de salvar",
-      });
-      return;
-    }
-
-    // Validar se frete está aprovado
-    if (!freteAprovado) {
-      toast({
-        variant: "destructive",
-        title: "Frete não aprovado",
-        description: "Confirme o valor do frete antes de salvar",
-      });
-      return;
-    }
-
-    // Calcular totais
+    // Calcular totais apenas dos produtos que têm lucro definido
     const custoTotal = produtos.reduce((acc, p) => 
       acc + ((p.custo_producao || 0) * p.quantidade), 0
     );
@@ -123,12 +94,6 @@ export default function FaturamentoEdit() {
       custoTotal,
       lucroTotal,
     });
-
-    // Atualizar frete aprovado
-    await supabase
-      .from('vendas')
-      .update({ frete_aprovado: true })
-      .eq('id', venda.id);
 
     // Redirecionar
     navigate('/dashboard/faturamento');
@@ -160,15 +125,6 @@ export default function FaturamentoEdit() {
 
   return (
     <div className="space-y-6 p-6">
-      <Button
-        variant="ghost"
-        onClick={() => navigate("/dashboard/faturamento")}
-        className="mb-4"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Voltar
-      </Button>
-
       <div>
         <h1 className="text-3xl font-bold">Faturamento - Venda {venda.numero_venda ? `#${venda.numero_venda}` : ''}</h1>
         <p className="text-muted-foreground">
@@ -244,44 +200,21 @@ export default function FaturamentoEdit() {
         </div>
       </div>
 
-      {/* Confirmação de Frete */}
-      <Card className={!todosProdutosFaturados ? "opacity-50" : ""}>
-        <CardHeader>
-          <CardTitle>Confirmação de Frete</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="frete"
-              checked={freteAprovado}
-              onCheckedChange={(checked) => setFreteAprovado(checked as boolean)}
-              disabled={!todosProdutosFaturados}
-            />
-            <Label
-              htmlFor="frete"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Confirmar valor do frete: R$ {(venda.valor_frete || 0).toFixed(2)}
-            </Label>
-          </div>
-          {!todosProdutosFaturados && (
-            <p className="text-sm text-muted-foreground">
-              Fature todos os produtos para habilitar a confirmação de frete
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Botão Salvar Tudo */}
-      <div className="flex justify-end">
+      {/* Botões de Ação */}
+      <div className="flex justify-end gap-4">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => navigate('/dashboard/faturamento')}
+        >
+          Voltar
+        </Button>
         <Button
           size="lg"
-          onClick={handleSalvarTudo}
-          disabled={!todosProdutosFaturados || !freteAprovado || isFinalizandoFaturamento}
-          className="gap-2"
+          onClick={handleFaturar}
+          disabled={isFinalizandoFaturamento}
         >
-          <Save className="h-5 w-5" />
-          {isFinalizandoFaturamento ? "Salvando..." : "Salvar Tudo"}
+          {isFinalizandoFaturamento ? "Faturando..." : "Faturar"}
         </Button>
       </div>
 
