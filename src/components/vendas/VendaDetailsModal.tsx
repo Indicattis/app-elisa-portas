@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, MapPin, Calendar, DollarSign, FileText, Package, Phone, Mail, Percent, Receipt, TrendingUp } from "lucide-react";
+import { User, MapPin, Calendar, DollarSign, FileText, Package, Phone, Mail, Truck, Wrench } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -31,32 +31,13 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
     return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
   };
 
-  // Calcular total de descontos
-  const calculateTotalDiscount = () => {
-    const portas = venda.portas || [];
-    let totalDescontoValor = 0;
-    
-    portas.forEach((produto: any) => {
-      if (produto.tipo_desconto === 'valor') {
-        totalDescontoValor += produto.desconto_valor || 0;
-      } else if (produto.tipo_desconto === 'percentual') {
-        const valorProduto = produto.valor_produto || 0;
-        const desconto = (valorProduto * (produto.desconto_percentual || 0)) / 100;
-        totalDescontoValor += desconto;
-      }
-    });
-    
-    return totalDescontoValor;
-  };
-
-  const totalDesconto = calculateTotalDiscount();
-  const custosTotal = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
-  const receitaTotal = venda.valor_venda || 0;
-  const lucroBruto = receitaTotal - custosTotal;
-  const margemLucro = receitaTotal > 0 ? (lucroBruto / receitaTotal) * 100 : 0;
-
-  // Calcular valor sem frete
-  const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+  // Calcular valores da venda
+  const valorProdutos = (venda.portas || []).reduce((acc: number, p: any) => 
+    acc + (p.valor_produto || 0) + (p.valor_pintura || 0), 0
+  );
+  const valorInstalacao = venda.valor_instalacao || 0;
+  const valorFrete = venda.valor_frete || 0;
+  const valorTotal = venda.valor_venda || 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -66,35 +47,43 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
         </DialogHeader>
 
         {/* Resumo Financeiro Principal */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card className="border-2 border-primary">
             <CardContent className="pt-6">
               <div className="text-center">
+                <DollarSign className="w-8 h-8 mx-auto mb-2 text-primary" />
                 <p className="text-sm text-muted-foreground mb-1">Valor Total</p>
-                <p className="text-3xl font-bold text-primary">{formatCurrency(venda.valor_venda || 0)}</p>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(valorTotal)}</p>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="border-2 border-purple-500">
+          <Card className="border-2 border-blue-500">
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Custos Totais</p>
-                <p className="text-3xl font-bold text-purple-600">{formatCurrency(custosTotal)}</p>
+                <Package className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                <p className="text-sm text-muted-foreground mb-1">Produtos</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(valorProdutos)}</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-green-500">
+          <Card className="border-2 border-orange-500">
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Lucro Bruto</p>
-                <p className={`text-3xl font-bold ${lucroBruto > 0 ? "text-green-600" : "text-red-600"}`}>
-                  {formatCurrency(lucroBruto)}
-                </p>
-                <Badge variant={margemLucro > 20 ? "default" : margemLucro > 10 ? "secondary" : "destructive"} className="mt-2">
-                  Margem: {margemLucro.toFixed(1)}%
-                </Badge>
+                <Wrench className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+                <p className="text-sm text-muted-foreground mb-1">Instalação</p>
+                <p className="text-2xl font-bold text-orange-600">{formatCurrency(valorInstalacao)}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-purple-500">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <Truck className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                <p className="text-sm text-muted-foreground mb-1">Frete</p>
+                <p className="text-2xl font-bold text-purple-600">{formatCurrency(valorFrete)}</p>
               </div>
             </CardContent>
           </Card>
@@ -135,7 +124,7 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-3 border-t">
                       {produto.valor_produto > 0 && (
                         <div>
                           <p className="text-xs text-muted-foreground">Valor Produto</p>
@@ -148,16 +137,10 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
                           <p className="font-semibold">{formatCurrency(produto.valor_pintura)}</p>
                         </div>
                       )}
-                      {produto.custo_produto > 0 && (
+                      {produto.valor_instalacao > 0 && (
                         <div>
-                          <p className="text-xs text-muted-foreground">Custo Produto</p>
-                          <p className="font-semibold text-purple-600">{formatCurrency(produto.custo_produto)}</p>
-                        </div>
-                      )}
-                      {produto.custo_pintura > 0 && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Custo Pintura</p>
-                          <p className="font-semibold text-purple-600">{formatCurrency(produto.custo_pintura)}</p>
+                          <p className="text-xs text-muted-foreground">Valor Instalação</p>
+                          <p className="font-semibold">{formatCurrency(produto.valor_instalacao)}</p>
                         </div>
                       )}
                     </div>
