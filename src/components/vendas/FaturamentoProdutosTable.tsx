@@ -15,7 +15,7 @@ interface Produto {
   id: string;
   tipo_produto?: string;
   descricao: string;
-  medidas?: string;
+  tamanho?: string;
   desconto_percentual?: number;
   desconto_valor?: number;
   valor_instalacao?: number;
@@ -84,7 +84,7 @@ export function FaturamentoProdutosTable({
                   {produto.descricao}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {produto.medidas || "-"}
+                  {produto.tamanho || "-"}
                 </TableCell>
                 <TableCell className="text-right text-orange-600">
                   {desconto}
