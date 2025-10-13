@@ -17,7 +17,7 @@ export function FaturamentoProdutoCard({
   produto,
   onClick,
 }: FaturamentoProdutoCardProps) {
-  const isFaturado = (produto.lucro_item || 0) > 0;
+  const isFaturado = produto.lucro_item !== null && produto.lucro_item !== undefined;
 
   return (
     <Card
