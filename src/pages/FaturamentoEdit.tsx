@@ -7,7 +7,7 @@ import { DollarSign, TrendingUp, Percent, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
-import { FaturamentoProdutoCard } from "@/components/vendas/FaturamentoProdutoCard";
+import { FaturamentoProdutosTable } from "@/components/vendas/FaturamentoProdutosTable";
 
 interface Venda {
   id: string;
@@ -186,18 +186,14 @@ export default function FaturamentoEdit() {
         </Card>
       </div>
 
-      {/* Grid de Produtos */}
+      {/* Tabela de Produtos */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Produtos da Venda</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {produtos?.map((produto) => (
-            <FaturamentoProdutoCard
-              key={produto.id}
-              produto={produto}
-              onClick={() => setSelectedProduto(produto)}
-            />
-          ))}
-        </div>
+        <FaturamentoProdutosTable
+          produtos={produtos || []}
+          valorFrete={venda.valor_frete}
+          onEditLucro={(produto) => setSelectedProduto(produto)}
+        />
       </div>
 
       {/* Botões de Ação */}
