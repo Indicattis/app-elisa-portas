@@ -170,7 +170,7 @@ export const useProdutosVenda = (vendaId?: string) => {
     isDeleting: deleteProdutoMutation.isPending,
     updateLucroItem: updateLucroItemMutation.mutate,
     isUpdatingLucro: updateLucroItemMutation.isPending,
-    finalizarFaturamento: finalizarFaturamentoMutation.mutate,
+    finalizarFaturamento: finalizarFaturamentoMutation.mutateAsync,
     isFinalizandoFaturamento: finalizarFaturamentoMutation.isPending,
   };
 };

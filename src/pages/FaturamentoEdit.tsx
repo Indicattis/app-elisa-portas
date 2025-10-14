@@ -109,15 +109,23 @@ export default function FaturamentoEdit() {
     
     const produtosIds = produtos.map(p => p.id);
     
-    await finalizarFaturamento({
-      vendaId: venda.id,
-      custoTotal,
-      lucroTotal,
-      produtosIds,
-    });
-    
-    setShowConfirmDialog(false);
-    navigate('/dashboard/faturamento');
+    try {
+      await finalizarFaturamento({
+        vendaId: venda.id,
+        custoTotal,
+        lucroTotal,
+        produtosIds,
+      });
+      
+      setShowConfirmDialog(false);
+      
+      // Aguardar um pouco para garantir que as queries foram invalidadas
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      navigate('/dashboard/faturamento');
+    } catch (error) {
+      console.error('Erro ao finalizar faturamento:', error);
+    }
   };
 
   // Cálculos
