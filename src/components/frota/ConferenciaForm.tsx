@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
@@ -10,7 +9,7 @@ export interface ConferenciaFormData {
   km_atual: number;
   data_troca_oleo?: string;
   agua_conferida: boolean;
-  status: 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
+  observacoes?: string;
 }
 
 interface ConferenciaFormProps {
@@ -18,14 +17,16 @@ interface ConferenciaFormProps {
   onSubmit: (data: ConferenciaFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
+  initialDataTrocaOleo?: string;
 }
 
-export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting }: ConferenciaFormProps) {
+export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialDataTrocaOleo }: ConferenciaFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ConferenciaFormData>({
     defaultValues: {
       km_atual: 0,
       agua_conferida: false,
-      status: 'pronto'
+      data_troca_oleo: initialDataTrocaOleo || '',
+      observacoes: ''
     }
   });
 
@@ -79,22 +80,12 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting 
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Status do Veículo *</Label>
-          <Select
-            value={watch('status')}
-            onValueChange={(value) => setValue('status', value as any)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pronto">Pronto</SelectItem>
-              <SelectItem value="atencao">Atenção</SelectItem>
-              <SelectItem value="critico">Crítico</SelectItem>
-              <SelectItem value="mecanico">Mecânico</SelectItem>
-              <SelectItem value="em_uso">Em Uso</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="observacoes">Observações</Label>
+          <Input
+            id="observacoes"
+            {...register('observacoes')}
+            placeholder="Digite observações sobre a conferência"
+          />
         </div>
       </div>
 

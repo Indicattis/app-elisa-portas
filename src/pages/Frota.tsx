@@ -73,6 +73,7 @@ export default function Frota() {
                 <TableRow>
                   <TableHead>Foto</TableHead>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Placa</TableHead>
                   <TableHead>Modelo</TableHead>
                   <TableHead>Ano</TableHead>
                   <TableHead>Km Atual</TableHead>
@@ -104,6 +105,7 @@ export default function Frota() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{veiculo.nome}</TableCell>
+                    <TableCell>{(veiculo as any).placa || '-'}</TableCell>
                     <TableCell>{veiculo.modelo}</TableCell>
                     <TableCell>{veiculo.ano}</TableCell>
                     <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>

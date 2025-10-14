@@ -7,6 +7,7 @@ export interface Veiculo {
   id: string;
   nome: string;
   modelo: string;
+  placa?: string | null;
   ano: number;
   km_atual: number;
   data_troca_oleo: string | null;
@@ -22,6 +23,7 @@ export interface Veiculo {
 export interface VeiculoFormData {
   nome: string;
   modelo: string;
+  placa?: string;
   ano: number;
   km_atual: number;
   data_troca_oleo?: string;

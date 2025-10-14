@@ -20,6 +20,7 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<VeiculoFormData>({
     defaultValues: {
       nome: initialData?.nome || '',
+      placa: (initialData as any)?.placa || '',
       modelo: initialData?.modelo || '',
       ano: initialData?.ano || new Date().getFullYear(),
       km_atual: initialData?.km_atual || 0,
@@ -85,6 +86,15 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
             placeholder="Ex: Caminhão Azul"
           />
           {errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="placa">Placa</Label>
+          <Input
+            id="placa"
+            {...register('placa')}
+            placeholder="Ex: ABC-1234"
+          />
         </div>
 
         <div className="space-y-2">

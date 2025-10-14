@@ -56,7 +56,8 @@ export default function FrotaConferencia() {
       km_atual: data.km_atual,
       data_troca_oleo: data.data_troca_oleo,
       agua_conferida: data.agua_conferida,
-      status: data.status
+      observacoes: data.observacoes,
+      status: veiculo?.status || 'pronto'
     });
 
     navigate('/dashboard/instalacoes/frota');
@@ -186,6 +187,7 @@ export default function FrotaConferencia() {
             onSubmit={handleSubmitConferencia}
             onCancel={handleCancelPhoto}
             isSubmitting={isCreating || isUploading}
+            initialDataTrocaOleo={veiculo?.data_troca_oleo}
           />
         </CardContent>
       </Card>

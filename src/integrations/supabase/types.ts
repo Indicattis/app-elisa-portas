@@ -2511,6 +2511,7 @@ export type Database = {
           km_atual: number
           modelo: string
           nome: string
+          placa: string | null
           status: string
           updated_at: string
         }
@@ -2525,6 +2526,7 @@ export type Database = {
           km_atual?: number
           modelo: string
           nome: string
+          placa?: string | null
           status?: string
           updated_at?: string
         }
@@ -2539,6 +2541,7 @@ export type Database = {
           km_atual?: number
           modelo?: string
           nome?: string
+          placa?: string | null
           status?: string
           updated_at?: string
         }
@@ -2553,6 +2556,7 @@ export type Database = {
           foto_url: string
           id: string
           km_atual: number
+          observacoes: string | null
           status: string
           veiculo_id: string
         }
@@ -2564,6 +2568,7 @@ export type Database = {
           foto_url: string
           id?: string
           km_atual: number
+          observacoes?: string | null
           status: string
           veiculo_id: string
         }
@@ -2575,6 +2580,7 @@ export type Database = {
           foto_url?: string
           id?: string
           km_atual?: number
+          observacoes?: string | null
           status?: string
           veiculo_id?: string
         }
