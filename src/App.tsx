@@ -68,6 +68,11 @@ import Licenciados from "./pages/Licenciados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
 import ForcaVendas from "./pages/ForcaVendas";
 import DiarioBordo from "./pages/DiarioBordo";
+import Frota from "./pages/Frota";
+import FrotaNovo from "./pages/FrotaNovo";
+import FrotaEdit from "./pages/FrotaEdit";
+import FrotaConferencia from "./pages/FrotaConferencia";
+import FrotaConferenciasHistorico from "./pages/FrotaConferenciasHistorico";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -356,6 +361,56 @@ const App = () => (
                     <ProtectedRoute requirePermission="instalacoes">
                       <DashboardLayout>
                         <Instalacoes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/frota"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <Frota />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/frota/novo"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <FrotaNovo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/frota/:id/editar"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <FrotaEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/frota/conferencia"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <FrotaConferencia />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/frota/:id/conferencias"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <FrotaConferenciasHistorico />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

@@ -2499,6 +2499,95 @@ export type Database = {
         }
         Relationships: []
       }
+      veiculos: {
+        Row: {
+          ano: number
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          data_troca_oleo: string | null
+          foto_url: string | null
+          id: string
+          km_atual: number
+          modelo: string
+          nome: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_troca_oleo?: string | null
+          foto_url?: string | null
+          id?: string
+          km_atual?: number
+          modelo: string
+          nome: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_troca_oleo?: string | null
+          foto_url?: string | null
+          id?: string
+          km_atual?: number
+          modelo?: string
+          nome?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      veiculos_conferencias: {
+        Row: {
+          agua_conferida: boolean
+          conferido_por: string
+          created_at: string
+          data_troca_oleo: string | null
+          foto_url: string
+          id: string
+          km_atual: number
+          status: string
+          veiculo_id: string
+        }
+        Insert: {
+          agua_conferida?: boolean
+          conferido_por: string
+          created_at?: string
+          data_troca_oleo?: string | null
+          foto_url: string
+          id?: string
+          km_atual: number
+          status: string
+          veiculo_id: string
+        }
+        Update: {
+          agua_conferida?: boolean
+          conferido_por?: string
+          created_at?: string
+          data_troca_oleo?: string | null
+          foto_url?: string
+          id?: string
+          km_atual?: number
+          status?: string
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "veiculos_conferencias_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           atendente_id: string
