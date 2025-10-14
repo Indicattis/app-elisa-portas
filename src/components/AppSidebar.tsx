@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -105,7 +105,8 @@ export function AppSidebar() {
 
   const isActive = (path: string) => {
     if (path === '#') return false;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    // Comparação exata para evitar que itens pais fiquem ativos
+    return location.pathname === path;
   };
 
   const getIcon = (iconName: string | null) => {
@@ -179,10 +180,10 @@ export function AppSidebar() {
                                     className={!canAccess ? "opacity-50 cursor-not-allowed" : ""}
                                   >
                                     {canAccess ? (
-                                      <a href={subItem.href}>
+                                      <Link to={subItem.href}>
                                         <SubIcon className="h-4 w-4" />
                                         <span>{subItem.label}</span>
-                                      </a>
+                                      </Link>
                                     ) : (
                                       <div className="flex items-center gap-2 w-full">
                                         <SubIcon className="h-4 w-4" />
