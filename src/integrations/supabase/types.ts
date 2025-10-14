@@ -2556,6 +2556,7 @@ export type Database = {
           foto_url: string
           id: string
           km_atual: number
+          nivel_oleo_conferido: boolean
           observacoes: string | null
           status: string
           veiculo_id: string
@@ -2568,6 +2569,7 @@ export type Database = {
           foto_url: string
           id?: string
           km_atual: number
+          nivel_oleo_conferido?: boolean
           observacoes?: string | null
           status: string
           veiculo_id: string
@@ -2580,6 +2582,7 @@ export type Database = {
           foto_url?: string
           id?: string
           km_atual?: number
+          nivel_oleo_conferido?: boolean
           observacoes?: string | null
           status?: string
           veiculo_id?: string

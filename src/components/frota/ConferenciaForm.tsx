@@ -9,6 +9,7 @@ export interface ConferenciaFormData {
   km_atual: number;
   data_troca_oleo?: string;
   agua_conferida: boolean;
+  nivel_oleo_conferido: boolean;
   observacoes?: string;
 }
 
@@ -26,6 +27,7 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
     defaultValues: {
       km_atual: initialKmAtual || 0,
       agua_conferida: false,
+      nivel_oleo_conferido: false,
       data_troca_oleo: initialDataTrocaOleo || '',
       observacoes: ''
     }
@@ -77,6 +79,17 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
           />
           <Label htmlFor="agua_conferida" className="cursor-pointer">
             Água conferida
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="nivel_oleo_conferido"
+            checked={watch('nivel_oleo_conferido')}
+            onCheckedChange={(checked) => setValue('nivel_oleo_conferido', checked as boolean)}
+          />
+          <Label htmlFor="nivel_oleo_conferido" className="cursor-pointer">
+            Nível do óleo
           </Label>
         </div>
 
