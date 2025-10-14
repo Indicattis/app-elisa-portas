@@ -18,12 +18,13 @@ interface ConferenciaFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   initialDataTrocaOleo?: string;
+  initialKmAtual?: number;
 }
 
-export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialDataTrocaOleo }: ConferenciaFormProps) {
+export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialDataTrocaOleo, initialKmAtual }: ConferenciaFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ConferenciaFormData>({
     defaultValues: {
-      km_atual: 0,
+      km_atual: initialKmAtual || 0,
       agua_conferida: false,
       data_troca_oleo: initialDataTrocaOleo || '',
       observacoes: ''

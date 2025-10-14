@@ -188,6 +188,7 @@ export default function FrotaConferencia() {
             onCancel={handleCancelPhoto}
             isSubmitting={isCreating || isUploading}
             initialDataTrocaOleo={veiculo?.data_troca_oleo}
+            initialKmAtual={veiculo?.km_atual}
           />
         </CardContent>
       </Card>
