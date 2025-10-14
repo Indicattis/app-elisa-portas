@@ -28,10 +28,12 @@ export default function FrotaEdit() {
       foto_url = await uploadFoto({ file: data.foto, veiculo_id: id });
     }
 
+    const { foto, ...veiculoData } = data;
+
     await updateVeiculo({
       id,
       data: {
-        ...data,
+        ...veiculoData,
         foto_url
       }
     });

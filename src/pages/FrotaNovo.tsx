@@ -16,8 +16,10 @@ export default function FrotaNovo() {
       foto_url = await uploadFoto({ file: data.foto });
     }
 
+    const { foto, ...veiculoData } = data;
+
     await createVeiculo({
-      ...data,
+      ...veiculoData,
       foto_url
     });
 
