@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { UserRole, AppPermission, ROLE_LABELS } from '@/types/permissions';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ShieldAlert } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TabNode {
   id: string;
@@ -55,6 +57,7 @@ export function RolePermissionManager() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('atendente');
   const [selectedTabGroup, setSelectedTabGroup] = useState<'sidebar' | 'settings' | 'outros_paineis'>('sidebar');
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
 
   // Fetch all active tabs
   const { data: tabs = [] } = useQuery({
@@ -207,7 +210,7 @@ export function RolePermissionManager() {
           <Checkbox
             checked={selected}
             onCheckedChange={(checked) => handleTabToggle(node, checked)}
-            disabled={!hasAnyPermission || updatePermissions.isPending || isLoading}
+            disabled={!hasAnyPermission || updatePermissions.isPending || isLoading || !isAdmin}
           />
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -262,6 +265,15 @@ export function RolePermissionManager() {
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
+        {!isAdmin && (
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertDescription>
+              Apenas administradores podem modificar permissões de cargos. Você pode visualizar as permissões, mas não editá-las.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Role Selector */}
         <div>
           <label className="text-sm font-medium mb-2 block">Selecionar Cargo</label>
@@ -344,7 +356,7 @@ export function RolePermissionManager() {
                   permissions: rolePermissions.filter(p => !allCurrentPermissions.includes(p))
                 });
               }}
-              disabled={updatePermissions.isPending || !allCurrentPermissions.some(p => rolePermissions.includes(p))}
+              disabled={updatePermissions.isPending || !allCurrentPermissions.some(p => rolePermissions.includes(p)) || !isAdmin}
             >
               Remover Todas
             </Button>
@@ -356,7 +368,7 @@ export function RolePermissionManager() {
                   permissions: newPermissions
                 });
               }}
-              disabled={updatePermissions.isPending || allCurrentPermissions.every(p => rolePermissions.includes(p))}
+              disabled={updatePermissions.isPending || allCurrentPermissions.every(p => rolePermissions.includes(p)) || !isAdmin}
             >
               Conceder Todas
             </Button>
