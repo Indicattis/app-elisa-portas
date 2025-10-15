@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StorageMigration } from "@/components/StorageMigration";
-import { Settings, Palette, Users as UsersIcon, Shield } from "lucide-react";
+import { Settings, Palette, Users as UsersIcon, Shield, UserCog } from "lucide-react";
 import { useState } from "react";
 import Users from "@/pages/Users";
 import { RolePermissionManager } from "@/components/RolePermissionManager";
+import { RoleManager } from "@/components/RoleManager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +34,7 @@ export default function Configuracoes() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="aparencia" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
             Aparência
@@ -45,6 +46,10 @@ export default function Configuracoes() {
           <TabsTrigger value="permissoes" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Permissões
+          </TabsTrigger>
+          <TabsTrigger value="cargos" className="flex items-center gap-2">
+            <UserCog className="w-4 h-4" />
+            Cargos
           </TabsTrigger>
           <TabsTrigger value="sistema" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -71,6 +76,10 @@ export default function Configuracoes() {
 
         <TabsContent value="permissoes" className="space-y-6">
           <RolePermissionManager />
+        </TabsContent>
+
+        <TabsContent value="cargos" className="space-y-6">
+          <RoleManager />
         </TabsContent>
 
         <TabsContent value="sistema" className="space-y-6">

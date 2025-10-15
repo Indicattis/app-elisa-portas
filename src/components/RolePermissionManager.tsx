@@ -53,7 +53,7 @@ function buildTabTree(tabs: any[], tabGroup: string): TabNode[] {
 
 export function RolePermissionManager() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('atendente');
-  const [selectedTabGroup, setSelectedTabGroup] = useState<'sidebar' | 'settings'>('sidebar');
+  const [selectedTabGroup, setSelectedTabGroup] = useState<'sidebar' | 'settings' | 'outros_paineis'>('sidebar');
   const queryClient = useQueryClient();
 
   // Fetch all active tabs
@@ -280,10 +280,11 @@ export function RolePermissionManager() {
         </div>
 
         {/* Tab Group Selector */}
-        <Tabs value={selectedTabGroup} onValueChange={(v) => setSelectedTabGroup(v as 'sidebar' | 'settings')}>
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={selectedTabGroup} onValueChange={(v) => setSelectedTabGroup(v as 'sidebar' | 'settings' | 'outros_paineis')}>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="sidebar">Abas da Sidebar</TabsTrigger>
-            <TabsTrigger value="settings">Abas de Configurações</TabsTrigger>
+            <TabsTrigger value="settings">Configurações</TabsTrigger>
+            <TabsTrigger value="outros_paineis">Outros Painéis</TabsTrigger>
           </TabsList>
 
           <TabsContent value="sidebar" className="space-y-4 mt-4">
@@ -305,6 +306,20 @@ export function RolePermissionManager() {
               {tabTree.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Nenhuma aba encontrada para configurações
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {tabTree.map(node => renderTabNode(node))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="outros_paineis" className="space-y-4 mt-4">
+            <div className="border rounded-lg p-4 max-h-[500px] overflow-y-auto">
+              {tabTree.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Nenhuma aba encontrada para outros painéis
                 </p>
               ) : (
                 <div className="space-y-1">
