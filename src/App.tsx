@@ -78,6 +78,7 @@ import FrotaNovo from "./pages/FrotaNovo";
 import FrotaEdit from "./pages/FrotaEdit";
 import FrotaConferencia from "./pages/FrotaConferencia";
 import FrotaConferenciasHistorico from "./pages/FrotaConferenciasHistorico";
+import TabelaPrecos from "./pages/TabelaPrecos";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -276,6 +277,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <ForcaVendas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vendas/tabela-precos"
+                  element={
+                    <ProtectedRoute requirePermission="tabela_precos">
+                      <DashboardLayout>
+                        <TabelaPrecos />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

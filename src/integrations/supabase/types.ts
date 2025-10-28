@@ -2475,6 +2475,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tabela_precos_portas: {
+        Row: {
+          altura: number
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string
+          id: string
+          largura: number
+          updated_at: string
+          valor_instalacao: number
+          valor_pintura: number
+          valor_porta: number
+        }
+        Insert: {
+          altura: number
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao: string
+          id?: string
+          largura: number
+          updated_at?: string
+          valor_instalacao?: number
+          valor_pintura?: number
+          valor_porta?: number
+        }
+        Update: {
+          altura?: number
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          id?: string
+          largura?: number
+          updated_at?: string
+          valor_instalacao?: number
+          valor_pintura?: number
+          valor_porta?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -3056,6 +3098,7 @@ export type Database = {
         | "pedidos"
         | "canais_aquisicao"
         | "forca_vendas"
+        | "tabela_precos"
       autorizado_etapa:
         | "apresentacao_proposta"
         | "treinamentos_video"
@@ -3287,6 +3330,7 @@ export const Constants = {
         "pedidos",
         "canais_aquisicao",
         "forca_vendas",
+        "tabela_precos",
       ],
       autorizado_etapa: [
         "apresentacao_proposta",
