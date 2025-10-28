@@ -626,15 +626,15 @@ export default function MarketingAnalise() {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
       {/* Filters Section */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>Selecione os filtros para análise</CardDescription>
+          <CardTitle className="text-base sm:text-lg">Filtros</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Selecione os filtros para análise</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label>Período</Label>
               <Popover>
@@ -730,53 +730,53 @@ export default function MarketingAnalise() {
       </Card>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Investimento Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Investimento Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
               R$ {metrics.totalInvestimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Faturamento</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Faturamento</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
               R$ {metrics.totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">ROI</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">ROI</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold">
               {metrics.roi.toFixed(2)}%
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Taxa de Conversão</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold">
               {metrics.taxaConversao.toFixed(2)}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               {metrics.vendasConvertidas} de {metrics.totalLeads} leads
             </p>
           </CardContent>
@@ -784,25 +784,25 @@ export default function MarketingAnalise() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full">
+        <Card className="w-full">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Vendas por Público Alvo</CardTitle>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+              <CardTitle className="text-sm sm:text-base">Vendas por Público Alvo</CardTitle>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={chartMode === 'faturamento'}
                   onCheckedChange={(checked) => setChartMode(checked ? 'faturamento' : 'quantidade')}
                 />
-                <Label className="text-sm">
-                  {chartMode === 'quantidade' ? 'Quantidade' : 'Faturamento'}
+                <Label className="text-xs sm:text-sm whitespace-nowrap">
+                  {chartMode === 'quantidade' ? 'Qtd.' : 'Valor'}
                 </Label>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="w-full overflow-hidden">
             {publicoAlvoData && publicoAlvoData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                 <PieChart>
                   <Pie
                     data={publicoAlvoData}
@@ -811,10 +811,10 @@ export default function MarketingAnalise() {
                     labelLine={false}
                     label={(entry) => 
                       chartMode === 'quantidade' 
-                        ? `${entry.vendas} vendas`
-                        : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
+                        ? `${entry.vendas}`
+                        : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                     }
-                    outerRadius={80}
+                    outerRadius={60}
                     fill="#8884d8"
                     dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
                   >
@@ -830,25 +830,26 @@ export default function MarketingAnalise() {
                         return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, props.payload.name];
                       }
                     }}
+                    contentStyle={{ fontSize: '12px' }}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                Nenhum dado disponível para o período selecionado
+              <div className="flex items-center justify-center h-[250px] sm:h-[300px] text-muted-foreground text-xs sm:text-sm">
+                Nenhum dado disponível
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader>
-            <CardTitle>Vendas por Canal de Aquisição</CardTitle>
+            <CardTitle className="text-sm sm:text-base">Vendas por Canal de Aquisição</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="w-full overflow-hidden">
             {canalAquisicaoData && canalAquisicaoData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                 <PieChart>
                   <Pie
                     data={canalAquisicaoData}
@@ -857,10 +858,10 @@ export default function MarketingAnalise() {
                     labelLine={false}
                     label={(entry) => 
                       chartMode === 'quantidade' 
-                        ? `${entry.vendas} vendas`
-                        : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
+                        ? `${entry.vendas}`
+                        : `R$ ${entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                     }
-                    outerRadius={80}
+                    outerRadius={60}
                     fill="#8884d8"
                     dataKey={chartMode === 'quantidade' ? 'vendas' : 'value'}
                   >
@@ -876,13 +877,14 @@ export default function MarketingAnalise() {
                         return [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, props.payload.name];
                       }
                     }}
+                    contentStyle={{ fontSize: '12px' }}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                Nenhum dado disponível para o período selecionado
+              <div className="flex items-center justify-center h-[250px] sm:h-[300px] text-muted-foreground text-xs sm:text-sm">
+                Nenhum dado disponível
               </div>
             )}
           </CardContent>
@@ -890,91 +892,93 @@ export default function MarketingAnalise() {
       </div>
 
       {/* Region Performance Table */}
-      <Card>
+      <Card className="w-full overflow-hidden">
         <CardHeader>
-          <CardTitle>Performance por Região</CardTitle>
-          <CardDescription>Análise detalhada por estado</CardDescription>
+          <CardTitle className="text-base sm:text-lg">Performance por Região</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Análise detalhada por estado</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Região</TableHead>
-                <TableHead>Investimento</TableHead>
-                <TableHead>Faturamento</TableHead>
-                <TableHead>Vendas</TableHead>
-                <TableHead>Lucro</TableHead>
-                <TableHead>CAC</TableHead>
-                <TableHead>Ticket Médio</TableHead>
-                <TableHead>ROI</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {regionPerformanceData.map((region) => (
-                <TableRow key={region.regiao}>
-                  <TableCell className="font-medium">{region.regiao}</TableCell>
-                  <TableCell>
-                    R$ {region.investimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    R$ {region.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>{region.vendas}</TableCell>
-                  <TableCell className={region.lucro >= 0 ? 'text-green-600' : 'text-red-600'}>
-                    R$ {region.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    R$ {region.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    R$ {region.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell className={region.roi >= 0 ? 'text-green-600' : 'text-red-600'}>
-                    {region.roi.toFixed(2)}%
-                  </TableCell>
+        <CardContent className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
+          <div className="min-w-[800px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Região</TableHead>
+                  <TableHead className="text-xs">Investimento</TableHead>
+                  <TableHead className="text-xs">Faturamento</TableHead>
+                  <TableHead className="text-xs">Vendas</TableHead>
+                  <TableHead className="text-xs">Lucro</TableHead>
+                  <TableHead className="text-xs">CAC</TableHead>
+                  <TableHead className="text-xs">Ticket Médio</TableHead>
+                  <TableHead className="text-xs">ROI</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {regionPerformanceData.map((region) => (
+                  <TableRow key={region.regiao}>
+                    <TableCell className="font-medium text-xs sm:text-sm">{region.regiao}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      R$ {region.investimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      R$ {region.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm">{region.vendas}</TableCell>
+                    <TableCell className={cn("text-xs sm:text-sm", region.lucro >= 0 ? 'text-green-600' : 'text-red-600')}>
+                      R$ {region.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      R$ {region.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      R$ {region.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className={cn("text-xs sm:text-sm", region.roi >= 0 ? 'text-green-600' : 'text-red-600')}>
+                      {region.roi.toFixed(2)}%
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
       {/* Additional Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
+        <Card className="w-full">
           <CardHeader>
-            <CardTitle>CAC (Custo de Aquisição de Cliente)</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-sm sm:text-base">CAC (Custo de Aquisição)</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Custo médio por cliente adquirido
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold break-words">
               R$ {metrics.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader>
-            <CardTitle>Performance por Canal</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-sm sm:text-base">Performance por Canal</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Dados do período selecionado
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span>Total de Leads:</span>
                 <span className="font-medium">{metrics.totalLeads}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span>Vendas Convertidas:</span>
                 <span className="font-medium">{metrics.vendasConvertidas}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span>Ticket Médio:</span>
-                <span className="font-medium">
+                <span className="font-medium break-words">
                   R$ {metrics.vendasConvertidas > 0 ? 
                     (metrics.totalVendas / metrics.vendasConvertidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : 
                     '0,00'}
@@ -986,30 +990,33 @@ export default function MarketingAnalise() {
       </div>
 
       {/* Investment History with Add/Edit Dialog */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="w-full overflow-hidden">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div>
-            <CardTitle>Histórico de Investimentos</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-base sm:text-lg">Histórico de Investimentos</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Últimos investimentos registrados
             </CardDescription>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => {
-                setEditingInvestimento(null);
-                setNewInvestment({
-                  mes: format(new Date(), "yyyy-MM"),
-                  regiao: "",
-                  investimento_google_ads: 0,
-                  investimento_meta_ads: 0,
-                  investimento_linkedin_ads: 0,
-                  outros_investimentos: 0,
-                  observacoes: ""
-                });
-              }}>
+              <Button 
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setEditingInvestimento(null);
+                  setNewInvestment({
+                    mes: format(new Date(), "yyyy-MM"),
+                    regiao: "",
+                    investimento_google_ads: 0,
+                    investimento_meta_ads: 0,
+                    investimento_linkedin_ads: 0,
+                    outros_investimentos: 0,
+                    observacoes: ""
+                  });
+                }}>
                 <Plus className="h-4 w-4 mr-2" />
-                Adicionar Investimento
+                Adicionar
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -1121,23 +1128,23 @@ export default function MarketingAnalise() {
           </Dialog>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {investimentos.slice(0, 10).map((investimento) => (
-              <div key={investimento.id} className="flex items-center justify-between border-b pb-2">
-                <div>
-                  <p className="font-medium">
+              <div key={investimento.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm sm:text-base truncate">
                     {format(new Date(investimento.mes), "MMMM 'de' yyyy", { locale: ptBR })}
                   </p>
                   {investimento.regiao && (
-                    <p className="text-sm text-muted-foreground">{investimento.regiao}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{investimento.regiao}</p>
                   )}
                   {investimento.observacoes && (
-                    <p className="text-sm text-muted-foreground">{investimento.observacoes}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{investimento.observacoes}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="font-medium">
+                <div className="flex items-center gap-2 justify-between sm:justify-end">
+                  <div className="text-left sm:text-right min-w-0 flex-1 sm:flex-initial">
+                    <p className="font-medium text-sm sm:text-base break-words">
                       R$ {(
                         Number(investimento.investimento_google_ads) +
                         Number(investimento.investimento_meta_ads) +
@@ -1145,24 +1152,25 @@ export default function MarketingAnalise() {
                         Number(investimento.outros_investimentos)
                       ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
-                    <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5">
                       {Number(investimento.investimento_google_ads) > 0 && (
-                        <div>Google: R$ {Number(investimento.investimento_google_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="truncate">Google: R$ {Number(investimento.investimento_google_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       )}
                       {Number(investimento.investimento_meta_ads) > 0 && (
-                        <div>Meta: R$ {Number(investimento.investimento_meta_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="truncate">Meta: R$ {Number(investimento.investimento_meta_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       )}
                       {Number(investimento.investimento_linkedin_ads) > 0 && (
-                        <div>LinkedIn: R$ {Number(investimento.investimento_linkedin_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="truncate">LinkedIn: R$ {Number(investimento.investimento_linkedin_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       )}
                       {Number(investimento.outros_investimentos) > 0 && (
-                        <div>Outros: R$ {Number(investimento.outros_investimentos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="truncate">Outros: R$ {Number(investimento.outros_investimentos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       )}
                     </div>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="sm"
+                    className="shrink-0"
                     onClick={() => handleEdit(investimento)}
                   >
                     <Edit className="h-4 w-4" />
