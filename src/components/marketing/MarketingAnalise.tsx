@@ -35,10 +35,8 @@ interface MarketingInvestment {
 interface MarketingMetrics {
   totalInvestimento: number;
   totalVendas: number;
-  roi: number;
-  cac: number;
-  taxaConversao: number;
-  totalLeads: number;
+  roi: number | null;
+  cac: number | null;
   vendasConvertidas: number;
 }
 
@@ -75,13 +73,12 @@ export default function MarketingAnalise() {
   const [selectedRegiao, setSelectedRegiao] = useState<string>("all");
   const [selectedCanalAquisicao, setSelectedCanalAquisicao] = useState<string>("all");
   const [investimentos, setInvestimentos] = useState<MarketingInvestment[]>([]);
+  const [investimentosHistorico, setInvestimentosHistorico] = useState<MarketingInvestment[]>([]);
   const [metrics, setMetrics] = useState<MarketingMetrics>({
     totalInvestimento: 0,
     totalVendas: 0,
-    roi: 0,
-    cac: 0,
-    taxaConversao: 0,
-    totalLeads: 0,
+    roi: null,
+    cac: null,
     vendasConvertidas: 0
   });
   const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
@@ -147,9 +144,8 @@ export default function MarketingAnalise() {
       
       if (error) throw error;
       
-      // Filtrar manualmente para evitar erro de tipos profundos
+      // Filtrar manualmente para evitar erro de tipos profundos (TODAS as vendas, independente de custo_total)
       return (data || []).filter((v: any) => 
-        v.custo_total !== null && v.custo_total > 0 &&
         v.data_venda >= startDate &&
         v.data_venda <= endDate
       );
@@ -159,30 +155,12 @@ export default function MarketingAnalise() {
     }
   };
 
-  const fetchLeadsData = async (startDate: string, endDate: string): Promise<any[]> => {
-    try {
-      const { data, error } = await supabase
-        .from("elisaportas_leads")
-        .select("id, atendente_id, endereco_estado, novo_status, canal_aquisicao_id, created_at");
-      
-      if (error) throw error;
-      
-      // Filtrar manualmente para evitar erro de tipos profundos
-      return (data || []).filter((l: any) =>
-        l.created_at >= startDate &&
-        l.created_at <= endDate
-      );
-    } catch (error) {
-      console.error("Erro ao buscar leads:", error);
-      return [];
-    }
-  };
-
   const fetchData = async () => {
     setLoading(true);
     try {
       await Promise.all([
         fetchInvestimentos(),
+        fetchInvestimentosHistorico(),
         fetchVendedores(),
         fetchRegioes(),
         fetchMetrics(),
@@ -224,6 +202,25 @@ export default function MarketingAnalise() {
       setInvestimentos(data || []);
     } catch (error) {
       console.error("Erro ao buscar investimentos:", error);
+    }
+  };
+
+  const fetchInvestimentosHistorico = async () => {
+    try {
+      const { data, error }: any = await supabase
+        .from("marketing_investimentos")
+        .select("*")
+        .order("mes", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error("Erro ao buscar histórico de investimentos:", error);
+        return;
+      }
+      
+      setInvestimentosHistorico(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar histórico de investimentos:", error);
     }
   };
 
@@ -316,38 +313,18 @@ export default function MarketingAnalise() {
       vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
     }
 
-    // Buscar leads usando helper
-    const allLeads = await fetchLeadsData(startDate, endDate);
-
-    // Aplicar filtros aos leads
-    let leadsData = allLeads;
-    
-    if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-      leadsData = leadsData.filter((lead: any) => lead.canal_aquisicao_id === selectedCanalAquisicao);
-    }
-    
-    if (selectedVendedor && selectedVendedor !== "all") {
-      leadsData = leadsData.filter((lead: any) => lead.atendente_id === selectedVendedor);
-    }
-    
-    if (selectedRegiao && selectedRegiao !== "all") {
-      leadsData = leadsData.filter((lead: any) => lead.endereco_estado === selectedRegiao);
-    }
-
     const totalVendas = vendasData?.reduce((sum: number, venda: any) => sum + Number(venda.valor_venda), 0) || 0;
-    const totalLeads = leadsData?.length || 0;
     const vendasConvertidas = vendasData?.length || 0;
-    const taxaConversao = totalLeads > 0 ? (vendasConvertidas / totalLeads) * 100 : 0;
-    const roi = totalInvestimento > 0 ? ((totalVendas - totalInvestimento) / totalInvestimento) * 100 : 0;
-    const cac = vendasConvertidas > 0 ? totalInvestimento / vendasConvertidas : 0;
+    
+    // ROI e CAC só são calculados quando há investimentos no período
+    const roi = totalInvestimento > 0 ? ((totalVendas - totalInvestimento) / totalInvestimento) * 100 : null;
+    const cac = (totalInvestimento > 0 && vendasConvertidas > 0) ? totalInvestimento / vendasConvertidas : null;
 
     setMetrics({
       totalInvestimento,
       totalVendas,
       roi,
       cac,
-      taxaConversao,
-      totalLeads,
       vendasConvertidas
     });
   };
@@ -371,9 +348,8 @@ export default function MarketingAnalise() {
 
       if (error) throw error;
 
-      // Filtrar manualmente para evitar erro de tipos profundos
+      // Filtrar manualmente para evitar erro de tipos profundos (TODAS as vendas)
       let vendasData = (allVendas || []).filter((v: any) => 
-        v.custo_total !== null && v.custo_total > 0 &&
         v.data_venda >= startDate &&
         v.data_venda <= endDate
       );
@@ -446,9 +422,8 @@ export default function MarketingAnalise() {
 
       if (vendasError) throw vendasError;
 
-      // Filtrar manualmente para evitar erro de tipos profundos
+      // Filtrar manualmente para evitar erro de tipos profundos (TODAS as vendas)
       let vendasData = (allVendas || []).filter((v: any) => 
-        v.custo_total !== null && v.custo_total > 0 &&
         v.data_venda >= startDate &&
         v.data_venda <= endDate &&
         v.estado !== null
@@ -523,7 +498,8 @@ export default function MarketingAnalise() {
       });
 
       regionMap.forEach((data, regiao) => {
-        data.cac = data.vendas > 0 ? data.investimento / data.vendas : 0;
+        // CAC e ROI só calculados quando há investimento
+        data.cac = (data.investimento > 0 && data.vendas > 0) ? data.investimento / data.vendas : 0;
         data.ticketMedio = data.vendas > 0 ? data.faturamento / data.vendas : 0;
         data.roi = data.investimento > 0 ? ((data.faturamento - data.investimento) / data.investimento) * 100 : 0;
       });
@@ -558,6 +534,7 @@ export default function MarketingAnalise() {
 
       setDialogOpen(false);
       fetchInvestimentos();
+      fetchInvestimentosHistorico();
       fetchMetrics();
       setNewInvestment({
         mes: format(new Date(), "yyyy-MM"),
@@ -604,6 +581,7 @@ export default function MarketingAnalise() {
       setDialogOpen(false);
       setEditingInvestimento(null);
       fetchInvestimentos();
+      fetchInvestimentosHistorico();
       fetchMetrics();
     } catch (error) {
       console.error("Erro ao atualizar investimento:", error);
@@ -747,23 +725,30 @@ export default function MarketingAnalise() {
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl md:text-2xl font-bold">
-              {metrics.roi.toFixed(2)}%
+              {metrics.roi !== null ? `${metrics.roi.toFixed(2)}%` : "N/A"}
             </div>
+            {metrics.roi === null && (
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                Cadastre investimentos para visualizar
+              </p>
+            )}
           </CardContent>
         </Card>
 
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Taxa de Conversão</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+            <CardTitle className="text-xs sm:text-sm font-medium">CAC</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl md:text-2xl font-bold">
-              {metrics.taxaConversao.toFixed(2)}%
+              {metrics.cac !== null ? `R$ ${metrics.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "N/A"}
             </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">
-              {metrics.vendasConvertidas} de {metrics.totalLeads} leads
-            </p>
+            {metrics.cac === null && (
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                Cadastre investimentos para visualizar
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -910,15 +895,15 @@ export default function MarketingAnalise() {
                     <TableCell className={cn("text-xs sm:text-sm hidden sm:table-cell", region.lucro >= 0 ? 'text-green-600' : 'text-red-600')}>
                       R$ {region.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
-                      R$ {region.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
+                     <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
+                       {region.cac > 0 ? `R$ ${region.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "-"}
+                     </TableCell>
                     <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
                       R$ {region.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className={cn("text-xs sm:text-sm hidden sm:table-cell", region.roi >= 0 ? 'text-green-600' : 'text-red-600')}>
-                      {region.roi.toFixed(2)}%
-                    </TableCell>
+                     <TableCell className={cn("text-xs sm:text-sm hidden sm:table-cell", region.roi >= 0 ? 'text-green-600' : 'text-red-600')}>
+                       {region.investimento > 0 ? `${region.roi.toFixed(2)}%` : "-"}
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -926,51 +911,39 @@ export default function MarketingAnalise() {
         </CardContent>
       </Card>
 
-      {/* Additional Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="text-sm sm:text-base">CAC (Custo de Aquisição)</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Custo médio por cliente adquirido
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold break-words">
-              R$ {metrics.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+      {/* Additional Metrics Card */}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-sm sm:text-base">Resumo de Vendas</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            Dados do período selecionado
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs sm:text-sm">
+              <span>Vendas Realizadas:</span>
+              <span className="font-medium">{metrics.vendasConvertidas}</span>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="text-sm sm:text-base">Performance por Canal</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Dados do período selecionado
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+            <div className="flex justify-between text-xs sm:text-sm">
+              <span>Ticket Médio:</span>
+              <span className="font-medium break-words">
+                R$ {metrics.vendasConvertidas > 0 ? 
+                  (metrics.totalVendas / metrics.vendasConvertidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : 
+                  '0,00'}
+              </span>
+            </div>
+            {metrics.cac !== null && (
               <div className="flex justify-between text-xs sm:text-sm">
-                <span>Total de Leads:</span>
-                <span className="font-medium">{metrics.totalLeads}</span>
-              </div>
-              <div className="flex justify-between text-xs sm:text-sm">
-                <span>Vendas Convertidas:</span>
-                <span className="font-medium">{metrics.vendasConvertidas}</span>
-              </div>
-              <div className="flex justify-between text-xs sm:text-sm">
-                <span>Ticket Médio:</span>
+                <span>CAC Médio:</span>
                 <span className="font-medium break-words">
-                  R$ {metrics.vendasConvertidas > 0 ? 
-                    (metrics.totalVendas / metrics.vendasConvertidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : 
-                    '0,00'}
+                  R$ {metrics.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Investment History with Add/Edit Dialog */}
       <Card className="w-full overflow-hidden">
@@ -1112,7 +1085,7 @@ export default function MarketingAnalise() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {investimentos.slice(0, 10).map((investimento) => {
+            {investimentosHistorico.map((investimento) => {
               const totalInvestimento = 
                 Number(investimento.investimento_google_ads) +
                 Number(investimento.investimento_meta_ads) +
