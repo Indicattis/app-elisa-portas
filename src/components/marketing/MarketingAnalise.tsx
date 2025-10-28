@@ -629,102 +629,87 @@ export default function MarketingAnalise() {
     <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
       {/* Filters Section */}
       <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Filtros</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">Selecione os filtros para análise</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="space-y-2">
-              <Label>Período</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dateRange && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+        <CardContent className="p-2 sm:p-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal h-8 sm:h-9 text-xs sm:text-sm px-2",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-1 h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="truncate">
                     {dateRange?.from ? (
                       dateRange.to ? (
                         <>
-                          {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                          {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                          {format(dateRange.from, "dd/MM/yy", { locale: ptBR })} - {format(dateRange.to, "dd/MM/yy", { locale: ptBR })}
                         </>
                       ) : (
-                        format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                        format(dateRange.from, "dd/MM/yy", { locale: ptBR })
                       )
                     ) : (
-                      <span>Selecione o período</span>
+                      "Período"
                     )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={dateRange?.from}
-                    selected={dateRange}
-                    onSelect={setDateRange}
-                    numberOfMonths={2}
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
 
-            <div className="space-y-2">
-              <Label>Vendedor</Label>
-              <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {vendedores.map((vendedor) => (
-                    <SelectItem key={vendedor.id} value={vendedor.id}>
-                      {vendedor.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
+              <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {vendedores.map((vendedor) => (
+                  <SelectItem key={vendedor.id} value={vendedor.id}>
+                    {vendedor.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <div className="space-y-2">
-              <Label>Região</Label>
-              <Select value={selectedRegiao} onValueChange={setSelectedRegiao}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {regioes.map((regiao) => (
-                    <SelectItem key={regiao} value={regiao}>
-                      {regiao}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={selectedRegiao} onValueChange={setSelectedRegiao}>
+              <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                <SelectValue placeholder="Região" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {regioes.map((regiao) => (
+                  <SelectItem key={regiao} value={regiao}>
+                    {regiao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <div className="space-y-2">
-              <Label>Canal de Aquisição</Label>
-              <Select value={selectedCanalAquisicao} onValueChange={setSelectedCanalAquisicao}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {canais.map((canal) => (
-                    <SelectItem key={canal.id} value={canal.id}>
-                      {canal.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={selectedCanalAquisicao} onValueChange={setSelectedCanalAquisicao}>
+              <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                <SelectValue placeholder="Canal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {canais.map((canal) => (
+                  <SelectItem key={canal.id} value={canal.id}>
+                    {canal.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
