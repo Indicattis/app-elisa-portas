@@ -14,7 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy, TrendingUp, FileText, X, Edit, DoorClosed, Home } from 'lucide-react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
@@ -180,125 +182,128 @@ export default function Vendas() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Vendas</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => navigate('/dashboard/vendas/forca-vendas')} variant="outline">
-            <Trophy className="w-4 h-4 mr-2" />
-            Força de Vendas
+    <div className="container mx-auto py-3 px-3 sm:p-6 space-y-3 sm:space-y-6 max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Vendas</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Gerencie suas vendas e faturamentos</p>
+          </div>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => navigate('/dashboard/vendas/forca-vendas')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline ml-2">Força</span>
           </Button>
-          <Button onClick={handleExportarPDF} variant="outline">
-            <FileDown className="w-4 h-4 mr-2" />
-            Exportar Relatório PDF
+          <Button variant="outline" onClick={handleExportarPDF} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline ml-2">PDF</span>
           </Button>
-          <Button onClick={() => navigate('/dashboard/vendas/nova')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Venda
+          <Button onClick={() => navigate('/dashboard/vendas/nova')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline ml-2">Nova</span>
           </Button>
         </div>
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Vendas</CardTitle>
+            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalVendas}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{stats.totalVendas}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Valor</CardTitle>
+            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalValor)}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-base sm:text-2xl font-bold">{formatCurrency(stats.totalValor)}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Itens</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Itens</CardTitle>
+            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProdutos}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{stats.totalProdutos}</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Vendas</CardTitle>
+      <Card className="max-w-full">
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="text-sm sm:text-base">Filtros</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4 space-y-4">
-            {/* Filtros Avançados */}
-            <div className="space-y-4">
-              {/* Linha 1: Período, Atendente, Ordenação */}
-              <div className="flex flex-wrap gap-4">
-                {/* Seletor de Período */}
-                <div className="flex items-center gap-2">
-                  <Label>Período:</Label>
+        <CardContent className="p-3 sm:p-6 pt-0">
+          <div className="space-y-3">
+            {/* Busca */}
+            <div className="relative w-full">
+              <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3 sm:w-4 sm:h-4" />
+              <Input
+                placeholder="Buscar por cliente, telefone, cidade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 sm:pl-10 h-8 sm:h-10 text-xs sm:text-sm w-full"
+              />
+            </div>
+            
+            {/* Filtros em scroll horizontal */}
+            <ScrollArea className="w-full">
+              <div className="flex gap-2 sm:gap-4 pb-2 min-w-max">
+                <div className="flex flex-col gap-1 w-36 sm:w-64">
+                  <label className="text-xs sm:text-sm font-medium">Período</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className={cn(
-                          "w-64 justify-start text-left font-normal",
-                          !dateRange && "text-muted-foreground"
-                        )}
+                        className="w-full h-8 sm:h-10 justify-start text-left font-normal text-xs sm:text-sm"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                         {dateRange?.from ? (
                           dateRange.to ? (
                             <>
-                              {format(dateRange.from, "dd/MM/yyyy")} -{" "}
-                              {format(dateRange.to, "dd/MM/yyyy")}
+                              {format(dateRange.from, "dd/MM", { locale: ptBR })} -{" "}
+                              {format(dateRange.to, "dd/MM", { locale: ptBR })}
                             </>
                           ) : (
-                            format(dateRange.from, "dd/MM/yyyy")
+                            format(dateRange.from, "dd/MM/yy", { locale: ptBR })
                           )
                         ) : (
-                          <span>Selecione um período</span>
+                          <span>Período</span>
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
                       <Calendar
                         initialFocus
                         mode="range"
                         defaultMonth={dateRange?.from}
                         selected={dateRange}
                         onSelect={setDateRange}
-                        numberOfMonths={2}
+                        numberOfMonths={1}
+                        locale={ptBR}
                       />
                     </PopoverContent>
                   </Popover>
-                  {dateRange && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDateRange(undefined)}
-                    >
-                      Limpar
-                    </Button>
-                  )}
                 </div>
 
-                {/* Filtro por Atendente */}
-                <div className="flex items-center gap-2">
-                  <Label>Vendedor:</Label>
+                <div className="flex flex-col gap-1 w-32 sm:w-48">
+                  <label className="text-xs sm:text-sm font-medium">Vendedor</label>
                   <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm z-50 bg-background">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos os vendedores</SelectItem>
-                      {atendentes.map(atendente => (
+                    <SelectContent className="z-50 bg-background">
+                      <SelectItem value="todos">Todos</SelectItem>
+                      {atendentes.map((atendente) => (
                         <SelectItem key={atendente.user_id} value={atendente.user_id}>
                           {atendente.nome}
                         </SelectItem>
@@ -307,198 +312,257 @@ export default function Vendas() {
                   </Select>
                 </div>
 
-                {/* Ordenação por Valor */}
-                <div className="flex items-center gap-2">
-                  <Label>Ordenar por valor:</Label>
+                <div className="flex flex-col gap-1 w-32 sm:w-40">
+                  <label className="text-xs sm:text-sm font-medium">Ordenar</label>
                   <Select value={sortByValue} onValueChange={(v) => setSortByValue(v as any)}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm z-50 bg-background">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Padrão (data)</SelectItem>
-                      <SelectItem value="desc">Maior valor</SelectItem>
-                      <SelectItem value="asc">Menor valor</SelectItem>
+                    <SelectContent className="z-50 bg-background">
+                      <SelectItem value="none">Data</SelectItem>
+                      <SelectItem value="desc">Maior</SelectItem>
+                      <SelectItem value="asc">Menor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Filtro Previsão de Entrega */}
-                <div className="flex items-center gap-2">
-                  <Label>Previsão Entrega:</Label>
+                <div className="flex flex-col gap-1 w-36 sm:w-64">
+                  <label className="text-xs sm:text-sm font-medium">Previsão</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className={cn(
-                          "w-64 justify-start text-left font-normal",
-                          !filterPrevisaoEntrega && "text-muted-foreground"
-                        )}
+                        className="w-full h-8 sm:h-10 justify-start text-left font-normal text-xs sm:text-sm"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                         {filterPrevisaoEntrega?.from ? (
                           filterPrevisaoEntrega.to ? (
                             <>
-                              {format(filterPrevisaoEntrega.from, "dd/MM/yyyy")} -{" "}
-                              {format(filterPrevisaoEntrega.to, "dd/MM/yyyy")}
+                              {format(filterPrevisaoEntrega.from, "dd/MM", { locale: ptBR })} -{" "}
+                              {format(filterPrevisaoEntrega.to, "dd/MM", { locale: ptBR })}
                             </>
                           ) : (
-                            format(filterPrevisaoEntrega.from, "dd/MM/yyyy")
+                            format(filterPrevisaoEntrega.from, "dd/MM/yy", { locale: ptBR })
                           )
                         ) : (
-                          <span>Filtrar por previsão</span>
+                          <span>Previsão</span>
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
                       <Calendar
                         initialFocus
                         mode="range"
                         selected={filterPrevisaoEntrega}
                         onSelect={setFilterPrevisaoEntrega}
-                        numberOfMonths={2}
+                        numberOfMonths={1}
+                        locale={ptBR}
                       />
                     </PopoverContent>
                   </Popover>
-                  {filterPrevisaoEntrega && (
+                </div>
+
+                {(dateRange?.from || selectedAtendente !== "todos" || sortByValue !== "none" || filterPrevisaoEntrega?.from) && (
+                  <div className="flex items-end">
                     <Button
                       variant="ghost"
-                      size="sm"
-                      onClick={() => setFilterPrevisaoEntrega(undefined)}
+                      onClick={() => {
+                        setDateRange(undefined);
+                        setSelectedAtendente("todos");
+                        setSortByValue("none");
+                        setFilterPrevisaoEntrega(undefined);
+                      }}
+                      className="h-8 sm:h-10 text-xs sm:text-sm"
                     >
+                      <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Limpar
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-
-
-              {/* Busca */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Buscar por cliente, telefone, cidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="rounded-md border">
-            <Table>
+      <Card className="max-w-full overflow-hidden">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Cidade/Estado</TableHead>
-                  <TableHead>Previsão Entrega</TableHead>
-                  <TableHead>Produtos</TableHead>
-                  <TableHead className="text-center">Nota Fiscal</TableHead>
-                  <TableHead className="text-right">Valor Total</TableHead>
-                  <TableHead className="text-right">Valor Total c/ Frete</TableHead>
-                  <TableHead>Atendente</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Cliente</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-right">Valor/Ações</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Data</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Telefone</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cidade/Estado</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Previsão</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Produtos</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">NF</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Valor Total</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Com Frete</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Atendente</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredVendas?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={12} className="text-center py-8 text-xs sm:text-sm text-muted-foreground">
                       Nenhuma venda encontrada
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredVendas?.map((venda) => (
-                    <TableRow key={venda.id}>
-                      <TableCell>
-                        {format(new Date(venda.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="font-medium">{venda.cliente_nome}</TableCell>
-                      <TableCell>{venda.cliente_telefone}</TableCell>
-                      <TableCell>{venda.cidade}/{venda.estado}</TableCell>
-                      <TableCell>
-                        {venda.data_prevista_entrega 
-                          ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <ProductIconsSummary venda={venda} />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {venda.nota_fiscal ? (
-                          <span className="text-green-600 font-medium">Sim</span>
-                        ) : (
-                          <span className="text-muted-foreground">Não</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatCurrency((venda.valor_venda || 0) - (venda.valor_frete || 0))}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatCurrency(venda.valor_venda || 0)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={venda.atendente?.foto_perfil_url || ''} alt={venda.atendente?.nome || 'Atendente'} />
-                            <AvatarFallback>
-                              {venda.atendente?.nome?.charAt(0) || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">{venda.atendente?.nome || 'N/A'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedVenda(venda);
-                              setDetailsModalOpen(true);
-                            }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          {(isAdmin || venda.atendente_id === userRole?.user_id) && (
+                  filteredVendas?.map((venda) => {
+                    const canEdit = isAdmin || venda.atendente_id === userRole?.user_id;
+                    
+                    return (
+                      <TableRow key={venda.id}>
+                        {/* Mobile: Coluna 1 - Cliente + Info */}
+                        <TableCell className="py-2 px-2 sm:py-4 sm:px-4 md:hidden">
+                          <div className="space-y-1">
+                            <div className="font-medium text-xs truncate max-w-[150px]">{venda.cliente_nome}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {format(new Date(venda.data_venda), "dd/MM/yy", { locale: ptBR })}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                              {venda.cidade}/{venda.estado}
+                            </div>
+                            <div className="flex items-center gap-1 mt-1">
+                              <ProductIconsSummary venda={venda} />
+                              {venda.atendente && (
+                                <Avatar className="h-4 w-4 ml-1">
+                                  <AvatarImage src={venda.atendente?.foto_perfil_url || ''} />
+                                  <AvatarFallback className="text-[8px]">
+                                    {venda.atendente?.nome?.charAt(0) || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        {/* Mobile: Coluna 2 - Valor + Ações */}
+                        <TableCell className="py-2 px-2 sm:py-4 sm:px-4 md:hidden text-right">
+                          <div className="space-y-1">
+                            <div className="font-bold text-xs">{formatCurrency(venda.valor_venda || 0)}</div>
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedVenda(venda);
+                                  setDetailsModalOpen(true);
+                                }}
+                                className="h-7 w-7"
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              {canEdit && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                                  className="h-7 w-7"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        {/* Desktop: Todas as colunas */}
+                        <TableCell className="hidden md:table-cell text-sm">
+                          {format(new Date(venda.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm font-medium">{venda.cliente_nome}</TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">{venda.cliente_telefone}</TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">{venda.cidade}/{venda.estado}</TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">
+                          {venda.data_prevista_entrega 
+                            ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
+                            : '-'
+                          }
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <ProductIconsSummary venda={venda} />
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-center">
+                          {venda.nota_fiscal ? (
+                            <Badge variant="default" className="text-xs">Sim</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">Não</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm font-semibold text-right">
+                          {formatCurrency((venda.valor_venda || 0) - (venda.valor_frete || 0))}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm font-bold text-right">
+                          {formatCurrency(venda.valor_venda || 0)}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={venda.atendente?.foto_perfil_url || ''} alt={venda.atendente?.nome || 'Atendente'} />
+                              <AvatarFallback className="text-xs">
+                                {venda.atendente?.nome?.charAt(0) || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">{venda.atendente?.nome || 'N/A'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right">
+                          <div className="flex justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                              onClick={() => {
+                                setSelectedVenda(venda);
+                                setDetailsModalOpen(true);
+                              }}
                             >
-                              <Pencil className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </Button>
-                          )}
-                          {isAdmin && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteVenda(venda.id)}>
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {isAdmin && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => deleteVenda(venda.id)}>
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
