@@ -140,7 +140,7 @@ export default function MarketingAnalise() {
     try {
       const { data, error } = await supabase
         .from("vendas")
-        .select("valor_venda, custo_total, atendente_id, estado, canal_aquisicao_id, data_venda");
+        .select("valor_venda, valor_frete, custo_total, atendente_id, estado, canal_aquisicao_id, data_venda");
       
       if (error) throw error;
       
@@ -313,7 +313,7 @@ export default function MarketingAnalise() {
       vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
     }
 
-    const totalVendas = vendasData?.reduce((sum: number, venda: any) => sum + Number(venda.valor_venda), 0) || 0;
+    const totalVendas = vendasData?.reduce((sum: number, venda: any) => sum + (Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0)), 0) || 0;
     const vendasConvertidas = vendasData?.length || 0;
     
     // ROI e CAC só são calculados quando há investimentos no período
@@ -339,7 +339,7 @@ export default function MarketingAnalise() {
       const { data: allVendas, error } = await supabase
         .from("vendas")
         .select(`
-          valor_venda, publico_alvo, canal_aquisicao_id, atendente_id, estado, data_venda, custo_total,
+          valor_venda, valor_frete, publico_alvo, canal_aquisicao_id, atendente_id, estado, data_venda, custo_total,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -373,7 +373,7 @@ export default function MarketingAnalise() {
           const publico = venda.publico_alvo || 'Não informado';
           const current = publicoAlvoMap.get(publico) || { value: 0, vendas: 0 };
           publicoAlvoMap.set(publico, {
-            value: current.value + venda.valor_venda,
+            value: current.value + (Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0)),
             vendas: current.vendas + 1
           });
         });
@@ -390,7 +390,7 @@ export default function MarketingAnalise() {
           const canal = venda.canais_aquisicao?.nome || 'Não informado';
           const current = canalMap.get(canal) || { value: 0, vendas: 0 };
           canalMap.set(canal, {
-            value: current.value + venda.valor_venda,
+            value: current.value + (Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0)),
             vendas: current.vendas + 1
           });
         });
@@ -418,7 +418,7 @@ export default function MarketingAnalise() {
     try {
       const { data: allVendas, error: vendasError } = await supabase
         .from("vendas")
-        .select("valor_venda, estado, custo_total, atendente_id, canal_aquisicao_id, data_venda");
+        .select("valor_venda, valor_frete, estado, custo_total, atendente_id, canal_aquisicao_id, data_venda");
 
       if (vendasError) throw vendasError;
 
@@ -470,9 +470,9 @@ export default function MarketingAnalise() {
           });
         }
         const regionData = regionMap.get(regiao)!;
-        regionData.faturamento += Number(venda.valor_venda);
+        regionData.faturamento += Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
         regionData.vendas += 1;
-        regionData.lucro += Number(venda.valor_venda) - Number(venda.custo_total || 0);
+        regionData.lucro += (Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0)) - Number(venda.custo_total || 0);
       });
 
       investimentosData?.forEach(inv => {
