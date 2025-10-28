@@ -37,6 +37,13 @@ import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
 import CanaisAquisicao from "./pages/CanaisAquisicao";
+import VendasHome from "./pages/VendasHome";
+import FabricaHome from "./pages/FabricaHome";
+import InstalacoesHome from "./pages/InstalacoesHome";
+import AdministrativoHome from "./pages/AdministrativoHome";
+import FinanceiroHome from "./pages/FinanceiroHome";
+import ParceirosHome from "./pages/ParceirosHome";
+import RHHome from "./pages/RHHome";
 import Investimentos from "./pages/Investimentos";
 import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
@@ -431,6 +438,76 @@ const App = () => (
                     <ProtectedRoute requirePermission="marketing">
                       <DashboardLayout>
                         <Marketing />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vendas/home"
+                  element={
+                    <ProtectedRoute requirePermission="vendas">
+                      <DashboardLayout>
+                        <VendasHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/fabrica/home"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <FabricaHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/home"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <InstalacoesHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/home"
+                  element={
+                    <ProtectedRoute requirePermission="configuracoes">
+                      <DashboardLayout>
+                        <AdministrativoHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/financeiro/home"
+                  element={
+                    <ProtectedRoute requirePermission="faturamento">
+                      <DashboardLayout>
+                        <FinanceiroHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/parceiros/home"
+                  element={
+                    <ProtectedRoute requirePermission="autorizados">
+                      <DashboardLayout>
+                        <ParceirosHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/rh/home"
+                  element={
+                    <ProtectedRoute requirePermission="organograma">
+                      <DashboardLayout>
+                        <RHHome />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
