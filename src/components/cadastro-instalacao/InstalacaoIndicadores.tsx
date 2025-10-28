@@ -56,108 +56,108 @@ export const InstalacaoIndicadores = ({ instalacoes }: InstalacaoIndicadoresProp
   }, [instalacoes]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4">
       {/* Categoria: Instalações */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Package className="h-4 w-4 text-red-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
             Instalações
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.categorias.instalacao}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold">{stats.categorias.instalacao}</div>
         </CardContent>
       </Card>
 
       {/* Categoria: Entregas */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Truck className="h-4 w-4 text-gray-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <Truck className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
             Entregas
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.categorias.entrega}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold">{stats.categorias.entrega}</div>
         </CardContent>
       </Card>
 
       {/* Categoria: Correções */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Wrench className="h-4 w-4 text-purple-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <Wrench className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
             Correções
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.categorias.correcao}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold">{stats.categorias.correcao}</div>
         </CardContent>
       </Card>
 
       {/* Categoria: Carregamento Agendado */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-orange-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
             Agendados
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.categorias.carregamento_agendado}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold">{stats.categorias.carregamento_agendado}</div>
         </CardContent>
       </Card>
 
       {/* Status: Pendente Produção */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4 text-yellow-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
             Pendente
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.status.pendente_producao}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold">{stats.status.pendente_producao}</div>
         </CardContent>
       </Card>
 
       {/* Status: Pronta Fábrica */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-blue-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
             Pronta
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.status.pronta_fabrica}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold">{stats.status.pronta_fabrica}</div>
         </CardContent>
       </Card>
 
       {/* Status: Finalizadas */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
             Finalizadas
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.status.finalizada}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold">{stats.status.finalizada}</div>
         </CardContent>
       </Card>
 
       {/* Atrasadas */}
       <Card className="border-red-500/20 bg-red-500/5">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500" />
+        <CardHeader className="pb-1 p-3">
+          <CardTitle className="text-[10px] sm:text-xs font-medium flex items-center gap-1">
+            <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
             Atrasadas
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-red-500">{stats.atrasadas}</div>
+        <CardContent className="p-3 pt-0">
+          <div className="text-lg sm:text-2xl font-bold text-red-500">{stats.atrasadas}</div>
         </CardContent>
       </Card>
     </div>
