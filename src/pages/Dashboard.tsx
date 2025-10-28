@@ -228,25 +228,25 @@ export default function Dashboard() {
           ) : vendedores.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">Nenhuma venda registrada este mês</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {vendedores.map((vendedor) => {
                 const category = getVendedorCategory(vendedor.total_vendas);
                 return (
                   <div
                     key={vendedor.nome}
-                    className={`relative p-4 rounded-lg border-2 bg-gradient-to-br ${category.color} ${category.border}`}
+                    className={`relative p-3 rounded-lg border bg-gradient-to-br ${category.color} ${category.border}`}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-2">
                       <div className="relative">
-                        <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+                        <Avatar className="h-9 w-9 border border-white">
                           <AvatarImage src={vendedor.foto_perfil_url} alt={vendedor.nome} />
-                          <AvatarFallback className="bg-background text-foreground">
+                          <AvatarFallback className="bg-background text-foreground text-xs">
                             {vendedor.nome.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         {vendedor.posicao <= 3 && (
-                          <div className="absolute -top-1 -right-1">
-                            <Medal className={`h-5 w-5 ${
+                          <div className="absolute -top-0.5 -right-0.5">
+                            <Medal className={`h-4 w-4 ${
                               vendedor.posicao === 1 ? 'text-yellow-500' :
                               vendedor.posicao === 2 ? 'text-gray-400' :
                               'text-amber-700'
@@ -256,20 +256,16 @@ export default function Dashboard() {
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <h4 className="font-semibold text-sm text-foreground truncate">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="font-semibold text-xs text-foreground truncate">
                             {vendedor.nome}
                           </h4>
-                          <Badge variant="secondary" className="text-xs shrink-0">
+                          <Badge variant="secondary" className="text-[10px] h-4 px-1">
                             #{vendedor.posicao}
                           </Badge>
                         </div>
                         
-                        <Badge variant="outline" className="mb-2 text-xs">
-                          {category.name}
-                        </Badge>
-                        
-                        <div className="text-lg font-bold text-foreground">
+                        <div className="text-sm font-bold text-foreground">
                           {formatCurrency(vendedor.total_vendas)}
                         </div>
                       </div>
