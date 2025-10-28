@@ -149,7 +149,7 @@ function HeaderUserInfo() {
             {getUserInitials(user.email || '')}
           </AvatarFallback>
         </Avatar>
-        <div className="flex flex-col text-sm">
+        <div className="hidden md:flex flex-col text-sm">
           <span className="font-medium leading-none">{user.email}</span>
           <span className="text-xs text-muted-foreground capitalize leading-none mt-1">
             {userRole?.role?.replace("_", " ")}
