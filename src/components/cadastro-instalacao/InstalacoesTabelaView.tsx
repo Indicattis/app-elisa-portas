@@ -40,6 +40,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { AlterarParaCorrecaoDialog } from './AlterarParaCorrecaoDialog';
@@ -316,29 +317,29 @@ export const InstalacoesTabelaView = ({
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Instalações Cadastradas</CardTitle>
-            <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" />
-              Baixar PDF
+    <div className="w-full max-w-full overflow-hidden space-y-4">
+      <Card className="w-full max-w-full">
+        <CardHeader className="p-3 sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base sm:text-2xl truncate">Instalações Cadastradas</CardTitle>
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="gap-1 h-8 shrink-0">
+              <Download className="h-3 w-3" />
+              <span className="hidden sm:inline">Baixar PDF</span>
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-3 sm:p-6">
+        <CardContent className="p-3 sm:p-6 w-full max-w-full overflow-hidden">
           {/* Filtros Compactos */}
-          <div className="h-[100px] overflow-hidden space-y-2">
+          <div className="h-[100px] overflow-hidden space-y-2 w-full max-w-full">
             {/* Linha 1: Busca e Filtros Rápidos */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 w-full min-w-0">
               <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                 <Input
                   placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-7 h-8 text-xs"
+                  className="pl-7 h-8 text-[9px] w-full"
                 />
               </div>
               
@@ -347,7 +348,7 @@ export const InstalacoesTabelaView = ({
                   variant={quickFilter === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setQuickFilter('all')}
-                  className="h-8 px-2 text-[10px]"
+                  className="h-8 px-1.5 text-[9px] min-w-0"
                 >
                   Todos
                 </Button>
@@ -355,7 +356,7 @@ export const InstalacoesTabelaView = ({
                   variant={quickFilter === 'sem_responsavel' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setQuickFilter('sem_responsavel')}
-                  className="h-8 px-2 text-[10px]"
+                  className="h-8 px-1.5 text-[9px] min-w-0"
                   title="Sem Responsável"
                 >
                   <UserX className="h-3 w-3" />
@@ -364,7 +365,7 @@ export const InstalacoesTabelaView = ({
                   variant={quickFilter === 'atrasados' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setQuickFilter('atrasados')}
-                  className="h-8 px-2 text-[10px]"
+                  className="h-8 px-1.5 text-[9px] min-w-0"
                   title="Atrasados"
                 >
                   <Clock className="h-3 w-3" />
@@ -373,9 +374,9 @@ export const InstalacoesTabelaView = ({
             </div>
 
             {/* Linha 2: Selects em Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 w-full min-w-0">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-8 text-[10px]">
+                <SelectTrigger className="h-8 text-[9px] min-w-0">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -387,7 +388,7 @@ export const InstalacoesTabelaView = ({
               </Select>
 
               <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-                <SelectTrigger className="h-8 text-[10px]">
+                <SelectTrigger className="h-8 text-[9px] min-w-0">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -400,7 +401,7 @@ export const InstalacoesTabelaView = ({
               </Select>
 
               <Select value={filterEstado} onValueChange={setFilterEstado}>
-                <SelectTrigger className="h-8 text-[10px]">
+                <SelectTrigger className="h-8 text-[9px] min-w-0">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -418,21 +419,21 @@ export const InstalacoesTabelaView = ({
                   onClick={clearFilters} 
                   variant="ghost" 
                   size="sm" 
-                  className="h-8 text-[10px] gap-1"
+                  className="h-8 text-[9px] gap-1 min-w-0 px-1.5"
                 >
                   <X className="h-3 w-3" />
-                  Limpar
+                  <span className="hidden sm:inline">Limpar</span>
                 </Button>
               )}
             </div>
 
             {/* Linha 3: Filtros Rápidos Adicionais (Mobile) */}
-            <div className="flex gap-1">
+            <div className="flex gap-1 w-full min-w-0">
               <Button
                 variant={quickFilter === 'pendente_producao' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setQuickFilter('pendente_producao')}
-                className="h-7 px-2 text-[10px] flex-1"
+                className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
               >
                 Pendente
               </Button>
@@ -440,7 +441,7 @@ export const InstalacoesTabelaView = ({
                 variant={quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setQuickFilter('pronta_fabrica')}
-                className="h-7 px-2 text-[10px] flex-1"
+                className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
               >
                 Pronta
               </Button>
@@ -455,13 +456,13 @@ export const InstalacoesTabelaView = ({
             </div>
           ) : (
             <>
-              {/* Mobile First - Card View */}
-              <div className="block lg:hidden space-y-2">
+              {/* Mobile First - Card View (Single Column) */}
+              <div className="block lg:hidden space-y-2 mt-4">
                 {paginatedInstalacoes.map((instalacao) => (
                   <div
                     key={instalacao.id}
                     onClick={() => setDetalhesInstalacao(instalacao)}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors w-full max-w-full ${
                       instalacao.status === 'finalizada'
                         ? 'bg-green-500/5 hover:bg-green-500/10'
                         : isAtrasado(instalacao)
@@ -469,23 +470,27 @@ export const InstalacoesTabelaView = ({
                         : 'hover:bg-accent/50'
                     }`}
                   >
-                    <div className="grid grid-cols-2 gap-2">
-                      {/* Coluna 1: Cliente */}
-                      <div className="space-y-1">
+                    <div className="space-y-2">
+                      {/* Cliente */}
+                      <div>
                         <p className="text-[10px] text-muted-foreground">Cliente</p>
                         <p className="text-xs font-semibold truncate">{instalacao.nome_cliente}</p>
-                        <p className="text-[10px] text-muted-foreground">{instalacao.telefone_cliente || '-'}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">
+                        <p className="text-[10px] text-muted-foreground truncate">{instalacao.telefone_cliente || '-'}</p>
+                      </div>
+
+                      {/* Localização */}
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Localização</p>
+                        <p className="text-[10px] truncate">
                           {instalacao.cidade}, {instalacao.estado}
                         </p>
                       </div>
 
-                      {/* Coluna 2: Status e Data */}
-                      <div className="space-y-1">
-                        <p className="text-[10px] text-muted-foreground">Status</p>
+                      {/* Status e Categoria */}
+                      <div className="flex flex-wrap gap-1">
                         <Badge 
                           variant="outline" 
-                          className={`text-[9px] w-fit ${getStatusVariant(instalacao.status)}`}
+                          className={`text-[9px] ${getStatusVariant(instalacao.status)}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             setStatusInstalacao(instalacao);
@@ -493,29 +498,34 @@ export const InstalacoesTabelaView = ({
                         >
                           {getStatusLabel(instalacao.status)}
                         </Badge>
-                        <Badge variant="outline" className={`text-[9px] w-fit ${getCategoriaVariant(instalacao.categoria)}`}>
+                        <Badge variant="outline" className={`text-[9px] ${getCategoriaVariant(instalacao.categoria)}`}>
                           {getCategoriaLabel(instalacao.categoria)}
                         </Badge>
-                        {instalacao.data_instalacao && (
-                          <p className="text-[10px] text-muted-foreground mt-1">
-                            {format(new Date(instalacao.data_instalacao), 'dd/MM/yyyy')}
-                          </p>
-                        )}
                         {isAtrasado(instalacao) && (
-                          <div className="flex items-center gap-1 text-destructive mt-1">
+                          <Badge variant="destructive" className="text-[9px] gap-1">
                             <AlertCircle className="h-3 w-3" />
-                            <span className="text-[9px]">Atrasado</span>
-                          </div>
+                            Atrasado
+                          </Badge>
                         )}
                       </div>
+
+                      {/* Data */}
+                      {instalacao.data_instalacao && (
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">
+                            Data: {format(new Date(instalacao.data_instalacao), 'dd/MM/yyyy')}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Desktop - Table View */}
-              <div className="hidden lg:block rounded-md border overflow-x-auto">
-                <Table>
+              <div className="hidden lg:block rounded-md border mt-4">
+                <ScrollArea className="w-full">
+                  <Table className="w-full table-fixed">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs">
@@ -659,33 +669,35 @@ export const InstalacoesTabelaView = ({
                     ))}
                   </TableBody>
                 </Table>
+                </ScrollArea>
               </div>
 
               {/* Paginação */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 w-full">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Mostrando {(currentPage - 1) * itemsPerPage + 1} até{' '}
                     {Math.min(currentPage * itemsPerPage, filteredAndSortedInstalacoes.length)} de{' '}
-                    {filteredAndSortedInstalacoes.length} instalações
+                    {filteredAndSortedInstalacoes.length}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 sm:gap-2 items-center">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}
+                      className="h-8 text-[10px] px-2"
                     >
                       Anterior
                     </Button>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 overflow-x-auto max-w-[150px] sm:max-w-none">
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Button
                           key={page}
                           variant={currentPage === page ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setCurrentPage(page)}
-                          className="w-8"
+                          className="h-8 w-8 text-[10px] shrink-0"
                         >
                           {page}
                         </Button>
@@ -696,6 +708,7 @@ export const InstalacoesTabelaView = ({
                       size="sm"
                       onClick={() => setCurrentPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
+                      className="h-8 text-[10px] px-2"
                     >
                       Próximo
                     </Button>
