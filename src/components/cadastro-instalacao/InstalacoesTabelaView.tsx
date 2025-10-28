@@ -327,109 +327,124 @@ export const InstalacoesTabelaView = ({
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          {/* Filtros Rápidos */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button
-              variant={quickFilter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setQuickFilter('all')}
-            >
-              Todos
-            </Button>
-            <Button
-              variant={quickFilter === 'sem_responsavel' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setQuickFilter('sem_responsavel')}
-              className="gap-2"
-            >
-              <UserX className="h-4 w-4" />
-              Sem Responsável
-            </Button>
-            <Button
-              variant={quickFilter === 'atrasados' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setQuickFilter('atrasados')}
-              className="gap-2"
-            >
-              <Clock className="h-4 w-4" />
-              Atrasados
-            </Button>
-            <Button
-              variant={quickFilter === 'pendente_producao' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setQuickFilter('pendente_producao')}
-            >
-              Pendente Produção
-            </Button>
-            <Button
-              variant={quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setQuickFilter('pronta_fabrica')}
-            >
-              Pronta Fábrica
-            </Button>
-          </div>
-
-          {/* Filtros */}
-          <div className="space-y-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <CardContent className="p-3 sm:p-6">
+          {/* Filtros Compactos */}
+          <div className="h-[100px] overflow-hidden space-y-2">
+            {/* Linha 1: Busca e Filtros Rápidos */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nome ou telefone..."
+                  placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-7 h-8 text-xs"
                 />
               </div>
+              
+              <div className="flex gap-1 shrink-0">
+                <Button
+                  variant={quickFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setQuickFilter('all')}
+                  className="h-8 px-2 text-[10px]"
+                >
+                  Todos
+                </Button>
+                <Button
+                  variant={quickFilter === 'sem_responsavel' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setQuickFilter('sem_responsavel')}
+                  className="h-8 px-2 text-[10px]"
+                  title="Sem Responsável"
+                >
+                  <UserX className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant={quickFilter === 'atrasados' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setQuickFilter('atrasados')}
+                  className="h-8 px-2 text-[10px]"
+                  title="Atrasados"
+                >
+                  <Clock className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
 
+            {/* Linha 2: Selects em Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-[10px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os Status</SelectItem>
-                  <SelectItem value="pendente_producao">Pendente Produção</SelectItem>
-                  <SelectItem value="pronta_fabrica">Pronta Fábrica</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="pendente_producao">Pendente</SelectItem>
+                  <SelectItem value="pronta_fabrica">Pronta</SelectItem>
                   <SelectItem value="finalizada">Finalizada</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-[10px]">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas Categorias</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="instalacao">Instalação</SelectItem>
                   <SelectItem value="entrega">Entrega</SelectItem>
                   <SelectItem value="correcao">Correção</SelectItem>
-                  <SelectItem value="carregamento_agendado">Carregamento Agendado</SelectItem>
+                  <SelectItem value="carregamento_agendado">Carregamento</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={filterEstado} onValueChange={setFilterEstado}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-[10px]">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os Estados</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {ESTADOS_BRASIL.map((estado) => (
                     <SelectItem key={estado.sigla} value={estado.sigla}>
-                      {estado.nome}
+                      {estado.sigla}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              {(searchTerm || filterStatus !== 'all' || filterCategoria !== 'all' || filterEstado !== 'all' || quickFilter !== 'all') && (
+                <Button 
+                  onClick={clearFilters} 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 text-[10px] gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  Limpar
+                </Button>
+              )}
             </div>
 
-            {(searchTerm || filterStatus !== 'all' || filterCategoria !== 'all' || filterEstado !== 'all' || quickFilter !== 'all') && (
-              <Button onClick={clearFilters} variant="ghost" size="sm" className="gap-2">
-                <X className="h-4 w-4" />
-                Limpar Filtros
+            {/* Linha 3: Filtros Rápidos Adicionais (Mobile) */}
+            <div className="flex gap-1">
+              <Button
+                variant={quickFilter === 'pendente_producao' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setQuickFilter('pendente_producao')}
+                className="h-7 px-2 text-[10px] flex-1"
+              >
+                Pendente
               </Button>
-            )}
+              <Button
+                variant={quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setQuickFilter('pronta_fabrica')}
+                className="h-7 px-2 text-[10px] flex-1"
+              >
+                Pronta
+              </Button>
+            </div>
           </div>
 
           {/* Tabela */}
