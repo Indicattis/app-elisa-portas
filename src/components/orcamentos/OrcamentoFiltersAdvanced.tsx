@@ -45,106 +45,93 @@ export function OrcamentoFiltersAdvanced({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filtros
-          </CardTitle>
-          <div className="flex gap-2">
+    <Card className="w-full overflow-hidden">
+      <CardContent className="p-2 sm:p-3 max-h-[100px] overflow-hidden">
+        <div className="flex flex-col gap-2">
+          {/* Header compacto */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">Filtros</span>
+            </div>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={resetFilters}
+              className="h-6 px-2 text-xs"
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
+              <RotateCcw className="w-3 h-3 mr-1" />
               Limpar
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? "Recolher" : "Expandir"}
-            </Button>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Buscar */}
-          <div className="space-y-2">
-            <Label>Buscar</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Nome do cliente"
-                value={filters.search}
-                onChange={(e) => handleFilterChange("search", e.target.value)}
-                className="pl-8"
-              />
+
+          {/* Filtros em linha horizontal com scroll */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            {/* Buscar */}
+            <div className="flex-shrink-0 w-32 sm:w-40">
+              <div className="relative">
+                <Search className="absolute left-1.5 top-1.5 h-3 w-3 text-muted-foreground" />
+                <Input
+                  placeholder="Cliente"
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                  className="h-7 pl-6 text-xs"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Status */}
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Select 
-              value={filters.status} 
-              onValueChange={(value) => handleFilterChange("status", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                <SelectItem value="pendente">Em aberto</SelectItem>
-                <SelectItem value="congelado">Congelado</SelectItem>
-                <SelectItem value="perdido">Perdido</SelectItem>
-                <SelectItem value="vendido">Vendido</SelectItem>
-                <SelectItem value="reprovado">Venda reprovada</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Status */}
+            <div className="flex-shrink-0 w-28 sm:w-36">
+              <Select 
+                value={filters.status} 
+                onValueChange={(value) => handleFilterChange("status", value)}
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-background">
+                  <SelectItem value="todos" className="text-xs">Todos</SelectItem>
+                  <SelectItem value="pendente" className="text-xs">Em aberto</SelectItem>
+                  <SelectItem value="congelado" className="text-xs">Congelado</SelectItem>
+                  <SelectItem value="perdido" className="text-xs">Perdido</SelectItem>
+                  <SelectItem value="vendido" className="text-xs">Vendido</SelectItem>
+                  <SelectItem value="reprovado" className="text-xs">Reprovado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Classe */}
-          <div className="space-y-2">
-            <Label>Classe</Label>
-            <Select 
-              value={filters.classe} 
-              onValueChange={(value) => handleFilterChange("classe", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todas as classes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as classes</SelectItem>
-                <SelectItem value="1">Classe 1 (R$ 0 - 20k)</SelectItem>
-                <SelectItem value="2">Classe 2 (R$ 20k - 50k)</SelectItem>
-                <SelectItem value="3">Classe 3 (R$ 50k - 75k)</SelectItem>
-                <SelectItem value="4">Classe 4 (R$ 75k+)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+            {/* Classe */}
+            <div className="flex-shrink-0 w-28 sm:w-36">
+              <Select 
+                value={filters.classe} 
+                onValueChange={(value) => handleFilterChange("classe", value)}
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue placeholder="Classe" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-background">
+                  <SelectItem value="todas" className="text-xs">Todas</SelectItem>
+                  <SelectItem value="1" className="text-xs">Classe 1</SelectItem>
+                  <SelectItem value="2" className="text-xs">Classe 2</SelectItem>
+                  <SelectItem value="3" className="text-xs">Classe 3</SelectItem>
+                  <SelectItem value="4" className="text-xs">Classe 4</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        {isExpanded && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
             {/* Atendente */}
-            <div className="space-y-2">
-              <Label>Atendente</Label>
+            <div className="flex-shrink-0 w-32 sm:w-40">
               <Select 
                 value={filters.atendente} 
                 onValueChange={(value) => handleFilterChange("atendente", value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os atendentes" />
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue placeholder="Atendente" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os atendentes</SelectItem>
+                <SelectContent className="z-50 bg-background max-h-[200px]">
+                  <SelectItem value="todos" className="text-xs">Todos</SelectItem>
                   {atendentes.map((atendente) => (
-                    <SelectItem key={atendente.id} value={atendente.id}>
+                    <SelectItem key={atendente.id} value={atendente.id} className="text-xs">
                       {atendente.nome}
                     </SelectItem>
                   ))}
@@ -153,34 +140,32 @@ export function OrcamentoFiltersAdvanced({
             </div>
 
             {/* Data Início */}
-            <div className="space-y-2">
-              <Label>Data Início</Label>
+            <div className="flex-shrink-0 w-32 sm:w-36">
               <div className="relative">
-                <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Calendar className="absolute left-1.5 top-1.5 h-3 w-3 text-muted-foreground pointer-events-none z-10" />
                 <Input
                   type="date"
                   value={filters.dataInicio}
                   onChange={(e) => handleFilterChange("dataInicio", e.target.value)}
-                  className="pl-8"
+                  className="h-7 pl-6 text-xs"
                 />
               </div>
             </div>
 
             {/* Data Fim */}
-            <div className="space-y-2">
-              <Label>Data Fim</Label>
+            <div className="flex-shrink-0 w-32 sm:w-36">
               <div className="relative">
-                <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Calendar className="absolute left-1.5 top-1.5 h-3 w-3 text-muted-foreground pointer-events-none z-10" />
                 <Input
                   type="date"
                   value={filters.dataFim}
                   onChange={(e) => handleFilterChange("dataFim", e.target.value)}
-                  className="pl-8"
+                  className="h-7 pl-6 text-xs"
                 />
               </div>
             </div>
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
