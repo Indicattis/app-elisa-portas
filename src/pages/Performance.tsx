@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -143,100 +143,65 @@ export default function Performance() {
     }
   };
 
-  const chartData = useMemo(() => {
-    if (!salesData || salesData.length === 0) return [];
-    
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-    
-    // Create a map for quick lookup
-    const salesMap = salesData.reduce((acc, sale) => {
-      acc[sale.data] = sale.valor;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    const data = [];
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-      data.push({
-        dia: day,
-        valor: salesMap[dateStr] || 0
-      });
-    }
-    return data;
-  }, [salesData]);
+  const canalChartData = useMemo(() => {
+    return canalStats.map(stat => ({
+      canal: stat.canal,
+      cliques: stat.total_clicks
+    }));
+  }, [canalStats]);
+
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-foreground">Performance</h1>
-        <p className="text-xl text-muted-foreground">
-          Análise de vendas e roleta WhatsApp do mês de {format(today, "MMMM 'de' yyyy", { locale: ptBR })}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Performance</h1>
+        <p className="text-sm sm:text-base md:text-xl text-muted-foreground">
+          Análise de cliques da roleta WhatsApp do mês de {format(today, "MMMM 'de' yyyy", { locale: ptBR })}
         </p>
       </div>
 
-      {/* Gráfico de vendas diárias */}
-      <div className="w-full">
-        <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
-          Vendas Diárias do Mês
-        </h2>
-        <div className="bg-card rounded-lg p-6 shadow-lg">
-          {loadingSales ? (
-            <div className="flex items-center justify-center h-[400px]">
-              <div className="text-xl text-muted-foreground">Carregando dados...</div>
+      {/* Gráfico de cliques por canal */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <TrendingUp className="h-5 w-5" />
+            Cliques por Canal de Aquisição
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingWhatsApp ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <div className="text-muted-foreground">Carregando dados...</div>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={chartData}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={canalChartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="dia" 
-                  label={{ value: 'Dia do Mês', position: 'insideBottom', offset: -5 }}
-                />
+                <XAxis type="number" />
                 <YAxis 
-                  label={{ value: 'Valor (R$)', angle: -90, position: 'insideLeft' }}
-                  tickFormatter={(value) => new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                  }).format(value)}
+                  type="category" 
+                  dataKey="canal" 
+                  width={150}
+                  tick={{ fontSize: 12 }}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [
-                    new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    }).format(value),
-                    'Vendas'
-                  ]}
-                  labelFormatter={(label) => `Dia ${label}`}
+                  formatter={(value: number) => [`${value} cliques`, 'Total']}
+                  contentStyle={{ fontSize: '14px' }}
                 />
-                {/* Linhas de referência para os marcos de valores */}
-                <ReferenceLine y={20000} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
-                <ReferenceLine y={50000} stroke="#eab308" strokeWidth={2} strokeDasharray="5 5" />
-                <ReferenceLine y={75000} stroke="#22c55e" strokeWidth={2} strokeDasharray="5 5" />
-                
-                <Line 
-                  type="monotone" 
-                  dataKey="valor" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={3}
-                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
-                />
-              </LineChart>
+                <Bar dataKey="cliques" radius={[0, 4, 4, 0]}>
+                  {canalChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Indicadores da Roleta WhatsApp */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Cliques por Atendente */}
         <Card>
           <CardHeader>
@@ -251,14 +216,14 @@ export default function Performance() {
                 <div className="text-muted-foreground">Carregando...</div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {atendenteStats.map((atendente, index) => (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {atendenteStats.slice(0, 10).map((atendente, index) => (
                   <div key={atendente.nome} className="flex items-center justify-between p-2 rounded bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{index + 1}º</Badge>
-                      <span className="font-medium">{atendente.nome}</span>
+                      <span className="font-medium text-sm">{atendente.nome}</span>
                     </div>
-                    <Badge variant="secondary">{atendente.total_clicks} cliques</Badge>
+                    <Badge variant="secondary">{atendente.total_clicks}</Badge>
                   </div>
                 ))}
               </div>
@@ -280,18 +245,19 @@ export default function Performance() {
                 <div className="text-muted-foreground">Carregando...</div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {canalStats.map((canal, index) => (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {canalStats.slice(0, 10).map((canal, index) => (
                   <div key={canal.canal} className="flex items-center justify-between p-2 rounded bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant={canal.canal === 'Meta (Facebook/Instagram)' ? 'default' : 
                                canal.canal === 'Google' ? 'secondary' : 'outline'}
+                        className="text-xs"
                       >
                         {canal.canal}
                       </Badge>
                     </div>
-                    <Badge variant="secondary">{canal.total_clicks} cliques</Badge>
+                    <Badge variant="secondary">{canal.total_clicks}</Badge>
                   </div>
                 ))}
               </div>
@@ -313,14 +279,14 @@ export default function Performance() {
                 <div className="text-muted-foreground">Carregando...</div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {referrerStats.map((referrer, index) => (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {referrerStats.slice(0, 10).map((referrer, index) => (
                   <div key={referrer.referrer} className="flex items-center justify-between p-2 rounded bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{index + 1}º</Badge>
-                      <span className="font-medium text-xs">{referrer.referrer}</span>
+                      <span className="font-medium text-xs truncate max-w-[120px]">{referrer.referrer}</span>
                     </div>
-                    <Badge variant="secondary">{referrer.total_clicks} cliques</Badge>
+                    <Badge variant="secondary">{referrer.total_clicks}</Badge>
                   </div>
                 ))}
               </div>
@@ -343,19 +309,20 @@ export default function Performance() {
               <div className="text-muted-foreground">Carregando histórico...</div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Atendente</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Referenciador</TableHead>
-                  <TableHead>Origem</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {whatsAppClicks.map((click) => {
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
+                    <TableHead className="whitespace-nowrap">Atendente</TableHead>
+                    <TableHead className="whitespace-nowrap">Canal</TableHead>
+                    <TableHead className="whitespace-nowrap hidden sm:table-cell">Telefone</TableHead>
+                    <TableHead className="whitespace-nowrap hidden md:table-cell">Referenciador</TableHead>
+                    <TableHead className="whitespace-nowrap hidden lg:table-cell">Origem</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {whatsAppClicks.slice(0, 10).map((click) => {
                   let canal = 'Outros';
                   if (click.fbclid || click.utm_source?.toLowerCase().includes('facebook') || click.utm_source?.toLowerCase().includes('meta')) {
                     canal = 'Meta';
@@ -365,32 +332,34 @@ export default function Performance() {
                     canal = click.utm_source;
                   }
 
-                  return (
-                    <TableRow key={click.id}>
-                      <TableCell>
-                        {format(new Date(click.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="font-medium">{click.atendente_nome}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={canal === 'Meta' ? 'default' : 
-                                 canal === 'Google' ? 'secondary' : 'outline'}
-                        >
-                          {canal}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{click.atendente_telefone || '-'}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {click.referrer ? new URL(click.referrer).hostname : 'Acesso Direto'}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {click.page_url ? new URL(click.page_url).hostname : '-'}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                    return (
+                      <TableRow key={click.id}>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          {format(new Date(click.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="font-medium text-sm">{click.atendente_nome}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={canal === 'Meta' ? 'default' : 
+                                   canal === 'Google' ? 'secondary' : 'outline'}
+                            className="text-xs"
+                          >
+                            {canal}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm">{click.atendente_telefone || '-'}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                          {click.referrer ? new URL(click.referrer).hostname : 'Acesso Direto'}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                          {click.page_url ? new URL(click.page_url).hostname : '-'}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
