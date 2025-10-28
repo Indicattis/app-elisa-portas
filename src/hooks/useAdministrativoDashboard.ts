@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 
 export interface AdministrativoMetrics {
   totalItensEstoque: number;
@@ -8,6 +9,10 @@ export interface AdministrativoMetrics {
   movimentacoesRecentes: number;
   comprasPendentes: number;
   documentosRecentes: number;
+  faturamentoMes: number;
+  vendasMes: number;
+  usuariosAtivos: number;
+  usuariosInativos: number;
 }
 
 export const useAdministrativoDashboard = () => {
@@ -42,6 +47,34 @@ export const useAdministrativoDashboard = () => {
         .select('id', { count: 'exact' })
         .gte('created_at', trintaDiasAtras.toISOString());
 
+      // Faturamento do mês atual
+      const hoje = new Date();
+      const inicioMes = format(startOfMonth(hoje), 'yyyy-MM-dd');
+      const fimMes = format(endOfMonth(hoje), 'yyyy-MM-dd');
+
+      const { data: vendas } = await supabase
+        .from('vendas')
+        .select('valor_venda, valor_frete')
+        .gte('data_venda', inicioMes)
+        .lte('data_venda', fimMes)
+        .not('custo_total', 'is', null);
+
+      const faturamentoMes = vendas?.reduce((sum, v) => 
+        sum + (Number(v.valor_venda || 0) - Number(v.valor_frete || 0)), 0
+      ) || 0;
+      const vendasMes = vendas?.length || 0;
+
+      // Usuários do organograma
+      const { data: usuariosAtivos } = await supabase
+        .from('admin_users')
+        .select('id', { count: 'exact' })
+        .eq('ativo', true);
+
+      const { data: usuariosInativos } = await supabase
+        .from('admin_users')
+        .select('id', { count: 'exact' })
+        .eq('ativo', false);
+
       const metrics: AdministrativoMetrics = {
         totalItensEstoque: totalItens,
         valorTotalEstoque: valorTotal,
@@ -49,6 +82,10 @@ export const useAdministrativoDashboard = () => {
         movimentacoesRecentes: movimentacoes?.length || 0,
         comprasPendentes: 0,
         documentosRecentes: documentos?.length || 0,
+        faturamentoMes,
+        vendasMes,
+        usuariosAtivos: usuariosAtivos?.length || 0,
+        usuariosInativos: usuariosInativos?.length || 0,
       };
 
       return metrics;

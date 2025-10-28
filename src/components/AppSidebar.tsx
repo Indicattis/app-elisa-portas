@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp } from "lucide-react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
 import { useGroupedTabs } from "@/hooks/useGroupedTabs";
@@ -69,10 +69,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const { data: tabs = [], isLoading } = useTabsAccess('sidebar', user?.id);
   
-  // Filtrar o diário de bordo dos tabs normais
-  const filteredTabs = tabs.filter(tab => tab.key !== 'diario_bordo');
-  const diarioBordoTab = tabs.find(tab => tab.key === 'diario_bordo');
-  const groupedTabs = useGroupedTabs(filteredTabs);
+  const groupedTabs = useGroupedTabs(tabs);
   const { theme } = useTheme();
   
   // Persistir estado dos grupos no localStorage
@@ -146,6 +143,28 @@ export function AppSidebar() {
     }, {} as Record<string, boolean>);
     setOpenGroups(allClosed);
   };
+
+  // Estado para o relógio
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Formatar hora de Brasília
+  const brasiliaTime = currentTime.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r">
@@ -255,21 +274,13 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        {diarioBordoTab && diarioBordoTab.can_access && (
-          <button
-            onClick={() => navigate('/dashboard/diario-bordo')}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg",
-              "bg-primary text-primary-foreground font-medium",
-              "hover:bg-primary/90 transition-all duration-200",
-              "shadow-md hover:shadow-lg",
-              isActive('/dashboard/diario-bordo') && "ring-2 ring-primary-foreground/20"
-            )}
-          >
-            <BookOpen className="h-5 w-5" />
-            <span className="text-sm">Diário de Bordo</span>
-          </button>
-        )}
+        <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary/10 text-primary">
+          <Clock className="h-5 w-5 shrink-0" />
+          <div className="text-sm font-medium text-center">
+            <div>{brasiliaTime.split(', ')[0]}</div>
+            <div>{brasiliaTime.split(', ')[1]}</div>
+          </div>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

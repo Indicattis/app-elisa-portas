@@ -1,4 +1,4 @@
-import { Package, DollarSign, AlertTriangle, TrendingUp } from "lucide-react";
+import { Package, DollarSign, AlertTriangle, TrendingUp, Receipt, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdministrativoDashboard } from "@/hooks/useAdministrativoDashboard";
 
@@ -21,64 +21,131 @@ export default function AdministrativoHome() {
             Dashboard Administrativo
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Gestão de estoque e documentos
+            Gestão de estoque, faturamento e equipe
           </p>
         </div>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total em Estoque</CardTitle>
-            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {metrics?.totalItensEstoque || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">itens</p>
-          </CardContent>
-        </Card>
+      {/* Metrics Cards - Estoque */}
+      <div>
+        <h2 className="text-base sm:text-lg font-semibold mb-3">Estoque</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Total em Estoque</CardTitle>
+              <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                {metrics?.totalItensEstoque || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">itens</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Valor Total</CardTitle>
-            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              R$ {metrics?.valorTotalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
-            </div>
-            <p className="text-xs text-muted-foreground">em estoque</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Valor Total</CardTitle>
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                R$ {metrics?.valorTotalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+              </div>
+              <p className="text-xs text-muted-foreground">em estoque</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Estoque Baixo</CardTitle>
-            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {metrics?.produtosEstoqueBaixo || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">produtos</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Estoque Baixo</CardTitle>
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                {metrics?.produtosEstoqueBaixo || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">produtos</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Movimentações</CardTitle>
-            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {metrics?.movimentacoesRecentes || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">últimos 7 dias</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Movimentações</CardTitle>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                {metrics?.movimentacoesRecentes || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">últimos 7 dias</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Metrics Cards - Faturamento */}
+      <div>
+        <h2 className="text-base sm:text-lg font-semibold mb-3">Faturamento</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Faturamento do Mês</CardTitle>
+              <Receipt className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                R$ {metrics?.faturamentoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+              </div>
+              <p className="text-xs text-muted-foreground">vendas faturadas</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Vendas do Mês</CardTitle>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                {metrics?.vendasMes || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">vendas faturadas</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Metrics Cards - Organograma */}
+      <div>
+        <h2 className="text-base sm:text-lg font-semibold mb-3">Organograma</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Usuários Ativos</CardTitle>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                {metrics?.usuariosAtivos || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">membros da equipe</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <CardTitle className="text-xs sm:text-sm font-medium">Usuários Inativos</CardTitle>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">
+                {metrics?.usuariosInativos || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">desativados</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Documentos */}
