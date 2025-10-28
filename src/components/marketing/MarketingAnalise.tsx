@@ -1111,56 +1111,53 @@ export default function MarketingAnalise() {
           </Dialog>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 sm:space-y-4">
-            {investimentos.slice(0, 10).map((investimento) => (
-              <div key={investimento.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm sm:text-base truncate">
-                    {format(new Date(investimento.mes), "MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                  {investimento.regiao && (
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{investimento.regiao}</p>
-                  )}
-                  {investimento.observacoes && (
-                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{investimento.observacoes}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 justify-between sm:justify-end">
-                  <div className="text-left sm:text-right min-w-0 flex-1 sm:flex-initial">
-                    <p className="font-medium text-sm sm:text-base break-words">
-                      R$ {(
-                        Number(investimento.investimento_google_ads) +
-                        Number(investimento.investimento_meta_ads) +
-                        Number(investimento.investimento_linkedin_ads) +
-                        Number(investimento.outros_investimentos)
-                      ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5">
-                      {Number(investimento.investimento_google_ads) > 0 && (
-                        <div className="truncate">Google: R$ {Number(investimento.investimento_google_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                      )}
-                      {Number(investimento.investimento_meta_ads) > 0 && (
-                        <div className="truncate">Meta: R$ {Number(investimento.investimento_meta_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                      )}
-                      {Number(investimento.investimento_linkedin_ads) > 0 && (
-                        <div className="truncate">LinkedIn: R$ {Number(investimento.investimento_linkedin_ads).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                      )}
-                      {Number(investimento.outros_investimentos) > 0 && (
-                        <div className="truncate">Outros: R$ {Number(investimento.outros_investimentos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                      )}
+          <div className="space-y-2">
+            {investimentos.slice(0, 10).map((investimento) => {
+              const totalInvestimento = 
+                Number(investimento.investimento_google_ads) +
+                Number(investimento.investimento_meta_ads) +
+                Number(investimento.investimento_linkedin_ads) +
+                Number(investimento.outros_investimentos);
+              const hasInvestimento = totalInvestimento > 0;
+
+              return (
+                <div 
+                  key={investimento.id} 
+                  className="flex items-center justify-between h-[50px] border-b last:border-b-0 px-2"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={cn(
+                      "w-2 h-2 rounded-full shrink-0",
+                      hasInvestimento ? "bg-green-500" : "bg-yellow-500"
+                    )} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">
+                        {format(new Date(investimento.mes), "MMM/yyyy", { locale: ptBR })}
+                        {investimento.regiao && (
+                          <span className="text-xs text-muted-foreground ml-2">• {investimento.regiao}</span>
+                        )}
+                      </p>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => handleEdit(investimento)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <p className="font-medium text-sm">
+                      {hasInvestimento 
+                        ? `R$ ${totalInvestimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                        : "Não informado"
+                      }
+                    </p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleEdit(investimento)}
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
