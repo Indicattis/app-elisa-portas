@@ -395,89 +395,162 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Atendente</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Classe</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Produtos</TableHead>
-              <TableHead>Valor Total</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              {/* Mobile: apenas 2 colunas */}
+              <TableHead className="text-xs sm:text-sm">Cliente</TableHead>
+              <TableHead className="text-xs sm:text-sm">Valor</TableHead>
+              
+              {/* Desktop: colunas adicionais */}
+              <TableHead className="hidden md:table-cell text-xs sm:text-sm">Atendente</TableHead>
+              <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Classe</TableHead>
+              <TableHead className="hidden md:table-cell text-xs sm:text-sm">Status</TableHead>
+              <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Produtos</TableHead>
+              <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Data</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs sm:text-sm text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {orcamentos.map((orcamento) => (
               <TableRow key={orcamento.id}>
-                <TableCell>
+                {/* Mobile: Coluna Cliente */}
+                <TableCell className="p-2 sm:p-4">
+                  <div className="space-y-1">
+                    <div className="font-medium text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">
+                      {orcamento.cliente_nome}
+                    </div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                      {orcamento.cliente_telefone}
+                    </div>
+                    
+                    {/* Mobile: Info extra compacta */}
+                    <div className="flex flex-wrap gap-1 mt-1 md:hidden">
+                      <Badge 
+                        variant={getStatusBadgeVariant(getStatusNumber(orcamento.status))}
+                        className={`text-[10px] px-1.5 py-0 h-4 ${getStatusNumber(orcamento.status) === 4 ? "bg-green-500 text-white hover:bg-green-600" : ""}`}
+                      >
+                        {ORCAMENTO_STATUS[getStatusNumber(orcamento.status) as keyof typeof ORCAMENTO_STATUS]}
+                      </Badge>
+                      {orcamento.classe === 4 && (
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                
+                {/* Mobile: Coluna Valor */}
+                <TableCell className="p-2 sm:p-4">
+                  <div className="space-y-1">
+                    <span className="font-medium text-xs sm:text-sm block">
+                      R$ {orcamento.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground block md:hidden">
+                      {new Date(orcamento.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                    
+                    {/* Mobile: Ações compactas */}
+                    <div className="flex gap-1 mt-1 sm:hidden">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleGeneratePDF(orcamento)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Download className="w-3 h-3" />
+                      </Button>
+                      
+                      {canEdit(orcamento) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onEdit?.(orcamento)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      )}
+                      
+                      {canChangeStatus(orcamento) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedOrcamento(orcamento);
+                            setShowStatusModal(true);
+                          }}
+                          className="h-6 w-6 p-0"
+                        >
+                          <AlertTriangle className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                
+                {/* Desktop: Atendente */}
+                <TableCell className="hidden md:table-cell p-2 sm:p-4">
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
                       <AvatarImage 
                         src={orcamento.admin_users?.foto_perfil_url} 
                         alt={orcamento.admin_users?.nome || "Atendente"} 
                       />
-                      <AvatarFallback>
+                      <AvatarFallback className="text-xs">
                         {orcamento.admin_users?.nome?.charAt(0) || "?"}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{orcamento.admin_users?.nome || "Não atribuído"}</span>
+                    <span className="text-xs sm:text-sm truncate max-w-[100px]">
+                      {orcamento.admin_users?.nome || "Não atribuído"}
+                    </span>
                   </div>
                 </TableCell>
                 
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{orcamento.cliente_nome}</div>
-                    <div className="text-sm text-muted-foreground">{orcamento.cliente_telefone}</div>
-                  </div>
-                </TableCell>
-                
-                <TableCell>
+                {/* Desktop: Classe */}
+                <TableCell className="hidden lg:table-cell p-2 sm:p-4">
                   <div className="flex items-center gap-2">
                     {orcamento.classe === 4 && (
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-yellow-500 shrink-0" />
                     )}
-                    <Badge variant={getClasseBadgeVariant(orcamento.classe)}>
+                    <Badge variant={getClasseBadgeVariant(orcamento.classe)} className="text-[10px] sm:text-xs">
                       {ORCAMENTO_CLASSES[orcamento.classe as keyof OrcamentoClasse]?.label}
                     </Badge>
                   </div>
                 </TableCell>
                 
-                <TableCell>
+                {/* Desktop: Status */}
+                <TableCell className="hidden md:table-cell p-2 sm:p-4">
                   <Badge 
                     variant={getStatusBadgeVariant(getStatusNumber(orcamento.status))}
-                    className={getStatusNumber(orcamento.status) === 4 ? "bg-green-500 text-white hover:bg-green-600" : ""}
+                    className={`text-[10px] sm:text-xs ${getStatusNumber(orcamento.status) === 4 ? "bg-green-500 text-white hover:bg-green-600" : ""}`}
                   >
                     {ORCAMENTO_STATUS[getStatusNumber(orcamento.status) as keyof typeof ORCAMENTO_STATUS]}
                   </Badge>
                 </TableCell>
                 
-                <TableCell>
+                {/* Desktop: Produtos */}
+                <TableCell className="hidden lg:table-cell p-2 sm:p-4">
                   {renderProductIcons(orcamento)}
                 </TableCell>
                 
-                <TableCell>
-                  <span className="font-medium">
-                    R$ {orcamento.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </TableCell>
-                
-                <TableCell>
-                  <span className="text-sm text-muted-foreground">
+                {/* Desktop: Data */}
+                <TableCell className="hidden lg:table-cell p-2 sm:p-4">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
                     {new Date(orcamento.created_at).toLocaleDateString('pt-BR')}
                   </span>
                 </TableCell>
                 
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                {/* Desktop: Ações */}
+                <TableCell className="hidden sm:table-cell text-right p-2 sm:p-4">
+                  <div className="flex justify-end gap-1 sm:gap-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleGeneratePDF(orcamento)}
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                     
                     {(orcamento.status === 'vendido' || getStatusNumber(orcamento.status) === 4) && (
@@ -486,11 +559,12 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                         variant="default"
                         onClick={() => handleGerarPedido(orcamento)}
                         disabled={loadingPedido[orcamento.id]}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                       >
                         {loadingPedido[orcamento.id] ? (
-                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         ) : (
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                         )}
                       </Button>
                     )}
@@ -500,8 +574,9 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                         size="sm"
                         variant="outline"
                         onClick={() => onEdit?.(orcamento)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     )}
                     
@@ -513,16 +588,17 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                           setSelectedOrcamento(orcamento);
                           setShowStatusModal(true);
                         }}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                       >
-                        <AlertTriangle className="w-4 h-4" />
+                        <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     )}
                     
                     {canDelete(orcamento) && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            <Trash2 className="w-4 h-4" />
+                          <Button size="sm" variant="outline" className="h-7 w-7 sm:h-8 sm:w-8 p-0">
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
