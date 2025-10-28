@@ -238,6 +238,71 @@ export function AppSidebar() {
                               const canAccess = subItem.can_access;
                               const itemIsActive = canAccess && isActive(subItem.href);
                               
+                              // Verificar se este subItem também é um grupo (tem children)
+                              const isNestedGroup = tabs.some(t => t.parent_key === subItem.key);
+                              const nestedChildren = tabs.filter(t => t.parent_key === subItem.key);
+                              
+                              if (isNestedGroup && nestedChildren.length > 0) {
+                                // Renderizar como um grupo aninhado
+                                const isNestedGroupOpen = openGroups[subItem.key] ?? false;
+                                
+                                return (
+                                  <SidebarMenuSubItem key={subItem.key}>
+                                    <Collapsible
+                                      open={isNestedGroupOpen}
+                                      onOpenChange={() => handleGroupToggle(subItem.key)}
+                                    >
+                                      <CollapsibleTrigger asChild>
+                                        <SidebarMenuSubButton className="w-full">
+                                          <SubIcon className="h-4 w-4" />
+                                          <span>{subItem.label}</span>
+                                          <ChevronDown 
+                                            className={cn(
+                                              "ml-auto h-3 w-3 transition-transform duration-200",
+                                              isNestedGroupOpen && "rotate-180"
+                                            )} 
+                                          />
+                                        </SidebarMenuSubButton>
+                                      </CollapsibleTrigger>
+                                      
+                                      <CollapsibleContent className="pl-4">
+                                        <SidebarMenuSub>
+                                          {nestedChildren.map((nestedItem) => {
+                                            const NestedIcon = getIcon(nestedItem.icon);
+                                            const nestedCanAccess = nestedItem.can_access;
+                                            const nestedIsActive = nestedCanAccess && isActive(nestedItem.href);
+                                            
+                                            return (
+                                              <SidebarMenuSubItem key={nestedItem.key}>
+                                                <SidebarMenuSubButton 
+                                                  asChild={nestedCanAccess}
+                                                  isActive={nestedIsActive}
+                                                  className={!nestedCanAccess ? "opacity-50 cursor-not-allowed" : ""}
+                                                >
+                                                  {nestedCanAccess ? (
+                                                    <Link to={nestedItem.href}>
+                                                      <NestedIcon className="h-4 w-4" />
+                                                      <span>{nestedItem.label}</span>
+                                                    </Link>
+                                                  ) : (
+                                                    <div className="flex items-center gap-2 w-full">
+                                                      <NestedIcon className="h-4 w-4" />
+                                                      <span>{nestedItem.label}</span>
+                                                      <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
+                                                    </div>
+                                                  )}
+                                                </SidebarMenuSubButton>
+                                              </SidebarMenuSubItem>
+                                            );
+                                          })}
+                                        </SidebarMenuSub>
+                                      </CollapsibleContent>
+                                    </Collapsible>
+                                  </SidebarMenuSubItem>
+                                );
+                              }
+                              
+                              // Renderizar como item normal
                               return (
                                 <SidebarMenuSubItem key={subItem.key}>
                                   <SidebarMenuSubButton 
