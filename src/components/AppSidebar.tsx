@@ -1,5 +1,5 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
@@ -81,23 +81,36 @@ export function AppSidebar() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  // Ref para controlar se já fizemos a inicialização automática
+  const hasInitialized = useRef(false);
+
   // Salvar estado quando mudar
   useEffect(() => {
     localStorage.setItem('sidebar-groups-state', JSON.stringify(openGroups));
   }, [openGroups]);
 
-  // Auto-expandir grupo que contém a rota ativa
+  // Auto-expandir grupo na primeira vez (apenas se não houver estado salvo)
   useEffect(() => {
-    groupedTabs.forEach(group => {
-      const hasActiveChild = group.children.some(child => 
-        location.pathname === child.href || location.pathname.startsWith(child.href + '/')
-      );
-      
-      if (hasActiveChild && !openGroups[group.key]) {
-        setOpenGroups(prev => ({ ...prev, [group.key]: true }));
-      }
-    });
-  }, [location.pathname, groupedTabs]);
+    if (hasInitialized.current || groupedTabs.length === 0) return;
+    
+    const saved = localStorage.getItem('sidebar-groups-state');
+    const hasSavedState = saved && Object.keys(JSON.parse(saved)).length > 0;
+    
+    // Só auto-expande se não houver estado salvo previamente
+    if (!hasSavedState) {
+      groupedTabs.forEach(group => {
+        const hasActiveChild = group.children.some(child => 
+          location.pathname === child.href || location.pathname.startsWith(child.href + '/')
+        );
+        
+        if (hasActiveChild) {
+          setOpenGroups(prev => ({ ...prev, [group.key]: true }));
+        }
+      });
+    }
+    
+    hasInitialized.current = true;
+  }, [groupedTabs]);
   
   // Determinar qual logo usar baseado no tema
   const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
