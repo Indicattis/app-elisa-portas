@@ -2946,28 +2946,31 @@ export type Database = {
     }
     Functions: {
       analyze_database_storage: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           size_bytes: number
           size_pretty: string
           table_name: string
         }[]
       }
-      aprovar_orcamento: {
-        Args:
-          | {
+      aprovar_orcamento:
+        | {
+            Args: {
               desconto_adicional?: number
               observacoes?: string
               orcamento_uuid: string
             }
-          | {
+            Returns: boolean
+          }
+        | {
+            Args: {
               desconto_adicional?: number
               observacoes?: string
               orcamento_uuid: string
               tipo_desconto?: string
             }
-        Returns: boolean
-      }
+            Returns: boolean
+          }
       calcular_classe_orcamento: {
         Args: { valor_total: number }
         Returns: number
@@ -2977,7 +2980,7 @@ export type Database = {
         Returns: number
       }
       count_base64_images: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           base64_count: number
           table_name: string
@@ -3009,29 +3012,17 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_admin_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_lead_attendant: {
-        Args: { lead_uuid: string }
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
+      is_admin_user: { Args: never; Returns: boolean }
+      is_lead_attendant: { Args: { lead_uuid: string }; Returns: boolean }
       obter_proximo_whatsapp: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           nome: string
           numero_telefone: string
         }[]
       }
-      perform_database_vacuum: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      perform_database_vacuum: { Args: never; Returns: string }
     }
     Enums: {
       app_permission:
