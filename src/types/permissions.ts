@@ -30,7 +30,8 @@ export type AppPermission =
   | 'investimentos'
   | 'pedidos'
   | 'canais_aquisicao'
-  | 'forca_vendas';
+  | 'forca_vendas'
+  | 'tabela_precos';
 
 export interface UserRoleAssignment {
   id: string;
@@ -204,6 +205,11 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'forca_vendas',
     label: 'Força de Vendas',
     description: 'Acompanhar desempenho da força de vendas'
+  },
+  tabela_precos: {
+    key: 'tabela_precos',
+    label: 'Tabela de Preços',
+    description: 'Gerenciar tabela de preços das portas'
   }
 };
 
