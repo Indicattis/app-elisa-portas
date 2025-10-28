@@ -41,11 +41,8 @@ import VendasHome from "./pages/VendasHome";
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
 import AdministrativoHome from "./pages/AdministrativoHome";
-import FinanceiroHome from "./pages/FinanceiroHome";
 import ParceirosHome from "./pages/ParceirosHome";
-import RHHome from "./pages/RHHome";
 import Investimentos from "./pages/Investimentos";
-import ContasReceber from "./pages/ContasReceber";
 import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
@@ -484,31 +481,11 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/financeiro/home"
-                  element={
-                    <ProtectedRoute requirePermission="faturamento">
-                      <DashboardLayout>
-                        <FinanceiroHome />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/dashboard/parceiros/home"
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
                         <ParceirosHome />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/rh/home"
-                  element={
-                    <ProtectedRoute requirePermission="organograma">
-                      <DashboardLayout>
-                        <RHHome />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -529,16 +506,6 @@ const App = () => (
                     <ProtectedRoute requirePermission="marketing">
                       <DashboardLayout>
                         <Investimentos />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/contas-receber"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <ContasReceber />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
