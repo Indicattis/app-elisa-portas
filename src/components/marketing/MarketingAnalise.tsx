@@ -630,7 +630,7 @@ export default function MarketingAnalise() {
       {/* Filters Section */}
       <Card className="w-full">
         <CardContent className="p-2 sm:p-3">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
