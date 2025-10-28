@@ -888,36 +888,36 @@ export default function MarketingAnalise() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Região</TableHead>
-                  <TableHead className="text-xs">Investimento</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">Investimento</TableHead>
                   <TableHead className="text-xs">Faturamento</TableHead>
                   <TableHead className="text-xs">Vendas</TableHead>
-                  <TableHead className="text-xs">Lucro</TableHead>
-                  <TableHead className="text-xs">CAC</TableHead>
-                  <TableHead className="text-xs">Ticket Médio</TableHead>
-                  <TableHead className="text-xs">ROI</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">Lucro</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">CAC</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">Ticket Médio</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">ROI</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {regionPerformanceData.map((region) => (
                   <TableRow key={region.regiao}>
                     <TableCell className="font-medium text-xs sm:text-sm">{region.regiao}</TableCell>
-                    <TableCell className="text-xs sm:text-sm">
+                    <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
                       R$ {region.investimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm">
                       R$ {region.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm">{region.vendas}</TableCell>
-                    <TableCell className={cn("text-xs sm:text-sm", region.lucro >= 0 ? 'text-green-600' : 'text-red-600')}>
+                    <TableCell className={cn("text-xs sm:text-sm hidden sm:table-cell", region.lucro >= 0 ? 'text-green-600' : 'text-red-600')}>
                       R$ {region.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className="text-xs sm:text-sm">
+                    <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
                       R$ {region.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className="text-xs sm:text-sm">
+                    <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
                       R$ {region.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className={cn("text-xs sm:text-sm", region.roi >= 0 ? 'text-green-600' : 'text-red-600')}>
+                    <TableCell className={cn("text-xs sm:text-sm hidden sm:table-cell", region.roi >= 0 ? 'text-green-600' : 'text-red-600')}>
                       {region.roi.toFixed(2)}%
                     </TableCell>
                   </TableRow>
