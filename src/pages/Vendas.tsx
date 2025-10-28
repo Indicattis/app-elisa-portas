@@ -238,147 +238,150 @@ export default function Vendas() {
         </Card>
       </div>
 
-      <Card className="max-w-full h-[100px] overflow-hidden">
-        <CardContent className="p-2 sm:p-3 h-full flex flex-col">
-          <div className="flex items-center gap-2 h-full">
-            {/* Busca compacta */}
-            <div className="relative w-32 sm:w-48 flex-shrink-0">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
-              <Input
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-7 h-7 text-xs w-full"
-              />
-            </div>
-            
-            {/* Filtros em scroll horizontal */}
-            <ScrollArea className="flex-1">
-              <div className="flex gap-2 pb-1 min-w-max">
-                <div className="flex flex-col gap-0.5 w-28 sm:w-40">
-                  <label className="text-[10px] sm:text-xs font-medium">Período</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full h-7 justify-start text-left font-normal text-[10px] sm:text-xs"
-                      >
-                        <CalendarIcon className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        {dateRange?.from ? (
-                          dateRange.to ? (
-                            <>
-                              {format(dateRange.from, "dd/MM", { locale: ptBR })} -{" "}
-                              {format(dateRange.to, "dd/MM", { locale: ptBR })}
-                            </>
-                          ) : (
-                            format(dateRange.from, "dd/MM/yy", { locale: ptBR })
-                          )
-                        ) : (
-                          <span>Período</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
-                      <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={dateRange?.from}
-                        selected={dateRange}
-                        onSelect={setDateRange}
-                        numberOfMonths={1}
-                        locale={ptBR}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="flex flex-col gap-0.5 w-24 sm:w-32">
-                  <label className="text-[10px] sm:text-xs font-medium">Vendedor</label>
-                  <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-                    <SelectTrigger className="h-7 text-[10px] sm:text-xs z-50 bg-background">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent className="z-50 bg-background">
-                      <SelectItem value="todos">Todos</SelectItem>
-                      {atendentes.map((atendente) => (
-                        <SelectItem key={atendente.user_id} value={atendente.user_id}>
-                          {atendente.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex flex-col gap-0.5 w-20 sm:w-28">
-                  <label className="text-[10px] sm:text-xs font-medium">Ordenar</label>
-                  <Select value={sortByValue} onValueChange={(v) => setSortByValue(v as any)}>
-                    <SelectTrigger className="h-7 text-[10px] sm:text-xs z-50 bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-50 bg-background">
-                      <SelectItem value="none">Data</SelectItem>
-                      <SelectItem value="desc">Maior</SelectItem>
-                      <SelectItem value="asc">Menor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex flex-col gap-0.5 w-28 sm:w-40">
-                  <label className="text-[10px] sm:text-xs font-medium">Previsão</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full h-7 justify-start text-left font-normal text-[10px] sm:text-xs"
-                      >
-                        <CalendarIcon className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        {filterPrevisaoEntrega?.from ? (
-                          filterPrevisaoEntrega.to ? (
-                            <>
-                              {format(filterPrevisaoEntrega.from, "dd/MM", { locale: ptBR })} -{" "}
-                              {format(filterPrevisaoEntrega.to, "dd/MM", { locale: ptBR })}
-                            </>
-                          ) : (
-                            format(filterPrevisaoEntrega.from, "dd/MM/yy", { locale: ptBR })
-                          )
-                        ) : (
-                          <span>Previsão</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
-                      <Calendar
-                        initialFocus
-                        mode="range"
-                        selected={filterPrevisaoEntrega}
-                        onSelect={setFilterPrevisaoEntrega}
-                        numberOfMonths={1}
-                        locale={ptBR}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {(dateRange?.from || selectedAtendente !== "todos" || sortByValue !== "none" || filterPrevisaoEntrega?.from) && (
-                  <div className="flex items-end pb-1">
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setDateRange(undefined);
-                        setSelectedAtendente("todos");
-                        setSortByValue("none");
-                        setFilterPrevisaoEntrega(undefined);
-                      }}
-                      className="h-7 text-[10px] sm:text-xs px-2"
-                    >
-                      <X className="h-2.5 w-2.5 mr-0.5" />
-                      Limpar
-                    </Button>
-                  </div>
-                )}
+      <Card className="max-w-full overflow-hidden">
+        <CardContent className="p-2 sm:p-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {/* Busca - ocupa 2 colunas no mobile */}
+            <div className="col-span-2 sm:col-span-1">
+              <div className="relative w-full">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
+                <Input
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-7 h-8 text-xs w-full"
+                />
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
+
+            {/* Período */}
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] font-medium truncate">Período</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full h-8 justify-start text-left font-normal text-[10px]"
+                  >
+                    <CalendarIcon className="mr-1 h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "dd/MM", { locale: ptBR })}-{format(dateRange.to, "dd/MM", { locale: ptBR })}
+                          </>
+                        ) : (
+                          format(dateRange.from, "dd/MM", { locale: ptBR })
+                        )
+                      ) : (
+                        "Período"
+                      )}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={1}
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Vendedor */}
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] font-medium truncate">Vendedor</label>
+              <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
+                <SelectTrigger className="h-8 text-[10px] z-50 bg-background">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-background">
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {atendentes.map((atendente) => (
+                    <SelectItem key={atendente.user_id} value={atendente.user_id}>
+                      {atendente.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Ordenar */}
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] font-medium truncate">Ordenar</label>
+              <Select value={sortByValue} onValueChange={(v) => setSortByValue(v as any)}>
+                <SelectTrigger className="h-8 text-[10px] z-50 bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-background">
+                  <SelectItem value="none">Data</SelectItem>
+                  <SelectItem value="desc">Maior</SelectItem>
+                  <SelectItem value="asc">Menor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Previsão */}
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] font-medium truncate">Previsão</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full h-8 justify-start text-left font-normal text-[10px]"
+                  >
+                    <CalendarIcon className="mr-1 h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">
+                      {filterPrevisaoEntrega?.from ? (
+                        filterPrevisaoEntrega.to ? (
+                          <>
+                            {format(filterPrevisaoEntrega.from, "dd/MM", { locale: ptBR })}-{format(filterPrevisaoEntrega.to, "dd/MM", { locale: ptBR })}
+                          </>
+                        ) : (
+                          format(filterPrevisaoEntrega.from, "dd/MM", { locale: ptBR })
+                        )
+                      ) : (
+                        "Previsão"
+                      )}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    selected={filterPrevisaoEntrega}
+                    onSelect={setFilterPrevisaoEntrega}
+                    numberOfMonths={1}
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Botão Limpar - aparece somente quando há filtros ativos */}
+            {(dateRange?.from || selectedAtendente !== "todos" || sortByValue !== "none" || filterPrevisaoEntrega?.from) && (
+              <div className="col-span-2 sm:col-span-1 flex items-end">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setDateRange(undefined);
+                    setSelectedAtendente("todos");
+                    setSortByValue("none");
+                    setFilterPrevisaoEntrega(undefined);
+                  }}
+                  className="h-8 text-[10px] w-full"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Limpar
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
