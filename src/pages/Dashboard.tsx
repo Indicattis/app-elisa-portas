@@ -193,10 +193,10 @@ export default function Dashboard() {
   }];
   return <div className="space-y-6">
       {/* KPIs principais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+      <div className="w-full">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas do Mês</CardTitle>
+            <CardTitle className="text-sm font-medium">Faturamento atual do mês</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
