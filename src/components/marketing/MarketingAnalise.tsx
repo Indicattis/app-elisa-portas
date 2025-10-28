@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TrendingUp, DollarSign, Users, Target, Plus, Edit } from "lucide-react";
-import { format, startOfYear, endOfYear } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { DateRange } from "react-day-picker";
@@ -68,8 +68,8 @@ interface RegionPerformanceData {
 export default function MarketingAnalise() {
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfYear(new Date()),
-    to: endOfYear(new Date())
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
   });
   const [selectedVendedor, setSelectedVendedor] = useState<string>("all");
   const [selectedRegiao, setSelectedRegiao] = useState<string>("all");
