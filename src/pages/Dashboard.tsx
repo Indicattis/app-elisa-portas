@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OrcamentoStats } from "@/components/orcamentos/OrcamentoStats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line } from "recharts";
-import { TrendingUp, Target, DollarSign } from "lucide-react";
+import { TrendingUp, Target, DollarSign, Trophy, Medal } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -211,6 +213,74 @@ export default function Dashboard() {
 
         
       </div>
+
+      {/* Ranking de Vendas */}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            Ranking de Vendas do Mês
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingVendedores ? (
+            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+          ) : vendedores.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">Nenhuma venda registrada este mês</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {vendedores.map((vendedor) => {
+                const category = getVendedorCategory(vendedor.total_vendas);
+                return (
+                  <div
+                    key={vendedor.nome}
+                    className={`relative p-4 rounded-lg border-2 bg-gradient-to-br ${category.color} ${category.border}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="relative">
+                        <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+                          <AvatarImage src={vendedor.foto_perfil_url} alt={vendedor.nome} />
+                          <AvatarFallback className="bg-background text-foreground">
+                            {vendedor.nome.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {vendedor.posicao <= 3 && (
+                          <div className="absolute -top-1 -right-1">
+                            <Medal className={`h-5 w-5 ${
+                              vendedor.posicao === 1 ? 'text-yellow-500' :
+                              vendedor.posicao === 2 ? 'text-gray-400' :
+                              'text-amber-700'
+                            }`} />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h4 className="font-semibold text-sm text-foreground truncate">
+                            {vendedor.nome}
+                          </h4>
+                          <Badge variant="secondary" className="text-xs shrink-0">
+                            #{vendedor.posicao}
+                          </Badge>
+                        </div>
+                        
+                        <Badge variant="outline" className="mb-2 text-xs">
+                          {category.name}
+                        </Badge>
+                        
+                        <div className="text-lg font-bold text-foreground">
+                          {formatCurrency(vendedor.total_vendas)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Gráfico de vendas */}
       
