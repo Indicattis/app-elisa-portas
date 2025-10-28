@@ -238,36 +238,41 @@ export function CanaisAquisicaoManager() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Canais Cadastrados</CardTitle>
+      <Card className="w-full overflow-hidden">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Canais Cadastrados</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-2 sm:p-6">
+          <div className="space-y-3 sm:space-y-4 w-full">
             {canais.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-muted-foreground py-8 text-sm">
                 Nenhum canal de aquisição cadastrado.
               </p>
             ) : (
               canais.map((canal) => (
                 <div
                   key={canal.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg w-full"
                 >
-                  <div className="flex items-center gap-4">
-                    <GripVertical className="w-4 h-4 text-muted-foreground" />
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{canal.nome}</span>
-                      <Badge variant={canal.ativo ? "default" : "secondary"}>
-                        {canal.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                    <GripVertical className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5 sm:mt-0 hidden sm:block" />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-sm sm:text-base truncate">{canal.nome}</span>
+                        <Badge 
+                          variant={canal.ativo ? "default" : "secondary"}
+                          className="shrink-0 text-xs"
+                        >
+                          {canal.ativo ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
+                        Ordem: {canal.ordem}
+                      </span>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      Ordem: {canal.ordem}
-                    </span>
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0">
                     <Switch
                       checked={canal.ativo}
                       onCheckedChange={() => handleToggleAtivo(canal)}
@@ -276,6 +281,7 @@ export function CanaisAquisicaoManager() {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleEdit(canal)}
+                      className="h-8 w-8 p-0"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>
@@ -283,6 +289,7 @@ export function CanaisAquisicaoManager() {
                       size="sm"
                       variant="ghost"
                       onClick={() => setDeletingCanal(canal)}
+                      className="h-8 w-8 p-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
