@@ -238,35 +238,32 @@ export default function Vendas() {
         </Card>
       </div>
 
-      <Card className="max-w-full">
-        <CardHeader className="p-3 sm:p-6">
-          <CardTitle className="text-sm sm:text-base">Filtros</CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 sm:p-6 pt-0">
-          <div className="space-y-3">
-            {/* Busca */}
-            <div className="relative w-full">
-              <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3 sm:w-4 sm:h-4" />
+      <Card className="max-w-full h-[100px] overflow-hidden">
+        <CardContent className="p-2 sm:p-3 h-full flex flex-col">
+          <div className="flex items-center gap-2 h-full">
+            {/* Busca compacta */}
+            <div className="relative w-32 sm:w-48 flex-shrink-0">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
               <Input
-                placeholder="Buscar por cliente, telefone, cidade..."
+                placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 sm:pl-10 h-8 sm:h-10 text-xs sm:text-sm w-full"
+                className="pl-7 h-7 text-xs w-full"
               />
             </div>
             
             {/* Filtros em scroll horizontal */}
-            <ScrollArea className="w-full">
-              <div className="flex gap-2 sm:gap-4 pb-2 min-w-max">
-                <div className="flex flex-col gap-1 w-36 sm:w-64">
-                  <label className="text-xs sm:text-sm font-medium">Período</label>
+            <ScrollArea className="flex-1">
+              <div className="flex gap-2 pb-1 min-w-max">
+                <div className="flex flex-col gap-0.5 w-28 sm:w-40">
+                  <label className="text-[10px] sm:text-xs font-medium">Período</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full h-8 sm:h-10 justify-start text-left font-normal text-xs sm:text-sm"
+                        className="w-full h-7 justify-start text-left font-normal text-[10px] sm:text-xs"
                       >
-                        <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        <CalendarIcon className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {dateRange?.from ? (
                           dateRange.to ? (
                             <>
@@ -295,10 +292,10 @@ export default function Vendas() {
                   </Popover>
                 </div>
 
-                <div className="flex flex-col gap-1 w-32 sm:w-48">
-                  <label className="text-xs sm:text-sm font-medium">Vendedor</label>
+                <div className="flex flex-col gap-0.5 w-24 sm:w-32">
+                  <label className="text-[10px] sm:text-xs font-medium">Vendedor</label>
                   <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-                    <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm z-50 bg-background">
+                    <SelectTrigger className="h-7 text-[10px] sm:text-xs z-50 bg-background">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-background">
@@ -312,10 +309,10 @@ export default function Vendas() {
                   </Select>
                 </div>
 
-                <div className="flex flex-col gap-1 w-32 sm:w-40">
-                  <label className="text-xs sm:text-sm font-medium">Ordenar</label>
+                <div className="flex flex-col gap-0.5 w-20 sm:w-28">
+                  <label className="text-[10px] sm:text-xs font-medium">Ordenar</label>
                   <Select value={sortByValue} onValueChange={(v) => setSortByValue(v as any)}>
-                    <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm z-50 bg-background">
+                    <SelectTrigger className="h-7 text-[10px] sm:text-xs z-50 bg-background">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-background">
@@ -326,15 +323,15 @@ export default function Vendas() {
                   </Select>
                 </div>
 
-                <div className="flex flex-col gap-1 w-36 sm:w-64">
-                  <label className="text-xs sm:text-sm font-medium">Previsão</label>
+                <div className="flex flex-col gap-0.5 w-28 sm:w-40">
+                  <label className="text-[10px] sm:text-xs font-medium">Previsão</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full h-8 sm:h-10 justify-start text-left font-normal text-xs sm:text-sm"
+                        className="w-full h-7 justify-start text-left font-normal text-[10px] sm:text-xs"
                       >
-                        <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        <CalendarIcon className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {filterPrevisaoEntrega?.from ? (
                           filterPrevisaoEntrega.to ? (
                             <>
@@ -363,7 +360,7 @@ export default function Vendas() {
                 </div>
 
                 {(dateRange?.from || selectedAtendente !== "todos" || sortByValue !== "none" || filterPrevisaoEntrega?.from) && (
-                  <div className="flex items-end">
+                  <div className="flex items-end pb-1">
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -372,9 +369,9 @@ export default function Vendas() {
                         setSortByValue("none");
                         setFilterPrevisaoEntrega(undefined);
                       }}
-                      className="h-8 sm:h-10 text-xs sm:text-sm"
+                      className="h-7 text-[10px] sm:text-xs px-2"
                     >
-                      <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      <X className="h-2.5 w-2.5 mr-0.5" />
                       Limpar
                     </Button>
                   </div>
