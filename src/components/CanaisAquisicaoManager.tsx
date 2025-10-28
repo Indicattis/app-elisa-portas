@@ -239,59 +239,60 @@ export function CanaisAquisicaoManager() {
       </div>
 
       <Card className="w-full overflow-hidden">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg">Canais Cadastrados</CardTitle>
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="text-sm sm:text-lg">Canais Cadastrados</CardTitle>
         </CardHeader>
         <CardContent className="p-2 sm:p-6">
-          <div className="space-y-3 sm:space-y-4 w-full">
+          <div className="space-y-2 sm:space-y-4 w-full">
             {canais.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8 text-sm">
+              <p className="text-center text-muted-foreground py-6 text-xs sm:text-sm">
                 Nenhum canal de aquisição cadastrado.
               </p>
             ) : (
               canais.map((canal) => (
                 <div
                   key={canal.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg w-full"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 p-2 sm:p-4 border rounded-lg w-full"
                 >
-                  <div className="flex items-start sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                    <GripVertical className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5 sm:mt-0 hidden sm:block" />
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium text-sm sm:text-base truncate">{canal.nome}</span>
+                  <div className="flex items-start sm:items-center gap-1.5 sm:gap-4 flex-1 min-w-0">
+                    <GripVertical className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground shrink-0 mt-0.5 sm:mt-0 hidden sm:block" />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <span className="font-medium text-xs sm:text-base truncate">{canal.nome}</span>
                         <Badge 
                           variant={canal.ativo ? "default" : "secondary"}
-                          className="shrink-0 text-xs"
+                          className="shrink-0 text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5"
                         >
                           {canal.ativo ? "Ativo" : "Inativo"}
                         </Badge>
                       </div>
-                      <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
+                      <span className="text-[10px] sm:text-sm text-muted-foreground shrink-0">
                         Ordem: {canal.ordem}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 justify-end sm:justify-start shrink-0">
                     <Switch
                       checked={canal.ativo}
                       onCheckedChange={() => handleToggleAtivo(canal)}
+                      className="scale-75 sm:scale-100"
                     />
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => handleEdit(canal)}
-                      className="h-8 w-8 p-0"
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => setDeletingCanal(canal)}
-                      className="h-8 w-8 p-0"
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                   </div>
                 </div>
