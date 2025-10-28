@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck } from "lucide-react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
 import { useGroupedTabs } from "@/hooks/useGroupedTabs";
@@ -118,6 +118,22 @@ export function AppSidebar() {
     setOpenGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
   };
 
+  const handleOpenAll = () => {
+    const allOpen = groupedTabs.reduce((acc, group) => {
+      acc[group.key] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setOpenGroups(allOpen);
+  };
+
+  const handleCloseAll = () => {
+    const allClosed = groupedTabs.reduce((acc, group) => {
+      acc[group.key] = false;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setOpenGroups(allClosed);
+  };
+
   return (
     <Sidebar collapsible="offcanvas" className="border-r">
       <SidebarHeader className="h-12">
@@ -133,6 +149,25 @@ export function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
+
+      <div className="flex gap-2 px-2 py-2 border-b">
+        <button
+          onClick={handleOpenAll}
+          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          title="Abrir Todos"
+        >
+          <ChevronsDown className="h-3 w-3" />
+          <span>Abrir</span>
+        </button>
+        <button
+          onClick={handleCloseAll}
+          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          title="Fechar Todos"
+        >
+          <ChevronsUp className="h-3 w-3" />
+          <span>Fechar</span>
+        </button>
+      </div>
 
       <SidebarContent>
         <SidebarGroup>
