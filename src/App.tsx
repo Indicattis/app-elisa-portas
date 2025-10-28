@@ -79,6 +79,7 @@ import FrotaEdit from "./pages/FrotaEdit";
 import FrotaConferencia from "./pages/FrotaConferencia";
 import FrotaConferenciasHistorico from "./pages/FrotaConferenciasHistorico";
 import TabelaPrecos from "./pages/TabelaPrecos";
+import Todo from "./pages/Todo";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -837,6 +838,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="diario_bordo">
                       <DashboardLayout>
                         <DiarioBordo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/checklist-lideranca"
+                  element={
+                    <ProtectedRoute requirePermission="checklist_lideranca">
+                      <DashboardLayout>
+                        <Todo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

@@ -31,7 +31,8 @@ export type AppPermission =
   | 'pedidos'
   | 'canais_aquisicao'
   | 'forca_vendas'
-  | 'tabela_precos';
+  | 'tabela_precos'
+  | 'checklist_lideranca';
 
 export interface UserRoleAssignment {
   id: string;
@@ -210,6 +211,11 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'tabela_precos',
     label: 'Tabela de Preços',
     description: 'Gerenciar tabela de preços das portas'
+  },
+  checklist_lideranca: {
+    key: 'checklist_lideranca',
+    label: 'Checklist Liderança',
+    description: 'Visualizar e gerenciar tarefas da liderança'
   }
 };
 

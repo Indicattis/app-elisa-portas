@@ -2517,6 +2517,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefas: {
+        Row: {
+          created_at: string
+          created_by: string
+          descricao: string
+          dia_recorrencia: number | null
+          id: string
+          recorrente: boolean
+          responsavel_id: string
+          status: Database["public"]["Enums"]["tarefa_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          descricao: string
+          dia_recorrencia?: number | null
+          id?: string
+          recorrente?: boolean
+          responsavel_id: string
+          status?: Database["public"]["Enums"]["tarefa_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          descricao?: string
+          dia_recorrencia?: number | null
+          id?: string
+          recorrente?: boolean
+          responsavel_id?: string
+          status?: Database["public"]["Enums"]["tarefa_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -3099,6 +3135,7 @@ export type Database = {
         | "canais_aquisicao"
         | "forca_vendas"
         | "tabela_precos"
+        | "checklist_lideranca"
       autorizado_etapa:
         | "apresentacao_proposta"
         | "treinamentos_video"
@@ -3147,6 +3184,7 @@ export type Database = {
         | "proposta"
         | "contratado"
       status_visita: "agendada" | "concluida" | "cancelada"
+      tarefa_status: "em_andamento" | "concluida"
       tipo_instalacao_enum: "elisa" | "autorizados"
       tipo_parceiro: "autorizado" | "representante" | "licenciado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
@@ -3331,6 +3369,7 @@ export const Constants = {
         "canais_aquisicao",
         "forca_vendas",
         "tabela_precos",
+        "checklist_lideranca",
       ],
       autorizado_etapa: [
         "apresentacao_proposta",
@@ -3387,6 +3426,7 @@ export const Constants = {
         "contratado",
       ],
       status_visita: ["agendada", "concluida", "cancelada"],
+      tarefa_status: ["em_andamento", "concluida"],
       tipo_instalacao_enum: ["elisa", "autorizados"],
       tipo_parceiro: ["autorizado", "representante", "licenciado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],
