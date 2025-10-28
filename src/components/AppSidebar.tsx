@@ -152,6 +152,17 @@ export function AppSidebar() {
 
       <div className="flex gap-2 px-2 py-2 border-b">
         <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center justify-center px-2 py-1.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+          title="Home"
+        >
+          <img
+            src={currentLogo}
+            alt="Home"
+            className="h-5 w-5 object-contain"
+          />
+        </button>
+        <button
           onClick={handleOpenAll}
           className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
           title="Abrir Todos"
