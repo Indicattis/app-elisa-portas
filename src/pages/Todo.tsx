@@ -1,23 +1,56 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
+import { useSetorInfo } from "@/hooks/useSetorInfo";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Calendar, Repeat, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { SETOR_LABELS } from "@/utils/setorMapping";
+import { UserRole } from "@/types/permissions";
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  diretor: 'Diretor',
+  administrador: 'Administrador',
+  gerente_comercial: 'Gerente Comercial',
+  coordenador_vendas: 'Coordenador de Vendas',
+  vendedor: 'Vendedor',
+  gerente_marketing: 'Gerente de Marketing',
+  analista_marketing: 'Analista de Marketing',
+  assistente_marketing: 'Assistente de Marketing',
+  gerente_instalacoes: 'Gerente de Instalações',
+  instalador: 'Instalador',
+  aux_instalador: 'Auxiliar de Instalação',
+  gerente_fabril: 'Gerente Fabril',
+  gerente_producao: 'Gerente de Produção',
+  soldador: 'Soldador',
+  pintor: 'Pintor',
+  aux_pintura: 'Auxiliar de Pintura',
+  aux_geral: 'Auxiliar Geral',
+  gerente_financeiro: 'Gerente Financeiro',
+  assistente_administrativo: 'Assistente Administrativo',
+  atendente: 'Atendente',
+};
 
 export default function Todo() {
+  const [searchParams] = useSearchParams();
+  const setor = searchParams.get('setor') || undefined;
+  
   const { user, userRole } = useAuth();
-  const { tarefas, isLoading, criarTarefa, marcarConcluida, reabrirTarefa, deletarTarefa } = useTarefas(user?.id);
+  const { tarefas, isLoading, criarTarefa, marcarConcluida, reabrirTarefa, deletarTarefa } = useTarefas(user?.id, setor);
+  const { data: responsavelSetor } = useSetorInfo(setor);
   const [modalAberto, setModalAberto] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
+  const setorLabel = setor ? SETOR_LABELS[setor as keyof typeof SETOR_LABELS] : 'Geral';
 
   const tarefasEmAndamento = tarefas.filter(t => t.status === 'em_andamento');
   const tarefasConcluidas = tarefas.filter(t => t.status === 'concluida');
@@ -32,16 +65,48 @@ export default function Todo() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Checklist Liderança</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold">
+            Checklist Liderança - {setorLabel}
+          </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie suas tarefas e responsabilidades
+            {setor ? `Gerencie tarefas do setor ${setorLabel.toLowerCase()}` : 'Gerencie suas tarefas e responsabilidades'}
           </p>
         </div>
 
+        {/* Card do Responsável */}
+        {responsavelSetor && (
+          <Card className="w-80 shrink-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                Responsável pelo Setor
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={responsavelSetor.foto_perfil_url || undefined} />
+                  <AvatarFallback>
+                    {responsavelSetor.nome.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{responsavelSetor.nome}</p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {responsavelSetor.email}
+                  </p>
+                  <Badge variant="secondary" className="mt-1 text-xs">
+                    {ROLE_LABELS[responsavelSetor.role as UserRole]}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {podeGerenciar && (
-          <Button onClick={() => setModalAberto(true)}>
+          <Button onClick={() => setModalAberto(true)} className="shrink-0">
             <Plus className="h-4 w-4 mr-2" />
             Nova Tarefa
           </Button>
@@ -161,7 +226,8 @@ export default function Todo() {
       <NovaTarefaModal
         open={modalAberto}
         onOpenChange={setModalAberto}
-        onSubmit={(tarefa) => criarTarefa.mutate(tarefa)}
+        onSubmit={(tarefa) => criarTarefa.mutate({ ...tarefa, setor: setor || '' })}
+        setor={setor}
       />
 
       {/* Confirmação de Deleção */}

@@ -9,6 +9,7 @@ export interface Tarefa {
   status: 'em_andamento' | 'concluida';
   recorrente: boolean;
   dia_recorrencia: number | null;
+  setor: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -16,6 +17,7 @@ export interface Tarefa {
   responsavel?: {
     nome: string;
     email: string;
+    role: string;
   };
   criador?: {
     nome: string;
@@ -28,22 +30,32 @@ export interface TarefaInput {
   responsavel_id: string;
   recorrente: boolean;
   dia_recorrencia?: number | null;
+  setor: string;
 }
 
-export function useTarefas(userId?: string) {
+export function useTarefas(userId?: string, setor?: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Buscar tarefas do usuário
   const { data: tarefas = [], isLoading } = useQuery({
-    queryKey: ['tarefas', userId],
+    queryKey: ['tarefas', userId, setor],
     queryFn: async () => {
       if (!userId) return [];
 
-      const { data: tarefasData, error: tarefasError } = await supabase
+      let query = supabase
         .from('tarefas')
-        .select('*')
-        .eq('responsavel_id', userId)
+        .select('*');
+
+      // Se setor foi especificado, buscar tarefas de todos os usuários do setor
+      if (setor) {
+        query = query.eq('setor', setor);
+      } else {
+        // Caso contrário, apenas as do usuário
+        query = query.eq('responsavel_id', userId);
+      }
+
+      const { data: tarefasData, error: tarefasError } = await query
         .order('created_at', { ascending: false });
 
       if (tarefasError) throw tarefasError;
@@ -59,7 +71,7 @@ export function useTarefas(userId?: string) {
 
       const { data: usersData } = await supabase
         .from('admin_users')
-        .select('user_id, nome, email')
+        .select('user_id, nome, email, role')
         .in('user_id', userIds);
 
       const usersMap = new Map(usersData?.map(u => [u.user_id, u]) || []);
@@ -86,6 +98,7 @@ export function useTarefas(userId?: string) {
           responsavel_id: input.responsavel_id,
           recorrente: input.recorrente,
           dia_recorrencia: input.recorrente ? input.dia_recorrencia : null,
+          setor: input.setor,
           created_by: user.id,
         }])
         .select()

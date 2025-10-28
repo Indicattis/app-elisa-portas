@@ -2526,6 +2526,7 @@ export type Database = {
           id: string
           recorrente: boolean
           responsavel_id: string
+          setor: string | null
           status: Database["public"]["Enums"]["tarefa_status"]
           updated_at: string
         }
@@ -2537,6 +2538,7 @@ export type Database = {
           id?: string
           recorrente?: boolean
           responsavel_id: string
+          setor?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
           updated_at?: string
         }
@@ -2548,6 +2550,7 @@ export type Database = {
           id?: string
           recorrente?: boolean
           responsavel_id?: string
+          setor?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
           updated_at?: string
         }

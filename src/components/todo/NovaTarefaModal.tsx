@@ -8,28 +8,39 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TarefaInput } from "@/hooks/useTarefas";
+import { getRolesFromSetor } from "@/utils/setorMapping";
 
 interface NovaTarefaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (tarefa: TarefaInput) => void;
+  setor?: string;
 }
 
-export function NovaTarefaModal({ open, onOpenChange, onSubmit }: NovaTarefaModalProps) {
+export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTarefaModalProps) {
   const [descricao, setDescricao] = useState("");
   const [responsavelId, setResponsavelId] = useState("");
   const [recorrente, setRecorrente] = useState(false);
   const [diaRecorrencia, setDiaRecorrencia] = useState<number>(1);
 
-  // Buscar usuários ativos
+  // Buscar usuários ativos (filtrados por setor se fornecido)
   const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-ativos'],
+    queryKey: ['usuarios-ativos', setor],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('admin_users')
-        .select('user_id, nome, email')
-        .eq('ativo', true)
-        .order('nome');
+        .select('user_id, nome, email, role')
+        .eq('ativo', true);
+
+      // Filtrar por roles do setor se fornecido
+      if (setor) {
+        const roles = getRolesFromSetor(setor);
+        if (roles.length > 0) {
+          query = query.in('role', roles);
+        }
+      }
+
+      const { data, error } = await query.order('nome');
 
       if (error) throw error;
       return data;
@@ -44,6 +55,7 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit }: NovaTarefaModa
       responsavel_id: responsavelId,
       recorrente,
       dia_recorrencia: recorrente ? diaRecorrencia : null,
+      setor: setor || '',
     });
 
     // Limpar form
