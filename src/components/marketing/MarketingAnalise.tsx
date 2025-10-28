@@ -882,9 +882,8 @@ export default function MarketingAnalise() {
           <CardTitle className="text-base sm:text-lg">Performance por Região</CardTitle>
           <CardDescription className="text-xs sm:text-sm">Análise detalhada por estado</CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
-          <div className="min-w-[800px]">
-            <Table>
+        <CardContent>
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Região</TableHead>
@@ -924,7 +923,6 @@ export default function MarketingAnalise() {
                 ))}
               </TableBody>
             </Table>
-          </div>
         </CardContent>
       </Card>
 
