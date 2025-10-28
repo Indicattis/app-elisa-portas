@@ -136,20 +136,6 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r">
-      <SidebarHeader className="h-12">
-        <div className="flex items-center justify-center px-2 h-12">
-          <div className="w-full max-w-[120px] h-12 flex items-center justify-center">
-            <Link to="/dashboard" className="cursor-pointer">
-              <img
-                src={currentLogo}
-                alt="Elisa Portas"
-                className="w-full h-auto max-h-[50px] min-w-[25px] min-h-[25px] object-contain -translate-y-[10px] hover:opacity-80 transition-opacity"
-              />
-            </Link>
-          </div>
-        </div>
-      </SidebarHeader>
-
       <div className="flex gap-2 px-2 py-2 border-b">
         <button
           onClick={() => navigate('/dashboard')}
