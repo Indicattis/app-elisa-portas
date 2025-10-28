@@ -207,57 +207,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Meta do Mês</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(totalVendasMes / metaMensal * 100).toFixed(1)}%</div>
-            <div className="w-full bg-muted rounded-full h-2 mt-2">
-              <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{
-              width: `${Math.min(totalVendasMes / metaMensal * 100, 100)}%`
-            }} />
-            </div>
-          </CardContent>
-        </Card>
+        
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Orçamentos</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{orcamentos?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {orcamentos?.filter(o => o.status === 'pendente').length || 0} pendentes
-            </p>
-          </CardContent>
-        </Card>
+        
       </div>
 
       {/* Gráfico de vendas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Vendas por Dia (Mês Atual)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={vendasPorDia}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="data" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line type="monotone" dataKey="vendas" stroke="var(--color-vendas)" strokeWidth={2} dot={{
-                fill: "var(--color-vendas)"
-              }} />
-                <Line type="monotone" dataKey="meta" stroke="var(--color-meta)" strokeWidth={1} strokeDasharray="5 5" dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      
 
       {/* Estatísticas detalhadas */}
       
