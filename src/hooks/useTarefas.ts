@@ -29,7 +29,7 @@ export interface TarefaInput {
   descricao: string;
   responsavel_id: string;
   recorrente: boolean;
-  tipo_recorrencia?: 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias' | null;
+  tipo_recorrencia?: 'todos_os_dias' | 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias' | null;
   setor: string;
 }
 
@@ -95,6 +95,9 @@ export function useTarefas(userId?: string, setor?: string) {
       let diaRecorrencia: number | null = null;
       if (input.recorrente && input.tipo_recorrencia) {
         switch (input.tipo_recorrencia) {
+          case 'todos_os_dias':
+            diaRecorrencia = -1;
+            break;
           case 'primeiro_dia_mes':
             diaRecorrencia = 1;
             break;

@@ -19,13 +19,13 @@ interface NovaTarefaModalProps {
   setor?: string;
 }
 
-type TipoRecorrencia = 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias';
+type TipoRecorrencia = 'todos_os_dias' | 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias';
 
 export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTarefaModalProps) {
   const { user } = useAuth();
   const [descricao, setDescricao] = useState("");
   const [recorrente, setRecorrente] = useState(false);
-  const [tipoRecorrencia, setTipoRecorrencia] = useState<TipoRecorrencia>('primeiro_dia_mes');
+  const [tipoRecorrencia, setTipoRecorrencia] = useState<TipoRecorrencia>('todos_os_dias');
 
   const proximaDataRecorrencia = useMemo(() => {
     if (!recorrente) return null;
@@ -34,6 +34,9 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
     let proximaData: Date;
     
     switch (tipoRecorrencia) {
+      case 'todos_os_dias':
+        proximaData = addDays(hoje, 1);
+        break;
       case 'primeiro_dia_mes':
         proximaData = startOfMonth(addMonths(hoje, 1));
         break;
@@ -65,7 +68,7 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
     // Limpar form
     setDescricao("");
     setRecorrente(false);
-    setTipoRecorrencia('primeiro_dia_mes');
+    setTipoRecorrencia('todos_os_dias');
     onOpenChange(false);
   };
 
@@ -109,6 +112,7 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="todos_os_dias">Todos os dias</SelectItem>
                     <SelectItem value="primeiro_dia_mes">1° dia do mês</SelectItem>
                     <SelectItem value="cada_7_dias">A cada 7 dias (a partir de hoje)</SelectItem>
                     <SelectItem value="cada_15_dias">A cada 15 dias (a partir de hoje)</SelectItem>
