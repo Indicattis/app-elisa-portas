@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package } from "lucide-react";
-import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
+import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
@@ -9,6 +9,7 @@ import { useState } from "react";
 
 export default function Pedidos() {
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
+  const contadores = usePedidosContadores();
   
   const { 
     pedidos, 
@@ -73,7 +74,7 @@ export default function Pedidos() {
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
           {ORDEM_ETAPAS.map((etapa) => {
             const config = ETAPAS_CONFIG[etapa];
-            const count = etapa === etapaAtiva ? pedidos.length : 0;
+            const count = contadores[etapa] || 0;
             
             return (
               <TabsTrigger
@@ -83,11 +84,9 @@ export default function Pedidos() {
               >
                 <span className={`inline-block w-2 h-2 rounded-full mr-2 ${config.color}`} />
                 {config.label}
-                {etapa === etapaAtiva && (
-                  <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
-                    {count}
-                  </span>
-                )}
+                <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                  {count}
+                </span>
               </TabsTrigger>
             );
           })}

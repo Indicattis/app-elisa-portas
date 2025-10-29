@@ -4,6 +4,42 @@ import { useToast } from "@/hooks/use-toast";
 import type { EtapaPedido, PedidoEtapa, PedidoCheckbox } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
 
+// Hook para buscar contadores de todas as etapas
+export function usePedidosContadores() {
+  const { data: contadores = {} } = useQuery({
+    queryKey: ['pedidos-contadores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedidos_producao')
+        .select('etapa_atual');
+
+      if (error) throw error;
+
+      const counts: Record<EtapaPedido, number> = {
+        aberto: 0,
+        em_producao: 0,
+        inspecao_qualidade: 0,
+        aguardando_pintura: 0,
+        aguardando_coleta: 0,
+        aguardando_instalacao: 0,
+        finalizado: 0,
+      };
+
+      data?.forEach((pedido) => {
+        const etapa = pedido.etapa_atual as EtapaPedido;
+        if (etapa in counts) {
+          counts[etapa]++;
+        }
+      });
+
+      return counts;
+    },
+    refetchInterval: 5000, // Atualizar a cada 5 segundos
+  });
+
+  return contadores;
+}
+
 export function usePedidosEtapas(etapa?: EtapaPedido) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
