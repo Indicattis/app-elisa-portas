@@ -55,9 +55,11 @@ export function useTabelaPrecos(searchTerm: string = '') {
 
   const adicionarItem = useMutation({
     mutationFn: async (novoItem: ItemTabelaPrecoInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('tabela_precos_portas')
-        .insert([novoItem])
+        .insert([{ ...novoItem, created_by: user?.id }])
         .select()
         .single();
 
