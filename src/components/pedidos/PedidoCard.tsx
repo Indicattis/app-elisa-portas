@@ -59,7 +59,7 @@ export function PedidoCard({
           {/* Header com Badge de etapa e prioridade */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-1">
-              {dragHandleProps && !isAberto && (
+              {dragHandleProps && (
                 <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
                   <GripVertical className="h-4 w-4 text-muted-foreground" />
                 </div>
@@ -70,7 +70,7 @@ export function PedidoCard({
                 </Badge>
               )}
             </div>
-            {posicao && !isAberto && (
+            {posicao && (
               <Badge variant="outline" className={cn("text-xs font-semibold", getBadgeColor())}>
                 #{posicao}
               </Badge>
@@ -119,7 +119,7 @@ export function PedidoCard({
         </CardContent>
 
         <CardFooter className="gap-2 pt-0 pb-4 flex-wrap">
-          {onMoverPrioridade && posicao && total && !isAberto && (
+          {onMoverPrioridade && posicao && total && (
             <div className="flex gap-1">
               <Button
                 size="icon"
