@@ -3,18 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AvancarEtapaModal } from "./AvancarEtapaModal";
+import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
-import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
+import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PedidoCardProps {
   pedido: any;
   onMoverEtapa?: (pedidoId: string) => void;
+  onRetrocederEtapa?: (pedidoId: string) => void;
   onMoverPrioridade?: (pedidoId: string, direcao: 'frente' | 'tras') => void;
   isAberto?: boolean;
   isDragging?: boolean;
@@ -25,7 +28,8 @@ interface PedidoCardProps {
 
 export function PedidoCard({ 
   pedido, 
-  onMoverEtapa, 
+  onMoverEtapa,
+  onRetrocederEtapa,
   onMoverPrioridade,
   isAberto = false,
   isDragging = false,
@@ -35,6 +39,8 @@ export function PedidoCard({
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAvancarEtapa, setShowAvancarEtapa] = useState(false);
+  const [showRetrocederEtapa, setShowRetrocederEtapa] = useState(false);
+  const { isAdmin } = useAuth();
 
   // Buscar quantidade de linhas do pedido
   const { data: linhasCount = 0 } = useQuery({
@@ -55,6 +61,7 @@ export function PedidoCard({
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
   const config = etapaAtual ? ETAPAS_CONFIG[etapaAtual] : null;
   const proximaEtapa = etapaAtual ? getProximaEtapa(etapaAtual) : null;
+  const etapaAnterior = etapaAtual ? getEtapaAnterior(etapaAtual) : null;
 
   const produtos = venda?.produtos_vendas || [];
   const temLinhas = linhasCount > 0;
@@ -193,11 +200,26 @@ export function PedidoCard({
           )}
         </CardContent>
 
-        <CardFooter className="pt-0 pb-3">
+        <CardFooter className="pt-0 pb-3 gap-2">
+          {/* Botão de retroceder (apenas para admins e se não for primeira etapa) */}
+          {isAdmin && etapaAnterior && onRetrocederEtapa && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowRetrocederEtapa(true)}
+              title="Retroceder para etapa anterior (apenas administradores)"
+              className="flex-1"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 mr-2" />
+              Retroceder
+            </Button>
+          )}
+
+          {/* Botão de avançar */}
           {proximaEtapa && etapaAtual !== 'finalizado' && (
             <Button
               size="sm"
-              className="w-full"
+              className="flex-1"
               onClick={() => setShowAvancarEtapa(true)}
               disabled={isAberto && !temLinhas}
               title={isAberto && !temLinhas ? "Adicione pelo menos uma linha ao pedido para avançar" : ""}
@@ -220,6 +242,13 @@ export function PedidoCard({
         open={showAvancarEtapa}
         onOpenChange={setShowAvancarEtapa}
         onConfirmar={onMoverEtapa || (() => {})}
+      />
+
+      <RetrocederEtapaModal
+        pedido={pedido}
+        open={showRetrocederEtapa}
+        onOpenChange={setShowRetrocederEtapa}
+        onConfirmar={onRetrocederEtapa || (() => {})}
       />
     </>
   );

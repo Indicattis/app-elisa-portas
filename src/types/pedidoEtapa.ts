@@ -116,6 +116,14 @@ export function getProximaEtapa(etapaAtual: EtapaPedido): EtapaPedido | null {
   return ORDEM_ETAPAS[indiceAtual + 1];
 }
 
+export function getEtapaAnterior(etapaAtual: EtapaPedido): EtapaPedido | null {
+  const indiceAtual = ORDEM_ETAPAS.indexOf(etapaAtual);
+  if (indiceAtual === -1 || indiceAtual === 0) {
+    return null;
+  }
+  return ORDEM_ETAPAS[indiceAtual - 1];
+}
+
 // Tipos para sistema de prioridade
 export interface PrioridadeUpdate {
   id: string;

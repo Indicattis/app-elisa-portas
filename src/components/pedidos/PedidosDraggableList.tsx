@@ -23,6 +23,7 @@ interface PedidosDraggableListProps {
   etapa: EtapaPedido;
   isAberto: boolean;
   onMoverEtapa: (pedidoId: string) => void;
+  onRetrocederEtapa?: (pedidoId: string) => void;
   onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
 }
@@ -34,6 +35,7 @@ interface SortableItemProps {
   total: number;
   isAberto: boolean;
   onMoverEtapa: (pedidoId: string) => void;
+  onRetrocederEtapa?: (pedidoId: string) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
 }
 
@@ -44,6 +46,7 @@ function SortableItem({
   total,
   isAberto,
   onMoverEtapa,
+  onRetrocederEtapa,
   onMoverPrioridade,
 }: SortableItemProps) {
   const {
@@ -67,6 +70,7 @@ function SortableItem({
         pedido={pedido}
         isAberto={isAberto}
         onMoverEtapa={onMoverEtapa}
+        onRetrocederEtapa={onRetrocederEtapa}
         onMoverPrioridade={onMoverPrioridade}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
@@ -82,6 +86,7 @@ export function PedidosDraggableList({
   etapa,
   isAberto,
   onMoverEtapa,
+  onRetrocederEtapa,
   onReorganizar,
   onMoverPrioridade,
 }: PedidosDraggableListProps) {
@@ -153,6 +158,7 @@ export function PedidosDraggableList({
               total={pedidos.length}
               isAberto={isAberto}
               onMoverEtapa={onMoverEtapa}
+              onRetrocederEtapa={onRetrocederEtapa}
               onMoverPrioridade={onMoverPrioridade}
             />
           ))}

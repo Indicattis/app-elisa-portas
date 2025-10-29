@@ -15,12 +15,17 @@ export default function Pedidos() {
     pedidos, 
     isLoading, 
     moverParaProximaEtapa,
+    retrocederEtapa,
     atualizarPrioridade,
     reorganizarPedidos
   } = usePedidosEtapas(etapaAtiva);
 
   const handleMoverEtapa = async (pedidoId: string) => {
     await moverParaProximaEtapa.mutateAsync(pedidoId);
+  };
+
+  const handleRetrocederEtapa = async (pedidoId: string) => {
+    await retrocederEtapa.mutateAsync(pedidoId);
   };
 
   const handleReorganizar = async (atualizacoes: { id: string; prioridade: number }[]) => {
@@ -118,6 +123,7 @@ export default function Pedidos() {
                     etapa={etapa}
                     isAberto={etapa === 'aberto'}
                     onMoverEtapa={handleMoverEtapa}
+                    onRetrocederEtapa={handleRetrocederEtapa}
                     onReorganizar={handleReorganizar}
                     onMoverPrioridade={handleMoverPrioridade}
                   />
