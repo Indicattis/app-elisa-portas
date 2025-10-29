@@ -5,7 +5,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import { useState } from "react";
-import { PedidoEtapaCheckboxes } from "./PedidoEtapaCheckboxes";
+import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
 
@@ -30,7 +30,7 @@ export function PedidoCard({
   posicao,
   total
 }: PedidoCardProps) {
-  const [showCheckboxes, setShowCheckboxes] = useState(false);
+  const [showDetalhes, setShowDetalhes] = useState(false);
 
   // Para todos os pedidos (incluindo aberto), buscar dados da venda relacionada
   const venda = pedido.vendas;
@@ -147,7 +147,7 @@ export function PedidoCard({
             size="sm"
             variant="outline"
             className="flex-1"
-            onClick={() => setShowCheckboxes(true)}
+            onClick={() => setShowDetalhes(true)}
           >
             <Eye className="h-3 w-3 mr-1" />
             Detalhes
@@ -165,13 +165,11 @@ export function PedidoCard({
         </CardFooter>
       </Card>
 
-      {!isAberto && (
-        <PedidoEtapaCheckboxes
-          pedidoId={pedido.id}
-          open={showCheckboxes}
-          onOpenChange={setShowCheckboxes}
-        />
-      )}
+      <PedidoDetalhesSheet
+        pedido={pedido}
+        open={showDetalhes}
+        onOpenChange={setShowDetalhes}
+      />
     </>
   );
 }
