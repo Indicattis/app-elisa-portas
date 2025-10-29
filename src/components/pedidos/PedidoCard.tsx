@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
-import { AvancarEtapaModal } from "./AvancarEtapaModal";
+import { AcaoEtapaModal } from "./AcaoEtapaModal";
 import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
@@ -38,7 +38,7 @@ export function PedidoCard({
   total
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
-  const [showAvancarEtapa, setShowAvancarEtapa] = useState(false);
+  const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
   const [showRetrocederEtapa, setShowRetrocederEtapa] = useState(false);
   const { isAdmin } = useAuth();
 
@@ -217,12 +217,10 @@ export function PedidoCard({
             <Button
               size="sm"
               className="w-full"
-              onClick={() => setShowAvancarEtapa(true)}
-              disabled={isAberto && !temLinhas}
-              title={isAberto && !temLinhas ? "Adicione pelo menos uma linha ao pedido para avançar" : ""}
+              onClick={() => setShowAcaoEtapa(true)}
             >
               <ArrowRight className="h-3.5 w-3.5 mr-2" />
-              {isAberto ? 'Iniciar Produção' : 'Avançar Etapa'}
+              {isAberto ? 'Preparar Pedido' : `Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}
             </Button>
           )}
         </CardFooter>
@@ -234,11 +232,11 @@ export function PedidoCard({
         onOpenChange={setShowDetalhes}
       />
 
-      <AvancarEtapaModal
+      <AcaoEtapaModal
         pedido={pedido}
-        open={showAvancarEtapa}
-        onOpenChange={setShowAvancarEtapa}
-        onConfirmar={onMoverEtapa || (() => {})}
+        open={showAcaoEtapa}
+        onOpenChange={setShowAcaoEtapa}
+        onAvancar={onMoverEtapa || (() => {})}
       />
 
       <RetrocederEtapaModal
