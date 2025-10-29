@@ -102,21 +102,47 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
                   <div>
                     <Label className="text-xs text-muted-foreground">Produtos:</Label>
                     <div className="mt-1 space-y-2">
-                      {vendaData.produtos_vendas.map((produto: any, idx: number) => (
-                        <div key={idx} className="text-sm p-2 bg-muted/30 rounded">
-                          <div className="font-medium">{produto.descricao || 'Produto'}</div>
-                          {(produto.largura && produto.altura) && (
-                            <div className="text-muted-foreground text-xs">
-                              Medidas: {produto.largura}m x {produto.altura}m
-                            </div>
-                          )}
-                          {produto.quantidade > 1 && (
-                            <div className="text-muted-foreground text-xs">
-                              Quantidade: {produto.quantidade}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      {vendaData.produtos_vendas.map((produto: any, idx: number) => {
+                        const largura = produto.largura;
+                        const altura = produto.altura;
+                        
+                        // Cálculos
+                        const pesoDaPorta = largura && altura 
+                          ? (((altura * largura * 12) * 2) * 0.3).toFixed(2)
+                          : null;
+                        
+                        const quantidadeMeiaCanas = altura 
+                          ? Math.ceil(altura / 0.076)
+                          : null;
+                        
+                        return (
+                          <div key={idx} className="text-sm p-2 bg-muted/30 rounded space-y-1">
+                            <div className="font-medium">{produto.descricao || 'Produto'}</div>
+                            {(largura && altura) && (
+                              <div className="text-muted-foreground text-xs">
+                                Medidas: {largura}m x {altura}m
+                              </div>
+                            )}
+                            {produto.quantidade > 1 && (
+                              <div className="text-muted-foreground text-xs">
+                                Quantidade: {produto.quantidade}
+                              </div>
+                            )}
+                            
+                            {/* Cálculos */}
+                            {pesoDaPorta && (
+                              <div className="text-muted-foreground text-xs">
+                                Peso da porta: {pesoDaPorta} kg
+                              </div>
+                            )}
+                            {quantidadeMeiaCanas && (
+                              <div className="text-muted-foreground text-xs">
+                                Meia canas necessárias: {quantidadeMeiaCanas} unidades
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
