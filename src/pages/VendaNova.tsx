@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
+import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 
 interface Atendente {
   id: string;
@@ -33,6 +34,7 @@ export default function VendaNova() {
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [atendentes, setAtendentes] = useState<Atendente[]>([]);
+  const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     publico_alvo: "",
@@ -55,6 +57,12 @@ export default function VendaNova() {
   useEffect(() => {
     fetchAtendentes();
   }, []);
+
+  useEffect(() => {
+    if (formData.estado) {
+      setCidadesDisponiveis(getCidadesPorEstado(formData.estado));
+    }
+  }, [formData.estado]);
 
   const fetchAtendentes = async () => {
     try {
@@ -336,24 +344,43 @@ export default function VendaNova() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="estado">Estado *</Label>
-                  <Input
-                    id="estado"
-                    placeholder="Estado"
+                  <Select
                     value={formData.estado}
-                    onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                    onValueChange={(value) => setFormData({ ...formData, estado: value, cidade: '' })}
                     required
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTADOS_BRASIL.map((estado) => (
+                        <SelectItem key={estado.sigla} value={estado.sigla}>
+                          {estado.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="cidade">Cidade *</Label>
-                  <Input
-                    id="cidade"
-                    placeholder="Cidade"
+                  <Select
                     value={formData.cidade}
-                    onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                    onValueChange={(value) => setFormData({ ...formData, cidade: value })}
+                    disabled={!formData.estado}
                     required
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={formData.estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {cidadesDisponiveis.map((cidade) => (
+                        <SelectItem key={cidade} value={cidade}>
+                          {cidade}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
