@@ -366,12 +366,22 @@ export function AppSidebar() {
                                   <SidebarMenuSubButton 
                                     asChild={canAccess}
                                     isActive={itemIsActive}
-                                    className={!canAccess ? "opacity-50 cursor-not-allowed" : ""}
+                                    className={cn(
+                                      !canAccess ? "opacity-50 cursor-not-allowed" : "",
+                                      getChecklistColorClass(subItem.key, itemIsActive)
+                                    )}
+                                    data-active={itemIsActive}
                                   >
                                     {canAccess ? (
-                                      <Link to={subItem.href}>
+                                      <Link to={subItem.href} className="flex items-center gap-2 w-full">
                                         <SubIcon className="h-4 w-4" />
                                         <span>{subItem.label}</span>
+                                        {checklistColors[subItem.key] && (
+                                          <span className={cn(
+                                            "w-2 h-2 rounded-full ml-auto",
+                                            checklistColors[subItem.key].badge
+                                          )} />
+                                        )}
                                       </Link>
                                     ) : (
                                       <div className="flex items-center gap-2 w-full">
