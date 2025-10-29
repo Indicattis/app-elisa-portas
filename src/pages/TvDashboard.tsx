@@ -496,65 +496,7 @@ export default function TvDashboard() {
               </div>
             </div>
           </CarouselItem>
-          {/* Slide 4: Índices de Instalações */}
-          <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-10 w-full">
-              {/* Logo */}
-              <div>
-                <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
-              </div>
-
-              {/* Título */}
-              <div className="text-center">
-                <h1 className="font-anton text-7xl">INSTALAÇÕES</h1>
-                <p className="text-2xl text-muted-foreground mt-2">Indicadores de Produção</p>
-              </div>
-
-              {/* Cards de Indicadores */}
-              <div className="grid grid-cols-3 gap-8 w-full max-w-6xl">
-                {/* Instalações */}
-                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-2 border-blue-500 rounded-2xl p-8 shadow-2xl">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="bg-blue-500/30 p-6 rounded-full">
-                      <Package className="w-20 h-20 text-blue-300" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-blue-300">Instalações</h3>
-                    <div className="text-8xl font-bold text-white">
-                      {instalacoesStats.totalInstalacoes}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Correções */}
-                <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-2 border-orange-500 rounded-2xl p-8 shadow-2xl">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="bg-orange-500/30 p-6 rounded-full">
-                      <Wrench className="w-20 h-20 text-orange-300" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-orange-300">Correções</h3>
-                    <div className="text-8xl font-bold text-white">
-                      {instalacoesStats.totalCorrecoes}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Entregas Pendentes */}
-                <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border-2 border-yellow-500 rounded-2xl p-8 shadow-2xl">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="bg-yellow-500/30 p-6 rounded-full">
-                      <Truck className="w-20 h-20 text-yellow-300" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-yellow-300">Entregas</h3>
-                    <div className="text-8xl font-bold text-white">
-                      {instalacoesStats.entregasPendentes}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CarouselItem>
-
-          {/* Slide 5: Meta Parceiros Autorizados */}
+          {/* Slide 4: Meta Parceiros Autorizados */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-start p-6 space-y-6 w-full">
               {/* Título */}
@@ -652,76 +594,6 @@ export default function TvDashboard() {
             </div>
           </CarouselItem>
 
-          {/* Slide 6: Faturamento por Produto */}
-          <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-8 w-full">
-              {/* Logo */}
-              <div>
-                <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-16 w-auto" />
-              </div>
-
-              {/* Título */}
-              <div className="text-center">
-                <h1 className="font-anton text-6xl">FATURAMENTO POR ITEM</h1>
-                <p className="text-xl text-muted-foreground mt-2">Produtos vendidos este mês</p>
-              </div>
-
-              {/* Grid de produtos em 3 colunas */}
-              <div className="grid grid-cols-3 gap-6 w-full max-w-7xl">
-                {faturamentoPorProduto.slice(0, 9).map((produto, index) => {
-                  // Cores alternadas para os cards
-                  const colors = [
-                    { bg: 'from-blue-500/20 to-blue-600/20', border: 'border-blue-500', text: 'text-blue-300' },
-                    { bg: 'from-purple-500/20 to-purple-600/20', border: 'border-purple-500', text: 'text-purple-300' },
-                    { bg: 'from-emerald-500/20 to-emerald-600/20', border: 'border-emerald-500', text: 'text-emerald-300' },
-                    { bg: 'from-orange-500/20 to-orange-600/20', border: 'border-orange-500', text: 'text-orange-300' },
-                    { bg: 'from-pink-500/20 to-pink-600/20', border: 'border-pink-500', text: 'text-pink-300' },
-                    { bg: 'from-yellow-500/20 to-yellow-600/20', border: 'border-yellow-500', text: 'text-yellow-300' },
-                    { bg: 'from-red-500/20 to-red-600/20', border: 'border-red-500', text: 'text-red-300' },
-                    { bg: 'from-cyan-500/20 to-cyan-600/20', border: 'border-cyan-500', text: 'text-cyan-300' },
-                    { bg: 'from-indigo-500/20 to-indigo-600/20', border: 'border-indigo-500', text: 'text-indigo-300' },
-                  ];
-                  
-                  const colorIndex = index % colors.length;
-                  const color = colors[colorIndex];
-                  
-                  return (
-                    <div 
-                      key={produto.tipo_produto}
-                      className={`bg-gradient-to-br ${color.bg} border-2 ${color.border} rounded-2xl p-6 shadow-2xl`}
-                    >
-                      <div className="flex flex-col items-center space-y-3">
-                        <div className={`bg-${color.border.split('-')[1]}-500/30 p-4 rounded-full`}>
-                          <TrendingUp className={`w-12 h-12 ${color.text}`} />
-                        </div>
-                        <h3 className={`text-2xl font-bold ${color.text} text-center min-h-[3.5rem] flex items-center`}>
-                          {produto.tipo_produto}
-                        </h3>
-                        <div className="text-5xl font-bold text-white">
-                          {produto.quantidade}
-                        </div>
-                        <div className="text-sm text-muted-foreground">unidades</div>
-                        <div className="text-3xl font-bold text-white mt-2">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                          }).format(produto.valor_total)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                
-                {faturamentoPorProduto.length === 0 && (
-                  <div className="col-span-3 text-center py-12">
-                    <p className="text-2xl text-muted-foreground">Nenhum produto vendido este mês</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CarouselItem>
         </CarouselContent>
         
         {/* Navigation arrows with responsive positioning */}
@@ -739,7 +611,7 @@ export default function TvDashboard() {
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1, 2, 3, 4, 5].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
+        {[0, 1, 2, 3].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
     </div>;
 }
