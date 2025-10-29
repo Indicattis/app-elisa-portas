@@ -63,6 +63,53 @@ const iconMap: Record<string, any> = {
   CheckSquare,
 };
 
+// Mapeamento de cores para Checklist Liderança por setor
+const checklistColors: Record<string, { text: string; hover: string; active: string; badge: string }> = {
+  'checklist_lideranca_vendas_group': {
+    text: 'text-green-600 dark:text-green-400',
+    hover: 'hover:bg-green-50 dark:hover:bg-green-950/30',
+    active: 'data-[active=true]:bg-green-100 dark:data-[active=true]:bg-green-900/40 data-[active=true]:text-green-700 dark:data-[active=true]:text-green-300',
+    badge: 'bg-green-500'
+  },
+  'checklist_lideranca_marketing_group': {
+    text: 'text-yellow-600 dark:text-yellow-400',
+    hover: 'hover:bg-yellow-50 dark:hover:bg-yellow-950/30',
+    active: 'data-[active=true]:bg-yellow-100 dark:data-[active=true]:bg-yellow-900/40 data-[active=true]:text-yellow-700 dark:data-[active=true]:text-yellow-300',
+    badge: 'bg-yellow-500'
+  },
+  'checklist_lideranca_fabrica': {
+    text: 'text-gray-600 dark:text-gray-400',
+    hover: 'hover:bg-gray-50 dark:hover:bg-gray-950/30',
+    active: 'data-[active=true]:bg-gray-100 dark:data-[active=true]:bg-gray-900/40 data-[active=true]:text-gray-700 dark:data-[active=true]:text-gray-300',
+    badge: 'bg-gray-500'
+  },
+  'checklist_lideranca_instalacoes_group': {
+    text: 'text-red-600 dark:text-red-400',
+    hover: 'hover:bg-red-50 dark:hover:bg-red-950/30',
+    active: 'data-[active=true]:bg-red-100 dark:data-[active=true]:bg-red-900/40 data-[active=true]:text-red-700 dark:data-[active=true]:text-red-300',
+    badge: 'bg-red-500'
+  },
+  'checklist_lideranca_administrativo': {
+    text: 'text-blue-600 dark:text-blue-400',
+    hover: 'hover:bg-blue-50 dark:hover:bg-blue-950/30',
+    active: 'data-[active=true]:bg-blue-100 dark:data-[active=true]:bg-blue-900/40 data-[active=true]:text-blue-700 dark:data-[active=true]:text-blue-300',
+    badge: 'bg-blue-500'
+  },
+};
+
+// Função helper para obter classes de cor dos Checklist Liderança
+const getChecklistColorClass = (itemKey: string, isActive: boolean) => {
+  const colors = checklistColors[itemKey];
+  if (!colors) return '';
+  
+  return cn(
+    colors.text,
+    colors.hover,
+    colors.active,
+    isActive && 'font-semibold'
+  );
+};
+
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -273,17 +320,27 @@ export function AppSidebar() {
                                             const nestedCanAccess = nestedItem.can_access;
                                             const nestedIsActive = nestedCanAccess && isActive(nestedItem.href);
                                             
-                                            return (
+                                             return (
                                               <SidebarMenuSubItem key={nestedItem.key}>
                                                 <SidebarMenuSubButton 
                                                   asChild={nestedCanAccess}
                                                   isActive={nestedIsActive}
-                                                  className={!nestedCanAccess ? "opacity-50 cursor-not-allowed" : ""}
+                                                  className={cn(
+                                                    !nestedCanAccess ? "opacity-50 cursor-not-allowed" : "",
+                                                    getChecklistColorClass(nestedItem.key, nestedIsActive)
+                                                  )}
+                                                  data-active={nestedIsActive}
                                                 >
                                                   {nestedCanAccess ? (
-                                                    <Link to={nestedItem.href}>
+                                                    <Link to={nestedItem.href} className="flex items-center gap-2 w-full">
                                                       <NestedIcon className="h-4 w-4" />
                                                       <span>{nestedItem.label}</span>
+                                                      {checklistColors[nestedItem.key] && (
+                                                        <span className={cn(
+                                                          "w-2 h-2 rounded-full ml-auto",
+                                                          checklistColors[nestedItem.key].badge
+                                                        )} />
+                                                      )}
                                                     </Link>
                                                   ) : (
                                                     <div className="flex items-center gap-2 w-full">
