@@ -5,11 +5,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, AlertCircle, Package, MapPin, Truck } from "lucide-react";
 import { EtapaPedido, ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { usePedidoEtapaCheckboxes } from "@/hooks/usePedidoEtapaCheckboxes";
 import { PedidoLinhasEditor } from "./PedidoLinhasEditor";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AcaoEtapaModalProps {
   pedido: any;
@@ -33,6 +36,27 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
     todosObrigatoriosMarcados,
     isLoading: isLoadingCheckboxes 
   } = usePedidoEtapaCheckboxes(pedido.id, etapaAtual);
+
+  // Buscar dados da venda para mostrar informações dos produtos
+  const { data: vendaData } = useQuery({
+    queryKey: ['venda-produtos', pedido.venda_id],
+    queryFn: async () => {
+      if (!pedido.venda_id) return null;
+      
+      const { data, error } = await supabase
+        .from('vendas')
+        .select(`
+          *,
+          produtos_vendas(*)
+        `)
+        .eq('id', pedido.venda_id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pedido.venda_id && open
+  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,6 +87,74 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
         </DialogHeader>
         
         <ScrollArea className="max-h-[60vh] px-1">
+          {/* Informações da Venda */}
+          {vendaData && (
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Informações do Pedido
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Produtos */}
+                {vendaData.produtos_vendas && vendaData.produtos_vendas.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Produtos:</Label>
+                    <div className="mt-1 space-y-2">
+                      {vendaData.produtos_vendas.map((produto: any, idx: number) => (
+                        <div key={idx} className="text-sm p-2 bg-muted/30 rounded">
+                          <div className="font-medium">{produto.descricao || 'Produto'}</div>
+                          {(produto.largura && produto.altura) && (
+                            <div className="text-muted-foreground text-xs">
+                              Medidas: {produto.largura}m x {produto.altura}m
+                            </div>
+                          )}
+                          {produto.quantidade > 1 && (
+                            <div className="text-muted-foreground text-xs">
+                              Quantidade: {produto.quantidade}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tipo de Entrega */}
+                {pedido.modalidade_instalacao && (
+                  <div className="flex items-start gap-2">
+                    <Truck className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Modalidade:</Label>
+                      <div className="text-sm">
+                        {pedido.modalidade_instalacao === 'instalacao_elisa' && 'Instalação Elisa'}
+                        {pedido.modalidade_instalacao === 'autorizado_elisa' && 'Autorizado Elisa'}
+                        {pedido.modalidade_instalacao === 'sem_instalacao' && 'Sem Instalação'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Endereço */}
+                {(pedido.endereco_cidade || pedido.endereco_estado || pedido.endereco_rua) && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Endereço:</Label>
+                      <div className="text-sm">
+                        {pedido.endereco_rua && <div>{pedido.endereco_rua}{pedido.endereco_numero ? `, ${pedido.endereco_numero}` : ''}</div>}
+                        {pedido.endereco_cidade && pedido.endereco_estado && (
+                          <div>{pedido.endereco_cidade}, {pedido.endereco_estado}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {isAberto ? (
             // Renderizar editor de linhas
             <div className="space-y-4">
