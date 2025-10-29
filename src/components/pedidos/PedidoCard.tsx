@@ -134,6 +134,18 @@ export function PedidoCard({
                 </>
               )}
               
+              {isAdmin && etapaAnterior && onRetrocederEtapa && (
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={() => setShowRetrocederEtapa(true)}
+                  title="Retroceder para etapa anterior"
+                  className="h-6 w-6"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                </Button>
+              )}
+              
               {posicao && (
                 <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 font-semibold ml-0.5", getBadgeColor())}>
                   #{posicao}
@@ -201,31 +213,16 @@ export function PedidoCard({
         </CardContent>
 
         <CardFooter className="pt-0 pb-3 gap-2">
-          {/* Botão de retroceder (apenas para admins e se não for primeira etapa) */}
-          {isAdmin && etapaAnterior && onRetrocederEtapa && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowRetrocederEtapa(true)}
-              title="Retroceder para etapa anterior (apenas administradores)"
-              className="flex-1"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 mr-2" />
-              Retroceder
-            </Button>
-          )}
-
-          {/* Botão de avançar */}
           {proximaEtapa && etapaAtual !== 'finalizado' && (
             <Button
               size="sm"
-              className="flex-1"
+              className="w-full"
               onClick={() => setShowAvancarEtapa(true)}
               disabled={isAberto && !temLinhas}
               title={isAberto && !temLinhas ? "Adicione pelo menos uma linha ao pedido para avançar" : ""}
             >
               <ArrowRight className="h-3.5 w-3.5 mr-2" />
-              {isAberto ? 'Iniciar Produção' : `Avançar para ${proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}`}
+              {isAberto ? 'Iniciar Produção' : 'Avançar Etapa'}
             </Button>
           )}
         </CardFooter>
