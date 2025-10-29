@@ -102,12 +102,7 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
                   <div>
                     <Label className="text-xs text-muted-foreground">Produtos:</Label>
                     <div className="mt-1 space-y-2">
-                      {vendaData.produtos_vendas
-                        .filter((produto: any) => 
-                          produto.descricao && 
-                          produto.descricao.toLowerCase().includes('porta_enrolar')
-                        )
-                        .map((produto: any, idx: number) => {
+                      {vendaData.produtos_vendas.map((produto: any, idx: number) => {
                         const largura = produto.largura;
                         const altura = produto.altura;
                         
