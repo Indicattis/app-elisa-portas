@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { DollarSign, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { DollarSign, Search, Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/useTabelaPrecos";
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
@@ -14,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function TabelaPrecos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
 
@@ -22,6 +24,7 @@ export default function TabelaPrecos() {
 
   const handleUploadComplete = () => {
     queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
+    setBulkUploadModalOpen(false);
   };
 
   const handleNovoItem = () => {
@@ -69,14 +72,17 @@ export default function TabelaPrecos() {
           </div>
         </div>
 
-        <Button onClick={handleNovoItem}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Item
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setBulkUploadModalOpen(true)} variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Upload em Massa
+          </Button>
+          <Button onClick={handleNovoItem}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Item
+          </Button>
+        </div>
       </div>
-
-      {/* Bulk Upload */}
-      <BulkUploadTabelaPrecos onUploadComplete={handleUploadComplete} />
 
       {/* Card Principal */}
       <Card>
@@ -198,6 +204,16 @@ export default function TabelaPrecos() {
         onSubmit={handleSubmit}
         itemEditando={itemEditando}
       />
+
+      {/* Modal de Upload em Massa */}
+      <Dialog open={bulkUploadModalOpen} onOpenChange={setBulkUploadModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Upload em Massa</DialogTitle>
+          </DialogHeader>
+          <BulkUploadTabelaPrecos onUploadComplete={handleUploadComplete} />
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de Confirmação de Inativação */}
       <AlertDialog open={!!itemParaInativar} onOpenChange={() => setItemParaInativar(null)}>
