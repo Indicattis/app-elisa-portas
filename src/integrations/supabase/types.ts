@@ -2475,6 +2475,33 @@ export type Database = {
         }
         Relationships: []
       }
+      setores_lideres: {
+        Row: {
+          atribuido_por: string
+          created_at: string
+          id: string
+          lider_id: string
+          setor: string
+          updated_at: string
+        }
+        Insert: {
+          atribuido_por: string
+          created_at?: string
+          id?: string
+          lider_id: string
+          setor: string
+          updated_at?: string
+        }
+        Update: {
+          atribuido_por?: string
+          created_at?: string
+          id?: string
+          lider_id?: string
+          setor?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tabela_precos_portas: {
         Row: {
           altura: number

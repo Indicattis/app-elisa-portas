@@ -8,10 +8,30 @@ export function useSetorInfo(setor?: string) {
     queryFn: async () => {
       if (!setor) return null;
 
+      // PRIORIDADE 1: Buscar líder atribuído manualmente
+      const { data: liderAtribuido, error: liderError } = await supabase
+        .from('setores_lideres')
+        .select('lider_id')
+        .eq('setor', setor)
+        .maybeSingle();
+
+      if (liderAtribuido) {
+        // Buscar dados completos do líder
+        const { data: liderData, error: liderDataError } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, email, role, foto_perfil_url')
+          .eq('user_id', liderAtribuido.lider_id)
+          .maybeSingle();
+
+        if (liderData) {
+          return liderData;
+        }
+      }
+
+      // PRIORIDADE 2: Fallback para o primeiro gerente ativo (comportamento atual)
       const roles = getRolesFromSetor(setor);
       if (roles.length === 0) return null;
 
-      // Buscar o gerente/responsável do setor (primeiro gerente ativo)
       const gerenteRoles = roles.filter(r => r.startsWith('gerente_'));
       
       const { data, error } = await supabase
