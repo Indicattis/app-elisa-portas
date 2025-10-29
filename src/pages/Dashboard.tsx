@@ -203,9 +203,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalVendasMes)}</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% vs mês anterior
-            </p>
+            
           </CardContent>
         </Card>
 
@@ -223,19 +221,10 @@ export default function Dashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loadingVendedores ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
-          ) : vendedores.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhuma venda registrada este mês</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {vendedores.map((vendedor) => {
-                const category = getVendedorCategory(vendedor.total_vendas);
-                return (
-                  <div
-                    key={vendedor.nome}
-                    className={`relative p-3 rounded-lg border bg-gradient-to-br ${category.color} ${category.border}`}
-                  >
+          {loadingVendedores ? <div className="text-center py-8 text-muted-foreground">Carregando...</div> : vendedores.length === 0 ? <div className="text-center py-8 text-muted-foreground">Nenhuma venda registrada este mês</div> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {vendedores.map(vendedor => {
+            const category = getVendedorCategory(vendedor.total_vendas);
+            return <div key={vendedor.nome} className={`relative p-3 rounded-lg border bg-gradient-to-br ${category.color} ${category.border}`}>
                     <div className="flex items-center gap-2">
                       <div className="relative">
                         <Avatar className="h-9 w-9 border border-white">
@@ -244,15 +233,9 @@ export default function Dashboard() {
                             {vendedor.nome.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        {vendedor.posicao <= 3 && (
-                          <div className="absolute -top-0.5 -right-0.5">
-                            <Medal className={`h-4 w-4 ${
-                              vendedor.posicao === 1 ? 'text-yellow-500' :
-                              vendedor.posicao === 2 ? 'text-gray-400' :
-                              'text-amber-700'
-                            }`} />
-                          </div>
-                        )}
+                        {vendedor.posicao <= 3 && <div className="absolute -top-0.5 -right-0.5">
+                            <Medal className={`h-4 w-4 ${vendedor.posicao === 1 ? 'text-yellow-500' : vendedor.posicao === 2 ? 'text-gray-400' : 'text-amber-700'}`} />
+                          </div>}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -270,11 +253,9 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  </div>;
+          })}
+            </div>}
         </CardContent>
       </Card>
 
