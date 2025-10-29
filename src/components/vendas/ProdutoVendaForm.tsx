@@ -55,6 +55,7 @@ export function ProdutoVendaForm({
 
   const [incluirInstalacao, setIncluirInstalacao] = useState(false);
   const [carregandoPrecos, setCarregandoPrecos] = useState(false);
+  const [itemTabelaEncontrado, setItemTabelaEncontrado] = useState<string>('');
 
   // Atualizar formulário quando um produto for passado para edição
   useEffect(() => {
@@ -145,6 +146,7 @@ export function ProdutoVendaForm({
       
       if (item) {
         const tamanho = `${formData.largura}x${formData.altura}`;
+        setItemTabelaEncontrado(`Tabela: ${item.largura}m x ${item.altura}m`);
         
         if (formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') {
           setFormData(prev => ({
@@ -163,6 +165,7 @@ export function ProdutoVendaForm({
           toast.success(`Preço de pintura encontrado para ${item.largura}x${item.altura}m`);
         }
       } else {
+        setItemTabelaEncontrado('');
         toast.error('Preço não encontrado na tabela para essas medidas');
       }
     } catch (error) {
@@ -263,174 +266,227 @@ export function ProdutoVendaForm({
           <DialogTitle>{produtoEditando ? 'Editar Produto' : 'Adicionar Produto'}</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Tipo de Produto */}
-          <div className="space-y-2">
-            <Label>Tipo de Produto *</Label>
-            <Select
-              value={formData.tipo_produto}
-              onValueChange={(value: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao') => 
-                setFormData(prev => ({ ...prev, tipo_produto: value }))
-              }
-              disabled={!permitirTrocaTipo}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="porta_enrolar">Porta de Enrolar</SelectItem>
-                <SelectItem value="porta_social">Porta Social</SelectItem>
-                <SelectItem value="pintura_epoxi">Pintura Eletrostática</SelectItem>
-                <SelectItem value="acessorio">Acessório</SelectItem>
-                <SelectItem value="adicional">Adicional</SelectItem>
-                <SelectItem value="manutencao">Manutenção</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Campos específicos por tipo */}
           {(formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && (
             <>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="largura">Largura (m) *</Label>
-                  <Input
-                    id="largura"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.largura || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || undefined }))}
-                    onBlur={buscarPrecos}
-                    placeholder="Ex: 2.50"
-                    required
-                  />
+              {/* Seção: Medidas */}
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold">Medidas do Produto</h3>
+                  <p className="text-sm text-muted-foreground">Informe as dimensões da porta</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="altura">Altura (m) *</Label>
-                  <Input
-                    id="altura"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.altura || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || undefined }))}
-                    onBlur={buscarPrecos}
-                    placeholder="Ex: 3.00"
-                    required
-                  />
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="largura" className="text-base">Largura (m) *</Label>
+                    <Input
+                      id="largura"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.largura || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || undefined }))}
+                      onBlur={buscarPrecos}
+                      placeholder="Ex: 2.50"
+                      className="h-12 text-lg"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="altura" className="text-base">Altura (m) *</Label>
+                    <Input
+                      id="altura"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.altura || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || undefined }))}
+                      onBlur={buscarPrecos}
+                      placeholder="Ex: 3.00"
+                      className="h-12 text-lg"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {carregandoPrecos && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Buscando preços na tabela...
+                  </div>
+                )}
+
+                {itemTabelaEncontrado && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
+                    <p className="text-sm font-medium text-primary">{itemTabelaEncontrado}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t pt-6">
+                <div className="space-y-1 mb-4">
+                  <h3 className="text-lg font-semibold">Valores</h3>
+                  <p className="text-sm text-muted-foreground">Valores obtidos da tabela de preços</p>
+                </div>
+
+                <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-base">Valor do Produto</Label>
+                    <span className="text-lg font-semibold">
+                      R$ {formData.valor_produto.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-2 py-2">
+                    <Checkbox
+                      id="incluir_instalacao"
+                      checked={incluirInstalacao}
+                      onCheckedChange={(checked) => setIncluirInstalacao(checked as boolean)}
+                    />
+                    <Label htmlFor="incluir_instalacao" className="cursor-pointer text-base">
+                      Incluir Instalação
+                    </Label>
+                  </div>
+
+                  {incluirInstalacao && (
+                    <div className="flex justify-between items-center border-t pt-3">
+                      <Label className="text-base">Valor da Instalação</Label>
+                      <span className="text-lg font-semibold text-primary">
+                        R$ {formData.valor_instalacao.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {carregandoPrecos && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Buscando preços...
+              <div className="border-t pt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="cor" className="text-base">Cor (Opcional)</Label>
+                  <Select
+                    value={formData.cor_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, cor_id: value }))}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Selecione uma cor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cores?.map((cor) => (
+                        <SelectItem key={cor.id} value={cor.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-4 h-4 rounded border"
+                              style={{ backgroundColor: cor.codigo_hex }}
+                            />
+                            {cor.nome}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="incluir_instalacao"
-                  checked={incluirInstalacao}
-                  onCheckedChange={(checked) => setIncluirInstalacao(checked as boolean)}
-                />
-                <Label htmlFor="incluir_instalacao" className="cursor-pointer">
-                  Incluir Instalação
-                </Label>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cor">Cor</Label>
-                <Select
-                  value={formData.cor_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, cor_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma cor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cores?.map((cor) => (
-                      <SelectItem key={cor.id} value={cor.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-4 h-4 rounded border"
-                            style={{ backgroundColor: cor.codigo_hex }}
-                          />
-                          {cor.nome}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </>
           )}
 
           {formData.tipo_produto === 'pintura_epoxi' && (
             <>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="largura_pintura">Largura (m) *</Label>
-                  <Input
-                    id="largura_pintura"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.largura || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || undefined }))}
-                    onBlur={buscarPrecos}
-                    placeholder="Ex: 2.00"
-                    required
-                  />
+              {/* Seção: Medidas */}
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold">Medidas da Pintura</h3>
+                  <p className="text-sm text-muted-foreground">Informe as dimensões da área a ser pintada</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="altura_pintura">Altura (m) *</Label>
-                  <Input
-                    id="altura_pintura"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.altura || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || undefined }))}
-                    onBlur={buscarPrecos}
-                    placeholder="Ex: 2.50"
-                    required
-                  />
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="largura_pintura" className="text-base">Largura (m) *</Label>
+                    <Input
+                      id="largura_pintura"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.largura || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || undefined }))}
+                      onBlur={buscarPrecos}
+                      placeholder="Ex: 2.00"
+                      className="h-12 text-lg"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="altura_pintura" className="text-base">Altura (m) *</Label>
+                    <Input
+                      id="altura_pintura"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.altura || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || undefined }))}
+                      onBlur={buscarPrecos}
+                      placeholder="Ex: 2.50"
+                      className="h-12 text-lg"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {carregandoPrecos && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Buscando preços na tabela...
+                  </div>
+                )}
+
+                {itemTabelaEncontrado && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
+                    <p className="text-sm font-medium text-primary">{itemTabelaEncontrado}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t pt-6">
+                <div className="space-y-1 mb-4">
+                  <h3 className="text-lg font-semibold">Valores</h3>
+                  <p className="text-sm text-muted-foreground">Valores obtidos da tabela de preços</p>
+                </div>
+
+                <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-base">Valor da Pintura</Label>
+                    <span className="text-lg font-semibold">
+                      R$ {formData.valor_pintura.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {carregandoPrecos && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Buscando preços...
+              <div className="border-t pt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="cor" className="text-base">Cor da Pintura *</Label>
+                  <Select
+                    value={formData.cor_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, cor_id: value }))}
+                    required
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Selecione a cor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cores?.map((cor) => (
+                        <SelectItem key={cor.id} value={cor.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-4 h-4 rounded border"
+                              style={{ backgroundColor: cor.codigo_hex }}
+                            />
+                            {cor.nome}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="cor">Cor da Pintura *</Label>
-                <Select
-                  value={formData.cor_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, cor_id: value }))}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a cor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cores?.map((cor) => (
-                      <SelectItem key={cor.id} value={cor.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-4 h-4 rounded border"
-                            style={{ backgroundColor: cor.codigo_hex }}
-                          />
-                          {cor.nome}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </>
           )}
@@ -493,96 +549,108 @@ export function ProdutoVendaForm({
             </div>
           )}
 
-          {/* Campo de quantidade removido - quantidade será editada diretamente na tabela */}
-
-          {/* Valores */}
-          <div className="space-y-2">
-            <Label htmlFor="valor_produto">
-              Valor {formData.tipo_produto === 'pintura_epoxi' ? 'da Pintura' : formData.tipo_produto === 'manutencao' ? 'do Serviço' : 'do Produto'} (R$) *
-            </Label>
-            <Input
-              id="valor_produto"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.tipo_produto === 'pintura_epoxi' ? formData.valor_pintura : formData.valor_produto}
-              onChange={(e) => {
-                const valor = parseFloat(e.target.value) || 0;
-                if (formData.tipo_produto === 'pintura_epoxi') {
-                  setFormData(prev => ({ ...prev, valor_pintura: valor, valor_produto: 0 }));
-                } else {
+          {/* Valores manuais para outros tipos de produto */}
+          {formData.tipo_produto !== 'porta_enrolar' && 
+           formData.tipo_produto !== 'porta_social' && 
+           formData.tipo_produto !== 'pintura_epoxi' && (
+            <div className="space-y-2">
+              <Label htmlFor="valor_produto">
+                Valor {formData.tipo_produto === 'manutencao' ? 'do Serviço' : 'do Produto'} (R$) *
+              </Label>
+              <Input
+                id="valor_produto"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valor_produto}
+                onChange={(e) => {
+                  const valor = parseFloat(e.target.value) || 0;
                   setFormData(prev => ({ ...prev, valor_produto: valor }));
-                }
-              }}
-              required
-            />
-          </div>
-
-          {/* Tipo de Desconto */}
-          <div className="space-y-2">
-            <Label>Tipo de Desconto</Label>
-            <RadioGroup
-              value={formData.tipo_desconto}
-              onValueChange={(value: 'percentual' | 'valor') => 
-                setFormData(prev => ({ ...prev, tipo_desconto: value }))
-              }
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="percentual" id="percentual" />
-                <Label htmlFor="percentual" className="cursor-pointer">Percentual (%)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="valor" id="valor" />
-                <Label htmlFor="valor" className="cursor-pointer">Valor (R$)</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Desconto */}
-          {formData.tipo_desconto === 'percentual' ? (
-            <div className="space-y-2">
-              <Label htmlFor="desconto_percentual">Desconto (%)</Label>
-              <Input
-                id="desconto_percentual"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                value={formData.desconto_percentual}
-                onChange={(e) => handleNumberChange('desconto_percentual', e.target.value)}
-              />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="desconto_valor">Desconto (R$)</Label>
-              <Input
-                id="desconto_valor"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.desconto_valor}
-                onChange={(e) => handleNumberChange('desconto_valor', e.target.value)}
+                }}
+                required
               />
             </div>
           )}
+
+          {/* Seção de Desconto */}
+          <div className="border-t pt-6">
+            <div className="space-y-1 mb-4">
+              <h3 className="text-lg font-semibold">Desconto</h3>
+              <p className="text-sm text-muted-foreground">Aplique um desconto se necessário</p>
+            </div>
+
+            <div className="space-y-4">
+              <RadioGroup
+                value={formData.tipo_desconto}
+                onValueChange={(value: 'percentual' | 'valor') => 
+                  setFormData(prev => ({ ...prev, tipo_desconto: value }))
+                }
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="percentual" id="percentual" />
+                  <Label htmlFor="percentual" className="cursor-pointer">Percentual (%)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="valor" id="valor" />
+                  <Label htmlFor="valor" className="cursor-pointer">Valor (R$)</Label>
+                </div>
+              </RadioGroup>
+
+              {formData.tipo_desconto === 'percentual' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="desconto_percentual">Percentual de Desconto</Label>
+                  <Input
+                    id="desconto_percentual"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.desconto_percentual}
+                    onChange={(e) => handleNumberChange('desconto_percentual', e.target.value)}
+                    placeholder="Ex: 10"
+                    className="h-11"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="desconto_valor">Valor do Desconto</Label>
+                  <Input
+                    id="desconto_valor"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.desconto_valor}
+                    onChange={(e) => handleNumberChange('desconto_valor', e.target.value)}
+                    placeholder="Ex: 100.00"
+                    className="h-11"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Descrição - ocultar se for manutenção pois já tem campo específico */}
           {formData.tipo_produto !== 'manutencao' && (
-            <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição (opcional)</Label>
-              <Textarea
-                id="descricao"
-                value={formData.descricao}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                rows={2}
-              />
+            <div className="border-t pt-6">
+              <div className="space-y-2">
+                <Label htmlFor="descricao">Observações (Opcional)</Label>
+                <Textarea
+                  id="descricao"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                  rows={3}
+                  placeholder="Adicione observações sobre este produto..."
+                />
+              </div>
             </div>
           )}
 
-          <Button type="submit" className="w-full">
-            {produtoEditando ? 'Salvar Alterações' : 'Adicionar Produto'}
-          </Button>
+          <div className="border-t pt-6">
+            <Button type="submit" className="w-full h-12 text-base">
+              {produtoEditando ? 'Salvar Alterações' : 'Adicionar Produto'}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
