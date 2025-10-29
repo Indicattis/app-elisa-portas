@@ -105,7 +105,7 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
                       {vendaData.produtos_vendas
                         .filter((produto: any) => 
                           produto.descricao && 
-                          produto.descricao.toLowerCase().includes('porta')
+                          produto.descricao.toLowerCase().includes('porta_enrolar')
                         )
                         .map((produto: any, idx: number) => {
                         const largura = produto.largura;
