@@ -71,8 +71,9 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
             : valorBase * (produto.desconto_percentual / 100);
           const valorTotal = valorBase - descontoAplicado;
           
+          // Priorizar largura x altura sobre tamanho (para novos registros)
           const detalhes = (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social' || produto.tipo_produto === 'porta')
-            ? produto.tamanho
+            ? (produto.largura && produto.altura ? `${produto.largura}x${produto.altura}` : produto.tamanho)
             : produto.descricao || '-';
           
           return (
