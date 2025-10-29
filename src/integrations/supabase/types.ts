@@ -2182,6 +2182,7 @@ export type Database = {
           ordens_pintura: Json | null
           ordens_separacao: Json | null
           ordens_soldagem: Json | null
+          prioridade_etapa: number | null
           produtos: Json | null
           status: string
           status_ordens: Json | null
@@ -2221,6 +2222,7 @@ export type Database = {
           ordens_pintura?: Json | null
           ordens_separacao?: Json | null
           ordens_soldagem?: Json | null
+          prioridade_etapa?: number | null
           produtos?: Json | null
           status?: string
           status_ordens?: Json | null
@@ -2260,6 +2262,7 @@ export type Database = {
           ordens_pintura?: Json | null
           ordens_separacao?: Json | null
           ordens_soldagem?: Json | null
+          prioridade_etapa?: number | null
           produtos?: Json | null
           status?: string
           status_ordens?: Json | null

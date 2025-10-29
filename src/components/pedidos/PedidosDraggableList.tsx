@@ -1,0 +1,200 @@
+import { useState } from "react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { PedidoCard } from "./PedidoCard";
+import type { EtapaPedido } from "@/types/pedidoEtapa";
+
+interface PedidosDraggableListProps {
+  pedidos: any[];
+  etapa: EtapaPedido;
+  isAberto: boolean;
+  onCriarPedido: (vendaId: string) => void;
+  onMoverEtapa: (pedidoId: string) => void;
+  onReorganizar: (pedidos: { id: string; prioridade: number }[]) => void;
+  onMoverPrioridade: (pedidoId: string, direcao: 'frente' | 'tras') => void;
+}
+
+interface SortableItemProps {
+  id: string;
+  pedido: any;
+  posicao: number;
+  total: number;
+  isAberto: boolean;
+  onCriarPedido: (vendaId: string) => void;
+  onMoverEtapa: (pedidoId: string) => void;
+  onMoverPrioridade: (pedidoId: string, direcao: 'frente' | 'tras') => void;
+}
+
+function SortableItem({
+  id,
+  pedido,
+  posicao,
+  total,
+  isAberto,
+  onCriarPedido,
+  onMoverEtapa,
+  onMoverPrioridade,
+}: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <PedidoCard
+        pedido={pedido}
+        isAberto={isAberto}
+        onCriarPedido={onCriarPedido}
+        onMoverEtapa={onMoverEtapa}
+        onMoverPrioridade={onMoverPrioridade}
+        isDragging={isDragging}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        posicao={posicao}
+        total={total}
+      />
+    </div>
+  );
+}
+
+export function PedidosDraggableList({
+  pedidos,
+  etapa,
+  isAberto,
+  onCriarPedido,
+  onMoverEtapa,
+  onReorganizar,
+  onMoverPrioridade,
+}: PedidosDraggableListProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = pedidos.findIndex((p) => p.id === active.id);
+    const newIndex = pedidos.findIndex((p) => p.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    // Criar novo array com a ordem atualizada
+    const newOrder = [...pedidos];
+    const [movedItem] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, movedItem);
+
+    // Calcular novas prioridades (usar incrementos de 10)
+    const updates = newOrder.map((pedido, index) => ({
+      id: pedido.id,
+      prioridade: (newOrder.length - index) * 10,
+    }));
+
+    onReorganizar(updates);
+  };
+
+  const activePedido = activeId
+    ? pedidos.find((p) => p.id === activeId)
+    : null;
+
+  // Para etapa "aberto" (vendas sem pedido), não aplicar drag-and-drop
+  if (isAberto) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {pedidos.map((pedido) => (
+          <PedidoCard
+            key={pedido.id}
+            pedido={pedido}
+            isAberto={isAberto}
+            onCriarPedido={onCriarPedido}
+            onMoverEtapa={onMoverEtapa}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={pedidos.map((p) => p.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {pedidos.map((pedido, index) => (
+            <SortableItem
+              key={pedido.id}
+              id={pedido.id}
+              pedido={pedido}
+              posicao={index + 1}
+              total={pedidos.length}
+              isAberto={isAberto}
+              onCriarPedido={onCriarPedido}
+              onMoverEtapa={onMoverEtapa}
+              onMoverPrioridade={onMoverPrioridade}
+            />
+          ))}
+        </div>
+      </SortableContext>
+
+      <DragOverlay>
+        {activePedido ? (
+          <div className="opacity-80">
+            <PedidoCard
+              pedido={activePedido}
+              isAberto={isAberto}
+              onCriarPedido={onCriarPedido}
+              onMoverEtapa={onMoverEtapa}
+              isDragging
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}

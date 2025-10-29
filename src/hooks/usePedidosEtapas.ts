@@ -38,7 +38,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         if (error) throw error;
         return vendasSemPedido || [];
       } else {
-        // Buscar pedidos por etapa
+        // Buscar pedidos por etapa, ordenados por prioridade
         const { data, error } = await supabase
           .from('pedidos_producao')
           .select(`
@@ -58,6 +58,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             pedidos_etapas (*)
           `)
           .eq('etapa_atual', etapa)
+          .order('prioridade_etapa', { ascending: false })
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -246,12 +247,13 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
       if (etapaError) throw etapaError;
 
-      // Atualizar pedido
+      // Atualizar pedido e resetar prioridade
       const { error: updateError } = await supabase
         .from('pedidos_producao')
         .update({ 
           etapa_atual: proximaEtapa,
-          status: proximaEtapa === 'finalizado' ? 'concluido' : 'em_andamento'
+          status: proximaEtapa === 'finalizado' ? 'concluido' : 'em_andamento',
+          prioridade_etapa: 0
         })
         .eq('id', pedidoId);
 
@@ -276,12 +278,79 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     }
   });
 
+  // Atualizar prioridade de um pedido
+  const atualizarPrioridade = useMutation({
+    mutationFn: async ({ 
+      pedidoId, 
+      novaPrioridade 
+    }: { 
+      pedidoId: string; 
+      novaPrioridade: number;
+    }) => {
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ prioridade_etapa: novaPrioridade })
+        .eq('id', pedidoId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      toast({
+        title: "Prioridade atualizada",
+        description: "A prioridade do pedido foi atualizada"
+      });
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar prioridade:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a prioridade",
+        variant: "destructive"
+      });
+    },
+  });
+
+  // Reorganizar múltiplos pedidos (drag-and-drop)
+  const reorganizarPedidos = useMutation({
+    mutationFn: async (atualizacoes: { id: string; prioridade: number }[]) => {
+      const updates = atualizacoes.map(({ id, prioridade }) =>
+        supabase
+          .from('pedidos_producao')
+          .update({ prioridade_etapa: prioridade })
+          .eq('id', id)
+      );
+      
+      const results = await Promise.all(updates);
+      const errors = results.filter(r => r.error);
+      
+      if (errors.length > 0) throw errors[0].error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      toast({
+        title: "Pedidos reorganizados",
+        description: "As prioridades foram atualizadas com sucesso"
+      });
+    },
+    onError: (error) => {
+      console.error('Erro ao reorganizar pedidos:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível reorganizar os pedidos",
+        variant: "destructive"
+      });
+    },
+  });
+
   return {
     pedidos,
     isLoading,
     criarPedidoProducao,
     atualizarCheckbox,
     moverParaProximaEtapa,
-    getEtapaAtual
+    getEtapaAtual,
+    atualizarPrioridade,
+    reorganizarPedidos,
   };
 }

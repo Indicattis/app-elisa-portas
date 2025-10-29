@@ -2,9 +2,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package } from "lucide-react";
 import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
-import { PedidoCard } from "@/components/pedidos/PedidoCard";
+import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
-import type { EtapaPedido } from "@/types/pedidoEtapa";
+import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState } from "react";
 
 export default function Pedidos() {
@@ -14,7 +14,9 @@ export default function Pedidos() {
     pedidos, 
     isLoading, 
     criarPedidoProducao,
-    moverParaProximaEtapa 
+    moverParaProximaEtapa,
+    atualizarPrioridade,
+    reorganizarPedidos
   } = usePedidosEtapas(etapaAtiva);
 
   const handleCriarPedido = async (vendaId: string) => {
@@ -23,6 +25,39 @@ export default function Pedidos() {
 
   const handleMoverEtapa = async (pedidoId: string) => {
     await moverParaProximaEtapa.mutateAsync(pedidoId);
+  };
+
+  const handleReorganizar = async (atualizacoes: { id: string; prioridade: number }[]) => {
+    await reorganizarPedidos.mutateAsync(atualizacoes);
+  };
+
+  const handleMoverPrioridade = async (pedidoId: string, direcao: DirecaoPrioridade) => {
+    const index = pedidos.findIndex(p => p.id === pedidoId);
+    if (index === -1) return;
+
+    const pedidoAtual = pedidos[index];
+    
+    // Verificar se é um pedido de produção (não uma venda)
+    if (!('numero_pedido' in pedidoAtual)) return;
+
+    let novaPrioridade: number;
+
+    if (direcao === 'frente' && index > 0) {
+      // Mover para frente: pegar prioridade do anterior + 1
+      const anterior = pedidos[index - 1];
+      novaPrioridade = ((anterior as any).prioridade_etapa || 0) + 1;
+    } else if (direcao === 'tras' && index < pedidos.length - 1) {
+      // Mover para trás: pegar prioridade do próximo - 1
+      const proximo = pedidos[index + 1];
+      novaPrioridade = ((proximo as any).prioridade_etapa || 0) - 1;
+    } else {
+      return;
+    }
+
+    await atualizarPrioridade.mutateAsync({
+      pedidoId,
+      novaPrioridade
+    });
   };
 
   return (
@@ -84,17 +119,15 @@ export default function Pedidos() {
                     Nenhum pedido nesta etapa
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {pedidos.map((pedido) => (
-                      <PedidoCard
-                        key={pedido.id}
-                        pedido={pedido}
-                        isAberto={etapa === 'aberto'}
-                        onCriarPedido={handleCriarPedido}
-                        onMoverEtapa={handleMoverEtapa}
-                      />
-                    ))}
-                  </div>
+                  <PedidosDraggableList
+                    pedidos={pedidos}
+                    etapa={etapa}
+                    isAberto={etapa === 'aberto'}
+                    onCriarPedido={handleCriarPedido}
+                    onMoverEtapa={handleMoverEtapa}
+                    onReorganizar={handleReorganizar}
+                    onMoverPrioridade={handleMoverPrioridade}
+                  />
                 )}
               </CardContent>
             </Card>

@@ -110,3 +110,11 @@ export function getProximaEtapa(etapaAtual: EtapaPedido): EtapaPedido | null {
   }
   return ORDEM_ETAPAS[indiceAtual + 1];
 }
+
+// Tipos para sistema de prioridade
+export interface PrioridadeUpdate {
+  id: string;
+  prioridade: number;
+}
+
+export type DirecaoPrioridade = 'frente' | 'tras';

@@ -1,9 +1,9 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowRight, Eye, Package } from "lucide-react";
+import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import { useState } from "react";
 import { PedidoEtapaCheckboxes } from "./PedidoEtapaCheckboxes";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
@@ -13,10 +13,25 @@ interface PedidoCardProps {
   pedido: any;
   onCriarPedido?: (vendaId: string) => void;
   onMoverEtapa?: (pedidoId: string) => void;
+  onMoverPrioridade?: (pedidoId: string, direcao: 'frente' | 'tras') => void;
   isAberto?: boolean;
+  isDragging?: boolean;
+  dragHandleProps?: any;
+  posicao?: number;
+  total?: number;
 }
 
-export function PedidoCard({ pedido, onCriarPedido, onMoverEtapa, isAberto = false }: PedidoCardProps) {
+export function PedidoCard({ 
+  pedido, 
+  onCriarPedido, 
+  onMoverEtapa, 
+  onMoverPrioridade,
+  isAberto = false,
+  isDragging = false,
+  dragHandleProps,
+  posicao,
+  total
+}: PedidoCardProps) {
   const [showCheckboxes, setShowCheckboxes] = useState(false);
 
   const venda = isAberto ? pedido : pedido.vendas;
@@ -26,16 +41,42 @@ export function PedidoCard({ pedido, onCriarPedido, onMoverEtapa, isAberto = fal
 
   const produtos = venda?.produtos_vendas || [];
 
+  // Badge de posição com cores especiais para top 3
+  const getBadgeColor = () => {
+    if (!posicao) return "bg-muted text-muted-foreground";
+    if (posicao === 1) return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/50";
+    if (posicao === 2) return "bg-gray-400/20 text-gray-700 dark:text-gray-400 border-gray-500/50";
+    if (posicao === 3) return "bg-orange-600/20 text-orange-700 dark:text-orange-400 border-orange-600/50";
+    return "bg-muted text-muted-foreground";
+  };
+
   return (
     <>
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className={cn(
+        "hover:shadow-md transition-all",
+        isDragging && "opacity-50 cursor-grabbing"
+      )}>
         <CardContent className="pt-4 space-y-3">
-          {/* Badge de etapa */}
-          {config && (
-            <Badge className={`${config.color} text-white text-xs`}>
-              {config.label}
-            </Badge>
-          )}
+          {/* Header com Badge de etapa e prioridade */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-1">
+              {dragHandleProps && !isAberto && (
+                <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              {config && (
+                <Badge className={`${config.color} text-white text-xs`}>
+                  {config.label}
+                </Badge>
+              )}
+            </div>
+            {posicao && !isAberto && (
+              <Badge variant="outline" className={cn("text-xs font-semibold", getBadgeColor())}>
+                #{posicao}
+              </Badge>
+            )}
+          </div>
 
           {/* Informações do cliente */}
           <div>
@@ -78,7 +119,7 @@ export function PedidoCard({ pedido, onCriarPedido, onMoverEtapa, isAberto = fal
           )}
         </CardContent>
 
-        <CardFooter className="gap-2 pt-0 pb-4">
+        <CardFooter className="gap-2 pt-0 pb-4 flex-wrap">
           {isAberto ? (
             <Button
               size="sm"
@@ -90,6 +131,30 @@ export function PedidoCard({ pedido, onCriarPedido, onMoverEtapa, isAberto = fal
             </Button>
           ) : (
             <>
+              {onMoverPrioridade && posicao && total && (
+                <div className="flex gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    disabled={posicao === 1}
+                    onClick={() => onMoverPrioridade(pedido.id, 'frente')}
+                    title="Aumentar prioridade"
+                    className="h-8 w-8"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    disabled={posicao === total}
+                    onClick={() => onMoverPrioridade(pedido.id, 'tras')}
+                    title="Diminuir prioridade"
+                    className="h-8 w-8"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
               <Button
                 size="sm"
                 variant="outline"
