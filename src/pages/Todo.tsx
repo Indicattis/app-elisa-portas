@@ -51,6 +51,10 @@ export default function Todo() {
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
   const setorLabel = setor ? SETOR_LABELS[setor as keyof typeof SETOR_LABELS] : 'Geral';
+  
+  // Verificar se o usuário é o responsável pelo setor
+  const isResponsavelSetor = responsavelSetor?.user_id === user?.id;
+  const podeMarcarConcluida = podeGerenciar || isResponsavelSetor;
 
   const tarefasEmAndamento = tarefas.filter(t => t.status === 'em_andamento');
   const tarefasConcluidas = tarefas.filter(t => t.status === 'concluida');
@@ -128,32 +132,39 @@ export default function Todo() {
             tarefasEmAndamento.map((tarefa) => (
               <div
                 key={tarefa.id}
-                className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                className="flex items-center gap-3 py-2 px-3 border-b last:border-b-0 hover:bg-accent/30 transition-colors"
               >
                 <Checkbox
                   checked={false}
                   onCheckedChange={() => marcarConcluida.mutate(tarefa.id)}
+                  disabled={!podeMarcarConcluida}
+                  className="shrink-0"
                 />
 
-                <div className="flex-1 space-y-2">
-                  <p className="font-medium">{tarefa.descricao}</p>
-
-                  <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{tarefa.descricao}</p>
+                  
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {format(new Date(tarefa.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                    </div>
+                      {format(new Date(tarefa.created_at), "dd/MM", { locale: ptBR })}
+                    </span>
 
-                    {tarefa.recorrente && tarefa.dia_recorrencia && (
-                      <Badge variant="outline" className="flex items-center gap-1">
+                    {tarefa.recorrente && (
+                      <Badge variant="secondary" className="h-5 text-xs flex items-center gap-1 px-1.5">
                         <Repeat className="h-3 w-3" />
-                        Todo dia {tarefa.dia_recorrencia}
+                        {tarefa.dia_recorrencia === 0 && 'Diária'}
+                        {tarefa.dia_recorrencia === 1 && '1° do mês'}
+                        {tarefa.dia_recorrencia === -7 && 'Semanal'}
+                        {tarefa.dia_recorrencia === -15 && 'Quinzenal'}
+                        {tarefa.dia_recorrencia === -30 && 'Mensal'}
+                        {tarefa.dia_recorrencia && tarefa.dia_recorrencia > 1 && tarefa.dia_recorrencia <= 31 && `Dia ${tarefa.dia_recorrencia}`}
                       </Badge>
                     )}
 
                     {tarefa.criador && (
-                      <span className="text-xs">
-                        Criada por: {tarefa.criador.nome}
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
+                        por {tarefa.criador.nome}
                       </span>
                     )}
                   </div>
@@ -163,9 +174,10 @@ export default function Todo() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8 shrink-0"
                     onClick={() => setTarefaParaDeletar(tarefa.id)}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 )}
               </div>
@@ -189,21 +201,35 @@ export default function Todo() {
             tarefasConcluidas.map((tarefa) => (
               <div
                 key={tarefa.id}
-                className="flex items-start gap-4 p-4 border rounded-lg opacity-60"
+                className="flex items-center gap-3 py-2 px-3 border-b last:border-b-0 opacity-50"
               >
                 <Checkbox
                   checked={true}
                   onCheckedChange={() => reabrirTarefa.mutate(tarefa.id)}
+                  disabled={!podeMarcarConcluida}
+                  className="shrink-0"
                 />
 
-                <div className="flex-1 space-y-2">
-                  <p className="font-medium line-through">{tarefa.descricao}</p>
-
-                  <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium line-through truncate">{tarefa.descricao}</p>
+                  
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {format(new Date(tarefa.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                    </div>
+                      {format(new Date(tarefa.created_at), "dd/MM", { locale: ptBR })}
+                    </span>
+
+                    {tarefa.recorrente && (
+                      <Badge variant="outline" className="h-5 text-xs flex items-center gap-1 px-1.5">
+                        <Repeat className="h-3 w-3" />
+                        {tarefa.dia_recorrencia === 0 && 'Diária'}
+                        {tarefa.dia_recorrencia === 1 && '1° do mês'}
+                        {tarefa.dia_recorrencia === -7 && 'Semanal'}
+                        {tarefa.dia_recorrencia === -15 && 'Quinzenal'}
+                        {tarefa.dia_recorrencia === -30 && 'Mensal'}
+                        {tarefa.dia_recorrencia && tarefa.dia_recorrencia > 1 && tarefa.dia_recorrencia <= 31 && `Dia ${tarefa.dia_recorrencia}`}
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
@@ -211,9 +237,10 @@ export default function Todo() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8 shrink-0"
                     onClick={() => setTarefaParaDeletar(tarefa.id)}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 )}
               </div>
