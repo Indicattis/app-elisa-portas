@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
+import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AcaoEtapaModal } from "./AcaoEtapaModal";
 import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
@@ -41,6 +42,7 @@ export function PedidoCard({
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
   const [showRetrocederEtapa, setShowRetrocederEtapa] = useState(false);
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   // Buscar quantidade de linhas do pedido
   const { data: linhasCount = 0 } = useQuery({
@@ -212,7 +214,16 @@ export function PedidoCard({
           )}
         </CardContent>
 
-        <CardFooter className="pt-0 pb-3 gap-2">
+        <CardFooter className="pt-0 pb-3 gap-2 flex-col">
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
+          >
+            <FileText className="h-3.5 w-3.5 mr-2" />
+            Ver Preparação
+          </Button>
           {proximaEtapa && etapaAtual !== 'finalizado' && (
             <Button
               size="sm"

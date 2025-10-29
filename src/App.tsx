@@ -54,6 +54,7 @@ import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
 import Forbidden from "./pages/Forbidden";
 import Pedidos from "./pages/Pedidos";
+import PedidoPreparacao from "./pages/PedidoPreparacao";
 import ProducaoOrdens from "./pages/ProducaoOrdens";
 import TvDashboard from "./pages/TvDashboard";
 import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
@@ -688,6 +689,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <ContadorVendas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/pedidos/:id/preparacao"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <PedidoPreparacao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
