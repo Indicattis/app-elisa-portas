@@ -12,52 +12,57 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ['pedidos-etapas', etapa],
     queryFn: async () => {
-      let query = supabase
-        .from('pedidos_producao')
-        .select(`
-          *,
-          vendas:venda_id (
-            id,
-            cliente_nome,
-            cliente_telefone,
-            valor_venda,
-            created_at,
+      if (etapa === 'aberto') {
+        // Vendas sem pedido de produção - buscar vendas que não têm pedido
+        const { data: todosPedidos } = await supabase
+          .from('pedidos_producao')
+          .select('venda_id');
+        
+        const vendasComPedido = (todosPedidos || [])
+          .map(p => p.venda_id)
+          .filter(Boolean);
+
+        const { data: vendasSemPedido, error } = await supabase
+          .from('vendas')
+          .select(`
+            *,
             produtos_vendas (
               id,
               tipo_produto,
               cor:catalogo_cores (nome)
             )
-          ),
-          pedidos_etapas (*)
-        `)
-        .order('created_at', { ascending: false });
+          `)
+          .not('id', 'in', vendasComPedido.length > 0 ? `(${vendasComPedido.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
+          .order('created_at', { ascending: false });
 
-      if (etapa) {
-        if (etapa === 'aberto') {
-          // Vendas sem pedido de produção
-          const { data: vendasSemPedido } = await supabase
-            .from('vendas')
-            .select(`
-              *,
+        if (error) throw error;
+        return vendasSemPedido || [];
+      } else {
+        // Buscar pedidos por etapa
+        const { data, error } = await supabase
+          .from('pedidos_producao')
+          .select(`
+            *,
+            vendas:venda_id (
+              id,
+              cliente_nome,
+              cliente_telefone,
+              valor_venda,
+              created_at,
               produtos_vendas (
                 id,
                 tipo_produto,
                 cor:catalogo_cores (nome)
               )
-            `)
-            .is('pedido_producao_id', null)
-            .order('created_at', { ascending: false });
+            ),
+            pedidos_etapas (*)
+          `)
+          .eq('etapa_atual', etapa)
+          .order('created_at', { ascending: false });
 
-          return vendasSemPedido || [];
-        } else {
-          query = query.eq('etapa_atual', etapa);
-        }
+        if (error) throw error;
+        return data || [];
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data || [];
     },
   });
 
