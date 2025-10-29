@@ -16,16 +16,15 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PedidoCard } from "./PedidoCard";
-import type { EtapaPedido } from "@/types/pedidoEtapa";
+import type { EtapaPedido, DirecaoPrioridade, PrioridadeUpdate } from "@/types/pedidoEtapa";
 
 interface PedidosDraggableListProps {
   pedidos: any[];
   etapa: EtapaPedido;
   isAberto: boolean;
-  onCriarPedido: (vendaId: string) => void;
   onMoverEtapa: (pedidoId: string) => void;
-  onReorganizar: (pedidos: { id: string; prioridade: number }[]) => void;
-  onMoverPrioridade: (pedidoId: string, direcao: 'frente' | 'tras') => void;
+  onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
+  onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
 }
 
 interface SortableItemProps {
@@ -34,9 +33,8 @@ interface SortableItemProps {
   posicao: number;
   total: number;
   isAberto: boolean;
-  onCriarPedido: (vendaId: string) => void;
   onMoverEtapa: (pedidoId: string) => void;
-  onMoverPrioridade: (pedidoId: string, direcao: 'frente' | 'tras') => void;
+  onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
 }
 
 function SortableItem({
@@ -45,7 +43,6 @@ function SortableItem({
   posicao,
   total,
   isAberto,
-  onCriarPedido,
   onMoverEtapa,
   onMoverPrioridade,
 }: SortableItemProps) {
@@ -69,7 +66,6 @@ function SortableItem({
       <PedidoCard
         pedido={pedido}
         isAberto={isAberto}
-        onCriarPedido={onCriarPedido}
         onMoverEtapa={onMoverEtapa}
         onMoverPrioridade={onMoverPrioridade}
         isDragging={isDragging}
@@ -85,7 +81,6 @@ export function PedidosDraggableList({
   pedidos,
   etapa,
   isAberto,
-  onCriarPedido,
   onMoverEtapa,
   onReorganizar,
   onMoverPrioridade,
@@ -137,23 +132,6 @@ export function PedidosDraggableList({
     ? pedidos.find((p) => p.id === activeId)
     : null;
 
-  // Para etapa "aberto" (vendas sem pedido), não aplicar drag-and-drop
-  if (isAberto) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {pedidos.map((pedido) => (
-          <PedidoCard
-            key={pedido.id}
-            pedido={pedido}
-            isAberto={isAberto}
-            onCriarPedido={onCriarPedido}
-            onMoverEtapa={onMoverEtapa}
-          />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <DndContext
       sensors={sensors}
@@ -174,7 +152,6 @@ export function PedidosDraggableList({
               posicao={index + 1}
               total={pedidos.length}
               isAberto={isAberto}
-              onCriarPedido={onCriarPedido}
               onMoverEtapa={onMoverEtapa}
               onMoverPrioridade={onMoverPrioridade}
             />
@@ -188,7 +165,6 @@ export function PedidosDraggableList({
             <PedidoCard
               pedido={activePedido}
               isAberto={isAberto}
-              onCriarPedido={onCriarPedido}
               onMoverEtapa={onMoverEtapa}
               isDragging
             />

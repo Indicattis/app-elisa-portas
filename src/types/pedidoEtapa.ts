@@ -37,7 +37,12 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
     label: 'Pedidos em Aberto',
     color: 'bg-yellow-500',
     icon: 'Clock',
-    checkboxes: []
+    checkboxes: [
+      { id: 'orcamento_aprovado', label: 'Orçamento aprovado pelo cliente', required: true },
+      { id: 'pagamento_confirmado', label: 'Pagamento/Entrada confirmado', required: true },
+      { id: 'dados_completos', label: 'Todos os dados do pedido estão completos', required: true },
+      { id: 'pronto_producao', label: 'Pedido pronto para iniciar produção', required: false }
+    ]
   },
   em_producao: {
     label: 'Em Produção',

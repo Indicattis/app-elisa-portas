@@ -11,7 +11,6 @@ import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
 
 interface PedidoCardProps {
   pedido: any;
-  onCriarPedido?: (vendaId: string) => void;
   onMoverEtapa?: (pedidoId: string) => void;
   onMoverPrioridade?: (pedidoId: string, direcao: 'frente' | 'tras') => void;
   isAberto?: boolean;
@@ -23,7 +22,6 @@ interface PedidoCardProps {
 
 export function PedidoCard({ 
   pedido, 
-  onCriarPedido, 
   onMoverEtapa, 
   onMoverPrioridade,
   isAberto = false,
@@ -34,7 +32,8 @@ export function PedidoCard({
 }: PedidoCardProps) {
   const [showCheckboxes, setShowCheckboxes] = useState(false);
 
-  const venda = isAberto ? pedido : pedido.vendas;
+  // Para todos os pedidos (incluindo aberto), buscar dados da venda relacionada
+  const venda = pedido.vendas;
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
   const config = etapaAtual ? ETAPAS_CONFIG[etapaAtual] : null;
   const proximaEtapa = etapaAtual ? getProximaEtapa(etapaAtual) : null;
@@ -120,61 +119,48 @@ export function PedidoCard({
         </CardContent>
 
         <CardFooter className="gap-2 pt-0 pb-4 flex-wrap">
-          {isAberto ? (
+          {onMoverPrioridade && posicao && total && !isAberto && (
+            <div className="flex gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                disabled={posicao === 1}
+                onClick={() => onMoverPrioridade(pedido.id, 'frente')}
+                title="Aumentar prioridade"
+                className="h-8 w-8"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                disabled={posicao === total}
+                onClick={() => onMoverPrioridade(pedido.id, 'tras')}
+                title="Diminuir prioridade"
+                className="h-8 w-8"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1"
+            onClick={() => setShowCheckboxes(true)}
+          >
+            <Eye className="h-3 w-3 mr-1" />
+            Detalhes
+          </Button>
+          {proximaEtapa && etapaAtual !== 'finalizado' && (
             <Button
               size="sm"
-              className="w-full"
-              onClick={() => onCriarPedido?.(pedido.id)}
+              className="flex-1"
+              onClick={() => onMoverEtapa?.(pedido.id)}
             >
               <ArrowRight className="h-3 w-3 mr-1" />
-              Criar Pedido
+              {isAberto ? 'Iniciar Produção' : 'Avançar'}
             </Button>
-          ) : (
-            <>
-              {onMoverPrioridade && posicao && total && (
-                <div className="flex gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={posicao === 1}
-                    onClick={() => onMoverPrioridade(pedido.id, 'frente')}
-                    title="Aumentar prioridade"
-                    className="h-8 w-8"
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={posicao === total}
-                    onClick={() => onMoverPrioridade(pedido.id, 'tras')}
-                    title="Diminuir prioridade"
-                    className="h-8 w-8"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowCheckboxes(true)}
-              >
-                <Eye className="h-3 w-3 mr-1" />
-                Detalhes
-              </Button>
-              {proximaEtapa && etapaAtual !== 'finalizado' && (
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => onMoverEtapa?.(pedido.id)}
-                >
-                  <ArrowRight className="h-3 w-3 mr-1" />
-                  Avançar
-                </Button>
-              )}
-            </>
           )}
         </CardFooter>
       </Card>

@@ -13,30 +13,31 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     queryKey: ['pedidos-etapas', etapa],
     queryFn: async () => {
       if (etapa === 'aberto') {
-        // Vendas sem pedido de produção - buscar vendas que não têm pedido
-        const { data: todosPedidos } = await supabase
+        // Buscar pedidos na etapa aberto
+        const { data, error } = await supabase
           .from('pedidos_producao')
-          .select('venda_id');
-        
-        const vendasComPedido = (todosPedidos || [])
-          .map(p => p.venda_id)
-          .filter(Boolean);
-
-        const { data: vendasSemPedido, error } = await supabase
-          .from('vendas')
           .select(`
             *,
-            produtos_vendas (
+            vendas:venda_id (
               id,
-              tipo_produto,
-              cor:catalogo_cores (nome)
-            )
+              cliente_nome,
+              cliente_telefone,
+              valor_venda,
+              created_at,
+              produtos_vendas (
+                id,
+                tipo_produto,
+                cor:catalogo_cores (nome)
+              )
+            ),
+            pedidos_etapas (*)
           `)
-          .not('id', 'in', vendasComPedido.length > 0 ? `(${vendasComPedido.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
+          .eq('etapa_atual', 'aberto')
+          .order('prioridade_etapa', { ascending: false })
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return vendasSemPedido || [];
+        return data || [];
       } else {
         // Buscar pedidos por etapa, ordenados por prioridade
         const { data, error } = await supabase
@@ -82,69 +83,6 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       checkboxes: (data.checkboxes as any) || []
     } as PedidoEtapa;
   };
-
-  // Criar pedido de produção a partir de venda (mover de aberto para em_producao)
-  const criarPedidoProducao = useMutation({
-    mutationFn: async (vendaId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      // Buscar próximo número
-      const { data: numeroData } = await supabase.rpc('gerar_proximo_numero', {
-        tipo_documento: 'pedido_producao'
-      });
-
-      const numeroPedido = `PED-${String(numeroData || 1).padStart(6, '0')}`;
-
-      // Criar pedido
-      const { data: pedido, error: pedidoError } = await supabase
-        .from('pedidos_producao')
-        .insert({
-          venda_id: vendaId,
-          numero_pedido: numeroPedido,
-          status: 'em_andamento',
-          etapa_atual: 'em_producao',
-          created_by: user.id
-        } as any)
-        .select()
-        .single();
-
-      if (pedidoError) throw pedidoError;
-
-      // Criar registro de etapa inicial com checkboxes
-      const checkboxesIniciais = ETAPAS_CONFIG.em_producao.checkboxes.map(cb => ({
-        ...cb,
-        checked: false
-      }));
-
-      const { error: etapaError } = await supabase
-        .from('pedidos_etapas')
-        .insert({
-          pedido_id: pedido.id,
-          etapa: 'em_producao',
-          checkboxes: checkboxesIniciais as any
-        });
-
-      if (etapaError) throw etapaError;
-
-      return pedido;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
-      toast({
-        title: "Pedido criado",
-        description: "Pedido de produção criado com sucesso"
-      });
-    },
-    onError: (error) => {
-      console.error('Erro ao criar pedido:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o pedido de produção",
-        variant: "destructive"
-      });
-    }
-  });
 
   // Atualizar checkbox
   const atualizarCheckbox = useMutation({
@@ -346,7 +284,6 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
   return {
     pedidos,
     isLoading,
-    criarPedidoProducao,
     atualizarCheckbox,
     moverParaProximaEtapa,
     getEtapaAtual,
