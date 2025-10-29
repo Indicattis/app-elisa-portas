@@ -2332,6 +2332,7 @@ export type Database = {
         Row: {
           acessorio_id: string | null
           adicional_id: string | null
+          altura: number | null
           cor_id: string | null
           created_at: string | null
           custo_pintura: number | null
@@ -2342,6 +2343,7 @@ export type Database = {
           descricao: string | null
           faturamento: boolean | null
           id: string
+          largura: number | null
           lucro_item: number | null
           lucro_pintura: number | null
           lucro_produto: number | null
@@ -2364,6 +2366,7 @@ export type Database = {
         Insert: {
           acessorio_id?: string | null
           adicional_id?: string | null
+          altura?: number | null
           cor_id?: string | null
           created_at?: string | null
           custo_pintura?: number | null
@@ -2374,6 +2377,7 @@ export type Database = {
           descricao?: string | null
           faturamento?: boolean | null
           id?: string
+          largura?: number | null
           lucro_item?: number | null
           lucro_pintura?: number | null
           lucro_produto?: number | null
@@ -2396,6 +2400,7 @@ export type Database = {
         Update: {
           acessorio_id?: string | null
           adicional_id?: string | null
+          altura?: number | null
           cor_id?: string | null
           created_at?: string | null
           custo_pintura?: number | null
@@ -2406,6 +2411,7 @@ export type Database = {
           descricao?: string | null
           faturamento?: boolean | null
           id?: string
+          largura?: number | null
           lucro_item?: number | null
           lucro_pintura?: number | null
           lucro_produto?: number | null

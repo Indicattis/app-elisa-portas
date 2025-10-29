@@ -6,6 +6,8 @@ export interface ProdutoVenda {
   id?: string;
   tipo_produto: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'porta' | 'manutencao';
   tamanho?: string;
+  largura?: number;
+  altura?: number;
   cor_id?: string;
   acessorio_id?: string;
   adicional_id?: string;

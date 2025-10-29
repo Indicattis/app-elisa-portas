@@ -33,7 +33,9 @@ export const useProdutosVenda = (vendaId?: string) => {
       // Limpar campos UUID vazios e garantir valores default
       const produtoLimpo = {
         ...produto,
-        tamanho: produto.tamanho || '',
+        tamanho: produto.tamanho || (produto.largura && produto.altura ? `${produto.largura}x${produto.altura}` : ''),
+        largura: produto.largura || null,
+        altura: produto.altura || null,
         cor_id: produto.cor_id || null,
         acessorio_id: produto.acessorio_id || null,
         adicional_id: produto.adicional_id || null,

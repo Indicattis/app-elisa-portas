@@ -8,7 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ProdutoVenda } from '@/hooks/useVendas';
+import { buscarPrecosPorMedidas } from '@/utils/tabelaPrecosHelper';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface ProdutoVendaFormProps {
   open: boolean;
@@ -32,6 +36,8 @@ export function ProdutoVendaForm({
   const [formData, setFormData] = useState<ProdutoVenda>({
     tipo_produto: tipoInicial || 'porta_enrolar',
     tamanho: '',
+    largura: undefined,
+    altura: undefined,
     cor_id: '',
     acessorio_id: '',
     adicional_id: '',
@@ -47,15 +53,21 @@ export function ProdutoVendaForm({
     descricao: ''
   });
 
+  const [incluirInstalacao, setIncluirInstalacao] = useState(false);
+  const [carregandoPrecos, setCarregandoPrecos] = useState(false);
+
   // Atualizar formulário quando um produto for passado para edição
   useEffect(() => {
     if (produtoEditando) {
       setFormData(produtoEditando);
+      setIncluirInstalacao((produtoEditando.valor_instalacao || 0) > 0);
     } else {
       // Resetar formulário quando não há produto para editar
       setFormData({
         tipo_produto: tipoInicial || 'porta_enrolar',
         tamanho: '',
+        largura: undefined,
+        altura: undefined,
         cor_id: '',
         acessorio_id: '',
         adicional_id: '',
@@ -70,6 +82,7 @@ export function ProdutoVendaForm({
         quantidade: 1,
         descricao: ''
       });
+      setIncluirInstalacao(false);
     }
   }, [produtoEditando, tipoInicial]);
 
@@ -122,16 +135,81 @@ export function ProdutoVendaForm({
     }
   }, [formData.cor_id, cores]);
 
+  // Buscar preços na tabela de preços quando largura e altura forem informados
+  const buscarPrecos = async () => {
+    if (!formData.largura || !formData.altura) return;
+    
+    setCarregandoPrecos(true);
+    try {
+      const item = await buscarPrecosPorMedidas(formData.largura, formData.altura);
+      
+      if (item) {
+        const tamanho = `${formData.largura}x${formData.altura}`;
+        
+        if (formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') {
+          setFormData(prev => ({
+            ...prev,
+            valor_produto: item.valor_porta,
+            tamanho,
+            valor_instalacao: incluirInstalacao ? item.valor_instalacao : 0
+          }));
+          toast.success(`Preço encontrado para ${item.largura}x${item.altura}m`);
+        } else if (formData.tipo_produto === 'pintura_epoxi') {
+          setFormData(prev => ({
+            ...prev,
+            valor_pintura: item.valor_pintura,
+            tamanho
+          }));
+          toast.success(`Preço de pintura encontrado para ${item.largura}x${item.altura}m`);
+        }
+      } else {
+        toast.error('Preço não encontrado na tabela para essas medidas');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar preços:', error);
+      toast.error('Erro ao buscar preços');
+    } finally {
+      setCarregandoPrecos(false);
+    }
+  };
+
+  // Atualizar valor de instalação quando o checkbox mudar
+  useEffect(() => {
+    const atualizarInstalacao = async () => {
+      if ((formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && formData.largura && formData.altura) {
+        if (incluirInstalacao) {
+          const item = await buscarPrecosPorMedidas(formData.largura, formData.altura);
+          if (item) {
+            setFormData(prev => ({ ...prev, valor_instalacao: item.valor_instalacao }));
+          }
+        } else {
+          setFormData(prev => ({ ...prev, valor_instalacao: 0 }));
+        }
+      }
+    };
+    atualizarInstalacao();
+  }, [incluirInstalacao, formData.largura, formData.altura, formData.tipo_produto]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Impede a propagação para o formulário pai
+    e.stopPropagation();
     
-    if ((formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && !formData.tamanho) {
-      return;
+    if ((formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social')) {
+      if (!formData.largura || !formData.altura) {
+        toast.error('Informe largura e altura da porta');
+        return;
+      }
     }
     
-    if (formData.tipo_produto === 'pintura_epoxi' && !formData.cor_id) {
-      return;
+    if (formData.tipo_produto === 'pintura_epoxi') {
+      if (!formData.largura || !formData.altura) {
+        toast.error('Informe largura e altura para pintura');
+        return;
+      }
+      if (!formData.cor_id) {
+        toast.error('Selecione a cor da pintura');
+        return;
+      }
     }
     
     if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id) {
@@ -147,7 +225,7 @@ export function ProdutoVendaForm({
     }
     
     onAddProduto(formData);
-    onOpenChange(false); // Fecha o dialog após adicionar
+    onOpenChange(false);
   };
 
   const handleNumberChange = (field: keyof ProdutoVenda, value: string) => {
@@ -213,15 +291,53 @@ export function ProdutoVendaForm({
           {/* Campos específicos por tipo */}
           {(formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="tamanho">Tamanho *</Label>
-                <Input
-                  id="tamanho"
-                  value={formData.tamanho}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tamanho: e.target.value }))}
-                  placeholder="Ex: 2.00 x 2.50"
-                  required
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="largura">Largura (m) *</Label>
+                  <Input
+                    id="largura"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.largura || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || undefined }))}
+                    onBlur={buscarPrecos}
+                    placeholder="Ex: 2.50"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="altura">Altura (m) *</Label>
+                  <Input
+                    id="altura"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.altura || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || undefined }))}
+                    onBlur={buscarPrecos}
+                    placeholder="Ex: 3.00"
+                    required
+                  />
+                </div>
+              </div>
+
+              {carregandoPrecos && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Buscando preços...
+                </div>
+              )}
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="incluir_instalacao"
+                  checked={incluirInstalacao}
+                  onCheckedChange={(checked) => setIncluirInstalacao(checked as boolean)}
                 />
+                <Label htmlFor="incluir_instalacao" className="cursor-pointer">
+                  Incluir Instalação
+                </Label>
               </div>
 
               <div className="space-y-2">
@@ -248,23 +364,49 @@ export function ProdutoVendaForm({
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="valor_instalacao">Valor Instalação (R$)</Label>
-                <Input
-                  id="valor_instalacao"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.valor_instalacao}
-                  onChange={(e) => handleNumberChange('valor_instalacao', e.target.value)}
-                />
-              </div>
             </>
           )}
 
           {formData.tipo_produto === 'pintura_epoxi' && (
             <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="largura_pintura">Largura (m) *</Label>
+                  <Input
+                    id="largura_pintura"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.largura || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || undefined }))}
+                    onBlur={buscarPrecos}
+                    placeholder="Ex: 2.00"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="altura_pintura">Altura (m) *</Label>
+                  <Input
+                    id="altura_pintura"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.altura || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || undefined }))}
+                    onBlur={buscarPrecos}
+                    placeholder="Ex: 2.50"
+                    required
+                  />
+                </div>
+              </div>
+
+              {carregandoPrecos && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Buscando preços...
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="cor">Cor da Pintura *</Label>
                 <Select
