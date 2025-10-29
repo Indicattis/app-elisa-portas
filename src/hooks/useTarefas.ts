@@ -96,7 +96,7 @@ export function useTarefas(userId?: string, setor?: string) {
       if (input.recorrente && input.tipo_recorrencia) {
         switch (input.tipo_recorrencia) {
           case 'todos_os_dias':
-            diaRecorrencia = -1;
+            diaRecorrencia = 0;
             break;
           case 'primeiro_dia_mes':
             diaRecorrencia = 1;
