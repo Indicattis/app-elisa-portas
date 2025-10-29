@@ -127,26 +127,26 @@ export const EstoqueSelector = ({ onSelect }: EstoqueSelectorProps) => {
         {loading ? (
           <div className="p-4 text-center text-muted-foreground">Carregando...</div>
         ) : produtos.length > 0 ? (
-          <div className="p-2 space-y-2">
+          <div className="p-2 space-y-1">
             {produtos.map((produto) => (
               <Card
                 key={produto.id}
-                className="p-3 cursor-pointer hover:bg-accent transition-colors"
+                className="p-2 cursor-pointer hover:bg-accent transition-colors"
                 onClick={() => handleSelectProduto(produto)}
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-1.5">
                   <div className="flex-1">
-                    <div className="font-medium">{produto.nome_produto}</div>
+                    <div className="text-sm font-medium">{produto.nome_produto}</div>
                     {produto.descricao_produto && (
-                      <div className="text-sm text-muted-foreground mt-1">
+                      <div className="text-xs text-muted-foreground mt-0.5">
                         {produto.descricao_produto}
                       </div>
                     )}
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       Estoque: {produto.quantidade} {produto.unidade}
                     </div>
                   </div>
-                  <Package className="h-5 w-5 text-muted-foreground" />
+                  <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 </div>
               </Card>
             ))}
