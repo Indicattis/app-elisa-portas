@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/useTabelaPrecos";
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
+import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function TabelaPrecos() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +17,12 @@ export default function TabelaPrecos() {
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
 
+  const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
+
+  const handleUploadComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
+  };
 
   const handleNovoItem = () => {
     setItemEditando(null);
@@ -67,6 +74,9 @@ export default function TabelaPrecos() {
           Novo Item
         </Button>
       </div>
+
+      {/* Bulk Upload */}
+      <BulkUploadTabelaPrecos onUploadComplete={handleUploadComplete} />
 
       {/* Card Principal */}
       <Card>
