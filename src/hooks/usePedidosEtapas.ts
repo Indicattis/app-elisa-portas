@@ -188,6 +188,20 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         throw new Error('Pedido já está na última etapa');
       }
 
+      // Se está na etapa "aberto", validar se tem linhas cadastradas
+      if (etapaAtualNome === 'aberto') {
+        const { data: linhas, error: linhasError } = await supabase
+          .from('pedido_linhas')
+          .select('id')
+          .eq('pedido_id', pedidoId);
+        
+        if (linhasError) throw linhasError;
+        
+        if (!linhas || linhas.length === 0) {
+          throw new Error('O pedido precisa ter ao menos uma linha cadastrada antes de iniciar a produção');
+        }
+      }
+
       // Validar checkboxes obrigatórios
       const etapaAtual = await getEtapaAtual(pedidoId);
       if (etapaAtual) {

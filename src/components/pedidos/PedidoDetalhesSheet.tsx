@@ -3,7 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { Package, Phone, MapPin, Calendar, DollarSign } from "lucide-react";
+import { Package, Phone, MapPin, Calendar, DollarSign, ListChecks } from "lucide-react";
+import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
+import { PedidoLinhasEditor } from "./PedidoLinhasEditor";
 
 interface PedidoDetalhesSheetProps {
   pedido: any;
@@ -13,10 +15,12 @@ interface PedidoDetalhesSheetProps {
 
 export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalhesSheetProps) {
   const venda = pedido.vendas;
+  const { linhas, isLoading, adicionarLinha, removerLinha } = usePedidoLinhas(pedido.id);
   
   if (!venda) return null;
 
   const produtos = venda.produtos_vendas || [];
+  const isAberto = pedido.etapa_atual === 'aberto';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -35,6 +39,26 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               </Badge>
             </div>
           )}
+
+          <Separator />
+
+          {/* Linhas do Pedido */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              Linhas do Pedido ({linhas.length})
+            </h3>
+            {isLoading ? (
+              <div className="text-sm text-muted-foreground">Carregando...</div>
+            ) : (
+              <PedidoLinhasEditor
+                linhas={linhas}
+                isReadOnly={!isAberto}
+                onAdicionarLinha={adicionarLinha}
+                onRemoverLinha={removerLinha}
+              />
+            )}
+          </div>
 
           <Separator />
 

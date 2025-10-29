@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
+import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PedidoCardProps {
   pedido: any;
@@ -32,6 +34,20 @@ export function PedidoCard({
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
 
+  // Buscar quantidade de linhas do pedido
+  const { data: linhasCount = 0 } = useQuery({
+    queryKey: ['pedido-linhas-count', pedido.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('pedido_linhas')
+        .select('*', { count: 'exact', head: true })
+        .eq('pedido_id', pedido.id);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   // Para todos os pedidos (incluindo aberto), buscar dados da venda relacionada
   const venda = pedido.vendas;
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
@@ -39,6 +55,7 @@ export function PedidoCard({
   const proximaEtapa = etapaAtual ? getProximaEtapa(etapaAtual) : null;
 
   const produtos = venda?.produtos_vendas || [];
+  const temLinhas = linhasCount > 0;
 
   // Badge de posição com cores especiais para top 3
   const getBadgeColor = () => {
@@ -83,8 +100,25 @@ export function PedidoCard({
             <p className="text-xs text-muted-foreground">{venda?.cliente_telefone}</p>
           </div>
 
+          {/* Status das Linhas do Pedido */}
+          {isAberto && (
+            <div className="flex items-center gap-2">
+              {temLinhas ? (
+                <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  {linhasCount} {linhasCount === 1 ? 'linha cadastrada' : 'linhas cadastradas'}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Sem linhas cadastradas
+                </Badge>
+              )}
+            </div>
+          )}
+
           {/* Produtos */}
-          {produtos.length > 0 && (
+          {!isAberto && produtos.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {produtos.slice(0, 2).map((prod: any, idx: number) => (
                 <Badge key={idx} variant="outline" className="text-[10px]">
@@ -157,6 +191,8 @@ export function PedidoCard({
               size="sm"
               className="flex-1"
               onClick={() => onMoverEtapa?.(pedido.id)}
+              disabled={isAberto && !temLinhas}
+              title={isAberto && !temLinhas ? "Adicione pelo menos uma linha ao pedido para avançar" : ""}
             >
               <ArrowRight className="h-3 w-3 mr-1" />
               {isAberto ? 'Iniciar Produção' : 'Avançar'}
