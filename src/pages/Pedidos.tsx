@@ -1,158 +1,106 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Package, CheckCircle2, AlertCircle, Plus } from "lucide-react";
-import { useVendasPedidos } from "@/hooks/useVendasPedidos";
-import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
+import { Package } from "lucide-react";
+import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
+import { PedidoCard } from "@/components/pedidos/PedidoCard";
+import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
+import type { EtapaPedido } from "@/types/pedidoEtapa";
+import { useState } from "react";
 
 export default function Pedidos() {
-  const { toast } = useToast();
-  const { vendas, criarPedidoPrincipal, loading } = useVendasPedidos();
+  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
+  
+  const { 
+    pedidos, 
+    isLoading, 
+    criarPedidoProducao,
+    moverParaProximaEtapa 
+  } = usePedidosEtapas(etapaAtiva);
 
   const handleCriarPedido = async (vendaId: string) => {
-    try {
-      await criarPedidoPrincipal(vendaId);
-    } catch (error) {
-      // Error já tratado no hook
-    }
+    await criarPedidoProducao.mutateAsync(vendaId);
   };
 
-  const vendasComPedido = vendas.filter(v => v.pedidos_producao && v.pedidos_producao.length > 0);
-  const vendasSemPedido = vendas.filter(v => !v.pedidos_producao || v.pedidos_producao.length === 0);
+  const handleMoverEtapa = async (pedidoId: string) => {
+    await moverParaProximaEtapa.mutateAsync(pedidoId);
+  };
 
   return (
     <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-3">
         <Package className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Pedidos de Produção</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Listagem de vendas e pedidos vinculados</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Pedidos</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Acompanhe o progresso dos pedidos por etapa
+          </p>
         </div>
       </div>
 
-      {/* Vendas SEM Pedido */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <AlertCircle className="h-5 w-5 text-destructive" />
-            Vendas sem Pedido ({vendasSemPedido.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {vendasSemPedido.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Todas as vendas já têm pedidos vinculados
-              </p>
-            ) : (
-              vendasSemPedido.map((venda) => (
-                <div
-                  key={venda.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-sm truncate">{venda.cliente_nome}</p>
-                      <Badge variant="destructive" className="text-[10px] shrink-0">Sem Pedido</Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span>{venda.cliente_telefone}</span>
-                      <span>•</span>
-                      <span>{formatCurrency(venda.valor_venda)}</span>
-                      <span>•</span>
-                      <span>{format(new Date(venda.created_at), "dd/MM/yyyy")}</span>
-                    </div>
-                    {venda.produtos_vendas && venda.produtos_vendas.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {venda.produtos_vendas.slice(0, 3).map((prod: any, idx: number) => (
-                          <Badge key={idx} variant="outline" className="text-[10px]">
-                            {prod.tipo_produto} {prod.cor?.nome && `- ${prod.cor.nome}`}
-                          </Badge>
-                        ))}
-                        {venda.produtos_vendas.length > 3 && (
-                          <Badge variant="outline" className="text-[10px]">
-                            +{venda.produtos_vendas.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleCriarPedido(venda.id)}
-                    disabled={loading}
-                    className="shrink-0"
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Criar Pedido
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs de Etapas */}
+      <Tabs value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
+        <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
+          {ORDEM_ETAPAS.map((etapa) => {
+            const config = ETAPAS_CONFIG[etapa];
+            const count = etapa === etapaAtiva ? pedidos.length : 0;
+            
+            return (
+              <TabsTrigger
+                key={etapa}
+                value={etapa}
+                className="flex-shrink-0 text-xs sm:text-sm whitespace-nowrap"
+              >
+                <span className={`inline-block w-2 h-2 rounded-full mr-2 ${config.color}`} />
+                {config.label}
+                {etapa === etapaAtiva && (
+                  <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                    {count}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      {/* Vendas COM Pedido */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CheckCircle2 className="h-5 w-5 text-success" />
-            Vendas com Pedido ({vendasComPedido.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {vendasComPedido.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhuma venda com pedido vinculado ainda
-              </p>
-            ) : (
-              vendasComPedido.map((venda) => {
-                const pedido = venda.pedidos_producao?.[0];
-                return (
-                  <div
-                    key={venda.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-sm truncate">{venda.cliente_nome}</p>
-                        <Badge variant="default" className="text-[10px] shrink-0">
-                          {pedido?.status === "concluido" ? "Concluído" : "Em Produção"}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        <span>{venda.cliente_telefone}</span>
-                        <span>•</span>
-                        <span>{formatCurrency(venda.valor_venda)}</span>
-                        <span>•</span>
-                        <span>{format(new Date(venda.created_at), "dd/MM/yyyy")}</span>
-                      </div>
-                      {venda.produtos_vendas && venda.produtos_vendas.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {venda.produtos_vendas.slice(0, 3).map((prod: any, idx: number) => (
-                            <Badge key={idx} variant="outline" className="text-[10px]">
-                              {prod.tipo_produto} {prod.cor?.nome && `- ${prod.cor.nome}`}
-                            </Badge>
-                          ))}
-                          {venda.produtos_vendas.length > 3 && (
-                            <Badge variant="outline" className="text-[10px]">
-                              +{venda.produtos_vendas.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </div>
+        {ORDEM_ETAPAS.map((etapa) => (
+          <TabsContent key={etapa} value={etapa} className="mt-6">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <span>{ETAPAS_CONFIG[etapa].label}</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {pedidos.length} {pedidos.length === 1 ? 'pedido' : 'pedidos'}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Carregando...
                   </div>
-                );
-              })
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                ) : pedidos.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum pedido nesta etapa
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {pedidos.map((pedido) => (
+                      <PedidoCard
+                        key={pedido.id}
+                        pedido={pedido}
+                        isAberto={etapa === 'aberto'}
+                        onCriarPedido={handleCriarPedido}
+                        onMoverEtapa={handleMoverEtapa}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }

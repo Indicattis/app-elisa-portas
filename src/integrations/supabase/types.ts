@@ -2112,6 +2112,47 @@ export type Database = {
           },
         ]
       }
+      pedidos_etapas: {
+        Row: {
+          checkboxes: Json | null
+          created_at: string | null
+          data_entrada: string | null
+          data_saida: string | null
+          etapa: string
+          id: string
+          pedido_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          checkboxes?: Json | null
+          created_at?: string | null
+          data_entrada?: string | null
+          data_saida?: string | null
+          etapa: string
+          id?: string
+          pedido_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          checkboxes?: Json | null
+          created_at?: string | null
+          data_entrada?: string | null
+          data_saida?: string | null
+          etapa?: string
+          id?: string
+          pedido_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_etapas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos_producao: {
         Row: {
           cliente_bairro: string | null
@@ -2128,6 +2169,7 @@ export type Database = {
           endereco_estado: string | null
           endereco_numero: string | null
           endereco_rua: string | null
+          etapa_atual: string | null
           forma_pagamento: string | null
           id: string
           modalidade_instalacao: string | null
@@ -2166,6 +2208,7 @@ export type Database = {
           endereco_estado?: string | null
           endereco_numero?: string | null
           endereco_rua?: string | null
+          etapa_atual?: string | null
           forma_pagamento?: string | null
           id?: string
           modalidade_instalacao?: string | null
@@ -2204,6 +2247,7 @@ export type Database = {
           endereco_estado?: string | null
           endereco_numero?: string | null
           endereco_rua?: string | null
+          etapa_atual?: string | null
           forma_pagamento?: string | null
           id?: string
           modalidade_instalacao?: string | null
