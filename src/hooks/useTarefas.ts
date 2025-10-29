@@ -29,7 +29,7 @@ export interface TarefaInput {
   descricao: string;
   responsavel_id: string;
   recorrente: boolean;
-  dia_recorrencia?: number | null;
+  tipo_recorrencia?: 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias' | null;
   setor: string;
 }
 
@@ -91,13 +91,32 @@ export function useTarefas(userId?: string, setor?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Mapear tipo_recorrencia para dia_recorrencia
+      let diaRecorrencia: number | null = null;
+      if (input.recorrente && input.tipo_recorrencia) {
+        switch (input.tipo_recorrencia) {
+          case 'primeiro_dia_mes':
+            diaRecorrencia = 1;
+            break;
+          case 'cada_7_dias':
+            diaRecorrencia = -7;
+            break;
+          case 'cada_15_dias':
+            diaRecorrencia = -15;
+            break;
+          case 'cada_30_dias':
+            diaRecorrencia = -30;
+            break;
+        }
+      }
+
       const { data, error } = await supabase
         .from('tarefas')
         .insert([{
           descricao: input.descricao,
           responsavel_id: input.responsavel_id,
           recorrente: input.recorrente,
-          dia_recorrencia: input.recorrente ? input.dia_recorrencia : null,
+          dia_recorrencia: diaRecorrencia,
           setor: input.setor,
           created_by: user.id,
         }])

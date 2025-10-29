@@ -4,11 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState, useMemo } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { TarefaInput } from "@/hooks/useTarefas";
-import { getRolesFromSetor } from "@/utils/setorMapping";
+import { Info } from "lucide-react";
+import { format, addDays, startOfMonth, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface NovaTarefaModalProps {
   open: boolean;
@@ -17,52 +19,53 @@ interface NovaTarefaModalProps {
   setor?: string;
 }
 
+type TipoRecorrencia = 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias';
+
 export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTarefaModalProps) {
+  const { user } = useAuth();
   const [descricao, setDescricao] = useState("");
-  const [responsavelId, setResponsavelId] = useState("");
   const [recorrente, setRecorrente] = useState(false);
-  const [diaRecorrencia, setDiaRecorrencia] = useState<number>(1);
+  const [tipoRecorrencia, setTipoRecorrencia] = useState<TipoRecorrencia>('primeiro_dia_mes');
 
-  // Buscar usuários ativos (filtrados por setor se fornecido)
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-ativos', setor],
-    queryFn: async () => {
-      let query = supabase
-        .from('admin_users')
-        .select('user_id, nome, email, role')
-        .eq('ativo', true);
-
-      // Filtrar por roles do setor se fornecido
-      if (setor) {
-        const roles = getRolesFromSetor(setor);
-        if (roles.length > 0) {
-          query = query.in('role', roles);
-        }
-      }
-
-      const { data, error } = await query.order('nome');
-
-      if (error) throw error;
-      return data;
-    },
-  });
+  const proximaDataRecorrencia = useMemo(() => {
+    if (!recorrente) return null;
+    
+    const hoje = new Date();
+    let proximaData: Date;
+    
+    switch (tipoRecorrencia) {
+      case 'primeiro_dia_mes':
+        proximaData = startOfMonth(addMonths(hoje, 1));
+        break;
+      case 'cada_7_dias':
+        proximaData = addDays(hoje, 7);
+        break;
+      case 'cada_15_dias':
+        proximaData = addDays(hoje, 15);
+        break;
+      case 'cada_30_dias':
+        proximaData = addDays(hoje, 30);
+        break;
+    }
+    
+    return format(proximaData, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  }, [recorrente, tipoRecorrencia]);
 
   const handleSubmit = () => {
-    if (!descricao.trim() || !responsavelId) return;
+    if (!descricao.trim() || !user?.id) return;
 
     onSubmit({
       descricao,
-      responsavel_id: responsavelId,
+      responsavel_id: user.id,
       recorrente,
-      dia_recorrencia: recorrente ? diaRecorrencia : null,
+      tipo_recorrencia: recorrente ? tipoRecorrencia : null,
       setor: setor || '',
     });
 
     // Limpar form
     setDescricao("");
-    setResponsavelId("");
     setRecorrente(false);
-    setDiaRecorrencia(1);
+    setTipoRecorrencia('primeiro_dia_mes');
     onOpenChange(false);
   };
 
@@ -85,22 +88,6 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="responsavel">Responsável *</Label>
-            <Select value={responsavelId} onValueChange={setResponsavelId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                {usuarios.map((usuario) => (
-                  <SelectItem key={usuario.user_id} value={usuario.user_id}>
-                    {usuario.nome} ({usuario.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="flex items-center space-x-2">
             <Switch
               id="recorrente"
@@ -111,23 +98,33 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
           </div>
 
           {recorrente && (
-            <div className="space-y-2">
-              <Label htmlFor="dia">Dia do mês para recorrência (1-31)</Label>
-              <Select
-                value={diaRecorrencia.toString()}
-                onValueChange={(v) => setDiaRecorrencia(parseInt(v))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((dia) => (
-                    <SelectItem key={dia} value={dia.toString()}>
-                      Dia {dia}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="tipo-recorrencia">Tipo de recorrência</Label>
+                <Select
+                  value={tipoRecorrencia}
+                  onValueChange={(v) => setTipoRecorrencia(v as TipoRecorrencia)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="primeiro_dia_mes">1° dia do mês</SelectItem>
+                    <SelectItem value="cada_7_dias">A cada 7 dias (a partir de hoje)</SelectItem>
+                    <SelectItem value="cada_15_dias">A cada 15 dias (a partir de hoje)</SelectItem>
+                    <SelectItem value="cada_30_dias">A cada 30 dias (a partir de hoje)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {proximaDataRecorrencia && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Próxima tarefa será criada automaticamente em: <strong>{proximaDataRecorrencia}</strong>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )}
         </div>
@@ -136,7 +133,7 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!descricao.trim() || !responsavelId}>
+          <Button onClick={handleSubmit} disabled={!descricao.trim() || !user?.id}>
             Criar Tarefa
           </Button>
         </div>
