@@ -2284,50 +2284,6 @@ export type Database = {
           },
         ]
       }
-      pontos_instalacao: {
-        Row: {
-          cidade: string
-          created_at: string
-          created_by: string
-          dia_semana: number
-          equipe_id: string
-          id: string
-          observacoes: string | null
-          semana_inicio: string
-          updated_at: string
-        }
-        Insert: {
-          cidade: string
-          created_at?: string
-          created_by: string
-          dia_semana: number
-          equipe_id: string
-          id?: string
-          observacoes?: string | null
-          semana_inicio: string
-          updated_at?: string
-        }
-        Update: {
-          cidade?: string
-          created_at?: string
-          created_by?: string
-          dia_semana?: number
-          equipe_id?: string
-          id?: string
-          observacoes?: string | null
-          semana_inicio?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pontos_instalacao_equipe_id_fkey"
-            columns: ["equipe_id"]
-            isOneToOne: false
-            referencedRelation: "equipes_instalacao"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       produtos_vendas: {
         Row: {
           acessorio_id: string | null
