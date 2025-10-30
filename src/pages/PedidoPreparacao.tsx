@@ -58,13 +58,18 @@ export default function PedidoPreparacao() {
     adicionarLinha,
     removerLinha,
     popularLinhasSeparacao,
+    popularLinhasPerfiladeira,
     atualizarLinhasEmLote,
   } = usePedidoLinhas(id || '');
 
-  // Popular automaticamente linhas de separação ao carregar
+  // Popular automaticamente linhas de separação e perfiladeira ao carregar
   useEffect(() => {
     if (pedido?.venda_id && linhas.length === 0) {
       popularLinhasSeparacao(pedido.venda_id).catch(() => {
+        // Silenciar erro se já existirem linhas
+      });
+      
+      popularLinhasPerfiladeira(pedido.venda_id).catch(() => {
         // Silenciar erro se já existirem linhas
       });
     }

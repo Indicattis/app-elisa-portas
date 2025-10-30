@@ -269,6 +269,156 @@ export function usePedidoLinhas(pedidoId: string) {
     }
   });
 
+  // Mutation para popular automaticamente perfiladeira com tiras
+  const popularLinhasPerfiladeira = useMutation({
+    mutationFn: async (vendaId: string) => {
+      // Verificar se já existem linhas de perfiladeira do tipo tiras
+      const existingTiras = linhas.filter(l => 
+        l.categoria_linha === 'perfiladeira' && 
+        (l.estoque_id === 'd9d2982d-1323-4f04-9783-7bd3e7eca88c' || 
+         l.estoque_id === 'cf683858-1a61-46af-8566-28174a8b3683')
+      );
+      
+      if (existingTiras.length > 0) {
+        console.log('Tiras de perfiladeira já existem, pulando...');
+        return;
+      }
+
+      // Buscar portas de enrolar da venda
+      const { data: portas, error: portasError } = await supabase
+        .from('produtos_vendas')
+        .select('*')
+        .eq('venda_id', vendaId)
+        .eq('tipo_produto', 'porta_enrolar');
+
+      if (portasError) throw portasError;
+      if (!portas || portas.length === 0) {
+        console.log('Nenhuma porta de enrolar encontrada');
+        return;
+      }
+
+      // Buscar informações dos produtos de tiras
+      const { data: produtosTiras, error: tirasError } = await supabase
+        .from('estoque')
+        .select('*')
+        .in('id', [
+          'd9d2982d-1323-4f04-9783-7bd3e7eca88c', // Meia cana lisa
+          'cf683858-1a61-46af-8566-28174a8b3683'  // Meia cana micro
+        ]);
+
+      if (tirasError) throw tirasError;
+
+      const meiaCanalisaInfo = produtosTiras?.find(p => p.id === 'd9d2982d-1323-4f04-9783-7bd3e7eca88c');
+      const meiaCanaicroInfo = produtosTiras?.find(p => p.id === 'cf683858-1a61-46af-8566-28174a8b3683');
+
+      if (!meiaCanalisaInfo || !meiaCanaicroInfo) {
+        throw new Error('Produtos de tiras não encontrados no estoque');
+      }
+
+      // Calcular próxima ordem
+      const proximaOrdem = linhas.length > 0 
+        ? Math.max(...linhas.map(l => l.ordem)) + 1 
+        : 1;
+
+      // Gerar linhas para cada porta
+      const linhasParaInserir: any[] = [];
+      let ordemAtual = proximaOrdem;
+
+      portas.forEach((porta) => {
+        // Validar que a porta tem largura e altura
+        if (!porta.largura || !porta.altura) {
+          console.warn(`Porta ${porta.id} sem dimensões, pulando...`);
+          return;
+        }
+
+        const larguraPorta = porta.largura;
+        const alturaPorta = porta.altura;
+        
+        // Calcular quantidade de meia canas (altura / 0.076, arredondado para cima)
+        const qtdMeiaCanas = Math.ceil(alturaPorta / 0.076);
+
+        // Linha 1: Meia cana lisa - largura (porta - 0.14) - qtd meia canas
+        linhasParaInserir.push({
+          pedido_id: pedidoId,
+          estoque_id: meiaCanalisaInfo.id,
+          nome_produto: meiaCanalisaInfo.nome_produto,
+          descricao_produto: meiaCanalisaInfo.descricao_produto,
+          largura: parseFloat((larguraPorta - 0.14).toFixed(2)),
+          altura: null,
+          quantidade: qtdMeiaCanas,
+          categoria_linha: 'perfiladeira' as CategoriaLinha,
+          ordem: ordemAtual++,
+          check_separacao: false,
+          check_qualidade: false,
+          check_coleta: false,
+        });
+
+        // Linha 2: Meia cana lisa - largura (porta + 0.1) - qtd 6
+        linhasParaInserir.push({
+          pedido_id: pedidoId,
+          estoque_id: meiaCanalisaInfo.id,
+          nome_produto: meiaCanalisaInfo.nome_produto,
+          descricao_produto: meiaCanalisaInfo.descricao_produto,
+          largura: parseFloat((larguraPorta + 0.1).toFixed(2)),
+          altura: null,
+          quantidade: 6,
+          categoria_linha: 'perfiladeira' as CategoriaLinha,
+          ordem: ordemAtual++,
+          check_separacao: false,
+          check_qualidade: false,
+          check_coleta: false,
+        });
+
+        // Linha 3: Meia cana micro - largura (porta - 0.14) - qtd 4
+        linhasParaInserir.push({
+          pedido_id: pedidoId,
+          estoque_id: meiaCanaicroInfo.id,
+          nome_produto: meiaCanaicroInfo.nome_produto,
+          descricao_produto: meiaCanaicroInfo.descricao_produto,
+          largura: parseFloat((larguraPorta - 0.14).toFixed(2)),
+          altura: null,
+          quantidade: 4,
+          categoria_linha: 'perfiladeira' as CategoriaLinha,
+          ordem: ordemAtual++,
+          check_separacao: false,
+          check_qualidade: false,
+          check_coleta: false,
+        });
+      });
+
+      if (linhasParaInserir.length === 0) {
+        console.log('Nenhuma linha para inserir');
+        return;
+      }
+
+      // Inserir todas as linhas
+      const { error: insertError } = await supabase
+        .from('pedido_linhas')
+        .insert(linhasParaInserir);
+
+      if (insertError) throw insertError;
+
+      return { linhasInseridas: linhasParaInserir.length };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedidoId] });
+      if (result?.linhasInseridas) {
+        toast({
+          title: "Tiras de perfiladeira adicionadas",
+          description: `${result.linhasInseridas} linhas foram adicionadas automaticamente.`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Erro ao popular linhas de perfiladeira:', error);
+      toast({
+        title: "Erro ao adicionar tiras",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   return {
     linhas,
     isLoading,
@@ -278,5 +428,6 @@ export function usePedidoLinhas(pedidoId: string) {
     atualizarLinha: atualizarLinha.mutateAsync,
     atualizarLinhasEmLote: atualizarLinhasEmLote.mutateAsync,
     popularLinhasSeparacao: popularLinhasSeparacao.mutateAsync,
+    popularLinhasPerfiladeira: popularLinhasPerfiladeira.mutateAsync,
   };
 }
