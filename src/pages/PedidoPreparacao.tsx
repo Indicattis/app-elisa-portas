@@ -114,14 +114,14 @@ export default function PedidoPreparacao() {
 
   const calcularMeiaCanas = (produto: any) => {
     if (produto.altura) {
-      return (produto.altura * 0.076).toFixed(2);
+      return (produto.altura / 0.076).toFixed(2);
     }
     // Fallback para medidas em string
     if (produto.tamanho) {
       const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
       if (match) {
         const altura = parseFloat(match[2]);
-        return (altura * 0.076).toFixed(2);
+        return (altura / 0.076).toFixed(2);
       }
     }
     return null;
@@ -308,7 +308,7 @@ export default function PedidoPreparacao() {
                               PINTURA
                             </Badge>
                           )}
-                          {produto.descricao_produto || produto.descricao || produto.nome_produto || 'Sem descrição'}
+                          {produto.nome_produto || produto.descricao_produto || produto.descricao || 'Sem nome'}
                         </TableCell>
                         <TableCell className="py-2 text-xs font-mono">
                           {tamanhoDisplay}
