@@ -100,11 +100,6 @@ export default function PedidoPreparacao() {
 
   const venda = pedido.vendas;
   const produtos = venda?.produtos_vendas || [];
-  
-  // Filtrar portas enrolar e pinturas
-  const portasEnrolarEPinturas = produtos.filter((p: any) => 
-    p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'pintura_epoxi'
-  );
 
   const calcularPeso = (produto: any) => {
     if (produto.largura && produto.altura) {
@@ -312,12 +307,12 @@ export default function PedidoPreparacao() {
       </div>
 
       {/* Produtos da Venda - Tabela */}
-      {portasEnrolarEPinturas.length > 0 && (
+      {produtos.length > 0 && (
         <Card>
           <CardHeader className="p-3 pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
               <Package className="h-3.5 w-3.5" />
-              Produtos da Venda - Portas Enrolar e Pinturas
+              Produtos da Venda
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
@@ -326,6 +321,7 @@ export default function PedidoPreparacao() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="h-9 text-xs">#</TableHead>
+                    <TableHead className="h-9 text-xs">Tipo</TableHead>
                     <TableHead className="h-9 text-xs">Descrição</TableHead>
                     <TableHead className="h-9 text-xs">Tamanho</TableHead>
                     <TableHead className="h-9 text-xs">Cor</TableHead>
@@ -335,7 +331,7 @@ export default function PedidoPreparacao() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {portasEnrolarEPinturas.map((produto: any, idx: number) => {
+                  {produtos.map((produto: any, idx: number) => {
                     const peso = calcularPeso(produto);
                     const meiaCanas = calcularMeiaCanas(produto);
                     const tamanhoDisplay = produto.tamanho || 
@@ -349,11 +345,11 @@ export default function PedidoPreparacao() {
                           {idx + 1}
                         </TableCell>
                         <TableCell className="py-2 text-xs">
-                          {produto.tipo_produto === 'pintura_epoxi' && (
-                            <Badge variant="outline" className="mr-1.5 text-[10px] px-1">
-                              PINTURA
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
+                            {produto.tipo_produto?.replace(/_/g, ' ') || 'Produto'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
                           {produto.nome_produto || produto.descricao_produto || produto.descricao || 'Sem nome'}
                         </TableCell>
                         <TableCell className="py-2 text-xs font-mono">
