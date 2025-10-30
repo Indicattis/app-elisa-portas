@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { CalendarIcon, ArrowLeft, Plus, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 interface Atendente {
   id: string;
@@ -79,6 +81,21 @@ export default function VendaNova() {
       console.error("Erro ao buscar atendentes:", error);
     }
   };
+
+  const { data: produtosAvulsos = [] } = useQuery({
+    queryKey: ['produtos-comercializaveis'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('estoque')
+        .select('*')
+        .eq('ativo', true)
+        .eq('comercializado_individualmente', true)
+        .order('nome_produto');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -478,6 +495,65 @@ export default function VendaNova() {
                   </Label>
                 </div>
               </div>
+            </div>
+
+            {/* Produtos Avulsos */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Adicionar Produtos Avulsos
+              </h3>
+              
+              {produtosAvulsos.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {produtosAvulsos.map((produto) => (
+                    <Card 
+                      key={produto.id} 
+                      className="cursor-pointer hover:border-primary transition-colors"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {produto.nome_produto}
+                            </p>
+                            {produto.descricao_produto && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {produto.descricao_produto}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs">
+                                R$ {produto.preco_unitario.toFixed(2)}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                {produto.quantidade} {produto.unidade}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button 
+                            type="button"
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => {
+                              toast({
+                                title: "Disponível após criar a venda",
+                                description: "Produtos avulsos podem ser adicionados na edição da venda"
+                              });
+                            }}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum produto configurado para venda avulsa. Configure produtos no módulo de Estoque.
+                </p>
+              )}
             </div>
 
             <div className="flex gap-4 pt-4">

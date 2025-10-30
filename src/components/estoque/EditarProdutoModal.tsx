@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useState, useEffect } from "react";
@@ -23,6 +24,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
     unidade: "UN",
     categoria: "geral",
     preco_unitario: 0,
+    comercializado_individualmente: false,
   });
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
         unidade: produto.unidade,
         categoria: produto.categoria,
         preco_unitario: produto.preco_unitario,
+        comercializado_individualmente: produto.comercializado_individualmente,
       });
     }
   }, [produto]);
@@ -110,6 +113,18 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
               value={formData.preco_unitario} 
               onChange={(e) => setFormData({...formData, preco_unitario: parseFloat(e.target.value) || 0})} 
             />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="comercializado_edit"
+              checked={formData.comercializado_individualmente}
+              onCheckedChange={(checked) => 
+                setFormData({...formData, comercializado_individualmente: checked as boolean})
+              }
+            />
+            <Label htmlFor="comercializado_edit" className="cursor-pointer font-normal">
+              Produto pode ser comercializado individualmente
+            </Label>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSubmit} className="flex-1">Salvar</Button>

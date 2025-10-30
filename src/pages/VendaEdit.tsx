@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, ShoppingCart } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
@@ -21,6 +21,8 @@ import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 interface Lead {
   id: string;
@@ -115,6 +117,53 @@ export default function VendaEdit() {
         variant: "destructive",
         title: "Erro",
         description: "Erro ao carregar dados da venda",
+      });
+    }
+  };
+
+  const { data: produtosAvulsos = [] } = useQuery({
+    queryKey: ['produtos-comercializaveis'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('estoque')
+        .select('*')
+        .eq('ativo', true)
+        .eq('comercializado_individualmente', true)
+        .order('nome_produto');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const handleAdicionarProdutoAvulso = async (produtoEstoque: any) => {
+    if (!id) return;
+    
+    try {
+      await addProduto({
+        venda_id: id,
+        tipo_produto: 'adicional',
+        descricao: produtoEstoque.nome_produto,
+        valor_produto: produtoEstoque.preco_unitario,
+        quantidade: 1,
+        valor_pintura: 0,
+        valor_instalacao: 0,
+        valor_frete: 0,
+        tipo_desconto: 'percentual',
+        desconto_percentual: 0,
+        desconto_valor: 0,
+      });
+      
+      toast({
+        title: "Produto adicionado",
+        description: `${produtoEstoque.nome_produto} foi adicionado à venda`
+      });
+    } catch (error) {
+      console.error('Erro ao adicionar produto avulso:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível adicionar o produto"
       });
     }
   };
@@ -499,6 +548,70 @@ export default function VendaEdit() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Produtos Avulsos Disponíveis */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" />
+            Produtos Avulsos Disponíveis
+          </CardTitle>
+          <CardDescription>
+            Clique para adicionar produtos avulsos à venda
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {produtosAvulsos.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {produtosAvulsos.map((produto) => (
+                <Card 
+                  key={produto.id} 
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleAdicionarProdutoAvulso(produto)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {produto.nome_produto}
+                        </p>
+                        {produto.descricao_produto && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {produto.descricao_produto}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            R$ {produto.preco_unitario.toFixed(2)}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {produto.quantidade} {produto.unidade}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button 
+                        type="button"
+                        size="sm" 
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAdicionarProdutoAvulso(produto);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Nenhum produto disponível para venda avulsa. Configure produtos no módulo de Estoque.
+            </p>
+          )}
         </CardContent>
       </Card>
 

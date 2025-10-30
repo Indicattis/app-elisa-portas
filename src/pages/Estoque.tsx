@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Plus, ArrowUpDown, History, Settings, Pencil } from "lucide-react";
+import { Package, Plus, ArrowUpDown, History, Settings, Pencil, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
@@ -33,6 +34,7 @@ export default function Estoque() {
     unidade: "UN",
     categoria: "geral",
     preco_unitario: 0,
+    comercializado_individualmente: false,
   });
 
   const getCategoriaColor = (categoriaValue: string) => {
@@ -54,6 +56,7 @@ export default function Estoque() {
       unidade: "UN",
       categoria: "geral",
       preco_unitario: 0,
+      comercializado_individualmente: false,
     });
     setModalAberto(false);
   };
@@ -174,6 +177,18 @@ export default function Estoque() {
                     onChange={(e) => setFormData({...formData, preco_unitario: parseFloat(e.target.value) || 0})} 
                   />
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="comercializado"
+                    checked={formData.comercializado_individualmente}
+                    onCheckedChange={(checked) => 
+                      setFormData({...formData, comercializado_individualmente: checked as boolean})
+                    }
+                  />
+                  <Label htmlFor="comercializado" className="cursor-pointer font-normal">
+                    Produto pode ser comercializado individualmente
+                  </Label>
+                </div>
                 <Button onClick={handleSubmit} className="w-full">Adicionar</Button>
               </div>
             </DialogContent>
@@ -193,6 +208,7 @@ export default function Estoque() {
                 <TableHead>Produto</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Categoria</TableHead>
+                <TableHead>Venda Avulsa</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
                 <TableHead className="text-right">Preço Unit.</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -212,6 +228,18 @@ export default function Estoque() {
                     >
                       {getCategoriaLabel(produto.categoria)}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {produto.comercializado_individualmente ? (
+                      <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        Sim
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-muted-foreground">
+                        Não
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <span className="font-semibold">
@@ -252,7 +280,7 @@ export default function Estoque() {
               ))}
               {produtos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum produto cadastrado
                   </TableCell>
                 </TableRow>

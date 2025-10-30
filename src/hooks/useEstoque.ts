@@ -26,6 +26,7 @@ export interface ProdutoEstoque {
   categoria: string;
   ativo: boolean;
   preco_unitario: number;
+  comercializado_individualmente: boolean;
 }
 
 export interface ProdutoEstoqueInput {
@@ -35,6 +36,7 @@ export interface ProdutoEstoqueInput {
   unidade?: string;
   categoria?: string;
   preco_unitario?: number;
+  comercializado_individualmente?: boolean;
 }
 
 export const useEstoque = () => {
