@@ -98,7 +98,7 @@ export default function PedidoPreparacao() {
 
   const calcularPeso = (produto: any) => {
     if (produto.largura && produto.altura) {
-      return ((produto.largura * produto.altura * 3) / 1000).toFixed(1);
+      return (((produto.largura * produto.altura * 12) * 2) * 0.3).toFixed(1);
     }
     // Fallback para medidas em string
     if (produto.tamanho) {
@@ -106,7 +106,7 @@ export default function PedidoPreparacao() {
       if (match) {
         const largura = parseFloat(match[1]);
         const altura = parseFloat(match[2]);
-        return ((largura * altura * 3) / 1000).toFixed(1);
+        return (((largura * altura * 12) * 2) * 0.3).toFixed(1);
       }
     }
     return null;
@@ -114,14 +114,14 @@ export default function PedidoPreparacao() {
 
   const calcularMeiaCanas = (produto: any) => {
     if (produto.altura) {
-      return Math.ceil(produto.altura / 80); // altura em mm, meia cana = 80mm
+      return (produto.altura * 0.076).toFixed(2);
     }
     // Fallback para medidas em string
     if (produto.tamanho) {
       const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
       if (match) {
         const altura = parseFloat(match[2]);
-        return Math.ceil(altura / 80);
+        return (altura * 0.076).toFixed(2);
       }
     }
     return null;
@@ -308,7 +308,7 @@ export default function PedidoPreparacao() {
                               PINTURA
                             </Badge>
                           )}
-                          {produto.descricao || 'Sem descrição'}
+                          {produto.descricao_produto || produto.descricao || produto.nome_produto || 'Sem descrição'}
                         </TableCell>
                         <TableCell className="py-2 text-xs font-mono">
                           {tamanhoDisplay}
