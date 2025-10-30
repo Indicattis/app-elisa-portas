@@ -1,77 +1,72 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, User, FileText, Scale, Ruler } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
-import { PedidoLinhasEditor } from "@/components/pedidos/PedidoLinhasEditor";
+import { ArrowLeft, User, Phone, MapPin, Hash, Package } from "lucide-react";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
+import { LinhasCategorizadas } from "@/components/pedidos/LinhasCategorizadas";
+import { useEffect } from "react";
 
 export default function PedidoPreparacao() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  // Buscar pedido completo
   const { data: pedido, isLoading: pedidoLoading } = useQuery({
     queryKey: ['pedido-preparacao', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: pedidoData, error: pedidoError } = await supabase
         .from('pedidos_producao')
-        .select(`
-          *,
-          vendas (
-            *,
-            produtos_vendas (
-              *,
-              catalogo_cores (nome, codigo_hex)
-            )
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
-      
-      if (error) throw error;
-      return data;
+
+      if (pedidoError) throw pedidoError;
+
+      // Buscar venda separadamente
+      const { data: vendaData, error: vendaError } = await supabase
+        .from('vendas')
+        .select(`
+          *,
+          produtos_vendas (*)
+        `)
+        .eq('id', pedidoData.venda_id)
+        .single();
+
+      if (vendaError) throw vendaError;
+
+      return {
+        ...pedidoData,
+        vendas: vendaData
+      };
     },
     enabled: !!id
   });
 
-  const venda = pedido?.vendas;
-  const produtos = venda?.produtos_vendas || [];
-  
-  // Filtrar apenas portas enrolar
-  const portasEnrolar = produtos.filter((p: any) => 
-    p.tipo_produto === 'porta_enrolar' && p.largura && p.altura
-  );
-
-  // Hook para gerenciar linhas do pedido
   const {
     linhas,
     isLoading: linhasLoading,
     adicionarLinha,
     removerLinha,
-    atualizarCheckbox,
+    popularLinhasSeparacao,
   } = usePedidoLinhas(id || '');
 
-  // Calcular peso da porta: ((altura * largura * 12) * 2) * 0.3
-  const calcularPeso = (largura: number, altura: number) => {
-    return ((altura * largura * 12) * 2) * 0.3;
-  };
-
-  // Calcular quantidade de meia canas: Math.ceil(altura / 0.076)
-  const calcularMeiaCanas = (altura: number) => {
-    return Math.ceil(altura / 0.076);
-  };
+  // Popular automaticamente linhas de separação ao carregar
+  useEffect(() => {
+    if (pedido?.venda_id && linhas.length === 0) {
+      popularLinhasSeparacao(pedido.venda_id).catch(() => {
+        // Silenciar erro se já existirem linhas
+      });
+    }
+  }, [pedido?.venda_id, linhas.length]);
 
   if (pedidoLoading || linhasLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando preparação...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -79,227 +74,184 @@ export default function PedidoPreparacao() {
 
   if (!pedido) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">Pedido não encontrado</p>
-          <Button onClick={() => navigate('/dashboard/pedidos')}>
-            Voltar para Pedidos
-          </Button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <p className="text-sm text-muted-foreground">Pedido não encontrado</p>
+        <Button onClick={() => navigate('/dashboard/pedidos')} variant="outline" size="sm">
+          <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+          Voltar
+        </Button>
       </div>
     );
   }
 
+  const venda = pedido.vendas;
+  const produtos = venda?.produtos_vendas || [];
+  const portasEnrolar = produtos.filter((p: any) => 
+    p.tipo_produto === 'porta_enrolar' && p.medidas
+  );
+
+  const calcularPeso = (medidas: string) => {
+    const match = medidas.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+    if (!match) return null;
+    const largura = parseFloat(match[1]);
+    const altura = parseFloat(match[2]);
+    return (largura * altura * 3).toFixed(1);
+  };
+
+  const calcularMeiaCanas = (medidas: string) => {
+    const match = medidas.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+    if (!match) return null;
+    const altura = parseFloat(match[2]);
+    return Math.ceil(altura / 0.08);
+  };
+
   const isReadOnly = pedido.etapa_atual !== 'aberto';
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="container mx-auto py-4 space-y-3 max-w-6xl">
+      {/* Header Compacto */}
+      <div className="flex items-center justify-between py-2">
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
-            size="icon"
+            variant="ghost"
+            size="sm"
             onClick={() => navigate('/dashboard/pedidos')}
+            className="h-8"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+            Voltar
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Preparação de Pedido</h1>
-            <p className="text-muted-foreground">
-              {pedido.numero_pedido}
-            </p>
-          </div>
+          <div className="h-4 w-px bg-border" />
+          <h1 className="text-base font-semibold">Preparação {pedido.numero_pedido}</h1>
         </div>
-        <Badge variant={pedido.etapa_atual === 'aberto' ? 'default' : 'secondary'}>
+        <Badge variant="secondary" className="text-xs">
           {pedido.etapa_atual}
         </Badge>
       </div>
 
-      {/* Grid de 2 colunas */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Seção 1: Informações do Cliente */}
+      {/* Grid Cliente/Pedido Compacto */}
+      <div className="grid md:grid-cols-2 gap-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Informações do Cliente
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              Cliente
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Nome</label>
-              <p className="text-base font-semibold">{venda?.cliente_nome}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Telefone</label>
-                <p className="text-base">{pedido?.cliente_telefone || venda?.cliente_telefone || '-'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">CPF</label>
-                <p className="text-base">{pedido?.cliente_cpf || '-'}</p>
+          <CardContent className="p-3 pt-0 space-y-1.5">
+            <div className="flex items-start gap-1.5">
+              <User className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{venda?.cliente_nome}</p>
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">E-mail</label>
-              <p className="text-base">{pedido?.cliente_email || venda?.cliente_email || '-'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Endereço</label>
-              <p className="text-base">
-                {pedido?.endereco_rua ? (
-                  <>
-                    {pedido.endereco_rua}, {pedido.endereco_numero || 'S/N'}
-                    <br />
-                    {pedido.endereco_bairro && `${pedido.endereco_bairro}, `}
-                    {pedido.endereco_cidade}/{pedido.endereco_estado}
-                    <br />
-                    CEP: {pedido.endereco_cep || '-'}
-                  </>
-                ) : '-'}
-              </p>
-            </div>
+            {venda?.cliente_telefone && (
+              <div className="flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground">{venda.cliente_telefone}</p>
+              </div>
+            )}
+            {venda?.cliente_endereco && (
+              <div className="flex items-start gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  {venda.cliente_endereco}
+                  {venda.cliente_bairro && `, ${venda.cliente_bairro}`}
+                  {venda.cliente_cidade && ` - ${venda.cliente_cidade}`}
+                  {venda.cliente_estado && `/${venda.cliente_estado}`}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Seção 2: Informações do Pedido */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Informações do Pedido
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+              <Hash className="h-3.5 w-3.5" />
+              Pedido
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+          <CardContent className="p-3 pt-0 space-y-1.5">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Número</label>
-                <p className="text-base font-semibold">{pedido.numero_pedido}</p>
+                <p className="text-muted-foreground">Número</p>
+                <p className="font-medium">{pedido.numero_pedido}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Status</label>
-                <Badge variant="outline">{pedido.etapa_atual}</Badge>
+                <p className="text-muted-foreground">Venda</p>
+                <p className="font-medium">{venda?.numero_venda}</p>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Criado em</label>
-                <p className="text-base">{format(new Date(pedido.created_at), "dd/MM/yyyy")}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Entrega</label>
-                <p className="text-base">
-                  {pedido?.data_entrega ? format(new Date(pedido.data_entrega), "dd/MM/yyyy") : '-'}
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Instalação</label>
-                <p className="text-base">{pedido?.modalidade_instalacao || '-'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Pagamento</label>
-                <p className="text-base">{pedido?.forma_pagamento || '-'}</p>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Valor Total</label>
-              <p className="text-2xl font-bold text-primary">
-                {formatCurrency(venda?.valor_venda || 0)}
-              </p>
+              {venda?.valor_total && (
+                <div>
+                  <p className="text-muted-foreground">Valor</p>
+                  <p className="font-medium">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor_total)}
+                  </p>
+                </div>
+              )}
+              {venda?.data_entrega_prevista && (
+                <div>
+                  <p className="text-muted-foreground">Entrega</p>
+                  <p className="font-medium">
+                    {new Date(venda.data_entrega_prevista).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Seção 3: Produtos da Venda com Cálculos */}
+      {/* Produtos da Venda (Portas Enrolar) */}
       {portasEnrolar.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Produtos da Venda (Portas Enrolar)
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+              <Package className="h-3.5 w-3.5" />
+              Produtos da Venda
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {portasEnrolar.map((produto: any, idx: number) => {
-                const peso = calcularPeso(produto.largura, produto.altura);
-                const meiaCanas = calcularMeiaCanas(produto.altura);
-                
-                return (
-                  <div 
-                    key={idx} 
-                    className="border rounded-lg p-4 space-y-3 bg-muted/20"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{produto.descricao || 'Porta Enrolar'}</h4>
-                        <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Dimensões:</span>
-                            <span className="ml-2 font-medium">
-                              {produto.largura}m x {produto.altura}m
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Cor:</span>
-                            <span className="ml-2 font-medium">
-                              {produto.catalogo_cores?.nome || '-'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Quantidade:</span>
-                            <span className="ml-2 font-medium">{produto.quantidade || 1}</span>
-                          </div>
-                        </div>
+          <CardContent className="p-3 pt-0 space-y-1.5">
+            {portasEnrolar.map((produto: any, idx: number) => {
+              const peso = calcularPeso(produto.medidas);
+              const meiaCanas = calcularMeiaCanas(produto.medidas);
+
+              return (
+                <Card key={produto.id} className="p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">
+                        [{idx + 1}] {produto.descricao}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                        <span>Qtd: {produto.quantidade}</span>
+                        {peso && <span>⚖️ Peso: {peso}kg</span>}
+                        {meiaCanas && <span>📏 Meia canas: {meiaCanas}un</span>}
                       </div>
                     </div>
-                    
-                    {/* Cálculos */}
-                    <div className="flex gap-4 pt-3 border-t">
-                      <Badge variant="outline" className="flex items-center gap-2">
-                        <Scale className="h-4 w-4" />
-                        Peso: {peso.toFixed(2)} kg
-                      </Badge>
-                      <Badge variant="outline" className="flex items-center gap-2">
-                        <Ruler className="h-4 w-4" />
-                        Meia Canas: {meiaCanas} un
-                      </Badge>
-                    </div>
                   </div>
-                );
-              })}
-            </div>
+                </Card>
+              );
+            })}
           </CardContent>
         </Card>
       )}
 
-      {/* Seção 4: Linhas de Preparação */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Linhas de Preparação do Pedido</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PedidoLinhasEditor
-            linhas={linhas}
-            isReadOnly={isReadOnly}
-            onAdicionarLinha={adicionarLinha}
-            onRemoverLinha={removerLinha}
-            onAtualizarCheckbox={(linhaId, campo, valor) => 
-              atualizarCheckbox({ linhaId, campo, valor })
-            }
-          />
-        </CardContent>
-      </Card>
+      {/* Linhas Categorizadas */}
+      <LinhasCategorizadas
+        linhas={linhas}
+        isReadOnly={isReadOnly}
+        onAdicionarLinha={adicionarLinha}
+        onRemoverLinha={removerLinha}
+      />
 
-      {/* Ações do Pedido */}
-      <div className="flex gap-3 justify-end pb-6">
+      {/* Footer */}
+      <div className="flex justify-between pt-2">
         <Button
           variant="outline"
           onClick={() => navigate('/dashboard/pedidos')}
+          size="sm"
         >
           Voltar
         </Button>

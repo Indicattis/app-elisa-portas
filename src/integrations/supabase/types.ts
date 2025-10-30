@@ -2051,6 +2051,7 @@ export type Database = {
       }
       pedido_linhas: {
         Row: {
+          categoria_linha: string
           check_coleta: boolean | null
           check_qualidade: boolean | null
           check_separacao: boolean | null
@@ -2066,6 +2067,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          categoria_linha?: string
           check_coleta?: boolean | null
           check_qualidade?: boolean | null
           check_separacao?: boolean | null
@@ -2081,6 +2083,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          categoria_linha?: string
           check_coleta?: boolean | null
           check_qualidade?: boolean | null
           check_separacao?: boolean | null

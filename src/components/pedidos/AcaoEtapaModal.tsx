@@ -8,9 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, AlertCircle, Package, MapPin, Truck } from "lucide-react";
 import { EtapaPedido, ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
-import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { usePedidoEtapaCheckboxes } from "@/hooks/usePedidoEtapaCheckboxes";
-import { PedidoLinhasEditor } from "./PedidoLinhasEditor";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,13 +21,9 @@ interface AcaoEtapaModalProps {
 
 export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEtapaModalProps) {
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
-  const isAberto = etapaAtual === 'aberto';
   const proximaEtapa = getProximaEtapa(etapaAtual);
   
-  // Para pedido aberto: gerenciar linhas
-  const { linhas = [], isLoading: isLoadingLinhas, adicionarLinha, removerLinha } = usePedidoLinhas(pedido.id);
-  
-  // Para outras etapas: gerenciar checkboxes
+  // Gerenciar checkboxes
   const { 
     checkboxes, 
     atualizarCheckbox, 
@@ -72,17 +66,14 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
     }
   };
 
-  const canAdvance = isAberto ? linhas.length > 0 : todosObrigatoriosMarcados;
+  const canAdvance = todosObrigatoriosMarcados;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>
-            {isAberto 
-              ? 'Preparar Pedido para Produção' 
-              : `Avançar para ${proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}`
-            }
+            Avançar para {proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}
           </DialogTitle>
         </DialogHeader>
         
@@ -181,84 +172,59 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
             </Card>
           )}
 
-          {isAberto ? (
-            // Renderizar editor de linhas
-            <div className="space-y-4">
-              <Alert>
+          {/* Checkboxes da etapa */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div>
+                <p className="text-sm text-muted-foreground">Etapa Atual</p>
+                <p className="font-semibold">{ETAPAS_CONFIG[etapaAtual].label}</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">Próxima Etapa</p>
+                <p className="font-semibold">
+                  {proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : 'Finalizado'}
+                </p>
+              </div>
+            </div>
+            
+            {isLoadingCheckboxes ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Carregando ações...
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Label className="text-base">Ações necessárias:</Label>
+                {checkboxes.map(checkbox => (
+                  <div 
+                    key={checkbox.id} 
+                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <Checkbox
+                      id={checkbox.id}
+                      checked={checkbox.checked}
+                      onCheckedChange={(checked) => atualizarCheckbox(checkbox.id, checked as boolean)}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor={checkbox.id} className="cursor-pointer font-normal">
+                        {checkbox.label}
+                        {checkbox.required && <span className="text-destructive ml-1">*</span>}
+                      </Label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {!todosObrigatoriosMarcados && (
+              <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Adicione os produtos deste pedido antes de iniciar a produção
+                  Complete todos os itens obrigatórios (*) para avançar
                 </AlertDescription>
               </Alert>
-              
-              {isLoadingLinhas ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando produtos...
-                </div>
-              ) : (
-                <PedidoLinhasEditor
-                  linhas={linhas}
-                  isReadOnly={false}
-                  onAdicionarLinha={adicionarLinha}
-                  onRemoverLinha={removerLinha}
-                />
-              )}
-            </div>
-          ) : (
-            // Renderizar checkboxes da etapa
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                <div>
-                  <p className="text-sm text-muted-foreground">Etapa Atual</p>
-                  <p className="font-semibold">{ETAPAS_CONFIG[etapaAtual].label}</p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Próxima Etapa</p>
-                  <p className="font-semibold">
-                    {proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : 'Finalizado'}
-                  </p>
-                </div>
-              </div>
-              
-              {isLoadingCheckboxes ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando ações...
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <Label className="text-base">Ações necessárias:</Label>
-                  {checkboxes.map(checkbox => (
-                    <div 
-                      key={checkbox.id} 
-                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <Checkbox
-                        id={checkbox.id}
-                        checked={checkbox.checked}
-                        onCheckedChange={(checked) => atualizarCheckbox(checkbox.id, checked as boolean)}
-                      />
-                      <div className="flex-1">
-                        <Label htmlFor={checkbox.id} className="cursor-pointer font-normal">
-                          {checkbox.label}
-                          {checkbox.required && <span className="text-destructive ml-1">*</span>}
-                        </Label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {!todosObrigatoriosMarcados && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Complete todos os itens obrigatórios (*) para avançar
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </ScrollArea>
         
         <DialogFooter>
@@ -269,13 +235,7 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
             onClick={handleConfirmar}
             disabled={!canAdvance || isSubmitting}
           >
-            {isSubmitting ? (
-              'Processando...'
-            ) : isAberto ? (
-              linhas.length > 0 ? 'Salvar e Iniciar Produção' : 'Adicione produtos para continuar'
-            ) : (
-              'Confirmar Avanço'
-            )}
+            {isSubmitting ? 'Processando...' : 'Confirmar Avanço'}
           </Button>
         </DialogFooter>
       </DialogContent>

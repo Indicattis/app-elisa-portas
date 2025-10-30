@@ -215,24 +215,37 @@ export function PedidoCard({
         </CardContent>
 
         <CardFooter className="pt-0 pb-3 gap-2 flex-col">
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full"
-            onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-          >
-            <FileText className="h-3.5 w-3.5 mr-2" />
-            Ver Preparação
-          </Button>
-          {proximaEtapa && etapaAtual !== 'finalizado' && (
+          {isAberto ? (
             <Button
               size="sm"
               className="w-full"
-              onClick={() => setShowAcaoEtapa(true)}
+              onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
             >
-              <ArrowRight className="h-3.5 w-3.5 mr-2" />
-              {isAberto ? 'Preparar Pedido' : `Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}
+              <FileText className="h-3.5 w-3.5 mr-2" />
+              Preparar Pedido
             </Button>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
+              >
+                <FileText className="h-3.5 w-3.5 mr-2" />
+                Ver Preparação
+              </Button>
+              {proximaEtapa && etapaAtual !== 'finalizado' && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowAcaoEtapa(true)}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                  Avançar para {ETAPAS_CONFIG[proximaEtapa].label}
+                </Button>
+              )}
+            </>
           )}
         </CardFooter>
       </Card>
