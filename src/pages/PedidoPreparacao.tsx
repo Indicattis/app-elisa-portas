@@ -151,14 +151,14 @@ export default function PedidoPreparacao() {
                 <p className="text-xs text-muted-foreground">{venda.cliente_telefone}</p>
               </div>
             )}
-            {venda?.cliente_endereco && (
+            {(venda?.cep || venda?.cidade) && (
               <div className="flex items-start gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                 <p className="text-xs text-muted-foreground">
-                  {venda.cliente_endereco}
-                  {venda.cliente_bairro && `, ${venda.cliente_bairro}`}
-                  {venda.cliente_cidade && ` - ${venda.cliente_cidade}`}
-                  {venda.cliente_estado && `/${venda.cliente_estado}`}
+                  {venda.cep && `${venda.cep} - `}
+                  {venda.bairro && `${venda.bairro}, `}
+                  {venda.cidade && `${venda.cidade}`}
+                  {venda.estado && `/${venda.estado}`}
                 </p>
               </div>
             )}
@@ -180,21 +180,21 @@ export default function PedidoPreparacao() {
               </div>
               <div>
                 <p className="text-muted-foreground">Venda</p>
-                <p className="font-medium">{venda?.numero_venda}</p>
+                <p className="font-medium">#{pedido.numero_pedido}</p>
               </div>
-              {venda?.valor_total && (
+              {venda?.valor_venda && (
                 <div>
                   <p className="text-muted-foreground">Valor</p>
                   <p className="font-medium">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor_total)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor_venda)}
                   </p>
                 </div>
               )}
-              {venda?.data_entrega_prevista && (
+              {venda?.created_at && (
                 <div>
-                  <p className="text-muted-foreground">Entrega</p>
+                  <p className="text-muted-foreground">Data</p>
                   <p className="font-medium">
-                    {new Date(venda.data_entrega_prevista).toLocaleDateString('pt-BR')}
+                    {new Date(venda.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
               )}

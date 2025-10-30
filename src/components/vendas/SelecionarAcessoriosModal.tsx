@@ -31,45 +31,32 @@ export function SelecionarAcessoriosModal({
 }: SelecionarAcessoriosModalProps) {
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
 
-  const { data: acessorios = [], isLoading: loadingAcessorios } = useQuery({
-    queryKey: ['acessorios-ativos'],
+  // Buscar produtos do estoque com categoria "acessório" ou "adicional"
+  const { data: produtosEstoque = [], isLoading } = useQuery({
+    queryKey: ['estoque-acessorios-adicionais'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('acessorios')
+        .from('estoque')
         .select('*')
         .eq('ativo', true)
-        .order('nome');
+        .in('categoria', ['acessório', 'adicional'])
+        .order('nome_produto');
+      
       if (error) throw error;
       return data.map(item => ({
         id: item.id,
-        nome: item.nome,
-        preco: Number(item.preco),
-        tipo: 'acessorio' as const,
-        descricao: item.descricao
+        nome: item.nome_produto,
+        preco: Number(item.preco_unitario),
+        tipo: (item.categoria === 'acessório' ? 'acessorio' : 'adicional') as 'acessorio' | 'adicional',
+        descricao: item.descricao_produto
       }));
     },
     enabled: open
   });
 
-  const { data: adicionais = [], isLoading: loadingAdicionais } = useQuery({
-    queryKey: ['adicionais-ativos'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('adicionais')
-        .select('*')
-        .eq('ativo', true)
-        .order('nome');
-      if (error) throw error;
-      return data.map(item => ({
-        id: item.id,
-        nome: item.nome,
-        preco: Number(item.preco),
-        tipo: 'adicional' as const,
-        descricao: item.descricao
-      }));
-    },
-    enabled: open
-  });
+  // Separar por categoria para exibição
+  const acessorios = produtosEstoque.filter(item => item.tipo === 'acessorio');
+  const adicionais = produtosEstoque.filter(item => item.tipo === 'adicional');
 
   const toggleItem = (itemId: string) => {
     setItensSelecionados(prev => {
@@ -104,8 +91,7 @@ export function SelecionarAcessoriosModal({
       desconto_valor: 0,
       desconto_percentual: 0,
       tipo_desconto: 'valor' as 'valor' | 'percentual',
-      acessorio_id: item.tipo === 'acessorio' ? item.id : undefined,
-      adicional_id: item.tipo === 'adicional' ? item.id : undefined
+      estoque_id: item.id
     }));
 
     onConfirm(produtos);
@@ -117,8 +103,6 @@ export function SelecionarAcessoriosModal({
     setItensSelecionados(new Set());
     onOpenChange(false);
   };
-
-  const isLoading = loadingAcessorios || loadingAdicionais;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

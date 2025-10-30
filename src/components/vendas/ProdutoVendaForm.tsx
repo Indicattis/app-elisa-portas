@@ -100,27 +100,31 @@ export function ProdutoVendaForm({
     }
   });
 
+  // Buscar acessórios do estoque
   const { data: acessorios } = useQuery({
-    queryKey: ['acessorios'],
+    queryKey: ['estoque-acessorios'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('acessorios')
+        .from('estoque')
         .select('*')
         .eq('ativo', true)
-        .order('nome');
+        .eq('categoria', 'acessório')
+        .order('nome_produto');
       if (error) throw error;
       return data;
     }
   });
 
+  // Buscar adicionais do estoque
   const { data: adicionais } = useQuery({
-    queryKey: ['adicionais'],
+    queryKey: ['estoque-adicionais'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('adicionais')
+        .from('estoque')
         .select('*')
         .eq('ativo', true)
-        .order('nome');
+        .eq('categoria', 'adicional')
+        .order('nome_produto');
       if (error) throw error;
       return data;
     }
@@ -235,26 +239,28 @@ export function ProdutoVendaForm({
     setFormData(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
   };
 
-  const handleAcessorioChange = (acessorioId: string) => {
-    const acessorio = acessorios?.find(a => a.id === acessorioId);
+  const handleAcessorioChange = (estoqueId: string) => {
+    const acessorio = acessorios?.find(a => a.id === estoqueId);
     if (acessorio) {
       setFormData(prev => ({
         ...prev,
-        acessorio_id: acessorioId,
-        valor_produto: acessorio.preco,
-        descricao: acessorio.descricao || ''
+        tipo_produto: 'acessorio',
+        descricao: acessorio.nome_produto,
+        valor_produto: Number(acessorio.preco_unitario),
+        estoque_id: acessorio.id
       }));
     }
   };
 
-  const handleAdicionalChange = (adicionalId: string) => {
-    const adicional = adicionais?.find(a => a.id === adicionalId);
+  const handleAdicionalChange = (estoqueId: string) => {
+    const adicional = adicionais?.find(a => a.id === estoqueId);
     if (adicional) {
       setFormData(prev => ({
         ...prev,
-        adicional_id: adicionalId,
-        valor_produto: adicional.preco,
-        descricao: adicional.descricao || ''
+        tipo_produto: 'adicional',
+        descricao: adicional.nome_produto,
+        valor_produto: Number(adicional.preco_unitario),
+        estoque_id: adicional.id
       }));
     }
   };
@@ -495,7 +501,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="acessorio">Acessório *</Label>
               <Select
-                value={formData.acessorio_id}
+                value={formData.estoque_id}
                 onValueChange={handleAcessorioChange}
                 required
               >
@@ -505,7 +511,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {acessorios?.map((acessorio) => (
                     <SelectItem key={acessorio.id} value={acessorio.id}>
-                      {acessorio.nome} - R$ {acessorio.preco.toFixed(2)}
+                      {acessorio.nome_produto} - R$ {Number(acessorio.preco_unitario).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -517,7 +523,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="adicional">Adicional *</Label>
               <Select
-                value={formData.adicional_id}
+                value={formData.estoque_id}
                 onValueChange={handleAdicionalChange}
                 required
               >
@@ -527,7 +533,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {adicionais?.map((adicional) => (
                     <SelectItem key={adicional.id} value={adicional.id}>
-                      {adicional.nome} - R$ {adicional.preco.toFixed(2)}
+                      {adicional.nome_produto} - R$ {Number(adicional.preco_unitario).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>
