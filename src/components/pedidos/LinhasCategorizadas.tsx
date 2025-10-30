@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, Flame, Settings } from "lucide-react";
-import { TabelaLinhas } from "./TabelaLinhas";
+import { TabelaLinhasEditavel } from "./TabelaLinhasEditavel";
 import { AdicionarLinhaModal } from "./AdicionarLinhaModal";
-import type { PedidoLinha, PedidoLinhaNova, CategoriaLinha } from "@/hooks/usePedidoLinhas";
+import type { PedidoLinha, PedidoLinhaNova, PedidoLinhaUpdate, CategoriaLinha } from "@/hooks/usePedidoLinhas";
 
 interface LinhasCategorizadasProps {
   linhas: PedidoLinha[];
   isReadOnly: boolean;
   onAdicionarLinha: (linha: PedidoLinhaNova) => Promise<any>;
   onRemoverLinha: (id: string) => Promise<void>;
+  onChange: (linhasEditadas: Map<string, PedidoLinhaUpdate>) => void;
+  linhasEditadas: Map<string, PedidoLinhaUpdate>;
 }
 
 const CATEGORIAS = [
@@ -39,6 +41,8 @@ export function LinhasCategorizadas({
   isReadOnly,
   onAdicionarLinha,
   onRemoverLinha,
+  onChange,
+  linhasEditadas,
 }: LinhasCategorizadasProps) {
   const [modalAberto, setModalAberto] = useState(false);
   const [categoriaAtual, setCategoriaAtual] = useState<CategoriaLinha>('separacao');
@@ -79,10 +83,12 @@ export function LinhasCategorizadas({
                 </div>
               </CardHeader>
               <CardContent className="p-3 pt-0">
-                <TabelaLinhas
+                <TabelaLinhasEditavel
                   linhas={linhasCategoria}
                   isReadOnly={isReadOnly}
                   onRemover={onRemoverLinha}
+                  onChange={onChange}
+                  linhasEditadas={linhasEditadas}
                 />
               </CardContent>
             </Card>

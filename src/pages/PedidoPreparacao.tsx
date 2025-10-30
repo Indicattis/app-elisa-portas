@@ -5,14 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard } from "lucide-react";
-import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
+import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard, Save } from "lucide-react";
+import { usePedidoLinhas, type PedidoLinhaUpdate } from "@/hooks/usePedidoLinhas";
 import { LinhasCategorizadas } from "@/components/pedidos/LinhasCategorizadas";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PedidoPreparacao() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [linhasEditadas, setLinhasEditadas] = useState<Map<string, PedidoLinhaUpdate>>(new Map());
+  const [salvando, setSalvando] = useState(false);
 
   const { data: pedido, isLoading: pedidoLoading } = useQuery({
     queryKey: ['pedido-preparacao', id],
@@ -54,6 +58,7 @@ export default function PedidoPreparacao() {
     adicionarLinha,
     removerLinha,
     popularLinhasSeparacao,
+    atualizarLinhasEmLote,
   } = usePedidoLinhas(id || '');
 
   // Popular automaticamente linhas de separação ao carregar
@@ -128,6 +133,26 @@ export default function PedidoPreparacao() {
   };
 
   const isReadOnly = pedido.etapa_atual !== 'aberto';
+  const temAlteracoesPendentes = linhasEditadas.size > 0;
+
+  const handleSalvarAlteracoes = async () => {
+    if (linhasEditadas.size === 0) {
+      toast({
+        title: "Nenhuma alteração",
+        description: "Não há alterações para salvar.",
+      });
+      return;
+    }
+
+    setSalvando(true);
+    try {
+      const updates = Array.from(linhasEditadas.values());
+      await atualizarLinhasEmLote(updates);
+      setLinhasEditadas(new Map());
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   return (
     <div className="container mx-auto py-4 space-y-3 max-w-6xl">
@@ -145,10 +170,26 @@ export default function PedidoPreparacao() {
           </Button>
           <div className="h-4 w-px bg-border" />
           <h1 className="text-base font-semibold">Preparação {pedido.numero_pedido}</h1>
+          <Badge variant="secondary" className="text-xs">
+            {pedido.etapa_atual}
+          </Badge>
+          {temAlteracoesPendentes && (
+            <Badge variant="outline" className="text-xs">
+              {linhasEditadas.size} alteraç{linhasEditadas.size === 1 ? 'ão' : 'ões'} pendente{linhasEditadas.size === 1 ? '' : 's'}
+            </Badge>
+          )}
         </div>
-        <Badge variant="secondary" className="text-xs">
-          {pedido.etapa_atual}
-        </Badge>
+        {!isReadOnly && (
+          <Button
+            onClick={handleSalvarAlteracoes}
+            disabled={!temAlteracoesPendentes || salvando}
+            size="sm"
+            className="gap-2"
+          >
+            <Save className="h-3.5 w-3.5" />
+            {salvando ? "Salvando..." : `Salvar${linhasEditadas.size > 0 ? ` (${linhasEditadas.size})` : ''}`}
+          </Button>
+        )}
       </div>
 
       {/* Grid Cliente/Pedido Compacto */}
@@ -348,15 +389,17 @@ export default function PedidoPreparacao() {
       )}
 
       {/* Linhas Categorizadas */}
-      <LinhasCategorizadas
-        linhas={linhas}
-        isReadOnly={isReadOnly}
-        onAdicionarLinha={adicionarLinha}
-        onRemoverLinha={removerLinha}
-      />
+          <LinhasCategorizadas
+            linhas={linhas}
+            isReadOnly={isReadOnly}
+            onAdicionarLinha={adicionarLinha}
+            onRemoverLinha={removerLinha}
+            onChange={setLinhasEditadas}
+            linhasEditadas={linhasEditadas}
+          />
 
       {/* Footer */}
-      <div className="flex justify-between pt-2">
+      <div className="flex justify-between items-center pt-2">
         <Button
           variant="outline"
           onClick={() => navigate('/dashboard/pedidos')}
@@ -364,6 +407,17 @@ export default function PedidoPreparacao() {
         >
           Voltar
         </Button>
+        {!isReadOnly && (
+          <Button
+            onClick={handleSalvarAlteracoes}
+            disabled={!temAlteracoesPendentes || salvando}
+            size="sm"
+            className="gap-2"
+          >
+            <Save className="h-3.5 w-3.5" />
+            {salvando ? "Salvando..." : `Salvar${linhasEditadas.size > 0 ? ` (${linhasEditadas.size})` : ''}`}
+          </Button>
+        )}
       </div>
     </div>
   );

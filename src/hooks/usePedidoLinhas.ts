@@ -13,6 +13,8 @@ export interface PedidoLinha {
   quantidade: number;
   ordem: number;
   tamanho: string | null;
+  largura: number | null;
+  altura: number | null;
   categoria_linha: CategoriaLinha;
   check_separacao: boolean;
   check_qualidade: boolean;
@@ -26,8 +28,21 @@ export interface PedidoLinhaNova {
   descricao_produto?: string;
   quantidade: number;
   tamanho?: string;
+  largura?: number;
+  altura?: number;
   estoque_id?: string;
   categoria_linha: CategoriaLinha;
+}
+
+export interface PedidoLinhaUpdate {
+  id: string;
+  estoque_id?: string;
+  nome_produto?: string;
+  descricao_produto?: string;
+  quantidade?: number;
+  largura?: number;
+  altura?: number;
+  tamanho?: string;
 }
 
 export function usePedidoLinhas(pedidoId: string) {
@@ -202,12 +217,66 @@ export function usePedidoLinhas(pedidoId: string) {
     }
   });
 
+  const atualizarLinha = useMutation({
+    mutationFn: async (update: PedidoLinhaUpdate) => {
+      const { id, ...campos } = update;
+      const { error } = await supabase
+        .from('pedido_linhas')
+        .update(campos)
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedidoId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar linha",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const atualizarLinhasEmLote = useMutation({
+    mutationFn: async (updates: PedidoLinhaUpdate[]) => {
+      const promises = updates.map(async (update) => {
+        const { id, ...campos } = update;
+        return supabase
+          .from('pedido_linhas')
+          .update(campos)
+          .eq('id', id);
+      });
+
+      const results = await Promise.all(promises);
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) throw new Error(`${errors.length} atualizações falharam`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedidoId] });
+      toast({
+        title: "Linhas atualizadas",
+        description: "Todas as alterações foram salvas com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao salvar alterações",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   return {
     linhas,
     isLoading,
     adicionarLinha: adicionarLinha.mutateAsync,
     removerLinha: removerLinha.mutateAsync,
     atualizarCheckbox: atualizarCheckbox.mutateAsync,
+    atualizarLinha: atualizarLinha.mutateAsync,
+    atualizarLinhasEmLote: atualizarLinhasEmLote.mutateAsync,
     popularLinhasSeparacao: popularLinhasSeparacao.mutateAsync,
   };
 }

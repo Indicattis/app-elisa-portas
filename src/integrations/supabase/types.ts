@@ -2118,6 +2118,7 @@ export type Database = {
       }
       pedido_linhas: {
         Row: {
+          altura: number | null
           categoria_linha: string
           check_coleta: boolean | null
           check_qualidade: boolean | null
@@ -2126,6 +2127,7 @@ export type Database = {
           descricao_produto: string | null
           estoque_id: string | null
           id: string
+          largura: number | null
           nome_produto: string
           ordem: number
           pedido_id: string
@@ -2134,6 +2136,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          altura?: number | null
           categoria_linha?: string
           check_coleta?: boolean | null
           check_qualidade?: boolean | null
@@ -2142,6 +2145,7 @@ export type Database = {
           descricao_produto?: string | null
           estoque_id?: string | null
           id?: string
+          largura?: number | null
           nome_produto: string
           ordem?: number
           pedido_id: string
@@ -2150,6 +2154,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          altura?: number | null
           categoria_linha?: string
           check_coleta?: boolean | null
           check_qualidade?: boolean | null
@@ -2158,6 +2163,7 @@ export type Database = {
           descricao_produto?: string | null
           estoque_id?: string | null
           id?: string
+          largura?: number | null
           nome_produto?: string
           ordem?: number
           pedido_id?: string
