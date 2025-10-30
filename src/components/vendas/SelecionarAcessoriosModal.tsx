@@ -22,6 +22,7 @@ interface ItemSelecionavel {
   preco: number;
   tipo: 'acessorio' | 'adicional';
   descricao?: string;
+  categoria: string;
 }
 
 export function SelecionarAcessoriosModal({
@@ -31,15 +32,15 @@ export function SelecionarAcessoriosModal({
 }: SelecionarAcessoriosModalProps) {
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
 
-  // Buscar produtos do estoque com categoria "acessório" ou "adicional"
+  // Buscar produtos do estoque marcados como comercializáveis individualmente
   const { data: produtosEstoque = [], isLoading } = useQuery({
-    queryKey: ['estoque-acessorios-adicionais'],
+    queryKey: ['estoque-comercializaveis'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('estoque')
         .select('*')
         .eq('ativo', true)
-        .in('categoria', ['acessório', 'adicional'])
+        .eq('comercializado_individualmente', true)
         .order('nome_produto');
       
       if (error) throw error;
@@ -48,15 +49,17 @@ export function SelecionarAcessoriosModal({
         nome: item.nome_produto,
         preco: Number(item.preco_unitario),
         tipo: (item.categoria === 'acessório' ? 'acessorio' : 'adicional') as 'acessorio' | 'adicional',
-        descricao: item.descricao_produto
+        descricao: item.descricao_produto,
+        categoria: item.categoria
       }));
     },
     enabled: open
   });
 
-  // Separar por categoria para exibição
-  const acessorios = produtosEstoque.filter(item => item.tipo === 'acessorio');
-  const adicionais = produtosEstoque.filter(item => item.tipo === 'adicional');
+  // Separar por tipo para exibição (mantém compatibilidade com acessórios/adicionais)
+  const acessorios = produtosEstoque.filter(item => item.categoria === 'acessório');
+  const adicionais = produtosEstoque.filter(item => item.categoria === 'adicional');
+  const outrosProdutos = produtosEstoque.filter(item => item.categoria !== 'acessório' && item.categoria !== 'adicional');
 
   const toggleItem = (itemId: string) => {
     setItensSelecionados(prev => {
@@ -71,7 +74,7 @@ export function SelecionarAcessoriosModal({
   };
 
   const handleConfirmar = () => {
-    const todosItens: ItemSelecionavel[] = [...acessorios, ...adicionais];
+    const todosItens: ItemSelecionavel[] = [...acessorios, ...adicionais, ...outrosProdutos];
     const itensSelecionadosArray = todosItens.filter(item => itensSelecionados.has(item.id));
     
     const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => ({
@@ -203,9 +206,54 @@ export function SelecionarAcessoriosModal({
                 </div>
               )}
 
-              {acessorios.length === 0 && adicionais.length === 0 && !isLoading && (
+              {/* Outros Produtos */}
+              {outrosProdutos.length > 0 && (
+                <>
+                  {(acessorios.length > 0 || adicionais.length > 0) && <Separator />}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-5 h-5 text-primary" />
+                      <h3 className="font-semibold text-lg">Outros Produtos</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {outrosProdutos.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                        >
+                          <Checkbox
+                            id={item.id}
+                            checked={itensSelecionados.has(item.id)}
+                            onCheckedChange={() => toggleItem(item.id)}
+                          />
+                          <div className="flex-1 space-y-1">
+                            <Label
+                              htmlFor={item.id}
+                              className="text-sm font-medium leading-none cursor-pointer"
+                            >
+                              {item.nome}
+                            </Label>
+                            {item.descricao && (
+                              <p className="text-xs text-muted-foreground">
+                                {item.descricao}
+                              </p>
+                            )}
+                            <p className="text-sm font-semibold text-primary">
+                              R$ {item.preco.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {acessorios.length === 0 && adicionais.length === 0 && outrosProdutos.length === 0 && !isLoading && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Nenhum acessório ou adicional disponível
+                  Nenhum produto disponível para venda avulsa.
+                  <br />
+                  <span className="text-xs">Configure produtos no módulo de Estoque</span>
                 </div>
               )}
             </div>
