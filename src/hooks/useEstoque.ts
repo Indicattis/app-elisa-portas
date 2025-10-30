@@ -27,6 +27,13 @@ export interface ProdutoEstoque {
   ativo: boolean;
   preco_unitario: number;
   comercializado_individualmente: boolean;
+  subcategoria_id: string | null;
+  peso_porta: number | null;
+  setor_responsavel_producao: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
+  subcategoria?: {
+    id: string;
+    nome: string;
+  } | null;
 }
 
 export interface ProdutoEstoqueInput {
@@ -37,6 +44,9 @@ export interface ProdutoEstoqueInput {
   categoria?: string;
   preco_unitario?: number;
   comercializado_individualmente?: boolean;
+  subcategoria_id?: string | null;
+  peso_porta?: number | null;
+  setor_responsavel_producao?: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
 }
 
 export const useEstoque = () => {
@@ -49,7 +59,10 @@ export const useEstoque = () => {
     queryFn: async () => {
       let query = supabase
         .from("estoque")
-        .select("*")
+        .select(`
+          *,
+          subcategoria:estoque_subcategorias(id, nome)
+        `)
         .eq("ativo", true)
         .order("nome_produto");
 

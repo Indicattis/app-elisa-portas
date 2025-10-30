@@ -763,8 +763,13 @@ export type Database = {
           descricao_produto: string | null
           id: string
           nome_produto: string
+          peso_porta: number | null
           preco_unitario: number
           quantidade: number
+          setor_responsavel_producao:
+            | Database["public"]["Enums"]["setor_producao"]
+            | null
+          subcategoria_id: string | null
           unidade: string | null
           updated_at: string | null
         }
@@ -777,8 +782,13 @@ export type Database = {
           descricao_produto?: string | null
           id?: string
           nome_produto: string
+          peso_porta?: number | null
           preco_unitario?: number
           quantidade?: number
+          setor_responsavel_producao?:
+            | Database["public"]["Enums"]["setor_producao"]
+            | null
+          subcategoria_id?: string | null
           unidade?: string | null
           updated_at?: string | null
         }
@@ -791,12 +801,25 @@ export type Database = {
           descricao_produto?: string | null
           id?: string
           nome_produto?: string
+          peso_porta?: number | null
           preco_unitario?: number
           quantidade?: number
+          setor_responsavel_producao?:
+            | Database["public"]["Enums"]["setor_producao"]
+            | null
+          subcategoria_id?: string | null
           unidade?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "estoque_subcategoria_id_fkey"
+            columns: ["subcategoria_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_subcategorias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       estoque_categorias: {
         Row: {
@@ -874,6 +897,47 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "estoque"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_subcategorias: {
+        Row: {
+          ativo: boolean
+          categoria_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_subcategorias_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_categorias"
             referencedColumns: ["id"]
           },
         ]
@@ -3272,6 +3336,7 @@ export type Database = {
         | "qualificacao"
         | "proposta"
         | "contratado"
+      setor_producao: "perfiladeira" | "solda" | "separacao" | "pintura"
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
       tipo_instalacao_enum: "elisa" | "autorizados"
@@ -3514,6 +3579,7 @@ export const Constants = {
         "proposta",
         "contratado",
       ],
+      setor_producao: ["perfiladeira", "solda", "separacao", "pintura"],
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],
       tipo_instalacao_enum: ["elisa", "autorizados"],

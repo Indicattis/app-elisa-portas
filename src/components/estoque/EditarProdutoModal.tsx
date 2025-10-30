@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
+import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useState, useEffect } from "react";
 
 interface EditarProdutoModalProps {
@@ -17,6 +18,8 @@ interface EditarProdutoModalProps {
 
 export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: EditarProdutoModalProps) {
   const { categorias } = useCategorias();
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
+  const { subcategorias } = useSubcategorias(categoriaSelecionada || undefined);
   const [formData, setFormData] = useState({
     nome_produto: "",
     descricao_produto: "",
@@ -25,6 +28,9 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
     categoria: "geral",
     preco_unitario: 0,
     comercializado_individualmente: false,
+    subcategoria_id: null as string | null,
+    peso_porta: null as number | null,
+    setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
   });
 
   useEffect(() => {
@@ -37,9 +43,15 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
         categoria: produto.categoria,
         preco_unitario: produto.preco_unitario,
         comercializado_individualmente: produto.comercializado_individualmente,
+        subcategoria_id: produto.subcategoria_id,
+        peso_porta: produto.peso_porta,
+        setor_responsavel_producao: produto.setor_responsavel_producao,
       });
+
+      const catId = categorias.find(c => c.nome.toLowerCase() === produto.categoria.toLowerCase())?.id;
+      setCategoriaSelecionada(catId || null);
     }
-  }, [produto]);
+  }, [produto, categorias]);
 
   const handleSubmit = async () => {
     if (!produto) return;
@@ -74,7 +86,11 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
             <Label>Categoria</Label>
             <Select 
               value={formData.categoria} 
-              onValueChange={(value) => setFormData({...formData, categoria: value})}
+              onValueChange={(value) => {
+                setFormData({...formData, categoria: value, subcategoria_id: null});
+                const catId = categorias.find(c => c.nome.toLowerCase() === value.toLowerCase())?.id;
+                setCategoriaSelecionada(catId || null);
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -85,6 +101,71 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
                     {cat.nome}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Subcategoria</Label>
+            <Select 
+              value={formData.subcategoria_id || "nenhuma"} 
+              onValueChange={(value) => setFormData({
+                ...formData, 
+                subcategoria_id: value === "nenhuma" ? null : value
+              })}
+              disabled={!categoriaSelecionada}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma subcategoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                {subcategorias.map((sub) => (
+                  <SelectItem key={sub.id} value={sub.id}>
+                    {sub.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!categoriaSelecionada && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecione uma categoria primeiro
+              </p>
+            )}
+          </div>
+          <div>
+            <Label>Peso de Porta Recomendado (kg)</Label>
+            <Input 
+              type="number"
+              step="0.01"
+              placeholder="Ex: 150.5"
+              value={formData.peso_porta || ""} 
+              onChange={(e) => setFormData({
+                ...formData, 
+                peso_porta: e.target.value ? parseFloat(e.target.value) : null
+              })} 
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Deixe vazio se não aplicável
+            </p>
+          </div>
+          <div>
+            <Label>Setor Responsável pela Produção</Label>
+            <Select 
+              value={formData.setor_responsavel_producao || "nenhum"} 
+              onValueChange={(value) => setFormData({
+                ...formData, 
+                setor_responsavel_producao: value === "nenhum" ? null : value as any
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o setor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhum">Nenhum</SelectItem>
+                <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
+                <SelectItem value="solda">Solda</SelectItem>
+                <SelectItem value="separacao">Separação</SelectItem>
+                <SelectItem value="pintura">Pintura</SelectItem>
               </SelectContent>
             </Select>
           </div>

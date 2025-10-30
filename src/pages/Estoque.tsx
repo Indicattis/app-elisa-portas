@@ -9,12 +9,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
+import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { HistoricoModal } from "@/components/estoque/HistoricoModal";
 import { AlterarCategoriaModal } from "@/components/estoque/AlterarCategoriaModal";
 import { GerenciarCategoriasModal } from "@/components/estoque/GerenciarCategoriasModal";
+import { GerenciarSubcategoriasModal } from "@/components/estoque/GerenciarSubcategoriasModal";
 import { EditarProdutoModal } from "@/components/estoque/EditarProdutoModal";
 
 export default function Estoque() {
@@ -23,10 +25,13 @@ export default function Estoque() {
   const [modalAberto, setModalAberto] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
   const [categoriasModal, setCategoriasModal] = useState(false);
+  const [subcategoriasModal, setSubcategoriasModal] = useState(false);
   const [movimentacaoModal, setMovimentacaoModal] = useState(false);
   const [historicoModal, setHistoricoModal] = useState(false);
   const [categoriaModal, setCategoriaModal] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoEstoque | null>(null);
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
+  const { subcategorias } = useSubcategorias(categoriaSelecionada || undefined);
   const [formData, setFormData] = useState({
     nome_produto: "",
     descricao_produto: "",
@@ -35,6 +40,9 @@ export default function Estoque() {
     categoria: "geral",
     preco_unitario: 0,
     comercializado_individualmente: false,
+    subcategoria_id: null as string | null,
+    peso_porta: null as number | null,
+    setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
   });
 
   const getCategoriaColor = (categoriaValue: string) => {
@@ -57,7 +65,11 @@ export default function Estoque() {
       categoria: "geral",
       preco_unitario: 0,
       comercializado_individualmente: false,
+      subcategoria_id: null,
+      peso_porta: null,
+      setor_responsavel_producao: null,
     });
+    setCategoriaSelecionada(null);
     setModalAberto(false);
   };
 
@@ -121,6 +133,10 @@ export default function Estoque() {
             <Settings className="h-4 w-4 mr-2" />
             Gerenciar Categorias
           </Button>
+          <Button variant="outline" onClick={() => setSubcategoriasModal(true)}>
+            <Settings className="h-4 w-4 mr-2" />
+            Gerenciar Subcategorias
+          </Button>
           <Dialog open={modalAberto} onOpenChange={setModalAberto}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />Novo Produto</Button>
@@ -146,7 +162,11 @@ export default function Estoque() {
                   <Label>Categoria</Label>
                   <Select 
                     value={formData.categoria} 
-                    onValueChange={(value) => setFormData({...formData, categoria: value})}
+                    onValueChange={(value) => {
+                      setFormData({...formData, categoria: value, subcategoria_id: null});
+                      const catId = categorias.find(c => c.nome.toLowerCase() === value.toLowerCase())?.id;
+                      setCategoriaSelecionada(catId || null);
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -157,6 +177,71 @@ export default function Estoque() {
                           {cat.nome}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Subcategoria</Label>
+                  <Select 
+                    value={formData.subcategoria_id || "nenhuma"} 
+                    onValueChange={(value) => setFormData({
+                      ...formData, 
+                      subcategoria_id: value === "nenhuma" ? null : value
+                    })}
+                    disabled={!categoriaSelecionada}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma subcategoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                      {subcategorias.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.id}>
+                          {sub.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!categoriaSelecionada && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Selecione uma categoria primeiro
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label>Peso de Porta Recomendado (kg)</Label>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 150.5"
+                    value={formData.peso_porta || ""} 
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      peso_porta: e.target.value ? parseFloat(e.target.value) : null
+                    })} 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Deixe vazio se não aplicável
+                  </p>
+                </div>
+                <div>
+                  <Label>Setor Responsável pela Produção</Label>
+                  <Select 
+                    value={formData.setor_responsavel_producao || "nenhum"} 
+                    onValueChange={(value) => setFormData({
+                      ...formData, 
+                      setor_responsavel_producao: value === "nenhum" ? null : value as any
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o setor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nenhum">Nenhum</SelectItem>
+                      <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
+                      <SelectItem value="solda">Solda</SelectItem>
+                      <SelectItem value="separacao">Separação</SelectItem>
+                      <SelectItem value="pintura">Pintura</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -208,7 +293,10 @@ export default function Estoque() {
                 <TableHead>Produto</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Categoria</TableHead>
+                <TableHead>Subcategoria</TableHead>
                 <TableHead>Venda Avulsa</TableHead>
+                <TableHead>Peso Porta</TableHead>
+                <TableHead>Setor Produção</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
                 <TableHead className="text-right">Preço Unit.</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -230,6 +318,15 @@ export default function Estoque() {
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    {produto.subcategoria ? (
+                      <Badge variant="outline">
+                        {produto.subcategoria.nome}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {produto.comercializado_individualmente ? (
                       <Badge variant="default" className="bg-green-500 hover:bg-green-600">
                         <ShoppingCart className="h-3 w-3 mr-1" />
@@ -239,6 +336,35 @@ export default function Estoque() {
                       <Badge variant="secondary" className="text-muted-foreground">
                         Não
                       </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {produto.peso_porta ? (
+                      <span className="text-sm font-medium">
+                        {produto.peso_porta} kg
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {produto.setor_responsavel_producao ? (
+                      <Badge 
+                        variant="secondary"
+                        className={
+                          produto.setor_responsavel_producao === 'perfiladeira' ? 'bg-blue-100 text-blue-800' :
+                          produto.setor_responsavel_producao === 'solda' ? 'bg-orange-100 text-orange-800' :
+                          produto.setor_responsavel_producao === 'separacao' ? 'bg-green-100 text-green-800' :
+                          'bg-purple-100 text-purple-800'
+                        }
+                      >
+                        {produto.setor_responsavel_producao === 'perfiladeira' ? 'Perfiladeira' :
+                         produto.setor_responsavel_producao === 'solda' ? 'Solda' :
+                         produto.setor_responsavel_producao === 'separacao' ? 'Separação' :
+                         'Pintura'}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -280,7 +406,7 @@ export default function Estoque() {
               ))}
               {produtos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     Nenhum produto cadastrado
                   </TableCell>
                 </TableRow>
@@ -308,6 +434,11 @@ export default function Estoque() {
       <GerenciarCategoriasModal
         open={categoriasModal}
         onOpenChange={setCategoriasModal}
+      />
+
+      <GerenciarSubcategoriasModal
+        open={subcategoriasModal}
+        onOpenChange={setSubcategoriasModal}
       />
 
       <AlterarCategoriaModal
