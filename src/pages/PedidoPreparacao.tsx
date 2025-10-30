@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Phone, MapPin, Hash, Package } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard } from "lucide-react";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { LinhasCategorizadas } from "@/components/pedidos/LinhasCategorizadas";
 import { useEffect } from "react";
@@ -24,12 +25,15 @@ export default function PedidoPreparacao() {
 
       if (pedidoError) throw pedidoError;
 
-      // Buscar venda separadamente
+      // Buscar venda separadamente com produtos e cores
       const { data: vendaData, error: vendaError } = await supabase
         .from('vendas')
         .select(`
           *,
-          produtos_vendas (*)
+          produtos_vendas (
+            *,
+            cor:catalogo_cores(nome, codigo_hex)
+          )
         `)
         .eq('id', pedidoData.venda_id)
         .single();
@@ -86,23 +90,41 @@ export default function PedidoPreparacao() {
 
   const venda = pedido.vendas;
   const produtos = venda?.produtos_vendas || [];
-  const portasEnrolar = produtos.filter((p: any) => 
-    p.tipo_produto === 'porta_enrolar' && p.medidas
+  
+  // Filtrar portas enrolar e pinturas
+  const portasEnrolarEPinturas = produtos.filter((p: any) => 
+    p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'pintura_epoxi'
   );
 
-  const calcularPeso = (medidas: string) => {
-    const match = medidas.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
-    if (!match) return null;
-    const largura = parseFloat(match[1]);
-    const altura = parseFloat(match[2]);
-    return (largura * altura * 3).toFixed(1);
+  const calcularPeso = (produto: any) => {
+    if (produto.largura && produto.altura) {
+      return ((produto.largura * produto.altura * 3) / 1000).toFixed(1);
+    }
+    // Fallback para medidas em string
+    if (produto.tamanho) {
+      const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+      if (match) {
+        const largura = parseFloat(match[1]);
+        const altura = parseFloat(match[2]);
+        return ((largura * altura * 3) / 1000).toFixed(1);
+      }
+    }
+    return null;
   };
 
-  const calcularMeiaCanas = (medidas: string) => {
-    const match = medidas.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
-    if (!match) return null;
-    const altura = parseFloat(match[2]);
-    return Math.ceil(altura / 0.08);
+  const calcularMeiaCanas = (produto: any) => {
+    if (produto.altura) {
+      return Math.ceil(produto.altura / 80); // altura em mm, meia cana = 80mm
+    }
+    // Fallback para medidas em string
+    if (produto.tamanho) {
+      const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+      if (match) {
+        const altura = parseFloat(match[2]);
+        return Math.ceil(altura / 80);
+      }
+    }
+    return null;
   };
 
   const isReadOnly = pedido.etapa_atual !== 'aberto';
@@ -169,10 +191,10 @@ export default function PedidoPreparacao() {
           <CardHeader className="p-3 pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
               <Hash className="h-3.5 w-3.5" />
-              Pedido
+              Pedido & Pagamento
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-3 pt-0 space-y-1.5">
+          <CardContent className="p-3 pt-0 space-y-3">
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <p className="text-muted-foreground">Número</p>
@@ -199,41 +221,128 @@ export default function PedidoPreparacao() {
                 </div>
               )}
             </div>
+
+            {/* Informações de Pagamento */}
+            {venda?.forma_pagamento && (
+              <div className="pt-2 border-t space-y-1.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-xs font-semibold text-muted-foreground">Pagamento</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-muted-foreground">Forma</p>
+                    <p className="font-medium capitalize">
+                      {venda.forma_pagamento.replace(/_/g, ' ')}
+                    </p>
+                  </div>
+                  {venda.valor_entrada !== null && venda.valor_entrada > 0 && (
+                    <div>
+                      <p className="text-muted-foreground">Entrada</p>
+                      <p className="font-medium">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor_entrada)}
+                      </p>
+                    </div>
+                  )}
+                  {venda.numero_parcelas && venda.numero_parcelas > 1 && (
+                    <div>
+                      <p className="text-muted-foreground">Parcelas</p>
+                      <p className="font-medium">{venda.numero_parcelas}x</p>
+                    </div>
+                  )}
+                  {venda.valor_a_receber !== null && venda.valor_a_receber > 0 && (
+                    <div>
+                      <p className="text-muted-foreground">A Receber</p>
+                      <p className="font-medium">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor_a_receber)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Produtos da Venda (Portas Enrolar) */}
-      {portasEnrolar.length > 0 && (
+      {/* Produtos da Venda - Tabela */}
+      {portasEnrolarEPinturas.length > 0 && (
         <Card>
           <CardHeader className="p-3 pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
               <Package className="h-3.5 w-3.5" />
-              Produtos da Venda
+              Produtos da Venda - Portas Enrolar e Pinturas
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-3 pt-0 space-y-1.5">
-            {portasEnrolar.map((produto: any, idx: number) => {
-              const peso = calcularPeso(produto.medidas);
-              const meiaCanas = calcularMeiaCanas(produto.medidas);
+          <CardContent className="p-3 pt-0">
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="h-9 text-xs">#</TableHead>
+                    <TableHead className="h-9 text-xs">Descrição</TableHead>
+                    <TableHead className="h-9 text-xs">Tamanho</TableHead>
+                    <TableHead className="h-9 text-xs">Cor</TableHead>
+                    <TableHead className="h-9 text-xs text-right">Peso (kg)</TableHead>
+                    <TableHead className="h-9 text-xs text-right">Meia Canas</TableHead>
+                    <TableHead className="h-9 text-xs text-right">Qtd</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {portasEnrolarEPinturas.map((produto: any, idx: number) => {
+                    const peso = calcularPeso(produto);
+                    const meiaCanas = calcularMeiaCanas(produto);
+                    const tamanhoDisplay = produto.tamanho || 
+                      (produto.largura && produto.altura 
+                        ? `${produto.largura} x ${produto.altura}` 
+                        : '—');
 
-              return (
-                <Card key={produto.id} className="p-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">
-                        [{idx + 1}] {produto.descricao}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>Qtd: {produto.quantidade}</span>
-                        {peso && <span>⚖️ Peso: {peso}kg</span>}
-                        {meiaCanas && <span>📏 Meia canas: {meiaCanas}un</span>}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+                    return (
+                      <TableRow key={produto.id}>
+                        <TableCell className="py-2 text-xs font-medium">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {produto.tipo_produto === 'pintura_epoxi' && (
+                            <Badge variant="outline" className="mr-1.5 text-[10px] px-1">
+                              PINTURA
+                            </Badge>
+                          )}
+                          {produto.descricao || 'Sem descrição'}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs font-mono">
+                          {tamanhoDisplay}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {produto.cor?.nome ? (
+                            <div className="flex items-center gap-1.5">
+                              {produto.cor.codigo_hex && (
+                                <div 
+                                  className="w-3 h-3 rounded-sm border border-border shrink-0"
+                                  style={{ backgroundColor: produto.cor.codigo_hex }}
+                                />
+                              )}
+                              <span className="truncate">{produto.cor.nome}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs text-right font-medium">
+                          {peso ? `${peso}` : '—'}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs text-right font-medium">
+                          {meiaCanas ? `${meiaCanas}` : '—'}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs text-right font-semibold">
+                          {produto.quantidade || 1}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}
