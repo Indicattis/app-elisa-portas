@@ -65,7 +65,6 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
       setor: setor || '',
     });
 
-    // Limpar form
     setDescricao("");
     setRecorrente(false);
     setTipoRecorrencia('todos_os_dias');

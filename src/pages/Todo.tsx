@@ -4,12 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useSetorInfo } from "@/hooks/useSetorInfo";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
+import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Calendar, Repeat, Trash2 } from "lucide-react";
+import { Plus, Calendar, Repeat, Trash2, List } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -44,9 +45,21 @@ export default function Todo() {
   const setor = searchParams.get('setor') || undefined;
   
   const { user, userRole } = useAuth();
-  const { tarefas, isLoading, criarTarefa, marcarConcluida, reabrirTarefa, deletarTarefa } = useTarefas(user?.id, setor);
+  const { 
+    tarefas, 
+    isLoading, 
+    templates,
+    criarTarefa, 
+    criarTemplate,
+    marcarConcluida, 
+    reabrirTarefa, 
+    deletarTarefa,
+    toggleTemplate,
+    deletarTemplate
+  } = useTarefas(user?.id, setor);
   const { data: responsavelSetor } = useSetorInfo(setor);
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalRecorrentes, setModalRecorrentes] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
@@ -110,10 +123,16 @@ export default function Todo() {
         )}
 
         {podeGerenciar && (
-          <Button onClick={() => setModalAberto(true)} className="shrink-0">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Tarefa
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
+              <List className="h-4 w-4 mr-2" />
+              Recorrentes ({templates.length})
+            </Button>
+            <Button onClick={() => setModalAberto(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Tarefa
+            </Button>
+          </div>
         )}
       </div>
 
@@ -153,12 +172,11 @@ export default function Todo() {
                     {tarefa.recorrente && (
                       <Badge variant="secondary" className="h-5 text-xs flex items-center gap-1 px-1.5">
                         <Repeat className="h-3 w-3" />
-                        {tarefa.dia_recorrencia === 0 && 'Diária'}
-                        {tarefa.dia_recorrencia === 1 && '1° do mês'}
-                        {tarefa.dia_recorrencia === -7 && 'Semanal'}
-                        {tarefa.dia_recorrencia === -15 && 'Quinzenal'}
-                        {tarefa.dia_recorrencia === -30 && 'Mensal'}
-                        {tarefa.dia_recorrencia && tarefa.dia_recorrencia > 1 && tarefa.dia_recorrencia <= 31 && `Dia ${tarefa.dia_recorrencia}`}
+                        {tarefa.tipo_recorrencia === 'todos_os_dias' && 'Diária'}
+                        {tarefa.tipo_recorrencia === 'primeiro_dia_mes' && '1° do mês'}
+                        {tarefa.tipo_recorrencia === 'cada_7_dias' && 'Semanal'}
+                        {tarefa.tipo_recorrencia === 'cada_15_dias' && 'Quinzenal'}
+                        {tarefa.tipo_recorrencia === 'cada_30_dias' && 'Mensal'}
                       </Badge>
                     )}
 
@@ -222,12 +240,11 @@ export default function Todo() {
                     {tarefa.recorrente && (
                       <Badge variant="outline" className="h-5 text-xs flex items-center gap-1 px-1.5">
                         <Repeat className="h-3 w-3" />
-                        {tarefa.dia_recorrencia === 0 && 'Diária'}
-                        {tarefa.dia_recorrencia === 1 && '1° do mês'}
-                        {tarefa.dia_recorrencia === -7 && 'Semanal'}
-                        {tarefa.dia_recorrencia === -15 && 'Quinzenal'}
-                        {tarefa.dia_recorrencia === -30 && 'Mensal'}
-                        {tarefa.dia_recorrencia && tarefa.dia_recorrencia > 1 && tarefa.dia_recorrencia <= 31 && `Dia ${tarefa.dia_recorrencia}`}
+                        {tarefa.tipo_recorrencia === 'todos_os_dias' && 'Diária'}
+                        {tarefa.tipo_recorrencia === 'primeiro_dia_mes' && '1° do mês'}
+                        {tarefa.tipo_recorrencia === 'cada_7_dias' && 'Semanal'}
+                        {tarefa.tipo_recorrencia === 'cada_15_dias' && 'Quinzenal'}
+                        {tarefa.tipo_recorrencia === 'cada_30_dias' && 'Mensal'}
                       </Badge>
                     )}
                   </div>
@@ -253,8 +270,24 @@ export default function Todo() {
       <NovaTarefaModal
         open={modalAberto}
         onOpenChange={setModalAberto}
-        onSubmit={(tarefa) => criarTarefa.mutate({ ...tarefa, setor: setor || '' })}
+        onSubmit={(tarefa) => {
+          if (tarefa.recorrente) {
+            criarTemplate.mutate(tarefa);
+          } else {
+            criarTarefa.mutate(tarefa);
+          }
+        }}
         setor={setor}
+      />
+
+      {/* Modal Tarefas Recorrentes */}
+      <TarefasRecorrentesModal
+        open={modalRecorrentes}
+        onOpenChange={setModalRecorrentes}
+        templates={templates}
+        onToggle={(id, ativa) => toggleTemplate.mutate({ id, ativa })}
+        onDelete={(id) => deletarTemplate.mutate(id)}
+        podeGerenciar={podeGerenciar}
       />
 
       {/* Confirmação de Deleção */}
