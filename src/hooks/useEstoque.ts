@@ -243,10 +243,7 @@ export const useEstoque = () => {
       queryFn: async () => {
         let query = supabase
           .from("estoque_movimentacoes")
-          .select(`
-            *,
-            admin_users!estoque_movimentacoes_created_by_fkey(nome, email)
-          `)
+          .select("*")
           .order("created_at", { ascending: false });
 
         if (produtoId) {
