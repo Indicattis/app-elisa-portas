@@ -225,9 +225,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       }
 
       // Validar checkboxes obrigatórios (apenas se não for avanço automático)
+      // Para etapa "em_producao", não validar checkboxes (apenas ordens concluídas)
       const etapaAtual = await getEtapaAtual(pedidoId);
       if (etapaAtual) {
-        if (!skipCheckboxValidation) {
+        if (!skipCheckboxValidation && etapaAtualNome !== 'em_producao') {
           const checkboxesObrigatorios = etapaAtual.checkboxes.filter(cb => cb.required);
           const todosChecados = checkboxesObrigatorios.every(cb => cb.checked);
 
