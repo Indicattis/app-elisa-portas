@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard, Save, FileText } from "lucide-react";
+import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard, Save, FileText, RefreshCw } from "lucide-react";
 import { usePedidoLinhas, type PedidoLinhaUpdate } from "@/hooks/usePedidoLinhas";
 import { LinhasAgrupadasPorPorta } from "@/components/pedidos/LinhasAgrupadasPorPorta";
 import { useValidacaoLinhasPorPorta } from "@/hooks/useValidacaoLinhasPorPorta";
@@ -26,8 +26,9 @@ export default function PedidoPreparacao() {
   const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
   
   const { moverParaProximaEtapa } = usePedidosEtapas();
+  const queryClient = useQueryClient();
 
-  const { data: pedido, isLoading: pedidoLoading } = useQuery({
+  const { data: pedido, isLoading: pedidoLoading, refetch: refetchPedido } = useQuery({
     queryKey: ['pedido-preparacao', id],
     queryFn: async () => {
       const { data: pedidoData, error: pedidoError } = await supabase
@@ -213,6 +214,17 @@ export default function PedidoPreparacao() {
           <Badge variant="secondary" className="text-xs">
             {pedido.etapa_atual}
           </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              refetchPedido();
+              queryClient.invalidateQueries({ queryKey: ['pedido-linhas'] });
+            }}
+            className="h-7 w-7 p-0"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
           {temAlteracoesPendentes && (
             <Badge variant="outline" className="text-xs">
               {linhasEditadas.size} alteraç{linhasEditadas.size === 1 ? 'ão' : 'ões'} pendente{linhasEditadas.size === 1 ? '' : 's'}
