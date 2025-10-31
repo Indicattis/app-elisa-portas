@@ -52,21 +52,21 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       if (tipoOrdem === 'soldagem') {
         const { data, error } = await supabase
           .from('ordens_soldagem')
-          .select('*, pedidos_producao!pedido_id(cliente_nome)')
+          .select('*, pedidos_producao(cliente_nome)')
           .order('created_at', { ascending: true });
         if (error) throw error;
         ordensData = data || [];
       } else if (tipoOrdem === 'perfiladeira') {
         const { data, error } = await supabase
           .from('ordens_perfiladeira')
-          .select('*, pedidos_producao!pedido_id(cliente_nome)')
+          .select('*, pedidos_producao(cliente_nome)')
           .order('created_at', { ascending: true });
         if (error) throw error;
         ordensData = data || [];
       } else if (tipoOrdem === 'separacao') {
         const { data, error } = await supabase
           .from('ordens_separacao')
-          .select('*, pedidos_producao!pedido_id(cliente_nome)')
+          .select('*, pedidos_producao(cliente_nome)')
           .order('created_at', { ascending: true });
         if (error) throw error;
         ordensData = data || [];
