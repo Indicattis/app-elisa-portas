@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePedidosEtapas } from "./usePedidosEtapas";
+import { useEffect } from "react";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao';
 
@@ -86,10 +87,31 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
 
       return ordensComLinhas;
     },
-    refetchInterval: 5000,
-    refetchOnMount: 'always',
-    staleTime: 0,
   });
+
+  // Subscribe to realtime updates for linhas_ordens
+  useEffect(() => {
+    const channel = supabase
+      .channel('linhas-ordens-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'linhas_ordens',
+          filter: `tipo_ordem=eq.${tipoOrdem}`
+        },
+        () => {
+          // Invalidate queries on any update to refresh data
+          queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tipoOrdem, queryClient]);
 
   // Marcar linha como concluída
   const marcarLinhaConcluida = useMutation({
@@ -106,6 +128,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         .eq('id', linhaId);
 
       if (error) throw error;
+      return { linhaId, concluida };
     },
     onMutate: async ({ linhaId, concluida }) => {
       // Cancel outgoing refetches
@@ -114,17 +137,33 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       // Snapshot previous value
       const previousOrdens = queryClient.getQueryData<Ordem[]>(['ordens-producao', tipoOrdem]);
 
-      // Optimistically update
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Optimistically update to cache
       queryClient.setQueryData<Ordem[]>(['ordens-producao', tipoOrdem], (old) => {
         if (!old) return old;
-        return old.map(ordem => ({
-          ...ordem,
-          linhas: ordem.linhas?.map(linha => 
-            linha.id === linhaId 
-              ? { ...linha, concluida, concluida_em: concluida ? new Date().toISOString() : undefined }
-              : linha
-          )
-        }));
+        
+        return old.map(ordem => {
+          if (!ordem.linhas) return ordem;
+          
+          const hasLinha = ordem.linhas.some(l => l.id === linhaId);
+          if (!hasLinha) return ordem;
+          
+          return {
+            ...ordem,
+            linhas: ordem.linhas.map(linha => 
+              linha.id === linhaId 
+                ? { 
+                    ...linha, 
+                    concluida, 
+                    concluida_em: concluida ? new Date().toISOString() : undefined,
+                    concluida_por: concluida ? user?.id : undefined
+                  }
+                : linha
+            )
+          };
+        });
       });
 
       return { previousOrdens };
@@ -141,8 +180,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         variant: "destructive",
       });
     },
+    onSuccess: () => {
+      toast({
+        title: "Atualizado",
+        description: "Status da linha atualizado com sucesso.",
+      });
+    },
     onSettled: () => {
-      // Refetch after mutation
+      // Refetch after mutation to ensure data consistency
       queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
     },
   });
