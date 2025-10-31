@@ -4,6 +4,84 @@ import { useToast } from "@/hooks/use-toast";
 import type { EtapaPedido, PedidoEtapa, PedidoCheckbox } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
 
+// Função auxiliar para criar ordens de produção
+async function criarOrdensProducao(pedidoId: string) {
+  // Buscar linhas do pedido
+  const { data: linhas, error: linhasError } = await supabase
+    .from('pedido_linhas')
+    .select('*')
+    .eq('pedido_id', pedidoId);
+
+  if (linhasError) throw linhasError;
+  if (!linhas || linhas.length === 0) return;
+
+  // Criar ordem de soldagem
+  const { data: numeroOrdemSolda } = await supabase.rpc('gerar_numero_ordem', { tipo_ordem: 'soldagem' });
+  
+  await supabase
+    .from('ordens_soldagem')
+    .insert({
+      pedido_id: pedidoId,
+      numero_ordem: numeroOrdemSolda || `OS-${Date.now()}`,
+      status: 'pendente',
+    });
+
+  // Criar linhas de soldagem
+  const linhasSolda = linhas.map((linha, index) => ({
+    pedido_id: pedidoId,
+    tipo_ordem: 'soldagem',
+    item: linha.descricao_produto || `Item ${index + 1}`,
+    quantidade: linha.quantidade || 1,
+    tamanho: `${linha.largura || 0} x ${linha.altura || 0}`,
+  }));
+
+  await supabase.from('linhas_ordens').insert(linhasSolda);
+
+  // Criar ordem de perfiladeira
+  const { data: numeroOrdemPerfil } = await supabase.rpc('gerar_numero_ordem', { tipo_ordem: 'perfiladeira' });
+  
+  await supabase
+    .from('ordens_perfiladeira')
+    .insert({
+      pedido_id: pedidoId,
+      numero_ordem: numeroOrdemPerfil || `OP-${Date.now()}`,
+      status: 'pendente',
+    });
+
+  // Criar linhas de perfiladeira
+  const linhasPerfil = linhas.map((linha, index) => ({
+    pedido_id: pedidoId,
+    tipo_ordem: 'perfiladeira',
+    item: linha.descricao_produto || `Item ${index + 1}`,
+    quantidade: linha.quantidade || 1,
+    tamanho: `${linha.largura || 0} x ${linha.altura || 0}`,
+  }));
+
+  await supabase.from('linhas_ordens').insert(linhasPerfil);
+
+  // Criar ordem de separação
+  const { data: numeroOrdemSep } = await supabase.rpc('gerar_numero_ordem', { tipo_ordem: 'separacao' });
+  
+  await supabase
+    .from('ordens_separacao')
+    .insert({
+      pedido_id: pedidoId,
+      numero_ordem: numeroOrdemSep || `OE-${Date.now()}`,
+      status: 'pendente',
+    });
+
+  // Criar linhas de separação
+  const linhasSep = linhas.map((linha, index) => ({
+    pedido_id: pedidoId,
+    tipo_ordem: 'separacao',
+    item: linha.descricao_produto || `Item ${index + 1}`,
+    quantidade: linha.quantidade || 1,
+    tamanho: `${linha.largura || 0} x ${linha.altura || 0}`,
+  }));
+
+  await supabase.from('linhas_ordens').insert(linhasSep);
+}
+
 // Hook para buscar contadores de todas as etapas
 export function usePedidosContadores() {
   const { data: contadores = {} } = useQuery({
@@ -246,6 +324,11 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         .eq('id', pedidoId);
 
       if (updateError) throw updateError;
+
+      // Se avançou para produção, criar ordens automaticamente
+      if (proximaEtapa === 'em_producao') {
+        await criarOrdensProducao(pedidoId);
+      }
 
       return { etapaAtualNome, proximaEtapa };
     },

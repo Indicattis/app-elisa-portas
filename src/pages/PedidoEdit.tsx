@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Package, Wrench, Flame, Scissors } from "lucide-react";
-import ProductionOrdersListNew from "@/components/production/ProductionOrdersListNew";
+// Production orders component removed - now using separate production pages
 import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 
 interface PedidoCompleto {
@@ -240,12 +240,6 @@ export default function PedidoEdit() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Ordens de Produção - Primeira seção */}
-        <ProductionOrdersListNew 
-          pedido={pedido} 
-          onUpdate={handleOrderUpdate}
-        />
-
         {/* Dados do Cliente */}
         <Card>
           <CardHeader>

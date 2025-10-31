@@ -1,0 +1,79 @@
+import { useState } from "react";
+import { useOrdemProducao } from "@/hooks/useOrdemProducao";
+import { ProducaoKanban } from "@/components/production/ProducaoKanban";
+import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
+import { Flame } from "lucide-react";
+
+interface Ordem {
+  id: string;
+  numero_ordem: string;
+  pedido_id: string;
+  status: string;
+  created_at: string;
+  observacoes?: string;
+  linhas?: any[];
+  pedido?: {
+    cliente_nome: string;
+  };
+}
+
+export default function ProducaoSolda() {
+  const [ordemSelecionada, setOrdemSelecionada] = useState<Ordem | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const {
+    ordensAFazer,
+    ordensConcluidas,
+    isLoading,
+    marcarLinhaConcluida,
+    concluirOrdem,
+  } = useOrdemProducao('soldagem');
+
+  const handleOrdemClick = (ordem: Ordem) => {
+    setOrdemSelecionada(ordem);
+    setSheetOpen(true);
+  };
+
+  const handleMarcarLinha = (linhaId: string, concluida: boolean) => {
+    marcarLinhaConcluida.mutate({ linhaId, concluida });
+  };
+
+  const handleConcluirOrdem = (ordemId: string) => {
+    concluirOrdem.mutate(ordemId);
+    setSheetOpen(false);
+  };
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-orange-500/10 rounded-lg">
+          <Flame className="h-6 w-6 text-orange-500" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold">Solda</h1>
+          <p className="text-muted-foreground">
+            Gerencie as ordens de soldagem em produção
+          </p>
+        </div>
+      </div>
+
+      <ProducaoKanban
+        ordensAFazer={ordensAFazer}
+        ordensConcluidas={ordensConcluidas}
+        isLoading={isLoading}
+        onOrdemClick={handleOrdemClick}
+        tipoOrdem="soldagem"
+      />
+
+      <OrdemDetalhesSheet
+        ordem={ordemSelecionada}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        tipoOrdem="soldagem"
+        onMarcarLinha={handleMarcarLinha}
+        onConcluirOrdem={handleConcluirOrdem}
+        isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
+      />
+    </div>
+  );
+}

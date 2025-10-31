@@ -31,31 +31,12 @@ import NotFound from "./pages/NotFound";
 import VendaDetails from "./pages/VendaDetails";
 import Visitas from "./pages/Visitas";
 import VisitaNova from "./pages/VisitaNova";
-import Producao from "./pages/Producao";
+import ProducaoSolda from "./pages/ProducaoSolda";
+import ProducaoPerfiladeira from "./pages/ProducaoPerfiladeira";
+import ProducaoSeparacao from "./pages/ProducaoSeparacao";
 import Instalacoes from "./pages/Instalacoes";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
-import Marketing from "./pages/Marketing";
-import CanaisAquisicao from "./pages/CanaisAquisicao";
-import VendasHome from "./pages/VendasHome";
-import FabricaHome from "./pages/FabricaHome";
-import InstalacoesHome from "./pages/InstalacoesHome";
-import AdministrativoHome from "./pages/AdministrativoHome";
-import ParceirosHome from "./pages/ParceirosHome";
-import Investimentos from "./pages/Investimentos";
-import Organograma from "./pages/Organograma";
-import Calendario from "./pages/Calendario";
-import Autorizados from "./pages/Autorizados";
-import ParceiroNovo from "./pages/ParceiroNovo";
-import ParceiroEdit from "./pages/ParceiroEdit";
-import AutorizadoHistorico from "./pages/AutorizadoHistorico";
-import MapaAutorizados from "./pages/MapaAutorizados";
-import Configuracoes from "./pages/Configuracoes";
-import ContadorVendas from "./pages/ContadorVendas";
-import Forbidden from "./pages/Forbidden";
-import Pedidos from "./pages/Pedidos";
-import PedidoPreparacao from "./pages/PedidoPreparacao";
-import ProducaoOrdens from "./pages/ProducaoOrdens";
 import TvDashboard from "./pages/TvDashboard";
 import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
 import OrdemPinturaEdit from "./pages/OrdemPinturaEdit";
@@ -664,11 +645,31 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/pedidos/ordens-producao"
+                  path="/dashboard/producao/solda"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requirePermission="producao">
                       <DashboardLayout>
-                        <ProducaoOrdens />
+                        <ProducaoSolda />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/producao/perfiladeira"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <ProducaoPerfiladeira />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/producao/separacao"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <ProducaoSeparacao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

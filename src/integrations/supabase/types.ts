@@ -1329,6 +1329,9 @@ export type Database = {
       }
       linhas_ordens: {
         Row: {
+          concluida: boolean | null
+          concluida_em: string | null
+          concluida_por: string | null
           created_at: string
           id: string
           item: string
@@ -1339,6 +1342,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          concluida?: boolean | null
+          concluida_em?: string | null
+          concluida_por?: string | null
           created_at?: string
           id?: string
           item: string
@@ -1349,6 +1355,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          concluida?: boolean | null
+          concluida_em?: string | null
+          concluida_por?: string | null
           created_at?: string
           id?: string
           item?: string
@@ -1358,7 +1367,22 @@ export type Database = {
           tipo_ordem?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "linhas_ordens_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "linhas_ordens_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       marketing_investimentos: {
         Row: {
@@ -3307,10 +3331,12 @@ export type Database = {
         Args: { orcamento_uuid: string }
         Returns: string
       }
-      gerar_numero_ordem: {
-        Args: { pedido_numero: string; tipo_ordem: string }
-        Returns: string
-      }
+      gerar_numero_ordem:
+        | { Args: { tipo_ordem: string }; Returns: string }
+        | {
+            Args: { pedido_numero: string; tipo_ordem: string }
+            Returns: string
+          }
       gerar_proximo_numero: {
         Args: { tipo_documento: string }
         Returns: number
@@ -3340,6 +3366,10 @@ export type Database = {
         }[]
       }
       perform_database_vacuum: { Args: never; Returns: string }
+      verificar_ordens_pedido_concluidas: {
+        Args: { p_pedido_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_permission:
