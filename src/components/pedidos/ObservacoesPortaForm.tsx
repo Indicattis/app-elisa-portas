@@ -66,7 +66,7 @@ export function ObservacoesPortaForm({
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border-l-4 border-amber-500 pl-3">
       <CollapsibleTrigger className="w-full">
         <div className="flex items-center gap-2 mb-3 flex-wrap hover:opacity-70 transition-opacity">
-          <Badge variant="outline" className="bg-amber-50">
+          <Badge variant="outline">
             <FileText className="h-3 w-3 mr-1" />
             Porta #{portaIndex + 1}
           </Badge>
