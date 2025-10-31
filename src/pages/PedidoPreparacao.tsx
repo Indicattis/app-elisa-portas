@@ -186,7 +186,13 @@ export default function PedidoPreparacao() {
     if (!id) return;
     
     try {
-      await moverParaProximaEtapa.mutateAsync({ pedidoId: id });
+      // Pular validação de checkboxes quando está na etapa 'aberto'
+      // pois o usuário está apenas preparando o pedido
+      const skipValidation = pedido?.etapa_atual === 'aberto';
+      await moverParaProximaEtapa.mutateAsync({ 
+        pedidoId: id, 
+        skipCheckboxValidation: skipValidation 
+      });
       setMostrarModalAvancar(false);
       navigate('/dashboard/pedidos');
     } catch (error) {
