@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, CheckCircle2, Clock } from "lucide-react";
+import { Package, CheckCircle2, Clock, UserCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
@@ -20,9 +20,13 @@ interface Ordem {
   status: string;
   created_at: string;
   observacoes?: string;
+  responsavel_id?: string;
   linhas?: LinhaOrdem[];
   pedido?: {
     cliente_nome: string;
+  };
+  admin_users?: {
+    nome: string;
   };
 }
 
@@ -89,6 +93,15 @@ export function ProducaoKanban({
                   style={{ width: `${progresso}%` }}
                 />
               </div>
+            </div>
+          )}
+
+          {ordem.responsavel_id && (
+            <div className="flex items-center gap-2 text-xs">
+              <UserCheck className="h-3 w-3 text-primary" />
+              <span className="text-muted-foreground">
+                {ordem.admin_users?.nome || 'Responsável atribuído'}
+              </span>
             </div>
           )}
 

@@ -25,6 +25,7 @@ export default function ProducaoQualidade() {
     ordensAFazer,
     ordensConcluidas,
     isLoading,
+    capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
   } = useOrdemProducao('qualidade');
@@ -39,6 +40,10 @@ export default function ProducaoQualidade() {
 
   const handleMarcarLinha = async (linhaId: string, concluida: boolean) => {
     await marcarLinhaConcluida.mutateAsync({ linhaId, concluida });
+  };
+
+  const handleCapturarOrdem = async (ordemId: string) => {
+    await capturarOrdem.mutateAsync(ordemId);
   };
 
   const handleConcluirOrdem = async (ordemId: string) => {
@@ -68,6 +73,9 @@ export default function ProducaoQualidade() {
         tipoOrdem="qualidade"
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
+        onCapturarOrdem={handleCapturarOrdem}
+        isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
+        isCapturing={capturarOrdem.isPending}
       />
     </div>
   );

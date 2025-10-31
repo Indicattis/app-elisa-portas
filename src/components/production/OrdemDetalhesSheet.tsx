@@ -5,7 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, Package } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
@@ -23,9 +24,13 @@ interface Ordem {
   pedido_id: string;
   status: string;
   observacoes?: string;
+  responsavel_id?: string;
   linhas?: LinhaOrdem[];
   pedido?: {
     cliente_nome: string;
+  };
+  admin_users?: {
+    nome: string;
   };
 }
 
@@ -36,7 +41,9 @@ interface OrdemDetalhesSheetProps {
   tipoOrdem: TipoOrdem;
   onMarcarLinha: (linhaId: string, concluida: boolean) => void;
   onConcluirOrdem: (ordemId: string) => void;
+  onCapturarOrdem: (ordemId: string) => void;
   isUpdating?: boolean;
+  isCapturing?: boolean;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -53,14 +60,22 @@ export function OrdemDetalhesSheet({
   tipoOrdem,
   onMarcarLinha,
   onConcluirOrdem,
+  onCapturarOrdem,
   isUpdating = false,
+  isCapturing = false,
 }: OrdemDetalhesSheetProps) {
+  const { user } = useAuth();
+  
   if (!ordem) return null;
 
   const linhas = ordem.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
+  
+  const isResponsavel = ordem.responsavel_id === user?.id;
+  const temResponsavel = !!ordem.responsavel_id;
+  const podeMarcarLinhas = !temResponsavel || isResponsavel;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -99,7 +114,44 @@ export function OrdemDetalhesSheet({
                 <Badge variant="outline">{progresso}%</Badge>
               </div>
             </div>
+
+            {/* Responsável */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Responsável</span>
+              {temResponsavel ? (
+                <div className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">
+                    {ordem.admin_users?.nome || 'Atribuído'}
+                  </span>
+                  {isResponsavel && (
+                    <Badge variant="default" className="text-xs">Você</Badge>
+                  )}
+                </div>
+              ) : (
+                <Badge variant="secondary">Não atribuído</Badge>
+              )}
+            </div>
           </div>
+
+          {/* Botão de capturar ordem */}
+          {!temResponsavel && ordem.status !== 'concluido' && (
+            <>
+              <Separator />
+              <Button
+                className="w-full"
+                variant="outline"
+                disabled={isCapturing}
+                onClick={() => onCapturarOrdem(ordem.id)}
+              >
+                <UserCheck className="h-4 w-4 mr-2" />
+                {isCapturing ? "Capturando..." : "Capturar Ordem"}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Capture esta ordem para começar a trabalhar nela
+              </p>
+            </>
+          )}
 
           {ordem.observacoes && (
             <>
@@ -136,7 +188,7 @@ export function OrdemDetalhesSheet({
                     id={`checkbox-${linha.id}`}
                     checked={linha.concluida}
                     onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
-                    disabled={ordem.status === 'concluido' || isUpdating}
+                    disabled={ordem.status === 'concluido' || isUpdating || !podeMarcarLinhas}
                     className="mt-1"
                   />
                   
@@ -174,12 +226,17 @@ export function OrdemDetalhesSheet({
               <Separator />
               <Button
                 className="w-full"
-                disabled={!todasConcluidas || isUpdating}
+                disabled={!todasConcluidas || isUpdating || !podeMarcarLinhas}
                 onClick={() => onConcluirOrdem(ordem.id)}
               >
                 {isUpdating ? "Concluindo..." : "Concluir Ordem"}
               </Button>
-              {!todasConcluidas && linhas.length > 0 && (
+              {!podeMarcarLinhas && (
+                <p className="text-xs text-center text-muted-foreground text-orange-600">
+                  Apenas o responsável pode concluir esta ordem
+                </p>
+              )}
+              {!todasConcluidas && linhas.length > 0 && podeMarcarLinhas && (
                 <p className="text-xs text-center text-muted-foreground">
                   Marque todos os itens como concluídos para finalizar a ordem
                 </p>

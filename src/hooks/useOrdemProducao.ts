@@ -30,6 +30,9 @@ interface Ordem {
   pedido?: {
     cliente_nome: string;
   };
+  admin_users?: {
+    nome: string;
+  };
 }
 
 const TABELA_MAP: Record<TipoOrdem, string> = {
@@ -51,10 +54,15 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       let ordensData: any[] = [];
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
-      // Buscar ordens baseado no tipo
+      // Buscar ordens baseado no tipo com informação do responsável
       const { data, error } = await supabase
         .from(tabelaOrdem)
-        .select('*')
+        .select(`
+          *,
+          admin_users!responsavel_id (
+            nome
+          )
+        `)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -113,6 +121,41 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       supabase.removeChannel(channel);
     };
   }, [tipoOrdem, queryClient]);
+
+  // Capturar ordem (atribuir responsável)
+  const capturarOrdem = useMutation({
+    mutationFn: async (ordemId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
+      
+      const { error } = await supabase
+        .from(tabelaOrdem)
+        .update({
+          responsavel_id: user.id,
+        })
+        .eq('id', ordemId);
+
+      if (error) throw error;
+      return ordemId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+      toast({
+        title: "Ordem capturada",
+        description: "Você agora é o responsável por esta ordem.",
+      });
+    },
+    onError: (error) => {
+      console.error('Erro ao capturar ordem:', error);
+      toast({
+        title: "Erro ao capturar",
+        description: "Não foi possível capturar a ordem.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Marcar linha como concluída com atualização otimista
   const marcarLinhaConcluida = useMutation({
@@ -307,6 +350,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
     ordensAFazer,
     ordensConcluidas,
     isLoading,
+    capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
   };

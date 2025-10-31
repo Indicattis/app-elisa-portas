@@ -3458,6 +3458,10 @@ export type Database = {
         }[]
       }
       perform_database_vacuum: { Args: never; Returns: string }
+      pode_marcar_linhas_ordem: {
+        Args: { p_ordem_id: string; p_tipo_ordem: string }
+        Returns: boolean
+      }
       resetar_pedido_para_aberto: {
         Args: { p_pedido_id: string }
         Returns: undefined

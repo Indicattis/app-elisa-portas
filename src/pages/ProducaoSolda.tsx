@@ -26,6 +26,7 @@ export default function ProducaoSolda() {
     ordensAFazer,
     ordensConcluidas,
     isLoading,
+    capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
   } = useOrdemProducao('soldagem');
@@ -40,6 +41,10 @@ export default function ProducaoSolda() {
 
   const handleMarcarLinha = (linhaId: string, concluida: boolean) => {
     marcarLinhaConcluida.mutate({ linhaId, concluida });
+  };
+
+  const handleCapturarOrdem = async (ordemId: string) => {
+    await capturarOrdem.mutateAsync(ordemId);
   };
 
   const handleConcluirOrdem = (ordemId: string) => {
@@ -76,7 +81,9 @@ export default function ProducaoSolda() {
         tipoOrdem="soldagem"
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
+        onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
+        isCapturing={capturarOrdem.isPending}
       />
     </div>
   );
