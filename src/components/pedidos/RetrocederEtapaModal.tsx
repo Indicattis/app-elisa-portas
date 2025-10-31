@@ -45,8 +45,8 @@ export function RetrocederEtapaModal({
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
-            Retroceder Pedido
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            Resetar Pedido
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3 pt-2">
@@ -63,29 +63,34 @@ export function RetrocederEtapaModal({
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Retroceder para:</span>
-                  <Badge className={`${configAnterior.color} text-white text-xs`}>
-                    {configAnterior.label}
+                  <span className="text-sm text-muted-foreground">Será resetado para:</span>
+                  <Badge className="bg-gray-500 text-white text-xs">
+                    Aberto
                   </Badge>
                 </div>
               </div>
 
               {/* Aviso */}
-              <div className="rounded-md bg-orange-500/10 border border-orange-500/20 p-3">
-                <p className="text-xs text-orange-700 dark:text-orange-300">
-                  ⚠️ Esta ação irá retroceder o pedido para a etapa anterior. 
-                  Os checkboxes da etapa atual serão desmarcados e o pedido voltará 
-                  para a etapa anterior.
+              <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3">
+                <p className="text-xs text-red-700 dark:text-red-300 font-semibold mb-2">
+                  ⚠️ ATENÇÃO: Esta ação irá RESETAR COMPLETAMENTE o pedido!
                 </p>
+                <ul className="text-xs text-red-600 dark:text-red-400 space-y-1 list-disc list-inside">
+                  <li>O pedido voltará para a etapa "Aberto"</li>
+                  <li>Todas as linhas de produção serão desmarcadas</li>
+                  <li>Todos os checkboxes de qualidade serão desmarcados</li>
+                  <li>Todas as ordens de produção serão resetadas</li>
+                  <li>As linhas cadastradas no pedido serão mantidas</li>
+                </ul>
               </div>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirmar}>
+          <AlertDialogAction onClick={handleConfirmar} className="bg-red-600 hover:bg-red-700">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Retroceder Etapa
+            Resetar para Início
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

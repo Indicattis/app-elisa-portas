@@ -408,7 +408,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     },
   });
 
-  // Retroceder para etapa anterior (apenas admins)
+  // Resetar pedido para etapa inicial (apenas admins)
   const retrocederEtapa = useMutation({
     mutationFn: async (pedidoId: string) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -422,95 +422,37 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         .single();
 
       if (adminError || adminData?.role !== 'administrador') {
-        throw new Error('Apenas administradores podem retroceder pedidos de etapa');
+        throw new Error('Apenas administradores podem resetar pedidos');
       }
 
-      // Buscar pedido atual
-      const { data: pedido, error: pedidoError } = await supabase
-        .from('pedidos_producao')
-        .select('etapa_atual')
-        .eq('id', pedidoId)
-        .single();
+      // Chamar função RPC que faz todo o reset
+      const { error } = await supabase.rpc('resetar_pedido_para_aberto', {
+        p_pedido_id: pedidoId
+      });
 
-      if (pedidoError) throw pedidoError;
+      if (error) throw error;
 
-      const etapaAtualNome = pedido.etapa_atual as EtapaPedido;
-      const { getEtapaAnterior } = await import('@/types/pedidoEtapa');
-      const etapaAnterior = getEtapaAnterior(etapaAtualNome);
-
-      if (!etapaAnterior) {
-        throw new Error('Pedido já está na primeira etapa');
-      }
-
-      // Fechar etapa atual
-      const etapaAtual = await getEtapaAtual(pedidoId);
-      if (etapaAtual) {
-        await supabase
-          .from('pedidos_etapas')
-          .delete()
-          .eq('id', etapaAtual.id);
-      }
-
-      // Reabrir etapa anterior (buscar a última etapa anterior e remover data_saida)
-      const { data: etapasAnteriores, error: etapasError } = await supabase
-        .from('pedidos_etapas')
-        .select('*')
-        .eq('pedido_id', pedidoId)
-        .eq('etapa', etapaAnterior)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (etapasError) throw etapasError;
-
-      if (etapasAnteriores && etapasAnteriores.length > 0) {
-        // Reabrir etapa anterior existente
-        await supabase
-          .from('pedidos_etapas')
-          .update({ data_saida: null })
-          .eq('id', etapasAnteriores[0].id);
-      } else {
-        // Criar nova etapa anterior se não existir
-        const checkboxesNovos = ETAPAS_CONFIG[etapaAnterior].checkboxes.map(cb => ({
-          ...cb,
-          checked: false
-        }));
-
-        await supabase
-          .from('pedidos_etapas')
-          .insert({
-            pedido_id: pedidoId,
-            etapa: etapaAnterior,
-            checkboxes: checkboxesNovos as any
-          });
-      }
-
-      // Atualizar pedido
-      const { error: updateError } = await supabase
-        .from('pedidos_producao')
-        .update({ 
-          etapa_atual: etapaAnterior,
-          status: 'em_andamento',
-          prioridade_etapa: 0
-        })
-        .eq('id', pedidoId);
-
-      if (updateError) throw updateError;
-
-      return { etapaAtualNome, etapaAnterior };
+      return { etapaAtualNome: 'resetado', etapaAnterior: 'aberto' };
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-soldagem'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-perfiladeira'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-separacao'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-qualidade'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
       toast({
-        title: "Etapa retrocedida",
-        description: `Pedido retrocedido para ${ETAPAS_CONFIG[data.etapaAnterior].label}`
+        title: "Pedido Resetado",
+        description: "O pedido foi completamente resetado para a etapa Aberto"
       });
     },
     onError: (error: any) => {
-      console.error('Erro ao retroceder etapa:', error);
+      console.error('Erro ao resetar pedido:', error);
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível retroceder a etapa",
+        description: error.message || "Não foi possível resetar o pedido",
         variant: "destructive"
       });
     }
