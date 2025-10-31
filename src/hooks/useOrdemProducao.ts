@@ -47,34 +47,28 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
     queryKey: ['ordens-producao', tipoOrdem],
     queryFn: async () => {
       let ordensData: any[] = [];
+      const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
       // Buscar ordens baseado no tipo
-      if (tipoOrdem === 'soldagem') {
-        const { data, error } = await supabase
-          .from('ordens_soldagem')
-          .select('*, pedidos_producao(cliente_nome)')
-          .order('created_at', { ascending: true });
-        if (error) throw error;
-        ordensData = data || [];
-      } else if (tipoOrdem === 'perfiladeira') {
-        const { data, error } = await supabase
-          .from('ordens_perfiladeira')
-          .select('*, pedidos_producao(cliente_nome)')
-          .order('created_at', { ascending: true });
-        if (error) throw error;
-        ordensData = data || [];
-      } else if (tipoOrdem === 'separacao') {
-        const { data, error } = await supabase
-          .from('ordens_separacao')
-          .select('*, pedidos_producao(cliente_nome)')
-          .order('created_at', { ascending: true });
-        if (error) throw error;
-        ordensData = data || [];
-      }
+      const { data, error } = await supabase
+        .from(tabelaOrdem)
+        .select('*')
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      ordensData = data || [];
 
-      // Buscar linhas de cada ordem
+      // Buscar dados do pedido e linhas de cada ordem
       const ordensComLinhas = await Promise.all(
         ordensData.map(async (ordem: any) => {
+          // Buscar dados do pedido
+          const { data: pedido } = await supabase
+            .from('pedidos_producao')
+            .select('cliente_nome')
+            .eq('id', ordem.pedido_id)
+            .single();
+
+          // Buscar linhas da ordem
           const { data: linhas } = await supabase
             .from('linhas_ordens')
             .select('*')
@@ -85,9 +79,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
           return {
             ...ordem,
             linhas: linhas || [],
-            pedido: Array.isArray(ordem.pedidos_producao) 
-              ? ordem.pedidos_producao[0] 
-              : ordem.pedidos_producao,
+            pedido: pedido || null,
           } as Ordem;
         })
       );
