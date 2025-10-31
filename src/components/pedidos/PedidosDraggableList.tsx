@@ -22,6 +22,7 @@ interface PedidosDraggableListProps {
   pedidos: any[];
   etapa: EtapaPedido;
   isAberto: boolean;
+  viewMode?: 'grid' | 'list';
   onMoverEtapa: (pedidoId: string) => void;
   onRetrocederEtapa?: (pedidoId: string) => void;
   onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
@@ -34,6 +35,7 @@ interface SortableItemProps {
   posicao: number;
   total: number;
   isAberto: boolean;
+  viewMode?: 'grid' | 'list';
   onMoverEtapa: (pedidoId: string) => void;
   onRetrocederEtapa?: (pedidoId: string) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
@@ -45,6 +47,7 @@ function SortableItem({
   posicao,
   total,
   isAberto,
+  viewMode = 'grid',
   onMoverEtapa,
   onRetrocederEtapa,
   onMoverPrioridade,
@@ -69,6 +72,7 @@ function SortableItem({
       <PedidoCard
         pedido={pedido}
         isAberto={isAberto}
+        viewMode={viewMode}
         onMoverEtapa={onMoverEtapa}
         onRetrocederEtapa={onRetrocederEtapa}
         onMoverPrioridade={onMoverPrioridade}
@@ -85,6 +89,7 @@ export function PedidosDraggableList({
   pedidos,
   etapa,
   isAberto,
+  viewMode = 'grid',
   onMoverEtapa,
   onRetrocederEtapa,
   onReorganizar,
@@ -148,7 +153,11 @@ export function PedidosDraggableList({
         items={pedidos.map((p) => p.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className={
+          viewMode === 'list' 
+            ? "space-y-2" 
+            : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+        }>
           {pedidos.map((pedido, index) => (
             <SortableItem
               key={pedido.id}
@@ -157,6 +166,7 @@ export function PedidosDraggableList({
               posicao={index + 1}
               total={pedidos.length}
               isAberto={isAberto}
+              viewMode={viewMode}
               onMoverEtapa={onMoverEtapa}
               onRetrocederEtapa={onRetrocederEtapa}
               onMoverPrioridade={onMoverPrioridade}

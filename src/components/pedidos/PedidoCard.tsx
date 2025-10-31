@@ -25,6 +25,7 @@ interface PedidoCardProps {
   dragHandleProps?: any;
   posicao?: number;
   total?: number;
+  viewMode?: 'grid' | 'list';
 }
 
 export function PedidoCard({ 
@@ -36,7 +37,8 @@ export function PedidoCard({
   isDragging = false,
   dragHandleProps,
   posicao,
-  total
+  total,
+  viewMode = 'grid'
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -77,6 +79,166 @@ export function PedidoCard({
     return "bg-muted text-muted-foreground";
   };
 
+  // Layout compacto para visualização em lista
+  if (viewMode === 'list') {
+    return (
+      <>
+        <Card className={cn(
+          "hover:shadow-md transition-all",
+          isDragging && "opacity-50 cursor-grabbing"
+        )}>
+          <CardContent className="py-3">
+            <div className="flex items-center gap-3">
+              {dragHandleProps && (
+                <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              
+              {posicao && (
+                <Badge variant="outline" className={cn("text-xs px-2 py-0.5 font-semibold flex-shrink-0", getBadgeColor())}>
+                  #{posicao}
+                </Badge>
+              )}
+
+              {config && (
+                <Badge className={`${config.color} text-white text-xs px-2 py-0.5 flex-shrink-0`}>
+                  {config.label}
+                </Badge>
+              )}
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
+                  {!isAberto && pedido.numero_pedido && (
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      {pedido.numero_pedido}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{venda?.cliente_telefone}</span>
+                  <span>•</span>
+                  <span className="font-semibold text-primary">
+                    {formatCurrency(venda?.valor_venda || 0)}
+                  </span>
+                  <span>•</span>
+                  <span>{format(new Date(venda?.created_at || Date.now()), "dd/MM/yyyy")}</span>
+                </div>
+              </div>
+
+              {isAberto && (
+                <div className="flex-shrink-0">
+                  {temLinhas ? (
+                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {linhasCount}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Sem linhas
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setShowDetalhes(true)}
+                  title="Ver detalhes"
+                  className="h-7 w-7"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                
+                {onMoverPrioridade && posicao && total && (
+                  <>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      disabled={posicao === 1}
+                      onClick={() => onMoverPrioridade(pedido.id, 'frente')}
+                      title="Aumentar prioridade"
+                      className="h-7 w-7"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      disabled={posicao === total}
+                      onClick={() => onMoverPrioridade(pedido.id, 'tras')}
+                      title="Diminuir prioridade"
+                      className="h-7 w-7"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
+                )}
+                
+                {isAdmin && etapaAnterior && onRetrocederEtapa && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => setShowRetrocederEtapa(true)}
+                    title="Retroceder para etapa anterior"
+                    className="h-7 w-7"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+
+                {isAberto ? (
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
+                    className="ml-2"
+                  >
+                    <FileText className="h-3.5 w-3.5 mr-2" />
+                    Preparar
+                  </Button>
+                ) : proximaEtapa && etapaAtual !== 'finalizado' && (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAcaoEtapa(true)}
+                    className="ml-2"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                    Avançar
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <PedidoDetalhesSheet
+          pedido={pedido}
+          open={showDetalhes}
+          onOpenChange={setShowDetalhes}
+        />
+
+        <AcaoEtapaModal
+          pedido={pedido}
+          open={showAcaoEtapa}
+          onOpenChange={setShowAcaoEtapa}
+          onAvancar={onMoverEtapa || (() => {})}
+        />
+
+        <RetrocederEtapaModal
+          pedido={pedido}
+          open={showRetrocederEtapa}
+          onOpenChange={setShowRetrocederEtapa}
+          onConfirmar={onRetrocederEtapa || (() => {})}
+        />
+      </>
+    );
+  }
+
+  // Layout em grid (padrão)
   return (
     <>
       <Card className={cn(
