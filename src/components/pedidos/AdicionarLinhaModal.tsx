@@ -13,6 +13,7 @@ interface AdicionarLinhaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categoria: CategoriaLinha;
+  portaId: string;
   onAdicionar: (linha: PedidoLinhaNova) => Promise<any>;
 }
 
@@ -22,10 +23,11 @@ const CATEGORIA_LABELS = {
   perfiladeira: "Perfiladeira",
 };
 
-export function AdicionarLinhaModal({ open, onOpenChange, categoria, onAdicionar }: AdicionarLinhaModalProps) {
+export function AdicionarLinhaModal({ open, onOpenChange, categoria, portaId, onAdicionar }: AdicionarLinhaModalProps) {
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
   const [formData, setFormData] = useState<PedidoLinhaNova>({
+    produto_venda_id: portaId,
     nome_produto: "",
     descricao_produto: "",
     quantidade: 1,
@@ -42,6 +44,7 @@ export function AdicionarLinhaModal({ open, onOpenChange, categoria, onAdicionar
 
   const handleSelecionarProduto = (produto: any) => {
     setFormData({
+      produto_venda_id: portaId,
       nome_produto: produto.nome_produto,
       descricao_produto: produto.descricao_produto || "",
       quantidade: 1,
@@ -60,6 +63,7 @@ export function AdicionarLinhaModal({ open, onOpenChange, categoria, onAdicionar
     await onAdicionar(formData);
     
     setFormData({
+      produto_venda_id: portaId,
       nome_produto: "",
       descricao_produto: "",
       quantidade: 1,

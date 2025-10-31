@@ -2131,6 +2131,7 @@ export type Database = {
           nome_produto: string
           ordem: number
           pedido_id: string
+          produto_venda_id: string | null
           quantidade: number
           tamanho: string | null
           updated_at: string | null
@@ -2149,6 +2150,7 @@ export type Database = {
           nome_produto: string
           ordem?: number
           pedido_id: string
+          produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
           updated_at?: string | null
@@ -2167,6 +2169,7 @@ export type Database = {
           nome_produto?: string
           ordem?: number
           pedido_id?: string
+          produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
           updated_at?: string | null
@@ -2184,6 +2187,13 @@ export type Database = {
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_linhas_produto_venda_id_fkey"
+            columns: ["produto_venda_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_vendas"
             referencedColumns: ["id"]
           },
         ]

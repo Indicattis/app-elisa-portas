@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard, Save } from "lucide-react";
 import { usePedidoLinhas, type PedidoLinhaUpdate } from "@/hooks/usePedidoLinhas";
-import { LinhasCategorizadas } from "@/components/pedidos/LinhasCategorizadas";
-import { useEffect, useState } from "react";
+import { LinhasAgrupadasPorPorta } from "@/components/pedidos/LinhasAgrupadasPorPorta";
+import { useValidacaoLinhasPorPorta } from "@/hooks/useValidacaoLinhasPorPorta";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Flame, Settings } from "lucide-react";
 
 export default function PedidoPreparacao() {
   const { id } = useParams();
@@ -57,23 +59,8 @@ export default function PedidoPreparacao() {
     isLoading: linhasLoading,
     adicionarLinha,
     removerLinha,
-    popularLinhasSeparacao,
-    popularLinhasPerfiladeira,
     atualizarLinhasEmLote,
   } = usePedidoLinhas(id || '');
-
-  // Popular automaticamente linhas de separação e perfiladeira ao carregar
-  useEffect(() => {
-    if (pedido?.venda_id && linhas.length === 0) {
-      popularLinhasSeparacao(pedido.venda_id).catch(() => {
-        // Silenciar erro se já existirem linhas
-      });
-      
-      popularLinhasPerfiladeira(pedido.venda_id).catch(() => {
-        // Silenciar erro se já existirem linhas
-      });
-    }
-  }, [pedido?.venda_id, linhas.length]);
 
   if (pedidoLoading || linhasLoading) {
     return (
@@ -100,6 +87,16 @@ export default function PedidoPreparacao() {
 
   const venda = pedido.vendas;
   const produtos = venda?.produtos_vendas || [];
+  const portas = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
+
+  // Validação por porta
+  const {
+    statusPorPorta,
+    todasCompletas,
+    portasCompletas,
+    totalPortas,
+    podeSalvar,
+  } = useValidacaoLinhasPorPorta(portas, linhas);
 
   const calcularPeso = (produto: any) => {
     if (produto.largura && produto.altura) {
@@ -182,12 +179,17 @@ export default function PedidoPreparacao() {
         {!isReadOnly && (
           <Button
             onClick={handleSalvarAlteracoes}
-            disabled={!temAlteracoesPendentes || salvando}
+            disabled={!podeSalvar || !temAlteracoesPendentes || salvando}
             size="sm"
             className="gap-2"
           >
             <Save className="h-3.5 w-3.5" />
-            {salvando ? "Salvando..." : `Salvar${linhasEditadas.size > 0 ? ` (${linhasEditadas.size})` : ''}`}
+            {!podeSalvar 
+              ? `Faltam linhas (${portasCompletas}/${totalPortas} portas)`
+              : salvando 
+              ? "Salvando..." 
+              : `Salvar${linhasEditadas.size > 0 ? ` (${linhasEditadas.size})` : ''}`
+            }
           </Button>
         )}
       </div>
@@ -389,15 +391,99 @@ export default function PedidoPreparacao() {
         </Card>
       )}
 
-      {/* Linhas Categorizadas */}
-          <LinhasCategorizadas
-            linhas={linhas}
-            isReadOnly={isReadOnly}
-            onAdicionarLinha={adicionarLinha}
-            onRemoverLinha={removerLinha}
-            onChange={setLinhasEditadas}
-            linhasEditadas={linhasEditadas}
-          />
+      {/* Verificar se há portas */}
+      {portas.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Este pedido não possui portas de enrolar. Adicione produtos à venda antes de preparar o pedido.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {/* Separação */}
+          <Card>
+            <CardHeader className="p-3 pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <CardTitle className="text-sm font-semibold">Separação</CardTitle>
+                </div>
+                <Badge variant={statusPorPorta.every(s => s.separacao) ? "default" : "secondary"}>
+                  {statusPorPorta.filter(s => s.separacao).length}/{totalPortas} portas
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <LinhasAgrupadasPorPorta
+                categoria="separacao"
+                portas={portas}
+                linhas={linhas}
+                isReadOnly={isReadOnly}
+                onAdicionarLinha={adicionarLinha}
+                onRemoverLinha={removerLinha}
+                onChange={setLinhasEditadas}
+                linhasEditadas={linhasEditadas}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Solda */}
+          <Card>
+            <CardHeader className="p-3 pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Flame className="h-4 w-4" />
+                  <CardTitle className="text-sm font-semibold">Solda</CardTitle>
+                </div>
+                <Badge variant={statusPorPorta.every(s => s.solda) ? "default" : "secondary"}>
+                  {statusPorPorta.filter(s => s.solda).length}/{totalPortas} portas
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <LinhasAgrupadasPorPorta
+                categoria="solda"
+                portas={portas}
+                linhas={linhas}
+                isReadOnly={isReadOnly}
+                onAdicionarLinha={adicionarLinha}
+                onRemoverLinha={removerLinha}
+                onChange={setLinhasEditadas}
+                linhasEditadas={linhasEditadas}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Perfiladeira */}
+          <Card>
+            <CardHeader className="p-3 pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <CardTitle className="text-sm font-semibold">Perfiladeira</CardTitle>
+                </div>
+                <Badge variant={statusPorPorta.every(s => s.perfiladeira) ? "default" : "secondary"}>
+                  {statusPorPorta.filter(s => s.perfiladeira).length}/{totalPortas} portas
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <LinhasAgrupadasPorPorta
+                categoria="perfiladeira"
+                portas={portas}
+                linhas={linhas}
+                isReadOnly={isReadOnly}
+                onAdicionarLinha={adicionarLinha}
+                onRemoverLinha={removerLinha}
+                onChange={setLinhasEditadas}
+                linhasEditadas={linhasEditadas}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="flex justify-between items-center pt-2">
@@ -408,15 +494,20 @@ export default function PedidoPreparacao() {
         >
           Voltar
         </Button>
-        {!isReadOnly && (
+        {!isReadOnly && portas.length > 0 && (
           <Button
             onClick={handleSalvarAlteracoes}
-            disabled={!temAlteracoesPendentes || salvando}
+            disabled={!podeSalvar || !temAlteracoesPendentes || salvando}
             size="sm"
             className="gap-2"
           >
             <Save className="h-3.5 w-3.5" />
-            {salvando ? "Salvando..." : `Salvar${linhasEditadas.size > 0 ? ` (${linhasEditadas.size})` : ''}`}
+            {!podeSalvar 
+              ? `Faltam linhas (${portasCompletas}/${totalPortas} portas)`
+              : salvando 
+              ? "Salvando..." 
+              : `Salvar${linhasEditadas.size > 0 ? ` (${linhasEditadas.size})` : ''}`
+            }
           </Button>
         )}
       </div>
