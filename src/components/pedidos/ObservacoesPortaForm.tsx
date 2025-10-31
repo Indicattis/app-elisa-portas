@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,21 +60,27 @@ export function ObservacoesPortaForm({
     return () => subscription.unsubscribe();
   }, [form, onSalvar]);
 
-  return (
-    <div className="border-l-4 border-amber-500 pl-3">
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <Badge variant="outline" className="bg-amber-50">
-          <FileText className="h-3 w-3 mr-1" />
-          Porta #{portaIndex + 1}
-        </Badge>
-        <span className="text-sm font-medium">
-          {porta.largura}m × {porta.altura}m
-        </span>
-      </div>
+  const [isOpen, setIsOpen] = useState(false);
 
-      <Form {...form}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <FormField
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border-l-4 border-amber-500 pl-3">
+      <CollapsibleTrigger className="w-full">
+        <div className="flex items-center gap-2 mb-3 flex-wrap hover:opacity-70 transition-opacity">
+          <Badge variant="outline" className="bg-amber-50">
+            <FileText className="h-3 w-3 mr-1" />
+            Porta #{portaIndex + 1}
+          </Badge>
+          <span className="text-sm font-medium">
+            {porta.largura}m × {porta.altura}m
+          </span>
+          <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <Form {...form}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <FormField
             control={form.control}
             name="responsavel_medidas_id"
             render={({ field }) => (
@@ -276,8 +282,9 @@ export function ObservacoesPortaForm({
               </FormItem>
             )}
           />
-        </div>
-      </Form>
-    </div>
+          </div>
+        </Form>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
