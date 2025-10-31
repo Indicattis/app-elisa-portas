@@ -219,11 +219,13 @@ export function ProdutoVendaForm({
       }
     }
     
-    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id) {
+    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.estoque_id) {
+      toast.error('Selecione um acessório');
       return;
     }
     
-    if (formData.tipo_produto === 'adicional' && !formData.adicional_id) {
+    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.estoque_id) {
+      toast.error('Selecione um adicional');
       return;
     }
     
