@@ -46,11 +46,21 @@ export function LinhasAgrupadasPorPorta({
           <div key={porta.id} className="border-l-4 border-primary pl-3">
             {/* Header da porta */}
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline">Porta #{idx + 1}</Badge>
                 <span className="text-sm font-medium">
                   {porta.largura}m × {porta.altura}m
                 </span>
+                {porta.peso_total && (
+                  <Badge variant="secondary" className="text-xs">
+                    {porta.peso_total.toFixed(2)} kg
+                  </Badge>
+                )}
+                {porta.quantidade_tiras && (
+                  <Badge variant="secondary" className="text-xs">
+                    {porta.quantidade_tiras} {porta.quantidade_tiras === 1 ? 'tira' : 'tiras'}
+                  </Badge>
+                )}
                 {linhasDaPorta.length > 0 && (
                   <Badge variant="secondary" className="text-xs">
                     {linhasDaPorta.length} {linhasDaPorta.length === 1 ? 'linha' : 'linhas'}
