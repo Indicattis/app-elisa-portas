@@ -2198,6 +2198,76 @@ export type Database = {
           },
         ]
       }
+      pedido_porta_observacoes: {
+        Row: {
+          created_at: string
+          id: string
+          interna_externa: string
+          opcao_guia: string
+          opcao_rolo: string
+          opcao_tubo: string
+          pedido_id: string
+          posicao_guia: string
+          produto_venda_id: string
+          responsavel_medidas_id: string | null
+          retirada_porta: boolean
+          tubo_tiras_frontais: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interna_externa?: string
+          opcao_guia?: string
+          opcao_rolo?: string
+          opcao_tubo?: string
+          pedido_id: string
+          posicao_guia?: string
+          produto_venda_id: string
+          responsavel_medidas_id?: string | null
+          retirada_porta?: boolean
+          tubo_tiras_frontais?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interna_externa?: string
+          opcao_guia?: string
+          opcao_rolo?: string
+          opcao_tubo?: string
+          pedido_id?: string
+          posicao_guia?: string
+          produto_venda_id?: string
+          responsavel_medidas_id?: string | null
+          retirada_porta?: boolean
+          tubo_tiras_frontais?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_porta_observacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_porta_observacoes_produto_venda_id_fkey"
+            columns: ["produto_venda_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_vendas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_porta_observacoes_responsavel_medidas_id_fkey"
+            columns: ["responsavel_medidas_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos_etapas: {
         Row: {
           checkboxes: Json | null

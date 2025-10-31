@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard, Save } from "lucide-react";
+import { ArrowLeft, User, Phone, MapPin, Hash, Package, CreditCard, Save, FileText } from "lucide-react";
 import { usePedidoLinhas, type PedidoLinhaUpdate } from "@/hooks/usePedidoLinhas";
 import { LinhasAgrupadasPorPorta } from "@/components/pedidos/LinhasAgrupadasPorPorta";
 import { useValidacaoLinhasPorPorta } from "@/hooks/useValidacaoLinhasPorPorta";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Flame, Settings } from "lucide-react";
+import { ObservacoesPortaForm } from "@/components/pedidos/ObservacoesPortaForm";
+import { usePedidoPortaObservacoes } from "@/hooks/usePedidoPortaObservacoes";
 
 export default function PedidoPreparacao() {
   const { id } = useParams();
@@ -61,6 +63,27 @@ export default function PedidoPreparacao() {
     removerLinha,
     atualizarLinhasEmLote,
   } = usePedidoLinhas(id || '');
+
+  const {
+    observacoes,
+    isLoading: observacoesLoading,
+    salvarObservacao,
+    getObservacoesPorPorta,
+  } = usePedidoPortaObservacoes(id || '');
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios-ativos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('id, nome, email')
+        .eq('ativo', true)
+        .order('nome');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   if (pedidoLoading || linhasLoading) {
     return (
@@ -480,6 +503,31 @@ export default function PedidoPreparacao() {
                 onChange={setLinhasEditadas}
                 linhasEditadas={linhasEditadas}
               />
+            </CardContent>
+          </Card>
+
+          {/* Observações */}
+          <Card>
+            <CardHeader className="p-3 pb-2">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <CardTitle className="text-sm font-semibold">Observações</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <div className="space-y-4">
+                {portas.map((porta: any, idx: number) => (
+                  <ObservacoesPortaForm
+                    key={porta.id}
+                    porta={porta}
+                    portaIndex={idx}
+                    usuarios={usuarios}
+                    valoresIniciais={getObservacoesPorPorta(porta.id)}
+                    onSalvar={salvarObservacao}
+                    pedidoId={id || ''}
+                  />
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
