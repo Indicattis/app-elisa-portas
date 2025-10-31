@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 import { CheckCircle2, Circle, Package } from "lucide-react";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao';
@@ -125,11 +126,13 @@ export function OrdemDetalhesSheet({
 
             <div className="space-y-2">
               {linhas.map((linha) => (
-                <div
+                <Label
                   key={linha.id}
-                  className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  htmlFor={`checkbox-${linha.id}`}
+                  className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                 >
                   <Checkbox
+                    id={`checkbox-${linha.id}`}
                     checked={linha.concluida}
                     onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
                     disabled={ordem.status === 'concluido' || isUpdating}
@@ -153,7 +156,7 @@ export function OrdemDetalhesSheet({
                       {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
                     </div>
                   </div>
-                </div>
+                </Label>
               ))}
 
               {linhas.length === 0 && (
