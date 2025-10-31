@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AcaoEtapaModal } from "./AcaoEtapaModal";
 import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
+import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery } from "@tanstack/react-query";
@@ -43,6 +44,7 @@ export function PedidoCard({
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
   const [showRetrocederEtapa, setShowRetrocederEtapa] = useState(false);
+  const [showAvancarQualidade, setShowAvancarQualidade] = useState(false);
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -218,7 +220,7 @@ export function PedidoCard({
                 ) : etapaAtual === 'em_producao' ? (
                   <Button
                     size="sm"
-                    onClick={() => setShowAcaoEtapa(true)}
+                    onClick={() => setShowAvancarQualidade(true)}
                     disabled={!todasOrdensConcluidasEmProducao}
                     className="ml-2"
                     title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : ""}
@@ -259,6 +261,17 @@ export function PedidoCard({
           open={showRetrocederEtapa}
           onOpenChange={setShowRetrocederEtapa}
           onConfirmar={onRetrocederEtapa || (() => {})}
+        />
+
+        <AvancarQualidadeModal
+          open={showAvancarQualidade}
+          onOpenChange={setShowAvancarQualidade}
+          onConfirmar={() => {
+            if (onMoverEtapa) {
+              onMoverEtapa(pedido.id);
+              setShowAvancarQualidade(false);
+            }
+          }}
         />
       </>
     );
@@ -426,7 +439,7 @@ export function PedidoCard({
               <Button
                 size="sm"
                 className="w-full"
-                onClick={() => setShowAcaoEtapa(true)}
+                onClick={() => setShowAvancarQualidade(true)}
                 disabled={!todasOrdensConcluidasEmProducao}
                 title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : ""}
               >
@@ -478,6 +491,17 @@ export function PedidoCard({
         open={showRetrocederEtapa}
         onOpenChange={setShowRetrocederEtapa}
         onConfirmar={onRetrocederEtapa || (() => {})}
+      />
+
+      <AvancarQualidadeModal
+        open={showAvancarQualidade}
+        onOpenChange={setShowAvancarQualidade}
+        onConfirmar={() => {
+          if (onMoverEtapa) {
+            onMoverEtapa(pedido.id);
+            setShowAvancarQualidade(false);
+          }
+        }}
       />
     </>
   );
