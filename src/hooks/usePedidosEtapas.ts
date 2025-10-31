@@ -439,6 +439,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      queryClient.invalidateQueries({ queryKey: ['pedido-preparacao'] });
       queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
       queryClient.invalidateQueries({ queryKey: ['ordens-soldagem'] });
       queryClient.invalidateQueries({ queryKey: ['ordens-perfiladeira'] });
