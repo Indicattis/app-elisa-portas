@@ -191,7 +191,25 @@ export function usePedidoLinhas(pedidoId: string) {
 
   const atualizarLinhasEmLote = useMutation({
     mutationFn: async (updates: PedidoLinhaUpdate[]) => {
-      const promises = updates.map(async (update) => {
+      // Validar antes de enviar
+      const updatesFiltrados = updates.filter(update => {
+        // Se tem largura ou altura definidas, garantir que são positivas
+        if (update.largura !== undefined && update.largura !== null && update.largura <= 0) {
+          console.warn(`Linha ${update.id} tem largura inválida: ${update.largura}`);
+          return false;
+        }
+        if (update.altura !== undefined && update.altura !== null && update.altura <= 0) {
+          console.warn(`Linha ${update.id} tem altura inválida: ${update.altura}`);
+          return false;
+        }
+        return true;
+      });
+
+      if (updatesFiltrados.length === 0) {
+        throw new Error('Nenhuma atualização válida para processar. Verifique se largura e altura são maiores que zero.');
+      }
+
+      const promises = updatesFiltrados.map(async (update) => {
         const { id, ...campos } = update;
         return supabase
           .from('pedido_linhas')

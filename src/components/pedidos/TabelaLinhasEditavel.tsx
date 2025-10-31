@@ -58,6 +58,16 @@ export function TabelaLinhasEditavel({
     const novoMapa = new Map(linhasEditadas);
     const linhaAtual = novoMapa.get(linhaId) || { id: linhaId };
     
+    // Validar largura e altura para não permitir valores inválidos
+    if ((campo === 'largura' || campo === 'altura') && valor !== null) {
+      const numeroValor = parseFloat(String(valor));
+      // Se for 0 ou negativo, não permitir
+      if (numeroValor <= 0) {
+        return;
+      }
+      valor = numeroValor;
+    }
+    
     novoMapa.set(linhaId, {
       ...linhaAtual,
       [campo]: valor,
@@ -215,6 +225,7 @@ export function TabelaLinhasEditavel({
                     <Input
                       type="number"
                       step="0.01"
+                      min="0.01"
                       value={largura || ''}
                       onChange={(e) =>
                         handleCampoChange(
@@ -239,6 +250,7 @@ export function TabelaLinhasEditavel({
                     <Input
                       type="number"
                       step="0.01"
+                      min="0.01"
                       value={altura || ''}
                       onChange={(e) =>
                         handleCampoChange(
