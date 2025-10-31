@@ -4,139 +4,21 @@ import { useToast } from "@/hooks/use-toast";
 import type { EtapaPedido, PedidoEtapa, PedidoCheckbox } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
 
-// Função auxiliar para criar ordens de produção
+// Função auxiliar para criar ordens de produção usando SECURITY DEFINER
 async function criarOrdensProducao(pedidoId: string) {
   console.log('[criarOrdensProducao] Iniciando criação de ordens para pedido:', pedidoId);
   
   try {
-    // Buscar linhas do pedido
-    const { data: linhas, error: linhasError } = await supabase
-      .from('pedido_linhas')
-      .select('*')
-      .eq('pedido_id', pedidoId);
+    // Usar função SECURITY DEFINER para contornar políticas RLS
+    const { error } = await supabase.rpc('criar_ordens_producao_automaticas', {
+      p_pedido_id: pedidoId
+    });
 
-    if (linhasError) {
-      console.error('[criarOrdensProducao] Erro ao buscar linhas:', linhasError);
-      throw linhasError;
-    }
-    
-    if (!linhas || linhas.length === 0) {
-      console.warn('[criarOrdensProducao] Nenhuma linha encontrada para o pedido');
-      return;
+    if (error) {
+      console.error('[criarOrdensProducao] Erro ao criar ordens:', error);
+      throw error;
     }
 
-    console.log('[criarOrdensProducao] Linhas encontradas:', linhas.length);
-
-    // Criar ordem de soldagem
-    const { data: numeroOrdemSolda, error: soldaNumError } = await supabase.rpc('gerar_numero_ordem', { tipo_ordem: 'soldagem' });
-    
-    if (soldaNumError) {
-      console.error('[criarOrdensProducao] Erro ao gerar número ordem soldagem:', soldaNumError);
-    }
-    
-    const { error: soldaError } = await supabase
-      .from('ordens_soldagem')
-      .insert({
-        pedido_id: pedidoId,
-        numero_ordem: numeroOrdemSolda || `OS-${Date.now()}`,
-        status: 'pendente',
-      });
-
-    if (soldaError) {
-      console.error('[criarOrdensProducao] Erro ao criar ordem de soldagem:', soldaError);
-      throw soldaError;
-    }
-
-    // Criar linhas de soldagem
-    const linhasSolda = linhas.map((linha, index) => ({
-      pedido_id: pedidoId,
-      tipo_ordem: 'soldagem',
-      item: linha.nome_produto || linha.descricao_produto || `Item ${index + 1}`,
-      quantidade: linha.quantidade || 1,
-      tamanho: linha.tamanho || `${linha.largura || 0} x ${linha.altura || 0}`,
-    }));
-
-    const { error: linhasSoldaError } = await supabase.from('linhas_ordens').insert(linhasSolda);
-    if (linhasSoldaError) {
-      console.error('[criarOrdensProducao] Erro ao criar linhas soldagem:', linhasSoldaError);
-      throw linhasSoldaError;
-    }
-
-    console.log('[criarOrdensProducao] Ordem de soldagem criada com sucesso');
-
-    // Criar ordem de perfiladeira
-    const { data: numeroOrdemPerfil, error: perfilNumError } = await supabase.rpc('gerar_numero_ordem', { tipo_ordem: 'perfiladeira' });
-    
-    if (perfilNumError) {
-      console.error('[criarOrdensProducao] Erro ao gerar número ordem perfiladeira:', perfilNumError);
-    }
-    
-    const { error: perfilError } = await supabase
-      .from('ordens_perfiladeira')
-      .insert({
-        pedido_id: pedidoId,
-        numero_ordem: numeroOrdemPerfil || `OP-${Date.now()}`,
-        status: 'pendente',
-      });
-
-    if (perfilError) {
-      console.error('[criarOrdensProducao] Erro ao criar ordem de perfiladeira:', perfilError);
-      throw perfilError;
-    }
-
-    // Criar linhas de perfiladeira
-    const linhasPerfil = linhas.map((linha, index) => ({
-      pedido_id: pedidoId,
-      tipo_ordem: 'perfiladeira',
-      item: linha.nome_produto || linha.descricao_produto || `Item ${index + 1}`,
-      quantidade: linha.quantidade || 1,
-      tamanho: linha.tamanho || `${linha.largura || 0} x ${linha.altura || 0}`,
-    }));
-
-    const { error: linhasPerfilError } = await supabase.from('linhas_ordens').insert(linhasPerfil);
-    if (linhasPerfilError) {
-      console.error('[criarOrdensProducao] Erro ao criar linhas perfiladeira:', linhasPerfilError);
-      throw linhasPerfilError;
-    }
-
-    console.log('[criarOrdensProducao] Ordem de perfiladeira criada com sucesso');
-
-    // Criar ordem de separação
-    const { data: numeroOrdemSep, error: sepNumError } = await supabase.rpc('gerar_numero_ordem', { tipo_ordem: 'separacao' });
-    
-    if (sepNumError) {
-      console.error('[criarOrdensProducao] Erro ao gerar número ordem separação:', sepNumError);
-    }
-    
-    const { error: sepError } = await supabase
-      .from('ordens_separacao')
-      .insert({
-        pedido_id: pedidoId,
-        numero_ordem: numeroOrdemSep || `OE-${Date.now()}`,
-        status: 'pendente',
-      });
-
-    if (sepError) {
-      console.error('[criarOrdensProducao] Erro ao criar ordem de separação:', sepError);
-      throw sepError;
-    }
-
-    // Criar linhas de separação
-    const linhasSep = linhas.map((linha, index) => ({
-      pedido_id: pedidoId,
-      tipo_ordem: 'separacao',
-      item: linha.nome_produto || linha.descricao_produto || `Item ${index + 1}`,
-      quantidade: linha.quantidade || 1,
-      tamanho: linha.tamanho || `${linha.largura || 0} x ${linha.altura || 0}`,
-    }));
-
-    const { error: linhasSepError } = await supabase.from('linhas_ordens').insert(linhasSep);
-    if (linhasSepError) {
-      console.error('[criarOrdensProducao] Erro ao criar linhas separação:', linhasSepError);
-      throw linhasSepError;
-    }
-
-    console.log('[criarOrdensProducao] Ordem de separação criada com sucesso');
     console.log('[criarOrdensProducao] Todas as ordens criadas com sucesso!');
   } catch (error) {
     console.error('[criarOrdensProducao] Erro geral:', error);
