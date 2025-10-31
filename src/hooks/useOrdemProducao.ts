@@ -44,7 +44,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
 
   // Buscar todas as ordens do tipo
   const { data: ordens = [], isLoading } = useQuery({
-    queryKey: ['ordens-producao', tipoOrdem, Date.now()], // Força nova busca
+    queryKey: ['ordens-producao', tipoOrdem],
     queryFn: async () => {
       let ordensData: any[] = [];
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
@@ -68,18 +68,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             .eq('id', ordem.pedido_id)
             .single();
 
-          // Buscar linhas da ordem usando ordem_id
+          // Buscar linhas da ordem usando ordem_id e tipo_ordem
           const { data: linhas } = await supabase
             .from('linhas_ordens')
             .select('*')
             .eq('ordem_id', ordem.id)
+            .eq('tipo_ordem', tipoOrdem)
             .order('created_at', { ascending: true });
-
-          console.log(`[useOrdemProducao] Ordem ${ordem.numero_ordem} (${ordem.id}):`, {
-            tipo: tipoOrdem,
-            totalLinhas: linhas?.length || 0,
-            linhas: linhas?.map(l => ({ id: l.id, item: l.item, tipo_ordem: l.tipo_ordem }))
-          });
 
           return {
             ...ordem,

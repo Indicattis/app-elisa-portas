@@ -55,17 +55,7 @@ export function OrdemDetalhesSheet({
 }: OrdemDetalhesSheetProps) {
   if (!ordem) return null;
 
-  // Filtro de segurança: apenas linhas do tipo correto
-  const todasLinhas = ordem.linhas || [];
-  const linhas = todasLinhas.filter((l: any) => l.tipo_ordem === tipoOrdem);
-  
-  console.log(`[OrdemDetalhesSheet] Ordem ${ordem.numero_ordem}:`, {
-    tipo: tipoOrdem,
-    totalRecebidas: todasLinhas.length,
-    totalFiltradas: linhas.length,
-    linhas: linhas.map((l: any) => ({ id: l.id, item: l.item, tipo_ordem: l.tipo_ordem }))
-  });
-
+  const linhas = ordem.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
