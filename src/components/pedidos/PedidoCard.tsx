@@ -60,6 +60,20 @@ export function PedidoCard({
     },
   });
 
+  // Verificar se todas as ordens de produção estão concluídas (para etapa em_producao)
+  const { data: ordensStatus } = useQuery({
+    queryKey: ['pedido-ordens-status', pedido.id],
+    queryFn: async () => {
+      if (pedido.etapa_atual !== 'em_producao') return null;
+      
+      const { data: todasConcluidas } = await supabase
+        .rpc('verificar_ordens_pedido_concluidas', { p_pedido_id: pedido.id });
+      
+      return todasConcluidas;
+    },
+    enabled: pedido.etapa_atual === 'em_producao',
+  });
+
   // Para todos os pedidos (incluindo aberto), buscar dados da venda relacionada
   const venda = pedido.vendas;
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
@@ -69,6 +83,7 @@ export function PedidoCard({
 
   const produtos = venda?.produtos_vendas || [];
   const temLinhas = linhasCount > 0;
+  const todasOrdensConcluidasEmProducao = ordensStatus === true;
 
   // Badge de posição com cores especiais para top 3
   const getBadgeColor = () => {
@@ -199,6 +214,17 @@ export function PedidoCard({
                   >
                     <FileText className="h-3.5 w-3.5 mr-2" />
                     Preparar
+                  </Button>
+                ) : etapaAtual === 'em_producao' ? (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAcaoEtapa(true)}
+                    disabled={!todasOrdensConcluidasEmProducao}
+                    className="ml-2"
+                    title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : ""}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                    Avançar para Qualidade
                   </Button>
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
@@ -386,6 +412,28 @@ export function PedidoCard({
               <FileText className="h-3.5 w-3.5 mr-2" />
               Preparar Pedido
             </Button>
+          ) : etapaAtual === 'em_producao' ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
+              >
+                <FileText className="h-3.5 w-3.5 mr-2" />
+                Ver Preparação
+              </Button>
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={() => setShowAcaoEtapa(true)}
+                disabled={!todasOrdensConcluidasEmProducao}
+                title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : ""}
+              >
+                <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                Avançar para Qualidade
+              </Button>
+            </>
           ) : (
             <>
               <Button

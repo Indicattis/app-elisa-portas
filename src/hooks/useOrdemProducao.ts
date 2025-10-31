@@ -259,24 +259,9 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         } catch (error) {
           console.error('Erro ao avançar pedido:', error);
         }
-      } else {
-        // Para outras ordens, verificar se todas foram concluídas
-        const { data: todasConcluidas } = await supabase
-          .rpc('verificar_ordens_pedido_concluidas', { p_pedido_id: pedidoId });
-
-        if (todasConcluidas) {
-          // Avançar pedido automaticamente
-          try {
-            await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
-            toast({
-              title: "Pedido avançado automaticamente",
-              description: "Todas as ordens foram concluídas. O pedido foi movido para Inspeção da Qualidade.",
-            });
-          } catch (error) {
-            console.error('Erro ao avançar pedido:', error);
-          }
-        }
       }
+      // Nota: Para outras ordens (perfiladeira, solda, separação), 
+      // não avançar automaticamente - usuário deve usar botão manual
     },
     onError: (error) => {
       console.error('Erro ao concluir ordem:', error);
