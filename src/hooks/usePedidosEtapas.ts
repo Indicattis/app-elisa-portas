@@ -257,12 +257,51 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
       if (etapaError) throw etapaError;
 
+      // Lógica condicional quando sai da inspeção de qualidade
+      let etapaDestino = proximaEtapa;
+      if (etapaAtualNome === 'inspecao_qualidade') {
+        // Buscar venda associada ao pedido
+        const { data: pedidoData } = await supabase
+          .from('pedidos_producao')
+          .select('venda_id')
+          .eq('id', pedidoId)
+          .single();
+        
+        if (pedidoData?.venda_id) {
+          // Verificar se tem pintura
+          const { data: produtosComPintura } = await supabase
+            .from('produtos_vendas')
+            .select('id')
+            .eq('venda_id', pedidoData.venda_id)
+            .gt('valor_pintura', 0)
+            .limit(1);
+          
+          if (produtosComPintura && produtosComPintura.length > 0) {
+            // Tem pintura → avançar para aguardando_pintura
+            etapaDestino = 'aguardando_pintura';
+          } else {
+            // Não tem pintura → verificar tipo de entrega
+            const { data: venda } = await supabase
+              .from('vendas')
+              .select('tipo_entrega')
+              .eq('id', pedidoData.venda_id)
+              .single();
+            
+            if (venda?.tipo_entrega === 'entrega') {
+              etapaDestino = 'aguardando_coleta';
+            } else {
+              etapaDestino = 'aguardando_instalacao';
+            }
+          }
+        }
+      }
+
       // Atualizar pedido e resetar prioridade
       const { error: updateError } = await supabase
         .from('pedidos_producao')
         .update({ 
-          etapa_atual: proximaEtapa,
-          status: proximaEtapa === 'finalizado' ? 'concluido' : 'em_andamento',
+          etapa_atual: etapaDestino,
+          status: etapaDestino === 'finalizado' ? 'concluido' : 'em_andamento',
           prioridade_etapa: 0
         })
         .eq('id', pedidoId);
@@ -274,7 +313,18 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         await criarOrdensProducao(pedidoId);
       }
 
-      return { etapaAtualNome, proximaEtapa };
+      // Se avançou para inspeção de qualidade, criar ordem de qualidade
+      if (etapaDestino === 'inspecao_qualidade') {
+        const { error: qualidadeError } = await supabase.rpc('criar_ordem_qualidade', {
+          p_pedido_id: pedidoId
+        });
+
+        if (qualidadeError) {
+          console.error('[moverParaProximaEtapa] Erro ao criar ordem de qualidade:', qualidadeError);
+        }
+      }
+
+      return { etapaAtualNome, proximaEtapa: etapaDestino };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });

@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePedidosEtapas } from "./usePedidosEtapas";
 import { useEffect } from "react";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
 interface LinhaOrdem {
   id: string;
@@ -36,6 +36,7 @@ const TABELA_MAP: Record<TipoOrdem, string> = {
   soldagem: 'ordens_soldagem',
   perfiladeira: 'ordens_perfiladeira',
   separacao: 'ordens_separacao',
+  qualidade: 'ordens_qualidade',
 };
 
 export function useOrdemProducao(tipoOrdem: TipoOrdem) {
@@ -220,6 +221,20 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
           .update({ status: 'concluido', data_conclusao: new Date().toISOString() })
           .eq('id', ordemId);
         if (error) throw error;
+      } else if (tipoOrdem === 'qualidade') {
+        const { data: ordem, error: ordemError } = await supabase
+          .from('ordens_qualidade')
+          .select('pedido_id')
+          .eq('id', ordemId)
+          .single();
+        if (ordemError) throw ordemError;
+        pedidoId = ordem.pedido_id;
+
+        const { error } = await supabase
+          .from('ordens_qualidade')
+          .update({ status: 'concluido', data_conclusao: new Date().toISOString() })
+          .eq('id', ordemId);
+        if (error) throw error;
       }
 
       if (!pedidoId) throw new Error('Pedido ID não encontrado');
@@ -233,20 +248,33 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         description: "A ordem foi concluída com sucesso.",
       });
 
-      // Verificar se todas as ordens do pedido estão concluídas
-      const { data: todasConcluidas } = await supabase
-        .rpc('verificar_ordens_pedido_concluidas', { p_pedido_id: pedidoId });
-
-      if (todasConcluidas) {
-        // Avançar pedido automaticamente
+      // Se é ordem de qualidade, avançar automaticamente após conclusão
+      if (tipoOrdem === 'qualidade') {
         try {
           await moverParaProximaEtapa.mutateAsync(pedidoId);
           toast({
             title: "Pedido avançado automaticamente",
-            description: "Todas as ordens foram concluídas. O pedido foi movido para Inspeção da Qualidade.",
+            description: "Inspeção de qualidade concluída. Pedido avançado para próxima etapa.",
           });
         } catch (error) {
           console.error('Erro ao avançar pedido:', error);
+        }
+      } else {
+        // Para outras ordens, verificar se todas foram concluídas
+        const { data: todasConcluidas } = await supabase
+          .rpc('verificar_ordens_pedido_concluidas', { p_pedido_id: pedidoId });
+
+        if (todasConcluidas) {
+          // Avançar pedido automaticamente
+          try {
+            await moverParaProximaEtapa.mutateAsync(pedidoId);
+            toast({
+              title: "Pedido avançado automaticamente",
+              description: "Todas as ordens foram concluídas. O pedido foi movido para Inspeção da Qualidade.",
+            });
+          } catch (error) {
+            console.error('Erro ao avançar pedido:', error);
+          }
         }
       }
     },

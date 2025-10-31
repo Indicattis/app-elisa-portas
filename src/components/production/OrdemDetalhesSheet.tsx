@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Circle, Package } from "lucide-react";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
 interface LinhaOrdem {
   id: string;
@@ -43,6 +43,7 @@ const TIPO_LABELS: Record<TipoOrdem, string> = {
   soldagem: 'Soldagem',
   perfiladeira: 'Perfiladeira',
   separacao: 'Separação',
+  qualidade: 'Qualidade',
 };
 
 export function OrdemDetalhesSheet({

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Package, CheckCircle2, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
 interface LinhaOrdem {
   id: string;

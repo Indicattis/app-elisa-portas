@@ -34,6 +34,7 @@ import VisitaNova from "./pages/VisitaNova";
 import ProducaoSolda from "./pages/ProducaoSolda";
 import ProducaoPerfiladeira from "./pages/ProducaoPerfiladeira";
 import ProducaoSeparacao from "./pages/ProducaoSeparacao";
+import ProducaoQualidade from "./pages/ProducaoQualidade";
 import Instalacoes from "./pages/Instalacoes";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
@@ -680,6 +681,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="producao">
                       <DashboardLayout>
                         <ProducaoSeparacao />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/producao/qualidade"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <ProducaoQualidade />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

@@ -1933,6 +1933,84 @@ export type Database = {
           },
         ]
       }
+      ordens_qualidade: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string
+          responsavel_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordens_qualidade_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ordens_qualidade_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ordens_qualidade_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_qualidade_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ordens_qualidade_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       ordens_separacao: {
         Row: {
           created_at: string
@@ -3332,6 +3410,10 @@ export type Database = {
           base64_count: number
           table_name: string
         }[]
+      }
+      criar_ordem_qualidade: {
+        Args: { p_pedido_id: string }
+        Returns: undefined
       }
       criar_ordens_producao_automaticas: {
         Args: { p_pedido_id: string }
