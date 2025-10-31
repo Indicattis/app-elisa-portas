@@ -17,6 +17,13 @@ interface AdicionarLinhaModalProps {
   onAdicionar: (linha: PedidoLinhaNova) => Promise<any>;
 }
 
+// Mapeamento de categoria para setor de produção
+const CATEGORIA_TO_SETOR: Record<CategoriaLinha, 'perfiladeira' | 'solda' | 'separacao' | 'pintura'> = {
+  separacao: 'separacao',
+  solda: 'solda',
+  perfiladeira: 'perfiladeira',
+};
+
 const CATEGORIA_LABELS = {
   separacao: "Separação",
   solda: "Solda",
@@ -35,7 +42,9 @@ export function AdicionarLinhaModal({ open, onOpenChange, categoria, portaId, on
     categoria_linha: categoria,
   });
 
-  const { produtos, buscarProdutos } = useEstoque();
+  // Filtrar produtos pelo setor responsável pela categoria
+  const setorFiltro = CATEGORIA_TO_SETOR[categoria];
+  const { produtos, buscarProdutos } = useEstoque(busca, setorFiltro);
 
   const handleBuscar = (termo: string) => {
     setBusca(termo);

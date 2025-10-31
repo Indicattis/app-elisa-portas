@@ -49,13 +49,13 @@ export interface ProdutoEstoqueInput {
   setor_responsavel_producao?: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
 }
 
-export const useEstoque = () => {
+export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null = null) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(termoBuscaInicial);
 
   const { data: produtos = [], isLoading } = useQuery({
-    queryKey: ["estoque", searchTerm],
+    queryKey: ["estoque", searchTerm, setorFiltro],
     queryFn: async () => {
       let query = supabase
         .from("estoque")
@@ -70,6 +70,10 @@ export const useEstoque = () => {
         query = query.or(
           `nome_produto.ilike.%${searchTerm}%,descricao_produto.ilike.%${searchTerm}%`
         );
+      }
+
+      if (setorFiltro) {
+        query = query.eq("setor_responsavel_producao", setorFiltro);
       }
 
       const { data, error } = await query;
