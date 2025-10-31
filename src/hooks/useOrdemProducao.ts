@@ -176,6 +176,12 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         queryClient.invalidateQueries({ 
           queryKey: ['pedido-ordens-status', ordemComLinha.pedido_id] 
         });
+        // Invalidar também status de qualidade se for ordem de qualidade
+        if (tipoOrdem === 'qualidade') {
+          queryClient.invalidateQueries({ 
+            queryKey: ['pedido-qualidade-status', ordemComLinha.pedido_id] 
+          });
+        }
       }
       
       toast({
@@ -254,6 +260,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
     onSuccess: async (pedidoId) => {
       queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
       queryClient.invalidateQueries({ queryKey: ['pedido-ordens-status', pedidoId] });
+      
+      // Invalidar também status de qualidade se for ordem de qualidade
+      if (tipoOrdem === 'qualidade') {
+        queryClient.invalidateQueries({ 
+          queryKey: ['pedido-qualidade-status', pedidoId] 
+        });
+      }
       
       toast({
         title: "Ordem concluída",

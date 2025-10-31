@@ -3462,6 +3462,10 @@ export type Database = {
         Args: { p_pedido_id: string }
         Returns: undefined
       }
+      verificar_ordem_qualidade_concluida: {
+        Args: { p_pedido_id: string }
+        Returns: boolean
+      }
       verificar_ordens_pedido_concluidas: {
         Args: { p_pedido_id: string }
         Returns: boolean

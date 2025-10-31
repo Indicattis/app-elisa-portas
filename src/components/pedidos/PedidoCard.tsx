@@ -76,6 +76,20 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'em_producao',
   });
 
+  // Verificar se a ordem de qualidade está concluída (para etapa inspecao_qualidade)
+  const { data: ordemQualidadeStatus } = useQuery({
+    queryKey: ['pedido-qualidade-status', pedido.id],
+    queryFn: async () => {
+      if (pedido.etapa_atual !== 'inspecao_qualidade') return null;
+      
+      const { data: todasLinhasConcluidas } = await supabase
+        .rpc('verificar_ordem_qualidade_concluida', { p_pedido_id: pedido.id });
+      
+      return todasLinhasConcluidas;
+    },
+    enabled: pedido.etapa_atual === 'inspecao_qualidade',
+  });
+
   // Para todos os pedidos (incluindo aberto), buscar dados da venda relacionada
   const venda = pedido.vendas;
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
@@ -86,6 +100,7 @@ export function PedidoCard({
   const produtos = venda?.produtos_vendas || [];
   const temLinhas = linhasCount > 0;
   const todasOrdensConcluidasEmProducao = ordensStatus === true;
+  const ordemQualidadeConcluida = ordemQualidadeStatus === true;
 
   // Badge de posição com cores especiais para top 3
   const getBadgeColor = () => {
@@ -227,6 +242,17 @@ export function PedidoCard({
                   >
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
                     Avançar para Qualidade
+                  </Button>
+                ) : etapaAtual === 'inspecao_qualidade' ? (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAcaoEtapa(true)}
+                    disabled={!ordemQualidadeConcluida}
+                    className="ml-2"
+                    title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : ""}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                    Avançar
                   </Button>
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
@@ -458,7 +484,18 @@ export function PedidoCard({
                 <FileText className="h-3.5 w-3.5 mr-2" />
                 Ver Preparação
               </Button>
-              {proximaEtapa && etapaAtual !== 'finalizado' && (
+              {etapaAtual === 'inspecao_qualidade' ? (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowAcaoEtapa(true)}
+                  disabled={!ordemQualidadeConcluida}
+                  title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : ""}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                  Avançar para {ETAPAS_CONFIG[proximaEtapa].label}
+                </Button>
+              ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
                   size="sm"
                   className="w-full"
@@ -467,7 +504,7 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
                   Avançar para {ETAPAS_CONFIG[proximaEtapa].label}
                 </Button>
-              )}
+              ) : null}
             </>
           )}
         </CardFooter>
