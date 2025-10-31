@@ -68,12 +68,11 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             .eq('id', ordem.pedido_id)
             .single();
 
-          // Buscar linhas da ordem
+          // Buscar linhas da ordem usando ordem_id
           const { data: linhas } = await supabase
             .from('linhas_ordens')
             .select('*')
-            .eq('pedido_id', ordem.pedido_id)
-            .eq('tipo_ordem', tipoOrdem)
+            .eq('ordem_id', ordem.id)
             .order('created_at', { ascending: true });
 
           return {
