@@ -107,20 +107,43 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
-      toast({
-        title: "Linha atualizada",
-        description: "Status da linha foi atualizado com sucesso.",
+    onMutate: async ({ linhaId, concluida }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+
+      // Snapshot previous value
+      const previousOrdens = queryClient.getQueryData<Ordem[]>(['ordens-producao', tipoOrdem]);
+
+      // Optimistically update
+      queryClient.setQueryData<Ordem[]>(['ordens-producao', tipoOrdem], (old) => {
+        if (!old) return old;
+        return old.map(ordem => ({
+          ...ordem,
+          linhas: ordem.linhas?.map(linha => 
+            linha.id === linhaId 
+              ? { ...linha, concluida, concluida_em: concluida ? new Date().toISOString() : undefined }
+              : linha
+          )
+        }));
       });
+
+      return { previousOrdens };
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousOrdens) {
+        queryClient.setQueryData(['ordens-producao', tipoOrdem], context.previousOrdens);
+      }
       console.error('Erro ao atualizar linha:', error);
       toast({
         title: "Erro ao atualizar",
         description: "Não foi possível atualizar a linha.",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Refetch after mutation
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
     },
   });
 
