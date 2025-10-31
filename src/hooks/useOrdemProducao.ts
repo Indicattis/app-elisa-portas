@@ -251,7 +251,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       // Se é ordem de qualidade, avançar automaticamente após conclusão
       if (tipoOrdem === 'qualidade') {
         try {
-          await moverParaProximaEtapa.mutateAsync(pedidoId);
+          await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
           toast({
             title: "Pedido avançado automaticamente",
             description: "Inspeção de qualidade concluída. Pedido avançado para próxima etapa.",
@@ -267,7 +267,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         if (todasConcluidas) {
           // Avançar pedido automaticamente
           try {
-            await moverParaProximaEtapa.mutateAsync(pedidoId);
+            await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
             toast({
               title: "Pedido avançado automaticamente",
               description: "Todas as ordens foram concluídas. O pedido foi movido para Inspeção da Qualidade.",

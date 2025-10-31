@@ -66,7 +66,7 @@ export function PedidoEtapaCheckboxes({
   };
 
   const handleMoverEtapa = async () => {
-    await moverParaProximaEtapa.mutateAsync(pedidoId);
+    await moverParaProximaEtapa.mutateAsync({ pedidoId });
     onOpenChange(false);
   };
 

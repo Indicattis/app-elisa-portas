@@ -185,7 +185,7 @@ export default function PedidoPreparacao() {
     if (!id) return;
     
     try {
-      await moverParaProximaEtapa.mutateAsync(id);
+      await moverParaProximaEtapa.mutateAsync({ pedidoId: id });
       setMostrarModalAvancar(false);
       navigate('/dashboard/pedidos');
     } catch (error) {

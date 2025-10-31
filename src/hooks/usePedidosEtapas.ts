@@ -133,9 +133,9 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       .select('*')
       .eq('pedido_id', pedidoId)
       .is('data_saida', null)
-      .single();
+      .maybeSingle();
 
-    if (error) return null;
+    if (error || !data) return null;
     return {
       ...data,
       checkboxes: (data.checkboxes as any) || []
@@ -190,7 +190,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
   // Mover para próxima etapa
   const moverParaProximaEtapa = useMutation({
-    mutationFn: async (pedidoId: string) => {
+    mutationFn: async ({ pedidoId, skipCheckboxValidation = false }: { pedidoId: string; skipCheckboxValidation?: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
@@ -224,14 +224,16 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         }
       }
 
-      // Validar checkboxes obrigatórios
+      // Validar checkboxes obrigatórios (apenas se não for avanço automático)
       const etapaAtual = await getEtapaAtual(pedidoId);
       if (etapaAtual) {
-        const checkboxesObrigatorios = etapaAtual.checkboxes.filter(cb => cb.required);
-        const todosChecados = checkboxesObrigatorios.every(cb => cb.checked);
+        if (!skipCheckboxValidation) {
+          const checkboxesObrigatorios = etapaAtual.checkboxes.filter(cb => cb.required);
+          const todosChecados = checkboxesObrigatorios.every(cb => cb.checked);
 
-        if (!todosChecados) {
-          throw new Error('Todos os checkboxes obrigatórios devem ser marcados');
+          if (!todosChecados) {
+            throw new Error('Todos os checkboxes obrigatórios devem ser marcados');
+          }
         }
 
         // Fechar etapa atual
