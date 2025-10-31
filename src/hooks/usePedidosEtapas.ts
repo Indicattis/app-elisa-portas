@@ -317,14 +317,17 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       }
 
       // Se avançou para inspeção de qualidade, criar ordem de qualidade
-      if (etapaDestino === 'inspecao_qualidade') {
+      if (proximaEtapa === 'inspecao_qualidade') {
+        console.log('[moverParaProximaEtapa] Criando ordem de qualidade para pedido:', pedidoId);
         const { error: qualidadeError } = await supabase.rpc('criar_ordem_qualidade', {
           p_pedido_id: pedidoId
         });
 
         if (qualidadeError) {
           console.error('[moverParaProximaEtapa] Erro ao criar ordem de qualidade:', qualidadeError);
+          throw qualidadeError;
         }
+        console.log('[moverParaProximaEtapa] Ordem de qualidade criada com sucesso');
       }
 
       return { etapaAtualNome, proximaEtapa: etapaDestino };
