@@ -44,7 +44,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
 
   // Buscar todas as ordens do tipo
   const { data: ordens = [], isLoading } = useQuery({
-    queryKey: ['ordens-producao', tipoOrdem],
+    queryKey: ['ordens-producao', tipoOrdem, Date.now()], // Força nova busca
     queryFn: async () => {
       let ordensData: any[] = [];
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
@@ -75,6 +75,12 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             .eq('ordem_id', ordem.id)
             .order('created_at', { ascending: true });
 
+          console.log(`[useOrdemProducao] Ordem ${ordem.numero_ordem} (${ordem.id}):`, {
+            tipo: tipoOrdem,
+            totalLinhas: linhas?.length || 0,
+            linhas: linhas?.map(l => ({ id: l.id, item: l.item, tipo_ordem: l.tipo_ordem }))
+          });
+
           return {
             ...ordem,
             linhas: linhas || [],
@@ -86,6 +92,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       return ordensComLinhas;
     },
     refetchInterval: 5000,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   // Marcar linha como concluída
