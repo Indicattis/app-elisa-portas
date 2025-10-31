@@ -18,10 +18,11 @@ interface Ordem {
 }
 
 export default function ProducaoSeparacao() {
-  const [ordemSelecionada, setOrdemSelecionada] = useState<Ordem | null>(null);
+  const [ordemSelecionadaId, setOrdemSelecionadaId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const {
+    ordens,
     ordensAFazer,
     ordensConcluidas,
     isLoading,
@@ -29,8 +30,11 @@ export default function ProducaoSeparacao() {
     concluirOrdem,
   } = useOrdemProducao('separacao');
 
+  // Sincronizar ordem selecionada com cache atualizado
+  const ordemSelecionada = ordens.find(o => o.id === ordemSelecionadaId) || null;
+
   const handleOrdemClick = (ordem: Ordem) => {
-    setOrdemSelecionada(ordem);
+    setOrdemSelecionadaId(ordem.id);
     setSheetOpen(true);
   };
 
