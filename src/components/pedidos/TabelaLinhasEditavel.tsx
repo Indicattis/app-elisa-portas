@@ -14,6 +14,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Trash2, ChevronDown } from "lucide-react";
 import type { PedidoLinha, PedidoLinhaUpdate, CategoriaLinha } from "@/hooks/usePedidoLinhas";
 import { useEstoque } from "@/hooks/useEstoque";
@@ -97,11 +104,12 @@ export function TabelaLinhasEditavel({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[30%]">Produto</TableHead>
-            <TableHead className="w-[15%] text-center">Largura (m)</TableHead>
-            <TableHead className="w-[15%] text-center">Altura (m)</TableHead>
-            <TableHead className="w-[12%] text-center">Qtd</TableHead>
-            <TableHead className="w-[15%] text-center">Peso (kg)</TableHead>
+            <TableHead className="w-[25%]">Produto</TableHead>
+            <TableHead className="w-[12%] text-center">Largura (m)</TableHead>
+            <TableHead className="w-[12%] text-center">Altura (m)</TableHead>
+            <TableHead className="w-[10%] text-center">Qtd</TableHead>
+            <TableHead className="w-[12%] text-center">Peso (kg)</TableHead>
+            <TableHead className="w-[16%]">Tipo Ordem</TableHead>
             <TableHead className="w-[13%] text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -112,6 +120,7 @@ export function TabelaLinhasEditavel({
             const quantidade = getValorEditado(linha.id, 'quantidade') as number;
             const nomeProduto = getValorEditado(linha.id, 'nome_produto') as string;
             const descricaoProduto = getValorEditado(linha.id, 'descricao_produto') as string | null;
+            const tipoOrdem = getValorEditado(linha.id, 'tipo_ordem') as string || 'soldagem';
 
             // Calcular peso: ((largura * altura * 12) * 2) * 0.3
             const peso = largura && altura 
@@ -273,6 +282,33 @@ export function TabelaLinhasEditavel({
                     <span className="text-sm font-medium">{peso} kg</span>
                   ) : (
                     <span className="text-sm text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+
+                {/* Tipo de Ordem */}
+                <TableCell>
+                  {isReadOnly ? (
+                    <Badge variant="outline">
+                      {tipoOrdem === 'soldagem' && 'Soldagem'}
+                      {tipoOrdem === 'perfiladeira' && 'Perfiladeira'}
+                      {tipoOrdem === 'separacao' && 'Separação'}
+                    </Badge>
+                  ) : (
+                    <Select
+                      value={tipoOrdem}
+                      onValueChange={(value) =>
+                        handleCampoChange(linha.id, 'tipo_ordem', value)
+                      }
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="soldagem">Soldagem</SelectItem>
+                        <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
+                        <SelectItem value="separacao">Separação</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 </TableCell>
 

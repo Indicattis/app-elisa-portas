@@ -17,6 +17,7 @@ export interface PedidoLinha {
   largura: number | null;
   altura: number | null;
   categoria_linha: CategoriaLinha;
+  tipo_ordem: string | null;
   check_separacao: boolean;
   check_qualidade: boolean;
   check_coleta: boolean;
@@ -45,6 +46,7 @@ export interface PedidoLinhaUpdate {
   largura?: number;
   altura?: number;
   tamanho?: string;
+  tipo_ordem?: string;
 }
 
 export function usePedidoLinhas(pedidoId: string) {

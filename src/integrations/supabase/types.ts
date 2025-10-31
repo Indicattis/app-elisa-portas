@@ -2161,6 +2161,7 @@ export type Database = {
           produto_venda_id: string | null
           quantidade: number
           tamanho: string | null
+          tipo_ordem: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2180,6 +2181,7 @@ export type Database = {
           produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
+          tipo_ordem?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2199,6 +2201,7 @@ export type Database = {
           produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
+          tipo_ordem?: string | null
           updated_at?: string | null
         }
         Relationships: [
