@@ -201,7 +201,11 @@ export function usePedidoLinhas(pedidoId: string) {
 
       const results = await Promise.all(promises);
       const errors = results.filter(r => r.error);
-      if (errors.length > 0) throw new Error(`${errors.length} atualizações falharam`);
+      if (errors.length > 0) {
+        console.error('Erros ao atualizar linhas:', errors);
+        const errorMessages = errors.map(e => e.error?.message || 'Erro desconhecido').join(', ');
+        throw new Error(`Falha ao atualizar ${errors.length} linha(s): ${errorMessages}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedidoId] });
