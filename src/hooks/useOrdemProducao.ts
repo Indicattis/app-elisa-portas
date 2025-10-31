@@ -113,7 +113,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
     };
   }, [tipoOrdem, queryClient]);
 
-  // Marcar linha como concluída
+  // Marcar linha como concluída com atualização otimista
   const marcarLinhaConcluida = useMutation({
     mutationFn: async ({ linhaId, concluida }: { linhaId: string; concluida: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -131,51 +131,36 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       return { linhaId, concluida };
     },
     onMutate: async ({ linhaId, concluida }) => {
-      // Cancel outgoing refetches
+      // Cancel queries to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: ['ordens-producao', tipoOrdem] });
 
-      // Snapshot previous value
+      // Snapshot for rollback
       const previousOrdens = queryClient.getQueryData<Ordem[]>(['ordens-producao', tipoOrdem]);
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Optimistically update to cache
-      queryClient.setQueryData<Ordem[]>(['ordens-producao', tipoOrdem], (old) => {
-        if (!old) return old;
+      // Optimistic update: immediately update the cache
+      queryClient.setQueryData<Ordem[]>(['ordens-producao', tipoOrdem], (oldData) => {
+        if (!oldData) return oldData;
         
-        return old.map(ordem => {
-          if (!ordem.linhas) return ordem;
-          
-          const hasLinha = ordem.linhas.some(l => l.id === linhaId);
-          if (!hasLinha) return ordem;
-          
-          return {
-            ...ordem,
-            linhas: ordem.linhas.map(linha => 
-              linha.id === linhaId 
-                ? { 
-                    ...linha, 
-                    concluida, 
-                    concluida_em: concluida ? new Date().toISOString() : undefined,
-                    concluida_por: concluida ? user?.id : undefined
-                  }
-                : linha
-            )
-          };
-        });
+        // Create new array with updated linha
+        return oldData.map(ordem => ({
+          ...ordem,
+          linhas: ordem.linhas?.map(linha => 
+            linha.id === linhaId
+              ? { ...linha, concluida }
+              : linha
+          ) || []
+        }));
       });
 
       return { previousOrdens };
     },
-    onError: (error, variables, context) => {
+    onError: (error, _, context) => {
       // Rollback on error
       if (context?.previousOrdens) {
         queryClient.setQueryData(['ordens-producao', tipoOrdem], context.previousOrdens);
       }
-      console.error('Erro ao atualizar linha:', error);
       toast({
-        title: "Erro ao atualizar",
+        title: "Erro",
         description: "Não foi possível atualizar a linha.",
         variant: "destructive",
       });
@@ -183,12 +168,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
     onSuccess: () => {
       toast({
         title: "Atualizado",
-        description: "Status da linha atualizado com sucesso.",
       });
-    },
-    onSettled: () => {
-      // Refetch after mutation to ensure data consistency
-      queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
     },
   });
 
