@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Flame, Settings } from "lucide-react";
 import { ObservacoesPortaForm } from "@/components/pedidos/ObservacoesPortaForm";
 import { usePedidoPortaObservacoes } from "@/hooks/usePedidoPortaObservacoes";
+import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function PedidoPreparacao() {
   const { id } = useParams();
@@ -21,6 +23,9 @@ export default function PedidoPreparacao() {
   const { toast } = useToast();
   const [linhasEditadas, setLinhasEditadas] = useState<Map<string, PedidoLinhaUpdate>>(new Map());
   const [salvando, setSalvando] = useState(false);
+  const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
+  
+  const { moverParaProximaEtapa } = usePedidosEtapas();
 
   const { data: pedido, isLoading: pedidoLoading } = useQuery({
     queryKey: ['pedido-preparacao', id],
@@ -169,8 +174,23 @@ export default function PedidoPreparacao() {
       const updates = Array.from(linhasEditadas.values());
       await atualizarLinhasEmLote(updates);
       setLinhasEditadas(new Map());
+      // Após salvar com sucesso, mostrar modal perguntando se quer avançar
+      setMostrarModalAvancar(true);
     } finally {
       setSalvando(false);
+    }
+  };
+
+  const handleAvancarEtapa = async () => {
+    if (!id) return;
+    
+    try {
+      await moverParaProximaEtapa.mutateAsync(id);
+      setMostrarModalAvancar(false);
+      navigate('/dashboard/pedidos');
+    } catch (error) {
+      // Erro já é tratado no hook
+      setMostrarModalAvancar(false);
     }
   };
 
@@ -559,6 +579,32 @@ export default function PedidoPreparacao() {
           </Button>
         )}
       </div>
+
+      {/* Modal para avançar etapa */}
+      <Dialog open={mostrarModalAvancar} onOpenChange={setMostrarModalAvancar}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avançar para Produção?</DialogTitle>
+            <DialogDescription>
+              A preparação foi salva com sucesso. Deseja avançar este pedido para a fase de produção?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setMostrarModalAvancar(false)}
+            >
+              Não, continuar editando
+            </Button>
+            <Button
+              onClick={handleAvancarEtapa}
+              disabled={moverParaProximaEtapa.isPending}
+            >
+              {moverParaProximaEtapa.isPending ? "Avançando..." : "Sim, avançar para produção"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
