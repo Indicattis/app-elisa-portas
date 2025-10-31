@@ -166,7 +166,18 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         variant: "destructive",
       });
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Buscar pedidoId da linha para invalidar a query de status
+      const ordemComLinha = ordens.find(o => 
+        o.linhas?.some(l => l.id === variables.linhaId)
+      );
+      
+      if (ordemComLinha?.pedido_id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['pedido-ordens-status', ordemComLinha.pedido_id] 
+        });
+      }
+      
       toast({
         title: "Atualizado",
       });
@@ -242,6 +253,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
     },
     onSuccess: async (pedidoId) => {
       queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+      queryClient.invalidateQueries({ queryKey: ['pedido-ordens-status', pedidoId] });
       
       toast({
         title: "Ordem concluída",
