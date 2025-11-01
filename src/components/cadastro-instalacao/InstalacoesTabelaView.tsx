@@ -3,7 +3,6 @@ import { format, isPast, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   MapPin,
-  Trash2,
   Download,
   Search,
   X,
@@ -623,23 +622,7 @@ export const InstalacoesTabelaView = ({
                             : '-'}
                         </TableCell>
                         <TableCell className="text-right py-2">
-                          <div className="flex items-center justify-end gap-1">
-                            {isAdmin && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm('Tem certeza que deseja excluir esta instalação?')) {
-                                    onDelete(instalacao.id);
-                                  }
-                                }}
-                                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
+                          {/* Ações removidas */}
                         </TableCell>
                       </TableRow>
                     ))}

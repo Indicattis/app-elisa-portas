@@ -1,13 +1,8 @@
-import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Pencil, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Entrega, CreateEntregaData } from '@/hooks/useEntregas';
-import { CadastroEntregaForm } from './CadastroEntregaForm';
 import {
   Select,
   SelectContent,
@@ -15,16 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 interface EntregasTabelaViewProps {
   entregas: Entrega[];
@@ -59,24 +44,6 @@ export const EntregasTabelaView = ({
   onUpdateStatus,
   isAdmin,
 }: EntregasTabelaViewProps) => {
-  const [editingEntrega, setEditingEntrega] = useState<Entrega | null>(null);
-  const [deletingEntrega, setDeletingEntrega] = useState<Entrega | null>(null);
-
-  const handleUpdate = async (data: CreateEntregaData) => {
-    if (!editingEntrega) return;
-    const success = await onUpdate(editingEntrega.id, data);
-    if (success) {
-      setEditingEntrega(null);
-    }
-  };
-
-  const handleDelete = () => {
-    if (deletingEntrega) {
-      onDelete(deletingEntrega.id);
-      setDeletingEntrega(null);
-    }
-  };
-
   return (
     <>
       <div className="rounded-md border">
@@ -90,13 +57,12 @@ export const EntregasTabelaView = ({
               <TableHead>Data Entrega</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Criado em</TableHead>
-              {isAdmin && <TableHead className="text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {entregas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 8 : 7} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   Nenhuma entrega cadastrada
                 </TableCell>
               </TableRow>
@@ -136,67 +102,12 @@ export const EntregasTabelaView = ({
                   <TableCell>
                     {format(new Date(entrega.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                   </TableCell>
-                  {isAdmin && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingEntrega(entrega)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeletingEntrega(entrega)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editingEntrega} onOpenChange={() => setEditingEntrega(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Entrega</DialogTitle>
-          </DialogHeader>
-          {editingEntrega && (
-            <CadastroEntregaForm
-              initialData={editingEntrega}
-              onSubmit={handleUpdate}
-              isEditing
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingEntrega} onOpenChange={() => setDeletingEntrega(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir a entrega de <strong>{deletingEntrega?.nome_cliente}</strong>?
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
