@@ -15,12 +15,11 @@ interface PedidoDetalhesSheetProps {
 
 export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalhesSheetProps) {
   const venda = pedido.vendas;
-  const { linhas, isLoading, adicionarLinha, removerLinha } = usePedidoLinhas(pedido.id);
+  const { linhas, isLoading } = usePedidoLinhas(pedido.id);
   
   if (!venda) return null;
 
   const produtos = venda.produtos_vendas || [];
-  const isAberto = pedido.etapa_atual === 'aberto';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -53,9 +52,9 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
             ) : (
               <PedidoLinhasEditor
                 linhas={linhas}
-                isReadOnly={!isAberto}
-                onAdicionarLinha={adicionarLinha}
-                onRemoverLinha={removerLinha}
+                isReadOnly={true}
+                onAdicionarLinha={async () => {}}
+                onRemoverLinha={async () => {}}
               />
             )}
           </div>
