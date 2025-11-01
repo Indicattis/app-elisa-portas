@@ -54,6 +54,7 @@ export default function VendaNova() {
     valor_entrada: "",
     nota_fiscal: true,
     pagamento_na_entrega: false,
+    tipo_entrega: "instalacao",
   });
 
   useEffect(() => {
@@ -134,6 +135,7 @@ export default function VendaNova() {
         valor_entrada: parseFloat(formData.valor_entrada) || 0,
         nota_fiscal: formData.nota_fiscal,
         pagamento_na_entrega: formData.pagamento_na_entrega,
+        tipo_entrega: formData.tipo_entrega,
       };
 
       console.log('Criando venda com dados:', vendaData);

@@ -84,6 +84,8 @@ import FrotaConferencia from "./pages/FrotaConferencia";
 import FrotaConferenciasHistorico from "./pages/FrotaConferenciasHistorico";
 import TabelaPrecos from "./pages/TabelaPrecos";
 import Todo from "./pages/Todo";
+import LogisticaHome from "./pages/LogisticaHome";
+import Entregas from "./pages/Entregas";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -362,6 +364,26 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <VisitaNova />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/logistica/home"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <LogisticaHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/logistica/entregas"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <Entregas />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
