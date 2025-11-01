@@ -347,9 +347,18 @@ export function AppSidebar() {
                                                     <Link to={nestedItem.href} className="flex items-center gap-2 w-full">
                                                       <NestedIcon className="h-4 w-4" />
                                                       <span>{nestedItem.label}</span>
+                                                      {ordensCountMap[nestedItem.key] > 0 && (
+                                                        <Badge 
+                                                          variant="secondary" 
+                                                          className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
+                                                        >
+                                                          {ordensCountMap[nestedItem.key]}
+                                                        </Badge>
+                                                      )}
                                                       {checklistColors[nestedItem.key] && (
                                                         <span className={cn(
-                                                          "w-2 h-2 rounded-full ml-auto",
+                                                          "w-2 h-2 rounded-full",
+                                                          ordensCountMap[nestedItem.key] > 0 ? "" : "ml-auto",
                                                           checklistColors[nestedItem.key].badge
                                                         )} />
                                                       )}
