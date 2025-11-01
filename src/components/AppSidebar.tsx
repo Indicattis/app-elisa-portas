@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTabsAccess } from "@/hooks/useTabsAccess";
 import { useGroupedTabs } from "@/hooks/useGroupedTabs";
 import { useTheme } from "@/components/ThemeProvider";
+import { useOrdensCount } from "@/hooks/useOrdensCount";
+import { Badge } from "@/components/ui/badge";
 import logoDark from "@/assets/logo-dark.png";
 import logoLight from "@/assets/logo-light.png";
 import { 
@@ -117,6 +119,7 @@ export function AppSidebar() {
   const { user } = useAuth();
   const { state } = useSidebar();
   const { data: tabs = [], isLoading } = useTabsAccess('sidebar', user?.id);
+  const { data: ordensCount } = useOrdensCount();
   
   const groupedTabs = useGroupedTabs(tabs);
   const { theme } = useTheme();
@@ -291,6 +294,14 @@ export function AppSidebar() {
                               const isNestedGroup = tabs.some(t => t.parent_key === subItem.key);
                               const nestedChildren = tabs.filter(t => t.parent_key === subItem.key);
                               
+                              // Mapeamento de keys para counts de ordens
+                              const ordensCountMap: Record<string, number> = {
+                                'producao_solda': ordensCount?.soldagem || 0,
+                                'producao_perfiladeira': ordensCount?.perfiladeira || 0,
+                                'producao_separacao': ordensCount?.separacao || 0,
+                                'producao_qualidade': ordensCount?.qualidade || 0,
+                              };
+                              
                               if (isNestedGroup && nestedChildren.length > 0) {
                                 // Renderizar como um grupo aninhado
                                 const isNestedGroupOpen = openGroups[subItem.key] ?? false;
@@ -377,6 +388,14 @@ export function AppSidebar() {
                                       <Link to={subItem.href} className="flex items-center gap-2 w-full">
                                         <SubIcon className="h-4 w-4" />
                                         <span>{subItem.label}</span>
+                                        {ordensCountMap[subItem.key] > 0 && (
+                                          <Badge 
+                                            variant="secondary" 
+                                            className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
+                                          >
+                                            {ordensCountMap[subItem.key]}
+                                          </Badge>
+                                        )}
                                         {checklistColors[subItem.key] && (
                                           <span className={cn(
                                             "w-2 h-2 rounded-full ml-auto",
