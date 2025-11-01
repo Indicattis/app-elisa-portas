@@ -1470,6 +1470,13 @@ export type Database = {
             referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "linhas_ordens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketing_investimentos: {
@@ -1855,7 +1862,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ordens_instalacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ordens_perfiladeira: {
         Row: {
@@ -1903,7 +1918,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ordens_perfiladeira_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ordens_pintura: {
         Row: {
@@ -1954,7 +1977,15 @@ export type Database = {
           tipo_tinta?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ordens_pintura_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ordens_producao: {
         Row: {
@@ -2142,7 +2173,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ordens_separacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ordens_soldagem: {
         Row: {
@@ -2187,7 +2226,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ordens_soldagem_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organograma_connections: {
         Row: {

@@ -50,10 +50,16 @@ export interface Entrega {
   produtos?: ProdutoEntrega[];
   parcelas?: ParcelaEntrega[];
   venda?: {
+    id: string;
+    numero_venda: string;
     valor_a_receber: number;
     pagamento_na_entrega: boolean;
     forma_pagamento: string;
     observacoes_venda: string | null;
+  };
+  pedido?: {
+    id: string;
+    numero_pedido: string;
   };
   criador?: {
     nome: string;
@@ -83,18 +89,31 @@ export const useEntregas = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('entregas' as any)
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select(`
+          *,
+          pedido:pedidos_producao(
+            id,
+            numero_pedido
+          ),
+          venda:vendas(
+            id,
+            numero_venda,
+            valor_a_receber,
+            pagamento_na_entrega,
+            forma_pagamento,
+            observacoes_venda
+          )
+        `)
+        .order('created_at', { ascending: false});
 
       if (error) throw error;
       
-      // Buscar dados dos criadores, produtos e venda manualmente
+      // Buscar dados dos criadores e produtos manualmente
       const entregasComCriadores: Entrega[] = await Promise.all(
         (data || []).map(async (entrega: any) => {
           let criador = undefined;
           let produtos: ProdutoEntrega[] = [];
           let parcelas: ParcelaEntrega[] = [];
-          let venda = undefined;
 
           // Buscar criador
           if (entrega.created_by) {
@@ -107,16 +126,8 @@ export const useEntregas = () => {
             criador = userData || undefined;
           }
 
-          // Buscar dados da venda associada
+          // Buscar dados da venda associada se houver
           if (entrega.venda_id) {
-            // Buscar informações da venda
-            const { data: vendaData } = await supabase
-              .from('vendas')
-              .select('valor_a_receber, pagamento_na_entrega, forma_pagamento, observacoes_venda')
-              .eq('id', entrega.venda_id)
-              .maybeSingle();
-            
-            venda = vendaData || undefined;
 
             // Buscar produtos da venda
             const { data: produtosData } = await supabase
@@ -170,7 +181,8 @@ export const useEntregas = () => {
             status: entrega.status as 'pendente_producao' | 'em_producao' | 'em_qualidade' | 'aguardando_pintura' | 'pronta_fabrica' | 'finalizada',
             produtos,
             parcelas,
-            venda,
+            venda: entrega.venda || undefined,
+            pedido: entrega.pedido || undefined,
             criador
           };
         })

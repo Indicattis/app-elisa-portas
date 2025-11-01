@@ -13,7 +13,14 @@ interface Ordem {
   observacoes?: string;
   linhas?: any[];
   pedido?: {
+    id: string;
+    numero_pedido: string;
     cliente_nome: string;
+    venda_id?: string;
+    venda?: {
+      id: string;
+      numero_venda: string;
+    };
   };
 }
 

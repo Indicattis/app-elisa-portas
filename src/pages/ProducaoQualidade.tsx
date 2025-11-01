@@ -14,6 +14,21 @@ interface Ordem {
   data_conclusao?: string;
   observacoes?: string;
   responsavel_id?: string;
+  pedido?: {
+    id: string;
+    numero_pedido: string;
+    cliente_nome: string;
+    venda_id?: string;
+    venda?: {
+      id: string;
+      numero_venda: string;
+    };
+  };
+  linhas?: any[];
+  admin_users?: {
+    nome: string;
+    foto_perfil_url?: string;
+  };
 }
 
 export default function ProducaoQualidade() {

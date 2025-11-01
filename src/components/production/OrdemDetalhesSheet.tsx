@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
 import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
 import { toast } from "sonner";
+import { OrigemBadges } from "@/components/shared/OrigemBadges";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -30,7 +31,14 @@ interface Ordem {
   responsavel_id?: string;
   linhas?: LinhaOrdem[];
   pedido?: {
+    id: string;
+    numero_pedido: string;
     cliente_nome: string;
+    venda_id?: string;
+    venda?: {
+      id: string;
+      numero_venda: string;
+    };
   };
   admin_users?: {
     nome: string;
@@ -182,6 +190,24 @@ export function OrdemDetalhesSheet({
               )}
             </div>
           </div>
+
+          {/* Origem - Pedido e Venda */}
+          {(ordem.pedido?.id || ordem.pedido?.venda?.id) && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <span className="text-sm font-medium">Documentos de Origem</span>
+                <OrigemBadges
+                  pedidoId={ordem.pedido?.id}
+                  pedidoNumero={ordem.pedido?.numero_pedido}
+                  vendaId={ordem.pedido?.venda?.id}
+                  vendaNumero={ordem.pedido?.venda?.numero_venda}
+                  size="default"
+                  orientation="horizontal"
+                />
+              </div>
+            </>
+          )}
 
           {/* Botão de capturar ordem */}
           {!temResponsavel && ordem.status !== 'concluido' && (

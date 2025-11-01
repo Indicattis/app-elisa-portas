@@ -2,8 +2,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { InstalacaoCadastrada } from '@/hooks/useInstalacoesCadastradas';
 import { AlertCircle } from 'lucide-react';
+import { OrigemBadges } from '@/components/shared/OrigemBadges';
 
 interface DetalhesInstalacaoDialogProps {
   open: boolean;
@@ -90,6 +92,24 @@ export function DetalhesInstalacaoDialog({
               </div>
             </div>
           </div>
+
+          {/* Documentos Relacionados */}
+          {(instalacao.pedido?.id || instalacao.venda?.id) && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">Documentos Relacionados</h3>
+                <OrigemBadges
+                  pedidoId={instalacao.pedido?.id}
+                  pedidoNumero={instalacao.pedido?.numero_pedido}
+                  vendaId={instalacao.venda?.id}
+                  vendaNumero={instalacao.venda?.numero_venda}
+                  size="default"
+                  orientation="horizontal"
+                />
+              </div>
+            </>
+          )}
 
           {/* Datas e Responsável */}
           <div className="grid grid-cols-4 gap-4 text-sm">

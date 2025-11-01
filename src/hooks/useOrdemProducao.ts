@@ -28,7 +28,14 @@ interface Ordem {
   responsavel_id?: string;
   linhas?: LinhaOrdem[];
   pedido?: {
+    id: string;
+    numero_pedido: string;
     cliente_nome: string;
+    venda_id?: string;
+    venda?: {
+      id: string;
+      numero_venda: string;
+    };
   };
   admin_users?: {
     nome: string;
@@ -58,51 +65,42 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       // Buscar ordens baseado no tipo
       const { data, error } = await supabase
         .from(tabelaOrdem)
-        .select('*')
+        .select(`
+          *,
+          linhas:linhas_ordens!ordem_id(
+            id,
+            item,
+            quantidade,
+            tamanho,
+            concluida,
+            concluida_em,
+            concluida_por
+          ),
+          pedido:pedidos_producao!pedido_id(
+            id,
+            numero_pedido,
+            cliente_nome,
+            venda_id,
+            venda:vendas(
+              id,
+              numero_venda
+            )
+          ),
+          admin_users:responsavel_id(
+            nome,
+            foto_perfil_url
+          )
+        `)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      ordensData = data || [];
-
-      // Buscar dados do pedido, linhas e responsável de cada ordem
-      const ordensComLinhas = await Promise.all(
-        ordensData.map(async (ordem: any) => {
-          // Buscar dados do pedido
-          const { data: pedido } = await supabase
-            .from('pedidos_producao')
-            .select('cliente_nome')
-            .eq('id', ordem.pedido_id)
-            .single();
-
-          // Buscar linhas da ordem usando ordem_id e tipo_ordem
-          const { data: linhas } = await supabase
-            .from('linhas_ordens')
-            .select('*')
-            .eq('ordem_id', ordem.id)
-            .eq('tipo_ordem', tipoOrdem)
-            .order('created_at', { ascending: true });
-
-          // Buscar dados do responsável se houver
-          let responsavel = null;
-          if (ordem.responsavel_id) {
-            const { data: adminUser } = await supabase
-              .from('admin_users')
-              .select('nome, foto_perfil_url')
-              .eq('user_id', ordem.responsavel_id)
-              .single();
-            responsavel = adminUser;
-          }
-
-          return {
-            ...ordem,
-            linhas: linhas || [],
-            pedido: pedido || null,
-            admin_users: responsavel,
-          } as Ordem;
-        })
-      );
-
-      return ordensComLinhas;
+      
+      return (data || []).map((ordem: any) => ({
+        ...ordem,
+        linhas: ordem.linhas || [],
+        pedido: ordem.pedido || null,
+        admin_users: ordem.admin_users || null,
+      })) as Ordem[];
     },
   });
 
