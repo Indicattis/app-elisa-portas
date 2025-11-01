@@ -379,6 +379,16 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/dashboard/entregas"
+                  element={
+                    <ProtectedRoute requirePermission="instalacoes">
+                      <DashboardLayout>
+                        <Entregas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/logistica/entregas"
                   element={
                     <ProtectedRoute requirePermission="instalacoes">
