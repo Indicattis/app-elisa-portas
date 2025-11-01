@@ -3411,6 +3411,7 @@ export type Database = {
           table_name: string
         }[]
       }
+      criar_ordem_pintura: { Args: { p_pedido_id: string }; Returns: undefined }
       criar_ordem_qualidade: {
         Args: { p_pedido_id: string }
         Returns: undefined

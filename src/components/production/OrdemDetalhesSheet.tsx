@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2, Circle, Package, UserCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
 interface LinhaOrdem {
   id: string;
@@ -44,6 +44,10 @@ interface OrdemDetalhesSheetProps {
   onCapturarOrdem?: (ordemId: string) => void;
   isUpdating?: boolean;
   isCapturing?: boolean;
+  onIniciarPintura?: () => void;
+  onFinalizarPintura?: () => void;
+  isIniciando?: boolean;
+  isFinalizando?: boolean;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -51,6 +55,7 @@ const TIPO_LABELS: Record<TipoOrdem, string> = {
   perfiladeira: 'Perfiladeira',
   separacao: 'Separação',
   qualidade: 'Qualidade',
+  pintura: 'Pintura',
 };
 
 export function OrdemDetalhesSheet({
@@ -63,6 +68,10 @@ export function OrdemDetalhesSheet({
   onCapturarOrdem,
   isUpdating = false,
   isCapturing = false,
+  onIniciarPintura,
+  onFinalizarPintura,
+  isIniciando = false,
+  isFinalizando = false,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
   
@@ -100,8 +109,16 @@ export function OrdemDetalhesSheet({
             
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Status</span>
-              <Badge variant={ordem.status === 'concluido' ? 'default' : 'secondary'}>
-                {ordem.status === 'concluido' ? 'Concluído' : 'Pendente'}
+              <Badge variant={
+                ordem.status === 'concluido' || ordem.status === 'pronta' ? 'default' : 'secondary'
+              }>
+                {tipoOrdem === 'pintura' ? (
+                  ordem.status === 'pendente' ? 'Para Pintar' :
+                  ordem.status === 'pintando' ? 'Pintando' :
+                  ordem.status === 'pronta' ? 'Pronta' : ordem.status
+                ) : (
+                  ordem.status === 'concluido' ? 'Concluído' : 'Pendente'
+                )}
               </Badge>
             </div>
 
@@ -220,8 +237,50 @@ export function OrdemDetalhesSheet({
             </div>
           </div>
 
-          {/* Botão de concluir ordem */}
-          {ordem.status !== 'concluido' && (
+          {/* Botões específicos para pintura */}
+          {tipoOrdem === 'pintura' && ordem.status !== 'pronta' && (
+            <>
+              <Separator />
+              {ordem.status === 'pendente' && podeMarcarLinhas && (
+                <>
+                  <Button
+                    className="w-full"
+                    disabled={isIniciando}
+                    onClick={onIniciarPintura}
+                  >
+                    {isIniciando ? "Iniciando..." : "Iniciar Pintura"}
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Clique para mover a ordem para "Pintando"
+                  </p>
+                </>
+              )}
+              {ordem.status === 'pintando' && podeMarcarLinhas && (
+                <>
+                  <Button
+                    className="w-full"
+                    disabled={!todasConcluidas || isFinalizando}
+                    onClick={onFinalizarPintura}
+                  >
+                    {isFinalizando ? "Finalizando..." : "Finalizar Pintura"}
+                  </Button>
+                  {!todasConcluidas && linhas.length > 0 && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Marque todos os itens como concluídos para finalizar
+                    </p>
+                  )}
+                </>
+              )}
+              {!podeMarcarLinhas && (
+                <p className="text-xs text-center text-muted-foreground text-orange-600">
+                  Apenas o responsável pode gerenciar esta ordem
+                </p>
+              )}
+            </>
+          )}
+
+          {/* Botão de concluir ordem (para outras ordens) */}
+          {tipoOrdem !== 'pintura' && ordem.status !== 'concluido' && (
             <>
               <Separator />
               <Button

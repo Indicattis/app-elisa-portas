@@ -35,6 +35,7 @@ import ProducaoSolda from "./pages/ProducaoSolda";
 import ProducaoPerfiladeira from "./pages/ProducaoPerfiladeira";
 import ProducaoSeparacao from "./pages/ProducaoSeparacao";
 import ProducaoQualidade from "./pages/ProducaoQualidade";
+import ProducaoPintura from "./pages/ProducaoPintura";
 import Instalacoes from "./pages/Instalacoes";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
@@ -691,6 +692,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="producao">
                       <DashboardLayout>
                         <ProducaoQualidade />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/producao/pintura"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <ProducaoPintura />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

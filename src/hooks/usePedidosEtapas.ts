@@ -330,6 +330,20 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         console.log('[moverParaProximaEtapa] Ordem de qualidade criada com sucesso');
       }
 
+      // Se avançou para aguardando_pintura, criar ordem de pintura
+      if (etapaDestino === 'aguardando_pintura') {
+        console.log('[moverParaProximaEtapa] Criando ordem de pintura para pedido:', pedidoId);
+        const { error: pinturaError } = await supabase.rpc('criar_ordem_pintura', {
+          p_pedido_id: pedidoId
+        });
+
+        if (pinturaError) {
+          console.error('[moverParaProximaEtapa] Erro ao criar ordem de pintura:', pinturaError);
+          throw pinturaError;
+        }
+        console.log('[moverParaProximaEtapa] Ordem de pintura criada com sucesso');
+      }
+
       return { etapaAtualNome, proximaEtapa: etapaDestino };
     },
     onSuccess: (data) => {

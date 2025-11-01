@@ -300,6 +300,7 @@ export function AppSidebar() {
                                 'producao_perfiladeira': ordensCount?.perfiladeira || 0,
                                 'producao_separacao': ordensCount?.separacao || 0,
                                 'producao_qualidade': ordensCount?.qualidade || 0,
+                                'producao_pintura': ordensCount?.pintura || 0,
                               };
                               
                               if (isNestedGroup && nestedChildren.length > 0) {
