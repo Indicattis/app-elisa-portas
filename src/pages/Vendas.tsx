@@ -393,9 +393,12 @@ export default function Vendas() {
             <Table className="w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs sm:text-sm">Cliente</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-right">Valor/Ações</TableHead>
+                  {/* Mobile: 2 colunas */}
+                  <TableHead className="text-xs sm:text-sm md:hidden">Cliente</TableHead>
+                  <TableHead className="text-xs sm:text-sm text-right md:hidden">Valor/Ações</TableHead>
+                  {/* Desktop: todas as colunas alinhadas com as células */}
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Data</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cliente</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Telefone</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cidade/Estado</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Previsão</TableHead>
@@ -410,7 +413,7 @@ export default function Vendas() {
               <TableBody>
                 {filteredVendas?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center py-8 text-xs sm:text-sm text-muted-foreground">
+                    <TableCell colSpan={13} className="text-center py-8 text-xs sm:text-sm text-muted-foreground">
                       Nenhuma venda encontrada
                     </TableCell>
                   </TableRow>
