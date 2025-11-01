@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Package } from "lucide-react";
+import { Truck } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export default function Entregas() {
                 size={isMobile ? "sm" : "default"}
                 className="gap-2"
               >
-                <Package className="h-4 w-4" />
+                <Truck className="h-4 w-4" />
                 {!isMobile && "Nova Entrega"}
               </Button>
             )}
