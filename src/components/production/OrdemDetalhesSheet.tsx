@@ -41,7 +41,7 @@ interface OrdemDetalhesSheetProps {
   tipoOrdem: TipoOrdem;
   onMarcarLinha: (linhaId: string, concluida: boolean) => void;
   onConcluirOrdem: (ordemId: string) => void;
-  onCapturarOrdem: (ordemId: string) => void;
+  onCapturarOrdem?: (ordemId: string) => void;
   isUpdating?: boolean;
   isCapturing?: boolean;
 }

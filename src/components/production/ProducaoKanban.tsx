@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Package, CheckCircle2, Clock, UserCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -27,6 +29,7 @@ interface Ordem {
   };
   admin_users?: {
     nome: string;
+    foto_perfil_url?: string;
   };
 }
 
@@ -35,6 +38,8 @@ interface ProducaoKanbanProps {
   ordensConcluidas: Ordem[];
   isLoading: boolean;
   onOrdemClick: (ordem: Ordem) => void;
+  onCapturarOrdem?: (ordemId: string) => void;
+  isCapturing?: boolean;
   tipoOrdem: TipoOrdem;
 }
 
@@ -43,6 +48,8 @@ export function ProducaoKanban({
   ordensConcluidas,
   isLoading,
   onOrdemClick,
+  onCapturarOrdem,
+  isCapturing = false,
   tipoOrdem,
 }: ProducaoKanbanProps) {
   
@@ -52,30 +59,53 @@ export function ProducaoKanban({
     const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
 
     return (
-      <Card
-        key={ordem.id}
-        className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
-        onClick={() => onOrdemClick(ordem)}
-      >
+      <Card key={ordem.id} className="hover:shadow-md transition-all">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div 
+              className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
+              onClick={() => onOrdemClick(ordem)}
+            >
               <Package className="h-4 w-4 flex-shrink-0 text-primary" />
               <CardTitle className="text-sm font-semibold truncate">
                 {ordem.numero_ordem}
               </CardTitle>
             </div>
-            <Badge variant={ordem.status === 'concluido' ? 'default' : 'secondary'} className="flex-shrink-0">
-              {ordem.status === 'concluido' ? (
-                <CheckCircle2 className="h-3 w-3" />
-              ) : (
-                <Clock className="h-3 w-3" />
-              )}
-            </Badge>
+            
+            {ordem.responsavel_id ? (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={ordem.admin_users?.foto_perfil_url} alt={ordem.admin_users?.nome} />
+                  <AvatarFallback className="text-xs">
+                    {ordem.admin_users?.nome?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground truncate max-w-20">
+                  {ordem.admin_users?.nome}
+                </span>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCapturarOrdem?.(ordem.id);
+                }}
+                disabled={isCapturing}
+                className="h-7 text-xs flex-shrink-0"
+              >
+                <UserCheck className="h-3 w-3 mr-1" />
+                Capturar
+              </Button>
+            )}
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-3">
+        <CardContent 
+          className="space-y-3 cursor-pointer"
+          onClick={() => onOrdemClick(ordem)}
+        >
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground">Cliente</p>
             <p className="text-sm font-medium truncate">{ordem.pedido?.cliente_nome}</p>
@@ -93,15 +123,6 @@ export function ProducaoKanban({
                   style={{ width: `${progresso}%` }}
                 />
               </div>
-            </div>
-          )}
-
-          {ordem.responsavel_id && (
-            <div className="flex items-center gap-2 text-xs">
-              <UserCheck className="h-3 w-3 text-primary" />
-              <span className="text-muted-foreground">
-                {ordem.admin_users?.nome || 'Responsável atribuído'}
-              </span>
             </div>
           )}
 

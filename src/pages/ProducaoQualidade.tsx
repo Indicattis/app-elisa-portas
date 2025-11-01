@@ -63,6 +63,8 @@ export default function ProducaoQualidade() {
         ordensConcluidas={ordensConcluidas}
         isLoading={isLoading}
         onOrdemClick={handleOrdemClick}
+        onCapturarOrdem={handleCapturarOrdem}
+        isCapturing={capturarOrdem.isPending}
         tipoOrdem="qualidade"
       />
 
@@ -73,9 +75,7 @@ export default function ProducaoQualidade() {
         tipoOrdem="qualidade"
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
-        onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
-        isCapturing={capturarOrdem.isPending}
       />
     </div>
   );

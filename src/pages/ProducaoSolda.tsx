@@ -71,6 +71,8 @@ export default function ProducaoSolda() {
         ordensConcluidas={ordensConcluidas}
         isLoading={isLoading}
         onOrdemClick={handleOrdemClick}
+        onCapturarOrdem={handleCapturarOrdem}
+        isCapturing={capturarOrdem.isPending}
         tipoOrdem="soldagem"
       />
 
@@ -81,9 +83,7 @@ export default function ProducaoSolda() {
         tipoOrdem="soldagem"
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
-        onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
-        isCapturing={capturarOrdem.isPending}
       />
     </div>
   );

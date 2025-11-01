@@ -32,6 +32,7 @@ interface Ordem {
   };
   admin_users?: {
     nome: string;
+    foto_perfil_url?: string;
   };
 }
 
@@ -86,7 +87,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
           if (ordem.responsavel_id) {
             const { data: adminUser } = await supabase
               .from('admin_users')
-              .select('nome')
+              .select('nome, foto_perfil_url')
               .eq('user_id', ordem.responsavel_id)
               .single();
             responsavel = adminUser;
