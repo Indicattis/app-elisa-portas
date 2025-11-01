@@ -1084,6 +1084,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           nome_cliente: string
+          pedido_id: string | null
           responsavel_instalacao_id: string | null
           responsavel_instalacao_nome: string | null
           status: string
@@ -1112,6 +1113,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nome_cliente: string
+          pedido_id?: string | null
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
@@ -1140,6 +1142,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nome_cliente?: string
+          pedido_id?: string | null
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
@@ -1165,6 +1168,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "instalacoes_cadastradas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "instalacoes_cadastradas_venda_id_fkey"
