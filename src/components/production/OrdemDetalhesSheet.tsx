@@ -75,7 +75,7 @@ export function OrdemDetalhesSheet({
   
   const isResponsavel = ordem.responsavel_id === user?.id;
   const temResponsavel = !!ordem.responsavel_id;
-  const podeMarcarLinhas = !temResponsavel || isResponsavel;
+  const podeMarcarLinhas = temResponsavel && isResponsavel;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
