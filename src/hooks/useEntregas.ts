@@ -82,7 +82,7 @@ export const useEntregas = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('entregas' as any)
+        .from('entregas')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -319,7 +319,7 @@ export const useEntregas = () => {
   const updateStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
-        .from('entregas' as any)
+        .from('entregas')
         .update({ status })
         .eq('id', id);
 
