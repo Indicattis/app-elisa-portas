@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useOrdemProducao } from "@/hooks/useOrdemProducao";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
@@ -83,7 +83,9 @@ export default function ProducaoSolda() {
         tipoOrdem="soldagem"
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
+        onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
+        isCapturing={capturarOrdem.isPending}
       />
     </div>
   );

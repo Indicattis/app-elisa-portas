@@ -5,8 +5,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, Package, UserCheck } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
+import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
+import { toast } from "sonner";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -74,6 +77,8 @@ export function OrdemDetalhesSheet({
   isFinalizando = false,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const { buscarDadosOrdem } = useOrdemPDFData();
   
   if (!ordem) return null;
 
@@ -86,14 +91,41 @@ export function OrdemDetalhesSheet({
   const temResponsavel = !!ordem.responsavel_id;
   const podeMarcarLinhas = temResponsavel && isResponsavel;
 
+  const handleDownloadPDF = async () => {
+    if (!ordem) return;
+    
+    setIsDownloadingPDF(true);
+    try {
+      const dadosCompletos = await buscarDadosOrdem(ordem.id, tipoOrdem);
+      baixarOrdemProducaoPDF(dadosCompletos);
+      toast.success("PDF baixado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF da ordem");
+    } finally {
+      setIsDownloadingPDF(false);
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            {ordem.numero_ordem}
-          </SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {ordem.numero_ordem}
+            </SheetTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPDF}
+              disabled={isDownloadingPDF}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isDownloadingPDF ? "Gerando..." : "PDF"}
+            </Button>
+          </div>
           <SheetDescription>
             Detalhes da ordem de {TIPO_LABELS[tipoOrdem].toLowerCase()}
           </SheetDescription>
