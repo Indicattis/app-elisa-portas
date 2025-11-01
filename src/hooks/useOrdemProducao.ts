@@ -54,21 +54,16 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       let ordensData: any[] = [];
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
-      // Buscar ordens baseado no tipo com informação do responsável
+      // Buscar ordens baseado no tipo
       const { data, error } = await supabase
         .from(tabelaOrdem)
-        .select(`
-          *,
-          admin_users!responsavel_id (
-            nome
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
       ordensData = data || [];
 
-      // Buscar dados do pedido e linhas de cada ordem
+      // Buscar dados do pedido, linhas e responsável de cada ordem
       const ordensComLinhas = await Promise.all(
         ordensData.map(async (ordem: any) => {
           // Buscar dados do pedido
@@ -86,10 +81,22 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             .eq('tipo_ordem', tipoOrdem)
             .order('created_at', { ascending: true });
 
+          // Buscar dados do responsável se houver
+          let responsavel = null;
+          if (ordem.responsavel_id) {
+            const { data: adminUser } = await supabase
+              .from('admin_users')
+              .select('nome')
+              .eq('user_id', ordem.responsavel_id)
+              .single();
+            responsavel = adminUser;
+          }
+
           return {
             ...ordem,
             linhas: linhas || [],
             pedido: pedido || null,
+            admin_users: responsavel,
           } as Ordem;
         })
       );
