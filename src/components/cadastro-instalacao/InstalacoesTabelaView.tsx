@@ -4,7 +4,6 @@ import { ptBR } from 'date-fns/locale';
 import {
   MapPin,
   Trash2,
-  Pencil,
   Download,
   Search,
   X,
@@ -75,7 +74,6 @@ export const InstalacoesTabelaView = ({
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const navigate = useNavigate();
-  const [editingInstalacao, setEditingInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [correcaoInstalacao, setCorrecaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [statusInstalacao, setStatusInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [detalhesInstalacao, setDetalhesInstalacao] = useState<InstalacaoCadastrada | null>(null);
@@ -167,17 +165,6 @@ export const InstalacoesTabelaView = ({
   }, [filteredAndSortedInstalacoes, currentPage]);
 
   const totalPages = Math.ceil(filteredAndSortedInstalacoes.length / itemsPerPage);
-
-  const handleEdit = (instalacao: InstalacaoCadastrada) => {
-    setEditingInstalacao(instalacao);
-  };
-
-  const handleUpdate = async (data: CreateInstalacaoData) => {
-    if (editingInstalacao) {
-      await onUpdate(editingInstalacao.id, data);
-      setEditingInstalacao(null);
-    }
-  };
 
   const handleDownloadPDF = () => {
     try {
@@ -637,17 +624,6 @@ export const InstalacoesTabelaView = ({
                         </TableCell>
                         <TableCell className="text-right py-2">
                           <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(instalacao);
-                              }}
-                              className="h-7 w-7 p-0"
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
                             {isAdmin && (
                               <Button
                                 variant="ghost"
@@ -719,34 +695,6 @@ export const InstalacoesTabelaView = ({
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={!!editingInstalacao} onOpenChange={() => setEditingInstalacao(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Instalação</DialogTitle>
-          </DialogHeader>
-          {editingInstalacao && (
-            <CadastroInstalacaoForm
-              onSubmit={handleUpdate}
-              initialData={{
-                nome_cliente: editingInstalacao.nome_cliente,
-                telefone_cliente: editingInstalacao.telefone_cliente || '',
-                estado: editingInstalacao.estado,
-                cidade: editingInstalacao.cidade,
-                tamanho: editingInstalacao.tamanho || '',
-                categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
-                data_instalacao: editingInstalacao.data_instalacao || '',
-                data_producao: editingInstalacao.data_producao || '',
-                status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
-                tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
-                responsavel_instalacao_id: editingInstalacao.responsavel_instalacao_id || undefined,
-                responsavel_instalacao_nome: editingInstalacao.responsavel_instalacao_nome || undefined,
-              }}
-              isEditing={true}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <AlterarParaCorrecaoDialog
         open={!!correcaoInstalacao}
