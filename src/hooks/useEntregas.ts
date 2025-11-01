@@ -82,7 +82,7 @@ export const useEntregas = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('entregas')
+        .from('entregas' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -90,7 +90,7 @@ export const useEntregas = () => {
       
       // Buscar dados dos criadores, produtos e venda manualmente
       const entregasComCriadores: Entrega[] = await Promise.all(
-        (data || []).map(async (entrega) => {
+        (data || []).map(async (entrega: any) => {
           let criador = undefined;
           let produtos: ProdutoEntrega[] = [];
           let parcelas: ParcelaEntrega[] = [];
@@ -197,7 +197,7 @@ export const useEntregas = () => {
       const { data_entrega, responsavel_entrega_id, ...restData } = data;
       
       const { data: entrega, error } = await supabase
-        .from('entregas')
+        .from('entregas' as any)
         .insert({
           ...restData,
           data_entrega: data_entrega && data_entrega.trim() !== '' 
@@ -215,13 +215,14 @@ export const useEntregas = () => {
 
       toast.success('Entrega cadastrada com sucesso');
 
-      // Trigger geocoding
-      if (entrega?.id) {
-        geocodeEntrega(entrega.id, data.cidade, data.estado);
+      // Trigger geocoding apenas se entrega foi criada
+      const entregaId = (entrega as any)?.id;
+      if (entregaId && data.cidade && data.estado) {
+        geocodeEntrega(entregaId, data.cidade, data.estado);
       }
 
       await fetchEntregas();
-      return entrega?.id || null;
+      return entregaId || null;
     } catch (error) {
       console.error('Error creating entrega:', error);
       toast.error('Erro ao cadastrar entrega');
@@ -247,7 +248,7 @@ export const useEntregas = () => {
       };
       
       const { error } = await supabase
-        .from('entregas')
+        .from('entregas' as any)
         .update(sanitizedData)
         .eq('id', id);
 
@@ -279,7 +280,7 @@ export const useEntregas = () => {
   const deleteEntrega = async (id: string): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('entregas')
+        .from('entregas' as any)
         .delete()
         .eq('id', id);
 
@@ -318,7 +319,7 @@ export const useEntregas = () => {
   const updateStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
-        .from('entregas')
+        .from('entregas' as any)
         .update({ status })
         .eq('id', id);
 
@@ -342,7 +343,7 @@ export const useEntregas = () => {
         { 
           event: '*', 
           schema: 'public', 
-          table: 'entregas' 
+          table: 'entregas' as any
         }, 
         () => {
           fetchEntregas();

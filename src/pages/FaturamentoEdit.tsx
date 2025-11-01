@@ -9,6 +9,8 @@ import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { FaturamentoProdutosTable } from "@/components/vendas/FaturamentoProdutosTable";
 import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 
 interface Venda {
   id: string;
@@ -28,6 +30,8 @@ export default function FaturamentoEdit() {
   const [loading, setLoading] = useState(true);
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showPedidoDialog, setShowPedidoDialog] = useState(false);
+  const { createPedidoFromVenda } = usePedidoCreation();
 
   const {
     produtos,
@@ -119,10 +123,8 @@ export default function FaturamentoEdit() {
       
       setShowConfirmDialog(false);
       
-      // Aguardar um pouco para garantir que as queries foram invalidadas
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      navigate('/dashboard/faturamento');
+      // Mostrar dialog perguntando se quer criar pedido
+      setShowPedidoDialog(true);
     } catch (error) {
       console.error('Erro ao finalizar faturamento:', error);
     }
@@ -263,6 +265,37 @@ export default function FaturamentoEdit() {
         ).length || 0}
         onConfirmar={executarFaturamento}
       />
+
+      {/* Modal de Criação de Pedido */}
+      <AlertDialog open={showPedidoDialog} onOpenChange={setShowPedidoDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Venda Faturada com Sucesso!</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja criar o pedido de produção para esta venda agora?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => navigate('/dashboard/faturamento')}>
+              Não, criar depois
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              if (!venda) return;
+              const pedidoId = await createPedidoFromVenda(venda.id);
+              setShowPedidoDialog(false);
+              if (pedidoId) {
+                toast({
+                  title: "Pedido criado com sucesso!",
+                  description: "O pedido está pronto para ser preenchido.",
+                });
+              }
+              navigate('/dashboard/faturamento');
+            }}>
+              Sim, Criar Pedido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

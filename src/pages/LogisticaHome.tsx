@@ -12,20 +12,20 @@ export default function LogisticaHome() {
     queryKey: ['entregas-dashboard'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('entregas')
+        .from('entregas' as any)
         .select('*');
 
       if (error) throw error;
 
-      const pendentes = data.filter(e => e.status === 'pendente_producao').length;
-      const emProducao = data.filter(e => ['em_producao', 'em_qualidade', 'aguardando_pintura'].includes(e.status)).length;
-      const finalizadas = data.filter(e => e.status === 'finalizada').length;
+      const pendentes = (data || []).filter((e: any) => e.status === 'pendente_producao').length;
+      const emProducao = (data || []).filter((e: any) => ['em_producao', 'em_qualidade', 'aguardando_pintura'].includes(e.status)).length;
+      const finalizadas = (data || []).filter((e: any) => e.status === 'finalizada').length;
 
       return {
         entregasPendentes: pendentes,
         entregasEmProducao: emProducao,
         entregasFinalizadas: finalizadas,
-        totalEntregas: data.length
+        totalEntregas: (data || []).length
       };
     }
   });

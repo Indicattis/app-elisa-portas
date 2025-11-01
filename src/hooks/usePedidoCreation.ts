@@ -39,13 +39,13 @@ export const usePedidoCreation = () => {
       const { data: pedido, error: pedidoError } = await supabase
         .from('pedidos_producao')
         .insert({
-          venda_id: vendaId,
+          venda_id: vendaId as any,
           numero_pedido: numeroPedido,
           etapa_atual: 'aberto',
           status: 'pendente',
           created_by: user.id,
           prioridade_etapa: Date.now(),
-        })
+        } as any)
         .select()
         .single();
 

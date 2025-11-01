@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
+import { ESTADOS_BRASIL, CIDADES_POR_ESTADO } from '@/utils/estadosCidades';
 import { CreateEntregaData } from '@/hooks/useEntregas';
 import { Loader2 } from 'lucide-react';
 
@@ -49,7 +49,7 @@ export const CadastroEntregaForm = ({
   const [submitting, setSubmitting] = useState(false);
   const [selectedEstado, setSelectedEstado] = useState(initialData?.estado || '');
   const [cidades, setCidades] = useState<string[]>(
-    initialData?.estado ? getCidadesPorEstado(initialData.estado) : []
+    initialData?.estado ? CIDADES_POR_ESTADO[initialData.estado] || [] : []
   );
 
   const form = useForm<CreateEntregaData>({
@@ -69,7 +69,7 @@ export const CadastroEntregaForm = ({
 
   const handleEstadoChange = (estado: string) => {
     setSelectedEstado(estado);
-    const cidadesDoEstado = getCidadesPorEstado(estado);
+    const cidadesDoEstado = CIDADES_POR_ESTADO[estado] || [];
     setCidades(cidadesDoEstado);
     form.setValue('cidade', '');
   };
@@ -152,8 +152,8 @@ export const CadastroEntregaForm = ({
                   </FormControl>
                   <SelectContent>
                     {ESTADOS_BRASIL.map((estado) => (
-                      <SelectItem key={estado} value={estado}>
-                        {estado}
+                      <SelectItem key={estado.sigla} value={estado.sigla}>
+                        {estado.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>

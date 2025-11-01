@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,6 +27,7 @@ import { StatusBadge } from "@/components/vendas/StatusBadge";
 import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
 import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
+import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 
 interface Venda {
   id: string;
@@ -130,6 +131,7 @@ export default function Faturamento() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { createPedidoFromVenda } = usePedidoCreation();
 
   // Função para verificar se uma venda está faturada
   const isFaturada = (venda: Venda) => {
@@ -973,6 +975,25 @@ export default function Faturamento() {
 
                         <TableCell>
                           <div className="flex items-center gap-2">
+                            {/* Botão Criar Pedido - apenas para vendas faturadas sem pedido */}
+                            {isFaturada(venda) && !(venda as any).pedido_id && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const pedidoId = await createPedidoFromVenda(venda.id);
+                                  if (pedidoId) {
+                                    fetchVendas(); // Atualizar lista
+                                  }
+                                }}
+                                title="Criar pedido de produção"
+                              >
+                                <Package className="w-4 h-4 mr-1" />
+                                Criar Pedido
+                              </Button>
+                            )}
+                            
                             <Button 
                               variant="ghost" 
                               size="sm"
