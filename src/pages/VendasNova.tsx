@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { ArrowLeft, Plus, CalendarIcon } from 'lucide-react';
@@ -418,23 +419,27 @@ export default function VendasNova() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tipo_entrega">Tipo de Entrega *</Label>
-              <Select
+            <div className="space-y-3">
+              <Label>Tipo de Entrega *</Label>
+              <RadioGroup
                 value={formData.tipo_entrega}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
+                className="flex gap-4"
                 required
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="entrega">Entrega</SelectItem>
-                  <SelectItem value="instalacao">Instalação</SelectItem>
-                  <SelectItem value="correcao">Correção</SelectItem>
-                  <SelectItem value="servico">Serviço</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="instalacao" id="tipo-instalacao" />
+                  <Label htmlFor="tipo-instalacao" className="font-normal cursor-pointer">
+                    Instalação
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="entrega" id="tipo-entrega" />
+                  <Label htmlFor="tipo-entrega" className="font-normal cursor-pointer">
+                    Entrega
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="space-y-2">
