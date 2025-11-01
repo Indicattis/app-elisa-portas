@@ -5,31 +5,31 @@ export function useOrdensCount() {
   return useQuery({
     queryKey: ["ordens-count"],
     queryFn: async () => {
-      // Buscar count de ordens pendentes de cada tipo
+      // Buscar ordens pendentes de cada tipo e contar no cliente
       const [soldagemRes, perfiladeiraRes, separacaoRes, qualidadeRes] = await Promise.all([
         supabase
           .from("ordens_soldagem")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .neq("status", "concluido"),
         supabase
           .from("ordens_perfiladeira")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .neq("status", "concluido"),
         supabase
           .from("ordens_separacao")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .neq("status", "concluido"),
         supabase
           .from("ordens_qualidade")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .neq("status", "concluido"),
       ]);
 
       return {
-        soldagem: soldagemRes.count || 0,
-        perfiladeira: perfiladeiraRes.count || 0,
-        separacao: separacaoRes.count || 0,
-        qualidade: qualidadeRes.count || 0,
+        soldagem: soldagemRes.data?.length || 0,
+        perfiladeira: perfiladeiraRes.data?.length || 0,
+        separacao: separacaoRes.data?.length || 0,
+        qualidade: qualidadeRes.data?.length || 0,
       };
     },
     refetchInterval: 30000, // Atualizar a cada 30 segundos
