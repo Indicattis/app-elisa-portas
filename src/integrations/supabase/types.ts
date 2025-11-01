@@ -715,6 +715,81 @@ export type Database = {
           },
         ]
       }
+      entregas: {
+        Row: {
+          cidade: string
+          created_at: string
+          created_by: string | null
+          data_entrega: string | null
+          estado: string
+          geocode_precision: string | null
+          id: string
+          last_geocoded_at: string | null
+          latitude: number | null
+          longitude: number | null
+          nome_cliente: string
+          observacoes: string | null
+          pedido_id: string | null
+          status: string
+          telefone_cliente: string | null
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          cidade: string
+          created_at?: string
+          created_by?: string | null
+          data_entrega?: string | null
+          estado: string
+          geocode_precision?: string | null
+          id?: string
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          status?: string
+          telefone_cliente?: string | null
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          cidade?: string
+          created_at?: string
+          created_by?: string | null
+          data_entrega?: string | null
+          estado?: string
+          geocode_precision?: string | null
+          id?: string
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente?: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          status?: string
+          telefone_cliente?: string | null
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entregas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entregas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipes_instalacao: {
         Row: {
           ativa: boolean
