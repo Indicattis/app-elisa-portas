@@ -27,7 +27,7 @@ interface Ordem {
 interface Pedido {
   id: string;
   numero_pedido: string;
-  etapa: string;
+  etapa_atual: string;
   status?: string;
   created_at: string;
   venda_id?: string;
@@ -227,17 +227,17 @@ export default function PedidoView() {
           <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full ${
-                pedido.etapa === 'finalizado' ? 'bg-green-500' :
-                pedido.etapa === 'em_producao' ? 'bg-blue-500' :
-                pedido.etapa === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
+                pedido.etapa_atual === 'finalizado' ? 'bg-green-500' :
+                pedido.etapa_atual === 'em_producao' ? 'bg-blue-500' :
+                pedido.etapa_atual === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
               }`} />
               <div>
                 <p className="text-sm text-muted-foreground">Etapa Atual</p>
-                <p className="font-semibold text-lg">{getEtapaLabel(pedido.etapa)}</p>
+                <p className="font-semibold text-lg">{getEtapaLabel(pedido.etapa_atual)}</p>
               </div>
             </div>
-            <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa)} text-base px-4 py-2`}>
-              {getEtapaLabel(pedido.etapa)}
+            <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa_atual)} text-base px-4 py-2`}>
+              {getEtapaLabel(pedido.etapa_atual)}
             </Badge>
           </div>
         </CardContent>
