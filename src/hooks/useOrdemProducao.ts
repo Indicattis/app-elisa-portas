@@ -55,23 +55,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ['ordens-producao', tipoOrdem],
     queryFn: async () => {
-      let ordensData: any[] = [];
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
       // Buscar ordens baseado no tipo
-      const { data, error } = await supabase
+      const { data: ordensData, error: ordensError } = await supabase
         .from(tabelaOrdem)
         .select(`
           *,
-          linhas:linhas_ordens!ordem_id(
-            id,
-            item,
-            quantidade,
-            tamanho,
-            concluida,
-            concluida_em,
-            concluida_por
-          ),
           pedido:pedidos_producao!pedido_id(
             id,
             numero_pedido,
@@ -85,11 +75,23 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         `)
         .order('created_at', { ascending: true });
       
-      if (error) throw error;
+      if (ordensError) throw ordensError;
+      if (!ordensData || ordensData.length === 0) return [];
       
-      return (data || []).map((ordem: any) => ({
+      // Buscar linhas para todas as ordens de uma vez
+      const ordemIds = ordensData.map((o: any) => o.id);
+      const { data: linhasData, error: linhasError } = await supabase
+        .from('linhas_ordens')
+        .select('*')
+        .in('ordem_id', ordemIds)
+        .eq('tipo_ordem', tipoOrdem);
+      
+      if (linhasError) throw linhasError;
+      
+      // Mapear linhas para suas ordens
+      return ordensData.map((ordem: any) => ({
         ...ordem,
-        linhas: ordem.linhas || [],
+        linhas: (linhasData || []).filter((linha: any) => linha.ordem_id === ordem.id),
         pedido: ordem.pedido || null,
         admin_users: ordem.admin_users || null,
       })) as Ordem[];
