@@ -24,12 +24,12 @@ export default function Pedidos() {
     reorganizarPedidos
   } = usePedidosEtapas(etapaAtiva);
 
-  const handleMoverEtapa = async (pedidoId: string, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
-    if (onProgress) {
-      await moverParaProximaEtapa.mutateAsync({ pedidoId, onProgress });
-    } else {
-      await moverParaProximaEtapa.mutateAsync({ pedidoId });
-    }
+  const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
+    await moverParaProximaEtapa.mutateAsync({ 
+      pedidoId, 
+      skipCheckboxValidation: skipCheckboxValidation || false,
+      onProgress 
+    });
   };
 
   const handleRetrocederEtapa = async (pedidoId: string) => {

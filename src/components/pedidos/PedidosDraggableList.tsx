@@ -23,7 +23,7 @@ interface PedidosDraggableListProps {
   etapa: EtapaPedido;
   isAberto: boolean;
   viewMode?: 'grid' | 'list';
-  onMoverEtapa: (pedidoId: string) => void;
+  onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string) => void;
   onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
@@ -36,7 +36,7 @@ interface SortableItemProps {
   total: number;
   isAberto: boolean;
   viewMode?: 'grid' | 'list';
-  onMoverEtapa: (pedidoId: string) => void;
+  onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
 }
