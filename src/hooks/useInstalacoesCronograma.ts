@@ -43,7 +43,6 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
           
           return {
             ...instalacao,
-            categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
             status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
             tipo_instalacao: instalacao.tipo_instalacao as 'elisa' | 'autorizados',
             dia_semana: diaSemana

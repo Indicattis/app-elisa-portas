@@ -20,7 +20,6 @@ export default function Instalacoes() {
     createInstalacao, 
     deleteInstalacao, 
     updateInstalacao,
-    alterarParaCorrecao,
     updateStatus 
   } = useInstalacoesCadastradas();
 
@@ -56,7 +55,6 @@ export default function Instalacoes() {
           instalacoes={instalacoes}
           onDelete={deleteInstalacao}
           onUpdate={updateInstalacao}
-          onAlterarParaCorrecao={alterarParaCorrecao}
           onUpdateStatus={updateStatus}
           isAdmin={isAdmin}
         />

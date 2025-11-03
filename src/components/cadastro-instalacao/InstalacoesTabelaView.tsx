@@ -56,7 +56,6 @@ interface InstalacoesTabelaViewProps {
   instalacoes: InstalacaoCadastrada[];
   onDelete: (id: string) => void;
   onUpdate: (id: string, data: CreateInstalacaoData) => Promise<boolean>;
-  onAlterarParaCorrecao: (id: string, justificativa: string) => void;
   onUpdateStatus: (id: string, status: string) => void;
   isAdmin: boolean;
 }
@@ -68,19 +67,16 @@ export const InstalacoesTabelaView = ({
   instalacoes,
   onDelete,
   onUpdate,
-  onAlterarParaCorrecao,
   onUpdateStatus,
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const navigate = useNavigate();
-  const [correcaoInstalacao, setCorrecaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [statusInstalacao, setStatusInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [detalhesInstalacao, setDetalhesInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [responsavelInstalacao, setResponsavelInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterCategoria, setFilterCategoria] = useState<string>('all');
   const [filterEstado, setFilterEstado] = useState<string>('all');
   const [quickFilter, setQuickFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('created_at');
@@ -130,11 +126,6 @@ export const InstalacoesTabelaView = ({
       result = result.filter((inst) => inst.status === filterStatus);
     }
 
-    // Filtrar por categoria
-    if (filterCategoria !== 'all') {
-      result = result.filter((inst) => inst.categoria === filterCategoria);
-    }
-
     // Filtrar por estado
     if (filterEstado !== 'all') {
       result = result.filter((inst) => inst.estado === filterEstado);
@@ -156,7 +147,7 @@ export const InstalacoesTabelaView = ({
     });
 
     return result;
-  }, [instalacoes, searchTerm, quickFilter, filterStatus, filterCategoria, filterEstado, sortField, sortOrder]);
+  }, [instalacoes, searchTerm, quickFilter, filterStatus, filterEstado, sortField, sortOrder]);
 
   const paginatedInstalacoes = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -193,8 +184,6 @@ export const InstalacoesTabelaView = ({
           telefone_cliente: updatedInstalacao.telefone_cliente || '',
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
-          tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
@@ -240,8 +229,6 @@ export const InstalacoesTabelaView = ({
           telefone_cliente: updatedInstalacao.telefone_cliente || '',
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
-          tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
@@ -259,7 +246,6 @@ export const InstalacoesTabelaView = ({
   const clearFilters = () => {
     setSearchTerm('');
     setFilterStatus('all');
-    setFilterCategoria('all');
     setFilterEstado('all');
     setQuickFilter('all');
   };
@@ -373,19 +359,6 @@ export const InstalacoesTabelaView = ({
                 </SelectContent>
               </Select>
 
-              <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-                <SelectTrigger className="h-8 text-[9px] min-w-0">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="instalacao">Instalação</SelectItem>
-                  <SelectItem value="entrega">Entrega</SelectItem>
-                  <SelectItem value="correcao">Correção</SelectItem>
-                  <SelectItem value="carregamento_agendado">Carregamento</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Select value={filterEstado} onValueChange={setFilterEstado}>
                 <SelectTrigger className="h-8 text-[9px] min-w-0">
                   <SelectValue placeholder="Estado" />
@@ -400,7 +373,7 @@ export const InstalacoesTabelaView = ({
                 </SelectContent>
               </Select>
 
-              {(searchTerm || filterStatus !== 'all' || filterCategoria !== 'all' || filterEstado !== 'all' || quickFilter !== 'all') && (
+              {(searchTerm || filterStatus !== 'all' || filterEstado !== 'all' || quickFilter !== 'all') && (
                 <Button 
                   onClick={clearFilters} 
                   variant="ghost" 
@@ -472,7 +445,7 @@ export const InstalacoesTabelaView = ({
                         </p>
                       </div>
 
-                      {/* Status e Categoria */}
+                      {/* Status */}
                       <div className="flex flex-wrap gap-1">
                         <Badge 
                           variant="outline" 
@@ -483,9 +456,6 @@ export const InstalacoesTabelaView = ({
                           }}
                         >
                           {getStatusLabel(instalacao.status)}
-                        </Badge>
-                        <Badge variant="outline" className={`text-[9px] ${getCategoriaVariant(instalacao.categoria)}`}>
-                          {getCategoriaLabel(instalacao.categoria)}
                         </Badge>
                         {isAtrasado(instalacao) && (
                           <Badge variant="destructive" className="text-[9px] gap-1">
@@ -526,7 +496,6 @@ export const InstalacoesTabelaView = ({
                         </Button>
                       </TableHead>
                       <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs">Categoria</TableHead>
                       <TableHead className="text-xs">
                         <Button
                           variant="ghost"
@@ -591,11 +560,6 @@ export const InstalacoesTabelaView = ({
                           )}
                         </TableCell>
                         <TableCell className="py-2">
-                          <Badge variant="outline" className={`text-[10px] ${getCategoriaVariant(instalacao.categoria)}`}>
-                            {getCategoriaLabel(instalacao.categoria)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-2">
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] truncate max-w-[150px]">
                               {instalacao.cidade}, {instalacao.estado}
@@ -622,7 +586,36 @@ export const InstalacoesTabelaView = ({
                             : '-'}
                         </TableCell>
                         <TableCell className="text-right py-2">
-                          {/* Ações removidas */}
+                          <div className="flex gap-1 justify-end">
+                            {instalacao.pedido_id && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/dashboard/pedido/${instalacao.pedido_id}/edit`);
+                                }}
+                                className="h-7 px-2 text-xs"
+                                title="Ver Pedido"
+                              >
+                                Pedido
+                              </Button>
+                            )}
+                            {instalacao.venda_id && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/dashboard/vendas/${instalacao.venda_id}/view`);
+                                }}
+                                className="h-7 px-2 text-xs"
+                                title="Ver Venda"
+                              >
+                                Venda
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -678,17 +671,6 @@ export const InstalacoesTabelaView = ({
           )}
         </CardContent>
       </Card>
-
-      <AlterarParaCorrecaoDialog
-        open={!!correcaoInstalacao}
-        onOpenChange={(open) => !open && setCorrecaoInstalacao(null)}
-        onConfirm={(justificativa) => {
-          if (correcaoInstalacao) {
-            onAlterarParaCorrecao(correcaoInstalacao.id, justificativa);
-          }
-        }}
-        instalacaoNome={correcaoInstalacao?.nome_cliente || ''}
-      />
 
       <AlterarStatusDialog
         open={!!statusInstalacao}

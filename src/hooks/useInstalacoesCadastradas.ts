@@ -32,8 +32,6 @@ export interface InstalacaoCadastrada {
   telefone_cliente: string | null;
   estado: string;
   cidade: string;
-  tamanho: string | null;
-  categoria: 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado';
   latitude: number | null;
   longitude: number | null;
   last_geocoded_at: string | null;
@@ -76,14 +74,14 @@ export interface CreateInstalacaoData {
   telefone_cliente?: string;
   estado: string;
   cidade: string;
-  tamanho?: string;
-  categoria: 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado';
   data_instalacao?: string;
   status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
   tipo_instalacao?: 'elisa' | 'autorizados';
   responsavel_instalacao_id?: string;
   responsavel_instalacao_nome?: string;
   data_producao?: string;
+  pedido_id?: string;
+  venda_id?: string;
 }
 
 export const useInstalacoesCadastradas = () => {
@@ -183,7 +181,6 @@ export const useInstalacoesCadastradas = () => {
           
           return {
             ...instalacao,
-            categoria: instalacao.categoria as 'instalacao' | 'entrega' | 'correcao',
             status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
             produtos,
             parcelas,
@@ -364,31 +361,6 @@ export const useInstalacoesCadastradas = () => {
     };
   }, []);
 
-  const alterarParaCorrecao = async (id: string, justificativa: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { error } = await supabase
-        .from('instalacoes_cadastradas')
-        .update({
-          categoria: 'correcao',
-          justificativa_correcao: justificativa,
-          alterado_para_correcao_em: new Date().toISOString(),
-          alterado_para_correcao_por: user.id
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast.success('Instalação alterada para correção com sucesso');
-      await fetchInstalacoes();
-    } catch (error) {
-      console.error('Error alterando para correção:', error);
-      toast.error('Erro ao alterar a instalação para correção');
-    }
-  };
-
   const updateStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
@@ -413,7 +385,6 @@ export const useInstalacoesCadastradas = () => {
     createInstalacao,
     updateInstalacao,
     deleteInstalacao,
-    alterarParaCorrecao,
     updateStatus,
   };
 };

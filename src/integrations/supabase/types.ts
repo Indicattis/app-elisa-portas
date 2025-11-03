@@ -1145,7 +1145,6 @@ export type Database = {
         Row: {
           alterado_para_correcao_em: string | null
           alterado_para_correcao_por: string | null
-          categoria: string
           cidade: string
           created_at: string
           created_by: string | null
@@ -1163,7 +1162,6 @@ export type Database = {
           responsavel_instalacao_id: string | null
           responsavel_instalacao_nome: string | null
           status: string
-          tamanho: string | null
           telefone_cliente: string | null
           tipo_instalacao:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
@@ -1174,7 +1172,6 @@ export type Database = {
         Insert: {
           alterado_para_correcao_em?: string | null
           alterado_para_correcao_por?: string | null
-          categoria?: string
           cidade: string
           created_at?: string
           created_by?: string | null
@@ -1192,7 +1189,6 @@ export type Database = {
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
-          tamanho?: string | null
           telefone_cliente?: string | null
           tipo_instalacao?:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
@@ -1203,7 +1199,6 @@ export type Database = {
         Update: {
           alterado_para_correcao_em?: string | null
           alterado_para_correcao_por?: string | null
-          categoria?: string
           cidade?: string
           created_at?: string
           created_by?: string | null
@@ -1221,7 +1216,6 @@ export type Database = {
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
-          tamanho?: string | null
           telefone_cliente?: string | null
           tipo_instalacao?:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]

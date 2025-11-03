@@ -49,12 +49,6 @@ export const useInstalacoesDashboard = () => {
         total: total as number,
       })).sort((a, b) => b.total - a.total).slice(0, 5);
 
-      // Correções (retrabalho)
-      const { data: correcoes } = await supabase
-        .from('instalacoes_cadastradas')
-        .select('id', { count: 'exact' })
-        .eq('categoria', 'correcao');
-
       const metrics: InstalacoesMetrics = {
         instalacoesPendentes: pendentes?.length || 0,
         instalacoesConcluidasMes: concluidas?.length || 0,
@@ -62,7 +56,7 @@ export const useInstalacoesDashboard = () => {
         distribuicaoEstados: estadosArray,
         equipes: [],
         instalacoesSemana: 0,
-        taxaRetrabalho: correcoes && concluidas ? ((correcoes.length / concluidas.length) * 100) : 0,
+        taxaRetrabalho: 0,
       };
 
       return metrics;

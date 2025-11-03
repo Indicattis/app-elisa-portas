@@ -30,10 +30,6 @@ const formSchema = z.object({
   telefone_cliente: z.string().optional(),
   estado: z.string().min(2, 'Selecione um estado'),
   cidade: z.string().min(2, 'Selecione uma cidade'),
-  tamanho: z.string().optional(),
-  categoria: z.enum(['instalacao', 'entrega', 'correcao', 'carregamento_agendado'], {
-    required_error: 'Selecione uma categoria',
-  }),
   data_instalacao: z.string().optional(),
   data_producao: z.string().optional(),
   status: z.enum(['pendente_producao', 'pronta_fabrica', 'finalizada']).optional(),
@@ -69,8 +65,6 @@ export const CadastroInstalacaoForm = ({
       telefone_cliente: '',
       estado: '',
       cidade: '',
-      tamanho: '',
-      categoria: 'instalacao',
       data_instalacao: undefined,
       data_producao: undefined,
       status: 'pendente_producao',
@@ -227,44 +221,6 @@ export const CadastroInstalacaoForm = ({
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="categoria"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Categoria</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="instalacao">Instalação</SelectItem>
-                  <SelectItem value="entrega">Entrega</SelectItem>
-                  <SelectItem value="correcao">Correção</SelectItem>
-                  <SelectItem value="carregamento_agendado">Carregamento Agendado</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="tamanho"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tamanho (Opcional)</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: 2.10m x 0.80m" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
