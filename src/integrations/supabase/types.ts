@@ -3606,6 +3606,10 @@ export type Database = {
         Args: { p_pedido_id: string }
         Returns: undefined
       }
+      verificar_ordem_pintura_concluida: {
+        Args: { p_pedido_id: string }
+        Returns: boolean
+      }
       verificar_ordem_qualidade_concluida: {
         Args: { p_pedido_id: string }
         Returns: boolean

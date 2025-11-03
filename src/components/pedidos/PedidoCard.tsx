@@ -95,6 +95,20 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'inspecao_qualidade',
   });
 
+  // Verificar se a ordem de pintura está concluída (para etapa aguardando_pintura)
+  const { data: ordemPinturaStatus } = useQuery({
+    queryKey: ['pedido-pintura-status', pedido.id],
+    queryFn: async () => {
+      if (pedido.etapa_atual !== 'aguardando_pintura') return null;
+      
+      const { data: ordemConcluida } = await supabase
+        .rpc('verificar_ordem_pintura_concluida', { p_pedido_id: pedido.id });
+      
+      return ordemConcluida;
+    },
+    enabled: pedido.etapa_atual === 'aguardando_pintura',
+  });
+
   // Para todos os pedidos (incluindo aberto), buscar dados da venda relacionada
   const venda = pedido.vendas;
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
@@ -106,6 +120,7 @@ export function PedidoCard({
   const temLinhas = linhasCount > 0;
   const todasOrdensConcluidasEmProducao = ordensStatus === true;
   const ordemQualidadeConcluida = ordemQualidadeStatus === true;
+  const ordemPinturaConcluida = ordemPinturaStatus === true;
 
   // Função para determinar processos que serão executados
   const determinarProcessos = async (pedidoId: string) => {
@@ -217,6 +232,29 @@ export function PedidoCard({
             status: 'pending' 
           });
         }
+      }
+    }
+
+    // Se está na etapa aguardando pintura, determinar destino
+    if (etapaAtual === 'aguardando_pintura') {
+      const { data: venda } = await supabase
+        .from('vendas')
+        .select('tipo_entrega')
+        .eq('id', pedido.venda_id)
+        .single();
+
+      if (venda?.tipo_entrega === 'entrega') {
+        lista.push({ 
+          id: 'preparar_coleta', 
+          label: 'Enviando para Coleta', 
+          status: 'pending' 
+        });
+      } else {
+        lista.push({ 
+          id: 'preparar_instalacao', 
+          label: 'Enviando para Instalação', 
+          status: 'pending' 
+        });
       }
     }
 
@@ -428,6 +466,17 @@ export function PedidoCard({
                     disabled={!ordemQualidadeConcluida}
                     className="ml-2"
                     title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : ""}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                    Avançar
+                  </Button>
+                ) : etapaAtual === 'aguardando_pintura' ? (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAcaoEtapa(true)}
+                    disabled={!ordemPinturaConcluida}
+                    className="ml-2"
+                    title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : ""}
                   >
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
                     Avançar
@@ -737,6 +786,17 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
                   Avançar
                 </Button>
+              ) : etapaAtual === 'aguardando_pintura' ? (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowAcaoEtapa(true)}
+                  disabled={!ordemPinturaConcluida}
+                  title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : ""}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                  Avançar
+                </Button>
               ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
                   size="sm"
@@ -762,7 +822,30 @@ export function PedidoCard({
         pedido={pedido}
         open={showAcaoEtapa}
         onOpenChange={setShowAcaoEtapa}
-        onAvancar={onMoverEtapa || (() => {})}
+        onAvancar={async () => {
+          setShowAcaoEtapa(false);
+          
+          if (etapaAtual === 'aguardando_pintura') {
+            const listaProcessos = await determinarProcessos(pedido.id);
+            setProcessos(listaProcessos);
+            setShowProgresso(true);
+
+            if (onMoverEtapa) {
+              await onMoverEtapa(pedido.id, true, (processoId, status) => {
+                setProcessos(prev => 
+                  prev.map(p => p.id === processoId ? { ...p, status } : p)
+                );
+              });
+
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              setShowProgresso(false);
+            }
+          } else {
+            if (onMoverEtapa) {
+              onMoverEtapa(pedido.id);
+            }
+          }
+        }}
       />
 
       <RetrocederEtapaModal
