@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, DollarSign, Package, User, Calendar, CreditCard, FileText, Home, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Package, User, Calendar, CreditCard, FileText, Home, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -24,6 +24,7 @@ interface Pedido {
   id: string;
   numero_pedido: string;
   etapa: string;
+  ordens?: any[];
 }
 
 interface Instalacao {
@@ -106,9 +107,53 @@ export default function VendaView() {
 
       const { data: pedidoData } = await supabase
         .from("pedidos_producao")
-        .select("id, numero_pedido, etapa")
+        .select("id, numero_pedido, etapa_atual")
         .eq("venda_id", id)
         .maybeSingle();
+
+      // Se houver pedido, buscar suas ordens
+      let ordensData: any[] = [];
+      if (pedidoData?.id) {
+        // Buscar ordem de soldagem
+        const { data: soldagem } = await supabase
+          .from("ordens_soldagem")
+          .select("id, numero_ordem, status")
+          .eq("pedido_id", pedidoData.id)
+          .maybeSingle();
+        if (soldagem) ordensData.push({ ...soldagem, tipo: "Soldagem" });
+
+        // Buscar ordem de perfiladeira
+        const { data: perfiladeira } = await supabase
+          .from("ordens_perfiladeira")
+          .select("id, numero_ordem, status")
+          .eq("pedido_id", pedidoData.id)
+          .maybeSingle();
+        if (perfiladeira) ordensData.push({ ...perfiladeira, tipo: "Perfiladeira" });
+
+        // Buscar ordem de separação
+        const { data: separacao } = await supabase
+          .from("ordens_separacao")
+          .select("id, numero_ordem, status")
+          .eq("pedido_id", pedidoData.id)
+          .maybeSingle();
+        if (separacao) ordensData.push({ ...separacao, tipo: "Separação" });
+
+        // Buscar ordem de qualidade
+        const { data: qualidade } = await supabase
+          .from("ordens_qualidade")
+          .select("id, numero_ordem, status")
+          .eq("pedido_id", pedidoData.id)
+          .maybeSingle();
+        if (qualidade) ordensData.push({ ...qualidade, tipo: "Qualidade" });
+
+        // Buscar ordem de pintura
+        const { data: pintura } = await supabase
+          .from("ordens_pintura")
+          .select("id, numero_ordem, status")
+          .eq("pedido_id", pedidoData.id)
+          .maybeSingle();
+        if (pintura) ordensData.push({ ...pintura, tipo: "Pintura" });
+      }
 
       const { data: instalacaoData } = await supabase
         .from("instalacoes_cadastradas")
@@ -131,7 +176,7 @@ export default function VendaView() {
       setVenda({
         ...vendaData,
         parcelas: parcelasData || [],
-        pedido: pedidoData || undefined,
+        pedido: pedidoData ? { ...pedidoData, etapa: pedidoData.etapa_atual, ordens: ordensData } : undefined,
         instalacao: instalacaoData || undefined,
         canal_aquisicao: canalData || undefined,
         atendente: atendenteData || undefined,
@@ -166,6 +211,44 @@ export default function VendaView() {
     return colors[etapa] || "";
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "concluido":
+      case "pronta":
+        return <CheckCircle2 className="w-3 h-3 text-green-600" />;
+      case "em_andamento":
+        return <Clock className="w-3 h-3 text-blue-600" />;
+      case "cancelado":
+        return <XCircle className="w-3 h-3 text-red-600" />;
+      default:
+        return <AlertCircle className="w-3 h-3 text-yellow-600" />;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      aberto: "Aberto",
+      pendente: "Pendente",
+      em_andamento: "Em Andamento",
+      concluido: "Concluído",
+      cancelado: "Cancelado",
+      pronta: "Pronta",
+    };
+    return labels[status] || status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      aberto: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20",
+      pendente: "bg-gray-500/10 text-gray-700 border-gray-500/20",
+      em_andamento: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+      concluido: "bg-green-500/10 text-green-700 border-green-500/20",
+      pronta: "bg-green-500/10 text-green-700 border-green-500/20",
+      cancelado: "bg-red-500/10 text-red-700 border-red-500/20",
+    };
+    return colors[status] || "";
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
   if (!venda) return <div className="text-center py-8"><p>Venda não encontrada</p></div>;
 
@@ -196,24 +279,49 @@ export default function VendaView() {
         </CardHeader>
         <CardContent>
           {venda.pedido ? (
-            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className={`w-3 h-3 rounded-full ${
-                  venda.pedido.etapa === 'finalizado' ? 'bg-green-500' :
-                  venda.pedido.etapa === 'em_producao' ? 'bg-blue-500' :
-                  venda.pedido.etapa === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
-                }`} />
-                <div>
-                  <p className="text-sm text-muted-foreground">Pedido #{venda.pedido.numero_pedido}</p>
-                  <p className="font-semibold text-lg">{getEtapaLabel(venda.pedido.etapa)}</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className={`w-3 h-3 rounded-full ${
+                    venda.pedido.etapa === 'finalizado' ? 'bg-green-500' :
+                    venda.pedido.etapa === 'em_producao' ? 'bg-blue-500' :
+                    venda.pedido.etapa === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
+                  }`} />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pedido #{venda.pedido.numero_pedido}</p>
+                    <p className="font-semibold text-lg">{getEtapaLabel(venda.pedido.etapa)}</p>
+                  </div>
+                  <Badge variant="outline" className={`${getEtapaBadgeColor(venda.pedido.etapa)} px-3 py-1`}>
+                    {getEtapaLabel(venda.pedido.etapa)}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className={`${getEtapaBadgeColor(venda.pedido.etapa)} px-3 py-1`}>
-                  {getEtapaLabel(venda.pedido.etapa)}
-                </Badge>
+                <Button onClick={() => navigate(`/dashboard/pedido/${venda.pedido?.id}/view`)}>
+                  Ver Pedido
+                </Button>
               </div>
-              <Button onClick={() => navigate(`/dashboard/pedido/${venda.pedido?.id}/view`)}>
-                Ver Pedido
-              </Button>
+
+              {/* Ordens de Produção */}
+              {venda.pedido.ordens && venda.pedido.ordens.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-3">Ordens de Produção ({venda.pedido.ordens.length})</h3>
+                  <div className="space-y-2">
+                    {venda.pedido.ordens.map((ordem: any) => (
+                      <div key={ordem.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(ordem.status)}
+                          <div>
+                            <p className="font-medium text-sm">{ordem.tipo}</p>
+                            <p className="text-xs text-muted-foreground">#{ordem.numero_ordem}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className={`${getStatusColor(ordem.status)} text-xs`}>
+                          {getStatusLabel(ordem.status)}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-4 bg-muted/30 rounded-lg text-center">
