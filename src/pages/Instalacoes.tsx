@@ -21,7 +21,8 @@ export default function Instalacoes() {
     deleteInstalacao, 
     updateInstalacao,
     updateStatus,
-    concluirInstalacao
+    concluirInstalacao,
+    geocodeInstalacao
   } = useInstalacoesCadastradas();
 
   return (
@@ -58,6 +59,7 @@ export default function Instalacoes() {
           onUpdate={updateInstalacao}
           onUpdateStatus={updateStatus}
           onConcluirInstalacao={concluirInstalacao}
+          onGeocode={geocodeInstalacao}
           isAdmin={isAdmin}
         />
       </div>

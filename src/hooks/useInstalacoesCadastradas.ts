@@ -327,6 +327,8 @@ export const useInstalacoesCadastradas = () => {
     try {
       console.log(`Geocoding instalação ${id}: ${cidade}, ${estado}`);
       
+      toast.info('Geocodificando instalação...');
+      
       const { error } = await supabase.functions.invoke('geocode-instalacao', {
         body: { id, cidade, estado },
       });
@@ -334,9 +336,11 @@ export const useInstalacoesCadastradas = () => {
       if (error) {
         console.error('Geocoding error:', error);
         toast.error('Erro ao geocodificar instalação');
+        return false;
       } else {
         toast.success('Instalação geocodificada com sucesso');
         await fetchInstalacoes();
+        return true;
       }
     } catch (error) {
       console.error('Error calling geocode function:', error);
@@ -410,5 +414,6 @@ export const useInstalacoesCadastradas = () => {
     deleteInstalacao,
     updateStatus,
     concluirInstalacao,
+    geocodeInstalacao,
   };
 };

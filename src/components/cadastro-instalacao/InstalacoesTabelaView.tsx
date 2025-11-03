@@ -59,6 +59,7 @@ interface InstalacoesTabelaViewProps {
   onUpdate: (id: string, data: CreateInstalacaoData) => Promise<boolean>;
   onUpdateStatus: (id: string, status: string) => void;
   onConcluirInstalacao: (id: string) => Promise<boolean>;
+  onGeocode: (id: string, cidade: string, estado: string) => Promise<boolean>;
   isAdmin: boolean;
 }
 
@@ -71,6 +72,7 @@ export const InstalacoesTabelaView = ({
   onUpdate,
   onUpdateStatus,
   onConcluirInstalacao,
+  onGeocode,
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const navigate = useNavigate();
@@ -106,6 +108,17 @@ export const InstalacoesTabelaView = ({
     }
     
     await onConcluirInstalacao(instalacaoId);
+  };
+
+  const handleGeocode = async (instalacao: InstalacaoCadastrada) => {
+    await onGeocode(instalacao.id, instalacao.cidade, instalacao.estado);
+  };
+
+  const getGeocodeStatus = (instalacao: InstalacaoCadastrada) => {
+    if (instalacao.latitude && instalacao.longitude) {
+      return { label: 'Geocodificado', variant: 'success' as const };
+    }
+    return { label: 'Não Geocodificado', variant: 'warning' as const };
   };
 
   const filteredAndSortedInstalacoes = useMemo(() => {
@@ -449,10 +462,49 @@ export const InstalacoesTabelaView = ({
 
                       {/* Localização */}
                       <div>
-                        <p className="text-[10px] text-muted-foreground">Localização</p>
-                        <p className="text-[10px] truncate">
-                          {instalacao.cidade}, {instalacao.estado}
-                        </p>
+                        <p className="text-[10px] text-muted-foreground mb-1">Localização</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] truncate">
+                            {instalacao.cidade}, {instalacao.estado}
+                          </p>
+                          {instalacao.latitude && instalacao.longitude ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/dashboard/mapa-autorizados?instalacao=${instalacao.id}`);
+                              }}
+                              title="Ver no Mapa"
+                              className="h-5 w-5 p-0 text-blue-500"
+                            >
+                              <MapPin className="h-3 w-3" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleGeocode(instalacao);
+                              }}
+                              title="Geocodificar"
+                              className="h-5 w-5 p-0 text-orange-500"
+                            >
+                              <MapPin className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-[8px] w-fit mt-1 ${
+                            getGeocodeStatus(instalacao).variant === 'success' 
+                              ? 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' 
+                              : 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800'
+                          }`}
+                        >
+                          {getGeocodeStatus(instalacao).label}
+                        </Badge>
                       </div>
 
                       {/* Status */}
@@ -599,24 +651,49 @@ export const InstalacoesTabelaView = ({
                           )}
                         </TableCell>
                         <TableCell className="py-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] truncate max-w-[150px]">
-                              {instalacao.cidade}, {instalacao.estado}
-                            </span>
-                            {instalacao.latitude && instalacao.longitude && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/dashboard/mapa-autorizados?instalacao=${instalacao.id}`);
-                                }}
-                                title="Ver no Mapa"
-                                className="h-5 w-5 p-0 text-blue-500 hover:text-blue-600"
-                              >
-                                <Map className="h-3 w-3" />
-                              </Button>
-                            )}
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] truncate max-w-[150px]">
+                                {instalacao.cidade}, {instalacao.estado}
+                              </span>
+                              {instalacao.latitude && instalacao.longitude ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/dashboard/mapa-autorizados?instalacao=${instalacao.id}`);
+                                  }}
+                                  title="Ver no Mapa"
+                                  className="h-5 w-5 p-0 text-blue-500 hover:text-blue-600"
+                                >
+                                  <MapPin className="h-3 w-3" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleGeocode(instalacao);
+                                  }}
+                                  title="Geocodificar"
+                                  className="h-5 w-5 p-0 text-orange-500 hover:text-orange-600"
+                                >
+                                  <MapPin className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-[8px] w-fit ${
+                                getGeocodeStatus(instalacao).variant === 'success' 
+                                  ? 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' 
+                                  : 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800'
+                              }`}
+                            >
+                              {getGeocodeStatus(instalacao).label}
+                            </Badge>
                           </div>
                         </TableCell>
                         <TableCell className="text-[10px] py-2">
