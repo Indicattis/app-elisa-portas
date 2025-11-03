@@ -172,11 +172,11 @@ export function PedidoCard({
     }
 
     if (proximaEtapa === 'inspecao_qualidade') {
-      lista.unshift({ id: 'criar_ordem_qualidade', label: 'Criando ordem de qualidade', status: 'pending' });
+      lista.unshift({ id: 'criar_ordem_qualidade', label: 'Gerando ordem de qualidade', status: 'pending' });
     }
 
     if (proximaEtapa === 'aguardando_pintura') {
-      lista.unshift({ id: 'criar_ordem_pintura', label: 'Criando ordem de pintura', status: 'pending' });
+      lista.unshift({ id: 'criar_ordem_pintura', label: 'Gerando ordem de pintura', status: 'pending' });
     }
 
     return lista;
