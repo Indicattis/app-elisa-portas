@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Calendar, User, Package, FileText } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -185,6 +185,19 @@ export default function PedidoView() {
     return colors[status] || "";
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "concluido":
+        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      case "em_andamento":
+        return <Clock className="w-4 h-4 text-blue-600" />;
+      case "cancelado":
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      default:
+        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
   if (!pedido) return <div className="text-center py-8"><p>Pedido não encontrado</p></div>;
 
@@ -203,10 +216,32 @@ export default function PedidoView() {
             </p>
           </div>
         </div>
-        <Badge variant="outline" className={getEtapaBadgeColor(pedido.etapa)}>
-          {getEtapaLabel(pedido.etapa)}
-        </Badge>
       </div>
+
+      {/* Status e Etapa do Pedido */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Status do Pedido</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${
+                pedido.etapa === 'finalizado' ? 'bg-green-500' :
+                pedido.etapa === 'em_producao' ? 'bg-blue-500' :
+                pedido.etapa === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
+              }`} />
+              <div>
+                <p className="text-sm text-muted-foreground">Etapa Atual</p>
+                <p className="font-semibold text-lg">{getEtapaLabel(pedido.etapa)}</p>
+              </div>
+            </div>
+            <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa)} text-base px-4 py-2`}>
+              {getEtapaLabel(pedido.etapa)}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Informações do Cliente (se houver venda) */}
       {pedido.venda && (
@@ -283,11 +318,14 @@ export default function PedidoView() {
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2">
               {pedido.ordens.map((ordem) => (
-                <div key={ordem.id} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-semibold">{ordem.tipo}</p>
+                <div key={ordem.id} className="p-4 border rounded-lg hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {ordem.status !== "N/A" && getStatusIcon(ordem.status)}
+                      <p className="font-semibold text-base">{ordem.tipo}</p>
+                    </div>
                     {ordem.status !== "N/A" && (
-                      <Badge variant="outline" className={getStatusBadgeColor(ordem.status)}>
+                      <Badge variant="outline" className={`${getStatusBadgeColor(ordem.status)} font-medium`}>
                         {ordem.status === "aberto" && "Aberto"}
                         {ordem.status === "em_andamento" && "Em Andamento"}
                         {ordem.status === "concluido" && "Concluído"}
@@ -296,7 +334,13 @@ export default function PedidoView() {
                     )}
                   </div>
                   {ordem.numero_ordem !== "N/A" && (
-                    <p className="text-sm text-muted-foreground">#{ordem.numero_ordem}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FileText className="w-3 h-3" />
+                      <span>Ordem #{ordem.numero_ordem}</span>
+                    </div>
+                  )}
+                  {ordem.status === "N/A" && (
+                    <p className="text-sm text-muted-foreground">Ordem de instalação</p>
                   )}
                 </div>
               ))}
