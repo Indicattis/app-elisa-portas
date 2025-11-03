@@ -71,8 +71,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           telefone_cliente: updatedInstalacao.telefone_cliente || '',
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
-          tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
@@ -118,8 +116,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           telefone_cliente: updatedInstalacao.telefone_cliente || '',
           estado: updatedInstalacao.estado,
           cidade: updatedInstalacao.cidade,
-          tamanho: updatedInstalacao.tamanho || '',
-          categoria: updatedInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
@@ -188,24 +184,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
           <CardContent>
             <div className="space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge 
-                  variant="outline"
-                  className={
-                    instalacao.categoria === 'instalacao' 
-                      ? 'bg-red-500/10 text-red-500 border-red-500/20' 
-                      : instalacao.categoria === 'entrega'
-                      ? 'bg-gray-500/10 text-gray-500 border-gray-500/20'
-                      : instalacao.categoria === 'correcao'
-                      ? 'bg-purple-500/10 text-purple-500 border-purple-500/20'
-                      : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
-                  }
-                >
-                  {instalacao.categoria === 'instalacao' && 'Instalação'}
-                  {instalacao.categoria === 'entrega' && 'Entrega'}
-                  {instalacao.categoria === 'correcao' && 'Correção'}
-                  {instalacao.categoria === 'carregamento_agendado' && 'Carregamento Agendado'}
-                </Badge>
-                <Badge 
+                <Badge
                   variant="outline"
                   className={
                     instalacao.status === 'pendente_producao' 
@@ -220,11 +199,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                   {instalacao.status === 'finalizada' && 'Finalizada'}
                 </Badge>
               </div>
-              {instalacao.tamanho && (
-                <p className="text-sm">
-                  <span className="font-medium">Tamanho:</span> {instalacao.tamanho}
-                </p>
-              )}
               {instalacao.data_instalacao && (
                 <p className="text-sm">
                   <span className="font-medium">Data da Instalação:</span>{' '}
@@ -364,8 +338,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                 telefone_cliente: editingInstalacao.telefone_cliente || '',
                 estado: editingInstalacao.estado,
                 cidade: editingInstalacao.cidade,
-                tamanho: editingInstalacao.tamanho || '',
-                categoria: editingInstalacao.categoria as 'instalacao' | 'entrega' | 'correcao' | 'carregamento_agendado',
                 data_instalacao: editingInstalacao.data_instalacao || '',
                 status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,

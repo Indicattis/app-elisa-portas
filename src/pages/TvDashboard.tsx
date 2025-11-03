@@ -200,10 +200,10 @@ export default function TvDashboard() {
 
   // Calculate instalacoes stats
   const instalacoesStats = useMemo(() => {
-    const totalInstalacoes = instalacoes.filter(i => i.categoria === 'instalacao').length;
-    const totalCorrecoes = instalacoes.filter(i => i.categoria === 'correcao').length;
+    const totalInstalacoes = instalacoes.length;
+    const totalCorrecoes = 0; // Coluna categoria removida
     const entregasPendentes = instalacoes.filter(i => 
-      i.categoria === 'entrega' && i.status !== 'finalizada'
+      i.status !== 'finalizada'
     ).length;
 
     return {

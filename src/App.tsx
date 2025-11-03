@@ -86,6 +86,8 @@ import TabelaPrecos from "./pages/TabelaPrecos";
 import Todo from "./pages/Todo";
 import LogisticaHome from "./pages/LogisticaHome";
 import Entregas from "./pages/Entregas";
+import VendaView from "./pages/VendaView";
+import PedidoView from "./pages/PedidoView";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -924,6 +926,26 @@ const App = () => (
                     <ProtectedRoute requirePermission="checklist_lideranca">
                       <DashboardLayout>
                         <Todo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vendas/:id/view"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <VendaView />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/pedido/:id/view"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <PedidoView />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

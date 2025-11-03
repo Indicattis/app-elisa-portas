@@ -158,7 +158,7 @@ export const InstalacoesTabelaView = ({
 
   const handleDownloadPDF = () => {
     try {
-      baixarInstalacoesPDF({ instalacoes: filteredAndSortedInstalacoes });
+      baixarInstalacoesPDF({ instalacoes: filteredAndSortedInstalacoes as any });
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
       toast.error('Erro ao gerar PDF');

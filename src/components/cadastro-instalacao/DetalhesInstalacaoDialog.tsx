@@ -77,19 +77,11 @@ export function DetalhesInstalacaoDialog({
               <p className="text-xs text-muted-foreground mb-1">Localização</p>
               <p className="font-medium">{instalacao.cidade}, {instalacao.estado}</p>
             </div>
-            <div className="flex gap-2">
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Status</p>
-                <Badge variant="outline" className={getStatusVariant(instalacao.status)}>
-                  {getStatusLabel(instalacao.status)}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Categoria</p>
-                <Badge variant="outline" className={getCategoriaVariant(instalacao.categoria)}>
-                  {getCategoriaLabel(instalacao.categoria)}
-                </Badge>
-              </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Status</p>
+              <Badge variant="outline" className={getStatusVariant(instalacao.status)}>
+                {getStatusLabel(instalacao.status)}
+              </Badge>
             </div>
           </div>
 
@@ -131,12 +123,6 @@ export function DetalhesInstalacaoDialog({
                 <p className="text-xs text-muted-foreground">
                   {instalacao.tipo_instalacao === 'elisa' ? 'Equipe Elisa' : 'Autorizado'}
                 </p>
-              </div>
-            )}
-            {instalacao.tamanho && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Tamanho</p>
-                <p className="font-medium">{instalacao.tamanho}</p>
               </div>
             )}
           </div>
@@ -300,7 +286,7 @@ export function DetalhesInstalacaoDialog({
           )}
 
           {/* Informações de Correção */}
-          {instalacao.categoria === 'correcao' && instalacao.justificativa_correcao && (
+          {instalacao.justificativa_correcao && (
             <div className="bg-orange-500/5 p-4 rounded-lg border border-orange-500/20">
               <div className="flex items-start gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />

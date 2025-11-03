@@ -163,10 +163,7 @@ export default function MapaAutorizados() {
       return false;
     }
     
-    // Filtro de categoria/tipo
-    if (filtros.tiposInstalacao.length > 0 && !filtros.tiposInstalacao.includes(instalacao.categoria)) {
-      return false;
-    }
+    // Filtro de categoria/tipo removido - coluna não existe mais
     
     // Filtro de geocodificação
     if (filtros.apenasGeocodificados && (!instalacao.latitude || !instalacao.longitude)) {

@@ -135,11 +135,7 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
       } else {
         const instalacoesTexto = instalacoesNoDia.map(instalacao => {
           let texto = `${instalacao.nome_cliente}\n${instalacao.cidade}`;
-          texto += `\n[${getCategoriaLabel(instalacao.categoria)}]`;
           texto += ` - ${getStatusLabel(instalacao.status)}`;
-          if (instalacao.tamanho) {
-            texto += `\n${instalacao.tamanho}`;
-          }
           return texto;
         }).join('\n\n');
         row.push(instalacoesTexto);
@@ -232,29 +228,11 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
   );
   const diaMaisMovimentado = DIAS_SEMANA[instalacoesPorDia.indexOf(Math.max(...instalacoesPorDia))];
 
-  // Estatísticas por categoria
-  const porCategoria = {
-    instalacao: data.instalacoes.filter(i => i.categoria === 'instalacao').length,
-    entrega: data.instalacoes.filter(i => i.categoria === 'entrega').length,
-    correcao: data.instalacoes.filter(i => i.categoria === 'correcao').length,
-    carregamento_agendado: data.instalacoes.filter(i => i.categoria === 'carregamento_agendado').length,
-  };
+  // Estatísticas por categoria removidas - coluna não existe mais
 
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
   pdf.text(`• Total de instalações agendadas: ${totalInstalacoes}`, margin, legendaY);
   pdf.text(`• Equipes ativas: ${equipesAtivas}`, margin, legendaY + 6);
   pdf.text(`• Dia mais movimentado: ${diaMaisMovimentado?.label || 'N/A'} (${Math.max(...instalacoesPorDia)} instalações)`, margin, legendaY + 12);
-  
-  legendaY += 20;
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Por categoria:', margin, legendaY);
-  pdf.setFont('helvetica', 'normal');
-  legendaY += 6;
-  pdf.text(`• Instalações: ${porCategoria.instalacao}`, margin + 5, legendaY);
-  pdf.text(`• Entregas: ${porCategoria.entrega}`, margin + 5, legendaY + 6);
-  pdf.text(`• Correções: ${porCategoria.correcao}`, margin + 5, legendaY + 12);
-  pdf.text(`• Carregamentos: ${porCategoria.carregamento_agendado}`, margin + 5, legendaY + 18);
 
   // Rodapé
   const rodapeY = pageHeight - 15;

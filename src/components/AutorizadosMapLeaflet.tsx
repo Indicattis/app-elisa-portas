@@ -696,7 +696,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                 <Marker 
                   key={`instalacao-${instalacao.id}`} 
                   position={[instalacao.latitude!, instalacao.longitude!]} 
-                  icon={createInstalacaoIcon(instalacao.categoria, instalacao.status, isSelected)}
+                  icon={createInstalacaoIcon('instalacao', instalacao.status, isSelected)}
                   ref={(ref) => {
                     if (ref) {
                       instalacaoMarkerRefs.current[instalacao.id] = ref;
@@ -708,14 +708,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                     {/* Header */}
                     <div className="flex items-start gap-3">
                       <div 
-                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{
-                          backgroundColor: instalacao.categoria === 'instalacao' 
-                            ? '#ef4444' 
-                            : instalacao.categoria === 'entrega'
-                            ? '#6b7280'
-                            : '#a855f7'
-                        }}
+                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-blue-500"
                       >
                         <Home className="h-5 w-5 text-white" />
                       </div>
@@ -737,29 +730,6 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
 
                     {/* Details */}
                     <div className="space-y-2 text-sm border-t pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Categoria:</span>
-                        <span 
-                          className="font-medium px-2 py-1 rounded-md text-xs"
-                          style={{
-                            backgroundColor: instalacao.categoria === 'instalacao' 
-                              ? '#fee2e2' 
-                              : instalacao.categoria === 'entrega'
-                              ? '#f3f4f6'
-                              : '#f3e8ff',
-                            color: instalacao.categoria === 'instalacao' 
-                              ? '#dc2626' 
-                              : instalacao.categoria === 'entrega'
-                              ? '#4b5563'
-                              : '#9333ea'
-                          }}
-                        >
-                          {instalacao.categoria === 'instalacao' && 'Instalação'}
-                          {instalacao.categoria === 'entrega' && 'Entrega'}
-                          {instalacao.categoria === 'correcao' && 'Correção'}
-                        </span>
-                      </div>
-                      
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Status:</span>
                         <span 
@@ -789,13 +759,6 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                           <span className="font-medium">
                             {instalacao.tipo_instalacao === 'elisa' ? 'Elisa' : 'Autorizados'}
                           </span>
-                        </div>
-                      )}
-
-                      {instalacao.tamanho && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Tamanho:</span>
-                          <span className="font-medium">{instalacao.tamanho}</span>
                         </div>
                       )}
 

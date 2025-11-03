@@ -25,32 +25,12 @@ export function PontoInstalacao({
     });
   };
 
-  const getCategoriaColor = (categoria: string) => {
-    switch (categoria) {
-      case 'instalacao': return 'bg-blue-500/10 text-blue-700 border-blue-300';
-      case 'entrega': return 'bg-green-500/10 text-green-700 border-green-300';
-      case 'correcao': return 'bg-orange-500/10 text-orange-700 border-orange-300';
-      case 'carregamento_agendado': return 'bg-purple-500/10 text-purple-700 border-purple-300';
-      default: return 'bg-gray-500/10 text-gray-700 border-gray-300';
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pendente_producao': return 'bg-yellow-500/10 text-yellow-700 border-yellow-300';
       case 'pronta_fabrica': return 'bg-blue-500/10 text-blue-700 border-blue-300';
       case 'finalizada': return 'bg-green-500/10 text-green-700 border-green-300';
       default: return 'bg-gray-500/10 text-gray-700 border-gray-300';
-    }
-  };
-
-  const getCategoriaLabel = (categoria: string) => {
-    switch (categoria) {
-      case 'instalacao': return 'Instalação';
-      case 'entrega': return 'Entrega';
-      case 'correcao': return 'Correção';
-      case 'carregamento_agendado': return 'Carregamento';
-      default: return categoria;
     }
   };
 
@@ -89,19 +69,10 @@ export function PontoInstalacao({
         </div>
 
         <div className="flex flex-wrap gap-1">
-          <Badge variant="outline" className={`text-xs ${getCategoriaColor(instalacao.categoria)}`}>
-            {getCategoriaLabel(instalacao.categoria)}
-          </Badge>
           <Badge variant="outline" className={`text-xs ${getStatusColor(instalacao.status)}`}>
             {getStatusLabel(instalacao.status)}
           </Badge>
         </div>
-
-        {instalacao.tamanho && (
-          <div className="text-xs text-muted-foreground">
-            {instalacao.tamanho}
-          </div>
-        )}
       </div>
     </div>
   );
