@@ -2,7 +2,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Package, Search, LayoutGrid, List } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Package, Search, LayoutGrid, List, Paintbrush, Truck, Hammer } from "lucide-react";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
@@ -13,6 +14,9 @@ export default function Pedidos() {
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filtroInstalacao, setFiltroInstalacao] = useState(false);
+  const [filtroEntrega, setFiltroEntrega] = useState(false);
+  const [filtroPintura, setFiltroPintura] = useState(false);
   const contadores = usePedidosContadores();
   
   const { 
@@ -69,24 +73,51 @@ export default function Pedidos() {
     });
   };
 
-  // Filtrar pedidos baseado na pesquisa
+  // Filtrar pedidos baseado na pesquisa e filtros
   const pedidosFiltrados = useMemo(() => {
-    if (!searchTerm.trim()) return pedidos;
+    let filtered = pedidos;
 
-    const termo = searchTerm.toLowerCase();
-    return pedidos.filter((pedido: any) => {
-      const venda = pedido.vendas;
-      const clienteNome = venda?.cliente_nome?.toLowerCase() || '';
-      const clienteTelefone = venda?.cliente_telefone?.toLowerCase() || '';
-      const numeroPedido = pedido.numero_pedido?.toLowerCase() || '';
-      
-      return (
-        clienteNome.includes(termo) ||
-        clienteTelefone.includes(termo) ||
-        numeroPedido.includes(termo)
-      );
-    });
-  }, [pedidos, searchTerm]);
+    // Filtro de busca por texto
+    if (searchTerm.trim()) {
+      const termo = searchTerm.toLowerCase();
+      filtered = filtered.filter((pedido: any) => {
+        const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+        const clienteNome = vendaData?.cliente_nome?.toLowerCase() || '';
+        const clienteTelefone = vendaData?.cliente_telefone?.toLowerCase() || '';
+        const numeroPedido = pedido.numero_pedido?.toLowerCase() || '';
+        
+        return (
+          clienteNome.includes(termo) ||
+          clienteTelefone.includes(termo) ||
+          numeroPedido.includes(termo)
+        );
+      });
+    }
+
+    // Filtro de tipo de entrega
+    if (filtroInstalacao || filtroEntrega) {
+      filtered = filtered.filter((pedido: any) => {
+        const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+        const tipoEntrega = vendaData?.tipo_entrega;
+        
+        if (filtroInstalacao && tipoEntrega === 'instalacao') return true;
+        if (filtroEntrega && tipoEntrega === 'entrega') return true;
+        
+        return false;
+      });
+    }
+
+    // Filtro de pintura
+    if (filtroPintura) {
+      filtered = filtered.filter((pedido: any) => {
+        const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+        const produtos = vendaData?.produtos_vendas || [];
+        return produtos.some((p: any) => p.valor_pintura > 0);
+      });
+    }
+
+    return filtered;
+  }, [pedidos, searchTerm, filtroInstalacao, filtroEntrega, filtroPintura]);
 
   return (
     <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -134,6 +165,56 @@ export default function Pedidos() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Filtros de tipo */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-muted-foreground">Filtros:</span>
+        
+        <Button
+          size="sm"
+          variant={filtroInstalacao ? 'default' : 'outline'}
+          onClick={() => setFiltroInstalacao(!filtroInstalacao)}
+          className="h-8"
+        >
+          <Hammer className="h-3.5 w-3.5 mr-1.5" />
+          Instalações
+        </Button>
+
+        <Button
+          size="sm"
+          variant={filtroEntrega ? 'default' : 'outline'}
+          onClick={() => setFiltroEntrega(!filtroEntrega)}
+          className="h-8"
+        >
+          <Truck className="h-3.5 w-3.5 mr-1.5" />
+          Entregas
+        </Button>
+
+        <Button
+          size="sm"
+          variant={filtroPintura ? 'default' : 'outline'}
+          onClick={() => setFiltroPintura(!filtroPintura)}
+          className="h-8"
+        >
+          <Paintbrush className="h-3.5 w-3.5 mr-1.5" />
+          Com Pintura
+        </Button>
+
+        {(filtroInstalacao || filtroEntrega || filtroPintura) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setFiltroInstalacao(false);
+              setFiltroEntrega(false);
+              setFiltroPintura(false);
+            }}
+            className="h-8 text-muted-foreground"
+          >
+            Limpar filtros
+          </Button>
+        )}
       </div>
 
       {/* Tabs de Etapas */}

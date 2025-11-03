@@ -109,8 +109,10 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'aguardando_pintura',
   });
 
-  // Para todos os pedidos (incluindo aberto), buscar dados da venda relacionada
-  const venda = pedido.vendas;
+  // Tratar venda como array ou objeto único
+  const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+  const venda = vendaData;
+  
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
   const config = etapaAtual ? ETAPAS_CONFIG[etapaAtual] : null;
   const proximaEtapa = etapaAtual ? getProximaEtapa(etapaAtual) : null;
@@ -123,22 +125,31 @@ export function PedidoCard({
   const ordemPinturaConcluida = ordemPinturaStatus === true;
   
   // Identificar características do pedido
-  console.log('Pedido:', pedido.id, {
-    venda,
-    produtos,
-    tipo_entrega: venda?.tipo_entrega,
-    tem_produtos: produtos.length > 0
-  });
-  
-  const temPintura = produtos.some((p: any) => {
-    console.log('Produto pintura:', p.valor_pintura);
-    return p.valor_pintura > 0;
-  });
+  const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
   const tipoEntrega = venda?.tipo_entrega;
   const isInstalacao = tipoEntrega === 'instalacao';
   const isEntrega = tipoEntrega === 'entrega';
   
-  console.log('Flags:', { temPintura, tipoEntrega, isInstalacao, isEntrega });
+  // Extrair cores únicas dos produtos
+  const coresUnicas = Array.from(new Set(
+    produtos
+      .map((p: any) => p.cor?.nome)
+      .filter((cor: string | undefined) => cor !== undefined)
+  )) as string[];
+  
+  // Mapeamento de cores para hex
+  const coresMap: Record<string, string> = {
+    'Branco': '#FFFFFF',
+    'Preto': '#000000',
+    'Cinza': '#808080',
+    'Azul': '#0000FF',
+    'Verde': '#008000',
+    'Vermelho': '#FF0000',
+    'Amarelo': '#FFFF00',
+    'Marrom': '#8B4513',
+    'Bege': '#F5F5DC',
+    'Rosa': '#FFC0CB',
+  };
 
   // Função para determinar processos que serão executados
   const determinarProcessos = async (pedidoId: string) => {
@@ -338,31 +349,49 @@ export function PedidoCard({
                   {config.label}
                 </Badge>
               )}
-              
-              {temPintura && (
-                <Badge variant="outline" className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50 flex-shrink-0">
-                  <Paintbrush className="h-3 w-3 mr-1" />
-                  Pintura
-                </Badge>
-              )}
-              
-              {isInstalacao && (
-                <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50 flex-shrink-0">
-                  <Hammer className="h-3 w-3 mr-1" />
-                  Instalação
-                </Badge>
-              )}
-              
-              {isEntrega && (
-                <Badge variant="outline" className="text-xs px-2 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 flex-shrink-0">
-                  <Truck className="h-3 w-3 mr-1" />
-                  Entrega
-                </Badge>
-              )}
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
+                  
+                  <div className="flex items-center gap-1">
+                    {temPintura && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50 flex-shrink-0">
+                        <Paintbrush className="h-3 w-3" />
+                      </Badge>
+                    )}
+                    
+                    {isInstalacao && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50 flex-shrink-0">
+                        <Hammer className="h-3 w-3" />
+                      </Badge>
+                    )}
+                    
+                    {isEntrega && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 flex-shrink-0">
+                        <Truck className="h-3 w-3" />
+                      </Badge>
+                    )}
+                    
+                    {/* Círculos de cores */}
+                    {coresUnicas.length > 0 && (
+                      <div className="flex items-center gap-0.5 ml-1">
+                        {coresUnicas.slice(0, 5).map((cor, idx) => (
+                          <div
+                            key={idx}
+                            className="w-3 h-3 rounded-full border border-border"
+                            style={{ backgroundColor: coresMap[cor] || '#999999' }}
+                            title={cor}
+                          />
+                        ))}
+                        {coresUnicas.length > 5 && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            +{coresUnicas.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {!isAberto && pedido.numero_pedido && (
                     <span className="text-xs text-muted-foreground flex-shrink-0">
                       {pedido.numero_pedido}
@@ -709,8 +738,31 @@ export function PedidoCard({
 
           {/* Informações do cliente com background */}
           <div className="bg-muted/30 rounded-md p-2 -mx-2">
-            <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
-            <p className="text-[10px] text-muted-foreground">{venda?.cliente_telefone}</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
+                <p className="text-[10px] text-muted-foreground">{venda?.cliente_telefone}</p>
+              </div>
+              
+              {/* Círculos de cores */}
+              {coresUnicas.length > 0 && (
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {coresUnicas.slice(0, 3).map((cor, idx) => (
+                    <div
+                      key={idx}
+                      className="w-3 h-3 rounded-full border border-border"
+                      style={{ backgroundColor: coresMap[cor] || '#999999' }}
+                      title={cor}
+                    />
+                  ))}
+                  {coresUnicas.length > 3 && (
+                    <span className="text-[10px] text-muted-foreground ml-0.5">
+                      +{coresUnicas.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Status das Linhas do Pedido */}
