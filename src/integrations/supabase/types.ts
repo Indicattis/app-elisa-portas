@@ -721,6 +721,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_entrega: string | null
+          data_producao: string | null
+          entrega_concluida: boolean | null
+          entrega_concluida_em: string | null
+          entrega_concluida_por: string | null
           estado: string
           geocode_precision: string | null
           id: string
@@ -730,7 +734,10 @@ export type Database = {
           nome_cliente: string
           observacoes: string | null
           pedido_id: string | null
+          responsavel_entrega_id: string | null
+          responsavel_entrega_nome: string | null
           status: string
+          tamanho: string | null
           telefone_cliente: string | null
           updated_at: string
           venda_id: string | null
@@ -740,6 +747,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_entrega?: string | null
+          data_producao?: string | null
+          entrega_concluida?: boolean | null
+          entrega_concluida_em?: string | null
+          entrega_concluida_por?: string | null
           estado: string
           geocode_precision?: string | null
           id?: string
@@ -749,7 +760,10 @@ export type Database = {
           nome_cliente: string
           observacoes?: string | null
           pedido_id?: string | null
+          responsavel_entrega_id?: string | null
+          responsavel_entrega_nome?: string | null
           status?: string
+          tamanho?: string | null
           telefone_cliente?: string | null
           updated_at?: string
           venda_id?: string | null
@@ -759,6 +773,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_entrega?: string | null
+          data_producao?: string | null
+          entrega_concluida?: boolean | null
+          entrega_concluida_em?: string | null
+          entrega_concluida_por?: string | null
           estado?: string
           geocode_precision?: string | null
           id?: string
@@ -768,7 +786,10 @@ export type Database = {
           nome_cliente?: string
           observacoes?: string | null
           pedido_id?: string | null
+          responsavel_entrega_id?: string | null
+          responsavel_entrega_nome?: string | null
           status?: string
+          tamanho?: string | null
           telefone_cliente?: string | null
           updated_at?: string
           venda_id?: string | null
@@ -3538,6 +3559,10 @@ export type Database = {
       calcular_valor_produto_orcamento: {
         Args: { orcamento_uuid: string }
         Returns: number
+      }
+      concluir_entrega_e_avancar_pedido: {
+        Args: { p_entrega_id: string }
+        Returns: Json
       }
       concluir_instalacao_e_avancar_pedido: {
         Args: { p_instalacao_id: string }

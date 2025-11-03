@@ -1,25 +1,25 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Entrega, CreateEntregaData } from '@/hooks/useEntregas';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Eye, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
+import { DetalhesEntregaDialog } from './DetalhesEntregaDialog';
+import { ResponsavelEntregaModal } from './ResponsavelEntregaModal';
+import { DataProducaoEntregaModal } from './DataProducaoEntregaModal';
 
 interface EntregasTabelaViewProps {
   entregas: Entrega[];
-  onDelete: (id: string) => void;
-  onUpdate: (id: string, data: CreateEntregaData) => Promise<boolean>;
-  onUpdateStatus: (id: string, status: string) => void;
+  onDelete: (id: string) => Promise<boolean>;
+  onUpdate: (id: string, data: Partial<CreateEntregaData>) => Promise<boolean>;
+  onGeocode: (id: string, cidade: string, estado: string) => Promise<void>;
+  onConcluir: (id: string) => Promise<boolean>;
   isAdmin: boolean;
 }
 
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<string, string> = {
   pendente_producao: 'bg-yellow-500',
   em_producao: 'bg-blue-500',
   em_qualidade: 'bg-purple-500',
@@ -28,7 +28,7 @@ const STATUS_COLORS = {
   finalizada: 'bg-green-500',
 };
 
-const STATUS_LABELS = {
+const STATUS_LABELS: Record<string, string> = {
   pendente_producao: 'Pendente Produção',
   em_producao: 'Em Produção',
   em_qualidade: 'Em Qualidade',
@@ -39,11 +39,34 @@ const STATUS_LABELS = {
 
 export const EntregasTabelaView = ({
   entregas,
-  onDelete,
-  onUpdate,
-  onUpdateStatus,
+  onGeocode,
+  onConcluir,
   isAdmin,
 }: EntregasTabelaViewProps) => {
+  const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null);
+  const [showDetalhesModal, setShowDetalhesModal] = useState(false);
+  const [showResponsavelModal, setShowResponsavelModal] = useState(false);
+  const [showDataProducaoModal, setShowDataProducaoModal] = useState(false);
+
+  const handleViewDetalhes = (entrega: Entrega) => {
+    setSelectedEntrega(entrega);
+    setShowDetalhesModal(true);
+  };
+
+  const handleGeocode = async (entrega: Entrega) => {
+    await onGeocode(entrega.id, entrega.cidade, entrega.estado);
+  };
+
+  const handleConcluir = async (entrega: Entrega) => {
+    if (confirm('Confirma a conclusão desta entrega? O pedido será finalizado.')) {
+      await onConcluir(entrega.id);
+    }
+  };
+
+  const isGeocoded = (entrega: Entrega) => entrega.latitude && entrega.longitude;
+  const canConcluir = (entrega: Entrega) => 
+    entrega.pedido?.etapa_atual === 'aguardando_coleta' && !entrega.entrega_concluida;
+
   return (
     <>
       <div className="rounded-md border">
@@ -53,10 +76,10 @@ export const EntregasTabelaView = ({
               <TableHead>Cliente</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Cidade/Estado</TableHead>
-              <TableHead>Tamanho</TableHead>
               <TableHead>Data Entrega</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Criado em</TableHead>
+              <TableHead>Geo</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -72,35 +95,55 @@ export const EntregasTabelaView = ({
                   <TableCell className="font-medium">{entrega.nome_cliente}</TableCell>
                   <TableCell>{entrega.telefone_cliente || '-'}</TableCell>
                   <TableCell>{`${entrega.cidade}/${entrega.estado}`}</TableCell>
-                  <TableCell>{entrega.tamanho || '-'}</TableCell>
                   <TableCell>
                     {entrega.data_entrega ? format(new Date(entrega.data_entrega), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
                   </TableCell>
                   <TableCell>
-                    {isAdmin ? (
-                      <Select
-                        value={entrega.status}
-                        onValueChange={(value) => onUpdateStatus(entrega.id, value)}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge className={STATUS_COLORS[entrega.status]}>
-                        {STATUS_LABELS[entrega.status]}
+                    <Badge className={STATUS_COLORS[entrega.status]}>
+                      {STATUS_LABELS[entrega.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {isGeocoded(entrega) ? (
+                      <Badge variant="outline" className="bg-green-50">
+                        <CheckCircle2 className="h-3 w-3" />
                       </Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleGeocode(entrega)}
+                      >
+                        <MapPin className="h-4 w-4" />
+                      </Button>
                     )}
                   </TableCell>
                   <TableCell>
-                    {format(new Date(entrega.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleViewDetalhes(entrega)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {canConcluir(entrega) && isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleConcluir(entrega)}
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-1" />
+                          Concluir
+                        </Button>
+                      )}
+                      {entrega.entrega_concluida && (
+                        <Badge className="bg-green-600">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Concluída
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -108,6 +151,32 @@ export const EntregasTabelaView = ({
           </TableBody>
         </Table>
       </div>
+
+      <DetalhesEntregaDialog
+        entrega={selectedEntrega}
+        open={showDetalhesModal}
+        onOpenChange={setShowDetalhesModal}
+      />
+
+      {selectedEntrega && (
+        <>
+          <ResponsavelEntregaModal
+            entregaId={selectedEntrega.id}
+            currentResponsavelId={selectedEntrega.responsavel_entrega_id}
+            currentResponsavelNome={selectedEntrega.responsavel_entrega_nome}
+            open={showResponsavelModal}
+            onOpenChange={setShowResponsavelModal}
+            onSuccess={() => window.location.reload()}
+          />
+          <DataProducaoEntregaModal
+            entregaId={selectedEntrega.id}
+            currentDataProducao={selectedEntrega.data_producao}
+            open={showDataProducaoModal}
+            onOpenChange={setShowDataProducaoModal}
+            onSuccess={() => window.location.reload()}
+          />
+        </>
+      )}
     </>
   );
 };

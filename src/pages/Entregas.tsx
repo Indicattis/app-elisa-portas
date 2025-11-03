@@ -20,7 +20,8 @@ export default function Entregas() {
     createEntrega, 
     deleteEntrega, 
     updateEntrega,
-    updateStatus 
+    geocodeEntrega,
+    concluirEntrega
   } = useEntregas();
 
   return (
@@ -55,7 +56,8 @@ export default function Entregas() {
           entregas={entregas}
           onDelete={deleteEntrega}
           onUpdate={updateEntrega}
-          onUpdateStatus={updateStatus}
+          onGeocode={geocodeEntrega}
+          onConcluir={concluirEntrega}
           isAdmin={isAdmin}
         />
       </div>

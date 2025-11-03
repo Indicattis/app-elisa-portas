@@ -31,8 +31,8 @@ const formSchema = z.object({
   tamanho: z.string().optional(),
   data_entrega: z.string().optional(),
   data_producao: z.string().optional(),
-  status: z.enum(['pendente_producao', 'em_producao', 'em_qualidade', 'aguardando_pintura', 'pronta_fabrica', 'finalizada']).optional(),
   responsavel_entrega_id: z.string().optional(),
+  responsavel_entrega_nome: z.string().optional(),
 });
 
 interface CadastroEntregaFormProps {
@@ -62,8 +62,8 @@ export const CadastroEntregaForm = ({
       tamanho: '',
       data_entrega: undefined,
       data_producao: undefined,
-      status: 'pendente_producao',
       responsavel_entrega_id: undefined,
+      responsavel_entrega_nome: undefined,
     },
   });
 
@@ -223,25 +223,13 @@ export const CadastroEntregaForm = ({
 
         <FormField
           control={form.control}
-          name="status"
+          name="data_producao"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="pendente_producao">Pendente Produção</SelectItem>
-                  <SelectItem value="em_producao">Em Produção</SelectItem>
-                  <SelectItem value="em_qualidade">Em Qualidade</SelectItem>
-                  <SelectItem value="aguardando_pintura">Aguardando Pintura</SelectItem>
-                  <SelectItem value="pronta_fabrica">Pronta Fábrica</SelectItem>
-                  <SelectItem value="finalizada">Finalizada</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Data de Produção (Opcional)</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

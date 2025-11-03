@@ -38,10 +38,14 @@ export interface Entrega {
   last_geocoded_at: string | null;
   geocode_precision: string | null;
   data_entrega: string | null;
+  observacoes: string | null;
   status: 'pendente_producao' | 'em_producao' | 'em_qualidade' | 'aguardando_pintura' | 'pronta_fabrica' | 'finalizada';
   responsavel_entrega_id: string | null;
   responsavel_entrega_nome: string | null;
   data_producao: string | null;
+  entrega_concluida: boolean;
+  entrega_concluida_em: string | null;
+  entrega_concluida_por: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -51,6 +55,7 @@ export interface Entrega {
   parcelas?: ParcelaEntrega[];
   venda?: {
     id: string;
+    numero_venda: string;
     valor_a_receber: number;
     pagamento_na_entrega: boolean;
     forma_pagamento: string;
@@ -59,10 +64,23 @@ export interface Entrega {
   pedido?: {
     id: string;
     numero_pedido: string;
+    etapa_atual: string;
   };
   criador?: {
     nome: string;
     foto_perfil_url?: string;
+  };
+  creator?: {
+    nome: string;
+    email: string;
+  };
+  responsavel?: {
+    nome: string;
+    email: string;
+  };
+  concluida_por_user?: {
+    nome: string;
+    email: string;
   };
 }
 
@@ -92,15 +110,20 @@ export const useEntregas = () => {
           *,
           pedido:pedidos_producao!pedido_id(
             id,
-            numero_pedido
+            numero_pedido,
+            etapa_atual
           ),
           venda:vendas!venda_id(
             id,
+            numero_venda,
             valor_a_receber,
             pagamento_na_entrega,
             forma_pagamento,
             observacoes_venda
-          )
+          ),
+          creator:admin_users!entregas_created_by_fkey(nome, email),
+          responsavel:admin_users!entregas_responsavel_entrega_id_fkey(nome, email),
+          concluida_por_user:admin_users!entregas_entrega_concluida_por_fkey(nome, email)
         `)
         .order('created_at', { ascending: false});
 
@@ -326,20 +349,21 @@ export const useEntregas = () => {
     }
   };
 
-  const updateStatus = async (id: string, status: string) => {
+  const concluirEntrega = async (id: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('entregas' as any)
-        .update({ status })
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('concluir_entrega_e_avancar_pedido', {
+        p_entrega_id: id
+      });
 
       if (error) throw error;
 
-      toast.success('Status atualizado com sucesso');
+      toast.success('Entrega concluída e pedido finalizado com sucesso!');
       await fetchEntregas();
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Erro ao atualizar o status');
+      return true;
+    } catch (error: any) {
+      console.error('Error completing entrega:', error);
+      toast.error(error.message || 'Erro ao concluir entrega');
+      return false;
     }
   };
 
@@ -373,6 +397,7 @@ export const useEntregas = () => {
     createEntrega,
     updateEntrega,
     deleteEntrega,
-    updateStatus,
+    geocodeEntrega,
+    concluirEntrega,
   };
 };

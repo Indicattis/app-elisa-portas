@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { id, cidade, estado }: GeocodeRequest = await req.json();
+    const { id, cidade, estado, table = 'instalacoes_cadastradas' } = await req.json() as GeocodeRequest & { table?: string };
 
     console.log(`Geocoding instalação: ${cidade}, ${estado}`);
 
@@ -56,9 +56,9 @@ Deno.serve(async (req) => {
 
     console.log(`Found coordinates: ${latitude}, ${longitude}`);
 
-    // Update instalação with coordinates
+    // Update instalação or entrega with coordinates
     const { error: updateError } = await supabaseClient
-      .from('instalacoes_cadastradas')
+      .from(table as any)
       .update({
         latitude,
         longitude,
