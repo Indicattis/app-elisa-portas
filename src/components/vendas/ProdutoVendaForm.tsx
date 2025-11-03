@@ -56,6 +56,7 @@ export function ProdutoVendaForm({
   const [incluirInstalacao, setIncluirInstalacao] = useState(false);
   const [carregandoPrecos, setCarregandoPrecos] = useState(false);
   const [itemTabelaEncontrado, setItemTabelaEncontrado] = useState<string>('');
+  const [tipoPortaPintura, setTipoPortaPintura] = useState<'porta_enrolar' | 'porta_social'>('porta_enrolar');
 
   // Atualizar formulário quando um produto for passado para edição
   useEffect(() => {
@@ -84,6 +85,7 @@ export function ProdutoVendaForm({
         descricao: ''
       });
       setIncluirInstalacao(false);
+      setTipoPortaPintura('porta_enrolar');
     }
   }, [produtoEditando, tipoInicial]);
 
@@ -166,6 +168,20 @@ export function ProdutoVendaForm({
         valor_instalacao: incluirInstalacao ? 1000 : 0
       }));
       toast.success('Valores definidos para porta social');
+      return;
+    }
+    
+    // Para pintura de porta social, usar valor fixo
+    if (formData.tipo_produto === 'pintura_epoxi' && tipoPortaPintura === 'porta_social') {
+      const tamanho = `${formData.largura}x${formData.altura}`;
+      setItemTabelaEncontrado('Pintura Porta Social - Valor Fixo');
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_pintura: 500,
+        tamanho
+      }));
+      toast.success('Valor fixo definido para pintura de porta social');
       return;
     }
     
@@ -435,6 +451,46 @@ export function ProdutoVendaForm({
 
           {formData.tipo_produto === 'pintura_epoxi' && (
             <>
+              {/* Seção: Tipo de Porta */}
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold">Tipo de Porta</h3>
+                  <p className="text-sm text-muted-foreground">Selecione o tipo de porta que será pintada</p>
+                </div>
+                
+                <RadioGroup
+                  value={tipoPortaPintura}
+                  onValueChange={(value: 'porta_enrolar' | 'porta_social') => {
+                    setTipoPortaPintura(value);
+                    // Resetar valores ao trocar tipo
+                    setFormData(prev => ({
+                      ...prev,
+                      largura: undefined,
+                      altura: undefined,
+                      valor_pintura: 0,
+                      tamanho: ''
+                    }));
+                    setItemTabelaEncontrado('');
+                  }}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="porta_enrolar" id="porta_enrolar_pintura" />
+                    <Label htmlFor="porta_enrolar_pintura" className="cursor-pointer flex-1">
+                      <span className="font-medium">Porta de Enrolar</span>
+                      <p className="text-xs text-muted-foreground">Preço por tabela</p>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="porta_social" id="porta_social_pintura" />
+                    <Label htmlFor="porta_social_pintura" className="cursor-pointer flex-1">
+                      <span className="font-medium">Porta Social</span>
+                      <p className="text-xs text-muted-foreground">Valor fixo: R$ 500,00</p>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               {/* Seção: Medidas */}
               <div className="space-y-4">
                 <div className="space-y-1">
@@ -492,7 +548,11 @@ export function ProdutoVendaForm({
               <div className="border-t pt-6">
                 <div className="space-y-1 mb-4">
                   <h3 className="text-lg font-semibold">Valores</h3>
-                  <p className="text-sm text-muted-foreground">Valores obtidos da tabela de preços</p>
+                  <p className="text-sm text-muted-foreground">
+                    {tipoPortaPintura === 'porta_social' 
+                      ? 'Valor fixo para porta social' 
+                      : 'Valores obtidos da tabela de preços'}
+                  </p>
                 </div>
 
                 <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
@@ -502,6 +562,11 @@ export function ProdutoVendaForm({
                       R$ {formData.valor_pintura.toFixed(2)}
                     </span>
                   </div>
+                  {tipoPortaPintura === 'porta_social' && formData.valor_pintura > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Valor fixo não alterável para pintura de porta social
+                    </p>
+                  )}
                 </div>
               </div>
 
