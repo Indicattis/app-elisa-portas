@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package, Eye, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -988,11 +988,44 @@ export default function Faturamento() {
                                   }
                                 }}
                                 title="Criar pedido de produção"
+                                className="gap-1"
                               >
-                                <Package className="w-4 h-4 mr-1" />
+                                <Package className="w-4 h-4" />
                                 Criar Pedido
                               </Button>
                             )}
+                            
+                            {/* Botão Acessar Pedido - se houver pedido */}
+                            {(venda as any).pedido_id && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/dashboard/pedido/${(venda as any).pedido_id}/view`);
+                                }}
+                                title="Ver pedido de produção"
+                                className="gap-1"
+                              >
+                                <Package className="w-4 h-4" />
+                                Ver Pedido
+                              </Button>
+                            )}
+
+                            {/* Botão Acessar Venda */}
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/dashboard/vendas/${venda.id}/view`);
+                              }}
+                              title="Ver detalhes da venda"
+                              className="gap-1"
+                            >
+                              <Eye className="w-4 h-4" />
+                              Ver Venda
+                            </Button>
                             
                             <Button 
                               variant="ghost" 
