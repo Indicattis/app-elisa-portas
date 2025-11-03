@@ -174,7 +174,7 @@ export default function VendaView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/vendas')}>
             <ArrowLeft className="w-4 h-4 mr-2" />Voltar
           </Button>
           <div>
