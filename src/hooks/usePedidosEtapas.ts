@@ -199,8 +199,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       skipCheckboxValidation?: boolean;
       onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void;
     }) => {
-      // Helper para executar com delay mínimo de 3 segundos
-      const executarComDelay = async (fn: () => Promise<void>, minDelay = 3000) => {
+      // Helper para executar com delay mínimo de 0,5 segundos
+      const executarComDelay = async (fn: () => Promise<void>, minDelay = 500) => {
         const start = Date.now();
         await fn();
         const elapsed = Date.now() - start;
