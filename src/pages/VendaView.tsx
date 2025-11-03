@@ -73,8 +73,7 @@ export default function VendaView() {
         .from("vendas")
         .select(`
           *,
-          produtos:produtos_vendas(*,cor:catalogo_cores(nome, codigo_hex)),
-          parcelas:contas_receber(*)
+          produtos:produtos_vendas(*,cor:catalogo_cores(nome, codigo_hex))
         `)
         .eq("id", id)
         .maybeSingle();
@@ -87,6 +86,12 @@ export default function VendaView() {
       }
 
       // Buscar relações separadamente para evitar problemas com foreign keys
+      const { data: parcelasData } = await supabase
+        .from("contas_receber")
+        .select("*")
+        .eq("venda_id", id)
+        .order("numero_parcela", { ascending: true });
+
       const { data: pedidoData } = await supabase
         .from("pedidos_producao")
         .select("id, numero_pedido")
@@ -113,6 +118,7 @@ export default function VendaView() {
 
       setVenda({
         ...vendaData,
+        parcelas: parcelasData || [],
         pedido: pedidoData || undefined,
         instalacao: instalacaoData || undefined,
         canal_aquisicao: canalData || undefined,
