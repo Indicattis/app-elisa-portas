@@ -415,7 +415,7 @@ export function PedidoCard({
                       setShowProgresso(true);
                       
                       if (onMoverEtapa) {
-                        await onMoverEtapa(pedido.id, false, (processoId, status) => {
+                        await onMoverEtapa(pedido.id, true, (processoId, status) => {
                           setProcessos(prev => prev.map(p => 
                             p.id === processoId ? { ...p, status } : p
                           ));
@@ -721,7 +721,7 @@ export function PedidoCard({
                     setShowProgresso(true);
                     
                     if (onMoverEtapa) {
-                      await onMoverEtapa(pedido.id, false, (processoId, status) => {
+                      await onMoverEtapa(pedido.id, true, (processoId, status) => {
                         setProcessos(prev => prev.map(p => 
                           p.id === processoId ? { ...p, status } : p
                         ));
