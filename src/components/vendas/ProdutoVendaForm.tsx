@@ -144,6 +144,31 @@ export function ProdutoVendaForm({
   const buscarPrecos = async () => {
     if (!formData.largura || !formData.altura) return;
     
+    // Para porta social, usar valores fixos e validar dimensões
+    if (formData.tipo_produto === 'porta_social') {
+      // Validar dimensões máximas
+      if (formData.largura > 1.20) {
+        toast.error('Porta social: largura máxima é 1,20m');
+        return;
+      }
+      if (formData.altura > 2.50) {
+        toast.error('Porta social: altura máxima é 2,50m');
+        return;
+      }
+      
+      const tamanho = `${formData.largura}x${formData.altura}`;
+      setItemTabelaEncontrado('Porta Social - Valores Fixos');
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_produto: 1500,
+        tamanho,
+        valor_instalacao: incluirInstalacao ? 1000 : 0
+      }));
+      toast.success('Valores definidos para porta social');
+      return;
+    }
+    
     setCarregandoPrecos(true);
     try {
       const item = await buscarPrecosPorMedidas(formData.largura, formData.altura);
@@ -152,7 +177,7 @@ export function ProdutoVendaForm({
         const tamanho = `${formData.largura}x${formData.altura}`;
         setItemTabelaEncontrado(`Tabela: ${item.largura}m x ${item.altura}m`);
         
-        if (formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') {
+        if (formData.tipo_produto === 'porta_enrolar') {
           setFormData(prev => ({
             ...prev,
             valor_produto: item.valor_porta,
@@ -185,9 +210,14 @@ export function ProdutoVendaForm({
     const atualizarInstalacao = async () => {
       if ((formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && formData.largura && formData.altura) {
         if (incluirInstalacao) {
-          const item = await buscarPrecosPorMedidas(formData.largura, formData.altura);
-          if (item) {
-            setFormData(prev => ({ ...prev, valor_instalacao: item.valor_instalacao }));
+          // Para porta social, usar valor fixo de instalação
+          if (formData.tipo_produto === 'porta_social') {
+            setFormData(prev => ({ ...prev, valor_instalacao: 1000 }));
+          } else {
+            const item = await buscarPrecosPorMedidas(formData.largura, formData.altura);
+            if (item) {
+              setFormData(prev => ({ ...prev, valor_instalacao: item.valor_instalacao }));
+            }
           }
         } else {
           setFormData(prev => ({ ...prev, valor_instalacao: 0 }));
@@ -287,31 +317,37 @@ export function ProdutoVendaForm({
                 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="largura" className="text-base">Largura (m) *</Label>
+                    <Label htmlFor="largura" className="text-base">
+                      Largura (m) * {formData.tipo_produto === 'porta_social' && <span className="text-muted-foreground font-normal">(máx 1,20m)</span>}
+                    </Label>
                     <Input
                       id="largura"
                       type="number"
                       step="0.01"
                       min="0"
+                      max={formData.tipo_produto === 'porta_social' ? 1.20 : undefined}
                       value={formData.largura || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || undefined }))}
                       onBlur={buscarPrecos}
-                      placeholder="Ex: 2.50"
+                      placeholder={formData.tipo_produto === 'porta_social' ? "Ex: 1.00" : "Ex: 2.50"}
                       className="h-12 text-lg"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="altura" className="text-base">Altura (m) *</Label>
+                    <Label htmlFor="altura" className="text-base">
+                      Altura (m) * {formData.tipo_produto === 'porta_social' && <span className="text-muted-foreground font-normal">(máx 2,50m)</span>}
+                    </Label>
                     <Input
                       id="altura"
                       type="number"
                       step="0.01"
                       min="0"
+                      max={formData.tipo_produto === 'porta_social' ? 2.50 : undefined}
                       value={formData.altura || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || undefined }))}
                       onBlur={buscarPrecos}
-                      placeholder="Ex: 3.00"
+                      placeholder={formData.tipo_produto === 'porta_social' ? "Ex: 2.10" : "Ex: 3.00"}
                       className="h-12 text-lg"
                       required
                     />
