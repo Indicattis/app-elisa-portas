@@ -351,47 +351,8 @@ export function PedidoCard({
               )}
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
-                  
-                  <div className="flex items-center gap-1">
-                    {temPintura && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50 flex-shrink-0">
-                        <Paintbrush className="h-3 w-3" />
-                      </Badge>
-                    )}
-                    
-                    {isInstalacao && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50 flex-shrink-0">
-                        <Hammer className="h-3 w-3" />
-                      </Badge>
-                    )}
-                    
-                    {isEntrega && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 flex-shrink-0">
-                        <Truck className="h-3 w-3" />
-                      </Badge>
-                    )}
-                    
-                    {/* Círculos de cores */}
-                    {coresUnicas.length > 0 && (
-                      <div className="flex items-center gap-0.5 ml-1">
-                        {coresUnicas.slice(0, 5).map((cor, idx) => (
-                          <div
-                            key={idx}
-                            className="w-3 h-3 rounded-full border border-border"
-                            style={{ backgroundColor: coresMap[cor] || '#999999' }}
-                            title={cor}
-                          />
-                        ))}
-                        {coresUnicas.length > 5 && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            +{coresUnicas.length - 5}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
                   {!isAberto && pedido.numero_pedido && (
                     <span className="text-xs text-muted-foreground flex-shrink-0">
                       {pedido.numero_pedido}
@@ -407,6 +368,51 @@ export function PedidoCard({
                   <span>•</span>
                   <span>{format(new Date(venda?.created_at || Date.now()), "dd/MM/yyyy")}</span>
                 </div>
+                
+                {/* Flags abaixo das informações */}
+                {(temPintura || isInstalacao || isEntrega) && (
+                  <div className="flex items-center gap-1 mt-1.5">
+                    {temPintura && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                        <Paintbrush className="h-3 w-3 mr-1" />
+                        Pintura
+                      </Badge>
+                    )}
+                    
+                    {isInstalacao && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                        <Hammer className="h-3 w-3 mr-1" />
+                        Instalação
+                      </Badge>
+                    )}
+                    
+                    {isEntrega && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                        <Truck className="h-3 w-3 mr-1" />
+                        Entrega
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                
+                {/* Círculos de cores */}
+                {coresUnicas.length > 0 && (
+                  <div className="flex items-center gap-0.5 mt-1">
+                    {coresUnicas.slice(0, 5).map((cor, idx) => (
+                      <div
+                        key={idx}
+                        className="w-3 h-3 rounded-full border border-border"
+                        style={{ backgroundColor: coresMap[cor] || '#999999' }}
+                        title={cor}
+                      />
+                    ))}
+                    {coresUnicas.length > 5 && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        +{coresUnicas.length - 5}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {isAberto && (
@@ -649,24 +655,6 @@ export function PedidoCard({
                   {config.label}
                 </Badge>
               )}
-              {temPintura && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
-                  <Paintbrush className="h-2.5 w-2.5 mr-0.5" />
-                  Pintura
-                </Badge>
-              )}
-              {isInstalacao && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
-                  <Hammer className="h-2.5 w-2.5 mr-0.5" />
-                  Inst.
-                </Badge>
-              )}
-              {isEntrega && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
-                  <Truck className="h-2.5 w-2.5 mr-0.5" />
-                  Entreg.
-                </Badge>
-              )}
             </div>
             
             {/* Controles compactos */}
@@ -738,31 +726,53 @@ export function PedidoCard({
 
           {/* Informações do cliente com background */}
           <div className="bg-muted/30 rounded-md p-2 -mx-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
-                <p className="text-[10px] text-muted-foreground">{venda?.cliente_telefone}</p>
-              </div>
-              
-              {/* Círculos de cores */}
-              {coresUnicas.length > 0 && (
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {coresUnicas.slice(0, 3).map((cor, idx) => (
-                    <div
-                      key={idx}
-                      className="w-3 h-3 rounded-full border border-border"
-                      style={{ backgroundColor: coresMap[cor] || '#999999' }}
-                      title={cor}
-                    />
-                  ))}
-                  {coresUnicas.length > 3 && (
-                    <span className="text-[10px] text-muted-foreground ml-0.5">
-                      +{coresUnicas.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
+              <p className="text-[10px] text-muted-foreground">{venda?.cliente_telefone}</p>
             </div>
+            
+            {/* Flags e círculos de cores */}
+            {(temPintura || isInstalacao || isEntrega || coresUnicas.length > 0) && (
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                {temPintura && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                    <Paintbrush className="h-2.5 w-2.5 mr-0.5" />
+                    Pintura
+                  </Badge>
+                )}
+                {isInstalacao && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                    <Hammer className="h-2.5 w-2.5 mr-0.5" />
+                    Instalação
+                  </Badge>
+                )}
+                {isEntrega && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                    <Truck className="h-2.5 w-2.5 mr-0.5" />
+                    Entrega
+                  </Badge>
+                )}
+                
+                {/* Círculos de cores */}
+                {coresUnicas.length > 0 && (
+                  <div className="flex items-center gap-0.5 ml-auto">
+                    {coresUnicas.slice(0, 3).map((cor, idx) => (
+                      <div
+                        key={idx}
+                        className="w-3 h-3 rounded-full border border-border"
+                        style={{ backgroundColor: coresMap[cor] || '#999999' }}
+                        title={cor}
+                      />
+                    ))}
+                    {coresUnicas.length > 3 && (
+                      <span className="text-[10px] text-muted-foreground ml-0.5">
+                        +{coresUnicas.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Status das Linhas do Pedido */}
