@@ -171,7 +171,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                 {linhas.map((linha: any) => (
                   <div key={linha.id} className="flex items-center justify-between p-2 bg-muted/30 rounded text-xs">
                     <div className="flex-1">
-                      <p className="font-medium">{linha.item}</p>
+                      <p className="font-medium">{linha.nome_produto}</p>
                       {linha.tamanho && (
                         <p className="text-muted-foreground text-[10px]">{linha.tamanho}</p>
                       )}
