@@ -346,8 +346,11 @@ export default function PedidoView() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-medium">{produto.descricao || 'Produto'}</p>
+                      {produto.tipo_produto && (
+                        <p className="text-sm text-muted-foreground mt-1">Tipo: {produto.tipo_produto}</p>
+                      )}
                       {produto.tamanho && (
-                        <p className="text-sm text-muted-foreground mt-1">Tamanho: {produto.tamanho}</p>
+                        <p className="text-sm text-muted-foreground">Tamanho: {produto.tamanho}</p>
                       )}
                       {produto.cor && (
                         <p className="text-sm text-muted-foreground">Cor: {produto.cor}</p>
