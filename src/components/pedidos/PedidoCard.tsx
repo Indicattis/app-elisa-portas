@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, ExternalLink } from "lucide-react";
+import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, ExternalLink, Paintbrush, Truck, Hammer } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
@@ -121,6 +121,12 @@ export function PedidoCard({
   const todasOrdensConcluidasEmProducao = ordensStatus === true;
   const ordemQualidadeConcluida = ordemQualidadeStatus === true;
   const ordemPinturaConcluida = ordemPinturaStatus === true;
+  
+  // Identificar características do pedido
+  const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
+  const tipoEntrega = venda?.tipo_entrega;
+  const isInstalacao = tipoEntrega === 'instalacao';
+  const isEntrega = tipoEntrega === 'entrega';
 
   // Função para determinar processos que serão executados
   const determinarProcessos = async (pedidoId: string) => {
@@ -318,6 +324,27 @@ export function PedidoCard({
               {config && (
                 <Badge className={`${config.color} text-white text-xs px-2 py-0.5 flex-shrink-0`}>
                   {config.label}
+                </Badge>
+              )}
+              
+              {temPintura && (
+                <Badge variant="outline" className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50 flex-shrink-0">
+                  <Paintbrush className="h-3 w-3 mr-1" />
+                  Pintura
+                </Badge>
+              )}
+              
+              {isInstalacao && (
+                <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50 flex-shrink-0">
+                  <Hammer className="h-3 w-3 mr-1" />
+                  Instalação
+                </Badge>
+              )}
+              
+              {isEntrega && (
+                <Badge variant="outline" className="text-xs px-2 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 flex-shrink-0">
+                  <Truck className="h-3 w-3 mr-1" />
+                  Entrega
                 </Badge>
               )}
 
@@ -579,6 +606,24 @@ export function PedidoCard({
               {config && (
                 <Badge className={`${config.color} text-white text-[10px] px-1.5 py-0.5`}>
                   {config.label}
+                </Badge>
+              )}
+              {temPintura && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                  <Paintbrush className="h-2.5 w-2.5 mr-0.5" />
+                  Pintura
+                </Badge>
+              )}
+              {isInstalacao && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                  <Hammer className="h-2.5 w-2.5 mr-0.5" />
+                  Inst.
+                </Badge>
+              )}
+              {isEntrega && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                  <Truck className="h-2.5 w-2.5 mr-0.5" />
+                  Entreg.
                 </Badge>
               )}
             </div>
