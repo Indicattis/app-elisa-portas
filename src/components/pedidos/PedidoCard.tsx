@@ -414,10 +414,22 @@ export function PedidoCard({
         <AvancarQualidadeModal
           open={showAvancarQualidade}
           onOpenChange={setShowAvancarQualidade}
-          onConfirmar={() => {
+          onConfirmar={async () => {
+            setShowAvancarQualidade(false);
+            
+            const listaProcessos = await determinarProcessos(pedido.id);
+            setProcessos(listaProcessos);
+            setShowProgresso(true);
+
             if (onMoverEtapa) {
-              onMoverEtapa(pedido.id);
-              setShowAvancarQualidade(false);
+              await onMoverEtapa(pedido.id, false, (processoId, status) => {
+                setProcessos(prev => 
+                  prev.map(p => p.id === processoId ? { ...p, status } : p)
+                );
+              });
+
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              setShowProgresso(false);
             }
           }}
         />
@@ -434,6 +446,7 @@ export function PedidoCard({
         <ProcessoAvancoModal
           open={showProgresso}
           processos={processos}
+          onClose={() => setShowProgresso(false)}
         />
       </>
     );
@@ -691,10 +704,22 @@ export function PedidoCard({
       <AvancarQualidadeModal
         open={showAvancarQualidade}
         onOpenChange={setShowAvancarQualidade}
-        onConfirmar={() => {
+        onConfirmar={async () => {
+          setShowAvancarQualidade(false);
+          
+          const listaProcessos = await determinarProcessos(pedido.id);
+          setProcessos(listaProcessos);
+          setShowProgresso(true);
+
           if (onMoverEtapa) {
-            onMoverEtapa(pedido.id);
-            setShowAvancarQualidade(false);
+            await onMoverEtapa(pedido.id, false, (processoId, status) => {
+              setProcessos(prev => 
+                prev.map(p => p.id === processoId ? { ...p, status } : p)
+              );
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setShowProgresso(false);
           }
         }}
       />
