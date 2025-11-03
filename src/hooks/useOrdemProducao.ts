@@ -332,20 +332,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         description: "A ordem foi concluída com sucesso.",
       });
 
-      // Se é ordem de qualidade, avançar automaticamente após conclusão
-      if (tipoOrdem === 'qualidade') {
-        try {
-          await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
-          toast({
-            title: "Pedido avançado automaticamente",
-            description: "Inspeção de qualidade concluída. Pedido avançado para próxima etapa.",
-          });
-        } catch (error) {
-          console.error('Erro ao avançar pedido:', error);
-        }
-      }
-      // Nota: Para outras ordens (perfiladeira, solda, separação), 
-      // não avançar automaticamente - usuário deve usar botão manual
+      // Nota: Pedido não avança automaticamente - usuário deve usar botão manual para avançar
     },
     onError: (error) => {
       console.error('Erro ao concluir ordem:', error);
