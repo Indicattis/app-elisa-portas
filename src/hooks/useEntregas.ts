@@ -91,11 +91,11 @@ export const useEntregas = () => {
         .from('entregas' as any)
         .select(`
           *,
-          pedido:pedidos_producao(
+          pedido:pedido_id(
             id,
             numero_pedido
           ),
-          venda:vendas(
+          venda:venda_id(
             id,
             numero_venda,
             valor_a_receber,

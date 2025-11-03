@@ -76,12 +76,12 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             concluida_em,
             concluida_por
           ),
-          pedido:pedidos_producao!pedido_id(
+          pedido:pedido_id(
             id,
             numero_pedido,
             cliente_nome,
             venda_id,
-            venda:vendas(
+            venda:venda_id(
               id,
               numero_venda
             )
