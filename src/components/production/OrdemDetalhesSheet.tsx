@@ -95,17 +95,6 @@ export function OrdemDetalhesSheet({
   const temResponsavel = !!ordem.responsavel_id;
   const podeMarcarLinhas = temResponsavel && isResponsavel;
 
-  console.log('[OrdemDetalhesSheet] Debug:', {
-    ordem_id: ordem.id,
-    ordem_responsavel_id: ordem.responsavel_id,
-    user_id: user?.id,
-    temResponsavel,
-    isResponsavel,
-    podeMarcarLinhas,
-    status: ordem.status,
-    isUpdating
-  });
-
   const handleDownloadPDF = async () => {
     if (!ordem) return;
     
@@ -280,15 +269,7 @@ export function OrdemDetalhesSheet({
                   <Checkbox
                     id={`checkbox-${linha.id}`}
                     checked={linha.concluida}
-                    onCheckedChange={(checked) => {
-                      console.log('[Checkbox] onChange disparado:', {
-                        linha_id: linha.id,
-                        checked,
-                        linha_concluida_atual: linha.concluida,
-                        disabled: ordem.status === 'concluido' || isUpdating || !podeMarcarLinhas
-                      });
-                      onMarcarLinha(linha.id, checked as boolean);
-                    }}
+                    onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
                     disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas}
                     className="mt-1"
                   />
