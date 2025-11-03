@@ -99,14 +99,13 @@ export function DetalhesInstalacaoDialog({
               <Separator />
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold">Documentos Relacionados</h3>
-                <OrigemBadges
-                  pedidoId={instalacao.pedido?.id}
-                  pedidoNumero={instalacao.pedido?.numero_pedido}
-                  vendaId={instalacao.venda?.id}
-                  vendaNumero={instalacao.venda?.numero}
-                  size="default"
-                  orientation="horizontal"
-                />
+            <OrigemBadges
+              pedidoId={instalacao.pedido?.id}
+              pedidoNumero={instalacao.pedido?.numero_pedido}
+              vendaId={instalacao.venda?.id}
+              size="default"
+              orientation="horizontal"
+            />
               </div>
             </>
           )}
@@ -233,11 +232,11 @@ export function DetalhesInstalacaoDialog({
                   <p className="font-medium">{instalacao.venda.forma_pagamento || 'Não informado'}</p>
                 </div>
 
-                {instalacao.venda.observacoes && (
+                {instalacao.venda.observacoes_venda && (
                   <div className="col-span-2">
                     <p className="text-xs text-muted-foreground">Observações da Venda</p>
                     <p className="text-sm bg-muted p-2 rounded-md mt-1">
-                      {instalacao.venda.observacoes}
+                      {instalacao.venda.observacoes_venda}
                     </p>
                   </div>
                 )}

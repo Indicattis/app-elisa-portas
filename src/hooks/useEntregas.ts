@@ -51,11 +51,10 @@ export interface Entrega {
   parcelas?: ParcelaEntrega[];
   venda?: {
     id: string;
-    numero: string;
     valor_a_receber: number;
     pagamento_na_entrega: boolean;
     forma_pagamento: string;
-    observacoes: string | null;
+    observacoes_venda: string | null;
   };
   pedido?: {
     id: string;
@@ -97,11 +96,10 @@ export const useEntregas = () => {
           ),
           venda:vendas!venda_id(
             id,
-            numero,
             valor_a_receber,
             pagamento_na_entrega,
             forma_pagamento,
-            observacoes
+            observacoes_venda
           )
         `)
         .order('created_at', { ascending: false});

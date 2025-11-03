@@ -12,16 +12,12 @@ interface Ordem {
   observacoes?: string;
   responsavel_id?: string;
   linhas?: any[];
-  pedido?: {
-    id: string;
-    numero_pedido: string;
-    cliente_nome: string;
-    venda_id?: string;
-    venda?: {
+    pedido?: {
       id: string;
-      numero: string;
+      numero_pedido: string;
+      cliente_nome: string;
+      venda_id?: string;
     };
-  };
   admin_users?: {
     nome: string;
   };

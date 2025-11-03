@@ -19,10 +19,6 @@ interface Ordem {
     numero_pedido: string;
     cliente_nome: string;
     venda_id?: string;
-    venda?: {
-      id: string;
-      numero: string;
-    };
   };
   linhas?: any[];
   admin_users?: {

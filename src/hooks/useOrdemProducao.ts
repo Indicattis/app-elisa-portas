@@ -32,10 +32,6 @@ interface Ordem {
     numero_pedido: string;
     cliente_nome: string;
     venda_id?: string;
-    venda?: {
-      id: string;
-      numero: string;
-    };
   };
   admin_users?: {
     nome: string;
@@ -80,11 +76,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             id,
             numero_pedido,
             cliente_nome,
-            venda_id,
-            venda:vendas!venda_id(
-              id,
-              numero
-            )
+            venda_id
           ),
           admin_users:responsavel_id(
             nome,

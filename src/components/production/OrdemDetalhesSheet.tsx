@@ -35,10 +35,6 @@ interface Ordem {
     numero_pedido: string;
     cliente_nome: string;
     venda_id?: string;
-    venda?: {
-      id: string;
-      numero: string;
-    };
   };
   admin_users?: {
     nome: string;
@@ -192,7 +188,7 @@ export function OrdemDetalhesSheet({
           </div>
 
           {/* Origem - Pedido e Venda */}
-          {(ordem.pedido?.id || ordem.pedido?.venda?.id) && (
+          {(ordem.pedido?.id || ordem.pedido?.venda_id) && (
             <>
               <Separator />
               <div className="space-y-2">
@@ -200,8 +196,7 @@ export function OrdemDetalhesSheet({
                 <OrigemBadges
                   pedidoId={ordem.pedido?.id}
                   pedidoNumero={ordem.pedido?.numero_pedido}
-                  vendaId={ordem.pedido?.venda?.id}
-                  vendaNumero={ordem.pedido?.venda?.numero}
+                  vendaId={ordem.pedido?.venda_id}
                   size="default"
                   orientation="horizontal"
                 />
