@@ -205,7 +205,7 @@ export function OrdemDetalhesSheet({
           )}
 
           {/* Botão de capturar ordem */}
-          {!temResponsavel && ordem.status !== 'concluido' && (
+          {!temResponsavel && ordem.status !== 'concluido' && ordem.status !== 'pronta' && onCapturarOrdem && (
             <>
               <Separator />
               <Button
@@ -220,6 +220,18 @@ export function OrdemDetalhesSheet({
               <p className="text-xs text-center text-muted-foreground">
                 Capture esta ordem para começar a trabalhar nela
               </p>
+            </>
+          )}
+
+          {/* Alerta quando não pode marcar */}
+          {temResponsavel && !isResponsavel && ordem.status !== 'concluido' && ordem.status !== 'pronta' && (
+            <>
+              <Separator />
+              <div className="p-3 rounded-lg bg-muted/50 border border-muted">
+                <p className="text-xs text-muted-foreground text-center">
+                  Esta ordem está sendo executada por <span className="font-medium">{ordem.admin_users?.nome}</span>. Apenas o responsável pode marcar as linhas.
+                </p>
+              </div>
             </>
           )}
 
