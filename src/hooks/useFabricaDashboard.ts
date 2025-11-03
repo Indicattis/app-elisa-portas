@@ -35,23 +35,23 @@ export const useFabricaDashboard = () => {
       // Ordens por tipo
       const { data: ordensPerf } = await supabase
         .from('ordens_perfiladeira')
-        .select('id', { count: 'exact' })
-        .eq('status', 'em_andamento');
+        .select('id')
+        .neq('status', 'concluido');
 
       const { data: ordensSold } = await supabase
         .from('ordens_soldagem')
-        .select('id', { count: 'exact' })
-        .eq('status', 'em_andamento');
+        .select('id')
+        .neq('status', 'concluido');
 
       const { data: ordensSep } = await supabase
         .from('ordens_separacao')
-        .select('id', { count: 'exact' })
-        .eq('status', 'em_andamento');
+        .select('id')
+        .neq('status', 'concluido');
 
       const { data: ordensPint } = await supabase
         .from('ordens_pintura')
-        .select('id', { count: 'exact' })
-        .eq('status', 'em_andamento');
+        .select('id')
+        .neq('status', 'pronta');
 
       const metrics: FabricaMetrics = {
         pedidosEmProducao,
