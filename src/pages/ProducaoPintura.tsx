@@ -4,30 +4,12 @@ import { useOrdemPintura } from "@/hooks/useOrdemPintura";
 import { ProducaoPinturaKanban } from "@/components/production/ProducaoPinturaKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 
-interface Ordem {
-  id: string;
-  numero_ordem: string;
-  pedido_id: string;
-  status: string;
-  observacoes?: string;
-  responsavel_id?: string;
-  linhas?: any[];
-    pedido?: {
-      id: string;
-      numero_pedido: string;
-      cliente_nome: string;
-      venda_id?: string;
-    };
-  admin_users?: {
-    nome: string;
-  };
-}
-
 export default function ProducaoPintura() {
-  const [selectedOrdem, setSelectedOrdem] = useState<Ordem | null>(null);
+  const [selectedOrdemId, setSelectedOrdemId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const {
+    ordens,
     ordensParaPintar,
     ordensPintando,
     ordensProntas,
@@ -38,8 +20,11 @@ export default function ProducaoPintura() {
     marcarLinhaConcluida,
   } = useOrdemPintura();
 
-  const handleOrdemClick = (ordem: Ordem) => {
-    setSelectedOrdem(ordem);
+  // Sincronizar ordem selecionada com cache atualizado
+  const selectedOrdem = ordens.find(o => o.id === selectedOrdemId) || null;
+
+  const handleOrdemClick = (ordem: any) => {
+    setSelectedOrdemId(ordem.id);
     setDetailsOpen(true);
   };
 

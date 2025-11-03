@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export function useOrdemPintura() {
   const { toast } = useToast();
@@ -45,7 +46,7 @@ export function useOrdemPintura() {
 
           return {
             ...ordem,
-            pedido: pedido || { cliente_nome: 'Cliente não encontrado' },
+            pedido: pedido || { id: '', numero_pedido: '', cliente_nome: 'Cliente não encontrado', venda_id: undefined },
             admin_users: responsavel,
             linhas: linhas || [],
           };
@@ -54,9 +55,31 @@ export function useOrdemPintura() {
 
       return ordensComDados;
     },
-    staleTime: 0, // Dados sempre considerados stale para refetch imediato
-    refetchOnWindowFocus: true,
   });
+
+  // Subscribe to realtime updates for linhas_ordens
+  useEffect(() => {
+    const channel = supabase
+      .channel('linhas-ordens-pintura-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'linhas_ordens',
+          filter: 'tipo_ordem=eq.pintura'
+        },
+        () => {
+          // Invalidate queries on any update to refresh data
+          queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Filtrar ordens por status
   const ordensParaPintar = ordens.filter((o: any) => o.status === 'pendente');
