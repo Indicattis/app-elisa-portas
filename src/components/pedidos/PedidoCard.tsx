@@ -265,19 +265,22 @@ export function PedidoCard({
   const handleConfirmarAvanco = async () => {
     setShowConfirmarAvanco(false);
     
-    const listaProcessos = await determinarProcessos(pedido.id);
-    setProcessos(listaProcessos);
-    setShowProgresso(true);
+    // Se está na etapa aberto ou aguardando_pintura, usa o sistema de processos
+    if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura') {
+      const listaProcessos = await determinarProcessos(pedido.id);
+      setProcessos(listaProcessos);
+      setShowProgresso(true);
 
-    if (onMoverEtapa) {
-      await onMoverEtapa(pedido.id, true, (processoId, status) => {
-        setProcessos(prev => 
-          prev.map(p => p.id === processoId ? { ...p, status } : p)
-        );
-      });
+      if (onMoverEtapa) {
+        await onMoverEtapa(pedido.id, true, (processoId, status) => {
+          setProcessos(prev => 
+            prev.map(p => p.id === processoId ? { ...p, status } : p)
+          );
+        });
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setShowProgresso(false);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setShowProgresso(false);
+      }
     }
   };
 
@@ -473,7 +476,7 @@ export function PedidoCard({
                 ) : etapaAtual === 'aguardando_pintura' ? (
                   <Button
                     size="sm"
-                    onClick={() => setShowAcaoEtapa(true)}
+                    onClick={() => setShowConfirmarAvanco(true)}
                     disabled={!ordemPinturaConcluida}
                     className="ml-2"
                     title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : ""}
@@ -790,7 +793,7 @@ export function PedidoCard({
                 <Button
                   size="sm"
                   className="w-full"
-                  onClick={() => setShowAcaoEtapa(true)}
+                  onClick={() => setShowConfirmarAvanco(true)}
                   disabled={!ordemPinturaConcluida}
                   title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : ""}
                 >
@@ -822,30 +825,7 @@ export function PedidoCard({
         pedido={pedido}
         open={showAcaoEtapa}
         onOpenChange={setShowAcaoEtapa}
-        onAvancar={async () => {
-          setShowAcaoEtapa(false);
-          
-          if (etapaAtual === 'aguardando_pintura') {
-            const listaProcessos = await determinarProcessos(pedido.id);
-            setProcessos(listaProcessos);
-            setShowProgresso(true);
-
-            if (onMoverEtapa) {
-              await onMoverEtapa(pedido.id, true, (processoId, status) => {
-                setProcessos(prev => 
-                  prev.map(p => p.id === processoId ? { ...p, status } : p)
-                );
-              });
-
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              setShowProgresso(false);
-            }
-          } else {
-            if (onMoverEtapa) {
-              onMoverEtapa(pedido.id);
-            }
-          }
-        }}
+        onAvancar={onMoverEtapa || (() => {})}
       />
 
       <RetrocederEtapaModal
