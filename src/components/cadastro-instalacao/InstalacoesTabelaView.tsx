@@ -482,16 +482,17 @@ export const InstalacoesTabelaView = ({
                             </Button>
                           ) : (
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleGeocode(instalacao);
                               }}
-                              title="Geocodificar"
-                              className="h-5 w-5 p-0 text-orange-500"
+                              title="Geocodificar endereço"
+                              className="h-6 px-2 text-[9px] text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30"
                             >
-                              <MapPin className="h-3 w-3" />
+                              <MapPin className="h-3 w-3 mr-1" />
+                              Geocodificar
                             </Button>
                           )}
                         </div>
@@ -671,16 +672,17 @@ export const InstalacoesTabelaView = ({
                                 </Button>
                               ) : (
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleGeocode(instalacao);
                                   }}
-                                  title="Geocodificar"
-                                  className="h-5 w-5 p-0 text-orange-500 hover:text-orange-600"
+                                  title="Geocodificar endereço"
+                                  className="h-6 px-2 text-[9px] text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30"
                                 >
-                                  <MapPin className="h-3 w-3" />
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  Geocodificar
                                 </Button>
                               )}
                             </div>
