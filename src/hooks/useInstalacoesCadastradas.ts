@@ -56,11 +56,11 @@ export interface InstalacaoCadastrada {
   parcelas?: ParcelaInstalacao[];
   venda?: {
     id: string;
-    numero_venda: string;
+    numero: string;
     valor_a_receber: number;
     pagamento_na_entrega: boolean;
     forma_pagamento: string;
-    observacoes_venda: string | null;
+    observacoes: string | null;
   };
   pedido?: {
     id: string;
@@ -98,17 +98,17 @@ export const useInstalacoesCadastradas = () => {
         .from('instalacoes_cadastradas')
         .select(`
           *,
-          pedido:pedido_id(
+          pedido:pedidos_producao!pedido_id(
             id,
             numero_pedido
           ),
-          venda:venda_id(
+          venda:vendas!venda_id(
             id,
-            numero_venda,
+            numero,
             valor_a_receber,
             pagamento_na_entrega,
             forma_pagamento,
-            observacoes_venda
+            observacoes
           )
         `)
         .order('created_at', { ascending: false });

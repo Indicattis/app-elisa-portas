@@ -103,7 +103,7 @@ export function DetalhesInstalacaoDialog({
                   pedidoId={instalacao.pedido?.id}
                   pedidoNumero={instalacao.pedido?.numero_pedido}
                   vendaId={instalacao.venda?.id}
-                  vendaNumero={instalacao.venda?.numero_venda}
+                  vendaNumero={instalacao.venda?.numero}
                   size="default"
                   orientation="horizontal"
                 />
@@ -233,11 +233,11 @@ export function DetalhesInstalacaoDialog({
                   <p className="font-medium">{instalacao.venda.forma_pagamento || 'Não informado'}</p>
                 </div>
 
-                {instalacao.venda.observacoes_venda && (
+                {instalacao.venda.observacoes && (
                   <div className="col-span-2">
                     <p className="text-xs text-muted-foreground">Observações da Venda</p>
                     <p className="text-sm bg-muted p-2 rounded-md mt-1">
-                      {instalacao.venda.observacoes_venda}
+                      {instalacao.venda.observacoes}
                     </p>
                   </div>
                 )}

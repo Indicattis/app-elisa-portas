@@ -37,7 +37,7 @@ interface Ordem {
     venda_id?: string;
     venda?: {
       id: string;
-      numero_venda: string;
+      numero: string;
     };
   };
   admin_users?: {
@@ -201,7 +201,7 @@ export function OrdemDetalhesSheet({
                   pedidoId={ordem.pedido?.id}
                   pedidoNumero={ordem.pedido?.numero_pedido}
                   vendaId={ordem.pedido?.venda?.id}
-                  vendaNumero={ordem.pedido?.venda?.numero_venda}
+                  vendaNumero={ordem.pedido?.venda?.numero}
                   size="default"
                   orientation="horizontal"
                 />

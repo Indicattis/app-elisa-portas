@@ -34,7 +34,7 @@ interface Ordem {
     venda_id?: string;
     venda?: {
       id: string;
-      numero_venda: string;
+      numero: string;
     };
   };
   admin_users?: {
@@ -76,14 +76,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             concluida_em,
             concluida_por
           ),
-          pedido:pedido_id(
+          pedido:pedidos_producao!pedido_id(
             id,
             numero_pedido,
             cliente_nome,
             venda_id,
-            venda:venda_id(
+            venda:vendas!venda_id(
               id,
-              numero_venda
+              numero
             )
           ),
           admin_users:responsavel_id(

@@ -6,7 +6,7 @@ interface OrigemBadgesProps {
   pedidoId?: string | null;
   pedidoNumero?: string | null;
   vendaId?: string | null;
-  vendaNumero?: string | null;
+  vendaNumero?: string | number | null;
   size?: 'sm' | 'default';
   orientation?: 'horizontal' | 'vertical';
 }
@@ -56,7 +56,7 @@ export function OrigemBadges({
           title="Clique para visualizar a venda"
         >
           <FileText className="h-3 w-3" />
-          {vendaNumero || 'Ver Venda'}
+          {vendaNumero ? `#${vendaNumero}` : 'Ver Venda'}
         </Badge>
       )}
     </div>

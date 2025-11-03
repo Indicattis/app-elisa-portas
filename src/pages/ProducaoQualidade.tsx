@@ -21,7 +21,7 @@ interface Ordem {
     venda_id?: string;
     venda?: {
       id: string;
-      numero_venda: string;
+      numero: string;
     };
   };
   linhas?: any[];
