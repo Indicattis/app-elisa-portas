@@ -1,11 +1,15 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { Package, Phone, MapPin, Calendar, DollarSign, ListChecks } from "lucide-react";
+import { Package, Phone, MapPin, Calendar, DollarSign, ListChecks, ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { PedidoLinhasEditor } from "./PedidoLinhasEditor";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PedidoDetalhesSheetProps {
   pedido: any;
@@ -16,6 +20,104 @@ interface PedidoDetalhesSheetProps {
 export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalhesSheetProps) {
   const venda = pedido.vendas;
   const { linhas, isLoading } = usePedidoLinhas(pedido.id);
+  const navigate = useNavigate();
+  const [ordens, setOrdens] = useState<any[]>([]);
+  const [loadingOrdens, setLoadingOrdens] = useState(false);
+  
+  useEffect(() => {
+    if (open && pedido?.id) {
+      fetchOrdens();
+    }
+  }, [open, pedido?.id]);
+
+  const fetchOrdens = async () => {
+    setLoadingOrdens(true);
+    try {
+      const ordensData = [];
+
+      // Buscar ordem de soldagem
+      const { data: soldagem } = await supabase
+        .from("ordens_soldagem")
+        .select("id, numero_ordem, status")
+        .eq("pedido_id", pedido.id)
+        .maybeSingle();
+      if (soldagem) ordensData.push({ ...soldagem, tipo: "Soldagem" });
+
+      // Buscar ordem de perfiladeira
+      const { data: perfiladeira } = await supabase
+        .from("ordens_perfiladeira")
+        .select("id, numero_ordem, status")
+        .eq("pedido_id", pedido.id)
+        .maybeSingle();
+      if (perfiladeira) ordensData.push({ ...perfiladeira, tipo: "Perfiladeira" });
+
+      // Buscar ordem de separação
+      const { data: separacao } = await supabase
+        .from("ordens_separacao")
+        .select("id, numero_ordem, status")
+        .eq("pedido_id", pedido.id)
+        .maybeSingle();
+      if (separacao) ordensData.push({ ...separacao, tipo: "Separação" });
+
+      // Buscar ordem de qualidade
+      const { data: qualidade } = await supabase
+        .from("ordens_qualidade")
+        .select("id, numero_ordem, status")
+        .eq("pedido_id", pedido.id)
+        .maybeSingle();
+      if (qualidade) ordensData.push({ ...qualidade, tipo: "Qualidade" });
+
+      // Buscar ordem de pintura
+      const { data: pintura } = await supabase
+        .from("ordens_pintura")
+        .select("id, numero_ordem, status")
+        .eq("pedido_id", pedido.id)
+        .maybeSingle();
+      if (pintura) ordensData.push({ ...pintura, tipo: "Pintura" });
+
+      setOrdens(ordensData);
+    } catch (error) {
+      console.error("Erro ao buscar ordens:", error);
+    } finally {
+      setLoadingOrdens(false);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "concluido":
+      case "pronta":
+        return <CheckCircle2 className="w-3 h-3 text-green-600" />;
+      case "em_andamento":
+        return <Clock className="w-3 h-3 text-blue-600" />;
+      case "cancelado":
+        return <XCircle className="w-3 h-3 text-red-600" />;
+      default:
+        return <AlertCircle className="w-3 h-3 text-yellow-600" />;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      aberto: "Aberto",
+      em_andamento: "Em Andamento",
+      concluido: "Concluído",
+      cancelado: "Cancelado",
+      pronta: "Pronta",
+    };
+    return labels[status] || status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      aberto: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20",
+      em_andamento: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+      concluido: "bg-green-500/10 text-green-700 border-green-500/20",
+      pronta: "bg-green-500/10 text-green-700 border-green-500/20",
+      cancelado: "bg-red-500/10 text-red-700 border-red-500/20",
+    };
+    return colors[status] || "";
+  };
   
   if (!venda) return null;
 
@@ -25,7 +127,22 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Detalhes do Pedido</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle>Detalhes do Pedido</SheetTitle>
+            {venda.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(`/dashboard/vendas/${venda.id}/view`);
+                }}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Ver Venda
+              </Button>
+            )}
+          </div>
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
@@ -50,12 +167,53 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
             {isLoading ? (
               <div className="text-sm text-muted-foreground">Carregando...</div>
             ) : (
-              <PedidoLinhasEditor
-                linhas={linhas}
-                isReadOnly={true}
-                onAdicionarLinha={async () => {}}
-                onRemoverLinha={async () => {}}
-              />
+              <div className="space-y-1">
+                {linhas.map((linha: any) => (
+                  <div key={linha.id} className="flex items-center justify-between p-2 bg-muted/30 rounded text-xs">
+                    <div className="flex-1">
+                      <p className="font-medium">{linha.item}</p>
+                      {linha.tamanho && (
+                        <p className="text-muted-foreground text-[10px]">{linha.tamanho}</p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      {linha.quantidade}x
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Ordens de Produção */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Ordens de Produção ({ordens.length})
+            </h3>
+            {loadingOrdens ? (
+              <div className="text-sm text-muted-foreground">Carregando...</div>
+            ) : ordens.length > 0 ? (
+              <div className="space-y-2">
+                {ordens.map((ordem) => (
+                  <div key={ordem.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(ordem.status)}
+                      <div>
+                        <p className="font-medium text-sm">{ordem.tipo}</p>
+                        <p className="text-xs text-muted-foreground">#{ordem.numero_ordem}</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={`${getStatusColor(ordem.status)} text-xs`}>
+                      {getStatusLabel(ordem.status)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhuma ordem vinculada</p>
             )}
           </div>
 
