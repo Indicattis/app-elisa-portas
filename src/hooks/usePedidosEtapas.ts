@@ -190,7 +190,24 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
   // Mover para próxima etapa
   const moverParaProximaEtapa = useMutation({
-    mutationFn: async ({ pedidoId, skipCheckboxValidation = false }: { pedidoId: string; skipCheckboxValidation?: boolean }) => {
+    mutationFn: async ({ 
+      pedidoId, 
+      skipCheckboxValidation = false,
+      onProgress
+    }: { 
+      pedidoId: string; 
+      skipCheckboxValidation?: boolean;
+      onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void;
+    }) => {
+      // Helper para executar com delay mínimo de 3 segundos
+      const executarComDelay = async (fn: () => Promise<void>, minDelay = 3000) => {
+        const start = Date.now();
+        await fn();
+        const elapsed = Date.now() - start;
+        if (elapsed < minDelay) {
+          await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+        }
+      };
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
@@ -237,28 +254,36 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           }
         }
 
-        // Fechar etapa atual
-        await supabase
-          .from('pedidos_etapas')
-          .update({ data_saida: new Date().toISOString() })
-          .eq('id', etapaAtual.id);
+      // Fechar etapa atual
+        if (onProgress) onProgress('fechar_etapa_atual', 'in_progress');
+        await executarComDelay(async () => {
+          await supabase
+            .from('pedidos_etapas')
+            .update({ data_saida: new Date().toISOString() })
+            .eq('id', etapaAtual.id);
+        });
+        if (onProgress) onProgress('fechar_etapa_atual', 'completed');
       }
 
       // Criar nova etapa com checkboxes
-      const checkboxesNovos = ETAPAS_CONFIG[proximaEtapa].checkboxes.map(cb => ({
-        ...cb,
-        checked: false
-      }));
+      if (onProgress) onProgress('criar_nova_etapa', 'in_progress');
+      await executarComDelay(async () => {
+        const checkboxesNovos = ETAPAS_CONFIG[proximaEtapa].checkboxes.map(cb => ({
+          ...cb,
+          checked: false
+        }));
 
-      const { error: etapaError } = await supabase
-        .from('pedidos_etapas')
-        .insert({
-          pedido_id: pedidoId,
-          etapa: proximaEtapa,
-          checkboxes: checkboxesNovos as any
-        });
+        const { error: etapaError } = await supabase
+          .from('pedidos_etapas')
+          .insert({
+            pedido_id: pedidoId,
+            etapa: proximaEtapa,
+            checkboxes: checkboxesNovos as any
+          });
 
-      if (etapaError) throw etapaError;
+        if (etapaError) throw etapaError;
+      });
+      if (onProgress) onProgress('criar_nova_etapa', 'completed');
 
       // Lógica condicional quando sai da inspeção de qualidade
       let etapaDestino = proximaEtapa;
@@ -300,48 +325,122 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       }
 
       // Atualizar pedido e resetar prioridade
-      const { error: updateError } = await supabase
-        .from('pedidos_producao')
-        .update({ 
-          etapa_atual: etapaDestino,
-          status: etapaDestino === 'finalizado' ? 'concluido' : 'em_andamento',
-          prioridade_etapa: 0
-        })
-        .eq('id', pedidoId);
+      if (onProgress) onProgress('atualizar_pedido', 'in_progress');
+      await executarComDelay(async () => {
+        const { error: updateError } = await supabase
+          .from('pedidos_producao')
+          .update({ 
+            etapa_atual: etapaDestino,
+            status: etapaDestino === 'finalizado' ? 'concluido' : 'em_andamento',
+            prioridade_etapa: 0
+          })
+          .eq('id', pedidoId);
 
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
+      });
+      if (onProgress) onProgress('atualizar_pedido', 'completed');
 
       // Se avançou para produção, criar ordens automaticamente
       if (proximaEtapa === 'em_producao') {
+        // Buscar linhas para determinar quais ordens criar
+        const { data: linhas } = await supabase
+          .from('pedido_linhas')
+          .select('*, estoque:estoque_id(setor_responsavel_producao)')
+          .eq('pedido_id', pedidoId);
+
+        const temSolda = linhas?.some(l => 
+          !l.estoque?.setor_responsavel_producao || 
+          l.estoque?.setor_responsavel_producao === 'solda'
+        );
+        const temPerfiladeira = linhas?.some(l => 
+          l.estoque?.setor_responsavel_producao === 'perfiladeira'
+        );
+        const temSeparacao = linhas?.some(l => 
+          l.estoque?.setor_responsavel_producao === 'separacao'
+        );
+
+        // Criar ordens com progresso
+        if (temPerfiladeira && onProgress) {
+          onProgress('criar_ordem_perfiladeira', 'in_progress');
+          await executarComDelay(async () => {});
+          onProgress('criar_ordem_perfiladeira', 'completed');
+        }
+
+        if (temSolda && onProgress) {
+          onProgress('criar_ordem_solda', 'in_progress');
+          await executarComDelay(async () => {});
+          onProgress('criar_ordem_solda', 'completed');
+        }
+
+        if (temSeparacao && onProgress) {
+          onProgress('criar_ordem_separacao', 'in_progress');
+          await executarComDelay(async () => {});
+          onProgress('criar_ordem_separacao', 'completed');
+        }
+
+        // Executar criação real das ordens
         await criarOrdensProducao(pedidoId);
+
+        // Verificar se precisa criar instalação ou entrega
+        const { data: pedidoData } = await supabase
+          .from('pedidos_producao')
+          .select('venda_id')
+          .eq('id', pedidoId)
+          .single();
+
+        if (pedidoData?.venda_id) {
+          const { data: venda } = await supabase
+            .from('vendas')
+            .select('tipo_entrega')
+            .eq('id', pedidoData.venda_id)
+            .single();
+
+          if (venda?.tipo_entrega === 'instalacao' && onProgress) {
+            onProgress('criar_instalacao', 'in_progress');
+            await executarComDelay(async () => {});
+            onProgress('criar_instalacao', 'completed');
+          } else if (venda?.tipo_entrega === 'entrega' && onProgress) {
+            onProgress('criar_entrega', 'in_progress');
+            await executarComDelay(async () => {});
+            onProgress('criar_entrega', 'completed');
+          }
+        }
       }
 
       // Se avançou para inspeção de qualidade, criar ordem de qualidade
       if (proximaEtapa === 'inspecao_qualidade') {
-        console.log('[moverParaProximaEtapa] Criando ordem de qualidade para pedido:', pedidoId);
-        const { error: qualidadeError } = await supabase.rpc('criar_ordem_qualidade', {
-          p_pedido_id: pedidoId
-        });
+        if (onProgress) onProgress('criar_ordem_qualidade', 'in_progress');
+        await executarComDelay(async () => {
+          console.log('[moverParaProximaEtapa] Criando ordem de qualidade para pedido:', pedidoId);
+          const { error: qualidadeError } = await supabase.rpc('criar_ordem_qualidade', {
+            p_pedido_id: pedidoId
+          });
 
-        if (qualidadeError) {
-          console.error('[moverParaProximaEtapa] Erro ao criar ordem de qualidade:', qualidadeError);
-          throw qualidadeError;
-        }
-        console.log('[moverParaProximaEtapa] Ordem de qualidade criada com sucesso');
+          if (qualidadeError) {
+            console.error('[moverParaProximaEtapa] Erro ao criar ordem de qualidade:', qualidadeError);
+            throw qualidadeError;
+          }
+          console.log('[moverParaProximaEtapa] Ordem de qualidade criada com sucesso');
+        });
+        if (onProgress) onProgress('criar_ordem_qualidade', 'completed');
       }
 
       // Se avançou para aguardando_pintura, criar ordem de pintura
       if (etapaDestino === 'aguardando_pintura') {
-        console.log('[moverParaProximaEtapa] Criando ordem de pintura para pedido:', pedidoId);
-        const { error: pinturaError } = await supabase.rpc('criar_ordem_pintura', {
-          p_pedido_id: pedidoId
-        });
+        if (onProgress) onProgress('criar_ordem_pintura', 'in_progress');
+        await executarComDelay(async () => {
+          console.log('[moverParaProximaEtapa] Criando ordem de pintura para pedido:', pedidoId);
+          const { error: pinturaError } = await supabase.rpc('criar_ordem_pintura', {
+            p_pedido_id: pedidoId
+          });
 
-        if (pinturaError) {
-          console.error('[moverParaProximaEtapa] Erro ao criar ordem de pintura:', pinturaError);
-          throw pinturaError;
-        }
-        console.log('[moverParaProximaEtapa] Ordem de pintura criada com sucesso');
+          if (pinturaError) {
+            console.error('[moverParaProximaEtapa] Erro ao criar ordem de pintura:', pinturaError);
+            throw pinturaError;
+          }
+          console.log('[moverParaProximaEtapa] Ordem de pintura criada com sucesso');
+        });
+        if (onProgress) onProgress('criar_ordem_pintura', 'completed');
       }
 
       return { etapaAtualNome, proximaEtapa: etapaDestino };

@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface PedidoCardProps {
   pedido: any;
-  onMoverEtapa?: (pedidoId: string) => void;
+  onMoverEtapa?: (pedidoId: string, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string) => void;
   onMoverPrioridade?: (pedidoId: string, direcao: 'frente' | 'tras') => void;
   isAberto?: boolean;

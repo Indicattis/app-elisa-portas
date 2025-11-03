@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,7 +17,7 @@ interface AcaoEtapaModalProps {
   pedido: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAvancar: (pedidoId: string) => void;
+  onAvancar: (pedidoId: string, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
 }
 
 export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEtapaModalProps) {
@@ -53,14 +54,98 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showProgresso, setShowProgresso] = useState(false);
+  const [processos, setProcessos] = useState<Processo[]>([]);
+
+  const determinarProcessos = useCallback(async () => {
+    const lista: Processo[] = [];
+
+    // Sempre terá fechar etapa, criar nova etapa e atualizar pedido
+    lista.push(
+      { id: 'fechar_etapa_atual', label: 'Fechando etapa atual', status: 'pending' },
+      { id: 'criar_nova_etapa', label: 'Criando nova etapa', status: 'pending' },
+      { id: 'atualizar_pedido', label: 'Atualizando status do pedido', status: 'pending' }
+    );
+
+    // Se está avançando para produção, precisa criar ordens
+    if (etapaAtual === 'aberto' && proximaEtapa === 'em_producao') {
+      const { data: linhas } = await supabase
+        .from('pedido_linhas')
+        .select('*, estoque:estoque_id(setor_responsavel_producao)')
+        .eq('pedido_id', pedido.id);
+
+      const temSolda = linhas?.some(l => 
+        !l.estoque?.setor_responsavel_producao || 
+        l.estoque?.setor_responsavel_producao === 'solda'
+      );
+      const temPerfiladeira = linhas?.some(l => 
+        l.estoque?.setor_responsavel_producao === 'perfiladeira'
+      );
+      const temSeparacao = linhas?.some(l => 
+        l.estoque?.setor_responsavel_producao === 'separacao'
+      );
+
+      // Inserir processos de ordens antes dos processos gerais
+      const ordensProcessos: Processo[] = [];
+      if (temPerfiladeira) {
+        ordensProcessos.push({ id: 'criar_ordem_perfiladeira', label: 'Criando ordem de perfiladeira', status: 'pending' });
+      }
+      if (temSolda) {
+        ordensProcessos.push({ id: 'criar_ordem_solda', label: 'Criando ordem de solda', status: 'pending' });
+      }
+      if (temSeparacao) {
+        ordensProcessos.push({ id: 'criar_ordem_separacao', label: 'Criando ordem de separação', status: 'pending' });
+      }
+
+      // Verificar se precisa criar instalação ou entrega
+      if (vendaData?.tipo_entrega === 'instalacao') {
+        ordensProcessos.push({ id: 'criar_instalacao', label: 'Criando instalação', status: 'pending' });
+      } else if (vendaData?.tipo_entrega === 'entrega') {
+        ordensProcessos.push({ id: 'criar_entrega', label: 'Criando entrega', status: 'pending' });
+      }
+
+      lista.unshift(...ordensProcessos);
+    }
+
+    // Se está avançando para qualidade
+    if (proximaEtapa === 'inspecao_qualidade') {
+      lista.unshift({ id: 'criar_ordem_qualidade', label: 'Criando ordem de qualidade', status: 'pending' });
+    }
+
+    // Se está avançando para pintura
+    if (proximaEtapa === 'aguardando_pintura') {
+      lista.unshift({ id: 'criar_ordem_pintura', label: 'Criando ordem de pintura', status: 'pending' });
+    }
+
+    return lista;
+  }, [etapaAtual, proximaEtapa, pedido.id, vendaData]);
 
   const handleConfirmar = async () => {
     setIsSubmitting(true);
     try {
-      await onAvancar(pedido.id);
+      // Determinar processos
+      const listaProcessos = await determinarProcessos();
+      setProcessos(listaProcessos);
+      
+      // Fechar modal atual e abrir modal de progresso
       onOpenChange(false);
+      setShowProgresso(true);
+
+      // Executar avanço com callback de progresso
+      await onAvancar(pedido.id, (processoId, status) => {
+        setProcessos(prev => 
+          prev.map(p => p.id === processoId ? { ...p, status } : p)
+        );
+      });
+
+      // Aguardar 1 segundo para usuário ver todos checks
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Fechar modal de progresso
+      setShowProgresso(false);
     } catch (error) {
       console.error('Erro ao avançar:', error);
+      setShowProgresso(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -69,8 +154,9 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
   const canAdvance = todosObrigatoriosMarcados;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>
             Avançar para {proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}
@@ -240,5 +326,11 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <ProcessoAvancoModal
+      open={showProgresso}
+      processos={processos}
+    />
+  </>
   );
 }
