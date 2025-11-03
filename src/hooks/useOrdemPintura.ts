@@ -54,6 +54,8 @@ export function useOrdemPintura() {
 
       return ordensComDados;
     },
+    staleTime: 0, // Dados sempre considerados stale para refetch imediato
+    refetchOnWindowFocus: true,
   });
 
   // Filtrar ordens por status
@@ -184,17 +186,44 @@ export function useOrdemPintura() {
         .select();
 
       if (error) throw error;
+      return { linhaId, concluida };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ordens-pintura"] });
+    onMutate: async ({ linhaId, concluida }) => {
+      // Cancelar queries pendentes
+      await queryClient.cancelQueries({ queryKey: ["ordens-pintura"] });
+
+      // Snapshot do valor anterior
+      const previousOrdens = queryClient.getQueryData(["ordens-pintura"]);
+
+      // Atualizar otimisticamente
+      queryClient.setQueryData(["ordens-pintura"], (old: any[] = []) => {
+        return old.map(ordem => ({
+          ...ordem,
+          linhas: ordem.linhas?.map((linha: any) =>
+            linha.id === linhaId
+              ? { ...linha, concluida }
+              : linha
+          ) || []
+        }));
+      });
+
+      return { previousOrdens };
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Reverter em caso de erro
+      if (context?.previousOrdens) {
+        queryClient.setQueryData(["ordens-pintura"], context.previousOrdens);
+      }
       console.error("Erro ao marcar linha:", error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar a linha",
         variant: "destructive",
       });
+    },
+    onSuccess: () => {
+      // Invalidar queries para refetch
+      queryClient.invalidateQueries({ queryKey: ["ordens-pintura"] });
     },
   });
 
