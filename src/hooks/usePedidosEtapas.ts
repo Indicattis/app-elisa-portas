@@ -82,9 +82,11 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               cliente_telefone,
               valor_venda,
               created_at,
+              tipo_entrega,
               produtos_vendas (
                 id,
                 tipo_produto,
+                valor_pintura,
                 cor:catalogo_cores (nome)
               )
             ),
@@ -108,9 +110,11 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               cliente_telefone,
               valor_venda,
               created_at,
+              tipo_entrega,
               produtos_vendas (
                 id,
                 tipo_produto,
+                valor_pintura,
                 cor:catalogo_cores (nome)
               )
             ),
