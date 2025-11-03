@@ -10,6 +10,8 @@ import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AcaoEtapaModal } from "./AcaoEtapaModal";
 import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
 import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
+import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
+import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery } from "@tanstack/react-query";
@@ -45,6 +47,9 @@ export function PedidoCard({
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
   const [showRetrocederEtapa, setShowRetrocederEtapa] = useState(false);
   const [showAvancarQualidade, setShowAvancarQualidade] = useState(false);
+  const [showConfirmarAvanco, setShowConfirmarAvanco] = useState(false);
+  const [showProgresso, setShowProgresso] = useState(false);
+  const [processos, setProcessos] = useState<Processo[]>([]);
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -101,6 +106,84 @@ export function PedidoCard({
   const temLinhas = linhasCount > 0;
   const todasOrdensConcluidasEmProducao = ordensStatus === true;
   const ordemQualidadeConcluida = ordemQualidadeStatus === true;
+
+  // Função para determinar processos que serão executados
+  const determinarProcessos = async (pedidoId: string) => {
+    const lista: Processo[] = [];
+
+    lista.push(
+      { id: 'fechar_etapa_atual', label: 'Fechando etapa atual', status: 'pending' },
+      { id: 'criar_nova_etapa', label: 'Criando nova etapa', status: 'pending' },
+      { id: 'atualizar_pedido', label: 'Atualizando status do pedido', status: 'pending' }
+    );
+
+    if (etapaAtual === 'aberto') {
+      const { data: linhas } = await supabase
+        .from('pedido_linhas')
+        .select('*, estoque:estoque_id(setor_responsavel_producao)')
+        .eq('pedido_id', pedidoId);
+
+      const temSolda = linhas?.some(l => 
+        !l.estoque?.setor_responsavel_producao || 
+        l.estoque?.setor_responsavel_producao === 'solda'
+      );
+      const temPerfiladeira = linhas?.some(l => 
+        l.estoque?.setor_responsavel_producao === 'perfiladeira'
+      );
+      const temSeparacao = linhas?.some(l => 
+        l.estoque?.setor_responsavel_producao === 'separacao'
+      );
+
+      const ordensProcessos: Processo[] = [];
+      if (temPerfiladeira) {
+        ordensProcessos.push({ id: 'criar_ordem_perfiladeira', label: 'Criando ordem de perfiladeira', status: 'pending' });
+      }
+      if (temSolda) {
+        ordensProcessos.push({ id: 'criar_ordem_solda', label: 'Criando ordem de solda', status: 'pending' });
+      }
+      if (temSeparacao) {
+        ordensProcessos.push({ id: 'criar_ordem_separacao', label: 'Criando ordem de separação', status: 'pending' });
+      }
+
+      if (venda?.tipo_entrega === 'instalacao') {
+        ordensProcessos.push({ id: 'criar_instalacao', label: 'Criando instalação', status: 'pending' });
+      } else if (venda?.tipo_entrega === 'entrega') {
+        ordensProcessos.push({ id: 'criar_entrega', label: 'Criando entrega', status: 'pending' });
+      }
+
+      lista.unshift(...ordensProcessos);
+    }
+
+    if (proximaEtapa === 'inspecao_qualidade') {
+      lista.unshift({ id: 'criar_ordem_qualidade', label: 'Criando ordem de qualidade', status: 'pending' });
+    }
+
+    if (proximaEtapa === 'aguardando_pintura') {
+      lista.unshift({ id: 'criar_ordem_pintura', label: 'Criando ordem de pintura', status: 'pending' });
+    }
+
+    return lista;
+  };
+
+  // Handler para confirmar avanço (após modal de confirmação)
+  const handleConfirmarAvanco = async () => {
+    setShowConfirmarAvanco(false);
+    
+    const listaProcessos = await determinarProcessos(pedido.id);
+    setProcessos(listaProcessos);
+    setShowProgresso(true);
+
+    if (onMoverEtapa) {
+      await onMoverEtapa(pedido.id, (processoId, status) => {
+        setProcessos(prev => 
+          prev.map(p => p.id === processoId ? { ...p, status } : p)
+        );
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setShowProgresso(false);
+    }
+  };
 
   // Badge de posição com cores especiais para top 3
   const getBadgeColor = () => {
@@ -246,7 +329,7 @@ export function PedidoCard({
                     {temLinhas && onMoverEtapa && (
                       <Button
                         size="sm"
-                        onClick={() => setShowAcaoEtapa(true)}
+                        onClick={() => setShowConfirmarAvanco(true)}
                         className="ml-2"
                       >
                         <ArrowRight className="h-3.5 w-3.5 mr-2" />
@@ -320,6 +403,20 @@ export function PedidoCard({
               setShowAvancarQualidade(false);
             }
           }}
+        />
+
+        <ConfirmarAvancoModal
+          open={showConfirmarAvanco}
+          onOpenChange={setShowConfirmarAvanco}
+          onConfirmar={handleConfirmarAvanco}
+          pedido={pedido}
+          etapaAtual={config?.label || ''}
+          proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}
+        />
+
+        <ProcessoAvancoModal
+          open={showProgresso}
+          processos={processos}
         />
       </>
     );
@@ -488,14 +585,14 @@ export function PedidoCard({
                 <Button
                   size="sm"
                   className="w-full"
-                  onClick={() => setShowAcaoEtapa(true)}
+                  onClick={() => setShowConfirmarAvanco(true)}
                 >
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
                   Iniciar Produção
                 </Button>
-              )}
-            </>
-          ) : etapaAtual === 'em_producao' ? (
+                     )}
+                   </>
+                 ) : etapaAtual === 'em_producao' ? (
             <>
               <Button
                 size="sm"
@@ -583,6 +680,20 @@ export function PedidoCard({
             setShowAvancarQualidade(false);
           }
         }}
+      />
+
+      <ConfirmarAvancoModal
+        open={showConfirmarAvanco}
+        onOpenChange={setShowConfirmarAvanco}
+        onConfirmar={handleConfirmarAvanco}
+        pedido={pedido}
+        etapaAtual={config?.label || ''}
+        proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}
+      />
+
+      <ProcessoAvancoModal
+        open={showProgresso}
+        processos={processos}
       />
     </>
   );

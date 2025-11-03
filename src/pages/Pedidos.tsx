@@ -25,7 +25,11 @@ export default function Pedidos() {
   } = usePedidosEtapas(etapaAtiva);
 
   const handleMoverEtapa = async (pedidoId: string, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
-    await moverParaProximaEtapa.mutateAsync({ pedidoId, onProgress });
+    if (onProgress) {
+      await moverParaProximaEtapa.mutateAsync({ pedidoId, onProgress });
+    } else {
+      await moverParaProximaEtapa.mutateAsync({ pedidoId });
+    }
   };
 
   const handleRetrocederEtapa = async (pedidoId: string) => {
