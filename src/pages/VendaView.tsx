@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, DollarSign, Package, User, Calendar, CreditCard, FileText, Home } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Package, User, Calendar, CreditCard, FileText, Home, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -23,6 +23,7 @@ interface Parcela {
 interface Pedido {
   id: string;
   numero_pedido: string;
+  etapa: string;
 }
 
 interface Instalacao {
@@ -42,7 +43,18 @@ interface Venda {
   bairro?: string;
   cep?: string;
   valor_venda: number;
+  valor_instalacao?: number;
+  valor_frete?: number;
   forma_pagamento?: string;
+  data_venda: string;
+  data_prevista_entrega?: string;
+  tipo_entrega?: string;
+  numero_parcelas?: number;
+  valor_entrada?: number;
+  publico_alvo?: string;
+  nota_fiscal?: boolean;
+  pagamento_na_entrega?: boolean;
+  frete_aprovado?: boolean;
   canal_aquisicao?: { nome: string };
   atendente?: { nome: string; foto_perfil_url?: string };
   observacoes_venda?: string;
@@ -94,7 +106,7 @@ export default function VendaView() {
 
       const { data: pedidoData } = await supabase
         .from("pedidos_producao")
-        .select("id, numero_pedido")
+        .select("id, numero_pedido, etapa")
         .eq("venda_id", id)
         .maybeSingle();
 
@@ -134,6 +146,26 @@ export default function VendaView() {
 
   const formatCurrency = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+  const getEtapaLabel = (etapa: string) => {
+    const labels: Record<string, string> = {
+      aberto: "Aberto",
+      em_producao: "Em Produção",
+      finalizado: "Finalizado",
+      cancelado: "Cancelado",
+    };
+    return labels[etapa] || etapa;
+  };
+
+  const getEtapaBadgeColor = (etapa: string) => {
+    const colors: Record<string, string> = {
+      aberto: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20",
+      em_producao: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+      finalizado: "bg-green-500/10 text-green-700 border-green-500/20",
+      cancelado: "bg-red-500/10 text-red-700 border-red-500/20",
+    };
+    return colors[etapa] || "";
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
   if (!venda) return <div className="text-center py-8"><p>Venda não encontrada</p></div>;
 
@@ -154,8 +186,35 @@ export default function VendaView() {
         </div>
       </div>
 
+      {/* Status do Pedido */}
+      {venda.pedido && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Status do Pedido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${
+                  venda.pedido.etapa === 'finalizado' ? 'bg-green-500' :
+                  venda.pedido.etapa === 'em_producao' ? 'bg-blue-500' :
+                  venda.pedido.etapa === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
+                }`} />
+                <div>
+                  <p className="text-sm text-muted-foreground">Etapa do Pedido</p>
+                  <p className="font-semibold text-lg">{getEtapaLabel(venda.pedido.etapa)}</p>
+                </div>
+              </div>
+              <Badge variant="outline" className={`${getEtapaBadgeColor(venda.pedido.etapa)} text-base px-4 py-2`}>
+                {getEtapaLabel(venda.pedido.etapa)}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Resumo Financeiro */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Valor Total</CardTitle>
@@ -166,21 +225,97 @@ export default function VendaView() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Produtos</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Valor Produtos</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{venda.produtos?.length || 0}</p>
+            <p className="text-xl font-semibold">{formatCurrency((venda.valor_venda || 0) - (venda.valor_frete || 0))}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Forma de Pagamento</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Valor Instalação</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg font-medium">{venda.forma_pagamento || "Não informado"}</p>
+            <p className="text-xl font-semibold">{formatCurrency(venda.valor_instalacao || 0)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Valor Frete</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-semibold">{formatCurrency(venda.valor_frete || 0)}</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Detalhes da Venda */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Detalhes da Venda
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <p className="text-sm text-muted-foreground">Data da Venda</p>
+              <p className="font-medium">{format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}</p>
+            </div>
+            {venda.data_prevista_entrega && (
+              <div>
+                <p className="text-sm text-muted-foreground">Previsão de Entrega</p>
+                <p className="font-medium">{format(new Date(venda.data_prevista_entrega), "dd/MM/yyyy", { locale: ptBR })}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-muted-foreground">Tipo de Entrega</p>
+              <p className="font-medium">{venda.tipo_entrega === 'instalacao' ? 'Instalação' : venda.tipo_entrega === 'retirada' ? 'Retirada' : 'Não informado'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Forma de Pagamento</p>
+              <p className="font-medium">{venda.forma_pagamento || "Não informado"}</p>
+            </div>
+            {venda.numero_parcelas && (
+              <div>
+                <p className="text-sm text-muted-foreground">Número de Parcelas</p>
+                <p className="font-medium">{venda.numero_parcelas}x</p>
+              </div>
+            )}
+            {venda.valor_entrada !== undefined && venda.valor_entrada > 0 && (
+              <div>
+                <p className="text-sm text-muted-foreground">Valor de Entrada</p>
+                <p className="font-medium">{formatCurrency(venda.valor_entrada)}</p>
+              </div>
+            )}
+            {venda.publico_alvo && (
+              <div>
+                <p className="text-sm text-muted-foreground">Público Alvo</p>
+                <p className="font-medium capitalize">{venda.publico_alvo.replace('_', ' ')}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-muted-foreground">Nota Fiscal</p>
+              <Badge variant={venda.nota_fiscal ? "default" : "secondary"} className="mt-1">
+                {venda.nota_fiscal ? "Sim" : "Não"}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Pagamento na Entrega</p>
+              <Badge variant={venda.pagamento_na_entrega ? "default" : "secondary"} className="mt-1">
+                {venda.pagamento_na_entrega ? "Sim" : "Não"}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Frete Aprovado</p>
+              <Badge variant={venda.frete_aprovado ? "default" : "secondary"} className="mt-1">
+                {venda.frete_aprovado ? "Sim" : "Não"}
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Informações do Cliente */}
       <Card>
@@ -246,18 +381,20 @@ export default function VendaView() {
           <CardContent>
             <div className="space-y-2">
               {venda.produtos.map((produto) => (
-                <div key={produto.id} className="p-3 bg-muted/30 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">{produto.descricao}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
+                <div key={produto.id} className="p-2 bg-muted/30 rounded-lg">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-sm">{produto.descricao || produto.tipo_produto}</p>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                           {produto.tipo_produto}
                         </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {produto.cor && (
                           <Badge 
                             variant="outline" 
-                            className="text-xs"
+                            className="text-[10px] px-1.5 py-0"
                             style={{
                               borderColor: produto.cor.codigo_hex,
                               color: produto.cor.codigo_hex
@@ -267,20 +404,44 @@ export default function VendaView() {
                           </Badge>
                         )}
                         {produto.tamanho && (
-                          <span className="text-xs text-muted-foreground">{produto.tamanho}</span>
+                          <span className="text-[10px] text-muted-foreground">{produto.tamanho}</span>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">Qtd: {produto.quantidade}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 mt-1.5 text-[11px]">
+                        {produto.valor_produto > 0 && (
+                          <div>
+                            <span className="text-muted-foreground">Produto:</span>
+                            <span className="ml-1 font-medium">{formatCurrency(produto.valor_produto)}</span>
+                          </div>
+                        )}
+                        {produto.valor_instalacao > 0 && (
+                          <div>
+                            <span className="text-muted-foreground">Instalação:</span>
+                            <span className="ml-1 font-medium">{formatCurrency(produto.valor_instalacao)}</span>
+                          </div>
+                        )}
+                        {produto.valor_pintura > 0 && (
+                          <div>
+                            <span className="text-muted-foreground">Pintura:</span>
+                            <span className="ml-1 font-medium">{formatCurrency(produto.valor_pintura)}</span>
+                          </div>
+                        )}
+                        {(produto.desconto_valor > 0 || produto.desconto_percentual > 0) && (
+                          <div>
+                            <span className="text-muted-foreground">Desconto:</span>
+                            <span className="ml-1 font-medium text-red-600">
+                              {produto.desconto_valor > 0 
+                                ? formatCurrency(produto.desconto_valor)
+                                : `${produto.desconto_percentual}%`
+                              }
+                            </span>
+                          </div>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Quantidade: {produto.quantidade}
-                      </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(produto.valor_total)}</p>
-                      {produto.desconto_percentual > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          Desconto: {produto.desconto_percentual}%
-                        </p>
-                      )}
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-base">{formatCurrency(produto.valor_total)}</p>
                     </div>
                   </div>
                 </div>
