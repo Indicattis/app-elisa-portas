@@ -5,10 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Entrega, CreateEntregaData } from '@/hooks/useEntregas';
-import { Eye, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Eye, MapPin, CheckCircle2, ShoppingCart, Package } from 'lucide-react';
 import { DetalhesEntregaDialog } from './DetalhesEntregaDialog';
 import { ResponsavelEntregaModal } from './ResponsavelEntregaModal';
 import { DataProducaoEntregaModal } from './DataProducaoEntregaModal';
+import { useNavigate } from 'react-router-dom';
 
 interface EntregasTabelaViewProps {
   entregas: Entrega[];
@@ -43,6 +44,7 @@ export const EntregasTabelaView = ({
   onConcluir,
   isAdmin,
 }: EntregasTabelaViewProps) => {
+  const navigate = useNavigate();
   const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
   const [showResponsavelModal, setShowResponsavelModal] = useState(false);
@@ -124,9 +126,33 @@ export const EntregasTabelaView = ({
                         size="sm"
                         variant="ghost"
                         onClick={() => handleViewDetalhes(entrega)}
+                        title="Ver detalhes"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
+                      
+                      {entrega.venda_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => navigate(`/dashboard/vendas/${entrega.venda_id}`)}
+                          title="Ver venda"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      {entrega.pedido_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => navigate(`/dashboard/pedidos/${entrega.pedido_id}`)}
+                          title="Ver pedido"
+                        >
+                          <Package className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
                       {canConcluir(entrega) && isAdmin && (
                         <Button
                           size="sm"
