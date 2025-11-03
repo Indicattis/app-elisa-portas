@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
-import { VendaDetailsModal } from '@/components/vendas/VendaDetailsModal';
 import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
 
 import { Button } from '@/components/ui/button';
@@ -42,8 +41,6 @@ export default function Vendas() {
   const { vendas, isLoading, deleteVenda } = useVendas();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedVenda, setSelectedVenda] = useState<any>(null);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   
   // Estados para filtros avançados
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -455,10 +452,7 @@ export default function Vendas() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => {
-                                  setSelectedVenda(venda);
-                                  setDetailsModalOpen(true);
-                                }}
+                                onClick={() => navigate(`/dashboard/vendas/${venda.id}/view`)}
                                 className="h-7 w-7"
                               >
                                 <Eye className="h-3 w-3" />
@@ -522,10 +516,7 @@ export default function Vendas() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => {
-                                setSelectedVenda(venda);
-                                setDetailsModalOpen(true);
-                              }}
+                              onClick={() => navigate(`/dashboard/vendas/${venda.id}/view`)}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -572,12 +563,6 @@ export default function Vendas() {
           </div>
         </CardContent>
       </Card>
-
-      <VendaDetailsModal 
-        open={detailsModalOpen}
-        onOpenChange={setDetailsModalOpen}
-        venda={selectedVenda}
-      />
     </div>
   );
 }
