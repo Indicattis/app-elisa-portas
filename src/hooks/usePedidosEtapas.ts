@@ -443,6 +443,24 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         if (onProgress) onProgress('criar_ordem_pintura', 'completed');
       }
 
+      // Se avançou para aguardando_coleta
+      if (etapaDestino === 'aguardando_coleta') {
+        if (onProgress) onProgress('preparar_coleta', 'in_progress');
+        await executarComDelay(async () => {
+          console.log('[moverParaProximaEtapa] Preparando coleta para pedido:', pedidoId);
+        });
+        if (onProgress) onProgress('preparar_coleta', 'completed');
+      }
+
+      // Se avançou para aguardando_instalacao
+      if (etapaDestino === 'aguardando_instalacao') {
+        if (onProgress) onProgress('preparar_instalacao', 'in_progress');
+        await executarComDelay(async () => {
+          console.log('[moverParaProximaEtapa] Preparando instalação para pedido:', pedidoId);
+        });
+        if (onProgress) onProgress('preparar_instalacao', 'completed');
+      }
+
       return { etapaAtualNome, proximaEtapa: etapaDestino };
     },
     onSuccess: (data) => {

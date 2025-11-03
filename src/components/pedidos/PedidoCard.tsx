@@ -179,6 +179,47 @@ export function PedidoCard({
       lista.unshift({ id: 'criar_ordem_pintura', label: 'Gerando ordem de pintura', status: 'pending' });
     }
 
+    // Se está na etapa de inspeção de qualidade, determinar destino
+    if (etapaAtual === 'inspecao_qualidade') {
+      // Buscar produtos da venda para verificar se tem pintura
+      const { data: produtosComPintura } = await supabase
+        .from('produtos_vendas')
+        .select('id')
+        .eq('venda_id', pedido.venda_id)
+        .gt('valor_pintura', 0)
+        .limit(1);
+
+      if (produtosComPintura && produtosComPintura.length > 0) {
+        // Tem pintura
+        lista.push({ 
+          id: 'criar_ordem_pintura', 
+          label: 'Enviando para pintura', 
+          status: 'pending' 
+        });
+      } else {
+        // Não tem pintura - verificar tipo de entrega
+        const { data: venda } = await supabase
+          .from('vendas')
+          .select('tipo_entrega')
+          .eq('id', pedido.venda_id)
+          .single();
+
+        if (venda?.tipo_entrega === 'entrega') {
+          lista.push({ 
+            id: 'preparar_coleta', 
+            label: 'Enviando para Coleta', 
+            status: 'pending' 
+          });
+        } else {
+          lista.push({ 
+            id: 'preparar_instalacao', 
+            label: 'Enviando para Instalação', 
+            status: 'pending' 
+          });
+        }
+      }
+    }
+
     return lista;
   };
 
@@ -368,7 +409,22 @@ export function PedidoCard({
                 ) : etapaAtual === 'inspecao_qualidade' ? (
                   <Button
                     size="sm"
-                    onClick={() => setShowAcaoEtapa(true)}
+                    onClick={async () => {
+                      const processosNecessarios = await determinarProcessos(pedido.id);
+                      setProcessos(processosNecessarios);
+                      setShowProgresso(true);
+                      
+                      if (onMoverEtapa) {
+                        await onMoverEtapa(pedido.id, false, (processoId, status) => {
+                          setProcessos(prev => prev.map(p => 
+                            p.id === processoId ? { ...p, status } : p
+                          ));
+                        });
+
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        setShowProgresso(false);
+                      }
+                    }}
                     disabled={!ordemQualidadeConcluida}
                     className="ml-2"
                     title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : ""}
@@ -659,12 +715,27 @@ export function PedidoCard({
                 <Button
                   size="sm"
                   className="w-full"
-                  onClick={() => setShowAcaoEtapa(true)}
+                  onClick={async () => {
+                    const processosNecessarios = await determinarProcessos(pedido.id);
+                    setProcessos(processosNecessarios);
+                    setShowProgresso(true);
+                    
+                    if (onMoverEtapa) {
+                      await onMoverEtapa(pedido.id, false, (processoId, status) => {
+                        setProcessos(prev => prev.map(p => 
+                          p.id === processoId ? { ...p, status } : p
+                        ));
+                      });
+
+                      await new Promise(resolve => setTimeout(resolve, 1000));
+                      setShowProgresso(false);
+                    }
+                  }}
                   disabled={!ordemQualidadeConcluida}
                   title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : ""}
                 >
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                  Avançar para {ETAPAS_CONFIG[proximaEtapa].label}
+                  Avançar
                 </Button>
               ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
