@@ -78,7 +78,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             cliente_nome,
             venda_id
           ),
-          admin_users:responsavel_id(
+          admin_users!responsavel_id(
             nome,
             foto_perfil_url
           )
