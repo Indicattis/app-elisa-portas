@@ -3,6 +3,21 @@ import { toast } from 'sonner';
 import { gerarProximoNumero, formatarNumeroPedido } from '@/utils/numberingService';
 
 export const usePedidoCreation = () => {
+  const checkExistingPedido = async (vendaId: string): Promise<string | null> => {
+    try {
+      const { data: pedidoExistente } = await supabase
+        .from('pedidos_producao')
+        .select('id, numero_pedido')
+        .eq('venda_id', vendaId)
+        .maybeSingle();
+
+      return pedidoExistente?.id || null;
+    } catch (error) {
+      console.error('Error checking existing pedido:', error);
+      return null;
+    }
+  };
+
   const createPedidoFromVenda = async (vendaId: string): Promise<string | null> => {
     try {
       // Buscar dados da venda
@@ -14,18 +29,6 @@ export const usePedidoCreation = () => {
 
       if (vendaError) throw vendaError;
       if (!venda) throw new Error('Venda não encontrada');
-
-      // Verificar se já existe um pedido para esta venda
-      const { data: pedidoExistente } = await supabase
-        .from('pedidos_producao')
-        .select('id')
-        .eq('venda_id', vendaId)
-        .maybeSingle();
-
-      if (pedidoExistente) {
-        toast.error('Já existe um pedido para esta venda');
-        return pedidoExistente.id;
-      }
 
       // Buscar usuário atual
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,5 +74,5 @@ export const usePedidoCreation = () => {
     }
   };
 
-  return { createPedidoFromVenda };
+  return { createPedidoFromVenda, checkExistingPedido };
 };

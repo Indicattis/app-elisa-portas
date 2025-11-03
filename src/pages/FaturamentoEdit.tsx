@@ -31,7 +31,10 @@ export default function FaturamentoEdit() {
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showPedidoDialog, setShowPedidoDialog] = useState(false);
-  const { createPedidoFromVenda } = usePedidoCreation();
+  const [showPedidoDuplicadoDialog, setShowPedidoDuplicadoDialog] = useState(false);
+  const [pedidoExistenteId, setPedidoExistenteId] = useState<string | null>(null);
+  const [checkingPedido, setCheckingPedido] = useState(false);
+  const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
 
   const {
     produtos,
@@ -270,28 +273,75 @@ export default function FaturamentoEdit() {
       <AlertDialog open={showPedidoDialog} onOpenChange={setShowPedidoDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Venda Faturada com Sucesso!</AlertDialogTitle>
+            <AlertDialogTitle>
+              {checkingPedido ? "Verificando..." : "Venda Faturada com Sucesso!"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Deseja criar o pedido de produção para esta venda agora?
+              {checkingPedido 
+                ? "Verificando se já existe um pedido para esta venda..." 
+                : "Deseja criar o pedido de produção para esta venda agora?"
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {!checkingPedido && (
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => navigate('/dashboard/faturamento')}>
+                Não, criar depois
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={async () => {
+                if (!venda) return;
+                
+                // Primeiro verificar se já existe
+                setCheckingPedido(true);
+                const pedidoExistente = await checkExistingPedido(venda.id);
+                setCheckingPedido(false);
+                
+                if (pedidoExistente) {
+                  setPedidoExistenteId(pedidoExistente);
+                  setShowPedidoDialog(false);
+                  setShowPedidoDuplicadoDialog(true);
+                  return;
+                }
+                
+                // Se não existe, criar
+                const pedidoId = await createPedidoFromVenda(venda.id);
+                setShowPedidoDialog(false);
+                if (pedidoId) {
+                  toast({
+                    title: "Pedido criado com sucesso!",
+                    description: "O pedido está pronto para ser preenchido.",
+                  });
+                  navigate(`/dashboard/pedido/${pedidoId}/preparacao`);
+                } else {
+                  navigate('/dashboard/faturamento');
+                }
+              }}>
+                Sim, Criar Pedido
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de Pedido Duplicado */}
+      <AlertDialog open={showPedidoDuplicadoDialog} onOpenChange={setShowPedidoDuplicadoDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pedido Existente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Já existe um pedido vinculado a esta venda.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => navigate('/dashboard/faturamento')}>
-              Não, criar depois
+              Voltar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={async () => {
-              if (!venda) return;
-              const pedidoId = await createPedidoFromVenda(venda.id);
-              setShowPedidoDialog(false);
-              if (pedidoId) {
-                toast({
-                  title: "Pedido criado com sucesso!",
-                  description: "O pedido está pronto para ser preenchido.",
-                });
+            <AlertDialogAction onClick={() => {
+              if (pedidoExistenteId) {
+                navigate(`/dashboard/pedido/${pedidoExistenteId}/preparacao`);
               }
-              navigate('/dashboard/faturamento');
             }}>
-              Sim, Criar Pedido
+              Acessar Pedido
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
