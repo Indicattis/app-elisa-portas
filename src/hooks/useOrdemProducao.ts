@@ -67,10 +67,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
             numero_pedido,
             cliente_nome,
             venda_id
-          ),
-          admin_users!responsavel_id(
-            nome,
-            foto_perfil_url
           )
         `)
         .order('created_at', { ascending: true });
@@ -88,12 +84,32 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
       
       if (linhasError) throw linhasError;
       
+      // Buscar dados dos responsáveis se houver
+      const responsavelIds = ordensData
+        .map((o: any) => o.responsavel_id)
+        .filter((id: string | null) => id !== null);
+      
+      let responsaveisMap: Record<string, any> = {};
+      if (responsavelIds.length > 0) {
+        const { data: responsaveis } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, foto_perfil_url')
+          .in('user_id', responsavelIds);
+        
+        if (responsaveis) {
+          responsaveisMap = responsaveis.reduce((acc, r) => {
+            acc[r.user_id] = r;
+            return acc;
+          }, {} as Record<string, any>);
+        }
+      }
+      
       // Mapear linhas para suas ordens
       return ordensData.map((ordem: any) => ({
         ...ordem,
         linhas: (linhasData || []).filter((linha: any) => linha.ordem_id === ordem.id),
         pedido: ordem.pedido || null,
-        admin_users: ordem.admin_users || null,
+        admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
       })) as Ordem[];
     },
   });
