@@ -234,14 +234,26 @@ export function PedidoCard({
                 )}
 
                 {isAberto ? (
-                  <Button
-                    size="sm"
-                    onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-                    className="ml-2"
-                  >
-                    <FileText className="h-3.5 w-3.5 mr-2" />
-                    Preparar
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
+                      className="ml-2"
+                    >
+                      <FileText className="h-3.5 w-3.5 mr-2" />
+                      Preparar
+                    </Button>
+                    {temLinhas && onMoverEtapa && (
+                      <Button
+                        size="sm"
+                        onClick={() => setShowAcaoEtapa(true)}
+                        className="ml-2"
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                        Iniciar Produção
+                      </Button>
+                    )}
+                  </>
                 ) : etapaAtual === 'em_producao' ? (
                   <Button
                     size="sm"
@@ -463,14 +475,26 @@ export function PedidoCard({
 
         <CardFooter className="pt-0 pb-3 gap-2 flex-col">
           {isAberto ? (
-            <Button
-              size="sm"
-              className="w-full"
-              onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-            >
-              <FileText className="h-3.5 w-3.5 mr-2" />
-              Preparar Pedido
-            </Button>
+            <>
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
+              >
+                <FileText className="h-3.5 w-3.5 mr-2" />
+                Preparar Pedido
+              </Button>
+              {temLinhas && onMoverEtapa && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowAcaoEtapa(true)}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                  Iniciar Produção
+                </Button>
+              )}
+            </>
           ) : etapaAtual === 'em_producao' ? (
             <>
               <Button
