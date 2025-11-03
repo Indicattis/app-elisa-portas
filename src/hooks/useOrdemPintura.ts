@@ -170,17 +170,24 @@ export function useOrdemPintura() {
   // Marcar linha como concluída
   const marcarLinhaConcluida = useMutation({
     mutationFn: async ({ linhaId, concluida }: { linhaId: string; concluida: boolean }) => {
+      console.log('[marcarLinhaConcluida] Iniciando mutação:', { linhaId, concluida });
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      const { error } = await supabase
+      console.log('[marcarLinhaConcluida] Usuário:', user.id);
+
+      const { data, error } = await supabase
         .from("linhas_ordens")
         .update({
           concluida,
           concluida_em: concluida ? new Date().toISOString() : null,
           concluida_por: concluida ? user.id : null,
         })
-        .eq("id", linhaId);
+        .eq("id", linhaId)
+        .select();
+
+      console.log('[marcarLinhaConcluida] Resultado:', { data, error });
 
       if (error) throw error;
     },
