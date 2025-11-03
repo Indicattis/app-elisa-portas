@@ -123,10 +123,22 @@ export function PedidoCard({
   const ordemPinturaConcluida = ordemPinturaStatus === true;
   
   // Identificar características do pedido
-  const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
+  console.log('Pedido:', pedido.id, {
+    venda,
+    produtos,
+    tipo_entrega: venda?.tipo_entrega,
+    tem_produtos: produtos.length > 0
+  });
+  
+  const temPintura = produtos.some((p: any) => {
+    console.log('Produto pintura:', p.valor_pintura);
+    return p.valor_pintura > 0;
+  });
   const tipoEntrega = venda?.tipo_entrega;
   const isInstalacao = tipoEntrega === 'instalacao';
   const isEntrega = tipoEntrega === 'entrega';
+  
+  console.log('Flags:', { temPintura, tipoEntrega, isInstalacao, isEntrega });
 
   // Função para determinar processos que serão executados
   const determinarProcessos = async (pedidoId: string) => {
