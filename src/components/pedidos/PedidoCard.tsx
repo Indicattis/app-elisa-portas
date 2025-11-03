@@ -29,6 +29,8 @@ interface PedidoCardProps {
   posicao?: number;
   total?: number;
   viewMode?: 'grid' | 'list';
+  isSelecionado?: boolean;
+  onSelecionarPedido?: (pedido: any) => void;
 }
 
 export function PedidoCard({ 
@@ -41,7 +43,9 @@ export function PedidoCard({
   dragHandleProps,
   posicao,
   total,
-  viewMode = 'grid'
+  viewMode = 'grid',
+  isSelecionado = false,
+  onSelecionarPedido
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -326,10 +330,14 @@ export function PedidoCard({
   if (viewMode === 'list') {
     return (
       <>
-        <Card className={cn(
-          "hover:shadow-md transition-all",
-          isDragging && "opacity-50 cursor-grabbing"
-        )}>
+        <Card 
+          className={cn(
+            "hover:shadow-md transition-all cursor-pointer",
+            isDragging && "opacity-50 cursor-grabbing",
+            isSelecionado && "ring-2 ring-primary shadow-lg"
+          )}
+          onClick={() => onSelecionarPedido?.(pedido)}
+        >
           <CardContent className="py-3">
             <div className="flex items-center gap-3">
               {dragHandleProps && (
@@ -637,10 +645,14 @@ export function PedidoCard({
   // Layout em grid (padrão)
   return (
     <>
-      <Card className={cn(
-        "hover:shadow-md transition-all",
-        isDragging && "opacity-50 cursor-grabbing"
-      )}>
+      <Card 
+        className={cn(
+          "hover:shadow-md transition-all cursor-pointer",
+          isDragging && "opacity-50 cursor-grabbing",
+          isSelecionado && "ring-2 ring-primary shadow-lg"
+        )}
+        onClick={() => onSelecionarPedido?.(pedido)}
+      >
         <CardContent className="pt-3 pb-2 space-y-2.5">
           {/* Header compacto com controles */}
           <div className="flex items-center justify-between gap-1.5">

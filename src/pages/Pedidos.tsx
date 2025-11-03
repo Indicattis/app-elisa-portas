@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Package, Search, LayoutGrid, List, Paintbrush, Truck, Hammer } from "lucide-react";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
+import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState, useMemo } from "react";
@@ -17,6 +18,7 @@ export default function Pedidos() {
   const [filtroInstalacao, setFiltroInstalacao] = useState(false);
   const [filtroEntrega, setFiltroEntrega] = useState(false);
   const [filtroPintura, setFiltroPintura] = useState(false);
+  const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
   const contadores = usePedidosContadores();
   
   const { 
@@ -217,6 +219,14 @@ export default function Pedidos() {
         )}
       </div>
 
+      {/* Mapa de Fluxograma - aparece quando um pedido é selecionado */}
+      {pedidoSelecionado && (
+        <PedidoFluxogramaMap 
+          pedidoSelecionado={pedidoSelecionado}
+          onClose={() => setPedidoSelecionado(null)}
+        />
+      )}
+
       {/* Tabs de Etapas */}
       <Tabs value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
@@ -269,6 +279,8 @@ export default function Pedidos() {
                     etapa={etapa}
                     isAberto={etapa === 'aberto'}
                     viewMode={viewMode}
+                    pedidoSelecionado={pedidoSelecionado}
+                    onSelecionarPedido={setPedidoSelecionado}
                     onMoverEtapa={handleMoverEtapa}
                     onRetrocederEtapa={handleRetrocederEtapa}
                     onReorganizar={handleReorganizar}
