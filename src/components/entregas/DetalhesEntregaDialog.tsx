@@ -167,10 +167,10 @@ export const DetalhesEntregaDialog = ({ entrega, open, onOpenChange }: DetalhesE
               <div className="space-y-2">
                 <h3 className="font-semibold">Vínculos</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  {entrega.venda?.numero_venda && (
+                  {entrega.venda && (
                     <div>
-                      <span className="text-muted-foreground">Venda:</span>
-                      <p className="font-medium">{entrega.venda.numero_venda}</p>
+                      <span className="text-muted-foreground">Venda ID:</span>
+                      <p className="font-medium">{entrega.venda.id.slice(0, 8)}...</p>
                     </div>
                   )}
                   {entrega.pedido && (
