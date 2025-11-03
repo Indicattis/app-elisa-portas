@@ -694,6 +694,7 @@ export function PedidoCard({
       <ProcessoAvancoModal
         open={showProgresso}
         processos={processos}
+        onClose={() => setShowProgresso(false)}
       />
     </>
   );

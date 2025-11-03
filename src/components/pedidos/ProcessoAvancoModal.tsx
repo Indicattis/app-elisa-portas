@@ -13,9 +13,13 @@ export interface Processo {
 interface ProcessoAvancoModalProps {
   open: boolean;
   processos: Processo[];
+  onClose?: () => void;
 }
 
-export function ProcessoAvancoModal({ open, processos }: ProcessoAvancoModalProps) {
+export function ProcessoAvancoModal({ open, processos, onClose }: ProcessoAvancoModalProps) {
+  const temErro = processos.some(p => p.status === 'error');
+  const todosConcluidos = processos.every(p => p.status === 'completed');
+  
   return (
     <Dialog open={open} modal>
       <DialogContent 
@@ -69,9 +73,22 @@ export function ProcessoAvancoModal({ open, processos }: ProcessoAvancoModalProp
           ))}
         </div>
 
-        <div className="text-center text-sm text-muted-foreground pb-2">
-          Aguarde enquanto processamos...
-        </div>
+        {!temErro && !todosConcluidos && (
+          <div className="text-center text-sm text-muted-foreground pb-2">
+            Aguarde enquanto processamos...
+          </div>
+        )}
+
+        {temErro && onClose && (
+          <div className="flex justify-center pt-2 pb-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
