@@ -974,57 +974,71 @@ export default function Faturamento() {
                         </TableCell>
 
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             {/* Botão Criar Pedido - apenas para vendas faturadas sem pedido */}
                             {isFaturada(venda) && !(venda as any).pedido_id && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  const pedidoId = await createPedidoFromVenda(venda.id);
-                                  if (pedidoId) {
-                                    fetchVendas(); // Atualizar lista
-                                  }
-                                }}
-                                title="Criar pedido de produção"
-                                className="gap-1"
-                              >
-                                <Package className="w-4 h-4" />
-                                Criar Pedido
-                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    title="Criar pedido de produção"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Package className="w-4 h-4 text-blue-600" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Criar Pedido de Produção</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Deseja criar um pedido de produção para esta venda?
+                                      Cliente: {venda.cliente_nome}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={async () => {
+                                        const pedidoId = await createPedidoFromVenda(venda.id);
+                                        if (pedidoId) {
+                                          fetchVendas();
+                                        }
+                                      }}
+                                    >
+                                      Criar Pedido
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             )}
                             
                             {/* Botão Acessar Pedido - se houver pedido */}
                             {(venda as any).pedido_id && (
                               <Button 
-                                variant="outline" 
+                                variant="ghost" 
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(`/dashboard/pedido/${(venda as any).pedido_id}/view`);
                                 }}
                                 title="Ver pedido de produção"
-                                className="gap-1"
                               >
-                                <Package className="w-4 h-4" />
-                                Ver Pedido
+                                <Package className="w-4 h-4 text-blue-600" />
                               </Button>
                             )}
 
                             {/* Botão Acessar Venda */}
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/dashboard/vendas/${venda.id}/view`);
                               }}
                               title="Ver detalhes da venda"
-                              className="gap-1"
                             >
                               <Eye className="w-4 h-4" />
-                              Ver Venda
                             </Button>
                             
                             <Button 
