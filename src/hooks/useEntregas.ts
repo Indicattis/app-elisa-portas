@@ -120,10 +120,7 @@ export const useEntregas = () => {
             pagamento_na_entrega,
             forma_pagamento,
             observacoes_venda
-          ),
-          creator:admin_users!entregas_created_by_fkey(nome, email),
-          responsavel:admin_users!entregas_responsavel_entrega_id_fkey(nome, email),
-          concluida_por_user:admin_users!entregas_entrega_concluida_por_fkey(nome, email)
+          )
         `)
         .order('created_at', { ascending: false});
 
@@ -133,6 +130,9 @@ export const useEntregas = () => {
       const entregasComCriadores: Entrega[] = await Promise.all(
         (data || []).map(async (entrega: any) => {
           let criador = undefined;
+          let creator = undefined;
+          let responsavel = undefined;
+          let concluida_por_user = undefined;
           let produtos: ProdutoEntrega[] = [];
           let parcelas: ParcelaEntrega[] = [];
 
@@ -140,11 +140,36 @@ export const useEntregas = () => {
           if (entrega.created_by) {
             const { data: userData } = await supabase
               .from('admin_users')
-              .select('nome, foto_perfil_url')
+              .select('nome, email, foto_perfil_url')
               .eq('user_id', entrega.created_by)
               .maybeSingle();
             
-            criador = userData || undefined;
+            if (userData) {
+              criador = { nome: userData.nome, foto_perfil_url: userData.foto_perfil_url };
+              creator = { nome: userData.nome, email: userData.email };
+            }
+          }
+
+          // Buscar responsável
+          if (entrega.responsavel_entrega_id) {
+            const { data: respData } = await supabase
+              .from('admin_users')
+              .select('nome, email')
+              .eq('user_id', entrega.responsavel_entrega_id)
+              .maybeSingle();
+            
+            responsavel = respData || undefined;
+          }
+
+          // Buscar quem concluiu
+          if (entrega.entrega_concluida_por) {
+            const { data: concluidaData } = await supabase
+              .from('admin_users')
+              .select('nome, email')
+              .eq('user_id', entrega.entrega_concluida_por)
+              .maybeSingle();
+            
+            concluida_por_user = concluidaData || undefined;
           }
 
           // Buscar dados da venda associada se houver
@@ -204,7 +229,10 @@ export const useEntregas = () => {
             parcelas,
             venda: entrega.venda || undefined,
             pedido: entrega.pedido || undefined,
-            criador
+            criador,
+            creator,
+            responsavel,
+            concluida_por_user
           };
         })
       );
