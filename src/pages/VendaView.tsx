@@ -74,17 +74,50 @@ export default function VendaView() {
         .select(`
           *,
           produtos:produtos_vendas(*,cor:catalogo_cores(nome, codigo_hex)),
-          parcelas:contas_receber!venda_id(*),
-          pedido:pedidos_producao!venda_id(id, numero_pedido),
-          instalacao:instalacoes_cadastradas!venda_id(id, nome_cliente, data_instalacao),
-          canal_aquisicao:canais_aquisicao(nome),
-          atendente:admin_users!atendente_id(nome, foto_perfil_url)
+          parcelas:contas_receber(*)
         `)
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (vendaError) throw vendaError;
-      setVenda(vendaData as any);
+      if (!vendaData) {
+        toast({ variant: "destructive", title: "Erro", description: "Venda não encontrada" });
+        setLoading(false);
+        return;
+      }
+
+      // Buscar relações separadamente para evitar problemas com foreign keys
+      const { data: pedidoData } = await supabase
+        .from("pedidos_producao")
+        .select("id, numero_pedido")
+        .eq("venda_id", id)
+        .maybeSingle();
+
+      const { data: instalacaoData } = await supabase
+        .from("instalacoes_cadastradas")
+        .select("id, nome_cliente, data_instalacao")
+        .eq("venda_id", id)
+        .maybeSingle();
+
+      const { data: canalData } = await supabase
+        .from("canais_aquisicao")
+        .select("nome")
+        .eq("id", vendaData.canal_aquisicao_id)
+        .maybeSingle();
+
+      const { data: atendenteData } = await supabase
+        .from("admin_users")
+        .select("nome, foto_perfil_url")
+        .eq("user_id", vendaData.atendente_id)
+        .maybeSingle();
+
+      setVenda({
+        ...vendaData,
+        pedido: pedidoData || undefined,
+        instalacao: instalacaoData || undefined,
+        canal_aquisicao: canalData || undefined,
+        atendente: atendenteData || undefined,
+      } as any);
     } catch (error) {
       console.error("Erro ao buscar venda:", error);
       toast({ variant: "destructive", title: "Erro", description: "Erro ao carregar venda" });

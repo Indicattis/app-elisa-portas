@@ -61,14 +61,28 @@ export default function PedidoView() {
       // Buscar pedido principal
       const { data: pedidoData, error: pedidoError } = await supabase
         .from("pedidos_producao")
-        .select(`
-          *,
-          venda:vendas!venda_id(id, cliente_nome, cidade, estado)
-        `)
+        .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (pedidoError) throw pedidoError;
+      if (!pedidoData) {
+        toast({ variant: "destructive", title: "Erro", description: "Pedido não encontrado" });
+        setLoading(false);
+        return;
+      }
+
+      // Buscar venda relacionada separadamente
+      let vendaData = null;
+      if (pedidoData.venda_id) {
+        const { data } = await supabase
+          .from("vendas")
+          .select("id, cliente_nome, cidade, estado")
+          .eq("id", pedidoData.venda_id)
+          .maybeSingle();
+        vendaData = data;
+      }
+
 
       // Buscar linhas do pedido
       const { data: linhasData } = await supabase
@@ -125,6 +139,7 @@ export default function PedidoView() {
         ...pedidoData as any,
         linhas: linhasData || [],
         ordens,
+        venda: vendaData || undefined,
       });
     } catch (error) {
       console.error("Erro ao buscar pedido:", error);
