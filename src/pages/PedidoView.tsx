@@ -38,6 +38,11 @@ interface Pedido {
     cliente_nome: string;
     cidade?: string;
     estado?: string;
+    valor_venda?: number;
+    forma_pagamento?: string;
+    tipo_entrega?: string;
+    data_prevista_entrega?: string;
+    produtos?: any[];
   };
 }
 
@@ -72,15 +77,36 @@ export default function PedidoView() {
         return;
       }
 
-      // Buscar venda relacionada separadamente
+      // Buscar venda relacionada separadamente com produtos
       let vendaData = null;
+      let produtosVenda = [];
       if (pedidoData.venda_id) {
         const { data } = await supabase
           .from("vendas")
-          .select("id, cliente_nome, cidade, estado")
+          .select(`
+            id, 
+            cliente_nome, 
+            cidade, 
+            estado,
+            valor_venda,
+            forma_pagamento,
+            tipo_entrega,
+            data_prevista_entrega,
+            atendente_id
+          `)
           .eq("id", pedidoData.venda_id)
           .maybeSingle();
         vendaData = data;
+
+        // Buscar produtos da venda
+        if (data) {
+          const { data: produtos } = await supabase
+            .from("produtos_vendas")
+            .select("*")
+            .eq("venda_id", data.id)
+            .order("created_at");
+          produtosVenda = produtos || [];
+        }
       }
 
 
@@ -139,7 +165,7 @@ export default function PedidoView() {
         ...pedidoData as any,
         linhas: linhasData || [],
         ordens,
-        venda: vendaData || undefined,
+        venda: vendaData ? { ...vendaData, produtos: produtosVenda } : undefined,
       });
     } catch (error) {
       console.error("Erro ao buscar pedido:", error);
@@ -243,26 +269,55 @@ export default function PedidoView() {
         </CardContent>
       </Card>
 
-      {/* Informações do Cliente (se houver venda) */}
+      {/* Informações da Venda */}
       {pedido.venda && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Informações do Cliente
+              <FileText className="w-4 h-4" />
+              Informações da Venda
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Nome do Cliente</p>
-              <p className="font-medium">{pedido.venda.cliente_nome}</p>
-            </div>
-            {pedido.venda.cidade && pedido.venda.estado && (
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span>{pedido.venda.cidade}, {pedido.venda.estado}</span>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Cliente</p>
+                <p className="font-medium">{pedido.venda.cliente_nome}</p>
               </div>
-            )}
+              {pedido.venda.cidade && pedido.venda.estado && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Localização</p>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span>{pedido.venda.cidade}, {pedido.venda.estado}</span>
+                  </div>
+                </div>
+              )}
+              {pedido.venda.valor_venda && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Valor da Venda</p>
+                  <p className="font-medium">R$ {Number(pedido.venda.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                </div>
+              )}
+              {pedido.venda.forma_pagamento && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Forma de Pagamento</p>
+                  <p className="font-medium">{pedido.venda.forma_pagamento}</p>
+                </div>
+              )}
+              {pedido.venda.tipo_entrega && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Tipo de Entrega</p>
+                  <p className="font-medium capitalize">{pedido.venda.tipo_entrega}</p>
+                </div>
+              )}
+              {pedido.venda.data_prevista_entrega && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Data Prevista de Entrega</p>
+                  <p className="font-medium">{format(new Date(pedido.venda.data_prevista_entrega), "dd/MM/yyyy")}</p>
+                </div>
+              )}
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -271,6 +326,47 @@ export default function PedidoView() {
               <FileText className="w-4 h-4 mr-2" />
               Ver Venda Completa
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Produtos da Venda */}
+      {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Produtos da Venda ({pedido.venda.produtos.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {pedido.venda.produtos.map((produto: any) => (
+                <div key={produto.id} className="p-4 bg-muted/30 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium">{produto.descricao || 'Produto'}</p>
+                      {produto.tamanho && (
+                        <p className="text-sm text-muted-foreground mt-1">Tamanho: {produto.tamanho}</p>
+                      )}
+                      {produto.cor && (
+                        <p className="text-sm text-muted-foreground">Cor: {produto.cor}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="mb-2">
+                        {produto.quantidade}x
+                      </Badge>
+                      {produto.valor_total && (
+                        <p className="text-sm font-medium">
+                          R$ {Number(produto.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -352,21 +448,18 @@ export default function PedidoView() {
       <Separator />
 
       {/* Ações Rápidas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-2">
-          <Button onClick={() => navigate(`/dashboard/pedido/${id}/edit`)}>
-            Editar Pedido
-          </Button>
-          {pedido.venda_id && (
+      {pedido.venda_id && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ações Rápidas</CardTitle>
+          </CardHeader>
+          <CardContent>
             <Button variant="outline" onClick={() => navigate(`/dashboard/vendas/${pedido.venda_id}/view`)}>
               Ver Venda Relacionada
             </Button>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
