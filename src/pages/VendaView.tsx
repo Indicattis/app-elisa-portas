@@ -186,32 +186,42 @@ export default function VendaView() {
         </div>
       </div>
 
-      {/* Status do Pedido */}
-      {venda.pedido && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Status do Pedido</CardTitle>
-          </CardHeader>
-          <CardContent>
+      {/* Pedido Vinculado */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            Pedido de Produção
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {venda.pedido ? (
             <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div className={`w-3 h-3 rounded-full ${
                   venda.pedido.etapa === 'finalizado' ? 'bg-green-500' :
                   venda.pedido.etapa === 'em_producao' ? 'bg-blue-500' :
                   venda.pedido.etapa === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
                 }`} />
                 <div>
-                  <p className="text-sm text-muted-foreground">Etapa do Pedido</p>
+                  <p className="text-sm text-muted-foreground">Pedido #{venda.pedido.numero_pedido}</p>
                   <p className="font-semibold text-lg">{getEtapaLabel(venda.pedido.etapa)}</p>
                 </div>
+                <Badge variant="outline" className={`${getEtapaBadgeColor(venda.pedido.etapa)} px-3 py-1`}>
+                  {getEtapaLabel(venda.pedido.etapa)}
+                </Badge>
               </div>
-              <Badge variant="outline" className={`${getEtapaBadgeColor(venda.pedido.etapa)} text-base px-4 py-2`}>
-                {getEtapaLabel(venda.pedido.etapa)}
-              </Badge>
+              <Button onClick={() => navigate(`/dashboard/pedido/${venda.pedido?.id}/view`)}>
+                Ver Pedido
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="p-4 bg-muted/30 rounded-lg text-center">
+              <p className="text-muted-foreground">Nenhum pedido vinculado</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Resumo Financeiro */}
       <div className="grid gap-4 md:grid-cols-4">
