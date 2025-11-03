@@ -20,6 +20,11 @@ interface LinhaOrdem {
   quantidade: number;
   tamanho?: string;
   concluida: boolean;
+  produto_venda_id?: string;
+  cor_nome?: string;
+  tipo_pintura?: string;
+  largura?: number;
+  altura?: number;
 }
 
 interface Ordem {
@@ -259,40 +264,130 @@ export function OrdemDetalhesSheet({
               )}
             </div>
 
-            <div className="space-y-2">
-              {linhas.map((linha) => (
-                <Label
-                  key={linha.id}
-                  htmlFor={`checkbox-${linha.id}`}
-                  className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
-                >
-                  <Checkbox
-                    id={`checkbox-${linha.id}`}
-                    checked={linha.concluida}
-                    onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
-                    disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas}
-                    className="mt-1"
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      {linha.concluida ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      )}
-                      <span className={`text-sm font-medium ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
-                        {linha.item}
-                      </span>
-                    </div>
+            <div className="space-y-4">
+              {tipoOrdem === 'pintura' ? (
+                // Agrupamento por porta para pintura
+                (() => {
+                  // Agrupar linhas por produto_venda_id
+                  const linhasPorPorta = linhas.reduce((grupos, linha) => {
+                    const key = linha.produto_venda_id || 'sem_porta';
+                    if (!grupos[key]) {
+                      grupos[key] = [];
+                    }
+                    grupos[key].push(linha);
+                    return grupos;
+                  }, {} as Record<string, LinhaOrdem[]>);
+
+                  return Object.entries(linhasPorPorta).map(([portaId, linhasPorta], index) => {
+                    const primeiraLinha = linhasPorta[0];
+                    const todasConcluidasPorta = linhasPorta.every(l => l.concluida);
                     
-                    <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>Qtd: {linha.quantidade}</span>
-                      {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
+                    return (
+                      <div key={portaId} className="space-y-2 p-3 rounded-lg border bg-card">
+                        {/* Cabeçalho do grupo de porta */}
+                        <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-primary" />
+                              <span className="font-semibold text-sm">
+                                Porta {index + 1}
+                              </span>
+                              {todasConcluidasPorta && (
+                                <Badge variant="outline" className="bg-green-50">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                </Badge>
+                              )}
+                            </div>
+                            {primeiraLinha.cor_nome && (
+                              <div className="text-xs text-muted-foreground">
+                                <span className="font-medium">Pintura:</span> {primeiraLinha.cor_nome}
+                                {primeiraLinha.tipo_pintura && ` (${primeiraLinha.tipo_pintura})`}
+                              </div>
+                            )}
+                            {primeiraLinha.largura && primeiraLinha.altura && (
+                              <div className="text-xs text-muted-foreground">
+                                <span className="font-medium">Dimensões:</span> {primeiraLinha.largura} x {primeiraLinha.altura}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Itens da porta */}
+                        <div className="space-y-2">
+                          {linhasPorta.map((linha) => (
+                            <Label
+                              key={linha.id}
+                              htmlFor={`checkbox-${linha.id}`}
+                              className="flex items-start gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
+                            >
+                              <Checkbox
+                                id={`checkbox-${linha.id}`}
+                                checked={linha.concluida}
+                                onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
+                                disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas}
+                                className="mt-1"
+                              />
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  {linha.concluida ? (
+                                    <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
+                                  ) : (
+                                    <Circle className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                  )}
+                                  <span className={`text-sm ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
+                                    {linha.item}
+                                  </span>
+                                </div>
+                                
+                                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                                  <span>Qtd: {linha.quantidade}</span>
+                                  {linha.tamanho && <span>{linha.tamanho}</span>}
+                                </div>
+                              </div>
+                            </Label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()
+              ) : (
+                // Renderização normal para outras ordens
+                linhas.map((linha) => (
+                  <Label
+                    key={linha.id}
+                    htmlFor={`checkbox-${linha.id}`}
+                    className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                  >
+                    <Checkbox
+                      id={`checkbox-${linha.id}`}
+                      checked={linha.concluida}
+                      onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
+                      disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas}
+                      className="mt-1"
+                    />
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {linha.concluida ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className={`text-sm font-medium ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
+                          {linha.item}
+                        </span>
+                      </div>
+                      
+                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>Qtd: {linha.quantidade}</span>
+                        {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
+                      </div>
                     </div>
-                  </div>
-                </Label>
-              ))}
+                  </Label>
+                ))
+              )}
 
               {linhas.length === 0 && (
                 <div className="text-center py-8 text-sm text-muted-foreground">

@@ -1438,45 +1438,60 @@ export type Database = {
       }
       linhas_ordens: {
         Row: {
+          altura: number | null
           concluida: boolean | null
           concluida_em: string | null
           concluida_por: string | null
+          cor_nome: string | null
           created_at: string
           id: string
           item: string
+          largura: number | null
           ordem_id: string | null
           pedido_id: string
+          produto_venda_id: string | null
           quantidade: number
           tamanho: string | null
           tipo_ordem: string
+          tipo_pintura: string | null
           updated_at: string
         }
         Insert: {
+          altura?: number | null
           concluida?: boolean | null
           concluida_em?: string | null
           concluida_por?: string | null
+          cor_nome?: string | null
           created_at?: string
           id?: string
           item: string
+          largura?: number | null
           ordem_id?: string | null
           pedido_id: string
+          produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
           tipo_ordem: string
+          tipo_pintura?: string | null
           updated_at?: string
         }
         Update: {
+          altura?: number | null
           concluida?: boolean | null
           concluida_em?: string | null
           concluida_por?: string | null
+          cor_nome?: string | null
           created_at?: string
           id?: string
           item?: string
+          largura?: number | null
           ordem_id?: string | null
           pedido_id?: string
+          produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
           tipo_ordem?: string
+          tipo_pintura?: string | null
           updated_at?: string
         }
         Relationships: [
