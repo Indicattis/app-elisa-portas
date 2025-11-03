@@ -42,7 +42,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { AlterarParaCorrecaoDialog } from './AlterarParaCorrecaoDialog';
-import { AlterarStatusDialog } from './AlterarStatusDialog';
 import { DetalhesInstalacaoDialog } from './DetalhesInstalacaoDialog';
 import { DataProducaoModal } from './DataProducaoModal';
 import { ResponsavelInstalacaoModal } from './ResponsavelInstalacaoModal';
@@ -71,7 +70,6 @@ export const InstalacoesTabelaView = ({
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const navigate = useNavigate();
-  const [statusInstalacao, setStatusInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [detalhesInstalacao, setDetalhesInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [responsavelInstalacao, setResponsavelInstalacao] = useState<InstalacaoCadastrada | null>(null);
@@ -450,10 +448,7 @@ export const InstalacoesTabelaView = ({
                         <Badge 
                           variant="outline" 
                           className={`text-[9px] ${getStatusVariant(instalacao.status)}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setStatusInstalacao(instalacao);
-                          }}
+                          title="Status sincronizado com o pedido"
                         >
                           {getStatusLabel(instalacao.status)}
                         </Badge>
@@ -543,12 +538,8 @@ export const InstalacoesTabelaView = ({
                         <TableCell className="py-2">
                           <Badge 
                             variant="outline" 
-                            className={`text-[10px] cursor-pointer hover:opacity-80 ${getStatusVariant(instalacao.status)}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setStatusInstalacao(instalacao);
-                            }}
-                            title="Clique para alterar status"
+                            className={`text-[10px] ${getStatusVariant(instalacao.status)}`}
+                            title="Status sincronizado com o pedido"
                           >
                             {getStatusLabel(instalacao.status)}
                           </Badge>
@@ -671,18 +662,6 @@ export const InstalacoesTabelaView = ({
           )}
         </CardContent>
       </Card>
-
-      <AlterarStatusDialog
-        open={!!statusInstalacao}
-        onOpenChange={(open) => !open && setStatusInstalacao(null)}
-        onConfirm={(status) => {
-          if (statusInstalacao) {
-            onUpdateStatus(statusInstalacao.id, status);
-          }
-        }}
-        currentStatus={statusInstalacao?.status || 'pendente_producao'}
-        instalacaoNome={statusInstalacao?.nome_cliente || ''}
-      />
 
       <DetalhesInstalacaoDialog
         open={!!detalhesInstalacao}
