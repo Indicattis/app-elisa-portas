@@ -134,6 +134,23 @@ export function PedidoCard({
         l.estoque?.setor_responsavel_producao === 'separacao'
       );
 
+      // Buscar dados da venda para determinar tipo de entrega
+      const { data: pedidoData } = await supabase
+        .from('pedidos_producao')
+        .select('venda_id')
+        .eq('id', pedidoId)
+        .single();
+
+      let tipoEntrega = venda?.tipo_entrega;
+      if (!tipoEntrega && pedidoData?.venda_id) {
+        const { data: vendaData } = await supabase
+          .from('vendas')
+          .select('tipo_entrega')
+          .eq('id', pedidoData.venda_id)
+          .single();
+        tipoEntrega = vendaData?.tipo_entrega;
+      }
+
       const ordensProcessos: Processo[] = [];
       if (temPerfiladeira) {
         ordensProcessos.push({ id: 'criar_ordem_perfiladeira', label: 'Criando ordem de perfiladeira', status: 'pending' });
@@ -145,9 +162,9 @@ export function PedidoCard({
         ordensProcessos.push({ id: 'criar_ordem_separacao', label: 'Criando ordem de separação', status: 'pending' });
       }
 
-      if (venda?.tipo_entrega === 'instalacao') {
+      if (tipoEntrega === 'instalacao') {
         ordensProcessos.push({ id: 'criar_instalacao', label: 'Criando instalação', status: 'pending' });
-      } else if (venda?.tipo_entrega === 'entrega') {
+      } else if (tipoEntrega === 'entrega') {
         ordensProcessos.push({ id: 'criar_entrega', label: 'Criando entrega', status: 'pending' });
       }
 
