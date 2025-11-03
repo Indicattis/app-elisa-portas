@@ -1153,6 +1153,9 @@ export type Database = {
           estado: string
           geocode_precision: string | null
           id: string
+          instalacao_concluida: boolean | null
+          instalacao_concluida_em: string | null
+          instalacao_concluida_por: string | null
           justificativa_correcao: string | null
           last_geocoded_at: string | null
           latitude: number | null
@@ -1180,6 +1183,9 @@ export type Database = {
           estado: string
           geocode_precision?: string | null
           id?: string
+          instalacao_concluida?: boolean | null
+          instalacao_concluida_em?: string | null
+          instalacao_concluida_por?: string | null
           justificativa_correcao?: string | null
           last_geocoded_at?: string | null
           latitude?: number | null
@@ -1207,6 +1213,9 @@ export type Database = {
           estado?: string
           geocode_precision?: string | null
           id?: string
+          instalacao_concluida?: boolean | null
+          instalacao_concluida_em?: string | null
+          instalacao_concluida_por?: string | null
           justificativa_correcao?: string | null
           last_geocoded_at?: string | null
           latitude?: number | null
@@ -3529,6 +3538,10 @@ export type Database = {
       calcular_valor_produto_orcamento: {
         Args: { orcamento_uuid: string }
         Returns: number
+      }
+      concluir_instalacao_e_avancar_pedido: {
+        Args: { p_instalacao_id: string }
+        Returns: Json
       }
       count_base64_images: {
         Args: never

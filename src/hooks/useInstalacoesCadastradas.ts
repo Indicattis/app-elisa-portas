@@ -45,6 +45,9 @@ export interface InstalacaoCadastrada {
   justificativa_correcao: string | null;
   alterado_para_correcao_em: string | null;
   alterado_para_correcao_por: string | null;
+  instalacao_concluida: boolean;
+  instalacao_concluida_em: string | null;
+  instalacao_concluida_por: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -62,6 +65,7 @@ export interface InstalacaoCadastrada {
   pedido?: {
     id: string;
     numero_pedido: string;
+    etapa_atual: string;
   };
   criador?: {
     nome: string;
@@ -97,7 +101,8 @@ export const useInstalacoesCadastradas = () => {
           *,
           pedido:pedidos_producao!pedido_id(
             id,
-            numero_pedido
+            numero_pedido,
+            etapa_atual
           ),
           venda:vendas!venda_id(
             id,
@@ -378,6 +383,24 @@ export const useInstalacoesCadastradas = () => {
     }
   };
 
+  const concluirInstalacao = async (id: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.rpc('concluir_instalacao_e_avancar_pedido', {
+        p_instalacao_id: id
+      });
+
+      if (error) throw error;
+
+      toast.success('Instalação concluída! Pedido movido para "Finalizado"');
+      await fetchInstalacoes();
+      return true;
+    } catch (error: any) {
+      console.error('Error concluindo instalação:', error);
+      toast.error(error.message || 'Erro ao concluir instalação');
+      return false;
+    }
+  };
+
   return {
     instalacoes,
     loading,
@@ -386,5 +409,6 @@ export const useInstalacoesCadastradas = () => {
     updateInstalacao,
     deleteInstalacao,
     updateStatus,
+    concluirInstalacao,
   };
 };

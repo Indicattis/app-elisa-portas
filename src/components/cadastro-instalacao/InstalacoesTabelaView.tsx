@@ -12,6 +12,8 @@ import {
   Clock,
   UserX,
   Map,
+  Check,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +58,7 @@ interface InstalacoesTabelaViewProps {
   onDelete: (id: string) => void;
   onUpdate: (id: string, data: CreateInstalacaoData) => Promise<boolean>;
   onUpdateStatus: (id: string, status: string) => void;
+  onConcluirInstalacao: (id: string) => Promise<boolean>;
   isAdmin: boolean;
 }
 
@@ -67,6 +70,7 @@ export const InstalacoesTabelaView = ({
   onDelete,
   onUpdate,
   onUpdateStatus,
+  onConcluirInstalacao,
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const navigate = useNavigate();
@@ -94,6 +98,14 @@ export const InstalacoesTabelaView = ({
   const isAtrasado = (instalacao: InstalacaoCadastrada) => {
     if (!instalacao.data_instalacao || instalacao.status === 'finalizada') return false;
     return isPast(startOfDay(new Date(instalacao.data_instalacao))) && startOfDay(new Date(instalacao.data_instalacao)) < startOfDay(new Date());
+  };
+
+  const handleConcluirInstalacao = async (instalacaoId: string) => {
+    if (!confirm('Tem certeza que deseja marcar esta instalação como concluída? O pedido será movido para "Finalizado".')) {
+      return;
+    }
+    
+    await onConcluirInstalacao(instalacaoId);
   };
 
   const filteredAndSortedInstalacoes = useMemo(() => {
@@ -468,6 +480,41 @@ export const InstalacoesTabelaView = ({
                           </p>
                         </div>
                       )}
+
+                      {/* Instalação Concluída */}
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Instalação Concluída</p>
+                        {instalacao.instalacao_concluida ? (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 w-fit text-[9px]">
+                              <Check className="h-3 w-3 mr-1" />
+                              Concluída
+                            </Badge>
+                            {instalacao.instalacao_concluida_em && (
+                              <span className="text-[9px] text-muted-foreground">
+                                {format(new Date(instalacao.instalacao_concluida_em), "dd/MM/yyyy")}
+                              </span>
+                            )}
+                          </div>
+                        ) : instalacao.pedido?.etapa_atual === 'aguardando_instalacao' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleConcluirInstalacao(instalacao.id);
+                            }}
+                            className="h-7 px-2 text-[10px] w-full"
+                          >
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Marcar Concluída
+                          </Button>
+                        ) : (
+                          <span className="text-[9px] text-muted-foreground">
+                            N/A
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -513,6 +560,7 @@ export const InstalacoesTabelaView = ({
                           <ArrowUpDown className="h-3 w-3" />
                         </Button>
                       </TableHead>
+                      <TableHead className="text-xs">Instalação Concluída</TableHead>
                       <TableHead className="text-right text-xs">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -575,6 +623,38 @@ export const InstalacoesTabelaView = ({
                           {instalacao.data_instalacao
                             ? format(new Date(instalacao.data_instalacao), 'dd/MM/yy')
                             : '-'}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          {instalacao.instalacao_concluida ? (
+                            <div className="flex flex-col gap-1">
+                              <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 w-fit">
+                                <Check className="h-3 w-3 mr-1" />
+                                Concluída
+                              </Badge>
+                              {instalacao.instalacao_concluida_em && (
+                                <span className="text-[9px] text-muted-foreground">
+                                  {format(new Date(instalacao.instalacao_concluida_em), "dd/MM/yyyy")}
+                                </span>
+                              )}
+                            </div>
+                          ) : instalacao.pedido?.etapa_atual === 'aguardando_instalacao' ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleConcluirInstalacao(instalacao.id);
+                              }}
+                              className="h-7 px-2 text-xs"
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Marcar Concluída
+                            </Button>
+                          ) : (
+                            <span className="text-[9px] text-muted-foreground">
+                              N/A
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right py-2">
                           <div className="flex gap-1 justify-end">
