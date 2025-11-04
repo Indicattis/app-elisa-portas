@@ -95,7 +95,7 @@ export default function Auth() {
               </div>
             </div>
             <div className="flex justify-center mb-4">
-              <img src={logoEmpresa} alt="Logo da empresa" className="h-20 w-auto object-contain" />
+              
             </div>
             
             
