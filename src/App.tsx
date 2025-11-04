@@ -90,6 +90,7 @@ import FrotaConferencia from "./pages/FrotaConferencia";
 import FrotaConferenciasHistorico from "./pages/FrotaConferenciasHistorico";
 import TabelaPrecos from "./pages/TabelaPrecos";
 import Todo from "./pages/Todo";
+import ChecklistLideranca from "./pages/ChecklistLideranca";
 import LogisticaHome from "./pages/LogisticaHome";
 import Entregas from "./pages/Entregas";
 import VendaView from "./pages/VendaView";
@@ -967,6 +968,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="checklist_lideranca">
                       <DashboardLayout>
                         <Todo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/direcao/checklist-lideranca"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <ChecklistLideranca />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
