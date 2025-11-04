@@ -334,6 +334,15 @@ export function PedidoCard({
       });
     }
 
+    // Se está na etapa aguardando_instalacao, finalizando pedido
+    if (etapaAtual === 'aguardando_instalacao') {
+      lista.push({ 
+        id: 'finalizando_pedido', 
+        label: 'Finalizando Pedido', 
+        status: 'pending' 
+      });
+    }
+
     return lista;
   };
 
@@ -341,8 +350,8 @@ export function PedidoCard({
   const handleConfirmarAvanco = async () => {
     setShowConfirmarAvanco(false);
     
-    // Se está na etapa aberto, aguardando_pintura ou aguardando_coleta, usa o sistema de processos
-    if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura' || etapaAtual === 'aguardando_coleta') {
+    // Se está na etapa aberto, aguardando_pintura, aguardando_coleta ou aguardando_instalacao, usa o sistema de processos
+    if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura' || etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
       const listaProcessos = await determinarProcessos(pedido.id);
       setProcessos(listaProcessos);
       setShowProgresso(true);
