@@ -557,6 +557,48 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_mensais: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          mes: string
+          modalidade: string
+          nome: string
+          observacoes: string | null
+          updated_at: string | null
+          valor_esperado: number
+          valor_real: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          mes: string
+          modalidade: string
+          nome: string
+          observacoes?: string | null
+          updated_at?: string | null
+          valor_esperado?: number
+          valor_real?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          mes?: string
+          modalidade?: string
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string | null
+          valor_esperado?: number
+          valor_real?: number
+        }
+        Relationships: []
+      }
       documentos: {
         Row: {
           arquivo_url: string
@@ -596,6 +638,54 @@ export type Database = {
           tamanho_arquivo?: number
           titulo?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      dre_mensais: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          custos_producao: number
+          despesas_fixas: number
+          despesas_variaveis: number
+          faturamento_total: number
+          id: string
+          mes: string
+          observacoes: string | null
+          resultado_final: number
+          total_vendas: number
+          updated_at: string | null
+          vendas_faturadas: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          custos_producao?: number
+          despesas_fixas?: number
+          despesas_variaveis?: number
+          faturamento_total?: number
+          id?: string
+          mes: string
+          observacoes?: string | null
+          resultado_final?: number
+          total_vendas?: number
+          updated_at?: string | null
+          vendas_faturadas?: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          custos_producao?: number
+          despesas_fixas?: number
+          despesas_variaveis?: number
+          faturamento_total?: number
+          id?: string
+          mes?: string
+          observacoes?: string | null
+          resultado_final?: number
+          total_vendas?: number
+          updated_at?: string | null
+          vendas_faturadas?: number
         }
         Relationships: []
       }

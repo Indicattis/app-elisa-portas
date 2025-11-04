@@ -95,6 +95,8 @@ import LogisticaHome from "./pages/LogisticaHome";
 import Entregas from "./pages/Entregas";
 import VendaView from "./pages/VendaView";
 import PedidoView from "./pages/PedidoView";
+import DRE from "./pages/DRE";
+import Despesas from "./pages/Despesas";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -978,6 +980,26 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <ChecklistLideranca />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/direcao/dre"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <DRE />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/direcao/despesas"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Despesas />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
