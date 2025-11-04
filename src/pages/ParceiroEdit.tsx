@@ -211,9 +211,9 @@ export default function ParceiroEdit() {
       } else if (tipoParceiroAtual === 'representante') {
         updateData.representante_etapa = form.representante_etapa;
         updateData.etapa = null;
-        updateData.licenciado_etapa = null;
-      } else if (tipoParceiroAtual === 'licenciado') {
-        updateData.licenciado_etapa = form.licenciado_etapa;
+        updateData.franqueado_etapa = null;
+      } else if (tipoParceiroAtual === 'franqueado') {
+        updateData.franqueado_etapa = form.franqueado_etapa;
         updateData.etapa = null;
         updateData.representante_etapa = null;
       }
@@ -356,8 +356,8 @@ export default function ParceiroEdit() {
     switch (tipoParceiroAtual) {
       case 'representante':
         return form.representante_etapa;
-      case 'licenciado':
-        return form.licenciado_etapa;
+      case 'franqueado':
+        return form.franqueado_etapa;
       default:
         return form.etapa;
     }
@@ -369,8 +369,8 @@ export default function ParceiroEdit() {
       case 'representante':
         updates.representante_etapa = value;
         break;
-      case 'licenciado':
-        updates.licenciado_etapa = value;
+      case 'franqueado':
+        updates.franqueado_etapa = value;
         break;
       default:
         updates.etapa = value;

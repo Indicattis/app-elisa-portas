@@ -900,7 +900,7 @@ const App = () => (
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
-                        <Licenciados />
+                        <Franqueados />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

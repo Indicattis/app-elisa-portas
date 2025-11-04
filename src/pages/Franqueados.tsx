@@ -160,10 +160,10 @@ export default function Franqueados() {
       !autorizado.longitude
     );
 
-    if (licenciadosToGeocode.length === 0) {
+    if (franqueadosToGeocode.length === 0) {
       toast({
         title: 'Info',
-        description: 'Nenhum licenciado encontrado para geocodificação.'
+        description: 'Nenhum franqueado encontrado para geocodificação.'
       });
       return;
     }
@@ -174,10 +174,10 @@ export default function Franqueados() {
 
     toast({
       title: 'Geocodificação em lote iniciada',
-      description: `Processando ${licenciadosToGeocode.length} licenciados...`
+      description: `Processando ${franqueadosToGeocode.length} franqueados...`
     });
 
-    for (const autorizado of licenciadosToGeocode) {
+    for (const autorizado of franqueadosToGeocode) {
       try {
         const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
           body: {
@@ -215,26 +215,26 @@ export default function Franqueados() {
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('Relatório de Licenciados', 105, 20, { align: 'center' });
+    doc.text('Relatório de Franqueados', 105, 20, { align: 'center' });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 105, 30, { align: 'center' });
     
-    const { etapas } = getEtapasByTipo('licenciado');
+    const { etapas } = getEtapasByTipo('franqueado');
     
-    const tableData = filteredLicenciados.map(licenciado => {
-      const vendedor = vendedores.find(v => v.id === licenciado.vendedor_id);
-      const etapaAtual = getCurrentEtapa(licenciado);
+    const tableData = filteredFranqueados.map(franqueado => {
+      const vendedor = vendedores.find(v => v.id === franqueado.vendedor_id);
+      const etapaAtual = getCurrentEtapa(franqueado);
       return [
-        licenciado.nome,
+        franqueado.nome,
         vendedor?.nome || 'Sem vendedor',
-        licenciado.responsavel || '-',
-        licenciado.telefone || '-',
-        licenciado.cidade || '-',
-        licenciado.estado || '-',
+        franqueado.responsavel || '-',
+        franqueado.telefone || '-',
+        franqueado.cidade || '-',
+        franqueado.estado || '-',
         etapaAtual ? etapas[etapaAtual as keyof typeof etapas] || '-' : '-',
-        licenciado.ativo ? 'Ativo' : 'Inativo'
+        franqueado.ativo ? 'Ativo' : 'Inativo'
       ];
     });
     
@@ -288,19 +288,19 @@ export default function Franqueados() {
           size="sm"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Novo Licenciado
+          Novo Franqueado
         </Button>
       </div>
 
-      <AutorizadosIndicadores tipoParceiro="licenciado" />
+      <AutorizadosIndicadores tipoParceiro="franqueado" />
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Licenciados Cadastrados</CardTitle>
+              <CardTitle>Franqueados Cadastrados</CardTitle>
               <CardDescription>
-                Total de {filteredLicenciados.length} licenciados cadastrados
+                Total de {filteredFranqueados.length} franqueados cadastrados
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -379,74 +379,62 @@ export default function Franqueados() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLicenciados.map((licenciado) => {
-                  const vendedor = vendedores.find(v => v.id === licenciado.vendedor_id);
-                  const { etapas } = getEtapasByTipo('licenciado');
-                  const etapaAtual = getCurrentEtapa(licenciado);
+                {filteredFranqueados.map((franqueado) => {
+                  const vendedor = vendedores.find(v => v.id === franqueado.vendedor_id);
+                  const { etapas } = getEtapasByTipo('franqueado');
+                  const etapaAtual = getCurrentEtapa(franqueado);
                   
                   return (
-                    <TableRow key={licenciado.id}>
+                    <TableRow key={franqueado.id}>
                       <TableCell>
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={licenciado.logo_url} alt={licenciado.nome} />
+                          <AvatarImage src={franqueado.logo_url} alt={franqueado.nome} />
                           <AvatarFallback className="text-xs">
-                            {getInitials(licenciado.nome)}
+                            {getInitials(franqueado.nome)}
                           </AvatarFallback>
                         </Avatar>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{licenciado.nome}</div>
-                          {licenciado.responsavel && (
-                            <div className="text-sm text-muted-foreground">{licenciado.responsavel}</div>
+                          <div className="font-medium">{franqueado.nome}</div>
+                          {franqueado.responsavel && (
+                            <div className="text-sm text-muted-foreground">{franqueado.responsavel}</div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {vendedor ? (
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={vendedor.foto_perfil_url} alt={vendedor.nome} />
-                              <AvatarFallback className="text-xs">
-                                {getInitials(vendedor.nome)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{vendedor.nome}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Sem vendedor</span>
-                        )}
+...
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {licenciado.telefone && (
+                          {franqueado.telefone && (
                             <div className="flex items-center gap-1 text-sm">
                               <Phone className="h-3 w-3" />
-                              {licenciado.telefone}
+                              {franqueado.telefone}
                             </div>
                           )}
-                          {licenciado.email && (
+                          {franqueado.email && (
                             <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3" />
-                              {licenciado.email}
+                              {franqueado.email}
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {licenciado.cidade && (
+                          {franqueado.cidade && (
                             <div className="flex items-center gap-1 text-sm">
                               <MapPin className="h-3 w-3" />
-                              {licenciado.cidade} - {licenciado.estado}
+                              {franqueado.cidade} - {franqueado.estado}
                             </div>
                           )}
-                          {licenciado.endereco && (
+                          {franqueado.endereco && (
                             <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                              {licenciado.endereco}
+                              {franqueado.endereco}
                             </div>
                           )}
-                          {licenciado.latitude && licenciado.longitude && (
+                          {franqueado.latitude && franqueado.longitude && (
                             <Badge variant="secondary" className="text-xs">
                               Geocodificado
                             </Badge>
@@ -454,35 +442,29 @@ export default function Franqueados() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {etapaAtual ? (
-                          <Badge variant="outline">
-                            {etapas[etapaAtual as keyof typeof etapas]}
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Sem etapa</span>
-                        )}
+...
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {licenciado.average_rating !== undefined && licenciado.average_rating > 0 ? (
+                          {franqueado.average_rating !== undefined && franqueado.average_rating > 0 ? (
                             <div className="flex items-center gap-1">
-                              <StarRating rating={licenciado.average_rating} size={14} />
+                              <StarRating rating={franqueado.average_rating} size={14} />
                               <span className="text-xs text-muted-foreground">
-                                ({licenciado.total_ratings})
+                                ({franqueado.total_ratings})
                               </span>
                             </div>
                           ) : (
                             <span className="text-xs text-muted-foreground">Sem avaliação</span>
                           )}
                           <AddRatingDialog 
-                            autorizadoId={licenciado.id}
-                            autorizadoNome={licenciado.nome}
+                            autorizadoId={franqueado.id}
+                            autorizadoNome={franqueado.nome}
                           />
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={licenciado.ativo ? "default" : "secondary"}>
-                          {licenciado.ativo ? 'Ativo' : 'Inativo'}
+                        <Badge variant={franqueado.ativo ? "default" : "secondary"}>
+                          {franqueado.ativo ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -490,18 +472,18 @@ export default function Franqueados() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/dashboard/parceiros/${licenciado.id}/edit/licenciado`)}
+                            onClick={() => navigate(`/dashboard/parceiros/${franqueado.id}/edit/franqueado`)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          {!licenciado.latitude && !licenciado.longitude && (
+                          {!franqueado.latitude && !franqueado.longitude && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleGeocode(licenciado)}
-                              disabled={geocoding === licenciado.id}
+                              onClick={() => handleGeocode(franqueado)}
+                              disabled={geocoding === franqueado.id}
                             >
-                              {geocoding === licenciado.id ? (
+                              {geocoding === franqueado.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <MapPin className="h-4 w-4" />
@@ -521,13 +503,13 @@ export default function Franqueados() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o licenciado "{licenciado.nome}"? Esta ação não pode ser desfeita.
+                                  Tem certeza que deseja excluir o franqueado "{franqueado.nome}"? Esta ação não pode ser desfeita.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDelete(licenciado.id)}
+                                  onClick={() => handleDelete(franqueado.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   Excluir
@@ -544,8 +526,8 @@ export default function Franqueados() {
             </Table>
           ) : (
             <AutorizadosKanban 
-              autorizados={filteredLicenciados.map(a => ({ ...a, tipo_parceiro: a.tipo_parceiro || 'licenciado' }))} 
-              tipoParceiro="licenciado"
+              autorizados={filteredFranqueados.map(a => ({ ...a, tipo_parceiro: a.tipo_parceiro || 'franqueado' }))} 
+              tipoParceiro="franqueado"
               onEtapaChange={() => {
                 queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
               }} 

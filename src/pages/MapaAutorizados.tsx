@@ -32,10 +32,10 @@ interface Autorizado {
   created_at: string;
   updated_at: string;
   vendedor_id?: string;
-  tipo_parceiro: 'autorizado' | 'representante' | 'licenciado';
+  tipo_parceiro: 'autorizado' | 'representante' | 'franqueado';
   etapa?: AutorizadoEtapa;
   representante_etapa?: RepresentanteEtapa;
-  licenciado_etapa?: LicenciadoEtapa;
+  franqueado_etapa?: FranqueadoEtapa;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -207,7 +207,7 @@ export default function MapaAutorizados() {
   const statsParaFiltros = {
     totalAutorizados: autorizados.filter(a => a.tipo_parceiro === 'autorizado').length,
     totalRepresentantes: autorizados.filter(a => a.tipo_parceiro === 'representante').length,
-    totalLicenciados: autorizados.filter(a => a.tipo_parceiro === 'licenciado').length,
+    totalFranqueados: autorizados.filter(a => a.tipo_parceiro === 'franqueado').length,
     totalInstalacoes: instalacoes.length,
   };
 

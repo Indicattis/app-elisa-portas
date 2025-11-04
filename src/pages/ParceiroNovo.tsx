@@ -32,7 +32,7 @@ interface ParceiroForm {
   vendedor_id: string;
   etapa?: string;
   representante_etapa?: string;
-  licenciado_etapa?: string;
+  franqueado_etapa?: string;
   tipo_parceiro: TipoParceiro;
 }
 
@@ -61,7 +61,7 @@ export default function ParceiroNovo() {
     vendedor_id: "",
     etapa: tipoParceiroFinal === 'autorizado' ? order[0] : undefined,
     representante_etapa: tipoParceiroFinal === 'representante' ? order[0] : undefined,
-    licenciado_etapa: tipoParceiroFinal === 'licenciado' ? order[0] : undefined,
+    franqueado_etapa: tipoParceiroFinal === 'franqueado' ? order[0] : undefined,
     tipo_parceiro: tipoParceiroFinal
   });
   
@@ -157,8 +157,8 @@ export default function ParceiroNovo() {
         insertData.etapa = form.etapa;
       } else if (tipoParceiroFinal === 'representante') {
         insertData.representante_etapa = form.representante_etapa;
-      } else if (tipoParceiroFinal === 'licenciado') {
-        insertData.licenciado_etapa = form.licenciado_etapa;
+      } else if (tipoParceiroFinal === 'franqueado') {
+        insertData.franqueado_etapa = form.franqueado_etapa;
       }
 
       const { data: insertedData, error } = await supabase
@@ -207,8 +207,8 @@ export default function ParceiroNovo() {
     switch (tipoParceiroFinal) {
       case 'representante':
         return form.representante_etapa;
-      case 'licenciado':
-        return form.licenciado_etapa;
+      case 'franqueado':
+        return form.franqueado_etapa;
       default:
         return form.etapa;
     }
@@ -220,8 +220,8 @@ export default function ParceiroNovo() {
       case 'representante':
         updates.representante_etapa = value;
         break;
-      case 'licenciado':
-        updates.licenciado_etapa = value;
+      case 'franqueado':
+        updates.franqueado_etapa = value;
         break;
       default:
         updates.etapa = value;
