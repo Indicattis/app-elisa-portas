@@ -1,4 +1,4 @@
-import { TrendingUp, DollarSign, ShoppingCart, Target } from "lucide-react";
+import { TrendingUp, DollarSign, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVendasMesAtual, useVendasSemanaAtual, useRankingVendedoresDia } from "@/hooks/useVendasDashboard";
 import { useSalesData, useSellersRanking } from "@/hooks/useDashboardData";
@@ -10,9 +10,6 @@ export default function VendasHome() {
   const {
     data: vendasMes
   } = useVendasMesAtual();
-  const {
-    data: vendasSemana
-  } = useVendasSemanaAtual();
   const {
     data: vendasDiarias
   } = useSalesData();
@@ -43,10 +40,27 @@ export default function VendasHome() {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Vendas do Mês</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Faturamento do Mês</CardTitle>
+            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">
+              R$ {vendasMes?.total.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2
+            }) || '0,00'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total do mês
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Quantidade de Vendas</CardTitle>
             <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-3 sm:p-4 pt-0">
@@ -54,26 +68,7 @@ export default function VendasHome() {
               {vendasMes?.quantidade || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              R$ {vendasMes?.total.toLocaleString('pt-BR', {
-              minimumFractionDigits: 2
-            }) || '0,00'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Vendas da Semana</CardTitle>
-            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {vendasSemana?.quantidade || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              R$ {vendasSemana?.total.toLocaleString('pt-BR', {
-              minimumFractionDigits: 2
-            }) || '0,00'}
+              Vendas realizadas no mês
             </p>
           </CardContent>
         </Card>
@@ -81,7 +76,7 @@ export default function VendasHome() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
             <CardTitle className="text-xs sm:text-sm font-medium">Ticket Médio</CardTitle>
-            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-3 sm:p-4 pt-0">
             <div className="text-xl sm:text-2xl font-bold">
@@ -91,21 +86,6 @@ export default function VendasHome() {
             </div>
             <p className="text-xs text-muted-foreground">
               Média por venda
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Taxa Conversão</CardTitle>
-            <Target className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              --
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Em desenvolvimento
             </p>
           </CardContent>
         </Card>
