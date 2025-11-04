@@ -388,22 +388,12 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
         if (updateError) throw updateError;
 
-        // Sincronizar status da instalação cadastrada (se existir)
-        const statusInstalacaoMap: Record<EtapaPedido, string> = {
-          'aberto': 'pendente_producao',
-          'em_producao': 'em_producao',
-          'inspecao_qualidade': 'em_producao',
-          'aguardando_pintura': 'em_producao',
-          'aguardando_coleta': 'aguardando_coleta',
-          'aguardando_instalacao': 'aguardando_instalacao',
-          'finalizado': 'concluida'
-        };
-
-        const novoStatusInstalacao = statusInstalacaoMap[etapaDestino];
+        // Sincronizar status da instalação e entrega com a etapa do pedido
+        const novoStatus = etapaDestino === 'finalizado' ? 'concluida' : etapaDestino;
         
         const { error: instalacaoError } = await supabase
           .from('instalacoes_cadastradas')
-          .update({ status: novoStatusInstalacao })
+          .update({ status: novoStatus })
           .eq('pedido_id', pedidoId);
 
         if (instalacaoError) {
@@ -413,7 +403,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         // Sincronizar status da entrega (se existir)
         const { error: entregaError } = await supabase
           .from('entregas')
-          .update({ status: novoStatusInstalacao })
+          .update({ status: novoStatus })
           .eq('pedido_id', pedidoId);
 
         if (entregaError) {
