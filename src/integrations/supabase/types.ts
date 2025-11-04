@@ -231,9 +231,11 @@ export type Database = {
           ativo: boolean
           cep: string | null
           cidade: string | null
+          contrato_nome_arquivo: string | null
+          contrato_tamanho_arquivo: number | null
+          contrato_uploaded_at: string | null
+          contrato_url: string | null
           created_at: string
-          data_inativacao_automatica: string | null
-          data_inicio_contagem_inativacao: string | null
           email: string | null
           endereco: string | null
           estado: string | null
@@ -243,7 +245,6 @@ export type Database = {
             | null
           geocode_precision: string | null
           id: string
-          inativado_automaticamente: boolean | null
           last_geocoded_at: string | null
           latitude: number | null
           logo_url: string | null
@@ -264,9 +265,11 @@ export type Database = {
           ativo?: boolean
           cep?: string | null
           cidade?: string | null
+          contrato_nome_arquivo?: string | null
+          contrato_tamanho_arquivo?: number | null
+          contrato_uploaded_at?: string | null
+          contrato_url?: string | null
           created_at?: string
-          data_inativacao_automatica?: string | null
-          data_inicio_contagem_inativacao?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -276,7 +279,6 @@ export type Database = {
             | null
           geocode_precision?: string | null
           id?: string
-          inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
           logo_url?: string | null
@@ -297,9 +299,11 @@ export type Database = {
           ativo?: boolean
           cep?: string | null
           cidade?: string | null
+          contrato_nome_arquivo?: string | null
+          contrato_tamanho_arquivo?: number | null
+          contrato_uploaded_at?: string | null
+          contrato_url?: string | null
           created_at?: string
-          data_inativacao_automatica?: string | null
-          data_inicio_contagem_inativacao?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -309,7 +313,6 @@ export type Database = {
             | null
           geocode_precision?: string | null
           id?: string
-          inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
           logo_url?: string | null
@@ -332,53 +335,6 @@ export type Database = {
             columns: ["vendedor_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      autorizados_ratings: {
-        Row: {
-          atendente_id: string
-          autorizado_id: string
-          categoria: Database["public"]["Enums"]["rating_categoria"]
-          created_at: string
-          custo: number | null
-          data_evento: string | null
-          descricao: string
-          id: string
-          nota: number
-          updated_at: string
-        }
-        Insert: {
-          atendente_id: string
-          autorizado_id: string
-          categoria: Database["public"]["Enums"]["rating_categoria"]
-          created_at?: string
-          custo?: number | null
-          data_evento?: string | null
-          descricao: string
-          id?: string
-          nota: number
-          updated_at?: string
-        }
-        Update: {
-          atendente_id?: string
-          autorizado_id?: string
-          categoria?: Database["public"]["Enums"]["rating_categoria"]
-          created_at?: string
-          custo?: number | null
-          data_evento?: string | null
-          descricao?: string
-          id?: string
-          nota?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "autorizados_ratings_autorizado_id_fkey"
-            columns: ["autorizado_id"]
-            isOneToOne: false
-            referencedRelation: "autorizados"
             referencedColumns: ["id"]
           },
         ]
@@ -1204,51 +1160,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      inativacoes_automaticas_log: {
-        Row: {
-          autorizado_id: string
-          created_at: string | null
-          data_inativacao: string
-          dias_sem_avaliacao: number
-          executado_por: string | null
-          id: string
-          ultima_avaliacao_data: string | null
-        }
-        Insert: {
-          autorizado_id: string
-          created_at?: string | null
-          data_inativacao?: string
-          dias_sem_avaliacao: number
-          executado_por?: string | null
-          id?: string
-          ultima_avaliacao_data?: string | null
-        }
-        Update: {
-          autorizado_id?: string
-          created_at?: string | null
-          data_inativacao?: string
-          dias_sem_avaliacao?: number
-          executado_por?: string | null
-          id?: string
-          ultima_avaliacao_data?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inativacoes_automaticas_log_autorizado_id_fkey"
-            columns: ["autorizado_id"]
-            isOneToOne: false
-            referencedRelation: "autorizados"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inativacoes_automaticas_log_executado_por_fkey"
-            columns: ["executado_por"]
-            isOneToOne: false
-            referencedRelation: "admin_users"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -3820,11 +3731,7 @@ export type Database = {
         | "forca_vendas"
         | "tabela_precos"
         | "checklist_lideranca"
-      autorizado_etapa:
-        | "apresentacao_proposta"
-        | "treinamentos_video"
-        | "apto"
-        | "premium"
+      autorizado_etapa: "ativo" | "premium" | "perdido"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
       documento_categoria:
         | "manual"
@@ -3853,15 +3760,6 @@ export type Database = {
         | "logistica"
         | "atendimento"
         | "produto"
-      rating_categoria:
-        | "instalacao"
-        | "bos"
-        | "visita_tecnica"
-        | "manutencao"
-        | "representante_vendas"
-        | "representante_suporte"
-        | "franqueado_compliance"
-        | "franqueado_vendas"
       representante_etapa:
         | "inicial"
         | "qualificacao"
@@ -4057,12 +3955,7 @@ export const Constants = {
         "tabela_precos",
         "checklist_lideranca",
       ],
-      autorizado_etapa: [
-        "apresentacao_proposta",
-        "treinamentos_video",
-        "apto",
-        "premium",
-      ],
+      autorizado_etapa: ["ativo", "premium", "perdido"],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
       documento_categoria: [
         "manual",
@@ -4094,16 +3987,6 @@ export const Constants = {
         "logistica",
         "atendimento",
         "produto",
-      ],
-      rating_categoria: [
-        "instalacao",
-        "bos",
-        "visita_tecnica",
-        "manutencao",
-        "representante_vendas",
-        "representante_suporte",
-        "franqueado_compliance",
-        "franqueado_vendas",
       ],
       representante_etapa: [
         "inicial",

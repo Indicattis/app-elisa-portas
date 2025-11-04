@@ -1,14 +1,13 @@
 export type TipoParceiro = 'autorizado' | 'representante' | 'franqueado';
 export type RepresentanteEtapa = 'inicial' | 'qualificacao' | 'proposta' | 'contratado';
 export type FranqueadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
-export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamentos_video' | 'apto' | 'premium';
+export type AutorizadoEtapa = 'ativo' | 'premium' | 'perdido';
 
 // Etapas para Autorizados
 export const ETAPAS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
-  apresentacao_proposta: 'Apresentação Proposta',
-  treinamentos_video: 'Treinamentos em Vídeo',
-  apto: 'Apto',
-  premium: 'Premium'
+  ativo: 'Ativo',
+  premium: 'Premium',
+  perdido: 'Perdido'
 };
 
 // Etapas para Representantes
@@ -29,10 +28,9 @@ export const ETAPAS_FRANQUEADO: Record<FranqueadoEtapa, string> = {
 
 // Cores das etapas
 export const ETAPA_COLORS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
-  apresentacao_proposta: 'hsl(var(--chart-1))',
-  treinamentos_video: 'hsl(var(--chart-2))',
-  apto: 'hsl(var(--chart-4))',
-  premium: 'hsl(45, 100%, 51%)' // Golden color
+  ativo: 'hsl(var(--chart-4))', // Verde
+  premium: 'hsl(45, 100%, 51%)', // Dourado
+  perdido: 'hsl(var(--chart-3))' // Vermelho
 };
 
 export const ETAPA_COLORS_REPRESENTANTE: Record<RepresentanteEtapa, string> = {
@@ -51,10 +49,9 @@ export const ETAPA_COLORS_FRANQUEADO: Record<FranqueadoEtapa, string> = {
 
 // Ordenação das etapas
 export const ETAPA_ORDER_AUTORIZADO: AutorizadoEtapa[] = [
-  'apresentacao_proposta',
-  'treinamentos_video',
-  'apto',
-  'premium'
+  'ativo',
+  'premium',
+  'perdido'
 ];
 
 export const ETAPA_ORDER_REPRESENTANTE: RepresentanteEtapa[] = [
@@ -78,14 +75,8 @@ export const TIPO_PARCEIRO_LABELS: Record<TipoParceiro, string> = {
   franqueado: 'Franqueado'
 };
 
-// Categorias de avaliação por tipo de parceiro
+// Categorias de avaliação por tipo de parceiro (removidas para autorizados)
 export const RATING_CATEGORIES = {
-  autorizado: [
-    { value: 'instalacao', label: 'Instalação' },
-    { value: 'bos', label: 'BOS' },
-    { value: 'visita_tecnica', label: 'Visita Técnica' },
-    { value: 'manutencao', label: 'Manutenção' }
-  ],
   representante: [
     { value: 'representante_vendas', label: 'Vendas' },
     { value: 'representante_suporte', label: 'Suporte' }

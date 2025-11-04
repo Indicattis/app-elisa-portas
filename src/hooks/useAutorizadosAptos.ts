@@ -21,7 +21,7 @@ export const useAutorizadosAptos = () => {
         .from('autorizados')
         .select('id, nome, etapa, cidade, estado')
         .eq('ativo', true)
-        .in('etapa', ['apto', 'premium'])
+        .in('etapa', ['ativo', 'premium'])
         .order('nome');
 
       if (error) throw error;
