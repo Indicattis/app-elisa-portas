@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Star, Eye, Pencil, Trash2 } from "lucide-react";
+import { Star, Eye, Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
 import { ETAPAS_AUTORIZADO, ETAPA_COLORS } from "@/utils/etapas";
 import type { AutorizadoPerformance } from "@/hooks/useAutorizadosPerformance";
 
@@ -11,9 +11,11 @@ interface AutorizadosGridProps {
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onGeocode?: (autorizado: AutorizadoPerformance) => void;
+  geocodingId?: string | null;
 }
 
-export function AutorizadosGrid({ autorizados, onView, onEdit, onDelete }: AutorizadosGridProps) {
+export function AutorizadosGrid({ autorizados, onView, onEdit, onDelete, onGeocode, geocodingId }: AutorizadosGridProps) {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
@@ -36,8 +38,14 @@ export function AutorizadosGrid({ autorizados, onView, onEdit, onDelete }: Autor
               )}
             </div>
             <CardTitle className="text-lg">{autorizado.nome}</CardTitle>
-            <CardDescription>
-              {autorizado.cidade}, {autorizado.estado}
+            <CardDescription className="flex items-center gap-2">
+              <span>{autorizado.cidade}, {autorizado.estado}</span>
+              {autorizado.latitude && autorizado.longitude && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  Geocodificado
+                </Badge>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-3">
@@ -70,6 +78,20 @@ export function AutorizadosGrid({ autorizados, onView, onEdit, onDelete }: Autor
             <Button variant="ghost" size="sm" onClick={() => onEdit(autorizado.id)}>
               <Pencil className="h-4 w-4" />
             </Button>
+            {!autorizado.latitude && !autorizado.longitude && onGeocode && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onGeocode(autorizado)}
+                disabled={geocodingId === autorizado.id}
+              >
+                {geocodingId === autorizado.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPin className="h-4 w-4" />
+                )}
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={() => onDelete(autorizado.id)}>
               <Trash2 className="h-4 w-4" />
             </Button>

@@ -356,6 +356,8 @@ export default function Autorizados() {
               onEdit={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
               onDelete={handleDelete}
               onView={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
+              onGeocode={handleGeocode}
+              geocodingId={geocoding}
             />
           ) : (
             <AutorizadosKanban 
