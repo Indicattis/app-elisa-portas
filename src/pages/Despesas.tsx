@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useDespesas, DespesaFormData } from "@/hooks/useDespesas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export default function Despesas() {
-  const [mesSelecionado, setMesSelecionado] = useState(format(new Date(), "yyyy-MM-01"));
+  const [dataSelecionada, setDataSelecionada] = useState(new Date());
+  const mesSelecionado = format(startOfMonth(dataSelecionada), "yyyy-MM-dd");
   const { despesas, loading, saveDespesa, updateDespesa, deleteDespesa } = useDespesas(mesSelecionado);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -92,6 +95,18 @@ export default function Despesas() {
       valor_real: 0,
       observacoes: "",
     });
+  };
+
+  const handlePreviousMonth = () => {
+    const newDate = new Date(dataSelecionada);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setDataSelecionada(newDate);
+  };
+
+  const handleNextMonth = () => {
+    const newDate = new Date(dataSelecionada);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setDataSelecionada(newDate);
   };
 
   const DespesasTable = ({ despesas: lista, tipo }: { despesas: any[], tipo: string }) => (
@@ -254,15 +269,30 @@ export default function Despesas() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Selecionar Mês</CardTitle>
+          <CardTitle>Período Selecionado</CardTitle>
         </CardHeader>
         <CardContent>
-          <Input
-            type="month"
-            value={format(new Date(mesSelecionado), "yyyy-MM")}
-            onChange={(e) => setMesSelecionado(e.target.value + "-01")}
-            className="max-w-xs"
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePreviousMonth}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex-1 text-center">
+              <div className="text-2xl font-bold capitalize">
+                {format(dataSelecionada, "MMMM 'de' yyyy", { locale: ptBR })}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleNextMonth}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
