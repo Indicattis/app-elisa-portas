@@ -6,24 +6,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
 export default function VendasHome() {
-  const { data: vendasMes } = useVendasMesAtual();
-  const { data: vendasSemana } = useVendasSemanaAtual();
-  const { data: vendasDiarias } = useSalesData();
-  const { data: ranking } = useSellersRanking();
-
-  const ticketMedio = vendasMes && vendasMes.quantidade > 0 
-    ? vendasMes.total / vendasMes.quantidade 
-    : 0;
-
+  const {
+    data: vendasMes
+  } = useVendasMesAtual();
+  const {
+    data: vendasSemana
+  } = useVendasSemanaAtual();
+  const {
+    data: vendasDiarias
+  } = useSalesData();
+  const {
+    data: ranking
+  } = useSellersRanking();
+  const ticketMedio = vendasMes && vendasMes.quantidade > 0 ? vendasMes.total / vendasMes.quantidade : 0;
   const chartData = vendasDiarias?.map(v => ({
-    data: format(new Date(v.data), 'dd/MM', { locale: ptBR }),
-    valor: v.valor,
+    data: format(new Date(v.data), 'dd/MM', {
+      locale: ptBR
+    }),
+    valor: v.valor
   })) || [];
-
-  return (
-    <div className="space-y-3 sm:space-y-4 md:space-y-6 w-full p-3 sm:p-4 md:p-6">
+  return <div className="space-y-3 sm:space-y-4 md:space-y-6 w-full p-3 sm:p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3">
         <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
@@ -51,7 +54,9 @@ export default function VendasHome() {
               {vendasMes?.quantidade || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              R$ {vendasMes?.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+              R$ {vendasMes?.total.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2
+            }) || '0,00'}
             </p>
           </CardContent>
         </Card>
@@ -66,7 +71,9 @@ export default function VendasHome() {
               {vendasSemana?.quantidade || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              R$ {vendasSemana?.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+              R$ {vendasSemana?.total.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2
+            }) || '0,00'}
             </p>
           </CardContent>
         </Card>
@@ -78,7 +85,9 @@ export default function VendasHome() {
           </CardHeader>
           <CardContent className="p-3 sm:p-4 pt-0">
             <div className="text-xl sm:text-2xl font-bold">
-              R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {ticketMedio.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2
+            })}
             </div>
             <p className="text-xs text-muted-foreground">
               Média por venda
@@ -103,35 +112,7 @@ export default function VendasHome() {
       </div>
 
       {/* Chart */}
-      <Card>
-        <CardHeader className="p-3 sm:p-4 md:p-6">
-          <CardTitle className="text-sm sm:text-base md:text-lg">Vendas por Dia</CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
-          <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="data" 
-                  tick={{ fontSize: 10 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="valor" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      
 
       {/* Top Vendedores */}
       <Card>
@@ -140,8 +121,7 @@ export default function VendasHome() {
         </CardHeader>
         <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
           <div className="space-y-3 sm:space-y-4">
-            {ranking?.slice(0, 5).map((vendedor, index) => (
-              <div key={index} className="flex items-center gap-2 sm:gap-3">
+            {ranking?.slice(0, 5).map((vendedor, index) => <div key={index} className="flex items-center gap-2 sm:gap-3">
                 <div className="font-bold text-lg sm:text-xl text-muted-foreground w-6 sm:w-8">
                   {vendedor.posicao}º
                 </div>
@@ -157,14 +137,14 @@ export default function VendasHome() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm sm:text-base font-bold">
-                    R$ {vendedor.total_vendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {vendedor.total_vendas.toLocaleString('pt-BR', {
+                  minimumFractionDigits: 2
+                })}
                   </p>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
