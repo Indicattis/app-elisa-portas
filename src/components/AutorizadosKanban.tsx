@@ -9,8 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { getEtapasByTipo, getCurrentEtapa, type TipoParceiro } from "@/utils/parceiros";
-import { StarRating } from "./StarRating";
-import { AddRatingDialog } from "./AddRatingDialog";
+import { Star as StarIcon } from "lucide-react";
 
 interface Autorizado {
   id: string;
@@ -37,8 +36,6 @@ interface Autorizado {
   representante_etapa?: string;
   franqueado_etapa?: string;
   tipo_parceiro: TipoParceiro;
-  average_rating?: number;
-  total_ratings?: number;
   vendedor?: {
     nome: string;
     foto_perfil_url?: string;
@@ -205,30 +202,12 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
                       </div>
                     )}
 
-                    {/* Rating */}
-                    <div className="flex items-center justify-between pt-1">
-                      <div className="flex items-center gap-1">
-                        {autorizado.average_rating ? (
-                          <StarRating 
-                            rating={autorizado.average_rating} 
-                            showValue 
-                            size={12} 
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Sem avaliações</span>
-                        )}
-                        {autorizado.total_ratings && autorizado.total_ratings > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            ({autorizado.total_ratings})
-                          </span>
-                        )}
+                    {/* Premium Badge */}
+                    {getCurrentEtapa(autorizado) === 'premium' && (
+                      <div className="flex items-center justify-end pt-1">
+                        <StarIcon className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                       </div>
-                      <AddRatingDialog autorizadoId={autorizado.id} autorizadoNome={autorizado.nome}>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-70 hover:opacity-100">
-                          <Star className="h-3 w-3" />
-                        </Button>
-                      </AddRatingDialog>
-                    </div>
+                    )}
                   </div>
                 ))}
               </CardContent>

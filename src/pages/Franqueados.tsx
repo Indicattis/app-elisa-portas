@@ -18,8 +18,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getEtapasByTipo, getCurrentEtapa } from "@/utils/parceiros";
-import { StarRating } from "@/components/StarRating";
-import { AddRatingDialog } from "@/components/AddRatingDialog";
 import { useAutorizadosPerformance } from "@/hooks/useAutorizadosPerformance";
 import { aplicarFiltros } from "@/utils/autorizadosFilters";
 
@@ -43,10 +41,7 @@ export default function Franqueados() {
   const [filtros, setFiltros] = useState<FiltrosAutorizados>({
     busca: '',
     etapa: 'todos',
-    statusRisco: 'todos',
-    atendente: 'todos',
-    faixaAvaliacao: 'todos',
-    tempoUltimaAvaliacao: 'todos'
+    atendente: 'todos'
   });
 
   useEffect(() => {
@@ -445,22 +440,7 @@ export default function Franqueados() {
 ...
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          {franqueado.average_rating !== undefined && franqueado.average_rating > 0 ? (
-                            <div className="flex items-center gap-1">
-                              <StarRating rating={franqueado.average_rating} size={14} />
-                              <span className="text-xs text-muted-foreground">
-                                ({franqueado.total_ratings})
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Sem avaliação</span>
-                          )}
-                          <AddRatingDialog 
-                            autorizadoId={franqueado.id}
-                            autorizadoNome={franqueado.nome}
-                          />
-                        </div>
+                        <Badge variant="outline">N/A</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant={franqueado.ativo ? "default" : "secondary"}>

@@ -55,7 +55,6 @@ import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
 import ParceiroNovo from "./pages/ParceiroNovo";
 import ParceiroEdit from "./pages/ParceiroEdit";
-import AutorizadoHistorico from "./pages/AutorizadoHistorico";
 import MapaAutorizados from "./pages/MapaAutorizados";
 import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
@@ -661,16 +660,6 @@ const App = () => (
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
                         <ParceiroEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/autorizados/:id/historico"
-                  element={
-                    <ProtectedRoute requirePermission="autorizados">
-                      <DashboardLayout>
-                        <AutorizadoHistorico />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

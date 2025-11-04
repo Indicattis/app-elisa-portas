@@ -50,22 +50,8 @@ export const useParceirosDashboard = () => {
       const representantes = autorizados?.filter(a => a.tipo_parceiro === 'representante').length || 0;
       const franqueados = autorizados?.filter(a => a.tipo_parceiro === 'franqueado').length || 0;
 
-      // Ranking (últimas avaliações)
-      const { data: ratings } = await supabase
-        .from('autorizados_ratings')
-        .select(`
-          autorizado_id,
-          nota,
-          autorizados!inner(nome)
-        `)
-        .gte('created_at', inicioMes)
-        .order('nota', { ascending: false })
-        .limit(5);
-
-      const ranking = ratings?.map(r => ({
-        nome: (r.autorizados as any)?.nome || 'N/A',
-        nota: r.nota,
-      })) || [];
+      // Ranking de performance removido (ratings desabilitados)
+      const ranking: { nome: string; nota: number }[] = [];
 
       const metrics: ParceiroMetrics = {
         totalAtivos,

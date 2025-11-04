@@ -23,6 +23,8 @@ export interface AutorizadoPerformance {
   vendedor_id: string | null;
   contrato_url: string | null;
   contrato_nome_arquivo: string | null;
+  latitude: number | null;
+  longitude: number | null;
   vendedor: {
     id: string;
     nome: string;
