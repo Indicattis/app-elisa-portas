@@ -623,13 +623,13 @@ export function PedidoCard({
                 ) : etapaAtual === 'aguardando_instalacao' ? (
                   <Button
                     size="sm"
-                    onClick={() => setShowAcaoEtapa(true)}
+                    onClick={() => setShowConfirmarAvanco(true)}
                     disabled={!instalacaoConcluida}
                     className="ml-2"
                     title={!instalacaoConcluida ? "Conclua a instalação primeiro" : ""}
                   >
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                    Avançar
+                    Finalizar
                   </Button>
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
@@ -1011,12 +1011,12 @@ export function PedidoCard({
                 <Button
                   size="sm"
                   className="w-full"
-                  onClick={() => setShowAcaoEtapa(true)}
+                  onClick={() => setShowConfirmarAvanco(true)}
                   disabled={!instalacaoConcluida}
                   title={!instalacaoConcluida ? "Conclua a instalação primeiro" : ""}
                 >
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                  Avançar
+                  Finalizar
                 </Button>
               ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
