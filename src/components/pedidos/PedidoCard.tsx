@@ -130,6 +130,23 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'aguardando_coleta',
   });
 
+  // Verificar se a instalação está concluída (para etapa aguardando_instalacao)
+  const { data: instalacaoConcluida } = useQuery({
+    queryKey: ['pedido-instalacao-concluida', pedido.id],
+    queryFn: async () => {
+      if (pedido.etapa_atual !== 'aguardando_instalacao') return null;
+      
+      const { data: instalacao } = await supabase
+        .from('instalacoes_cadastradas')
+        .select('instalacao_concluida')
+        .eq('pedido_id', pedido.id)
+        .maybeSingle();
+      
+      return instalacao?.instalacao_concluida || false;
+    },
+    enabled: pedido.etapa_atual === 'aguardando_instalacao',
+  });
+
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
@@ -603,6 +620,17 @@ export function PedidoCard({
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
                     Finalizar
                   </Button>
+                ) : etapaAtual === 'aguardando_instalacao' ? (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAcaoEtapa(true)}
+                    disabled={!instalacaoConcluida}
+                    className="ml-2"
+                    title={!instalacaoConcluida ? "Conclua a instalação primeiro" : ""}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                    Avançar
+                  </Button>
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
                     size="sm"
@@ -978,6 +1006,17 @@ export function PedidoCard({
                 >
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
                   Finalizar
+                </Button>
+              ) : etapaAtual === 'aguardando_instalacao' ? (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowAcaoEtapa(true)}
+                  disabled={!instalacaoConcluida}
+                  title={!instalacaoConcluida ? "Conclua a instalação primeiro" : ""}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                  Avançar
                 </Button>
               ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
