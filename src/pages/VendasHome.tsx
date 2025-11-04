@@ -97,7 +97,7 @@ export default function VendasHome() {
       {/* Top Vendedores */}
       <Card>
         <CardHeader className="p-3 sm:p-4 md:p-6">
-          <CardTitle className="text-sm sm:text-base md:text-lg">Top 5 Vendedores do Mês</CardTitle>
+          <CardTitle className="text-sm sm:text-base md:text-lg">Ranking de vendas do mês</CardTitle>
         </CardHeader>
         <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
           <div className="space-y-3 sm:space-y-4">
