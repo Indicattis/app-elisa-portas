@@ -5,10 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Entrega, CreateEntregaData } from '@/hooks/useEntregas';
-import { Eye, MapPin, CheckCircle2, ShoppingCart, Package } from 'lucide-react';
+import { Eye, MapPin, CheckCircle2, ShoppingCart, Package, PackageCheck } from 'lucide-react';
 import { DetalhesEntregaDialog } from './DetalhesEntregaDialog';
 import { ResponsavelEntregaModal } from './ResponsavelEntregaModal';
 import { DataProducaoEntregaModal } from './DataProducaoEntregaModal';
+import { ConfirmarCarregamentoSheet } from './ConfirmarCarregamentoSheet';
 import { useNavigate } from 'react-router-dom';
 
 interface EntregasTabelaViewProps {
@@ -25,8 +26,8 @@ const STATUS_COLORS: Record<string, string> = {
   em_producao: 'bg-blue-500',
   em_qualidade: 'bg-purple-500',
   aguardando_pintura: 'bg-orange-500',
-  pronta_fabrica: 'bg-cyan-500',
-  finalizada: 'bg-green-500',
+  pronta_fabrica: 'bg-emerald-500',
+  finalizada: 'bg-green-600',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -34,7 +35,7 @@ const STATUS_LABELS: Record<string, string> = {
   em_producao: 'Em Produção',
   em_qualidade: 'Em Qualidade',
   aguardando_pintura: 'Aguardando Pintura',
-  pronta_fabrica: 'Pronta Fábrica',
+  pronta_fabrica: 'Pronta para Coleta',
   finalizada: 'Finalizada',
 };
 
@@ -49,6 +50,8 @@ export const EntregasTabelaView = ({
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
   const [showResponsavelModal, setShowResponsavelModal] = useState(false);
   const [showDataProducaoModal, setShowDataProducaoModal] = useState(false);
+  const [showCarregamentoSheet, setShowCarregamentoSheet] = useState(false);
+  const [entregaParaCarregamento, setEntregaParaCarregamento] = useState<Entrega | null>(null);
 
   const handleViewDetalhes = (entrega: Entrega) => {
     setSelectedEntrega(entrega);
@@ -59,15 +62,24 @@ export const EntregasTabelaView = ({
     await onGeocode(entrega.id, entrega.cidade, entrega.estado);
   };
 
-  const handleConcluir = async (entrega: Entrega) => {
-    if (confirm('Confirma a conclusão desta entrega? O pedido será finalizado.')) {
-      await onConcluir(entrega.id);
+  const handleConfirmarCarregamento = (entrega: Entrega) => {
+    setEntregaParaCarregamento(entrega);
+    setShowCarregamentoSheet(true);
+  };
+
+  const handleCarregamentoSuccess = async () => {
+    if (entregaParaCarregamento) {
+      await onConcluir(entregaParaCarregamento.id);
+      setShowCarregamentoSheet(false);
+      setEntregaParaCarregamento(null);
     }
   };
 
   const isGeocoded = (entrega: Entrega) => entrega.latitude && entrega.longitude;
-  const canConcluir = (entrega: Entrega) => 
-    entrega.pedido?.etapa_atual === 'aguardando_coleta' && !entrega.entrega_concluida;
+  const canConfirmarCarregamento = (entrega: Entrega) => 
+    entrega.pedido?.etapa_atual === 'aguardando_coleta' && 
+    !entrega.entrega_concluida &&
+    entrega.status === 'pronta_fabrica';
 
   return (
     <>
@@ -153,14 +165,15 @@ export const EntregasTabelaView = ({
                         </Button>
                       )}
                       
-                      {canConcluir(entrega) && isAdmin && (
+                      {canConfirmarCarregamento(entrega) && isAdmin && (
                         <Button
                           size="sm"
-                          variant="default"
-                          onClick={() => handleConcluir(entrega)}
+                          variant="outline"
+                          onClick={() => handleConfirmarCarregamento(entrega)}
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         >
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                          Concluir
+                          <PackageCheck className="h-4 w-4 mr-1" />
+                          Confirmar Carregamento
                         </Button>
                       )}
                       {entrega.entrega_concluida && (
@@ -203,6 +216,13 @@ export const EntregasTabelaView = ({
           />
         </>
       )}
+
+      <ConfirmarCarregamentoSheet
+        entrega={entregaParaCarregamento}
+        open={showCarregamentoSheet}
+        onOpenChange={setShowCarregamentoSheet}
+        onSuccess={handleCarregamentoSuccess}
+      />
     </>
   );
 };
