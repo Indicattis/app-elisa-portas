@@ -113,6 +113,23 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'aguardando_pintura',
   });
 
+  // Verificar se a entrega está concluída (para etapa aguardando_coleta)
+  const { data: entregaConcluida } = useQuery({
+    queryKey: ['pedido-entrega-concluida', pedido.id],
+    queryFn: async () => {
+      if (pedido.etapa_atual !== 'aguardando_coleta') return null;
+      
+      const { data: entrega } = await supabase
+        .from('entregas')
+        .select('entrega_concluida')
+        .eq('pedido_id', pedido.id)
+        .maybeSingle();
+      
+      return entrega?.entrega_concluida || false;
+    },
+    enabled: pedido.etapa_atual === 'aguardando_coleta',
+  });
+
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
@@ -570,7 +587,13 @@ export function PedidoCard({
                   <Button
                     size="sm"
                     onClick={() => setShowAcaoEtapa(true)}
+                    disabled={etapaAtual === 'aguardando_coleta' && !entregaConcluida}
                     className="ml-2"
+                    title={
+                      etapaAtual === 'aguardando_coleta' && !entregaConcluida
+                        ? "Confirme o carregamento na aba Entregas primeiro"
+                        : ""
+                    }
                   >
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
                     Avançar
