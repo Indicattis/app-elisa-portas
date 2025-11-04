@@ -5,10 +5,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card } from './ui/card';
 import { ESTADOS_BRASIL, CIDADES_POR_ESTADO } from '@/utils/estadosCidades';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 interface MapaLocalizacaoPesquisaProps {
   onPesquisar: (lat: number, lng: number) => void;
+}
+
+interface NominatimResponse {
+  lat: string;
+  lon: string;
+  display_name: string;
 }
 
 export function MapaLocalizacaoPesquisa({ onPesquisar }: MapaLocalizacaoPesquisaProps) {
@@ -24,19 +29,28 @@ export function MapaLocalizacaoPesquisa({ onPesquisar }: MapaLocalizacaoPesquisa
 
     setLoading(true);
     try {
-      // Chamar a função de geocodificação
-      const { data, error } = await supabase.functions.invoke('geocode-nominatim', {
-        body: {
-          id: 'temp-search',
-          cidade: cidadeSelecionada,
-          estado: estadoSelecionado
+      // Chamar a API Nominatim diretamente
+      const query = encodeURIComponent(`${cidadeSelecionada}, ${estadoSelecionado}, Brasil`);
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br&addressdetails=1`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'GrupoElisa/1.0'
         }
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Erro ao buscar coordenadas');
+      }
 
-      if (data?.success && data?.latitude && data?.longitude) {
-        onPesquisar(data.latitude, data.longitude);
+      const data: NominatimResponse[] = await response.json();
+
+      if (data && data.length > 0) {
+        const result = data[0];
+        const lat = parseFloat(result.lat);
+        const lng = parseFloat(result.lon);
+        
+        onPesquisar(lat, lng);
         toast.success(`Localização encontrada: ${cidadeSelecionada}, ${estadoSelecionado}`);
       } else {
         toast.error('Não foi possível encontrar as coordenadas para esta localização');
