@@ -45,11 +45,6 @@ const navigation = [{
   icon: CreditCard,
   adminOrManager: true
 }, {
-  name: "Organograma",
-  href: "/dashboard/organograma",
-  icon: Users,
-  adminOnly: true
-}, {
   name: "Calendário",
   href: "/dashboard/calendario",
   icon: CalendarDays

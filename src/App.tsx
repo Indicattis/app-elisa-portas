@@ -52,7 +52,6 @@ import InstalacoesHome from "./pages/InstalacoesHome";
 import AdministrativoHome from "./pages/AdministrativoHome";
 import ParceirosHome from "./pages/ParceirosHome";
 import Investimentos from "./pages/Investimentos";
-import Organograma from "./pages/Organograma";
 import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
 import ParceiroNovo from "./pages/ParceiroNovo";
@@ -145,12 +144,6 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                       <NavLink to="/dashboard/mapa-autorizados" className="flex items-center gap-2 cursor-pointer">
                         <Map className="h-4 w-4" />
                         <span>Mapa</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/organograma" className="flex items-center gap-2 cursor-pointer">
-                        <Network className="h-4 w-4" />
-                        <span>Organograma</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -589,16 +582,6 @@ const App = () => (
                     <ProtectedRoute requirePermission="marketing">
                       <DashboardLayout>
                         <Investimentos />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/organograma"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <Organograma />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

@@ -11,7 +11,6 @@ export type AppPermission =
   | 'faturamento'
   | 'contas_receber'
   | 'visitas'
-  | 'organograma'
   | 'contador_vendas'
   | 'configuracoes'
   | 'users'
@@ -106,11 +105,6 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'visitas',
     label: 'Visitas Técnicas',
     description: 'Agendar e gerenciar visitas técnicas'
-  },
-  organograma: {
-    key: 'organograma',
-    label: 'Organograma',
-    description: 'Visualizar organograma da empresa'
   },
   contador_vendas: {
     key: 'contador_vendas',
