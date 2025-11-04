@@ -3323,6 +3323,7 @@ export type Database = {
           cliente_email: string | null
           cliente_nome: string | null
           cliente_telefone: string | null
+          cpf_cliente: string | null
           created_at: string
           custo_total: number | null
           data_prevista_entrega: string | null
@@ -3354,6 +3355,7 @@ export type Database = {
           cliente_email?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
+          cpf_cliente?: string | null
           created_at?: string
           custo_total?: number | null
           data_prevista_entrega?: string | null
@@ -3385,6 +3387,7 @@ export type Database = {
           cliente_email?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
+          cpf_cliente?: string | null
           created_at?: string
           custo_total?: number | null
           data_prevista_entrega?: string | null

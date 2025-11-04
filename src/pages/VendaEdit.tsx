@@ -52,6 +52,7 @@ export default function VendaEdit() {
     cliente_nome: "",
     cliente_telefone: "",
     cliente_email: "",
+    cpf_cliente: "",
     estado: "",
     cidade: "",
     bairro: "",
@@ -101,6 +102,7 @@ export default function VendaEdit() {
         cliente_nome: vendaData.cliente_nome || "",
         cliente_telefone: vendaData.cliente_telefone || "",
         cliente_email: vendaData.cliente_email || "",
+        cpf_cliente: vendaData.cpf_cliente || "",
         estado: vendaData.estado || "",
         cidade: vendaData.cidade || "",
         bairro: vendaData.bairro || "",
@@ -199,6 +201,7 @@ export default function VendaEdit() {
         cliente_nome: formData.cliente_nome || null,
         cliente_telefone: formData.cliente_telefone || null,
         cliente_email: formData.cliente_email || null,
+        cpf_cliente: formData.cpf_cliente || null,
         estado: formData.estado || null,
         cidade: formData.cidade || null,
         bairro: formData.bairro || null,
@@ -477,6 +480,16 @@ export default function VendaEdit() {
                     placeholder="cliente@email.com"
                     value={formData.cliente_email}
                     onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cpf_cliente">CPF do Cliente</Label>
+                  <Input
+                    id="cpf_cliente"
+                    placeholder="000.000.000-00"
+                    value={formData.cpf_cliente}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cpf_cliente: e.target.value }))}
                   />
                 </div>
               </div>

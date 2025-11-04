@@ -181,13 +181,19 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
                   <p className="text-xs text-muted-foreground">Telefone</p>
                   <p className="text-sm font-medium">{venda.cliente_telefone}</p>
                 </div>
-                {venda.cliente_email && (
+                {venda.cpf_cliente && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <p className="text-sm font-medium">{venda.cliente_email}</p>
+                    <p className="text-xs text-muted-foreground">CPF</p>
+                    <p className="text-sm font-medium">{venda.cpf_cliente}</p>
                   </div>
                 )}
               </div>
+              {venda.cliente_email && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium">{venda.cliente_email}</p>
+                </div>
+              )}
               <div>
                 <p className="text-xs text-muted-foreground">Localização</p>
                 <p className="text-sm font-medium">{venda.cidade}/{venda.estado}</p>

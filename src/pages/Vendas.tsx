@@ -396,6 +396,7 @@ export default function Vendas() {
                   {/* Desktop: todas as colunas alinhadas com as células */}
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Data</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cliente</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">CPF</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Telefone</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cidade/Estado</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Previsão</TableHead>
@@ -476,6 +477,7 @@ export default function Vendas() {
                           {format(new Date(venda.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-sm font-medium">{venda.cliente_nome}</TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">{venda.cpf_cliente || '-'}</TableCell>
                         <TableCell className="hidden md:table-cell text-sm">{venda.cliente_telefone}</TableCell>
                         <TableCell className="hidden md:table-cell text-sm">{venda.cidade}/{venda.estado}</TableCell>
                         <TableCell className="hidden md:table-cell text-sm">

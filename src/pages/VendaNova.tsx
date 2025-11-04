@@ -47,6 +47,7 @@ export default function VendaNova() {
     cliente_nome: "",
     cliente_telefone: "",
     cliente_email: "",
+    cpf_cliente: "",
     forma_pagamento: "",
     observacoes_venda: "",
     atendente_id: "",
@@ -123,6 +124,7 @@ export default function VendaNova() {
         cliente_nome: formData.cliente_nome || null,
         cliente_telefone: formData.cliente_telefone || null,
         cliente_email: formData.cliente_email || null,
+        cpf_cliente: formData.cpf_cliente || null,
         valor_venda: 0, // Será calculado pela trigger ao adicionar produtos
         lucro_total: 0, // Será preenchido no faturamento
         valor_frete: 0,
@@ -256,15 +258,27 @@ export default function VendaNova() {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="cliente_email">Email</Label>
-                <Input
-                  id="cliente_email"
-                  type="email"
-                  placeholder="cliente@email.com"
-                  value={formData.cliente_email}
-                  onChange={(e) => setFormData({ ...formData, cliente_email: e.target.value })}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cliente_email">Email</Label>
+                  <Input
+                    id="cliente_email"
+                    type="email"
+                    placeholder="cliente@email.com"
+                    value={formData.cliente_email}
+                    onChange={(e) => setFormData({ ...formData, cliente_email: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cpf_cliente">CPF</Label>
+                  <Input
+                    id="cpf_cliente"
+                    placeholder="000.000.000-00"
+                    value={formData.cpf_cliente}
+                    onChange={(e) => setFormData({ ...formData, cpf_cliente: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
 

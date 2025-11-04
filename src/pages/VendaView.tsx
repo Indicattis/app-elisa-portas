@@ -36,7 +36,7 @@ interface Instalacao {
 interface Venda {
   id: string;
   cliente_nome: string;
-  cliente_cpf?: string;
+  cpf_cliente?: string;
   cliente_telefone?: string;
   cliente_email?: string;
   cidade?: string;
@@ -449,10 +449,10 @@ export default function VendaView() {
               <p className="text-sm text-muted-foreground">Nome</p>
               <p className="font-medium">{venda.cliente_nome}</p>
             </div>
-            {venda.cliente_cpf && (
+            {venda.cpf_cliente && (
               <div>
                 <p className="text-sm text-muted-foreground">CPF</p>
-                <p className="font-medium">{venda.cliente_cpf}</p>
+                <p className="font-medium">{venda.cpf_cliente}</p>
               </div>
             )}
             {venda.cliente_telefone && (
