@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Settings, LogOut, Tv, Map, Network, BookOpen, Calendar as CalendarIcon } from "lucide-react";
+import { Menu, Settings, LogOut, Tv, Map, Network, BookOpen, Calendar as CalendarIcon, Calculator } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -160,6 +160,12 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                       <NavLink to="/dashboard/calendario" className="flex items-center gap-2 cursor-pointer">
                         <CalendarIcon className="h-4 w-4" />
                         <span>Calendário</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <NavLink to="/dashboard/contador-vendas" className="flex items-center gap-2 cursor-pointer">
+                        <Calculator className="h-4 w-4" />
+                        <span>Contador de Vendas</span>
                       </NavLink>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
