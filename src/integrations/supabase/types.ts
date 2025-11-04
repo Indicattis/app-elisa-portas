@@ -238,14 +238,14 @@ export type Database = {
           endereco: string | null
           estado: string | null
           etapa: Database["public"]["Enums"]["autorizado_etapa"] | null
+          franqueado_etapa:
+            | Database["public"]["Enums"]["franqueado_etapa"]
+            | null
           geocode_precision: string | null
           id: string
           inativado_automaticamente: boolean | null
           last_geocoded_at: string | null
           latitude: number | null
-          licenciado_etapa:
-            | Database["public"]["Enums"]["licenciado_etapa"]
-            | null
           logo_url: string | null
           longitude: number | null
           nome: string
@@ -271,14 +271,14 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           etapa?: Database["public"]["Enums"]["autorizado_etapa"] | null
+          franqueado_etapa?:
+            | Database["public"]["Enums"]["franqueado_etapa"]
+            | null
           geocode_precision?: string | null
           id?: string
           inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
-          licenciado_etapa?:
-            | Database["public"]["Enums"]["licenciado_etapa"]
-            | null
           logo_url?: string | null
           longitude?: number | null
           nome: string
@@ -304,14 +304,14 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           etapa?: Database["public"]["Enums"]["autorizado_etapa"] | null
+          franqueado_etapa?:
+            | Database["public"]["Enums"]["franqueado_etapa"]
+            | null
           geocode_precision?: string | null
           id?: string
           inativado_automaticamente?: boolean | null
           last_geocoded_at?: string | null
           latitude?: number | null
-          licenciado_etapa?:
-            | Database["public"]["Enums"]["licenciado_etapa"]
-            | null
           logo_url?: string | null
           longitude?: number | null
           nome?: string
@@ -3833,6 +3833,7 @@ export type Database = {
         | "contrato"
         | "politica"
         | "outros"
+      franqueado_etapa: "inicial" | "avaliacao" | "aprovacao" | "ativo"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -3840,7 +3841,6 @@ export type Database = {
         | "aguardando_aprovacao_venda"
         | "venda_reprovada"
         | "venda_aprovada"
-      licenciado_etapa: "inicial" | "avaliacao" | "aprovacao" | "ativo"
       motivo_perda:
         | "desqualificado"
         | "perdido_por_preco"
@@ -3872,7 +3872,7 @@ export type Database = {
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
       tipo_instalacao_enum: "elisa" | "autorizados"
-      tipo_parceiro: "autorizado" | "representante" | "licenciado"
+      tipo_parceiro: "autorizado" | "representante" | "franqueado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
       turno_visita: "manha" | "tarde" | "noite"
       user_role:
@@ -4072,6 +4072,7 @@ export const Constants = {
         "politica",
         "outros",
       ],
+      franqueado_etapa: ["inicial", "avaliacao", "aprovacao", "ativo"],
       lead_status: [
         "aguardando_atendimento",
         "em_andamento",
@@ -4080,7 +4081,6 @@ export const Constants = {
         "venda_reprovada",
         "venda_aprovada",
       ],
-      licenciado_etapa: ["inicial", "avaliacao", "aprovacao", "ativo"],
       motivo_perda: [
         "desqualificado",
         "perdido_por_preco",
@@ -4116,7 +4116,7 @@ export const Constants = {
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],
       tipo_instalacao_enum: ["elisa", "autorizados"],
-      tipo_parceiro: ["autorizado", "representante", "licenciado"],
+      tipo_parceiro: ["autorizado", "representante", "franqueado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],
       turno_visita: ["manha", "tarde", "noite"],
       user_role: [

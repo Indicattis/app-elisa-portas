@@ -21,19 +21,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   ETAPAS_AUTORIZADO,
   ETAPAS_REPRESENTANTE,
-  ETAPAS_LICENCIADO,
+  ETAPAS_FRANQUEADO,
   AutorizadoEtapa,
   RepresentanteEtapa,
-  LicenciadoEtapa,
+  FranqueadoEtapa,
 } from "@/utils/etapas";
 
 export interface MapaFiltros {
   autorizados: boolean;
   representantes: boolean;
-  licenciados: boolean;
+  franqueados: boolean;
   etapasAutorizados: AutorizadoEtapa[];
   etapasRepresentantes: RepresentanteEtapa[];
-  etapasLicenciados: LicenciadoEtapa[];
+  etapasFranqueados: FranqueadoEtapa[];
   instalacoes: boolean;
   statusInstalacoes: string[];
   tiposInstalacao: string[];
@@ -49,7 +49,7 @@ interface MapaFiltrosAvancadosProps {
   stats: {
     totalAutorizados: number;
     totalRepresentantes: number;
-    totalLicenciados: number;
+    totalFranqueados: number;
     totalInstalacoes: number;
   };
 }
@@ -80,10 +80,10 @@ export function MapaFiltrosAvancados({ filtros, onChange, stats }: MapaFiltrosAv
     onChange({
       autorizados: true,
       representantes: true,
-      licenciados: true,
+      franqueados: true,
       etapasAutorizados: [],
       etapasRepresentantes: [],
-      etapasLicenciados: [],
+      etapasFranqueados: [],
       instalacoes: true,
       statusInstalacoes: [],
       tiposInstalacao: [],
@@ -108,11 +108,11 @@ export function MapaFiltrosAvancados({ filtros, onChange, stats }: MapaFiltrosAv
     onChange({ ...filtros, etapasRepresentantes: novasEtapas });
   };
 
-  const toggleEtapaLicenciado = (etapa: LicenciadoEtapa) => {
-    const novasEtapas = filtros.etapasLicenciados.includes(etapa)
-      ? filtros.etapasLicenciados.filter((e) => e !== etapa)
-      : [...filtros.etapasLicenciados, etapa];
-    onChange({ ...filtros, etapasLicenciados: novasEtapas });
+  const toggleEtapaFranqueado = (etapa: FranqueadoEtapa) => {
+    const novasEtapas = filtros.etapasFranqueados.includes(etapa)
+      ? filtros.etapasFranqueados.filter((e) => e !== etapa)
+      : [...filtros.etapasFranqueados, etapa];
+    onChange({ ...filtros, etapasFranqueados: novasEtapas });
   };
 
   const toggleStatusInstalacao = (status: string) => {
@@ -214,36 +214,36 @@ export function MapaFiltrosAvancados({ filtros, onChange, stats }: MapaFiltrosAv
             )}
           </div>
 
-          {/* Licenciados */}
+          {/* Franqueados */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="licenciados"
-                checked={filtros.licenciados}
+                id="franqueados"
+                checked={filtros.franqueados}
                 onCheckedChange={(checked) =>
-                  onChange({ ...filtros, licenciados: checked as boolean })
+                  onChange({ ...filtros, franqueados: checked as boolean })
                 }
               />
-              <Label htmlFor="licenciados" className="cursor-pointer">
-                Licenciados ({stats.totalLicenciados})
+              <Label htmlFor="franqueados" className="cursor-pointer">
+                Franqueados ({stats.totalFranqueados})
               </Label>
             </div>
-            {filtros.licenciados && (
+            {filtros.franqueados && (
               <div className="ml-6 space-y-1">
                 <div className="text-xs text-muted-foreground mb-1">
-                  Etapas {filtros.etapasLicenciados.length === 0 && "(todas)"}:
+                  Etapas {filtros.etapasFranqueados.length === 0 && "(todas)"}:
                 </div>
-{(Object.entries(ETAPAS_LICENCIADO) as [LicenciadoEtapa, string][]).map(([key, label]) => (
+{(Object.entries(ETAPAS_FRANQUEADO) as [FranqueadoEtapa, string][]).map(([key, label]) => (
                   <div key={key} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`etapa-licenciado-${key}`}
+                      id={`etapa-franqueado-${key}`}
                       checked={
-                        filtros.etapasLicenciados.length === 0 ||
-                        filtros.etapasLicenciados.includes(key)
+                        filtros.etapasFranqueados.length === 0 ||
+                        filtros.etapasFranqueados.includes(key)
                       }
-                      onCheckedChange={() => toggleEtapaLicenciado(key)}
+                      onCheckedChange={() => toggleEtapaFranqueado(key)}
                     />
-                    <Label htmlFor={`etapa-licenciado-${key}`} className="cursor-pointer text-sm">
+                    <Label htmlFor={`etapa-franqueado-${key}`} className="cursor-pointer text-sm">
                       {label}
                     </Label>
                   </div>
@@ -508,12 +508,12 @@ function calcularFiltrosAtivos(filtros: MapaFiltros): number {
 
   if (!filtros.autorizados) count++;
   if (!filtros.representantes) count++;
-  if (!filtros.licenciados) count++;
+  if (!filtros.franqueados) count++;
   if (!filtros.instalacoes) count++;
 
   if (filtros.etapasAutorizados.length > 0) count++;
   if (filtros.etapasRepresentantes.length > 0) count++;
-  if (filtros.etapasLicenciados.length > 0) count++;
+  if (filtros.etapasFranqueados.length > 0) count++;
   if (filtros.statusInstalacoes.length > 0) count++;
   if (filtros.tiposInstalacao.length > 0) count++;
 

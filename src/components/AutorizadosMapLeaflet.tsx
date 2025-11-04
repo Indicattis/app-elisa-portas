@@ -134,7 +134,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
       acc[estado] = {
         autorizado: 0,
         representante: 0,
-        licenciado: 0
+        franqueado: 0
       };
     }
     acc[estado][tipo] = (acc[estado][tipo] || 0) + 1;
@@ -475,7 +475,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                       <div className="flex items-center gap-1">
                         <span className="text-xs">Lic.</span>
                         <Badge className="rounded-full h-5 w-5 flex items-center justify-center p-0 text-xs" style={{ backgroundColor: '#EAB308', color: 'white' }}>
-                          {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'licenciado').length}
+                          {autorizados.filter(a => a.ativo && a.tipo_parceiro === 'franqueado').length}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-1">

@@ -1,6 +1,6 @@
 export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamentos_video' | 'apto' | 'premium';
 export type RepresentanteEtapa = 'inicial' | 'qualificacao' | 'proposta' | 'contratado';
-export type LicenciadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
+export type FranqueadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
 
 export const ETAPAS_AUTORIZADO: Record<AutorizadoEtapa, string> = {
   apresentacao_proposta: 'Apresentação Proposta',
@@ -16,7 +16,7 @@ export const ETAPAS_REPRESENTANTE: Record<RepresentanteEtapa, string> = {
   contratado: 'Contratado'
 };
 
-export const ETAPAS_LICENCIADO: Record<LicenciadoEtapa, string> = {
+export const ETAPAS_FRANQUEADO: Record<FranqueadoEtapa, string> = {
   inicial: 'Inicial',
   avaliacao: 'Avaliação',
   aprovacao: 'Aprovação',

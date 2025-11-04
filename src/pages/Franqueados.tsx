@@ -29,12 +29,12 @@ interface Vendedor {
   foto_perfil_url?: string;
 }
 
-export default function Licenciados() {
+export default function Franqueados() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: autorizados = [], isLoading: loading } = useAutorizadosPerformance();
-  const [filteredLicenciados, setFilteredLicenciados] = useState(autorizados);
+  const [filteredFranqueados, setFilteredFranqueados] = useState(autorizados);
   const [geocoding, setGeocoding] = useState<string | null>(null);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -54,8 +54,8 @@ export default function Licenciados() {
   }, []);
 
   useEffect(() => {
-    const filtered = aplicarFiltros(autorizados.filter(a => a.tipo_parceiro === 'licenciado'), filtros);
-    setFilteredLicenciados(filtered);
+    const filtered = aplicarFiltros(autorizados.filter(a => a.tipo_parceiro === 'franqueado'), filtros);
+    setFilteredFranqueados(filtered);
   }, [autorizados, filtros]);
 
   const fetchVendedores = async () => {
@@ -151,9 +151,9 @@ export default function Licenciados() {
   };
 
   const handleBatchGeocode = async () => {
-    const licenciadosToGeocode = autorizados.filter(autorizado => 
+    const franqueadosToGeocode = autorizados.filter(autorizado => 
       autorizado.ativo && 
-      autorizado.tipo_parceiro === 'licenciado' &&
+      autorizado.tipo_parceiro === 'franqueado' &&
       autorizado.cidade && 
       autorizado.estado && 
       !autorizado.latitude && 

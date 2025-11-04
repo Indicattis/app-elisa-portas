@@ -76,7 +76,7 @@ import Compras from "./pages/Compras";
 import Estoque from "./pages/Estoque";
 import RHAdmin from "./pages/RHAdmin";
 import Representantes from "./pages/Representantes";
-import Licenciados from "./pages/Licenciados";
+import Franqueados from "./pages/Franqueados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
 import ForcaVendas from "./pages/ForcaVendas";
 import DiarioBordo from "./pages/DiarioBordo";
@@ -620,7 +620,7 @@ const App = () => (
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
-                        <Licenciados />
+                      <Franqueados />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

@@ -1,6 +1,6 @@
-export type TipoParceiro = 'autorizado' | 'representante' | 'licenciado';
+export type TipoParceiro = 'autorizado' | 'representante' | 'franqueado';
 export type RepresentanteEtapa = 'inicial' | 'qualificacao' | 'proposta' | 'contratado';
-export type LicenciadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
+export type FranqueadoEtapa = 'inicial' | 'avaliacao' | 'aprovacao' | 'ativo';
 export type AutorizadoEtapa = 'apresentacao_proposta' | 'treinamentos_video' | 'apto' | 'premium';
 
 // Etapas para Autorizados
@@ -19,12 +19,12 @@ export const ETAPAS_REPRESENTANTE: Record<RepresentanteEtapa, string> = {
   contratado: 'Contratado'
 };
 
-// Etapas para Licenciados
-export const ETAPAS_LICENCIADO: Record<LicenciadoEtapa, string> = {
+// Etapas para Franqueados
+export const ETAPAS_FRANQUEADO: Record<FranqueadoEtapa, string> = {
   inicial: 'Documentação Inicial',
   avaliacao: 'Em Avaliação',
   aprovacao: 'Aguardando Aprovação',
-  ativo: 'Licença Ativa'
+  ativo: 'Franquia Ativa'
 };
 
 // Cores das etapas
@@ -42,7 +42,7 @@ export const ETAPA_COLORS_REPRESENTANTE: Record<RepresentanteEtapa, string> = {
   contratado: 'hsl(var(--chart-4))'
 };
 
-export const ETAPA_COLORS_LICENCIADO: Record<LicenciadoEtapa, string> = {
+export const ETAPA_COLORS_FRANQUEADO: Record<FranqueadoEtapa, string> = {
   inicial: 'hsl(var(--chart-3))',
   avaliacao: 'hsl(var(--chart-1))',
   aprovacao: 'hsl(var(--chart-2))',
@@ -64,7 +64,7 @@ export const ETAPA_ORDER_REPRESENTANTE: RepresentanteEtapa[] = [
   'contratado'
 ];
 
-export const ETAPA_ORDER_LICENCIADO: LicenciadoEtapa[] = [
+export const ETAPA_ORDER_FRANQUEADO: FranqueadoEtapa[] = [
   'inicial',
   'avaliacao',
   'aprovacao',
@@ -75,7 +75,7 @@ export const ETAPA_ORDER_LICENCIADO: LicenciadoEtapa[] = [
 export const TIPO_PARCEIRO_LABELS: Record<TipoParceiro, string> = {
   autorizado: 'Autorizado',
   representante: 'Representante',
-  licenciado: 'Licenciado'
+  franqueado: 'Franqueado'
 };
 
 // Categorias de avaliação por tipo de parceiro
@@ -90,9 +90,9 @@ export const RATING_CATEGORIES = {
     { value: 'representante_vendas', label: 'Vendas' },
     { value: 'representante_suporte', label: 'Suporte' }
   ],
-  licenciado: [
-    { value: 'licenciado_compliance', label: 'Compliance' },
-    { value: 'licenciado_vendas', label: 'Vendas' }
+  franqueado: [
+    { value: 'franqueado_compliance', label: 'Compliance' },
+    { value: 'franqueado_vendas', label: 'Vendas' }
   ]
 };
 
@@ -103,8 +103,8 @@ export function getEtapasByTipo(tipo: TipoParceiro) {
       return { etapas: ETAPAS_AUTORIZADO, order: ETAPA_ORDER_AUTORIZADO, colors: ETAPA_COLORS_AUTORIZADO };
     case 'representante':
       return { etapas: ETAPAS_REPRESENTANTE, order: ETAPA_ORDER_REPRESENTANTE, colors: ETAPA_COLORS_REPRESENTANTE };
-    case 'licenciado':
-      return { etapas: ETAPAS_LICENCIADO, order: ETAPA_ORDER_LICENCIADO, colors: ETAPA_COLORS_LICENCIADO };
+    case 'franqueado':
+      return { etapas: ETAPAS_FRANQUEADO, order: ETAPA_ORDER_FRANQUEADO, colors: ETAPA_COLORS_FRANQUEADO };
     default:
       return { etapas: ETAPAS_AUTORIZADO, order: ETAPA_ORDER_AUTORIZADO, colors: ETAPA_COLORS_AUTORIZADO };
   }
@@ -117,8 +117,8 @@ export function getCurrentEtapa(parceiro: any): string | null {
       return parceiro.etapa || null;
     case 'representante':
       return parceiro.representante_etapa || null;
-    case 'licenciado':
-      return parceiro.licenciado_etapa || null;
+    case 'franqueado':
+      return parceiro.franqueado_etapa || null;
     default:
       return null;
   }
@@ -131,7 +131,7 @@ export function getMarkerColorByTipo(tipo: TipoParceiro): string {
       return '#3B82F6'; // Azul
     case 'representante':
       return '#6B7280'; // Cinza
-    case 'licenciado':
+    case 'franqueado':
       return '#EAB308'; // Dourado
     default:
       return '#3B82F6';

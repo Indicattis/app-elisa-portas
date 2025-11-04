@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export type RatingCategoria = 
   | 'instalacao' | 'bos' | 'visita_tecnica' | 'manutencao'
   | 'representante_vendas' | 'representante_suporte'
-  | 'licenciado_compliance' | 'licenciado_vendas';
+  | 'franqueado_compliance' | 'franqueado_vendas';
 
 export interface AutorizadoRating {
   id: string;

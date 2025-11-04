@@ -35,7 +35,7 @@ interface Autorizado {
   vendedor_id?: string;
   etapa: string;
   representante_etapa?: string;
-  licenciado_etapa?: string;
+  franqueado_etapa?: string;
   tipo_parceiro: TipoParceiro;
   average_rating?: number;
   total_ratings?: number;
@@ -106,7 +106,7 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
     try {
       const updateField = tipoParceiro === 'autorizado' ? 'etapa' : 
                          tipoParceiro === 'representante' ? 'representante_etapa' : 
-                         'licenciado_etapa';
+                         'franqueado_etapa';
 
       // Call the onEtapaChange callback immediately for optimistic update
       onEtapaChange(draggedItem, novaEtapa);

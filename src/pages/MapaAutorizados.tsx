@@ -6,7 +6,7 @@ import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { MapaFiltrosAvancados, MapaFiltros } from "@/components/MapaFiltrosAvancados";
 import { MapaLocalizacaoPesquisa } from "@/components/MapaLocalizacaoPesquisa";
 import { Badge } from "@/components/ui/badge";
-import { AutorizadoEtapa, RepresentanteEtapa, LicenciadoEtapa } from "@/utils/etapas";
+import { AutorizadoEtapa, RepresentanteEtapa, FranqueadoEtapa } from "@/utils/etapas";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -50,10 +50,10 @@ export default function MapaAutorizados() {
   const [filtros, setFiltros] = useState<MapaFiltros>({
     autorizados: true,
     representantes: true,
-    licenciados: true,
+    franqueados: true,
     etapasAutorizados: [],
     etapasRepresentantes: [],
-    etapasLicenciados: [],
+    etapasFranqueados: [],
     instalacoes: true,
     statusInstalacoes: [],
     tiposInstalacao: [],
@@ -95,7 +95,7 @@ export default function MapaAutorizados() {
           cidade, estado, cep, regiao, ativo, logo_url, latitude, 
           longitude, last_geocoded_at, geocode_precision, created_at, 
           updated_at, vendedor_id, tipo_parceiro, etapa, 
-          representante_etapa, licenciado_etapa,
+          representante_etapa, franqueado_etapa,
           vendedor:admin_users(nome, foto_perfil_url)
         `)
         .order('nome');
@@ -138,12 +138,12 @@ export default function MapaAutorizados() {
       }
     }
     
-    if (autorizado.tipo_parceiro === 'licenciado' && filtros.licenciados) {
-      if (filtros.etapasLicenciados.length === 0) {
+    if (autorizado.tipo_parceiro === 'franqueado' && filtros.franqueados) {
+      if (filtros.etapasFranqueados.length === 0) {
         passaTipoParceiro = true;
       } else {
-        passaTipoParceiro = autorizado.licenciado_etapa
-          ? filtros.etapasLicenciados.includes(autorizado.licenciado_etapa as LicenciadoEtapa)
+        passaTipoParceiro = autorizado.franqueado_etapa
+          ? filtros.etapasFranqueados.includes(autorizado.franqueado_etapa as FranqueadoEtapa)
           : false;
       }
     }

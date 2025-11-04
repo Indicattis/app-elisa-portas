@@ -33,7 +33,7 @@ interface ParceiroForm {
   vendedor_id: string;
   etapa?: string;
   representante_etapa?: string;
-  licenciado_etapa?: string;
+  franqueado_etapa?: string;
   tipo_parceiro: TipoParceiro;
 }
 
@@ -108,7 +108,7 @@ export default function ParceiroEdit() {
           vendedor_id: data.vendedor_id || "",
           etapa: data.etapa,
           representante_etapa: data.representante_etapa,
-          licenciado_etapa: data.licenciado_etapa,
+          franqueado_etapa: data.franqueado_etapa,
           tipo_parceiro: data.tipo_parceiro || 'autorizado'
         });
 

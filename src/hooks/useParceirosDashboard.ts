@@ -9,7 +9,7 @@ export interface ParceiroMetrics {
   novosNoMes: number;
   autorizadosAptos: number;
   representantesAtivos: number;
-  licenciadosAtivos: number;
+  franqueadosAtivos: number;
 }
 
 export const useParceirosDashboard = () => {
@@ -46,9 +46,9 @@ export const useParceirosDashboard = () => {
         .sort((a, b) => b.total - a.total)
         .slice(0, 5);
 
-      // Representantes e Licenciados
+      // Representantes e Franqueados
       const representantes = autorizados?.filter(a => a.tipo_parceiro === 'representante').length || 0;
-      const licenciados = autorizados?.filter(a => a.tipo_parceiro === 'licenciado').length || 0;
+      const franqueados = autorizados?.filter(a => a.tipo_parceiro === 'franqueado').length || 0;
 
       // Ranking (últimas avaliações)
       const { data: ratings } = await supabase
@@ -74,7 +74,7 @@ export const useParceirosDashboard = () => {
         novosNoMes,
         autorizadosAptos: 0,
         representantesAtivos: representantes,
-        licenciadosAtivos: licenciados,
+        franqueadosAtivos: franqueados,
       };
 
       return metrics;
