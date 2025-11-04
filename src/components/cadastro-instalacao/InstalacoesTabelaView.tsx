@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { format, isPast, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   MapPin,
@@ -62,6 +62,7 @@ import { baixarInstalacoesPDF } from '@/utils/instalacoesPDFGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useInstalacoesFilters, isAtrasado } from '@/hooks/useInstalacoesFilters';
 
 interface InstalacoesTabelaViewProps {
   instalacoes: InstalacaoCadastrada[];
@@ -86,13 +87,10 @@ export const InstalacoesTabelaView = ({
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const navigate = useNavigate();
+  const { filters, setFilters, filteredInstalacoes, clearFilters } = useInstalacoesFilters(instalacoes);
   const [detalhesInstalacao, setDetalhesInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [responsavelInstalacao, setResponsavelInstalacao] = useState<InstalacaoCadastrada | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterEstado, setFilterEstado] = useState<string>('all');
-  const [quickFilter, setQuickFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,10 +105,6 @@ export const InstalacoesTabelaView = ({
     }
   };
 
-  const isAtrasado = (instalacao: InstalacaoCadastrada) => {
-    if (!instalacao.data_instalacao || instalacao.status === 'finalizada') return false;
-    return isPast(startOfDay(new Date(instalacao.data_instalacao))) && startOfDay(new Date(instalacao.data_instalacao)) < startOfDay(new Date());
-  };
 
   const [confirmingInstalacaoId, setConfirmingInstalacaoId] = useState<string | null>(null);
 
@@ -132,38 +126,8 @@ export const InstalacoesTabelaView = ({
     return { label: 'Não Geocodificado', variant: 'warning' as const };
   };
 
-  const filteredAndSortedInstalacoes = useMemo(() => {
-    let result = [...instalacoes];
-
-    // Filtrar por busca (nome ou telefone)
-    if (searchTerm) {
-      result = result.filter(
-        (inst) =>
-          inst.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          inst.telefone_cliente?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filtros rápidos não relacionados a status
-    if (quickFilter === 'sem_responsavel') {
-      result = result.filter((inst) => !inst.responsavel_instalacao_id);
-    } else if (quickFilter === 'atrasados') {
-      result = result.filter((inst) => isAtrasado(inst));
-    }
-
-    // Filtros de status (priorizar quickFilter se for de status, senão usar filterStatus)
-    if (quickFilter === 'pendente_producao') {
-      result = result.filter((inst) => inst.status === 'pendente_producao');
-    } else if (quickFilter === 'pronta_fabrica') {
-      result = result.filter((inst) => inst.status === 'pronta_fabrica');
-    } else if (filterStatus !== 'all') {
-      result = result.filter((inst) => inst.status === filterStatus);
-    }
-
-    // Filtrar por estado
-    if (filterEstado !== 'all') {
-      result = result.filter((inst) => inst.estado === filterEstado);
-    }
+  const sortedInstalacoes = useMemo(() => {
+    const result = [...filteredInstalacoes];
 
     // Ordenar
     result.sort((a, b) => {
@@ -181,18 +145,18 @@ export const InstalacoesTabelaView = ({
     });
 
     return result;
-  }, [instalacoes, searchTerm, quickFilter, filterStatus, filterEstado, sortField, sortOrder]);
+  }, [filteredInstalacoes, sortField, sortOrder]);
 
   const paginatedInstalacoes = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedInstalacoes.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredAndSortedInstalacoes, currentPage]);
+    return sortedInstalacoes.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedInstalacoes, currentPage]);
 
-  const totalPages = Math.ceil(filteredAndSortedInstalacoes.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedInstalacoes.length / itemsPerPage);
 
   const handleDownloadPDF = () => {
     try {
-      baixarInstalacoesPDF({ instalacoes: filteredAndSortedInstalacoes as any });
+      baixarInstalacoesPDF({ instalacoes: sortedInstalacoes as any });
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
       toast.error('Erro ao gerar PDF');
@@ -277,12 +241,6 @@ export const InstalacoesTabelaView = ({
     }
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setFilterStatus('all');
-    setFilterEstado('all');
-    setQuickFilter('all');
-  };
 
   const getCategoriaLabel = (categoria: string) => {
     const labels: Record<string, string> = {
@@ -343,34 +301,34 @@ export const InstalacoesTabelaView = ({
                 <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                 <Input
                   placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   className="pl-7 h-8 text-[9px] w-full"
                 />
               </div>
               
               <div className="flex gap-1 shrink-0">
                 <Button
-                  variant={quickFilter === 'all' ? 'default' : 'outline'}
+                  variant={filters.quickFilter === 'all' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setQuickFilter('all')}
+                  onClick={() => setFilters({ ...filters, quickFilter: 'all' })}
                   className="h-8 px-1.5 text-[9px] min-w-0"
                 >
                   Todos
                 </Button>
                 <Button
-                  variant={quickFilter === 'sem_responsavel' ? 'default' : 'outline'}
+                  variant={filters.quickFilter === 'sem_responsavel' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setQuickFilter('sem_responsavel')}
+                  onClick={() => setFilters({ ...filters, quickFilter: 'sem_responsavel' })}
                   className="h-8 px-1.5 text-[9px] min-w-0"
                   title="Sem Responsável"
                 >
                   <UserX className="h-3 w-3" />
                 </Button>
                 <Button
-                  variant={quickFilter === 'atrasados' ? 'default' : 'outline'}
+                  variant={filters.quickFilter === 'atrasados' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setQuickFilter('atrasados')}
+                  onClick={() => setFilters({ ...filters, quickFilter: 'atrasados' })}
                   className="h-8 px-1.5 text-[9px] min-w-0"
                   title="Atrasados"
                 >
@@ -382,14 +340,8 @@ export const InstalacoesTabelaView = ({
             {/* Linha 2: Selects em Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 w-full min-w-0">
               <Select 
-                value={filterStatus} 
-                onValueChange={(value) => {
-                  setFilterStatus(value);
-                  // Resetar filtros rápidos de status quando usar select
-                  if (value !== 'all' && (quickFilter === 'pendente_producao' || quickFilter === 'pronta_fabrica')) {
-                    setQuickFilter('all');
-                  }
-                }}
+                value={filters.status} 
+                onValueChange={(value) => setFilters({ ...filters, status: value, quickFilter: 'all' })}
               >
                 <SelectTrigger className="h-8 text-[9px] min-w-0">
                   <SelectValue placeholder="Status" />
@@ -402,7 +354,10 @@ export const InstalacoesTabelaView = ({
                 </SelectContent>
               </Select>
 
-              <Select value={filterEstado} onValueChange={setFilterEstado}>
+              <Select 
+                value={filters.estado} 
+                onValueChange={(value) => setFilters({ ...filters, estado: value })}
+              >
                 <SelectTrigger className="h-8 text-[9px] min-w-0">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
@@ -416,7 +371,7 @@ export const InstalacoesTabelaView = ({
                 </SelectContent>
               </Select>
 
-              {(searchTerm || filterStatus !== 'all' || filterEstado !== 'all' || quickFilter !== 'all') && (
+              {(filters.search || filters.status !== 'all' || filters.estado !== 'all' || filters.quickFilter !== 'all') && (
                 <Button 
                   onClick={clearFilters} 
                   variant="ghost" 
@@ -432,23 +387,17 @@ export const InstalacoesTabelaView = ({
             {/* Linha 3: Filtros Rápidos Adicionais (Mobile) */}
             <div className="flex gap-1 w-full min-w-0">
               <Button
-                variant={quickFilter === 'pendente_producao' ? 'default' : 'outline'}
+                variant={filters.quickFilter === 'pendente_producao' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setQuickFilter('pendente_producao');
-                  setFilterStatus('all'); // Resetar select de status
-                }}
+                onClick={() => setFilters({ ...filters, quickFilter: 'pendente_producao', status: 'all' })}
                 className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
               >
                 Pendente
               </Button>
               <Button
-                variant={quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
+                variant={filters.quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setQuickFilter('pronta_fabrica');
-                  setFilterStatus('all'); // Resetar select de status
-                }}
+                onClick={() => setFilters({ ...filters, quickFilter: 'pronta_fabrica', status: 'all' })}
                 className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
               >
                 Pronta
@@ -457,7 +406,7 @@ export const InstalacoesTabelaView = ({
           </div>
 
           {/* Tabela */}
-          {filteredAndSortedInstalacoes.length === 0 ? (
+          {sortedInstalacoes.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nenhuma instalação encontrada</p>
@@ -805,8 +754,8 @@ export const InstalacoesTabelaView = ({
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 w-full">
                   <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Mostrando {(currentPage - 1) * itemsPerPage + 1} até{' '}
-                    {Math.min(currentPage * itemsPerPage, filteredAndSortedInstalacoes.length)} de{' '}
-                    {filteredAndSortedInstalacoes.length}
+                    {Math.min(currentPage * itemsPerPage, sortedInstalacoes.length)} de{' '}
+                    {sortedInstalacoes.length}
                   </p>
                   <div className="flex gap-1 sm:gap-2 items-center">
                     <Button
