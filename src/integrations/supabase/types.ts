@@ -3813,7 +3813,7 @@ export type Database = {
         | "cronograma_instalacoes"
         | "rh_admin"
         | "representantes"
-        | "licenciados"
+        | "franqueados"
         | "investimentos"
         | "pedidos"
         | "canais_aquisicao"
@@ -3860,8 +3860,8 @@ export type Database = {
         | "manutencao"
         | "representante_vendas"
         | "representante_suporte"
-        | "licenciado_compliance"
-        | "licenciado_vendas"
+        | "franqueado_compliance"
+        | "franqueado_vendas"
       representante_etapa:
         | "inicial"
         | "qualificacao"
@@ -4049,7 +4049,7 @@ export const Constants = {
         "cronograma_instalacoes",
         "rh_admin",
         "representantes",
-        "licenciados",
+        "franqueados",
         "investimentos",
         "pedidos",
         "canais_aquisicao",
@@ -4102,8 +4102,8 @@ export const Constants = {
         "manutencao",
         "representante_vendas",
         "representante_suporte",
-        "licenciado_compliance",
-        "licenciado_vendas",
+        "franqueado_compliance",
+        "franqueado_vendas",
       ],
       representante_etapa: [
         "inicial",

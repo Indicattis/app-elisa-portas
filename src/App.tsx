@@ -896,7 +896,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/parceiros/licenciados"
+                  path="/dashboard/parceiros/franqueados"
                   element={
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
