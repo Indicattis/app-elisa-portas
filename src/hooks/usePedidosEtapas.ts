@@ -351,6 +351,29 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         }
       }
 
+      // Lógica condicional quando sai de aguardando_coleta
+      if (etapaAtualNome === 'aguardando_coleta') {
+        const { data: pedidoData } = await supabase
+          .from('pedidos_producao')
+          .select('venda_id')
+          .eq('id', pedidoId)
+          .single();
+        
+        if (pedidoData?.venda_id) {
+          const { data: venda } = await supabase
+            .from('vendas')
+            .select('tipo_entrega')
+            .eq('id', pedidoData.venda_id)
+            .single();
+          
+          if (venda?.tipo_entrega === 'entrega') {
+            etapaDestino = 'finalizado';
+          } else {
+            etapaDestino = 'aguardando_instalacao';
+          }
+        }
+      }
+
       // Atualizar pedido e resetar prioridade
       if (onProgress) onProgress('atualizar_pedido', 'in_progress');
       await executarComDelay(async () => {
