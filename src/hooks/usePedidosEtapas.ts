@@ -388,26 +388,52 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
         if (updateError) throw updateError;
 
-        // Sincronizar status da instalação e entrega com a etapa do pedido
-        const novoStatus = etapaDestino === 'finalizado' ? 'concluida' : etapaDestino;
+        // Sincronizar status da instalação com a etapa do pedido (se existir)
+        // Mapeamento de etapas para status válidos de instalação
+        const statusInstalacao = 
+          etapaDestino === 'aberto' ? 'pendente_producao' :
+          etapaDestino === 'em_producao' ? 'em_producao' :
+          etapaDestino === 'inspecao_qualidade' ? 'em_producao' :
+          etapaDestino === 'aguardando_pintura' ? 'em_producao' :
+          etapaDestino === 'aguardando_instalacao' ? 'pronta_fabrica' :
+          etapaDestino === 'finalizado' ? 'finalizada' :
+          'pendente_producao';
         
-        const { error: instalacaoError } = await supabase
+        console.log('[moverParaProximaEtapa] Sincronizando instalação:', { etapaDestino, statusInstalacao });
+        const { data: instalacaoData, error: instalacaoError } = await supabase
           .from('instalacoes_cadastradas')
-          .update({ status: novoStatus })
-          .eq('pedido_id', pedidoId);
+          .update({ status: statusInstalacao })
+          .eq('pedido_id', pedidoId)
+          .select('id, status');
 
         if (instalacaoError) {
-          console.error('Erro ao atualizar status da instalação:', instalacaoError);
+          console.error('[moverParaProximaEtapa] Erro ao atualizar status da instalação:', instalacaoError);
+        } else if (instalacaoData && instalacaoData.length > 0) {
+          console.log('[moverParaProximaEtapa] Status da instalação atualizado:', instalacaoData);
         }
 
-        // Sincronizar status da entrega (se existir)
-        const { error: entregaError } = await supabase
+        // Sincronizar status da entrega com a etapa do pedido (se existir)
+        // Mapeamento de etapas para status válidos de entrega
+        const statusEntrega = 
+          etapaDestino === 'aberto' ? 'pendente_producao' :
+          etapaDestino === 'em_producao' ? 'em_producao' :
+          etapaDestino === 'inspecao_qualidade' ? 'em_qualidade' :
+          etapaDestino === 'aguardando_pintura' ? 'aguardando_pintura' :
+          etapaDestino === 'aguardando_coleta' ? 'pronta_fabrica' :
+          etapaDestino === 'finalizado' ? 'finalizada' :
+          'pendente_producao';
+        
+        console.log('[moverParaProximaEtapa] Sincronizando entrega:', { etapaDestino, statusEntrega });
+        const { data: entregaData, error: entregaError } = await supabase
           .from('entregas')
-          .update({ status: novoStatus })
-          .eq('pedido_id', pedidoId);
+          .update({ status: statusEntrega })
+          .eq('pedido_id', pedidoId)
+          .select('id, status');
 
         if (entregaError) {
-          console.error('Erro ao atualizar status da entrega:', entregaError);
+          console.error('[moverParaProximaEtapa] Erro ao atualizar status da entrega:', entregaError);
+        } else if (entregaData && entregaData.length > 0) {
+          console.log('[moverParaProximaEtapa] Status da entrega atualizado:', entregaData);
         }
       });
       if (onProgress) onProgress('atualizar_pedido', 'completed');
