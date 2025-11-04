@@ -308,6 +308,15 @@ export function PedidoCard({
       }
     }
 
+    // Se está na etapa aguardando_coleta, finalizando pedido
+    if (etapaAtual === 'aguardando_coleta') {
+      lista.push({ 
+        id: 'finalizando_pedido', 
+        label: 'Finalizando Pedido', 
+        status: 'pending' 
+      });
+    }
+
     return lista;
   };
 
@@ -315,8 +324,8 @@ export function PedidoCard({
   const handleConfirmarAvanco = async () => {
     setShowConfirmarAvanco(false);
     
-    // Se está na etapa aberto ou aguardando_pintura, usa o sistema de processos
-    if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura') {
+    // Se está na etapa aberto, aguardando_pintura ou aguardando_coleta, usa o sistema de processos
+    if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura' || etapaAtual === 'aguardando_coleta') {
       const listaProcessos = await determinarProcessos(pedido.id);
       setProcessos(listaProcessos);
       setShowProgresso(true);
@@ -583,17 +592,22 @@ export function PedidoCard({
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
                     Avançar
                   </Button>
+                ) : etapaAtual === 'aguardando_coleta' ? (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowConfirmarAvanco(true)}
+                    disabled={!entregaConcluida}
+                    className="ml-2"
+                    title={!entregaConcluida ? "Confirme o carregamento na aba Entregas primeiro" : ""}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                    Finalizar
+                  </Button>
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
                     size="sm"
                     onClick={() => setShowAcaoEtapa(true)}
-                    disabled={etapaAtual === 'aguardando_coleta' && !entregaConcluida}
                     className="ml-2"
-                    title={
-                      etapaAtual === 'aguardando_coleta' && !entregaConcluida
-                        ? "Confirme o carregamento na aba Entregas primeiro"
-                        : ""
-                    }
                   >
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
                     Avançar
@@ -954,20 +968,25 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
                   Avançar
                 </Button>
+              ) : etapaAtual === 'aguardando_coleta' ? (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowConfirmarAvanco(true)}
+                  disabled={!entregaConcluida}
+                  title={!entregaConcluida ? "Confirme o carregamento na aba Entregas primeiro" : ""}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                  Finalizar
+                </Button>
               ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
                   size="sm"
                   className="w-full"
                   onClick={() => setShowAcaoEtapa(true)}
-                  disabled={etapaAtual === 'aguardando_coleta' && !entregaConcluida}
-                  title={
-                    etapaAtual === 'aguardando_coleta' && !entregaConcluida
-                      ? "Confirme o carregamento na aba Entregas primeiro"
-                      : ""
-                  }
                 >
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                  Finalizar
+                  Avançar para {ETAPAS_CONFIG[proximaEtapa].label}
                 </Button>
               ) : null}
             </>
