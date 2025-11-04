@@ -10,9 +10,15 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Settings, LogOut, Tv, Map } from "lucide-react";
+import { Menu, Settings, LogOut, Tv, Map, Network, BookOpen, Calendar as CalendarIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -119,16 +125,45 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </div>
               
               <div className="flex items-center gap-2 md:gap-3">
-                <Button variant="outline" size="icon" asChild className="hidden sm:flex">
-                  <NavLink to="/tv-dashboard">
-                    <Tv className="h-4 w-4" />
-                  </NavLink>
-                </Button>
-                <Button variant="outline" size="icon" asChild className="hidden sm:flex">
-                  <NavLink to="/dashboard/mapa-autorizados">
-                    <Map className="h-4 w-4" />
-                  </NavLink>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="hidden sm:flex">
+                      <Menu className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-background z-50">
+                    <DropdownMenuItem asChild>
+                      <NavLink to="/tv-dashboard" className="flex items-center gap-2 cursor-pointer">
+                        <Tv className="h-4 w-4" />
+                        <span>Modo TV</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <NavLink to="/dashboard/mapa-autorizados" className="flex items-center gap-2 cursor-pointer">
+                        <Map className="h-4 w-4" />
+                        <span>Mapa</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <NavLink to="/dashboard/organograma" className="flex items-center gap-2 cursor-pointer">
+                        <Network className="h-4 w-4" />
+                        <span>Organograma</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <NavLink to="/dashboard/diario-bordo" className="flex items-center gap-2 cursor-pointer">
+                        <BookOpen className="h-4 w-4" />
+                        <span>Diário de Bordo</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <NavLink to="/dashboard/calendario" className="flex items-center gap-2 cursor-pointer">
+                        <CalendarIcon className="h-4 w-4" />
+                        <span>Calendário</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <ThemeToggle />
                 <HeaderUserInfo />
               </div>
