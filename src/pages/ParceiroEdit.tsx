@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LogoUpload } from "@/components/LogoUpload";
-import { ArrowLeft, MapPin, Loader2, RotateCcw } from "lucide-react";
+import { ContratoUpload } from "@/components/ContratoUpload";
+import { ArrowLeft, MapPin, Loader2, RotateCcw, FileText } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,6 +72,8 @@ export default function ParceiroEdit() {
   const [geocoding, setGeocoding] = useState(false);
   const [resettingTime, setResettingTime] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [contratoUrl, setContratoUrl] = useState<string | null>(null);
+  const [contratoNome, setContratoNome] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
@@ -94,6 +97,8 @@ export default function ParceiroEdit() {
       
       if (data) {
         setTipoParceiroAtual(data.tipo_parceiro || 'autorizado');
+        setContratoUrl(data.contrato_url);
+        setContratoNome(data.contrato_nome_arquivo);
         setForm({
           nome: data.nome || "",
           email: data.email || "",
@@ -200,6 +205,8 @@ export default function ParceiroEdit() {
         logo_url: form.logo_url || null,
         vendedor_id: form.vendedor_id,
         tipo_parceiro: form.tipo_parceiro,
+        contrato_url: contratoUrl,
+        contrato_nome_arquivo: contratoNome,
         updated_at: new Date().toISOString()
       };
 
@@ -589,6 +596,28 @@ export default function ParceiroEdit() {
                 onLogoUpdate={handleLogoUpdate}
               />
             </div>
+
+            {/* Upload de Contrato - Apenas para autorizados */}
+            {tipoParceiroAtual === 'autorizado' && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Contrato
+                </Label>
+                <ContratoUpload 
+                  contratoUrl={contratoUrl}
+                  contratoNome={contratoNome}
+                  onContratoChange={(url, nome, tamanho) => {
+                    setContratoUrl(url);
+                    setContratoNome(nome);
+                  }}
+                  onContratoRemove={() => {
+                    setContratoUrl(null);
+                    setContratoNome(null);
+                  }}
+                />
+              </div>
+            )}
 
             {/* Botões de ação */}
             <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t">

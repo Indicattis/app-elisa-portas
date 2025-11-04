@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Star, Eye, Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
+import { Star, Eye, Pencil, Trash2, MapPin, Loader2, FileText } from "lucide-react";
 import { ETAPAS_AUTORIZADO, ETAPA_COLORS } from "@/utils/etapas";
 import type { AutorizadoPerformance } from "@/hooks/useAutorizadosPerformance";
 
@@ -40,12 +40,20 @@ export function AutorizadosGrid({ autorizados, onView, onEdit, onDelete, onGeoco
             <CardTitle className="text-lg">{autorizado.nome}</CardTitle>
             <CardDescription className="flex items-center gap-2">
               <span>{autorizado.cidade}, {autorizado.estado}</span>
-              {autorizado.latitude && autorizado.longitude && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Geocodificado
-                </Badge>
-              )}
+              <div className="flex gap-1">
+                {autorizado.latitude && autorizado.longitude && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    Geo
+                  </Badge>
+                )}
+                {autorizado.contrato_url && (
+                  <Badge variant="default" className="flex items-center gap-1 bg-green-600">
+                    <FileText className="h-3 w-3" />
+                    Contrato
+                  </Badge>
+                )}
+              </div>
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-3">

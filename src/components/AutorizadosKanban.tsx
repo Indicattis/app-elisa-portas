@@ -3,13 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Star } from "lucide-react";
+import { MapPin, Star as StarIcon, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { getEtapasByTipo, getCurrentEtapa, type TipoParceiro } from "@/utils/parceiros";
-import { Star as StarIcon } from "lucide-react";
 
 interface Autorizado {
   id: string;
@@ -192,13 +191,19 @@ export function AutorizadosKanban({ autorizados, tipoParceiro, onEtapaChange, on
                       </div>
                     </div>
 
-                    {/* City */}
+                    {/* City and Badges */}
                     {autorizado.cidade && (
-                      <div className="flex items-center text-xs text-muted-foreground mb-2">
-                        <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <div className="flex items-center text-xs text-muted-foreground mb-2 flex-wrap gap-1">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
                         <span className="truncate">
                           {autorizado.cidade}{autorizado.estado && `, ${autorizado.estado}`}
                         </span>
+                        {(autorizado as any).contrato_url && (
+                          <Badge variant="default" className="flex items-center gap-1 bg-green-600 ml-1">
+                            <FileText className="h-2 w-2" />
+                            <span className="text-xs">Contrato</span>
+                          </Badge>
+                        )}
                       </div>
                     )}
 
