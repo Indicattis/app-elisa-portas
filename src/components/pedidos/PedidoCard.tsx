@@ -959,9 +959,15 @@ export function PedidoCard({
                   size="sm"
                   className="w-full"
                   onClick={() => setShowAcaoEtapa(true)}
+                  disabled={etapaAtual === 'aguardando_coleta' && !entregaConcluida}
+                  title={
+                    etapaAtual === 'aguardando_coleta' && !entregaConcluida
+                      ? "Confirme o carregamento na aba Entregas primeiro"
+                      : ""
+                  }
                 >
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                  Avançar para {ETAPAS_CONFIG[proximaEtapa].label}
+                  Finalizar
                 </Button>
               ) : null}
             </>
