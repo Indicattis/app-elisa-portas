@@ -103,19 +103,30 @@ export default function Pedidos() {
       filtered = filtered.filter((pedido: any) => {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
         const produtos = vendaData?.produtos_vendas || [];
-        return produtos.some((p: any) => p.cor_id === corPintura);
+        return produtos.some((p: any) => {
+          // A cor vem como um objeto: { nome: "Nome da Cor" }
+          const corNome = p.cor?.nome || '';
+          // Buscar a cor selecionada no catálogo
+          return corNome.toLowerCase().includes(corPintura.toLowerCase());
+        });
       });
     }
 
-    // Filtro de prontos para avançar (todos os checkboxes marcados)
+    // Filtro de prontos para avançar (todos os checkboxes obrigatórios marcados)
     if (mostrarProntos) {
       filtered = filtered.filter((pedido: any) => {
-        // Lógica para verificar se todos os checkboxes estão marcados
-        // Isso depende da estrutura de etapas_checklist
-        const checklist = pedido.etapas_checklist?.[etapaAtiva];
-        if (!checklist || typeof checklist !== 'object') return false;
+        // Buscar a etapa atual nos pedidos_etapas
+        const etapaAtual = pedido.pedidos_etapas?.find(
+          (e: any) => e.etapa === etapaAtiva
+        );
         
-        return Object.values(checklist).every((valor) => valor === true);
+        if (!etapaAtual || !etapaAtual.checkboxes) return false;
+        
+        // Verificar se todos os checkboxes obrigatórios estão marcados
+        const checkboxes = etapaAtual.checkboxes as any[];
+        return checkboxes
+          .filter((cb: any) => cb.required)
+          .every((cb: any) => cb.checked === true);
       });
     }
 

@@ -71,10 +71,10 @@ export function PedidosFiltrosMinimalista({
         <SelectTrigger className="w-32 h-8 text-xs">
           <SelectValue placeholder="Cor" />
         </SelectTrigger>
-        <SelectContent className="max-h-80">
+        <SelectContent className="max-h-80 bg-background z-50">
           <SelectItem value="todas">Todas</SelectItem>
           {cores.map((cor) => (
-            <SelectItem key={cor.id} value={cor.id}>
+            <SelectItem key={cor.id} value={cor.nome}>
               <div className="flex items-center gap-2">
                 <div 
                   className="w-3 h-3 rounded-full border" 
