@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Eye, EyeOff, Shield, Monitor, Lock, UserPlus, LogIn, ArrowRight, Zap } from "lucide-react";
+import { Eye, EyeOff, Shield, Monitor, UserPlus, LogIn, ArrowRight, Zap } from "lucide-react";
 import logoEmpresa from "@/assets/logo-empresa.png";
 import iconEmpresa from "@/assets/icon-empresa.png";
 export default function Auth() {
@@ -166,10 +166,10 @@ export default function Auth() {
           <div className="text-center mt-8 text-sm text-muted-foreground animate-fade-in" style={{
           animationDelay: '0.5s'
         }}>
-            <p>Sistema protegido por autenticação multifatorial</p>
+            <p>Sistema de Gestão da Elisa Portas.</p>
             <div className="flex items-center justify-center gap-1 mt-2">
-              <Lock className="h-3 w-3" />
-              <span>Conexão segura SSL/TLS</span>
+              
+              <span>Criado por @Indicatti_mkt</span>
             </div>
           </div>
         </div>
