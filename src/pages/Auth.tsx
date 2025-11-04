@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Eye, EyeOff, Shield, Monitor, Lock, UserPlus, LogIn, ArrowRight, Zap } from "lucide-react";
+import logoEmpresa from "@/assets/logo-empresa.png";
+import iconEmpresa from "@/assets/icon-empresa.png";
 
 export default function Auth() {
   const { user, signIn, signUp, loading } = useAuth();
@@ -90,14 +92,22 @@ export default function Auth() {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
-                <div className="relative bg-primary/10 p-4 rounded-full border border-primary/20">
-                  <Shield className="h-12 w-12 text-primary animate-pulse" />
+                <div className="relative bg-primary/10 p-6 rounded-full border border-primary/20">
+                  <img 
+                    src={iconEmpresa} 
+                    alt="Ícone da empresa" 
+                    className="h-16 w-16 object-contain"
+                  />
                 </div>
               </div>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-2">
-              Central de Controle
-            </h1>
+            <div className="flex justify-center mb-4">
+              <img 
+                src={logoEmpresa} 
+                alt="Logo da empresa" 
+                className="h-20 w-auto object-contain"
+              />
+            </div>
             <p className="text-muted-foreground text-lg">
               Acesso seguro ao sistema integrado
             </p>
