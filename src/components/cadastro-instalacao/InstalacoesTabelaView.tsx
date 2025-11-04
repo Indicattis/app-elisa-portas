@@ -39,6 +39,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
@@ -102,12 +112,13 @@ export const InstalacoesTabelaView = ({
     return isPast(startOfDay(new Date(instalacao.data_instalacao))) && startOfDay(new Date(instalacao.data_instalacao)) < startOfDay(new Date());
   };
 
-  const handleConcluirInstalacao = async (instalacaoId: string) => {
-    if (!confirm('Tem certeza que deseja marcar esta instalação como concluída? O pedido será movido para "Finalizado".')) {
-      return;
-    }
+  const [confirmingInstalacaoId, setConfirmingInstalacaoId] = useState<string | null>(null);
+
+  const handleConcluirInstalacao = async () => {
+    if (!confirmingInstalacaoId) return;
     
-    await onConcluirInstalacao(instalacaoId);
+    await onConcluirInstalacao(confirmingInstalacaoId);
+    setConfirmingInstalacaoId(null);
   };
 
   const handleGeocode = async (instalacao: InstalacaoCadastrada) => {
@@ -555,7 +566,7 @@ export const InstalacoesTabelaView = ({
                             variant="outline"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleConcluirInstalacao(instalacao.id);
+                              setConfirmingInstalacaoId(instalacao.id);
                             }}
                             className="h-7 px-2 text-[10px] w-full"
                           >
@@ -722,7 +733,7 @@ export const InstalacoesTabelaView = ({
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleConcluirInstalacao(instalacao.id);
+                                setConfirmingInstalacaoId(instalacao.id);
                               }}
                               className="h-7 px-2 text-xs"
                             >
@@ -845,6 +856,21 @@ export const InstalacoesTabelaView = ({
         responsavelNomeAtual={responsavelInstalacao?.responsavel_instalacao_nome}
         onSave={handleSaveResponsavel}
       />
+
+      <AlertDialog open={!!confirmingInstalacaoId} onOpenChange={(open) => !open && setConfirmingInstalacaoId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Conclusão da Instalação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja marcar esta instalação como concluída? O botão "Finalizar" do pedido será habilitado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConcluirInstalacao}>Sim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

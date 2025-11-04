@@ -389,13 +389,18 @@ export const useInstalacoesCadastradas = () => {
 
   const concluirInstalacao = async (id: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.rpc('concluir_instalacao_e_avancar_pedido', {
-        p_instalacao_id: id
-      });
+      const { error } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({ 
+          instalacao_concluida: true,
+          instalacao_concluida_em: new Date().toISOString(),
+          instalacao_concluida_por: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq('id', id);
 
       if (error) throw error;
 
-      toast.success('Instalação concluída! Pedido movido para "Finalizado"');
+      toast.success('Instalação marcada como concluída!');
       await fetchInstalacoes();
       return true;
     } catch (error: any) {
