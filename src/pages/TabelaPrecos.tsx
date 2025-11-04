@@ -58,14 +58,32 @@ export default function TabelaPrecos() {
     return item.valor_porta + item.valor_instalacao + item.valor_pintura;
   };
 
-  // Busca rápida por dimensões
-  const itemEncontrado = itens.find(
-    (item) =>
-      alturaRapida &&
-      larguraRapida &&
-      item.altura.toString() === alturaRapida &&
-      item.largura.toString() === larguraRapida
-  );
+  // Busca rápida por dimensões aproximadas
+  const itemEncontrado = (() => {
+    if (!alturaRapida || !larguraRapida) return null;
+    
+    const alturaNum = parseFloat(alturaRapida);
+    const larguraNum = parseFloat(larguraRapida);
+    
+    if (isNaN(alturaNum) || isNaN(larguraNum)) return null;
+    
+    // Encontrar o item com a menor diferença total de dimensões
+    let menorDiferenca = Infinity;
+    let itemMaisProximo: ItemTabelaPreco | null = null;
+    
+    itens.forEach((item) => {
+      const diferencaAltura = Math.abs(item.altura - alturaNum);
+      const diferencaLargura = Math.abs(item.largura - larguraNum);
+      const diferencaTotal = diferencaAltura + diferencaLargura;
+      
+      if (diferencaTotal < menorDiferenca) {
+        menorDiferenca = diferencaTotal;
+        itemMaisProximo = item;
+      }
+    });
+    
+    return itemMaisProximo;
+  })();
 
   return (
     <div className="space-y-6">
@@ -136,7 +154,12 @@ export default function TabelaPrecos() {
                 itemEncontrado ? (
                   <div className="space-y-1">
                     <div className="flex items-center justify-between p-3 bg-background rounded-lg border-2 border-primary">
-                      <span className="text-sm font-medium">{itemEncontrado.descricao}</span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{itemEncontrado.descricao}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {itemEncontrado.largura}m × {itemEncontrado.altura}m
+                        </span>
+                      </div>
                       <Badge variant="default" className="text-base font-bold">
                         {calcularTotal(itemEncontrado).toLocaleString('pt-BR', {
                           style: 'currency',
@@ -152,7 +175,7 @@ export default function TabelaPrecos() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-10 px-4 bg-background rounded-lg border border-dashed">
-                    <span className="text-sm text-muted-foreground">Nenhum item encontrado</span>
+                    <span className="text-sm text-muted-foreground">Nenhum item cadastrado</span>
                   </div>
                 )
               ) : (
