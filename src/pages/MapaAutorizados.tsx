@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import AutorizadosMapLeaflet from "@/components/AutorizadosMapLeaflet";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { MapaFiltrosAvancados, MapaFiltros } from "@/components/MapaFiltrosAvancados";
+import { MapaLocalizacaoPesquisa } from "@/components/MapaLocalizacaoPesquisa";
 import { Badge } from "@/components/ui/badge";
 import { AutorizadoEtapa, RepresentanteEtapa, LicenciadoEtapa } from "@/utils/etapas";
 import { useSearchParams } from "react-router-dom";
@@ -45,6 +46,7 @@ export default function MapaAutorizados() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pontosPesquisa, setPontosPesquisa] = useState<Array<{ lat: number; lng: number }>>([]);
   const [filtros, setFiltros] = useState<MapaFiltros>({
     autorizados: true,
     representantes: true,
@@ -72,6 +74,11 @@ export default function MapaAutorizados() {
   // Função para limpar seleção
   const clearSelection = () => {
     setSearchParams({});
+  };
+
+  // Função para adicionar ponto de pesquisa
+  const handlePesquisar = (lat: number, lng: number) => {
+    setPontosPesquisa([{ lat, lng }]);
   };
 
   useEffect(() => {
@@ -239,6 +246,9 @@ export default function MapaAutorizados() {
         </div>
       )}
 
+      {/* Componente de pesquisa de localização */}
+      <MapaLocalizacaoPesquisa onPesquisar={handlePesquisar} />
+
       {/* Componente de filtros */}
       <MapaFiltrosAvancados
         filtros={filtros}
@@ -253,6 +263,7 @@ export default function MapaAutorizados() {
           instalacoes={filteredInstalacoes}
           showOverlays={true}
           stats={stats}
+          pontosPesquisa={pontosPesquisa}
           centerOnCoordinates={
             instalacaoSelecionada?.latitude && instalacaoSelecionada?.longitude
               ? {

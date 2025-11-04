@@ -66,6 +66,7 @@ interface AutorizadosMapLeafletProps {
     zoom?: number;
     instalacaoId?: string;
   };
+  pontosPesquisa?: Array<{ lat: number; lng: number }>;
 }
 interface ClickedPoint {
   lat: number;
@@ -86,7 +87,8 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
   instalacoes = [],
   showOverlays = true,
   stats,
-  centerOnCoordinates
+  centerOnCoordinates,
+  pontosPesquisa = []
 }) => {
   const mapRef = useRef<L.Map | null>(null);
   const [clickedPoint, setClickedPoint] = useState<ClickedPoint | null>(null);
@@ -324,6 +326,29 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
         }
         50% {
           opacity: 0.5;
+        }
+      }
+      .custom-search-point {
+        background: none;
+        border: none;
+      }
+      .search-point-icon {
+        width: 20px;
+        height: 20px;
+        background-color: #3b82f6;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        animation: search-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes search-pulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+        50% {
+          transform: scale(1.1);
+          box-shadow: 0 2px 12px rgba(59, 130, 246, 0.6);
         }
       }
       .custom-partner-marker-container {
@@ -823,6 +848,80 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
               {/* Polylines to nearest autorizados */}
               {clickedPoint.nearestAutorizados.map((autorizado, index) => <Polyline key={autorizado.id} positions={[[clickedPoint.lat, clickedPoint.lng], [autorizado.latitude!, autorizado.longitude!]]} color={index === 0 ? '#22c55e' : index === 1 ? '#f59e0b' : '#ef4444'} weight={3} opacity={0.7} dashArray={index === 0 ? undefined : "5, 10"} />)}
             </>}
+
+          {/* Search points markers */}
+          {pontosPesquisa.map((ponto, index) => {
+            // Calculate distances to all autorizados with coordinates
+            const autorizadosWithDistances = autorizadosWithCoords.map(autorizado => ({
+              ...autorizado,
+              distance: calculateDistance(ponto.lat, ponto.lng, autorizado.latitude!, autorizado.longitude!)
+            }));
+
+            // Sort by distance and get the 3 nearest
+            const nearestAutorizados = autorizadosWithDistances.sort((a, b) => a.distance - b.distance).slice(0, 3);
+
+            return (
+              <React.Fragment key={`search-point-${index}`}>
+                {/* Search point marker */}
+                <Marker 
+                  position={[ponto.lat, ponto.lng]} 
+                  icon={L.divIcon({
+                    html: `<div class="search-point-icon"></div>`,
+                    className: 'custom-search-point',
+                    iconSize: L.point(20, 20, true),
+                    iconAnchor: L.point(10, 10)
+                  })}
+                >
+                  <Popup className="custom-popup" minWidth={280}>
+                    <div className="p-4 space-y-3">
+                      <h3 className="font-semibold text-base">Local Pesquisado</h3>
+                      <div className="text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4 inline mr-1" />
+                        Lat: {ponto.lat.toFixed(4)}, Lng: {ponto.lng.toFixed(4)}
+                      </div>
+                      
+                      <div className="border-t pt-3">
+                        <h4 className="font-medium text-sm mb-2">Autorizados Mais Próximos:</h4>
+                        <div className="space-y-2">
+                          {nearestAutorizados.map((autorizado, idx) => (
+                            <div 
+                              key={autorizado.id}
+                              className="flex items-center justify-between p-2 rounded-md bg-muted/50"
+                            >
+                              <div className="flex items-center gap-2 flex-1">
+                                <div 
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{
+                                    backgroundColor: idx === 0 ? '#22c55e' : idx === 1 ? '#f59e0b' : '#ef4444'
+                                  }}
+                                />
+                                <span className="text-sm font-medium truncate">{autorizado.nome}</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground ml-2">
+                                {autorizado.distance.toFixed(1)} km
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+                
+                {/* Polylines to nearest autorizados */}
+                {nearestAutorizados.map((autorizado, idx) => (
+                  <Polyline 
+                    key={`polyline-${index}-${autorizado.id}`}
+                    positions={[[ponto.lat, ponto.lng], [autorizado.latitude!, autorizado.longitude!]]} 
+                    color={idx === 0 ? '#22c55e' : idx === 1 ? '#f59e0b' : '#ef4444'} 
+                    weight={3} 
+                    opacity={0.7} 
+                    dashArray={idx === 0 ? undefined : "5, 10"}
+                  />
+                ))}
+              </React.Fragment>
+            );
+          })}
         </MapContainer>
       </div>
     </div>;
