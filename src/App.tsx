@@ -50,7 +50,6 @@ import VendasHome from "./pages/VendasHome";
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
 import AdministrativoHome from "./pages/AdministrativoHome";
-import ParceirosHome from "./pages/ParceirosHome";
 import Investimentos from "./pages/Investimentos";
 import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
@@ -552,16 +551,6 @@ const App = () => (
                     <ProtectedRoute requirePermission="configuracoes">
                       <DashboardLayout>
                         <AdministrativoHome />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/parceiros/home"
-                  element={
-                    <ProtectedRoute requirePermission="autorizados">
-                      <DashboardLayout>
-                        <ParceirosHome />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
