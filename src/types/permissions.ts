@@ -25,7 +25,7 @@ export type AppPermission =
   | 'cronograma_instalacoes'
   | 'rh_admin'
   | 'representantes'
-  | 'licenciados'
+  | 'franqueados'
   | 'investimentos'
   | 'pedidos'
   | 'canais_aquisicao'
@@ -176,10 +176,10 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     label: 'Representantes',
     description: 'Gerenciar representantes comerciais'
   },
-  licenciados: {
-    key: 'licenciados',
-    label: 'Licenciados',
-    description: 'Gerenciar rede de licenciados'
+  franqueados: {
+    key: 'franqueados',
+    label: 'Franqueados',
+    description: 'Gerenciar rede de franqueados'
   },
   investimentos: {
     key: 'investimentos',
