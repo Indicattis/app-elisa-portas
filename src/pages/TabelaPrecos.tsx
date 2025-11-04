@@ -18,6 +18,8 @@ export default function TabelaPrecos() {
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
+  const [alturaRapida, setAlturaRapida] = useState('');
+  const [larguraRapida, setLarguraRapida] = useState('');
 
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
@@ -56,6 +58,15 @@ export default function TabelaPrecos() {
     return item.valor_porta + item.valor_instalacao + item.valor_pintura;
   };
 
+  // Busca rápida por dimensões
+  const itemEncontrado = itens.find(
+    (item) =>
+      alturaRapida &&
+      larguraRapida &&
+      item.altura.toString() === alturaRapida &&
+      item.largura.toString() === larguraRapida
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -83,6 +94,76 @@ export default function TabelaPrecos() {
           </Button>
         </div>
       </div>
+
+      {/* Card de Pesquisa Rápida */}
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Pesquisa Rápida de Orçamento
+          </CardTitle>
+          <CardDescription>
+            Informe as dimensões da porta para calcular o orçamento
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Largura (m)</label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 2.10"
+                value={larguraRapida}
+                onChange={(e) => setLarguraRapida(e.target.value)}
+                className="bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Altura (m)</label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 0.80"
+                value={alturaRapida}
+                onChange={(e) => setAlturaRapida(e.target.value)}
+                className="bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Resultado</label>
+              {alturaRapida && larguraRapida ? (
+                itemEncontrado ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between p-3 bg-background rounded-lg border-2 border-primary">
+                      <span className="text-sm font-medium">{itemEncontrado.descricao}</span>
+                      <Badge variant="default" className="text-base font-bold">
+                        {calcularTotal(itemEncontrado).toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        })}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground px-1">
+                      Porta: {itemEncontrado.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
+                      Instalação: {itemEncontrado.valor_instalacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
+                      Pintura: {itemEncontrado.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-10 px-4 bg-background rounded-lg border border-dashed">
+                    <span className="text-sm text-muted-foreground">Nenhum item encontrado</span>
+                  </div>
+                )
+              ) : (
+                <div className="flex items-center justify-center h-10 px-4 bg-background rounded-lg border border-dashed">
+                  <span className="text-sm text-muted-foreground">Preencha as dimensões</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Card Principal */}
       <Card>
