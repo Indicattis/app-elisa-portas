@@ -2946,6 +2946,113 @@ export type Database = {
           },
         ]
       }
+      requisicoes_compra: {
+        Row: {
+          aprovado_por: string | null
+          created_at: string
+          created_by: string | null
+          data_aprovacao: string | null
+          data_necessidade: string | null
+          fornecedor_id: string | null
+          id: string
+          motivo_rejeicao: string | null
+          numero_requisicao: string
+          observacoes: string | null
+          solicitante_id: string | null
+          status: string
+          updated_at: string
+          valor_total: number | null
+        }
+        Insert: {
+          aprovado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_aprovacao?: string | null
+          data_necessidade?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          motivo_rejeicao?: string | null
+          numero_requisicao: string
+          observacoes?: string | null
+          solicitante_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Update: {
+          aprovado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_aprovacao?: string | null
+          data_necessidade?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          motivo_rejeicao?: string | null
+          numero_requisicao?: string
+          observacoes?: string | null
+          solicitante_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisicoes_compra_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requisicoes_compra_itens: {
+        Row: {
+          created_at: string
+          id: string
+          observacoes: string | null
+          preco_total: number | null
+          preco_unitario: number | null
+          produto_id: string
+          quantidade: number
+          requisicao_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          preco_total?: number | null
+          preco_unitario?: number | null
+          produto_id: string
+          quantidade: number
+          requisicao_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          preco_total?: number | null
+          preco_unitario?: number | null
+          produto_id?: string
+          quantidade?: number
+          requisicao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisicoes_compra_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "estoque"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisicoes_compra_itens_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "requisicoes_compra"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requisicoes_parceria: {
         Row: {
           cidade: string
@@ -3691,6 +3798,7 @@ export type Database = {
             Args: { pedido_numero: string; tipo_ordem: string }
             Returns: string
           }
+      gerar_numero_requisicao: { Args: never; Returns: string }
       gerar_proximo_numero: {
         Args: { tipo_documento: string }
         Returns: number
