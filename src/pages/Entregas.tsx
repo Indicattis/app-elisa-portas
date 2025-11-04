@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { CadastroEntregaForm } from "@/components/entregas/CadastroEntregaForm";
 import { EntregasTabelaView } from "@/components/entregas/EntregasTabelaView";
 import { EntregasIndicadores } from "@/components/entregas/EntregasIndicadores";
+import { EntregasFiltros } from "@/components/entregas/EntregasFiltros";
 import { useEntregas } from "@/hooks/useEntregas";
+import { useEntregasFilters } from "@/hooks/useEntregasFilters";
 
 export default function Entregas() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
@@ -23,6 +25,19 @@ export default function Entregas() {
     geocodeEntrega,
     concluirEntrega
   } = useEntregas();
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    filterStatus,
+    setFilterStatus,
+    filterEstado,
+    setFilterEstado,
+    quickFilter,
+    setQuickFilter,
+    filteredEntregas,
+    estados,
+  } = useEntregasFilters(entregas);
 
   return (
     <>
@@ -52,8 +67,20 @@ export default function Entregas() {
 
         <EntregasIndicadores entregas={entregas} />
 
+        <EntregasFiltros
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterStatus={filterStatus}
+          onStatusChange={setFilterStatus}
+          filterEstado={filterEstado}
+          onEstadoChange={setFilterEstado}
+          estados={estados}
+          quickFilter={quickFilter}
+          onQuickFilterChange={setQuickFilter}
+        />
+
         <EntregasTabelaView
-          entregas={entregas}
+          entregas={filteredEntregas}
           onDelete={deleteEntrega}
           onUpdate={updateEntrega}
           onGeocode={geocodeEntrega}
