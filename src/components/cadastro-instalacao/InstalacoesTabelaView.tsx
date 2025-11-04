@@ -144,19 +144,19 @@ export const InstalacoesTabelaView = ({
       );
     }
 
-    // Filtros rápidos
+    // Filtros rápidos não relacionados a status
     if (quickFilter === 'sem_responsavel') {
       result = result.filter((inst) => !inst.responsavel_instalacao_id);
     } else if (quickFilter === 'atrasados') {
       result = result.filter((inst) => isAtrasado(inst));
-    } else if (quickFilter === 'pendente_producao') {
+    }
+
+    // Filtros de status (priorizar quickFilter se for de status, senão usar filterStatus)
+    if (quickFilter === 'pendente_producao') {
       result = result.filter((inst) => inst.status === 'pendente_producao');
     } else if (quickFilter === 'pronta_fabrica') {
       result = result.filter((inst) => inst.status === 'pronta_fabrica');
-    }
-
-    // Filtrar por status
-    if (filterStatus !== 'all') {
+    } else if (filterStatus !== 'all') {
       result = result.filter((inst) => inst.status === filterStatus);
     }
 
@@ -381,7 +381,16 @@ export const InstalacoesTabelaView = ({
 
             {/* Linha 2: Selects em Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 w-full min-w-0">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select 
+                value={filterStatus} 
+                onValueChange={(value) => {
+                  setFilterStatus(value);
+                  // Resetar filtros rápidos de status quando usar select
+                  if (value !== 'all' && (quickFilter === 'pendente_producao' || quickFilter === 'pronta_fabrica')) {
+                    setQuickFilter('all');
+                  }
+                }}
+              >
                 <SelectTrigger className="h-8 text-[9px] min-w-0">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -425,7 +434,10 @@ export const InstalacoesTabelaView = ({
               <Button
                 variant={quickFilter === 'pendente_producao' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setQuickFilter('pendente_producao')}
+                onClick={() => {
+                  setQuickFilter('pendente_producao');
+                  setFilterStatus('all'); // Resetar select de status
+                }}
                 className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
               >
                 Pendente
@@ -433,7 +445,10 @@ export const InstalacoesTabelaView = ({
               <Button
                 variant={quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setQuickFilter('pronta_fabrica')}
+                onClick={() => {
+                  setQuickFilter('pronta_fabrica');
+                  setFilterStatus('all'); // Resetar select de status
+                }}
                 className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
               >
                 Pronta
