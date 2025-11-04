@@ -37,7 +37,7 @@ export default function Entregas() {
     setQuickFilter,
     filteredEntregas,
     estados,
-  } = useEntregasFilters(entregas);
+  } = useEntregasFilters(entregas, isAdmin);
 
   return (
     <>
@@ -65,7 +65,7 @@ export default function Entregas() {
           </div>
         </div>
 
-        <EntregasIndicadores entregas={entregas} />
+        <EntregasIndicadores entregas={filteredEntregas} />
 
         <EntregasFiltros
           searchTerm={searchTerm}
