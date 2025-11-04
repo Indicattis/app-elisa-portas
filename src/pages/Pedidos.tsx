@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, Search, LayoutGrid, List, Paintbrush, Truck, Hammer } from "lucide-react";
+import { Package, LayoutGrid, List } from "lucide-react";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
+import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState, useMemo } from "react";
@@ -15,9 +16,9 @@ export default function Pedidos() {
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filtroInstalacao, setFiltroInstalacao] = useState(false);
-  const [filtroEntrega, setFiltroEntrega] = useState(false);
-  const [filtroPintura, setFiltroPintura] = useState(false);
+  const [tipoEntrega, setTipoEntrega] = useState('todos');
+  const [corPintura, setCorPintura] = useState('todas');
+  const [mostrarProntos, setMostrarProntos] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
   const contadores = usePedidosContadores();
   
@@ -79,47 +80,47 @@ export default function Pedidos() {
   const pedidosFiltrados = useMemo(() => {
     let filtered = pedidos;
 
-    // Filtro de busca por texto
+    // Filtro de busca por texto (nome do cliente)
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase();
       filtered = filtered.filter((pedido: any) => {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
         const clienteNome = vendaData?.cliente_nome?.toLowerCase() || '';
-        const clienteTelefone = vendaData?.cliente_telefone?.toLowerCase() || '';
-        const numeroPedido = pedido.numero_pedido?.toLowerCase() || '';
-        
-        return (
-          clienteNome.includes(termo) ||
-          clienteTelefone.includes(termo) ||
-          numeroPedido.includes(termo)
-        );
+        return clienteNome.includes(termo);
       });
     }
 
     // Filtro de tipo de entrega
-    if (filtroInstalacao || filtroEntrega) {
+    if (tipoEntrega !== 'todos') {
       filtered = filtered.filter((pedido: any) => {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
-        const tipoEntrega = vendaData?.tipo_entrega;
-        
-        if (filtroInstalacao && tipoEntrega === 'instalacao') return true;
-        if (filtroEntrega && tipoEntrega === 'entrega') return true;
-        
-        return false;
+        return vendaData?.tipo_entrega === tipoEntrega;
       });
     }
 
-    // Filtro de pintura
-    if (filtroPintura) {
+    // Filtro de cor de pintura
+    if (corPintura !== 'todas') {
       filtered = filtered.filter((pedido: any) => {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
         const produtos = vendaData?.produtos_vendas || [];
-        return produtos.some((p: any) => p.valor_pintura > 0);
+        return produtos.some((p: any) => p.cor_id === corPintura);
+      });
+    }
+
+    // Filtro de prontos para avançar (todos os checkboxes marcados)
+    if (mostrarProntos) {
+      filtered = filtered.filter((pedido: any) => {
+        // Lógica para verificar se todos os checkboxes estão marcados
+        // Isso depende da estrutura de etapas_checklist
+        const checklist = pedido.etapas_checklist?.[etapaAtiva];
+        if (!checklist || typeof checklist !== 'object') return false;
+        
+        return Object.values(checklist).every((valor) => valor === true);
       });
     }
 
     return filtered;
-  }, [pedidos, searchTerm, filtroInstalacao, filtroEntrega, filtroPintura]);
+  }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
 
   return (
     <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -135,89 +136,29 @@ export default function Pedidos() {
           </div>
         </div>
 
-        {/* Barra de pesquisa e controles */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por cliente, telefone ou número..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <div className="flex items-center gap-1 border rounded-md p-1">
-            <Button
-              size="icon"
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              onClick={() => setViewMode('grid')}
-              title="Visualização em grade"
-              className="h-8 w-8"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              onClick={() => setViewMode('list')}
-              title="Visualização em lista"
-              className="h-8 w-8"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+        {/* Controles de visualização */}
+        <div className="flex items-center gap-1 border rounded-md p-1">
+          <Button
+            size="icon"
+            variant={viewMode === 'grid' ? 'default' : 'ghost'}
+            onClick={() => setViewMode('grid')}
+            title="Visualização em grade"
+            className="h-8 w-8"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            onClick={() => setViewMode('list')}
+            title="Visualização em lista"
+            className="h-8 w-8"
+          >
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Filtros de tipo */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm text-muted-foreground">Filtros:</span>
-        
-        <Button
-          size="sm"
-          variant={filtroInstalacao ? 'default' : 'outline'}
-          onClick={() => setFiltroInstalacao(!filtroInstalacao)}
-          className="h-8"
-        >
-          <Hammer className="h-3.5 w-3.5 mr-1.5" />
-          Instalações
-        </Button>
-
-        <Button
-          size="sm"
-          variant={filtroEntrega ? 'default' : 'outline'}
-          onClick={() => setFiltroEntrega(!filtroEntrega)}
-          className="h-8"
-        >
-          <Truck className="h-3.5 w-3.5 mr-1.5" />
-          Entregas
-        </Button>
-
-        <Button
-          size="sm"
-          variant={filtroPintura ? 'default' : 'outline'}
-          onClick={() => setFiltroPintura(!filtroPintura)}
-          className="h-8"
-        >
-          <Paintbrush className="h-3.5 w-3.5 mr-1.5" />
-          Com Pintura
-        </Button>
-
-        {(filtroInstalacao || filtroEntrega || filtroPintura) && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setFiltroInstalacao(false);
-              setFiltroEntrega(false);
-              setFiltroPintura(false);
-            }}
-            className="h-8 text-muted-foreground"
-          >
-            Limpar filtros
-          </Button>
-        )}
-      </div>
 
       {/* Mapa de Fluxograma - aparece quando um pedido é selecionado */}
       {pedidoSelecionado && (
@@ -254,15 +195,26 @@ export default function Pedidos() {
           <TabsContent key={etapa} value={etapa} className="mt-6">
             <Card>
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center justify-between">
-                  <span>{ETAPAS_CONFIG[etapa].label}</span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
-                    {searchTerm && pedidosFiltrados.length !== pedidos.length && (
-                      <span className="ml-1">de {pedidos.length}</span>
-                    )}
-                  </span>
-                </CardTitle>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <span>{ETAPAS_CONFIG[etapa].label}</span>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
+                    </span>
+                  </CardTitle>
+                  
+                  {/* Filtros minimalistas */}
+                  <PedidosFiltrosMinimalista
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    tipoEntrega={tipoEntrega}
+                    onTipoEntregaChange={setTipoEntrega}
+                    corPintura={corPintura}
+                    onCorPinturaChange={setCorPintura}
+                    mostrarProntos={mostrarProntos}
+                    onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
