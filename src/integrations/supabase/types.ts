@@ -1163,6 +1163,54 @@ export type Database = {
           },
         ]
       }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          created_at: string
+          created_by: string | null
+          estado: string | null
+          id: string
+          nome: string
+          responsavel: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          responsavel?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          responsavel?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       instalacoes_cadastradas: {
         Row: {
           alterado_para_correcao_em: string | null
