@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Eye, EyeOff, Shield, Monitor, UserPlus, LogIn, ArrowRight, Zap } from "lucide-react";
 import logoEmpresa from "@/assets/logo-empresa.png";
 import iconEmpresa from "@/assets/icon-empresa.png";
@@ -77,10 +76,6 @@ export default function Auth() {
       <div className="absolute inset-0 opacity-30" style={{
       backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000' fill-opacity='0.03'%3E%3Cpath d='m0 40h40v-40h-40z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
     }}></div>
-
-      <div className="absolute top-4 right-4 z-10">
-        <ThemeToggle />
-      </div>
       
       <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
         <div className="w-full max-w-md">

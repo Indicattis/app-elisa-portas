@@ -3,7 +3,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, Factory, TrendingUp, CreditCard, CalendarDays, ChevronRight, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { ThemeToggle } from "@/components/ThemeToggle";
 const navigation = [{
   name: "Dashboard",
   href: "/dashboard",
@@ -205,10 +204,7 @@ export function Sidebar() {
           )}
           
           <div className="flex gap-2">
-            <div className="relative overflow-hidden rounded-lg">
-              <ThemeToggle />
-            </div>
-            <Button 
+            <Button
               variant="outline" 
               size={collapsed ? "icon" : "sm"} 
               onClick={signOut} 
