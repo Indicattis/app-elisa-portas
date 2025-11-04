@@ -65,7 +65,6 @@ export default function Auth() {
   return <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-background via-background to-background/80">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{
         animationDelay: '1s'
       }}></div>
