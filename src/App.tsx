@@ -97,6 +97,7 @@ import VendaView from "./pages/VendaView";
 import PedidoView from "./pages/PedidoView";
 import DRE from "./pages/DRE";
 import Despesas from "./pages/Despesas";
+import Vagas from "./pages/Vagas";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -1000,6 +1001,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Despesas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dp-rh/vagas"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <Vagas />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

@@ -3185,6 +3185,36 @@ export type Database = {
         }
         Relationships: []
       }
+      vagas: {
+        Row: {
+          cargo: Database["public"]["Enums"]["user_role"]
+          created_at: string | null
+          created_by: string | null
+          id: string
+          justificativa: string
+          status: Database["public"]["Enums"]["status_vaga"]
+          updated_at: string | null
+        }
+        Insert: {
+          cargo: Database["public"]["Enums"]["user_role"]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          justificativa: string
+          status?: Database["public"]["Enums"]["status_vaga"]
+          updated_at?: string | null
+        }
+        Update: {
+          cargo?: Database["public"]["Enums"]["user_role"]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          justificativa?: string
+          status?: Database["public"]["Enums"]["status_vaga"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       veiculos: {
         Row: {
           ano: number
@@ -3835,6 +3865,7 @@ export type Database = {
         | "proposta"
         | "contratado"
       setor_producao: "perfiladeira" | "solda" | "separacao" | "pintura"
+      status_vaga: "em_analise" | "aberta" | "fechada" | "preenchida"
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
       tipo_instalacao_enum: "elisa" | "autorizados"
@@ -4078,6 +4109,7 @@ export const Constants = {
         "contratado",
       ],
       setor_producao: ["perfiladeira", "solda", "separacao", "pintura"],
+      status_vaga: ["em_analise", "aberta", "fechada", "preenchida"],
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],
       tipo_instalacao_enum: ["elisa", "autorizados"],
