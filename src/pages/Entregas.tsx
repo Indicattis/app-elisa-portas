@@ -10,22 +10,20 @@ import { EntregasIndicadores } from "@/components/entregas/EntregasIndicadores";
 import { EntregasFiltros } from "@/components/entregas/EntregasFiltros";
 import { useEntregas } from "@/hooks/useEntregas";
 import { useEntregasFilters } from "@/hooks/useEntregasFilters";
-
 export default function Entregas() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
-  
   const isMobile = useIsMobile();
-  const { isAdmin } = useAuth();
-
-  const { 
-    entregas, 
-    createEntrega, 
-    deleteEntrega, 
+  const {
+    isAdmin
+  } = useAuth();
+  const {
+    entregas,
+    createEntrega,
+    deleteEntrega,
     updateEntrega,
     geocodeEntrega,
     concluirEntrega
   } = useEntregas();
-
   const {
     searchTerm,
     setSearchTerm,
@@ -36,11 +34,9 @@ export default function Entregas() {
     quickFilter,
     setQuickFilter,
     filteredEntregas,
-    estados,
-  } = useEntregasFilters(entregas, isAdmin);
-
-  return (
-    <>
+    estados
+  } = useEntregasFilters(entregas);
+  return <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -52,41 +48,18 @@ export default function Entregas() {
           </div>
           
           <div className="flex gap-2">
-            {isAdmin && (
-              <Button 
-                onClick={() => setShowCadastroModal(true)}
-                size={isMobile ? "sm" : "default"}
-                className="gap-2"
-              >
+            {isAdmin && <Button onClick={() => setShowCadastroModal(true)} size={isMobile ? "sm" : "default"} className="gap-2">
                 <Truck className="h-4 w-4" />
                 {!isMobile && "Nova Entrega"}
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
 
-        <EntregasIndicadores entregas={filteredEntregas} />
+        
 
-        <EntregasFiltros
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          filterStatus={filterStatus}
-          onStatusChange={setFilterStatus}
-          filterEstado={filterEstado}
-          onEstadoChange={setFilterEstado}
-          estados={estados}
-          quickFilter={quickFilter}
-          onQuickFilterChange={setQuickFilter}
-        />
+        <EntregasFiltros searchTerm={searchTerm} onSearchChange={setSearchTerm} filterStatus={filterStatus} onStatusChange={setFilterStatus} filterEstado={filterEstado} onEstadoChange={setFilterEstado} estados={estados} quickFilter={quickFilter} onQuickFilterChange={setQuickFilter} />
 
-        <EntregasTabelaView
-          entregas={filteredEntregas}
-          onDelete={deleteEntrega}
-          onUpdate={updateEntrega}
-          onGeocode={geocodeEntrega}
-          onConcluir={concluirEntrega}
-          isAdmin={isAdmin}
-        />
+        <EntregasTabelaView entregas={filteredEntregas} onDelete={deleteEntrega} onUpdate={updateEntrega} onGeocode={geocodeEntrega} onConcluir={concluirEntrega} isAdmin={isAdmin} />
       </div>
 
       <Dialog open={showCadastroModal} onOpenChange={setShowCadastroModal}>
@@ -97,14 +70,11 @@ export default function Entregas() {
               Preencha os dados para cadastrar uma nova entrega
             </DialogDescription>
           </DialogHeader>
-          <CadastroEntregaForm 
-            onSubmit={async (data) => {
-              await createEntrega(data);
-              setShowCadastroModal(false);
-            }}
-          />
+          <CadastroEntregaForm onSubmit={async data => {
+          await createEntrega(data);
+          setShowCadastroModal(false);
+        }} />
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 }
