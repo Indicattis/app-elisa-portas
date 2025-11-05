@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
+import { useEquipesMembros } from "@/hooks/useEquipesMembros";
 import { PontoInstalacao } from "./PontoInstalacao";
 import { CelulaDia } from "./CelulaDia";
 import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
 import { SelecionarInstalacaoModal } from "./SelecionarInstalacaoModal";
+import { EquipeMembrosList } from "./EquipeMembrosList";
 import { useToast } from "@/hooks/use-toast";
 
 interface CronogramaInstalacaoProps {
@@ -41,6 +43,13 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
   const { toast } = useToast();
 
   const equipesParaExibir = equipesFiltradas || equipes;
+
+  // Wrapper para carregar membros de cada equipe
+  function EquipeMembrosEquipeWrapper({ equipeId }: { equipeId: string }) {
+    const { membros } = useEquipesMembros(equipeId);
+    return <EquipeMembrosList membros={membros} compact />;
+  }
+
 
   const handleDrop = async (equipId: string, diaSemana: number) => {
     if (draggedItem && draggedItem.equipId !== equipId) {
@@ -144,7 +153,7 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
           {equipesParaExibir.map((equipe) => (
             <div key={equipe.id} className="grid grid-cols-8 min-h-[100px]">
               {/* Coluna da equipe */}
-              <div className="p-4 border-r bg-muted/30 flex items-center">
+              <div className="p-4 border-r bg-muted/30 flex flex-col gap-2">
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-4 h-4 rounded-full" 
@@ -152,6 +161,7 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
                   />
                   <span className="font-medium">{equipe.nome}</span>
                 </div>
+                <EquipeMembrosEquipeWrapper equipeId={equipe.id} />
               </div>
 
               {/* Colunas dos dias */}

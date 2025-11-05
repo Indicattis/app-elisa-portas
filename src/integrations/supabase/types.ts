@@ -895,6 +895,38 @@ export type Database = {
           },
         ]
       }
+      equipes_instalacao_membros: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          equipe_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          equipe_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          equipe_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipes_instalacao_membros_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes_instalacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque: {
         Row: {
           ativo: boolean | null
