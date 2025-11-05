@@ -194,29 +194,6 @@ export const EntregasTabelaView = ({
                         </Button>
                       )}
                       
-                      {entrega.status === 'pronta_fabrica' && !entrega.entrega_concluida && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAlterarStatus(entrega)}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                          Finalizar
-                        </Button>
-                      )}
-                      
-                      {canConfirmarCarregamento(entrega) && isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleConfirmarCarregamento(entrega)}
-                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                        >
-                          <PackageCheck className="h-4 w-4 mr-1" />
-                          Confirmar Carregamento
-                        </Button>
-                      )}
                       {entrega.entrega_concluida && (
                         <Badge className="bg-green-600">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
