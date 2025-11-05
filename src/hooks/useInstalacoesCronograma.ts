@@ -38,8 +38,17 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
       // Adicionar dia_semana para cada instalação
       const instalacoesComDia: InstalacaoCronograma[] = (data || [])
         .map(instalacao => {
-          const dataInstalacao = new Date(instalacao.data_instalacao!);
+          // Criar data no timezone local para evitar problemas de conversão
+          const [ano, mes, dia] = instalacao.data_instalacao!.split('-').map(Number);
+          const dataInstalacao = new Date(ano, mes - 1, dia);
           const diaSemana = getDay(dataInstalacao); // 0 = Domingo, 1 = Segunda, etc.
+          
+          console.log('Instalação carregada:', {
+            id: instalacao.id,
+            data_instalacao: instalacao.data_instalacao,
+            dataCalculada: dataInstalacao,
+            diaSemana
+          });
           
           return {
             ...instalacao,
@@ -64,7 +73,18 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
     novaData: Date
   ) => {
     try {
-      const dataFormatada = format(novaData, 'yyyy-MM-dd');
+      // Formatar a data no timezone local para evitar problemas de conversão
+      const ano = novaData.getFullYear();
+      const mes = String(novaData.getMonth() + 1).padStart(2, '0');
+      const dia = String(novaData.getDate()).padStart(2, '0');
+      const dataFormatada = `${ano}-${mes}-${dia}`;
+      
+      console.log('Atualizando instalação:', {
+        id,
+        dataOriginal: novaData,
+        dataFormatada,
+        diaSemana: getDay(novaData)
+      });
 
       // Buscar o nome da equipe
       const { data: equipeData } = await supabase
