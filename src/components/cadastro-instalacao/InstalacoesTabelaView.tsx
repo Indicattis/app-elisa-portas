@@ -54,6 +54,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { InstalacaoCadastrada, CreateInstalacaoData } from '@/hooks/useInstalacoesCadastradas';
 import { CadastroInstalacaoForm } from './CadastroInstalacaoForm';
 import { AlterarParaCorrecaoDialog } from './AlterarParaCorrecaoDialog';
+import { AlterarStatusDialog } from './AlterarStatusDialog';
 import { DetalhesInstalacaoDialog } from './DetalhesInstalacaoDialog';
 import { DataProducaoModal } from './DataProducaoModal';
 import { ResponsavelInstalacaoModal } from './ResponsavelInstalacaoModal';
@@ -95,6 +96,8 @@ export const InstalacoesTabelaView = ({
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [showAlterarStatusDialog, setShowAlterarStatusDialog] = useState(false);
+  const [instalacaoParaAlterarStatus, setInstalacaoParaAlterarStatus] = useState<InstalacaoCadastrada | null>(null);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -113,6 +116,30 @@ export const InstalacoesTabelaView = ({
     
     await onConcluirInstalacao(confirmingInstalacaoId);
     setConfirmingInstalacaoId(null);
+  };
+
+  const handleAlterarStatus = (instalacao: InstalacaoCadastrada) => {
+    setInstalacaoParaAlterarStatus(instalacao);
+    setShowAlterarStatusDialog(true);
+  };
+
+  const handleConfirmarAlterarStatus = async (novoStatus: string) => {
+    if (!instalacaoParaAlterarStatus) return;
+
+    try {
+      const { error } = await supabase
+        .from('instalacoes_cadastradas')
+        .update({ status: novoStatus })
+        .eq('id', instalacaoParaAlterarStatus.id);
+
+      if (error) throw error;
+
+      toast.success('Status alterado com sucesso!');
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      toast.error('Erro ao alterar status');
+    }
   };
 
   const handleGeocode = async (instalacao: InstalacaoCadastrada) => {
@@ -524,18 +551,18 @@ export const InstalacoesTabelaView = ({
                               </span>
                             )}
                           </div>
-                        ) : instalacao.pedido?.etapa_atual === 'aguardando_instalacao' ? (
+                        ) : instalacao.status === 'pronta_fabrica' ? (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setConfirmingInstalacaoId(instalacao.id);
+                              handleAlterarStatus(instalacao);
                             }}
-                            className="h-7 px-2 text-[10px] w-full"
+                            className="h-7 px-2 text-[10px] w-full text-green-600 hover:text-green-700 hover:bg-green-50"
                           >
                             <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Marcar Concluída
+                            Finalizar
                           </Button>
                         ) : (
                           <span className="text-[9px] text-muted-foreground">
@@ -691,18 +718,18 @@ export const InstalacoesTabelaView = ({
                                 </span>
                               )}
                             </div>
-                          ) : instalacao.pedido?.etapa_atual === 'aguardando_instalacao' ? (
+                          ) : instalacao.status === 'pronta_fabrica' ? (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setConfirmingInstalacaoId(instalacao.id);
+                                handleAlterarStatus(instalacao);
                               }}
-                              className="h-7 px-2 text-xs"
+                              className="h-7 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
                             >
                               <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Marcar Concluída
+                              Finalizar
                             </Button>
                           ) : (
                             <span className="text-[9px] text-muted-foreground">
@@ -835,6 +862,16 @@ export const InstalacoesTabelaView = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {instalacaoParaAlterarStatus && (
+        <AlterarStatusDialog
+          open={showAlterarStatusDialog}
+          onOpenChange={setShowAlterarStatusDialog}
+          onConfirm={handleConfirmarAlterarStatus}
+          currentStatus={instalacaoParaAlterarStatus.status}
+          instalacaoNome={instalacaoParaAlterarStatus.nome_cliente}
+        />
+      )}
     </div>
   );
 };

@@ -4,21 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface AlterarStatusDialogProps {
+interface AlterarStatusEntregaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (status: string) => void;
   currentStatus: string;
-  instalacaoNome: string;
+  entregaNome: string;
 }
 
-export function AlterarStatusDialog({
+export function AlterarStatusEntregaDialog({
   open,
   onOpenChange,
   onConfirm,
   currentStatus,
-  instalacaoNome
-}: AlterarStatusDialogProps) {
+  entregaNome
+}: AlterarStatusEntregaDialogProps) {
   const [status, setStatus] = useState(currentStatus);
 
   const handleConfirm = () => {
@@ -26,14 +26,13 @@ export function AlterarStatusDialog({
     onOpenChange(false);
   };
 
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Alterar Status</DialogTitle>
+          <DialogTitle>Alterar Status da Entrega</DialogTitle>
           <DialogDescription>
-            Alterar o status da instalação "{instalacaoNome}"
+            Alterar o status da entrega "{entregaNome}"
           </DialogDescription>
         </DialogHeader>
         
@@ -45,7 +44,7 @@ export function AlterarStatusDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pronta_fabrica">Pronta para Instalação</SelectItem>
+                <SelectItem value="pronta_fabrica">Pronta para Coleta</SelectItem>
                 <SelectItem value="finalizada">Finalizada</SelectItem>
               </SelectContent>
             </Select>

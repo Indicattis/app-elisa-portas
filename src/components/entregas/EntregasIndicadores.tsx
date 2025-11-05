@@ -13,30 +13,25 @@ export const EntregasIndicadores = ({ entregas }: EntregasIndicadoresProps) => {
     const status = {
       pronta_fabrica: 0,
       finalizada: 0,
+      atrasadas: 0,
     };
 
-    let atrasadas = 0;
-
     entregas.forEach((entrega) => {
-      // Contar por status
-      if (entrega.status in status) {
-        status[entrega.status as keyof typeof status]++;
-      }
-
-      // Contar atrasadas
-      if (
+      // Verificar se está atrasada (pronta_fabrica com data_entrega vencida)
+      const estaAtrasada = entrega.status === 'pronta_fabrica' &&
         entrega.data_entrega &&
-        entrega.status !== 'finalizada' &&
         isPast(startOfDay(new Date(entrega.data_entrega))) &&
-        startOfDay(new Date(entrega.data_entrega)) < startOfDay(new Date())
-      ) {
-        atrasadas++;
+        startOfDay(new Date(entrega.data_entrega)) < startOfDay(new Date());
+
+      if (estaAtrasada) {
+        status.atrasadas++;
+      } else if (entrega.status === 'pronta_fabrica' || entrega.status === 'finalizada') {
+        status[entrega.status]++;
       }
     });
 
     return {
       status,
-      atrasadas,
       total: entregas.length,
     };
   }, [entregas]);
@@ -78,7 +73,7 @@ export const EntregasIndicadores = ({ entregas }: EntregasIndicadoresProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 pt-0">
-          <div className="text-lg sm:text-2xl font-bold text-red-500">{stats.atrasadas}</div>
+          <div className="text-lg sm:text-2xl font-bold text-red-500">{stats.status.atrasadas}</div>
         </CardContent>
       </Card>
     </div>

@@ -13,30 +13,25 @@ export const InstalacaoIndicadores = ({ instalacoes }: InstalacaoIndicadoresProp
     const status = {
       pronta_fabrica: 0,
       finalizada: 0,
+      atrasadas: 0,
     };
 
-    let atrasadas = 0;
-
     instalacoes.forEach((inst) => {
-      // Contar por status
-      if (inst.status in status) {
-        status[inst.status as keyof typeof status]++;
-      }
-
-      // Contar atrasadas
-      if (
+      // Verificar se está atrasada (pronta_fabrica com data_instalacao vencida)
+      const estaAtrasada = inst.status === 'pronta_fabrica' &&
         inst.data_instalacao &&
-        inst.status !== 'finalizada' &&
         isPast(startOfDay(new Date(inst.data_instalacao))) &&
-        startOfDay(new Date(inst.data_instalacao)) < startOfDay(new Date())
-      ) {
-        atrasadas++;
+        startOfDay(new Date(inst.data_instalacao)) < startOfDay(new Date());
+
+      if (estaAtrasada) {
+        status.atrasadas++;
+      } else if (inst.status === 'pronta_fabrica' || inst.status === 'finalizada') {
+        status[inst.status]++;
       }
     });
 
     return {
       status,
-      atrasadas,
       total: instalacoes.length,
     };
   }, [instalacoes]);
@@ -78,7 +73,7 @@ export const InstalacaoIndicadores = ({ instalacoes }: InstalacaoIndicadoresProp
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 pt-0">
-          <div className="text-lg sm:text-2xl font-bold text-red-500">{stats.atrasadas}</div>
+          <div className="text-lg sm:text-2xl font-bold text-red-500">{stats.status.atrasadas}</div>
         </CardContent>
       </Card>
     </div>

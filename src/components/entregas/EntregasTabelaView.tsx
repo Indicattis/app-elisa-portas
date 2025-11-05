@@ -10,7 +10,10 @@ import { DetalhesEntregaDialog } from './DetalhesEntregaDialog';
 import { ResponsavelEntregaModal } from './ResponsavelEntregaModal';
 import { DataProducaoEntregaModal } from './DataProducaoEntregaModal';
 import { ConfirmarCarregamentoSheet } from './ConfirmarCarregamentoSheet';
+import { AlterarStatusEntregaDialog } from './AlterarStatusEntregaDialog';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface EntregasTabelaViewProps {
   entregas: Entrega[];
@@ -52,6 +55,8 @@ export const EntregasTabelaView = ({
   const [showDataProducaoModal, setShowDataProducaoModal] = useState(false);
   const [showCarregamentoSheet, setShowCarregamentoSheet] = useState(false);
   const [entregaParaCarregamento, setEntregaParaCarregamento] = useState<Entrega | null>(null);
+  const [showAlterarStatusModal, setShowAlterarStatusModal] = useState(false);
+  const [entregaParaAlterarStatus, setEntregaParaAlterarStatus] = useState<Entrega | null>(null);
 
   const handleViewDetalhes = (entrega: Entrega) => {
     setSelectedEntrega(entrega);
@@ -80,6 +85,30 @@ export const EntregasTabelaView = ({
     entrega.pedido?.etapa_atual === 'aguardando_coleta' && 
     !entrega.entrega_concluida &&
     entrega.status === 'pronta_fabrica';
+
+  const handleAlterarStatus = (entrega: Entrega) => {
+    setEntregaParaAlterarStatus(entrega);
+    setShowAlterarStatusModal(true);
+  };
+
+  const handleConfirmarAlterarStatus = async (novoStatus: string) => {
+    if (!entregaParaAlterarStatus) return;
+
+    try {
+      const { error } = await supabase
+        .from('entregas')
+        .update({ status: novoStatus })
+        .eq('id', entregaParaAlterarStatus.id);
+
+      if (error) throw error;
+
+      toast.success('Status alterado com sucesso!');
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      toast.error('Erro ao alterar status');
+    }
+  };
 
   return (
     <>
@@ -165,6 +194,18 @@ export const EntregasTabelaView = ({
                         </Button>
                       )}
                       
+                      {entrega.status === 'pronta_fabrica' && !entrega.entrega_concluida && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAlterarStatus(entrega)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-1" />
+                          Finalizar
+                        </Button>
+                      )}
+                      
                       {canConfirmarCarregamento(entrega) && isAdmin && (
                         <Button
                           size="sm"
@@ -223,6 +264,16 @@ export const EntregasTabelaView = ({
         onOpenChange={setShowCarregamentoSheet}
         onSuccess={handleCarregamentoSuccess}
       />
+
+      {entregaParaAlterarStatus && (
+        <AlterarStatusEntregaDialog
+          open={showAlterarStatusModal}
+          onOpenChange={setShowAlterarStatusModal}
+          onConfirm={handleConfirmarAlterarStatus}
+          currentStatus={entregaParaAlterarStatus.status}
+          entregaNome={entregaParaAlterarStatus.nome_cliente}
+        />
+      )}
     </>
   );
 };
