@@ -24,6 +24,11 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
+import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
+import { VerificacaoLiderModal } from '@/components/vendas/VerificacaoLiderModal';
+import { validarDesconto } from '@/utils/descontoVendasRules';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Percent } from 'lucide-react';
 
 export default function VendasNova() {
   const navigate = useNavigate();
@@ -46,7 +51,8 @@ export default function VendasNova() {
     valor_entrada: 0,
     valor_a_receber: 0,
     data_prevista_entrega: '',
-    tipo_entrega: 'instalacao'
+    tipo_entrega: 'instalacao',
+    venda_presencial: false
   });
 
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
@@ -57,6 +63,9 @@ export default function VendasNova() {
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
   const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
   const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
+  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
+  const [verificacaoLiderOpen, setVerificacaoLiderOpen] = useState(false);
+  const [produtosComDesconto, setProdutosComDesconto] = useState<ProdutoVenda[]>([]);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -168,6 +177,22 @@ export default function VendasNova() {
     });
   };
 
+  const handleAplicarDesconto = (produtosAtualizados: ProdutoVenda[]) => {
+    setPortas(produtosAtualizados);
+    
+    // Recalcular valores
+    const valorTotal = produtosAtualizados.reduce((acc, p) => {
+      const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+      const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+      return acc + valorBase - desconto;
+    }, 0) + (formData.valor_frete || 0);
+    
+    setFormData(prev => ({
+      ...prev,
+      valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -180,6 +205,28 @@ export default function VendasNova() {
       return;
     }
 
+    // Validar desconto
+    const validacao = validarDesconto(
+      portas,
+      formData.forma_pagamento,
+      formData.venda_presencial
+    );
+
+    if (validacao.excedeLimiteMaximo) {
+      toast({
+        variant: 'destructive',
+        title: 'Desconto Excedido',
+        description: `O desconto de ${validacao.percentualDesconto.toFixed(1)}% excede o limite máximo de 15%.`
+      });
+      return;
+    }
+
+    if (validacao.requerSenha) {
+      setProdutosComDesconto(portas);
+      setVerificacaoLiderOpen(true);
+      return;
+    }
+
     try {
       await createVenda({ 
         vendaData: {
@@ -188,6 +235,21 @@ export default function VendasNova() {
           data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
         }, 
         portas 
+      });
+      navigate('/dashboard/vendas');
+    } catch (error) {
+      console.error('Erro ao criar venda:', error);
+    }
+  };
+
+  const handleSenhaCorretaLider = async () => {
+    try {
+      await createVenda({ 
+        vendaData: {
+          ...formData,
+          data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
+        }, 
+        portas: produtosComDesconto
       });
       navigate('/dashboard/vendas');
     } catch (error) {
@@ -476,6 +538,23 @@ export default function VendasNova() {
                 rows={3}
               />
             </div>
+
+            <div className="md:col-span-2">
+              <div className="flex items-start space-x-3 p-4 border-2 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 hover:from-muted/50 hover:to-muted/80 transition-all hover:shadow-md">
+                <Checkbox 
+                  id="venda_presencial"
+                  checked={formData.venda_presencial}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))}
+                  className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <Label htmlFor="venda_presencial" className="cursor-pointer flex-1">
+                  <span className="font-medium">Venda Presencial</span>
+                  <p className="text-sm text-muted-foreground font-normal mt-1">
+                    Esta venda foi realizada presencialmente (adiciona +5% de limite de desconto)
+                  </p>
+                </Label>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -614,11 +693,38 @@ export default function VendasNova() {
           <Button type="button" variant="outline" onClick={() => navigate('/dashboard/vendas')}>
             Cancelar
           </Button>
+          {portas.length > 0 && (
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => setDescontoModalOpen(true)}
+            >
+              <Percent className="w-4 h-4 mr-2" />
+              Adicionar Desconto
+            </Button>
+          )}
           <Button type="submit" disabled={isCreating || portas.length === 0}>
             {isCreating ? 'Criando...' : 'Criar Venda'}
           </Button>
         </div>
       </form>
+
+      {/* Modais */}
+      <DescontoVendaModal
+        open={descontoModalOpen}
+        onOpenChange={setDescontoModalOpen}
+        produtos={portas}
+        onAplicarDesconto={handleAplicarDesconto}
+        formaPagamento={formData.forma_pagamento}
+        vendaPresencial={formData.venda_presencial}
+      />
+
+      <VerificacaoLiderModal
+        open={verificacaoLiderOpen}
+        onOpenChange={setVerificacaoLiderOpen}
+        onSenhaCorreta={handleSenhaCorretaLider}
+        percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).percentualDesconto}
+      />
     </div>
   );
 }

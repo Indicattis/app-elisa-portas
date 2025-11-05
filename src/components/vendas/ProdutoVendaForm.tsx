@@ -681,63 +681,6 @@ export function ProdutoVendaForm({
             </div>
           )}
 
-          {/* Seção de Desconto */}
-          <div className="border-t pt-6">
-            <div className="space-y-1 mb-4">
-              <h3 className="text-lg font-semibold">Desconto</h3>
-              <p className="text-sm text-muted-foreground">Aplique um desconto se necessário</p>
-            </div>
-
-            <div className="space-y-4">
-              <RadioGroup
-                value={formData.tipo_desconto}
-                onValueChange={(value: 'percentual' | 'valor') => 
-                  setFormData(prev => ({ ...prev, tipo_desconto: value }))
-                }
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="percentual" id="percentual" />
-                  <Label htmlFor="percentual" className="cursor-pointer">Percentual (%)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="valor" id="valor" />
-                  <Label htmlFor="valor" className="cursor-pointer">Valor (R$)</Label>
-                </div>
-              </RadioGroup>
-
-              {formData.tipo_desconto === 'percentual' ? (
-                <div className="space-y-2">
-                  <Label htmlFor="desconto_percentual">Percentual de Desconto</Label>
-                  <Input
-                    id="desconto_percentual"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    value={formData.desconto_percentual}
-                    onChange={(e) => handleNumberChange('desconto_percentual', e.target.value)}
-                    placeholder="Ex: 10"
-                    className="h-11"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="desconto_valor">Valor do Desconto</Label>
-                  <Input
-                    id="desconto_valor"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.desconto_valor}
-                    onChange={(e) => handleNumberChange('desconto_valor', e.target.value)}
-                    placeholder="Ex: 100.00"
-                    className="h-11"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Descrição - ocultar se for manutenção pois já tem campo específico */}
           {formData.tipo_produto !== 'manutencao' && (

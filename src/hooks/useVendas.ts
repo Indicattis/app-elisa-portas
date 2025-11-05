@@ -45,6 +45,7 @@ export interface VendaFormData {
   canal_aquisicao_id?: string;
   data_prevista_entrega?: string;
   tipo_entrega?: string;
+  venda_presencial?: boolean;
 }
 
 export function useVendas() {
