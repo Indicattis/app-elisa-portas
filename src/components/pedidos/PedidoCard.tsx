@@ -1099,14 +1099,33 @@ export function PedidoCard({
         } as any}
         open={showCarregamento}
         onOpenChange={setShowCarregamento}
-        onSuccess={() => {
+        onSuccess={async () => {
           setShowCarregamento(false);
-          queryClient.invalidateQueries({ queryKey: ['pedido-carregamento', pedido.id] });
-          queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedido.id] });
+          
+          // Invalidar queries para atualizar o status do carregamento
+          await queryClient.invalidateQueries({ queryKey: ['pedido-carregamento', pedido.id] });
+          await queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedido.id] });
+          
           toast({
             title: "Carregamento concluído",
-            description: "Todos os itens foram marcados. Você pode finalizar o pedido agora.",
+            description: "Finalizando pedido...",
           });
+
+          // Avançar automaticamente para "Finalizado"
+          const listaProcessos = await determinarProcessos(pedido.id);
+          setProcessos(listaProcessos);
+          setShowProgresso(true);
+
+          if (onMoverEtapa) {
+            await onMoverEtapa(pedido.id, true, (processoId, status) => {
+              setProcessos(prev => 
+                prev.map(p => p.id === processoId ? { ...p, status } : p)
+              );
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setShowProgresso(false);
+          }
         }}
       />
     </>
