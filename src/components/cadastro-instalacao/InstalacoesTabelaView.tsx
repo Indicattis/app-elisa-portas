@@ -527,14 +527,17 @@ export const InstalacoesTabelaView = ({
                         )}
                       </div>
 
-                      {/* Data */}
-                      {instalacao.data_instalacao && (
-                        <div>
-                          <p className="text-[10px] text-muted-foreground">
-                            Data: {format(new Date(instalacao.data_instalacao), 'dd/MM/yyyy')}
+                      {/* Data Agendada */}
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Data Agendada</p>
+                        {instalacao.data_instalacao ? (
+                          <p className="text-xs font-medium">
+                            {format(new Date(instalacao.data_instalacao), 'dd/MM/yyyy - EEEE', { locale: ptBR })}
                           </p>
-                        </div>
-                      )}
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Não agendada</p>
+                        )}
+                      </div>
 
                       {/* Instalação Concluída */}
                       <div>
@@ -611,7 +614,7 @@ export const InstalacoesTabelaView = ({
                           onClick={() => handleSort('data_instalacao')}
                           className="gap-1 h-7 text-xs"
                         >
-                          Data
+                          Data Agendada
                           <ArrowUpDown className="h-3 w-3" />
                         </Button>
                       </TableHead>
@@ -700,10 +703,21 @@ export const InstalacoesTabelaView = ({
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className="text-[10px] py-2">
-                          {instalacao.data_instalacao
-                            ? format(new Date(instalacao.data_instalacao), 'dd/MM/yy')
-                            : '-'}
+                        <TableCell className="py-2">
+                          <div className="space-y-0.5">
+                            {instalacao.data_instalacao ? (
+                              <>
+                                <p className="text-xs font-medium">
+                                  {format(new Date(instalacao.data_instalacao), 'dd/MM/yyyy')}
+                                </p>
+                                <p className="text-[9px] text-muted-foreground">
+                                  {format(new Date(instalacao.data_instalacao), 'EEEE', { locale: ptBR })}
+                                </p>
+                              </>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">Não agendada</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="py-2">
                           {instalacao.instalacao_concluida ? (
