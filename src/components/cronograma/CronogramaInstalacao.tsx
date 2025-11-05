@@ -76,10 +76,17 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
     data: Date
   ) => {
     try {
+      console.log('Agendando instalação:', {
+        instalacaoId,
+        equipId,
+        data: format(data, "dd/MM/yyyy - EEEE", { locale: ptBR }),
+        dataISO: data.toISOString()
+      });
+      
       await updateInstalacaoData(instalacaoId, equipId, data);
       toast({
         title: "Instalação agendada",
-        description: "A instalação foi agendada com sucesso no cronograma"
+        description: `A instalação foi agendada para ${format(data, "dd/MM/yyyy - EEEE", { locale: ptBR })}`
       });
     } catch (error) {
       console.error('Erro ao agendar instalação:', error);
