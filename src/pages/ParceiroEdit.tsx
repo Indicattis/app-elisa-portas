@@ -214,7 +214,7 @@ export default function ParceiroEdit() {
       if (tipoParceiroAtual === 'autorizado') {
         updateData.etapa = form.etapa;
         updateData.representante_etapa = null;
-        updateData.licenciado_etapa = null;
+        updateData.franqueado_etapa = null;
       } else if (tipoParceiroAtual === 'representante') {
         updateData.representante_etapa = form.representante_etapa;
         updateData.etapa = null;
