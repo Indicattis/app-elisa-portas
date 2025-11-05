@@ -401,7 +401,7 @@ export default function Vendas() {
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cidade/Estado</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Previsão</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Produtos</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">NF</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-center">VP</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Valor Total</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Com Frete</TableHead>
                   <TableHead className="hidden md:table-cell text-xs sm:text-sm">Atendente</TableHead>
@@ -490,7 +490,7 @@ export default function Vendas() {
                           <ProductIconsSummary venda={venda} />
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-center">
-                          {venda.nota_fiscal ? (
+                          {venda.venda_presencial ? (
                             <Badge variant="default" className="text-xs">Sim</Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">Não</Badge>

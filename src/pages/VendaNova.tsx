@@ -53,7 +53,7 @@ export default function VendaNova() {
     atendente_id: "",
     numero_parcelas: "1",
     valor_entrada: "",
-    nota_fiscal: true,
+    venda_presencial: false,
     pagamento_na_entrega: false,
     tipo_entrega: "instalacao",
   });
@@ -135,7 +135,7 @@ export default function VendaNova() {
         lead_id: null,
         numero_parcelas: parseInt(formData.numero_parcelas) || 1,
         valor_entrada: parseFloat(formData.valor_entrada) || 0,
-        nota_fiscal: formData.nota_fiscal,
+        venda_presencial: formData.venda_presencial,
         pagamento_na_entrega: formData.pagamento_na_entrega,
         tipo_entrega: formData.tipo_entrega,
       };
@@ -483,14 +483,18 @@ export default function VendaNova() {
 
               {/* Checkboxes de Configuração */}
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-4 border rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
+                <div className="flex items-start space-x-3 p-4 border-2 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 hover:from-muted/50 hover:to-muted/80 transition-all hover:shadow-md">
                   <Checkbox 
-                    id="nota_fiscal"
-                    checked={formData.nota_fiscal}
-                    onCheckedChange={(checked) => setFormData({ ...formData, nota_fiscal: checked as boolean })}
+                    id="venda_presencial"
+                    checked={formData.venda_presencial}
+                    onCheckedChange={(checked) => setFormData({ ...formData, venda_presencial: checked as boolean })}
+                    className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
-                  <Label htmlFor="nota_fiscal" className="cursor-pointer font-normal flex-1">
-                    Esta venda possui nota fiscal
+                  <Label htmlFor="venda_presencial" className="cursor-pointer flex-1">
+                    <span className="font-medium">Venda Presencial</span>
+                    <p className="text-sm text-muted-foreground font-normal mt-1">
+                      Esta venda foi realizada presencialmente na loja
+                    </p>
                   </Label>
                 </div>
 

@@ -53,7 +53,7 @@ interface Venda {
   numero_parcelas?: number;
   valor_entrada?: number;
   publico_alvo?: string;
-  nota_fiscal?: boolean;
+  venda_presencial?: boolean;
   pagamento_na_entrega?: boolean;
   frete_aprovado?: boolean;
   canal_aquisicao?: { nome: string };
@@ -414,9 +414,9 @@ export default function VendaView() {
               </div>
             )}
             <div>
-              <p className="text-sm text-muted-foreground">Nota Fiscal</p>
-              <Badge variant={venda.nota_fiscal ? "default" : "secondary"} className="mt-1">
-                {venda.nota_fiscal ? "Sim" : "Não"}
+              <p className="text-sm text-muted-foreground">Venda Presencial</p>
+              <Badge variant={venda.venda_presencial ? "default" : "secondary"} className="mt-1">
+                {venda.venda_presencial ? "Sim" : "Não"}
               </Badge>
             </div>
             <div>

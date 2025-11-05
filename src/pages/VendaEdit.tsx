@@ -59,7 +59,7 @@ export default function VendaEdit() {
     cep: "",
     observacoes_venda: "",
     valor_frete: "",
-    nota_fiscal: false,
+    venda_presencial: false,
   });
 
   const { user, isAdmin } = useAuth();
@@ -109,7 +109,7 @@ export default function VendaEdit() {
         cep: vendaData.cep || "",
         observacoes_venda: vendaData.observacoes_venda || "",
         valor_frete: (vendaData.valor_frete ? vendaData.valor_frete * 100 : 0).toString(),
-        nota_fiscal: vendaData.nota_fiscal || false,
+        venda_presencial: vendaData.venda_presencial || false,
       });
 
       // Vendas table doesn't have lead_id, so skip lead lookup
@@ -208,7 +208,7 @@ export default function VendaEdit() {
         cep: formData.cep || null,
         observacoes_venda: formData.observacoes_venda || null,
         valor_frete: valorFrete,
-        nota_fiscal: formData.nota_fiscal,
+        venda_presencial: formData.venda_presencial,
       };
 
       // Apenas admins podem editar a data da venda
@@ -432,16 +432,20 @@ export default function VendaEdit() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-3 p-4 border-2 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 hover:from-muted/50 hover:to-muted/80 transition-all hover:shadow-md">
                   <Checkbox
-                    id="nota_fiscal"
-                    checked={formData.nota_fiscal}
+                    id="venda_presencial"
+                    checked={formData.venda_presencial}
                     onCheckedChange={(checked) => 
-                      setFormData(prev => ({ ...prev, nota_fiscal: checked as boolean }))
+                      setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))
                     }
+                    className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
-                  <Label htmlFor="nota_fiscal" className="cursor-pointer">
-                    Nota Fiscal emitida
+                  <Label htmlFor="venda_presencial" className="cursor-pointer flex-1">
+                    <span className="font-medium">Venda Presencial</span>
+                    <p className="text-sm text-muted-foreground font-normal mt-1">
+                      Esta venda foi realizada presencialmente na loja
+                    </p>
                   </Label>
                 </div>
               </div>
