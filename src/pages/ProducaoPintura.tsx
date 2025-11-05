@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { Paintbrush } from "lucide-react";
 import { useOrdemPintura } from "@/hooks/useOrdemPintura";
+import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoPinturaKanban } from "@/components/production/ProducaoPinturaKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
+import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
 
 export default function ProducaoPintura() {
   const [selectedOrdemId, setSelectedOrdemId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
 
   const {
     ordens,
@@ -16,7 +20,7 @@ export default function ProducaoPintura() {
     capturarOrdem,
     finalizarPintura,
     marcarLinhaConcluida,
-  } = useOrdemPintura();
+  } = useOrdemPintura(tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
   const selectedOrdem = ordens.find(o => o.id === selectedOrdemId) || null;
@@ -64,6 +68,11 @@ export default function ProducaoPintura() {
         isCapturing={capturarOrdem.isPending}
         onFinalizarPintura={() => finalizarPintura.mutate(selectedOrdem?.id || '')}
         isFinalizando={finalizarPintura.isPending}
+      />
+
+      <ProcessoAvancoAutomaticoModal
+        open={modalOpen}
+        processos={processos}
       />
     </div>
   );

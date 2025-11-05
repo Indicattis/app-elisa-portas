@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
-export function useOrdemPintura() {
+type TipoOrdem = 'pintura';
+
+export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem: TipoOrdem) => void) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -133,10 +135,10 @@ export function useOrdemPintura() {
         throw new Error("Todas as linhas devem estar marcadas como concluídas");
       }
 
-      // Buscar capturada_em para calcular tempo de conclusão
+      // Buscar ordem completa para pegar pedido_id e capturada_em
       const { data: ordem } = await supabase
         .from("ordens_pintura")
-        .select("capturada_em")
+        .select("capturada_em, pedido_id")
         .eq("id", ordemId)
         .single();
 
@@ -157,14 +159,21 @@ export function useOrdemPintura() {
         .eq("id", ordemId);
 
       if (error) throw error;
+      
+      return ordem?.pedido_id;
     },
-    onSuccess: () => {
+    onSuccess: (pedidoId) => {
       queryClient.invalidateQueries({ queryKey: ["ordens-pintura"] });
       queryClient.invalidateQueries({ queryKey: ["ordens-count"] });
       toast({
         title: "Pintura finalizada",
         description: "A ordem foi concluída e está pronta",
       });
+
+      // Tentar avanço automático do pedido
+      if (pedidoId && onOrdemConcluida) {
+        onOrdemConcluida(pedidoId, 'pintura');
+      }
     },
     onError: (error: any) => {
       console.error("Erro ao finalizar pintura:", error);

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { usePedidosEtapas } from "./usePedidosEtapas";
 import { useEffect } from "react";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
@@ -46,10 +45,9 @@ const TABELA_MAP: Record<TipoOrdem, string> = {
   qualidade: 'ordens_qualidade',
 };
 
-export function useOrdemProducao(tipoOrdem: TipoOrdem) {
+export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedidoId: string, tipoOrdem: TipoOrdem) => void) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { moverParaProximaEtapa } = usePedidosEtapas();
 
   // Buscar todas as ordens do tipo
   const { data: ordens = [], isLoading } = useQuery({
@@ -309,7 +307,10 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         description: "A ordem foi concluída com sucesso.",
       });
 
-      // Nota: Pedido não avança automaticamente - usuário deve usar botão manual para avançar
+      // Tentar avanço automático do pedido
+      if (onOrdemConcluida) {
+        onOrdemConcluida(pedidoId, tipoOrdem);
+      }
     },
     onError: (error) => {
       console.error('Erro ao concluir ordem:', error);

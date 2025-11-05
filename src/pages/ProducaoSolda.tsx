@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useOrdemProducao } from "@/hooks/useOrdemProducao";
+import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
+import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
 import { Flame } from "lucide-react";
 
 interface Ordem {
@@ -24,6 +26,8 @@ export default function ProducaoSolda() {
   const [ordemSelecionadaId, setOrdemSelecionadaId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
+
   const {
     ordens,
     ordensAFazer,
@@ -32,7 +36,7 @@ export default function ProducaoSolda() {
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
-  } = useOrdemProducao('soldagem');
+  } = useOrdemProducao('soldagem', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
   const ordemSelecionada = ordens.find(o => o.id === ordemSelecionadaId) || null;
@@ -89,6 +93,11 @@ export default function ProducaoSolda() {
         onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
+      />
+
+      <ProcessoAvancoAutomaticoModal
+        open={modalOpen}
+        processos={processos}
       />
     </div>
   );
