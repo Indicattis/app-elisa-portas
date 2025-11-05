@@ -117,11 +117,22 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
           <div className="p-4 font-medium border-r bg-muted/50">Equipe</div>
           {DIAS_SEMANA.map((dia, index) => {
             const dataAtual = addDays(currentWeek, index);
+            const diaNumero = dataAtual.getDate();
+            const mesNumero = dataAtual.getMonth() + 1;
+            
+            console.log(`Header dia ${dia.label}:`, {
+              index,
+              dataAtual,
+              dia: diaNumero,
+              mes: mesNumero,
+              formatado: `${String(diaNumero).padStart(2, '0')}/${String(mesNumero).padStart(2, '0')}`
+            });
+            
             return (
               <div key={dia.value} className="p-4 text-center border-r last:border-r-0">
                 <div className="font-medium">{dia.label}</div>
                 <div className="text-sm text-muted-foreground">
-                  {format(dataAtual, "dd/MM", { locale: ptBR })}
+                  {String(diaNumero).padStart(2, '0')}/{String(mesNumero).padStart(2, '0')}
                 </div>
               </div>
             );

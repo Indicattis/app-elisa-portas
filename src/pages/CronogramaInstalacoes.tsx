@@ -70,7 +70,7 @@ export default function CronogramaInstalacoes() {
   };
 
   const handleToday = () => {
-    setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 0 }));
+    setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
   };
 
   if (loading || equipesLoading) {
