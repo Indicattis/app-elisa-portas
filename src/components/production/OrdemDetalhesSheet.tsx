@@ -401,32 +401,18 @@ export function OrdemDetalhesSheet({
           {tipoOrdem === 'pintura' && ordem.status !== 'pronta' && (
             <>
               <Separator />
-              {ordem.status === 'pendente' && podeMarcarLinhas && (
-                <>
-                  <Button
-                    className="w-full"
-                    disabled={isIniciando}
-                    onClick={onIniciarPintura}
-                  >
-                    {isIniciando ? "Iniciando..." : "Iniciar Pintura"}
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Clique para mover a ordem para "Pintando"
-                  </p>
-                </>
-              )}
-              {ordem.status === 'pintando' && podeMarcarLinhas && (
+              {podeMarcarLinhas && (
                 <>
                   <Button
                     className="w-full"
                     disabled={!todasConcluidas || isFinalizando}
                     onClick={onFinalizarPintura}
                   >
-                    {isFinalizando ? "Finalizando..." : "Finalizar Pintura"}
+                    {isFinalizando ? "Concluindo..." : "Concluir Pintura"}
                   </Button>
                   {!todasConcluidas && linhas.length > 0 && (
                     <p className="text-xs text-center text-muted-foreground">
-                      Marque todos os itens como concluídos para finalizar
+                      Marque todos os itens como concluídos para concluir a pintura
                     </p>
                   )}
                 </>
