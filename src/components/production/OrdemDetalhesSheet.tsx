@@ -92,9 +92,7 @@ export function OrdemDetalhesSheet({
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
   
-  if (!ordem) return null;
-
-  const linhas = ordem.linhas || [];
+  const linhas = ordem?.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
@@ -102,8 +100,10 @@ export function OrdemDetalhesSheet({
   const tempoDecorrido = useCronometroOrdem({
     capturada_em: ordem?.capturada_em,
     tempo_conclusao_segundos: ordem?.tempo_conclusao_segundos,
-    todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
+    todas_linhas_concluidas: todasConcluidas && ordem?.status === 'concluido',
   });
+  
+  if (!ordem) return null;
   
   const isResponsavel = ordem.responsavel_id === user?.id;
   const temResponsavel = !!ordem.responsavel_id;
