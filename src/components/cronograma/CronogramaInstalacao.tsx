@@ -45,8 +45,9 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
   const handleDrop = async (equipId: string, diaSemana: number) => {
     if (draggedItem && draggedItem.equipId !== equipId) {
       // Calcular a nova data baseada no dia da semana
-      const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
-      const novaData = addDays(weekStart, diaSemana === 0 ? 6 : diaSemana - 1);
+      // Como currentWeek já é a segunda-feira, usamos o index direto
+      const index = DIAS_SEMANA.findIndex(d => d.value === diaSemana);
+      const novaData = addDays(currentWeek, index);
       
       await updateInstalacaoData(
         draggedItem.id,
@@ -127,7 +128,7 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
 
               {/* Colunas dos dias */}
               {DIAS_SEMANA.map((dia, index) => {
-                const dataAtual = addDays(startOfWeek(currentWeek, { weekStartsOn: 1 }), index);
+                const dataAtual = addDays(currentWeek, index);
                 const instalacoesNoDia = instalacoes.filter(
                   i => i.responsavel_instalacao_id === equipe.id && i.dia_semana === dia.value
                 );
