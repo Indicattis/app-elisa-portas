@@ -12,11 +12,13 @@ import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
 import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
 import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
 import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
+import { ConfirmarCarregamentoSheet } from "@/components/entregas/ConfirmarCarregamentoSheet";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface PedidoCardProps {
   pedido: any;
@@ -53,8 +55,11 @@ export function PedidoCard({
   const [showAvancarQualidade, setShowAvancarQualidade] = useState(false);
   const [showConfirmarAvanco, setShowConfirmarAvanco] = useState(false);
   const [showProgresso, setShowProgresso] = useState(false);
+  const [showCarregamento, setShowCarregamento] = useState(false);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const { isAdmin } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   // Buscar quantidade de linhas do pedido
@@ -113,38 +118,23 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'aguardando_pintura',
   });
 
-  // Verificar se a entrega está concluída (para etapa aguardando_coleta)
-  const { data: entregaConcluida } = useQuery({
-    queryKey: ['pedido-entrega-concluida', pedido.id],
+  // Verificar se todos os itens do carregamento foram marcados
+  const { data: carregamentoConcluido } = useQuery({
+    queryKey: ['pedido-carregamento', pedido.id],
     queryFn: async () => {
-      if (pedido.etapa_atual !== 'aguardando_coleta') return null;
+      if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'aguardando_instalacao') {
+        return false;
+      }
       
-      const { data: entrega } = await supabase
-        .from('entregas')
-        .select('entrega_concluida')
-        .eq('pedido_id', pedido.id)
-        .maybeSingle();
+      const { data: linhas } = await supabase
+        .from('pedido_linhas')
+        .select('check_coleta')
+        .eq('pedido_id', pedido.id);
       
-      return entrega?.entrega_concluida || false;
+      if (!linhas || linhas.length === 0) return false;
+      return linhas.every(l => l.check_coleta === true);
     },
-    enabled: pedido.etapa_atual === 'aguardando_coleta',
-  });
-
-  // Verificar se a instalação está concluída (para etapa aguardando_instalacao)
-  const { data: instalacaoConcluida } = useQuery({
-    queryKey: ['pedido-instalacao-concluida', pedido.id],
-    queryFn: async () => {
-      if (pedido.etapa_atual !== 'aguardando_instalacao') return null;
-      
-      const { data: instalacao } = await supabase
-        .from('instalacoes_cadastradas')
-        .select('instalacao_concluida')
-        .eq('pedido_id', pedido.id)
-        .maybeSingle();
-      
-      return instalacao?.instalacao_concluida || false;
-    },
-    enabled: pedido.etapa_atual === 'aguardando_instalacao',
+    enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'aguardando_instalacao',
   });
 
   // Tratar venda como array ou objeto único
@@ -618,28 +608,27 @@ export function PedidoCard({
                     <ArrowRight className="h-3.5 w-3.5 mr-2" />
                     Avançar
                   </Button>
-                ) : etapaAtual === 'aguardando_coleta' ? (
-                  <Button
-                    size="sm"
-                    onClick={() => setShowConfirmarAvanco(true)}
-                    disabled={!entregaConcluida}
-                    className="ml-2"
-                    title={!entregaConcluida ? "Confirme o carregamento na aba Entregas primeiro" : ""}
-                  >
-                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                    Finalizar
-                  </Button>
-                ) : etapaAtual === 'aguardando_instalacao' ? (
-                  <Button
-                    size="sm"
-                    onClick={() => setShowConfirmarAvanco(true)}
-                    disabled={!instalacaoConcluida}
-                    className="ml-2"
-                    title={!instalacaoConcluida ? "Conclua a instalação primeiro" : ""}
-                  >
-                    <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                    Finalizar
-                  </Button>
+                ) : etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao' ? (
+                  carregamentoConcluido ? (
+                    <Button
+                      size="sm"
+                      onClick={() => setShowConfirmarAvanco(true)}
+                      className="ml-2 flex-shrink-0"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-2" />
+                      Finalizar
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowCarregamento(true)}
+                      className="ml-2 flex-shrink-0"
+                    >
+                      <Package className="h-3.5 w-3.5 mr-2" />
+                      Carregar
+                    </Button>
+                  )
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
                     size="sm"
@@ -1005,28 +994,27 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
                   Avançar
                 </Button>
-              ) : etapaAtual === 'aguardando_coleta' ? (
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setShowConfirmarAvanco(true)}
-                  disabled={!entregaConcluida}
-                  title={!entregaConcluida ? "Confirme o carregamento na aba Entregas primeiro" : ""}
-                >
-                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                  Finalizar
-                </Button>
-              ) : etapaAtual === 'aguardando_instalacao' ? (
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setShowConfirmarAvanco(true)}
-                  disabled={!instalacaoConcluida}
-                  title={!instalacaoConcluida ? "Conclua a instalação primeiro" : ""}
-                >
-                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                  Finalizar
-                </Button>
+              ) : etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao' ? (
+                carregamentoConcluido ? (
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setShowConfirmarAvanco(true)}
+                  >
+                    <CheckCircle className="h-3.5 w-3.5 mr-2" />
+                    Finalizar
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowCarregamento(true)}
+                  >
+                    <Package className="h-3.5 w-3.5 mr-2" />
+                    Carregar
+                  </Button>
+                )
               ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
                   size="sm"
@@ -1098,6 +1086,28 @@ export function PedidoCard({
         open={showProgresso}
         processos={processos}
         onClose={() => setShowProgresso(false)}
+      />
+
+      <ConfirmarCarregamentoSheet
+        entrega={{
+          id: pedido.id,
+          nome_cliente: venda?.cliente_nome || 'Cliente',
+          pedido_id: pedido.id,
+          pedido: {
+            numero_pedido: pedido.numero_pedido || 'N/A'
+          }
+        } as any}
+        open={showCarregamento}
+        onOpenChange={setShowCarregamento}
+        onSuccess={() => {
+          setShowCarregamento(false);
+          queryClient.invalidateQueries({ queryKey: ['pedido-carregamento', pedido.id] });
+          queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedido.id] });
+          toast({
+            title: "Carregamento concluído",
+            description: "Todos os itens foram marcados. Você pode finalizar o pedido agora.",
+          });
+        }}
       />
     </>
   );
