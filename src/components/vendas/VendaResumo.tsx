@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProdutoVenda } from '@/hooks/useVendas';
+import { calcularDescontoTotal, calcularPercentualDesconto, calcularTotalVenda } from '@/utils/descontoVendasRules';
 
 interface VendaResumoProps {
   produtos: ProdutoVenda[];
@@ -33,6 +34,9 @@ export function VendaResumo({ produtos, valorFrete = 0 }: VendaResumoProps) {
     total: 0
   });
 
+  const totalVendaSemDesconto = calcularTotalVenda(produtos);
+  const descontoAplicado = calcularDescontoTotal(produtos);
+  const percentualDesconto = calcularPercentualDesconto(descontoAplicado, totalVendaSemDesconto);
   const valorTotalComFrete = totais.total + valorFrete;
 
   return (
@@ -57,6 +61,14 @@ export function VendaResumo({ produtos, valorFrete = 0 }: VendaResumoProps) {
           <span className="text-muted-foreground">Valor Frete:</span>
           <span className="font-semibold">R$ {valorFrete.toFixed(2)}</span>
         </div>
+        {descontoAplicado > 0 && (
+          <div className="flex justify-between text-green-600 dark:text-green-400">
+            <span className="font-medium">Desconto Aplicado:</span>
+            <span className="font-semibold">
+              -R$ {descontoAplicado.toFixed(2)} ({percentualDesconto.toFixed(2)}%)
+            </span>
+          </div>
+        )}
         <div className="h-px bg-border my-2" />
         <div className="flex justify-between text-lg">
           <span className="font-bold">Total:</span>
