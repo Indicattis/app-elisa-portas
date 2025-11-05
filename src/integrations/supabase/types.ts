@@ -2798,6 +2798,33 @@ export type Database = {
           },
         ]
       }
+      pintura_inicios: {
+        Row: {
+          created_at: string
+          id: string
+          iniciado_em: string
+          iniciado_por: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          iniciado_em?: string
+          iniciado_por: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          iniciado_em?: string
+          iniciado_por?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pontos_instalacao: {
         Row: {
           cidade: string
