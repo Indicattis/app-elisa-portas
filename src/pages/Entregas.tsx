@@ -55,7 +55,7 @@ export default function Entregas() {
           </div>
         </div>
 
-        
+        <EntregasIndicadores entregas={entregas} />
 
         <EntregasFiltros searchTerm={searchTerm} onSearchChange={setSearchTerm} filterStatus={filterStatus} onStatusChange={setFilterStatus} filterEstado={filterEstado} onEstadoChange={setFilterEstado} estados={estados} quickFilter={quickFilter} onQuickFilterChange={setQuickFilter} />
 
