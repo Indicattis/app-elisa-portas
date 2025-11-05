@@ -92,7 +92,6 @@ import FrotaConferencia from "./pages/FrotaConferencia";
 import FrotaConferenciasHistorico from "./pages/FrotaConferenciasHistorico";
 import TabelaPrecos from "./pages/TabelaPrecos";
 import Todo from "./pages/Todo";
-import ChecklistLideranca from "./pages/ChecklistLideranca";
 import LogisticaHome from "./pages/LogisticaHome";
 import Entregas from "./pages/Entregas";
 import VendaView from "./pages/VendaView";
