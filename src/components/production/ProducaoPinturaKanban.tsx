@@ -1,15 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2 } from "lucide-react";
+import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 
 interface Ordem {
   id: string;
   numero_ordem: string;
   status: string;
   responsavel_id?: string;
+  capturada_em?: string;
   pedido?: {
     cliente_nome: string;
   };
@@ -43,6 +45,7 @@ export function ProducaoPinturaKanban({
     const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
     const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
     const todasConcluidas = linhas.length > 0 && linhas.every((l: any) => l.concluida);
+    const tempoDecorrido = useCronometroOrdem(ordem.capturada_em);
 
     return (
       <Card 
@@ -69,11 +72,21 @@ export function ProducaoPinturaKanban({
         </CardHeader>
         <CardContent className="space-y-3">
           {ordem.admin_users && (
-            <div className="flex items-center gap-2 text-sm">
-              <UserCheck className="h-4 w-4 text-primary" />
-              <span className="text-muted-foreground truncate">
-                {ordem.admin_users.nome}
-              </span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <UserCheck className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground truncate">
+                  {ordem.admin_users.nome}
+                </span>
+              </div>
+              {ordem.capturada_em && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-orange-500" />
+                  <span className="font-mono text-orange-600 dark:text-orange-400">
+                    {tempoDecorrido}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

@@ -14,7 +14,7 @@ export function useOrdemPintura() {
       // Primeiro buscar as ordens
       const { data: ordensData, error: ordensError } = await supabase
         .from("ordens_pintura")
-        .select('*')
+        .select('*, capturada_em')
         .order('created_at', { ascending: false });
 
       if (ordensError) throw ordensError;
@@ -93,7 +93,10 @@ export function useOrdemPintura() {
 
       const { error } = await supabase
         .from("ordens_pintura")
-        .update({ responsavel_id: user.id })
+        .update({ 
+          responsavel_id: user.id,
+          capturada_em: new Date().toISOString()
+        })
         .eq("id", ordemId);
 
       if (error) throw error;

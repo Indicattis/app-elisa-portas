@@ -5,12 +5,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, Package, UserCheck, Download } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
 import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
 import { toast } from "sonner";
 import { OrigemBadges } from "@/components/shared/OrigemBadges";
+import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -34,6 +35,7 @@ interface Ordem {
   status: string;
   observacoes?: string;
   responsavel_id?: string;
+  capturada_em?: string;
   linhas?: LinhaOrdem[];
   pedido?: {
     id: string;
@@ -88,6 +90,7 @@ export function OrdemDetalhesSheet({
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
+  const tempoDecorrido = useCronometroOrdem(ordem?.capturada_em);
   
   if (!ordem) return null;
 
@@ -190,6 +193,19 @@ export function OrdemDetalhesSheet({
                 <Badge variant="secondary">Não atribuído</Badge>
               )}
             </div>
+
+            {/* Cronômetro */}
+            {ordem.capturada_em && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Tempo decorrido</span>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm font-mono font-medium text-orange-600 dark:text-orange-400">
+                    {tempoDecorrido}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Origem - Pedido e Venda */}

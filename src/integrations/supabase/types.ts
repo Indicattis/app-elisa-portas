@@ -1962,6 +1962,7 @@ export type Database = {
       }
       ordens_perfiladeira: {
         Row: {
+          capturada_em: string | null
           created_at: string
           created_by: string | null
           data_conclusao: string | null
@@ -1977,6 +1978,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          capturada_em?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
@@ -1992,6 +1994,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          capturada_em?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
@@ -2018,6 +2021,7 @@ export type Database = {
       }
       ordens_pintura: {
         Row: {
+          capturada_em: string | null
           cor_principal: string | null
           created_at: string
           created_by: string | null
@@ -2034,6 +2038,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          capturada_em?: string | null
           cor_principal?: string | null
           created_at?: string
           created_by?: string | null
@@ -2050,6 +2055,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          capturada_em?: string | null
           cor_principal?: string | null
           created_at?: string
           created_by?: string | null
@@ -2139,6 +2145,7 @@ export type Database = {
       }
       ordens_qualidade: {
         Row: {
+          capturada_em: string | null
           created_at: string | null
           created_by: string | null
           data_conclusao: string | null
@@ -2152,6 +2159,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          capturada_em?: string | null
           created_at?: string | null
           created_by?: string | null
           data_conclusao?: string | null
@@ -2165,6 +2173,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          capturada_em?: string | null
           created_at?: string | null
           created_by?: string | null
           data_conclusao?: string | null
@@ -2217,6 +2226,7 @@ export type Database = {
       }
       ordens_separacao: {
         Row: {
+          capturada_em: string | null
           created_at: string
           created_by: string | null
           data_conclusao: string | null
@@ -2232,6 +2242,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          capturada_em?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
@@ -2247,6 +2258,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          capturada_em?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
@@ -2273,6 +2285,7 @@ export type Database = {
       }
       ordens_soldagem: {
         Row: {
+          capturada_em: string | null
           created_at: string
           created_by: string | null
           data_conclusao: string | null
@@ -2287,6 +2300,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          capturada_em?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
@@ -2301,6 +2315,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          capturada_em?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
