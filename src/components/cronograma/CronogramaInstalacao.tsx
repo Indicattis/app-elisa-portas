@@ -127,7 +127,7 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
 
               {/* Colunas dos dias */}
               {DIAS_SEMANA.map((dia, index) => {
-                const dataAtual = addDays(startOfWeek(currentWeek, { weekStartsOn: 1 }), dia.value === 0 ? 6 : dia.value - 1);
+                const dataAtual = addDays(startOfWeek(currentWeek, { weekStartsOn: 1 }), index);
                 const instalacoesNoDia = instalacoes.filter(
                   i => i.responsavel_instalacao_id === equipe.id && i.dia_semana === dia.value
                 );
