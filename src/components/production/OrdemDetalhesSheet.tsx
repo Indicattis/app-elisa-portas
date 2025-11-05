@@ -36,6 +36,7 @@ interface Ordem {
   observacoes?: string;
   responsavel_id?: string;
   capturada_em?: string;
+  tempo_conclusao_segundos?: number;
   linhas?: LinhaOrdem[];
   pedido?: {
     id: string;
@@ -90,7 +91,6 @@ export function OrdemDetalhesSheet({
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
-  const tempoDecorrido = useCronometroOrdem(ordem?.capturada_em);
   
   if (!ordem) return null;
 
@@ -98,6 +98,12 @@ export function OrdemDetalhesSheet({
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
+  
+  const tempoDecorrido = useCronometroOrdem({
+    capturada_em: ordem?.capturada_em,
+    tempo_conclusao_segundos: ordem?.tempo_conclusao_segundos,
+    todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
+  });
   
   const isResponsavel = ordem.responsavel_id === user?.id;
   const temResponsavel = !!ordem.responsavel_id;

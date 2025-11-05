@@ -1975,6 +1975,7 @@ export type Database = {
           produtos: Json | null
           responsavel_id: string | null
           status: string
+          tempo_conclusao_segundos: number | null
           updated_at: string
         }
         Insert: {
@@ -1991,6 +1992,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
         Update: {
@@ -2007,6 +2009,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2034,6 +2037,7 @@ export type Database = {
           produtos: Json | null
           responsavel_id: string | null
           status: string
+          tempo_conclusao_segundos: number | null
           tipo_tinta: string | null
           updated_at: string
         }
@@ -2051,6 +2055,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           tipo_tinta?: string | null
           updated_at?: string
         }
@@ -2068,6 +2073,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           tipo_tinta?: string | null
           updated_at?: string
         }
@@ -2156,6 +2162,7 @@ export type Database = {
           pedido_id: string
           responsavel_id: string | null
           status: string
+          tempo_conclusao_segundos: number | null
           updated_at: string | null
         }
         Insert: {
@@ -2170,6 +2177,7 @@ export type Database = {
           pedido_id: string
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -2184,6 +2192,7 @@ export type Database = {
           pedido_id?: string
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2239,6 +2248,7 @@ export type Database = {
           produtos: Json | null
           responsavel_id: string | null
           status: string
+          tempo_conclusao_segundos: number | null
           updated_at: string
         }
         Insert: {
@@ -2255,6 +2265,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
         Update: {
@@ -2271,6 +2282,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2297,6 +2309,7 @@ export type Database = {
           produtos: Json | null
           responsavel_id: string | null
           status: string
+          tempo_conclusao_segundos: number | null
           updated_at: string
         }
         Insert: {
@@ -2312,6 +2325,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
         Update: {
@@ -2327,6 +2341,7 @@ export type Database = {
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
         Relationships: [

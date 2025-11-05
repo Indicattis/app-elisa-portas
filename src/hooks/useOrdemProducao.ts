@@ -62,6 +62,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         .from(tabelaOrdem)
         .select(`
           *,
+          capturada_em,
+          tempo_conclusao_segundos,
           pedido:pedidos_producao!pedido_id(
             id,
             numero_pedido,
@@ -150,6 +152,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
         .from(tabelaOrdem)
         .update({
           responsavel_id: user.id,
+          capturada_em: new Date().toISOString(),
         })
         .eq('id', ordemId);
 
@@ -253,65 +256,39 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem) {
   const concluirOrdem = useMutation({
     mutationFn: async (ordemId: string) => {
       let pedidoId: string | null = null;
+      const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
 
-      // Buscar e atualizar baseado no tipo
-      if (tipoOrdem === 'soldagem') {
-        const { data: ordem, error: ordemError } = await supabase
-          .from('ordens_soldagem')
-          .select('pedido_id')
-          .eq('id', ordemId)
-          .single();
-        if (ordemError) throw ordemError;
-        pedidoId = ordem.pedido_id;
+      // Buscar ordem para pegar capturada_em
+      const { data: ordem, error: ordemError } = await supabase
+        .from(tabelaOrdem)
+        .select('pedido_id, capturada_em')
+        .eq('id', ordemId)
+        .maybeSingle();
+        
+      if (ordemError) throw ordemError;
+      if (!ordem) throw new Error('Ordem não encontrada');
+      
+      pedidoId = (ordem as any).pedido_id;
 
-        const { error } = await supabase
-          .from('ordens_soldagem')
-          .update({ status: 'concluido', data_conclusao: new Date().toISOString() })
-          .eq('id', ordemId);
-        if (error) throw error;
-      } else if (tipoOrdem === 'perfiladeira') {
-        const { data: ordem, error: ordemError } = await supabase
-          .from('ordens_perfiladeira')
-          .select('pedido_id')
-          .eq('id', ordemId)
-          .single();
-        if (ordemError) throw ordemError;
-        pedidoId = ordem.pedido_id;
-
-        const { error } = await supabase
-          .from('ordens_perfiladeira')
-          .update({ status: 'concluido', data_conclusao: new Date().toISOString() })
-          .eq('id', ordemId);
-        if (error) throw error;
-      } else if (tipoOrdem === 'separacao') {
-        const { data: ordem, error: ordemError } = await supabase
-          .from('ordens_separacao')
-          .select('pedido_id')
-          .eq('id', ordemId)
-          .single();
-        if (ordemError) throw ordemError;
-        pedidoId = ordem.pedido_id;
-
-        const { error } = await supabase
-          .from('ordens_separacao')
-          .update({ status: 'concluido', data_conclusao: new Date().toISOString() })
-          .eq('id', ordemId);
-        if (error) throw error;
-      } else if (tipoOrdem === 'qualidade') {
-        const { data: ordem, error: ordemError } = await supabase
-          .from('ordens_qualidade')
-          .select('pedido_id')
-          .eq('id', ordemId)
-          .single();
-        if (ordemError) throw ordemError;
-        pedidoId = ordem.pedido_id;
-
-        const { error } = await supabase
-          .from('ordens_qualidade')
-          .update({ status: 'concluido', data_conclusao: new Date().toISOString() })
-          .eq('id', ordemId);
-        if (error) throw error;
+      // Calcular tempo de conclusão
+      let tempo_conclusao_segundos = null;
+      if ((ordem as any)?.capturada_em) {
+        const captura = new Date((ordem as any).capturada_em);
+        const agora = new Date();
+        tempo_conclusao_segundos = Math.floor((agora.getTime() - captura.getTime()) / 1000);
       }
+
+      // Atualizar ordem
+      const { error } = await supabase
+        .from(tabelaOrdem)
+        .update({ 
+          status: 'concluido', 
+          data_conclusao: new Date().toISOString(),
+          tempo_conclusao_segundos,
+        })
+        .eq('id', ordemId);
+        
+      if (error) throw error;
 
       if (!pedidoId) throw new Error('Pedido ID não encontrado');
       return pedidoId;

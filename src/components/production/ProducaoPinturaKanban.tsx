@@ -12,6 +12,7 @@ interface Ordem {
   status: string;
   responsavel_id?: string;
   capturada_em?: string;
+  tempo_conclusao_segundos?: number;
   pedido?: {
     cliente_nome: string;
   };
@@ -45,7 +46,11 @@ export function ProducaoPinturaKanban({
     const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
     const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
     const todasConcluidas = linhas.length > 0 && linhas.every((l: any) => l.concluida);
-    const tempoDecorrido = useCronometroOrdem(ordem.capturada_em);
+    const tempoDecorrido = useCronometroOrdem({
+      capturada_em: ordem.capturada_em,
+      tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
+      todas_linhas_concluidas: todasConcluidas && ordem.status === 'pronta',
+    });
 
     return (
       <Card 

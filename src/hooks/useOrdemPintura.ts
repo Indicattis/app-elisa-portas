@@ -14,7 +14,7 @@ export function useOrdemPintura() {
       // Primeiro buscar as ordens
       const { data: ordensData, error: ordensError } = await supabase
         .from("ordens_pintura")
-        .select('*, capturada_em')
+        .select('*, capturada_em, tempo_conclusao_segundos')
         .order('created_at', { ascending: false });
 
       if (ordensError) throw ordensError;
@@ -133,11 +133,26 @@ export function useOrdemPintura() {
         throw new Error("Todas as linhas devem estar marcadas como concluídas");
       }
 
+      // Buscar capturada_em para calcular tempo de conclusão
+      const { data: ordem } = await supabase
+        .from("ordens_pintura")
+        .select("capturada_em")
+        .eq("id", ordemId)
+        .single();
+
+      let tempo_conclusao_segundos = null;
+      if (ordem?.capturada_em) {
+        const captura = new Date(ordem.capturada_em);
+        const agora = new Date();
+        tempo_conclusao_segundos = Math.floor((agora.getTime() - captura.getTime()) / 1000);
+      }
+
       const { error } = await supabase
         .from("ordens_pintura")
         .update({ 
           status: 'pronta',
           data_conclusao: new Date().toISOString(),
+          tempo_conclusao_segundos,
         })
         .eq("id", ordemId);
 
