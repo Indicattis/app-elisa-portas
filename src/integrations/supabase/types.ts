@@ -3976,6 +3976,15 @@ export type Database = {
         | "forca_vendas"
         | "tabela_precos"
         | "checklist_lideranca"
+        | "aparencia"
+        | "direcao"
+        | "logistica"
+        | "fornecedores"
+        | "vagas"
+        | "dre"
+        | "entregas"
+        | "despesas"
+        | "dp_rh"
       autorizado_etapa: "ativo" | "premium" | "perdido"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
       documento_categoria:
@@ -4199,6 +4208,15 @@ export const Constants = {
         "forca_vendas",
         "tabela_precos",
         "checklist_lideranca",
+        "aparencia",
+        "direcao",
+        "logistica",
+        "fornecedores",
+        "vagas",
+        "dre",
+        "entregas",
+        "despesas",
+        "dp_rh",
       ],
       autorizado_etapa: ["ativo", "premium", "perdido"],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],

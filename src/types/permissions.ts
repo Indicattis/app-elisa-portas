@@ -31,7 +31,16 @@ export type AppPermission =
   | 'canais_aquisicao'
   | 'forca_vendas'
   | 'tabela_precos'
-  | 'checklist_lideranca';
+  | 'checklist_lideranca'
+  | 'aparencia'
+  | 'direcao'
+  | 'logistica'
+  | 'fornecedores'
+  | 'vagas'
+  | 'dre'
+  | 'entregas'
+  | 'despesas'
+  | 'dp_rh';
 
 export interface UserRoleAssignment {
   id: string;
@@ -210,6 +219,51 @@ export const PERMISSION_LABELS: Record<AppPermission, PermissionDisplay> = {
     key: 'checklist_lideranca',
     label: 'Checklist Liderança',
     description: 'Visualizar e gerenciar tarefas da liderança'
+  },
+  aparencia: {
+    key: 'aparencia',
+    label: 'Aparência',
+    description: 'Configurar aparência e tema do sistema'
+  },
+  direcao: {
+    key: 'direcao',
+    label: 'Direção',
+    description: 'Acessar painel executivo de direção'
+  },
+  logistica: {
+    key: 'logistica',
+    label: 'Logística',
+    description: 'Gerenciar operações de logística'
+  },
+  fornecedores: {
+    key: 'fornecedores',
+    label: 'Fornecedores',
+    description: 'Cadastrar e gerenciar fornecedores'
+  },
+  vagas: {
+    key: 'vagas',
+    label: 'Vagas',
+    description: 'Gerenciar vagas e processos seletivos'
+  },
+  dre: {
+    key: 'dre',
+    label: 'DRE',
+    description: 'Visualizar Demonstrativo de Resultado do Exercício'
+  },
+  entregas: {
+    key: 'entregas',
+    label: 'Entregas',
+    description: 'Controlar e acompanhar entregas'
+  },
+  despesas: {
+    key: 'despesas',
+    label: 'Despesas',
+    description: 'Gerenciar despesas mensais'
+  },
+  dp_rh: {
+    key: 'dp_rh',
+    label: 'Departamento Pessoal',
+    description: 'Administrar folha de pagamento e benefícios'
   }
 };
 
