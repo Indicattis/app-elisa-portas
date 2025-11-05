@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, CheckCircle2, Clock, UserCheck } from "lucide-react";
+import { Package, CheckCircle2, Clock, UserCheck, Timer } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
@@ -23,6 +24,8 @@ interface Ordem {
   created_at: string;
   observacoes?: string;
   responsavel_id?: string;
+  capturada_em?: string;
+  tempo_conclusao_segundos?: number;
   linhas?: LinhaOrdem[];
   pedido?: {
     cliente_nome: string;
@@ -56,7 +59,14 @@ export function ProducaoKanban({
   const renderOrdemCard = (ordem: Ordem) => {
     const linhas = ordem.linhas || [];
     const linhasConcluidas = linhas.filter(l => l.concluida).length;
+    const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
     const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
+
+    const tempoDecorrido = useCronometroOrdem({
+      capturada_em: ordem.capturada_em,
+      tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
+      todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
+    });
 
     return (
       <Card key={ordem.id} className="hover:shadow-md transition-all">
@@ -106,9 +116,18 @@ export function ProducaoKanban({
           className="space-y-3 cursor-pointer"
           onClick={() => onOrdemClick(ordem)}
         >
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Cliente</p>
-            <p className="text-sm font-medium truncate">{ordem.pedido?.cliente_nome}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex-1 space-y-1 min-w-0">
+              <p className="text-xs text-muted-foreground">Cliente</p>
+              <p className="text-sm font-medium truncate">{ordem.pedido?.cliente_nome}</p>
+            </div>
+            
+            {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
+              <Badge variant="secondary" className="gap-1 flex-shrink-0">
+                <Timer className="h-3 w-3" />
+                {tempoDecorrido}
+              </Badge>
+            )}
           </div>
 
           {linhas.length > 0 && (

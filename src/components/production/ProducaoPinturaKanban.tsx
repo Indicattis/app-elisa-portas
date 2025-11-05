@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Clock } from "lucide-react";
+import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
@@ -61,9 +61,17 @@ export function ProducaoPinturaKanban({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-base font-semibold truncate">
-                {ordem.numero_ordem}
-              </CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardTitle className="text-base font-semibold truncate">
+                  {ordem.numero_ordem}
+                </CardTitle>
+                {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
+                  <Badge variant="outline" className="gap-1 flex-shrink-0">
+                    <Timer className="h-3 w-3" />
+                    {tempoDecorrido}
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground truncate mt-1">
                 {ordem.pedido?.cliente_nome}
               </p>
@@ -77,21 +85,11 @@ export function ProducaoPinturaKanban({
         </CardHeader>
         <CardContent className="space-y-3">
           {ordem.admin_users && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <UserCheck className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground truncate">
-                  {ordem.admin_users.nome}
-                </span>
-              </div>
-              {ordem.capturada_em && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-orange-500" />
-                  <span className="font-mono text-orange-600 dark:text-orange-400">
-                    {tempoDecorrido}
-                  </span>
-                </div>
-              )}
+            <div className="flex items-center gap-2 text-sm">
+              <UserCheck className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground truncate">
+                {ordem.admin_users.nome}
+              </span>
             </div>
           )}
 
