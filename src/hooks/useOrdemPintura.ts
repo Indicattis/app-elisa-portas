@@ -83,7 +83,6 @@ export function useOrdemPintura() {
 
   // Filtrar ordens por status
   const ordensParaPintar = ordens.filter((o: any) => o.status === 'pendente');
-  const ordensPintando = ordens.filter((o: any) => o.status === 'pintando');
   const ordensProntas = ordens.filter((o: any) => o.status === 'pronta');
 
   // Capturar ordem (atribuir responsável)
@@ -116,39 +115,6 @@ export function useOrdemPintura() {
     },
   });
 
-  // Iniciar pintura (pendente -> pintando)
-  const iniciarPintura = useMutation({
-    mutationFn: async (ordemId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { error } = await supabase
-        .from("ordens_pintura")
-        .update({ 
-          status: 'pintando',
-          data_inicio: new Date().toISOString(),
-        })
-        .eq("id", ordemId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ordens-pintura"] });
-      queryClient.invalidateQueries({ queryKey: ["ordens-count"] });
-      toast({
-        title: "Pintura iniciada",
-        description: "A ordem foi movida para 'Pintando'",
-      });
-    },
-    onError: (error) => {
-      console.error("Erro ao iniciar pintura:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível iniciar a pintura",
-        variant: "destructive",
-      });
-    },
-  });
 
   // Finalizar pintura (pintando -> pronta)
   const finalizarPintura = useMutation({
@@ -253,11 +219,9 @@ export function useOrdemPintura() {
   return {
     ordens,
     ordensParaPintar,
-    ordensPintando,
     ordensProntas,
     isLoading,
     capturarOrdem,
-    iniciarPintura,
     finalizarPintura,
     marcarLinhaConcluida,
   };

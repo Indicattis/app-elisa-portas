@@ -11,11 +11,9 @@ export default function ProducaoPintura() {
   const {
     ordens,
     ordensParaPintar,
-    ordensPintando,
     ordensProntas,
     isLoading,
     capturarOrdem,
-    iniciarPintura,
     finalizarPintura,
     marcarLinhaConcluida,
   } = useOrdemPintura();
@@ -37,18 +35,16 @@ export default function ProducaoPintura() {
         <div>
           <h1 className="text-3xl font-bold">Produção - Pintura</h1>
           <p className="text-muted-foreground">
-            Gerencie as ordens de pintura em 3 etapas: Para Pintar, Pintando e Pronta
+            Gerencie as ordens de pintura: Para Pintar e Pronta
           </p>
         </div>
       </div>
 
       <ProducaoPinturaKanban
         ordensParaPintar={ordensParaPintar}
-        ordensPintando={ordensPintando}
         ordensProntas={ordensProntas}
         isLoading={isLoading}
         onOrdemClick={handleOrdemClick}
-        onIniciarPintura={iniciarPintura.mutate}
         onFinalizarPintura={finalizarPintura.mutate}
         onCapturarOrdem={capturarOrdem.mutate}
         isCapturing={capturarOrdem.isPending}
@@ -66,9 +62,7 @@ export default function ProducaoPintura() {
         onCapturarOrdem={(ordemId) => capturarOrdem.mutate(ordemId)}
         isUpdating={marcarLinhaConcluida.isPending}
         isCapturing={capturarOrdem.isPending}
-        onIniciarPintura={() => iniciarPintura.mutate(selectedOrdem?.id || '')}
         onFinalizarPintura={() => finalizarPintura.mutate(selectedOrdem?.id || '')}
-        isIniciando={iniciarPintura.isPending}
         isFinalizando={finalizarPintura.isPending}
       />
     </div>

@@ -21,11 +21,9 @@ interface Ordem {
 
 interface ProducaoPinturaKanbanProps {
   ordensParaPintar: Ordem[];
-  ordensPintando: Ordem[];
   ordensProntas: Ordem[];
   isLoading: boolean;
   onOrdemClick: (ordem: Ordem) => void;
-  onIniciarPintura: (ordemId: string) => void;
   onFinalizarPintura: (ordemId: string) => void;
   onCapturarOrdem: (ordemId: string) => void;
   isCapturing?: boolean;
@@ -33,16 +31,14 @@ interface ProducaoPinturaKanbanProps {
 
 export function ProducaoPinturaKanban({
   ordensParaPintar,
-  ordensPintando,
   ordensProntas,
   isLoading,
   onOrdemClick,
-  onIniciarPintura,
   onFinalizarPintura,
   onCapturarOrdem,
   isCapturing = false,
 }: ProducaoPinturaKanbanProps) {
-  const renderOrdemCard = (ordem: Ordem, showIniciarButton = false, showFinalizarButton = false) => {
+  const renderOrdemCard = (ordem: Ordem, showFinalizarButton = false) => {
     const linhas = ordem.linhas || [];
     const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
     const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
@@ -124,22 +120,7 @@ export function ProducaoPinturaKanban({
             </Button>
           )}
 
-          {showIniciarButton && ordem.responsavel_id && (
-            <Button
-              variant="default"
-              size="sm"
-              className="w-full"
-              onClick={(e) => {
-                e.stopPropagation();
-                onIniciarPintura(ordem.id);
-              }}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Iniciar Pintura
-            </Button>
-          )}
-
-          {showFinalizarButton && todasConcluidas && (
+          {showFinalizarButton && ordem.responsavel_id && todasConcluidas && (
             <Button
               variant="default"
               size="sm"
@@ -154,7 +135,7 @@ export function ProducaoPinturaKanban({
             </Button>
           )}
 
-          {showFinalizarButton && !todasConcluidas && (
+          {showFinalizarButton && ordem.responsavel_id && !todasConcluidas && (
             <p className="text-xs text-center text-muted-foreground">
               Marque todos os itens para finalizar
             </p>
@@ -182,7 +163,7 @@ export function ProducaoPinturaKanban({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Coluna: Para Pintar */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -193,32 +174,11 @@ export function ProducaoPinturaKanban({
           </Badge>
         </div>
         <div className="space-y-3">
-          {ordensParaPintar.map((ordem) => renderOrdemCard(ordem, true, false))}
+          {ordensParaPintar.map((ordem) => renderOrdemCard(ordem, true))}
           {ordensParaPintar.length === 0 && (
             <Card className="border-dashed">
               <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
                 Nenhuma ordem pendente
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Coluna: Pintando */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
-          <h2 className="text-lg font-semibold">Pintando</h2>
-          <Badge variant="secondary" className="ml-auto">
-            {ordensPintando.length}
-          </Badge>
-        </div>
-        <div className="space-y-3">
-          {ordensPintando.map((ordem) => renderOrdemCard(ordem, false, true))}
-          {ordensPintando.length === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
-                Nenhuma ordem em pintura
               </CardContent>
             </Card>
           )}
@@ -235,7 +195,7 @@ export function ProducaoPinturaKanban({
           </Badge>
         </div>
         <div className="space-y-3">
-          {ordensProntas.map((ordem) => renderOrdemCard(ordem, false, false))}
+          {ordensProntas.map((ordem) => renderOrdemCard(ordem, false))}
           {ordensProntas.length === 0 && (
             <Card className="border-dashed">
               <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
