@@ -1,12 +1,14 @@
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useState } from "react";
 import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
 import { PontoInstalacao } from "./PontoInstalacao";
 import { CelulaDia } from "./CelulaDia";
 import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
-import { useState } from "react";
+import { SelecionarInstalacaoModal } from "./SelecionarInstalacaoModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface CronogramaInstalacaoProps {
   currentWeek: Date;
@@ -29,6 +31,14 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
   const { instalacoes, updateInstalacaoData } = useInstalacoesCronograma(currentWeek);
   const { draggedItem, handleDragStart, handleDragEnd } = useDragAndDrop();
   const [selectedInstalacao, setSelectedInstalacao] = useState<any>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<{
+    equipId: string;
+    equipNome: string;
+    diaSemana: number;
+    data: Date;
+  } | null>(null);
+  const { toast } = useToast();
 
   const equipesParaExibir = equipesFiltradas || equipes;
 
@@ -43,6 +53,41 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
         equipId,
         novaData
       );
+    }
+  };
+
+  const handleCellDoubleClick = (equipId: string, diaSemana: number, data: Date) => {
+    const equipe = equipesParaExibir.find(e => e.id === equipId);
+    if (equipe) {
+      setSelectedCell({
+        equipId,
+        equipNome: equipe.nome,
+        diaSemana,
+        data
+      });
+      setModalOpen(true);
+    }
+  };
+
+  const handleSelectInstalacao = async (
+    instalacaoId: string,
+    equipId: string,
+    data: Date
+  ) => {
+    try {
+      await updateInstalacaoData(instalacaoId, equipId, data);
+      toast({
+        title: "Instalação agendada",
+        description: "A instalação foi agendada com sucesso no cronograma"
+      });
+    } catch (error) {
+      console.error('Erro ao agendar instalação:', error);
+      toast({
+        title: "Erro ao agendar",
+        description: "Não foi possível agendar a instalação",
+        variant: "destructive"
+      });
+      throw error;
     }
   };
 
@@ -81,7 +126,8 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
               </div>
 
               {/* Colunas dos dias */}
-              {DIAS_SEMANA.map((dia) => {
+              {DIAS_SEMANA.map((dia, index) => {
+                const dataAtual = addDays(startOfWeek(currentWeek, { weekStartsOn: 1 }), dia.value === 0 ? 6 : dia.value - 1);
                 const instalacoesNoDia = instalacoes.filter(
                   i => i.responsavel_instalacao_id === equipe.id && i.dia_semana === dia.value
                 );
@@ -91,7 +137,9 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
                     key={`${equipe.id}-${dia.value}`}
                     equipId={equipe.id}
                     diaSemana={dia.value}
+                    data={dataAtual}
                     onDrop={handleDrop}
+                    onDoubleClick={handleCellDoubleClick}
                     draggedItem={draggedItem}
                   >
                     {instalacoesNoDia.map((instalacao) => (
@@ -117,6 +165,17 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
           instalacao={selectedInstalacao}
           open={!!selectedInstalacao}
           onOpenChange={(open) => !open && setSelectedInstalacao(null)}
+        />
+      )}
+
+      {selectedCell && (
+        <SelecionarInstalacaoModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          equipId={selectedCell.equipId}
+          equipNome={selectedCell.equipNome}
+          data={selectedCell.data}
+          onSelectInstalacao={handleSelectInstalacao}
         />
       )}
     </div>

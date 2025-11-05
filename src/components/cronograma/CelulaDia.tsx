@@ -4,15 +4,19 @@ import { cn } from "@/lib/utils";
 interface CelulaDiaProps {
   equipId: string;
   diaSemana: number;
+  data: Date;
   onDrop: (equipId: string, diaSemana: number) => void;
+  onDoubleClick?: (equipId: string, diaSemana: number, data: Date) => void;
   draggedItem: { id: string; equipId: string; cidade: string } | null;
   children: React.ReactNode;
 }
 
 export function CelulaDia({ 
   equipId, 
-  diaSemana, 
-  onDrop, 
+  diaSemana,
+  data,
+  onDrop,
+  onDoubleClick,
   draggedItem, 
   children 
 }: CelulaDiaProps) {
@@ -39,16 +43,24 @@ export function CelulaDia({
     }
   };
 
+  const handleDoubleClick = () => {
+    if (onDoubleClick) {
+      onDoubleClick(equipId, diaSemana, data);
+    }
+  };
+
   return (
     <div
       className={cn(
         "p-2 border-r last:border-r-0 min-h-[100px] transition-colors",
         isDragOver && canDrop && "bg-primary/10 border-primary",
-        canDrop && "border-dashed"
+        canDrop && "border-dashed",
+        onDoubleClick && "cursor-pointer hover:bg-accent/50"
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onDoubleClick={handleDoubleClick}
     >
       {children}
     </div>
