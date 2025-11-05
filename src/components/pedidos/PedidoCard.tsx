@@ -609,26 +609,15 @@ export function PedidoCard({
                     Avançar
                   </Button>
                 ) : etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao' ? (
-                  carregamentoConcluido ? (
-                    <Button
-                      size="sm"
-                      onClick={() => setShowConfirmarAvanco(true)}
-                      className="ml-2 flex-shrink-0"
-                    >
-                      <CheckCircle className="h-3.5 w-3.5 mr-2" />
-                      Finalizar
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowCarregamento(true)}
-                      className="ml-2 flex-shrink-0"
-                    >
-                      <Package className="h-3.5 w-3.5 mr-2" />
-                      Carregar
-                    </Button>
-                  )
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowCarregamento(true)}
+                    className="ml-2 flex-shrink-0"
+                  >
+                    <Package className="h-3.5 w-3.5 mr-2" />
+                    Carregar
+                  </Button>
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
                     size="sm"
@@ -995,26 +984,15 @@ export function PedidoCard({
                   Avançar
                 </Button>
               ) : etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao' ? (
-                carregamentoConcluido ? (
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setShowConfirmarAvanco(true)}
-                  >
-                    <CheckCircle className="h-3.5 w-3.5 mr-2" />
-                    Finalizar
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowCarregamento(true)}
-                  >
-                    <Package className="h-3.5 w-3.5 mr-2" />
-                    Carregar
-                  </Button>
-                )
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowCarregamento(true)}
+                >
+                  <Package className="h-3.5 w-3.5 mr-2" />
+                  Carregar
+                </Button>
               ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
                   size="sm"
