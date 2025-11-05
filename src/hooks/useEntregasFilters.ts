@@ -1,21 +1,14 @@
 import { useMemo, useState } from "react";
 import { Entrega } from "./useEntregas";
 
-export const useEntregasFilters = (entregas: Entrega[], isAdmin: boolean = false) => {
+export const useEntregasFilters = (entregas: Entrega[]) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterEstado, setFilterEstado] = useState<string>("all");
-  const [quickFilter, setQuickFilter] = useState<string>("all");
+  const [quickFilter, setQuickFilter] = useState<string>("prontas");
 
   const filteredEntregas = useMemo(() => {
     return entregas.filter((entrega) => {
-      // Filtro de permissão: usuários não-admin só veem entregas com pedido em "aguardando_coleta"
-      if (!isAdmin) {
-        if (!entrega.pedido || entrega.pedido.etapa_atual !== 'aguardando_coleta') {
-          return false;
-        }
-      }
-
       // Busca por nome do cliente
       const matchesSearch = entrega.nome_cliente
         .toLowerCase()
@@ -45,7 +38,7 @@ export const useEntregasFilters = (entregas: Entrega[], isAdmin: boolean = false
 
       return true;
     });
-  }, [entregas, searchTerm, filterStatus, filterEstado, quickFilter, isAdmin]);
+  }, [entregas, searchTerm, filterStatus, filterEstado, quickFilter]);
 
   const sortedEntregas = useMemo(() => {
     return [...filteredEntregas].sort((a, b) => {
