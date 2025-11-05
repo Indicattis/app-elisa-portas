@@ -58,6 +58,16 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
   };
 
   const handleCellDoubleClick = (equipId: string, diaSemana: number, data: Date) => {
+    console.log('Double click na célula:', {
+      equipId,
+      diaSemana,
+      data,
+      dataFormatada: format(data, "dd/MM/yyyy - EEEE", { locale: ptBR }),
+      dia: data.getDate(),
+      mes: data.getMonth() + 1,
+      ano: data.getFullYear()
+    });
+    
     const equipe = equipesParaExibir.find(e => e.id === equipId);
     if (equipe) {
       setSelectedCell({
