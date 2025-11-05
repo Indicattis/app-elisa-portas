@@ -34,7 +34,7 @@ export default function Entregas() {
     quickFilter,
     setQuickFilter,
     filteredEntregas,
-    estados
+    estados,
   } = useEntregasFilters(entregas);
   return <>
       <div className="space-y-6">

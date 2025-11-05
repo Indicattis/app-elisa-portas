@@ -5,7 +5,7 @@ export const useEntregasFilters = (entregas: Entrega[]) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterEstado, setFilterEstado] = useState<string>("all");
-  const [quickFilter, setQuickFilter] = useState<string>("prontas");
+  const [quickFilter, setQuickFilter] = useState<string>("all");
 
   const filteredEntregas = useMemo(() => {
     return entregas.filter((entrega) => {
