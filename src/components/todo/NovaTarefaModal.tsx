@@ -5,9 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { TarefaInput } from "@/hooks/useTarefas";
+import { useAllUsers } from "@/hooks/useAllUsers";
 import { Info } from "lucide-react";
 import { format, addDays, startOfMonth, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,10 +24,15 @@ interface NovaTarefaModalProps {
 type TipoRecorrencia = 'todos_os_dias' | 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias';
 
 export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTarefaModalProps) {
-  const { user } = useAuth();
+  const { user, userRole, isAdmin } = useAuth();
+  const { data: allUsers = [] } = useAllUsers();
   const [descricao, setDescricao] = useState("");
+  const [responsavelId, setResponsavelId] = useState<string>(user?.id || "");
   const [recorrente, setRecorrente] = useState(false);
   const [tipoRecorrencia, setTipoRecorrencia] = useState<TipoRecorrencia>('todos_os_dias');
+
+  const isDiretor = userRole?.role === 'diretor';
+  const podeEscolherResponsavel = isAdmin || isDiretor;
 
   const proximaDataRecorrencia = useMemo(() => {
     if (!recorrente) return null;
@@ -55,17 +62,18 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
   }, [recorrente, tipoRecorrencia]);
 
   const handleSubmit = () => {
-    if (!descricao.trim() || !user?.id) return;
+    if (!descricao.trim() || !responsavelId) return;
 
     onSubmit({
       descricao,
-      responsavel_id: user.id,
+      responsavel_id: responsavelId,
       recorrente,
       tipo_recorrencia: recorrente ? tipoRecorrencia : null,
       setor: setor || '',
     });
 
     setDescricao("");
+    setResponsavelId(user?.id || "");
     setRecorrente(false);
     setTipoRecorrencia('todos_os_dias');
     onOpenChange(false);
@@ -89,6 +97,32 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
               rows={4}
             />
           </div>
+
+          {podeEscolherResponsavel && (
+            <div className="space-y-2">
+              <Label htmlFor="responsavel">Responsável *</Label>
+              <Select value={responsavelId} onValueChange={setResponsavelId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allUsers.map((usuario) => (
+                    <SelectItem key={usuario.user_id} value={usuario.user_id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={usuario.foto_perfil_url} />
+                          <AvatarFallback className="text-[10px]">
+                            {usuario.nome.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{usuario.nome}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex items-center space-x-2">
             <Switch
@@ -136,7 +170,7 @@ export function NovaTarefaModal({ open, onOpenChange, onSubmit, setor }: NovaTar
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!descricao.trim() || !user?.id}>
+          <Button onClick={handleSubmit} disabled={!descricao.trim() || !responsavelId}>
             Criar Tarefa
           </Button>
         </div>

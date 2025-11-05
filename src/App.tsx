@@ -18,7 +18,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Settings, LogOut, Tv, Map, Network, BookOpen, Calendar as CalendarIcon, Calculator } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { Menu, Settings, LogOut, Tv, Map, Network, BookOpen, Calendar as CalendarIcon, Calculator, CheckSquare } from "lucide-react";
+import { MinhasTarefasSheet } from "@/components/todo/MinhasTarefasSheet";
+import { useTarefasCount } from "@/hooks/useTarefasCount";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -184,6 +188,8 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 function HeaderUserInfo() {
   const { user, userRole, isAdmin, signOut } = useAuth();
+  const { data: tarefasCount = 0 } = useTarefasCount();
+  const [tarefasOpen, setTarefasOpen] = useState(false);
 
   if (!user) return null;
 
@@ -192,34 +198,55 @@ function HeaderUserInfo() {
   };
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={userRole?.foto_perfil_url} alt="Foto de perfil" />
-          <AvatarFallback className="text-xs">
-            {getUserInitials(user.email || '')}
-          </AvatarFallback>
-        </Avatar>
-        <div className="hidden md:flex flex-col text-sm">
-          <span className="font-medium leading-none">{user.email}</span>
-          <span className="text-xs text-muted-foreground capitalize leading-none mt-1">
-            {userRole?.role?.replace("_", " ")}
-          </span>
+    <>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={userRole?.foto_perfil_url} alt="Foto de perfil" />
+            <AvatarFallback className="text-xs">
+              {getUserInitials(user.email || '')}
+            </AvatarFallback>
+          </Avatar>
+          <div className="hidden md:flex flex-col text-sm">
+            <span className="font-medium leading-none">{user.email}</span>
+            <span className="text-xs text-muted-foreground capitalize leading-none mt-1">
+              {userRole?.role?.replace("_", " ")}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="relative"
+            onClick={() => setTarefasOpen(true)}
+          >
+            <CheckSquare className="h-4 w-4" />
+            {tarefasCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-1 -right-1 h-5 min-w-5 px-1 text-xs flex items-center justify-center"
+              >
+                {tarefasCount}
+              </Badge>
+            )}
+          </Button>
+
+          <Button variant="ghost" size="sm" asChild>
+            <NavLink to="/dashboard/configuracoes">
+              <Settings className="h-4 w-4" />
+            </NavLink>
+          </Button>
+          
+          <Button variant="ghost" size="sm" onClick={signOut}>
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-      
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" asChild>
-          <NavLink to="/dashboard/configuracoes">
-            <Settings className="h-4 w-4" />
-          </NavLink>
-        </Button>
-        
-        <Button variant="ghost" size="sm" onClick={signOut}>
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+
+      <MinhasTarefasSheet open={tarefasOpen} onOpenChange={setTarefasOpen} />
+    </>
   );
 }
 
@@ -942,26 +969,6 @@ const App = () => (
                     <ProtectedRoute requirePermission="diario_bordo">
                       <DashboardLayout>
                         <DiarioBordo />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/checklist-lideranca"
-                  element={
-                    <ProtectedRoute requirePermission="checklist_lideranca">
-                      <DashboardLayout>
-                        <Todo />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/direcao/checklist-lideranca"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <ChecklistLideranca />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

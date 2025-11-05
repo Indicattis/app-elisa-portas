@@ -66,52 +66,7 @@ const iconMap: Record<string, any> = {
   ClipboardCheck,
 };
 
-// Mapeamento de cores para Checklist Liderança por setor
-const checklistColors: Record<string, { text: string; hover: string; active: string; badge: string }> = {
-  'checklist_lideranca_vendas_group': {
-    text: 'text-green-600 dark:text-green-400',
-    hover: 'hover:bg-green-50 dark:hover:bg-green-950/30',
-    active: 'data-[active=true]:bg-green-100 dark:data-[active=true]:bg-green-900/40 data-[active=true]:text-green-700 dark:data-[active=true]:text-green-300',
-    badge: 'bg-green-500'
-  },
-  'checklist_lideranca_marketing_group': {
-    text: 'text-yellow-600 dark:text-yellow-400',
-    hover: 'hover:bg-yellow-50 dark:hover:bg-yellow-950/30',
-    active: 'data-[active=true]:bg-yellow-100 dark:data-[active=true]:bg-yellow-900/40 data-[active=true]:text-yellow-700 dark:data-[active=true]:text-yellow-300',
-    badge: 'bg-yellow-500'
-  },
-  'checklist_lideranca_fabrica': {
-    text: 'text-gray-600 dark:text-gray-400',
-    hover: 'hover:bg-gray-50 dark:hover:bg-gray-950/30',
-    active: 'data-[active=true]:bg-gray-100 dark:data-[active=true]:bg-gray-900/40 data-[active=true]:text-gray-700 dark:data-[active=true]:text-gray-300',
-    badge: 'bg-gray-500'
-  },
-  'checklist_lideranca_instalacoes_group': {
-    text: 'text-red-600 dark:text-red-400',
-    hover: 'hover:bg-red-50 dark:hover:bg-red-950/30',
-    active: 'data-[active=true]:bg-red-100 dark:data-[active=true]:bg-red-900/40 data-[active=true]:text-red-700 dark:data-[active=true]:text-red-300',
-    badge: 'bg-red-500'
-  },
-  'checklist_lideranca_administrativo': {
-    text: 'text-blue-600 dark:text-blue-400',
-    hover: 'hover:bg-blue-50 dark:hover:bg-blue-950/30',
-    active: 'data-[active=true]:bg-blue-100 dark:data-[active=true]:bg-blue-900/40 data-[active=true]:text-blue-700 dark:data-[active=true]:text-blue-300',
-    badge: 'bg-blue-500'
-  },
-};
-
-// Função helper para obter classes de cor dos Checklist Liderança
-const getChecklistColorClass = (itemKey: string, isActive: boolean) => {
-  const colors = checklistColors[itemKey];
-  if (!colors) return '';
-  
-  return cn(
-    colors.text,
-    colors.hover,
-    colors.active,
-    isActive && 'font-semibold'
-  );
-};
+// Checklist colors removed - now using global task system
 
 export function AppSidebar() {
   const location = useLocation();
@@ -335,12 +290,11 @@ export function AppSidebar() {
                                             
                                              return (
                                               <SidebarMenuSubItem key={nestedItem.key}>
-                                                <SidebarMenuSubButton 
+                                                 <SidebarMenuSubButton 
                                                   asChild={nestedCanAccess}
                                                   isActive={nestedIsActive}
                                                   className={cn(
-                                                    !nestedCanAccess ? "opacity-50 cursor-not-allowed" : "",
-                                                    getChecklistColorClass(nestedItem.key, nestedIsActive)
+                                                    !nestedCanAccess ? "opacity-50 cursor-not-allowed" : ""
                                                   )}
                                                   data-active={nestedIsActive}
                                                 >
@@ -355,13 +309,6 @@ export function AppSidebar() {
                                                         >
                                                           {ordensCountMap[nestedItem.key]}
                                                         </Badge>
-                                                      )}
-                                                      {checklistColors[nestedItem.key] && (
-                                                        <span className={cn(
-                                                          "w-2 h-2 rounded-full",
-                                                          ordensCountMap[nestedItem.key] > 0 ? "" : "ml-auto",
-                                                          checklistColors[nestedItem.key].badge
-                                                        )} />
                                                       )}
                                                     </Link>
                                                   ) : (
@@ -385,34 +332,27 @@ export function AppSidebar() {
                               // Renderizar como item normal
                               return (
                                 <SidebarMenuSubItem key={subItem.key}>
-                                  <SidebarMenuSubButton 
-                                    asChild={canAccess}
-                                    isActive={itemIsActive}
-                                    className={cn(
-                                      !canAccess ? "opacity-50 cursor-not-allowed" : "",
-                                      getChecklistColorClass(subItem.key, itemIsActive)
-                                    )}
-                                    data-active={itemIsActive}
-                                  >
-                                    {canAccess ? (
-                                      <Link to={subItem.href} className="flex items-center gap-2 w-full">
-                                        <SubIcon className="h-4 w-4" />
-                                        <span>{subItem.label}</span>
-                                        {ordensCountMap[subItem.key] > 0 && (
-                                          <Badge 
-                                            variant="secondary" 
-                                            className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
-                                          >
-                                            {ordensCountMap[subItem.key]}
-                                          </Badge>
-                                        )}
-                                        {checklistColors[subItem.key] && (
-                                          <span className={cn(
-                                            "w-2 h-2 rounded-full ml-auto",
-                                            checklistColors[subItem.key].badge
-                                          )} />
-                                        )}
-                                      </Link>
+                                <SidebarMenuSubButton 
+                                  asChild={canAccess}
+                                  isActive={itemIsActive}
+                                  className={cn(
+                                    !canAccess ? "opacity-50 cursor-not-allowed" : ""
+                                  )}
+                                  data-active={itemIsActive}
+                                >
+                                  {canAccess ? (
+                                    <Link to={subItem.href} className="flex items-center gap-2 w-full">
+                                      <SubIcon className="h-4 w-4" />
+                                      <span>{subItem.label}</span>
+                                      {ordensCountMap[subItem.key] > 0 && (
+                                        <Badge 
+                                          variant="secondary" 
+                                          className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
+                                        >
+                                          {ordensCountMap[subItem.key]}
+                                        </Badge>
+                                      )}
+                                    </Link>
                                     ) : (
                                       <div className="flex items-center gap-2 w-full">
                                         <SubIcon className="h-4 w-4" />
