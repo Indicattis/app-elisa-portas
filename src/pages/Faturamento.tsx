@@ -458,12 +458,8 @@ export default function Faturamento() {
     activeTab === 'nao_faturadas' ? vendasNaoFaturadas :
     filteredVendas; // todas
 
-  // Determinar quais vendas usar para cálculo de lucros (apenas faturadas)
-  const vendasParaLucros = activeTab === 'nao_faturadas' 
-    ? [] // Vendas não faturadas não têm lucros calculados
-    : activeTab === 'faturadas'
-    ? vendasParaIndicadores // Já são todas faturadas
-    : vendasParaIndicadores.filter(isFaturada); // Na aba "todas", pegar só faturadas
+  // Para lucros, SEMPRE usar apenas vendas faturadas, independente da aba
+  const vendasParaLucros = filteredVendas.filter(isFaturada);
 
   // Calcular novos indicadores baseados na seleção ativa
   const indicadores = {
@@ -487,7 +483,7 @@ export default function Faturamento() {
         sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroInstalacoes: vendasParaIndicadores.reduce((acc, v) => 
+    lucroInstalacoes: vendasParaLucros.reduce((acc, v) => 
       acc + (v.valor_instalacao || 0), 0),
     
     lucroBrutoTotal: vendasParaLucros.reduce((acc, v) => {
@@ -510,6 +506,26 @@ export default function Faturamento() {
       acc + (v.valor_frete || 0), 0),
   };
 
+  // Debug logs para verificar filtros e cálculos
+  console.log('[FATURAMENTO DEBUG]', {
+    totalVendas: vendas.length,
+    filteredVendas: filteredVendas.length,
+    vendasParaIndicadores: vendasParaIndicadores.length,
+    vendasParaLucros: vendasParaLucros.length,
+    activeTab,
+    dateRange: {
+      from: dateRange?.from ? format(dateRange.from, 'dd/MM/yyyy') : null,
+      to: dateRange?.to ? format(dateRange.to, 'dd/MM/yyyy') : null
+    },
+    indicadores: {
+      faturamentoTotal: indicadores.faturamentoTotal.toFixed(2),
+      lucroPortas: indicadores.lucroPortas.toFixed(2),
+      lucroPintura: indicadores.lucroPintura.toFixed(2),
+      lucroInstalacoes: indicadores.lucroInstalacoes.toFixed(2),
+      lucroBrutoTotal: indicadores.lucroBrutoTotal.toFixed(2),
+      quantidadePortas: indicadores.quantidadePortas,
+    }
+  });
 
   const meses = [
     { value: 1, label: "Janeiro" }, { value: 2, label: "Fevereiro" },
