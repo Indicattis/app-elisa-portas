@@ -126,11 +126,6 @@ export function formatarDesconto(
 }
 
 /**
- * ID do usuário responsável pelo setor
- */
-export const RESPONSAVEL_SETOR_ID = 'cff6be68-3bc3-4d62-98e4-8eb9101415c6';
-
-/**
  * Determina o tipo de autorização necessária baseado no desconto
  */
 export function getTipoAutorizacaoNecessaria(
