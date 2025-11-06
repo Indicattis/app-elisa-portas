@@ -458,6 +458,13 @@ export default function Faturamento() {
     activeTab === 'nao_faturadas' ? vendasNaoFaturadas :
     filteredVendas; // todas
 
+  // Determinar quais vendas usar para cálculo de lucros (apenas faturadas)
+  const vendasParaLucros = activeTab === 'nao_faturadas' 
+    ? [] // Vendas não faturadas não têm lucros calculados
+    : activeTab === 'faturadas'
+    ? vendasParaIndicadores // Já são todas faturadas
+    : vendasParaIndicadores.filter(isFaturada); // Na aba "todas", pegar só faturadas
+
   // Calcular novos indicadores baseados na seleção ativa
   const indicadores = {
     quantidadePortas: vendasParaIndicadores.reduce((acc, v) => {
@@ -467,14 +474,14 @@ export default function Faturamento() {
       ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
     }, 0),
     
-    // Lucros apenas de vendas faturadas
-    lucroPintura: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
+    // Lucros calculados apenas de vendas faturadas
+    lucroPintura: vendasParaLucros.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroPortas: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
+    lucroPortas: vendasParaLucros.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
@@ -483,7 +490,7 @@ export default function Faturamento() {
     lucroInstalacoes: vendasParaIndicadores.reduce((acc, v) => 
       acc + (v.valor_instalacao || 0), 0),
     
-    lucroBrutoTotal: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
+    lucroBrutoTotal: vendasParaLucros.reduce((acc, v) => {
       const portas = v.portas || [];
       // Lucro das portas + Lucro da pintura
       const lucroPortas = portas.reduce((sum: number, p: any) => 
