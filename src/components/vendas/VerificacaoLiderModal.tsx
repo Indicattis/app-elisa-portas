@@ -102,7 +102,7 @@ export function VerificacaoLiderModal({
       // Buscar dados do usuário líder
       const { data: userData, error: userError } = await supabase
         .from('admin_users')
-        .select('user_id, nome, email, role')
+        .select('user_id, nome, role')
         .eq('user_id', setorData.lider_id)
         .eq('ativo', true)
         .maybeSingle();
@@ -113,47 +113,19 @@ export function VerificacaoLiderModal({
         return;
       }
 
-      if (!userData || !userData.email) {
-        setErro('Usuário líder não encontrado ou sem email cadastrado');
+      if (!userData) {
+        setErro('Usuário líder não encontrado ou inativo');
         return;
       }
 
-      // Verificar senha tentando fazer login com as credenciais do líder
-      // Salvamos a sessão atual primeiro
-      const { data: currentSession } = await supabase.auth.getSession();
+      // Verificar senha usando senha fixa
+      const SENHA_LIDER = "Lider@2025";
       
-      try {
-        // Tenta fazer login com o email e senha do líder
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: userData.email,
-          password: senha
-        });
-
-        if (signInError) {
-          setErro('Senha incorreta');
-          return;
-        }
-
-        // Se chegou aqui, a senha está correta
-        // Restaurar a sessão original
-        if (currentSession?.session) {
-          await supabase.auth.setSession({
-            access_token: currentSession.session.access_token,
-            refresh_token: currentSession.session.refresh_token
-          });
-        }
-
+      if (senha === SENHA_LIDER) {
         onSenhaCorreta();
         onOpenChange(false);
-      } catch (err) {
-        // Restaurar sessão em caso de erro
-        if (currentSession?.session) {
-          await supabase.auth.setSession({
-            access_token: currentSession.session.access_token,
-            refresh_token: currentSession.session.refresh_token
-          });
-        }
-        throw err;
+      } else {
+        setErro('Senha incorreta');
       }
     } catch (error) {
       console.error('Erro ao verificar senha:', error);
