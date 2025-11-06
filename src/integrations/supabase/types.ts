@@ -933,11 +933,11 @@ export type Database = {
           categoria: string | null
           created_at: string | null
           created_by: string | null
+          custo_unitario: number
           descricao_produto: string | null
           id: string
           nome_produto: string
           peso_porta: number | null
-          preco_unitario: number
           quantidade: number
           setor_responsavel_producao:
             | Database["public"]["Enums"]["setor_producao"]
@@ -951,11 +951,11 @@ export type Database = {
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
+          custo_unitario?: number
           descricao_produto?: string | null
           id?: string
           nome_produto: string
           peso_porta?: number | null
-          preco_unitario?: number
           quantidade?: number
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
@@ -969,11 +969,11 @@ export type Database = {
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
+          custo_unitario?: number
           descricao_produto?: string | null
           id?: string
           nome_produto?: string
           peso_porta?: number | null
-          preco_unitario?: number
           quantidade?: number
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]

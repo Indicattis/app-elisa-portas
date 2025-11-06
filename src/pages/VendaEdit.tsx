@@ -145,7 +145,7 @@ export default function VendaEdit() {
         venda_id: id,
         tipo_produto: 'adicional',
         descricao: produtoEstoque.nome_produto,
-        valor_produto: produtoEstoque.preco_unitario,
+        valor_produto: produtoEstoque.custo_unitario,
         quantidade: 1,
         valor_pintura: 0,
         valor_instalacao: 0,
@@ -600,7 +600,7 @@ export default function VendaEdit() {
                         )}
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="outline" className="text-xs">
-                            R$ {produto.preco_unitario.toFixed(2)}
+                            R$ {produto.custo_unitario.toFixed(2)}
                           </Badge>
                           <Badge variant="secondary" className="text-xs">
                             {produto.quantidade} {produto.unidade}

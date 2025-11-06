@@ -37,7 +37,7 @@ export default function Estoque() {
     quantidade: 0,
     unidade: "UN",
     categoria: "geral",
-    preco_unitario: 0,
+    custo_unitario: 0,
     subcategoria_id: null as string | null,
     peso_porta: null as number | null,
     setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
@@ -61,7 +61,7 @@ export default function Estoque() {
       quantidade: 0, 
       unidade: "UN",
       categoria: "geral",
-      preco_unitario: 0,
+      custo_unitario: 0,
       subcategoria_id: null,
       peso_porta: null,
       setor_responsavel_producao: null,
@@ -257,12 +257,12 @@ export default function Estoque() {
                   />
                 </div>
                 <div>
-                  <Label>Preço Unitário</Label>
+                  <Label>Custo Unitário</Label>
                   <Input 
                     type="number"
                     step="0.01"
-                    value={formData.preco_unitario} 
-                    onChange={(e) => setFormData({...formData, preco_unitario: parseFloat(e.target.value) || 0})} 
+                    value={formData.custo_unitario} 
+                    onChange={(e) => setFormData({...formData, custo_unitario: parseFloat(e.target.value) || 0})} 
                   />
                 </div>
                 <Button onClick={handleSubmit} className="w-full">Adicionar</Button>
@@ -288,7 +288,7 @@ export default function Estoque() {
                 <TableHead>Peso Porta</TableHead>
                 <TableHead>Setor Produção</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
-                <TableHead className="text-right">Preço Unit.</TableHead>
+                <TableHead className="text-right">Custo Unit.</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -352,7 +352,7 @@ export default function Estoque() {
                   </TableCell>
                   <TableCell className="text-right">
                     <span className="font-medium">
-                      R$ {produto.preco_unitario.toFixed(2)}
+                      R$ {produto.custo_unitario.toFixed(2)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">

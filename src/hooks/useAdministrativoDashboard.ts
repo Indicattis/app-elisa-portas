@@ -26,7 +26,7 @@ export const useAdministrativoDashboard = () => {
         .eq('ativo', true);
 
       const totalItens = estoque?.reduce((sum, item) => sum + item.quantidade, 0) || 0;
-      const valorTotal = estoque?.reduce((sum, item) => sum + (item.quantidade * item.preco_unitario), 0) || 0;
+      const valorTotal = estoque?.reduce((sum, item) => sum + (item.quantidade * item.custo_unitario), 0) || 0;
       const estoqueBaixo = estoque?.filter(item => item.quantidade < 10).length || 0;
 
       // Movimentações (últimos 7 dias)

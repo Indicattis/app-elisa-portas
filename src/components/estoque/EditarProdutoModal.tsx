@@ -25,7 +25,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
     quantidade: 0,
     unidade: "UN",
     categoria: "geral",
-    preco_unitario: 0,
+    custo_unitario: 0,
     subcategoria_id: null as string | null,
     peso_porta: null as number | null,
     setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
@@ -39,7 +39,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
         quantidade: produto.quantidade,
         unidade: produto.unidade,
         categoria: produto.categoria,
-        preco_unitario: produto.preco_unitario,
+        custo_unitario: produto.custo_unitario,
         subcategoria_id: produto.subcategoria_id,
         peso_porta: produto.peso_porta,
         setor_responsavel_producao: produto.setor_responsavel_producao,
@@ -184,12 +184,12 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
             </div>
           </div>
           <div>
-            <Label>Preço Unitário</Label>
+            <Label>Custo Unitário</Label>
             <Input 
               type="number"
               step="0.01"
-              value={formData.preco_unitario} 
-              onChange={(e) => setFormData({...formData, preco_unitario: parseFloat(e.target.value) || 0})} 
+              value={formData.custo_unitario} 
+              onChange={(e) => setFormData({...formData, custo_unitario: parseFloat(e.target.value) || 0})} 
             />
           </div>
           <div className="flex gap-2">
