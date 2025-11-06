@@ -1999,11 +1999,13 @@ export type Database = {
           created_by: string | null
           data_conclusao: string | null
           data_inicio: string | null
+          em_backlog: boolean | null
           id: string
           numero_ordem: string
           observacoes: string | null
           pedido_id: string
           perfis_produzidos: Json | null
+          prioridade: number | null
           produtos: Json | null
           responsavel_id: string | null
           status: string
@@ -2016,11 +2018,13 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem: string
           observacoes?: string | null
           pedido_id: string
           perfis_produzidos?: Json | null
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
@@ -2033,11 +2037,13 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem?: string
           observacoes?: string | null
           pedido_id?: string
           perfis_produzidos?: Json | null
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
@@ -2062,10 +2068,12 @@ export type Database = {
           created_by: string | null
           data_conclusao: string | null
           data_inicio: string | null
+          em_backlog: boolean | null
           id: string
           numero_ordem: string
           observacoes: string | null
           pedido_id: string
+          prioridade: number | null
           produtos: Json | null
           responsavel_id: string | null
           status: string
@@ -2080,10 +2088,12 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem: string
           observacoes?: string | null
           pedido_id: string
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
@@ -2098,10 +2108,12 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem?: string
           observacoes?: string | null
           pedido_id?: string
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
@@ -2188,10 +2200,12 @@ export type Database = {
           created_by: string | null
           data_conclusao: string | null
           data_inicio: string | null
+          em_backlog: boolean | null
           id: string
           numero_ordem: string
           observacoes: string | null
           pedido_id: string
+          prioridade: number | null
           responsavel_id: string | null
           status: string
           tempo_conclusao_segundos: number | null
@@ -2203,10 +2217,12 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem: string
           observacoes?: string | null
           pedido_id: string
+          prioridade?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_conclusao_segundos?: number | null
@@ -2218,10 +2234,12 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem?: string
           observacoes?: string | null
           pedido_id?: string
+          prioridade?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_conclusao_segundos?: number | null
@@ -2272,11 +2290,13 @@ export type Database = {
           created_by: string | null
           data_conclusao: string | null
           data_inicio: string | null
+          em_backlog: boolean | null
           id: string
           materiais_separados: Json | null
           numero_ordem: string
           observacoes: string | null
           pedido_id: string
+          prioridade: number | null
           produtos: Json | null
           responsavel_id: string | null
           status: string
@@ -2289,11 +2309,13 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           materiais_separados?: Json | null
           numero_ordem: string
           observacoes?: string | null
           pedido_id: string
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
@@ -2306,11 +2328,13 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           materiais_separados?: Json | null
           numero_ordem?: string
           observacoes?: string | null
           pedido_id?: string
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
@@ -2334,10 +2358,12 @@ export type Database = {
           created_by: string | null
           data_conclusao: string | null
           data_inicio: string | null
+          em_backlog: boolean | null
           id: string
           numero_ordem: string
           observacoes: string | null
           pedido_id: string
+          prioridade: number | null
           produtos: Json | null
           responsavel_id: string | null
           status: string
@@ -2350,10 +2376,12 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem: string
           observacoes?: string | null
           pedido_id: string
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
@@ -2366,10 +2394,12 @@ export type Database = {
           created_by?: string | null
           data_conclusao?: string | null
           data_inicio?: string | null
+          em_backlog?: boolean | null
           id?: string
           numero_ordem?: string
           observacoes?: string | null
           pedido_id?: string
+          prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string

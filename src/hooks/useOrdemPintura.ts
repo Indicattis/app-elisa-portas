@@ -16,7 +16,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
       // Primeiro buscar as ordens
       const { data: ordensData, error: ordensError } = await supabase
         .from("ordens_pintura")
-        .select('*, capturada_em, tempo_conclusao_segundos')
+        .select('*, capturada_em, tempo_conclusao_segundos, em_backlog, prioridade')
+        .order('prioridade', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (ordensError) throw ordensError;
@@ -83,8 +84,17 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
     };
   }, [queryClient]);
 
-  // Filtrar ordens por status
-  const ordensParaPintar = ordens.filter((o: any) => o.status === 'pendente');
+  // Filtrar ordens por status e ordenar por backlog e prioridade
+  const ordensParaPintar = ordens
+    .filter((o: any) => o.status === 'pendente')
+    .sort((a: any, b: any) => {
+      // Ordens em backlog primeiro
+      if (a.em_backlog && !b.em_backlog) return -1;
+      if (!a.em_backlog && b.em_backlog) return 1;
+      // Depois por prioridade (maior primeiro)
+      return (b.prioridade || 0) - (a.prioridade || 0);
+    });
+  
   const ordensProntas = ordens.filter((o: any) => o.status === 'pronta');
 
   // Capturar ordem (atribuir responsável)

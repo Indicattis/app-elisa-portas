@@ -2,9 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, CheckCircle2, Clock, UserCheck, Timer } from "lucide-react";
+import { Package, CheckCircle2, Clock, UserCheck, Timer, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
+import { cn } from "@/lib/utils";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
@@ -26,6 +27,8 @@ interface Ordem {
   responsavel_id?: string;
   capturada_em?: string;
   tempo_conclusao_segundos?: number;
+  em_backlog?: boolean;
+  prioridade?: number;
   linhas?: LinhaOrdem[];
   pedido?: {
     cliente_nome: string;
@@ -69,17 +72,31 @@ export function ProducaoKanban({
     });
 
     return (
-      <Card key={ordem.id} className="hover:shadow-md transition-all">
+      <Card 
+        key={ordem.id} 
+        className={cn(
+          "hover:shadow-md transition-all",
+          ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
+        )}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-2">
             <div 
               className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
               onClick={() => onOrdemClick(ordem)}
             >
+              {ordem.em_backlog && (
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
+              )}
               <Package className="h-4 w-4 flex-shrink-0 text-primary" />
               <CardTitle className="text-sm font-semibold truncate">
                 {ordem.numero_ordem}
               </CardTitle>
+              {ordem.em_backlog && (
+                <Badge className="bg-red-500 text-white text-xs">
+                  BACKLOG
+                </Badge>
+              )}
             </div>
             
             {ordem.responsavel_id ? (

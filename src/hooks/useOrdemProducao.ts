@@ -25,6 +25,8 @@ interface Ordem {
   data_conclusao?: string;
   observacoes?: string;
   responsavel_id?: string;
+  em_backlog?: boolean;
+  prioridade?: number;
   linhas?: LinhaOrdem[];
   pedido?: {
     id: string;
@@ -62,6 +64,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           *,
           capturada_em,
           tempo_conclusao_segundos,
+          em_backlog,
+          prioridade,
           pedido:pedidos_producao!pedido_id(
             id,
             numero_pedido,
@@ -69,6 +73,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             venda_id
           )
         `)
+        .order('prioridade', { ascending: false })
         .order('created_at', { ascending: true });
       
       if (ordensError) throw ordensError;
@@ -322,8 +327,17 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
-  // Separar ordens por status
-  const ordensAFazer = ordens.filter(o => o.status === 'pendente');
+  // Separar ordens por status e ordenar por backlog e prioridade
+  const ordensAFazer = ordens
+    .filter(o => o.status === 'pendente')
+    .sort((a, b) => {
+      // Ordens em backlog primeiro
+      if (a.em_backlog && !b.em_backlog) return -1;
+      if (!a.em_backlog && b.em_backlog) return 1;
+      // Depois por prioridade (maior primeiro)
+      return (b.prioridade || 0) - (a.prioridade || 0);
+    });
+  
   const ordensConcluidas = ordens.filter(o => o.status === 'concluido');
 
   return {

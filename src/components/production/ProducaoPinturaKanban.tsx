@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer } from "lucide-react";
+import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
@@ -13,6 +13,8 @@ interface Ordem {
   responsavel_id?: string;
   capturada_em?: string;
   tempo_conclusao_segundos?: number;
+  em_backlog?: boolean;
+  prioridade?: number;
   pedido?: {
     cliente_nome: string;
   };
@@ -55,16 +57,27 @@ export function ProducaoPinturaKanban({
     return (
       <Card 
         key={ordem.id} 
-        className="cursor-pointer hover:shadow-md transition-shadow"
+        className={cn(
+          "cursor-pointer hover:shadow-md transition-shadow",
+          ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
+        )}
         onClick={() => onOrdemClick(ordem)}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
+                {ordem.em_backlog && (
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
+                )}
                 <CardTitle className="text-base font-semibold truncate">
                   {ordem.numero_ordem}
                 </CardTitle>
+                {ordem.em_backlog && (
+                  <Badge className="bg-red-500 text-white text-xs">
+                    BACKLOG
+                  </Badge>
+                )}
                 {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
                   <Badge variant="outline" className="gap-1 flex-shrink-0">
                     <Timer className="h-3 w-3" />
