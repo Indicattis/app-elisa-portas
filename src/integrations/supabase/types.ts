@@ -2710,6 +2710,7 @@ export type Database = {
           created_by: string | null
           data_carregamento: string | null
           data_entrega: string | null
+          em_backlog: boolean | null
           endereco_bairro: string | null
           endereco_cep: string | null
           endereco_cidade: string | null
@@ -2717,9 +2718,11 @@ export type Database = {
           endereco_numero: string | null
           endereco_rua: string | null
           etapa_atual: string | null
+          etapa_origem_backlog: string | null
           forma_pagamento: string | null
           id: string
           modalidade_instalacao: string | null
+          motivo_backlog: string | null
           numero_parcelas: number | null
           numero_pedido: string
           observacoes: string | null
@@ -2751,6 +2754,7 @@ export type Database = {
           created_by?: string | null
           data_carregamento?: string | null
           data_entrega?: string | null
+          em_backlog?: boolean | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
           endereco_cidade?: string | null
@@ -2758,9 +2762,11 @@ export type Database = {
           endereco_numero?: string | null
           endereco_rua?: string | null
           etapa_atual?: string | null
+          etapa_origem_backlog?: string | null
           forma_pagamento?: string | null
           id?: string
           modalidade_instalacao?: string | null
+          motivo_backlog?: string | null
           numero_parcelas?: number | null
           numero_pedido: string
           observacoes?: string | null
@@ -2792,6 +2798,7 @@ export type Database = {
           created_by?: string | null
           data_carregamento?: string | null
           data_entrega?: string | null
+          em_backlog?: boolean | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
           endereco_cidade?: string | null
@@ -2799,9 +2806,11 @@ export type Database = {
           endereco_numero?: string | null
           endereco_rua?: string | null
           etapa_atual?: string | null
+          etapa_origem_backlog?: string | null
           forma_pagamento?: string | null
           id?: string
           modalidade_instalacao?: string | null
+          motivo_backlog?: string | null
           numero_parcelas?: number | null
           numero_pedido?: string
           observacoes?: string | null
@@ -3930,6 +3939,14 @@ export type Database = {
       }
       resetar_pedido_para_aberto: {
         Args: { p_pedido_id: string }
+        Returns: undefined
+      }
+      retroceder_pedido_para_etapa: {
+        Args: {
+          p_etapa_destino: string
+          p_motivo_backlog: string
+          p_pedido_id: string
+        }
         Returns: undefined
       }
       verificar_ordem_pintura_concluida: {

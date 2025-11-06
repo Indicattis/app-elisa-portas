@@ -658,9 +658,13 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     },
   });
 
-  // Resetar pedido para etapa inicial (apenas admins)
+  // Retroceder pedido para qualquer etapa (backlog)
   const retrocederEtapa = useMutation({
-    mutationFn: async (pedidoId: string) => {
+    mutationFn: async ({ pedidoId, etapaDestino, motivo }: { 
+      pedidoId: string; 
+      etapaDestino: EtapaPedido; 
+      motivo: string;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
@@ -672,38 +676,34 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         .single();
 
       if (adminError || adminData?.role !== 'administrador') {
-        throw new Error('Apenas administradores podem resetar pedidos');
+        throw new Error('Apenas administradores podem retroceder pedidos');
       }
 
-      // Chamar função RPC que faz todo o reset
-      const { error } = await supabase.rpc('resetar_pedido_para_aberto', {
-        p_pedido_id: pedidoId
+      // Chamar função RPC que faz o retrocesso
+      const { error } = await supabase.rpc('retroceder_pedido_para_etapa', {
+        p_pedido_id: pedidoId,
+        p_etapa_destino: etapaDestino,
+        p_motivo_backlog: motivo
       });
 
       if (error) throw error;
 
-      return { etapaAtualNome: 'resetado', etapaAnterior: 'aberto' };
+      return { etapaDestino };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
       queryClient.invalidateQueries({ queryKey: ['pedido-preparacao'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-soldagem'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-perfiladeira'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-separacao'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-qualidade'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
       toast({
-        title: "Pedido Resetado",
-        description: "O pedido foi completamente resetado para a etapa Aberto"
+        title: "Pedido Retornado",
+        description: `O pedido foi marcado como BACKLOG e retornou para: ${ETAPAS_CONFIG[data.etapaDestino].label}`
       });
     },
     onError: (error: any) => {
-      console.error('Erro ao resetar pedido:', error);
+      console.error('Erro ao retroceder pedido:', error);
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível resetar o pedido",
+        description: error.message || "Não foi possível retroceder o pedido",
         variant: "destructive"
       });
     }

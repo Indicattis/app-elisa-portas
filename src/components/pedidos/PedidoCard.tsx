@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, ExternalLink, Paintbrush, Truck, Hammer } from "lucide-react";
+import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, ExternalLink, Paintbrush, Truck, Hammer, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 interface PedidoCardProps {
   pedido: any;
   onMoverEtapa?: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
-  onRetrocederEtapa?: (pedidoId: string) => void;
+  onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onMoverPrioridade?: (pedidoId: string, direcao: 'frente' | 'tras') => void;
   isAberto?: boolean;
   isDragging?: boolean;
@@ -151,6 +151,10 @@ export function PedidoCard({
 
   const carregamentoConcluido = carregamentoCompleto?.concluido || false;
   const temDataCarregamento = carregamentoCompleto?.temData || false;
+
+  // Verificar se está em backlog
+  const emBacklog = pedido.em_backlog === true;
+  const motivoBacklog = pedido.motivo_backlog;
 
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
@@ -391,7 +395,8 @@ export function PedidoCard({
           className={cn(
             "hover:shadow-md transition-all cursor-pointer",
             isDragging && "opacity-50 cursor-grabbing",
-            isSelecionado && "ring-2 ring-primary shadow-lg"
+            isSelecionado && "ring-2 ring-primary shadow-lg",
+            emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
           )}
           onClick={() => onSelecionarPedido?.(pedido)}
         >
@@ -403,6 +408,10 @@ export function PedidoCard({
                 </div>
               )}
               
+              {emBacklog && (
+                <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 animate-pulse" />
+              )}
+
               {posicao && (
                 <Badge variant="outline" className={cn("text-xs px-2 py-0.5 font-semibold flex-shrink-0", getBadgeColor())}>
                   #{posicao}
@@ -410,7 +419,10 @@ export function PedidoCard({
               )}
 
               {config && (
-                <Badge className={`${config.color} text-white text-xs px-2 py-0.5 flex-shrink-0`}>
+                <Badge className={cn(
+                  "text-white text-xs px-2 py-0.5 flex-shrink-0",
+                  emBacklog ? "bg-red-500" : config.color
+                )}>
                   {config.label}
                 </Badge>
               )}
@@ -678,12 +690,12 @@ export function PedidoCard({
           onAvancar={onMoverEtapa || (() => {})}
         />
 
-        <RetrocederEtapaModal
-          pedido={pedido}
-          open={showRetrocederEtapa}
-          onOpenChange={setShowRetrocederEtapa}
-          onConfirmar={onRetrocederEtapa || (() => {})}
-        />
+      <RetrocederEtapaModal
+        pedido={pedido}
+        open={showRetrocederEtapa}
+        onOpenChange={setShowRetrocederEtapa}
+        onConfirmar={onRetrocederEtapa || (() => {})}
+      />
 
         <AvancarQualidadeModal
           open={showAvancarQualidade}
@@ -733,7 +745,8 @@ export function PedidoCard({
         className={cn(
           "hover:shadow-md transition-all cursor-pointer",
           isDragging && "opacity-50 cursor-grabbing",
-          isSelecionado && "ring-2 ring-primary shadow-lg"
+          isSelecionado && "ring-2 ring-primary shadow-lg",
+          emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
         )}
         onClick={() => onSelecionarPedido?.(pedido)}
       >
@@ -746,8 +759,14 @@ export function PedidoCard({
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
                 </div>
               )}
+              {emBacklog && (
+                <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 animate-pulse" />
+              )}
               {config && (
-                <Badge className={`${config.color} text-white text-[10px] px-1.5 py-0.5`}>
+                <Badge className={cn(
+                  "text-white text-[10px] px-1.5 py-0.5",
+                  emBacklog ? "bg-red-500" : config.color
+                )}>
                   {config.label}
                 </Badge>
               )}

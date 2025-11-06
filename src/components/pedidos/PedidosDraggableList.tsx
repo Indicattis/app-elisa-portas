@@ -26,7 +26,7 @@ interface PedidosDraggableListProps {
   pedidoSelecionado?: any | null;
   onSelecionarPedido?: (pedido: any) => void;
   onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
-  onRetrocederEtapa?: (pedidoId: string) => void;
+  onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
 }
@@ -41,7 +41,7 @@ interface SortableItemProps {
   isSelecionado?: boolean;
   onSelecionarPedido?: (pedido: any) => void;
   onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
-  onRetrocederEtapa?: (pedidoId: string) => void;
+  onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
 }
 

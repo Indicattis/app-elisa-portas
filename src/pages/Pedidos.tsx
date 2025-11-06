@@ -39,8 +39,8 @@ export default function Pedidos() {
     });
   };
 
-  const handleRetrocederEtapa = async (pedidoId: string) => {
-    await retrocederEtapa.mutateAsync(pedidoId);
+  const handleRetrocederEtapa = (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => {
+    retrocederEtapa.mutate({ pedidoId, etapaDestino, motivo });
   };
 
   const handleReorganizar = async (atualizacoes: { id: string; prioridade: number }[]) => {

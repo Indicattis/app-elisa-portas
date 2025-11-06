@@ -9,15 +9,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { useState } from "react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
-import { ETAPAS_CONFIG, getEtapaAnterior } from "@/types/pedidoEtapa";
+import { ETAPAS_CONFIG, ORDEM_ETAPAS } from "@/types/pedidoEtapa";
 
 interface RetrocederEtapaModalProps {
   pedido: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirmar: (pedidoId: string) => void;
+  onConfirmar: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
 }
 
 export function RetrocederEtapaModal({
@@ -26,18 +30,25 @@ export function RetrocederEtapaModal({
   onOpenChange,
   onConfirmar
 }: RetrocederEtapaModalProps) {
-  const etapaAtual = pedido.etapa_atual as EtapaPedido;
-  const etapaAnterior = getEtapaAnterior(etapaAtual);
-  const configAtual = ETAPAS_CONFIG[etapaAtual];
-  const configAnterior = etapaAnterior ? ETAPAS_CONFIG[etapaAnterior] : null;
+  const [etapaDestino, setEtapaDestino] = useState<EtapaPedido>('aberto');
+  const [motivo, setMotivo] = useState('');
 
-  if (!etapaAnterior || !configAnterior) {
-    return null;
-  }
+  const etapaAtual = pedido.etapa_atual as EtapaPedido;
+  const configAtual = ETAPAS_CONFIG[etapaAtual];
+  const configDestino = ETAPAS_CONFIG[etapaDestino];
+
+  // Filtrar apenas etapas anteriores à atual
+  const indiceAtual = ORDEM_ETAPAS.indexOf(etapaAtual);
+  const etapasDisponiveis = ORDEM_ETAPAS.slice(0, indiceAtual);
 
   const handleConfirmar = () => {
-    onConfirmar(pedido.id);
+    if (!motivo.trim()) {
+      return;
+    }
+    onConfirmar(pedido.id, etapaDestino, motivo);
     onOpenChange(false);
+    setMotivo('');
+    setEtapaDestino('aberto');
   };
 
   return (
@@ -46,41 +57,67 @@ export function RetrocederEtapaModal({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
-            Resetar Pedido
+            Retornar Pedido (Backlog)
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <div className="space-y-3 pt-2">
+            <div className="space-y-4 pt-2">
               <p className="text-sm">
                 {pedido.numero_pedido || `Pedido #${pedido.id.slice(0, 8)}`}
               </p>
 
               {/* Etapas */}
-              <div className="space-y-2 border-t pt-3">
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Etapa Atual:</span>
                   <Badge className={`${configAtual.color} text-white text-xs`}>
                     {configAtual.label}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Será resetado para:</span>
-                  <Badge className="bg-gray-500 text-white text-xs">
-                    Aberto
-                  </Badge>
+
+                {/* Seleção de Etapa Destino */}
+                <div className="space-y-2">
+                  <Label htmlFor="etapa-destino" className="text-sm font-medium">
+                    Retornar para etapa:
+                  </Label>
+                  <Select value={etapaDestino} onValueChange={(value) => setEtapaDestino(value as EtapaPedido)}>
+                    <SelectTrigger id="etapa-destino">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {etapasDisponiveis.map((etapa) => (
+                        <SelectItem key={etapa} value={etapa}>
+                          {ETAPAS_CONFIG[etapa].label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Justificativa */}
+                <div className="space-y-2">
+                  <Label htmlFor="motivo" className="text-sm font-medium">
+                    Justificativa do retorno: *
+                  </Label>
+                  <Textarea
+                    id="motivo"
+                    placeholder="Descreva o motivo do retorno do pedido..."
+                    value={motivo}
+                    onChange={(e) => setMotivo(e.target.value)}
+                    rows={3}
+                    className="resize-none"
+                  />
                 </div>
               </div>
 
               {/* Aviso */}
-              <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3">
-                <p className="text-xs text-red-700 dark:text-red-300 font-semibold mb-2">
-                  ⚠️ ATENÇÃO: Esta ação irá RESETAR COMPLETAMENTE o pedido!
+              <div className="rounded-md bg-orange-500/10 border border-orange-500/20 p-3">
+                <p className="text-xs text-orange-700 dark:text-orange-300 font-semibold mb-2">
+                  ⚠️ Este pedido será marcado como BACKLOG:
                 </p>
-                <ul className="text-xs text-red-600 dark:text-red-400 space-y-1 list-disc list-inside">
-                  <li>O pedido voltará para a etapa "Aberto"</li>
-                  <li>Todas as linhas de produção serão desmarcadas</li>
-                  <li>Todos os checkboxes de qualidade serão desmarcados</li>
-                  <li>Todas as ordens de produção serão resetadas</li>
-                  <li>As linhas cadastradas no pedido serão mantidas</li>
+                <ul className="text-xs text-orange-600 dark:text-orange-400 space-y-1 list-disc list-inside">
+                  <li>Terá prioridade máxima na lista</li>
+                  <li>Ficará com borda e indicador vermelho</li>
+                  <li>Será posicionado no topo da etapa</li>
                 </ul>
               </div>
             </div>
@@ -88,9 +125,13 @@ export function RetrocederEtapaModal({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirmar} className="bg-red-600 hover:bg-red-700">
+          <AlertDialogAction 
+            onClick={handleConfirmar} 
+            disabled={!motivo.trim()}
+            className="bg-red-600 hover:bg-red-700"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Resetar para Início
+            Confirmar Retorno
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
