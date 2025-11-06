@@ -11,30 +11,22 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { InstalacaoCadastrada } from "@/hooks/useInstalacoesCadastradas";
 
-interface Entrega {
-  id: string;
-  nome_cliente: string;
-  pedido_id?: string;
-  pedido?: {
-    numero_pedido: string;
-  };
-}
-
-interface ConfirmarCarregamentoSheetProps {
-  entrega: Entrega | null;
+interface ConfirmarCarregamentoInstalacaoSheetProps {
+  instalacao: InstalacaoCadastrada | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
 
-export function ConfirmarCarregamentoSheet({
-  entrega,
+export function ConfirmarCarregamentoInstalacaoSheet({
+  instalacao,
   open,
   onOpenChange,
   onSuccess,
-}: ConfirmarCarregamentoSheetProps) {
-  const { linhas, isLoading, atualizarCheckbox } = usePedidoLinhas(entrega?.pedido_id || "");
+}: ConfirmarCarregamentoInstalacaoSheetProps) {
+  const { linhas, isLoading, atualizarCheckbox } = usePedidoLinhas(instalacao?.pedido_id || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dataCarregamento, setDataCarregamento] = useState<string>(format(new Date(), "yyyy-MM-dd"));
 
@@ -73,7 +65,7 @@ export function ConfirmarCarregamentoSheet({
       const { error } = await supabase
         .from("pedidos_producao")
         .update({ data_carregamento: dataCarregamento })
-        .eq("id", entrega?.pedido_id);
+        .eq("id", instalacao?.pedido_id);
 
       if (error) throw error;
 
@@ -86,7 +78,7 @@ export function ConfirmarCarregamentoSheet({
     }
   };
 
-  if (!entrega) return null;
+  if (!instalacao) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -102,11 +94,11 @@ export function ConfirmarCarregamentoSheet({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Cliente:</span>
-              <span className="font-medium">{entrega.nome_cliente}</span>
+              <span className="font-medium">{instalacao.nome_cliente}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Pedido:</span>
-              <span className="font-medium">{entrega.pedido?.numero_pedido || "N/A"}</span>
+              <span className="font-medium">{instalacao.pedido?.numero_pedido || "N/A"}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progresso:</span>
@@ -185,7 +177,7 @@ export function ConfirmarCarregamentoSheet({
             <div className="flex items-start gap-2 rounded-md bg-warning/10 border border-warning p-3">
               <span className="text-warning">⚠</span>
               <p className="text-sm text-warning">
-                Marque todos os itens antes de concluir a entrega
+                Marque todos os itens antes de concluir o carregamento
               </p>
             </div>
           )}
@@ -212,7 +204,7 @@ export function ConfirmarCarregamentoSheet({
               ) : (
                 <>
                   <PackageCheck className="mr-2 h-4 w-4" />
-                  Concluir Entrega
+                  Concluir Carregamento
                 </>
               )}
             </Button>

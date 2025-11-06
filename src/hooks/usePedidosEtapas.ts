@@ -245,6 +245,21 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         }
       }
 
+      // Se está em aguardando_coleta ou aguardando_instalacao, validar data_carregamento
+      if (etapaAtualNome === 'aguardando_coleta' || etapaAtualNome === 'aguardando_instalacao') {
+        const { data: pedidoData, error: pedidoDataError } = await supabase
+          .from('pedidos_producao')
+          .select('data_carregamento')
+          .eq('id', pedidoId)
+          .single();
+        
+        if (pedidoDataError) throw pedidoDataError;
+        
+        if (!pedidoData?.data_carregamento) {
+          throw new Error('Informe a data de carregamento antes de finalizar o pedido');
+        }
+      }
+
       // Validar checkboxes obrigatórios (apenas se não for avanço automático)
       // Para etapa "em_producao", não validar checkboxes (apenas ordens concluídas)
       const etapaAtual = await getEtapaAtual(pedidoId);

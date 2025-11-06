@@ -118,24 +118,39 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'aguardando_pintura',
   });
 
-  // Verificar se todos os itens do carregamento foram marcados
-  const { data: carregamentoConcluido } = useQuery({
+  // Verificar se todos os itens do carregamento foram marcados e se tem data
+  const { data: carregamentoCompleto } = useQuery({
     queryKey: ['pedido-carregamento', pedido.id],
     queryFn: async () => {
       if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'aguardando_instalacao') {
-        return false;
+        return { concluido: false, temData: true };
       }
       
+      // Verificar se tem data_carregamento
+      const { data: pedidoData } = await supabase
+        .from('pedidos_producao')
+        .select('data_carregamento')
+        .eq('id', pedido.id)
+        .single();
+      
+      const temData = !!pedidoData?.data_carregamento;
+      
+      // Verificar se todos os itens estão marcados
       const { data: linhas } = await supabase
         .from('pedido_linhas')
         .select('check_coleta')
         .eq('pedido_id', pedido.id);
       
-      if (!linhas || linhas.length === 0) return false;
-      return linhas.every(l => l.check_coleta === true);
+      if (!linhas || linhas.length === 0) return { concluido: false, temData };
+      const todosMarcados = linhas.every(l => l.check_coleta === true);
+      
+      return { concluido: todosMarcados && temData, temData };
     },
     enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'aguardando_instalacao',
   });
+
+  const carregamentoConcluido = carregamentoCompleto?.concluido || false;
+  const temDataCarregamento = carregamentoCompleto?.temData || false;
 
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
@@ -609,15 +624,32 @@ export function PedidoCard({
                     Avançar
                   </Button>
                 ) : etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao' ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowCarregamento(true)}
-                    className="ml-2 flex-shrink-0"
-                  >
-                    <Package className="h-3.5 w-3.5 mr-2" />
-                    Carregar
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowCarregamento(true)}
+                      className="ml-2 flex-shrink-0"
+                    >
+                      <Package className="h-3.5 w-3.5 mr-2" />
+                      Carregar
+                    </Button>
+                    {carregamentoConcluido && (
+                      <Button
+                        size="sm"
+                        onClick={() => setShowConfirmarAvanco(true)}
+                        className="ml-2"
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                        Finalizar
+                      </Button>
+                    )}
+                    {!temDataCarregamento && (
+                      <span className="ml-2 text-xs text-warning">
+                        Defina data de carregamento
+                      </span>
+                    )}
+                  </>
                 ) : proximaEtapa && etapaAtual !== 'finalizado' && (
                   <Button
                     size="sm"
@@ -983,17 +1015,34 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5 mr-2" />
                   Avançar
                 </Button>
-              ) : etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao' ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowCarregamento(true)}
-                >
-                  <Package className="h-3.5 w-3.5 mr-2" />
-                  Carregar
-                </Button>
-              ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
+                ) : etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao' ? (
+                  <div className="flex flex-col gap-2 w-full">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowCarregamento(true)}
+                    >
+                      <Package className="h-3.5 w-3.5 mr-2" />
+                      Carregar
+                    </Button>
+                    {carregamentoConcluido && (
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setShowConfirmarAvanco(true)}
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                        Finalizar
+                      </Button>
+                    )}
+                    {!temDataCarregamento && (
+                      <span className="text-xs text-warning text-center">
+                        Defina data de carregamento
+                      </span>
+                    )}
+                  </div>
+                ) : proximaEtapa && etapaAtual !== 'finalizado' ? (
                 <Button
                   size="sm"
                   className="w-full"

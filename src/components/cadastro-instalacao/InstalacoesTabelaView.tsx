@@ -58,6 +58,7 @@ import { AlterarStatusDialog } from './AlterarStatusDialog';
 import { DetalhesInstalacaoDialog } from './DetalhesInstalacaoDialog';
 import { DataProducaoModal } from './DataProducaoModal';
 import { ResponsavelInstalacaoModal } from './ResponsavelInstalacaoModal';
+import { ConfirmarCarregamentoInstalacaoSheet } from './ConfirmarCarregamentoInstalacaoSheet';
 import { ESTADOS_BRASIL } from '@/utils/estadosCidades';
 import { baixarInstalacoesPDF } from '@/utils/instalacoesPDFGenerator';
 import { toast } from 'sonner';
@@ -110,6 +111,8 @@ export const InstalacoesTabelaView = ({
 
 
   const [confirmingInstalacaoId, setConfirmingInstalacaoId] = useState<string | null>(null);
+  const [showCarregamentoSheet, setShowCarregamentoSheet] = useState(false);
+  const [instalacaoCarregamento, setInstalacaoCarregamento] = useState<InstalacaoCadastrada | null>(null);
 
   const handleConcluirInstalacao = async () => {
     if (!confirmingInstalacaoId) return;
@@ -886,6 +889,16 @@ export const InstalacoesTabelaView = ({
           instalacaoNome={instalacaoParaAlterarStatus.nome_cliente}
         />
       )}
+
+      <ConfirmarCarregamentoInstalacaoSheet
+        instalacao={instalacaoCarregamento}
+        open={showCarregamentoSheet}
+        onOpenChange={setShowCarregamentoSheet}
+        onSuccess={() => {
+          setShowCarregamentoSheet(false);
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };

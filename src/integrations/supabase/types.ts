@@ -2708,6 +2708,7 @@ export type Database = {
           cliente_telefone: string | null
           created_at: string
           created_by: string | null
+          data_carregamento: string | null
           data_entrega: string | null
           endereco_bairro: string | null
           endereco_cep: string | null
@@ -2748,6 +2749,7 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           created_by?: string | null
+          data_carregamento?: string | null
           data_entrega?: string | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
@@ -2788,6 +2790,7 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           created_by?: string | null
+          data_carregamento?: string | null
           data_entrega?: string | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
