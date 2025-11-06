@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ProdutoVenda } from '@/hooks/useVendas';
-import { calcularLimitesDesconto, calcularTotalVenda, LIMITE_MAXIMO_ABSOLUTO } from '@/utils/descontoVendasRules';
+import { calcularLimitesDesconto, calcularTotalVenda } from '@/utils/descontoVendasRules';
 import { Percent, DollarSign, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface DescontoVendaModalProps {
@@ -80,10 +80,10 @@ export function DescontoVendaModal({
   const novoPercentualDesconto = totalVenda > 0 ? (novoDescontoTotal / totalVenda) * 100 : 0;
 
   // Determinar status do desconto
-  const dentroDoLimite = novoPercentualDesconto <= limites.limiteTotal;
-  const requerSenhaResponsavel = novoPercentualDesconto > limites.limiteTotal && novoPercentualDesconto <= 15;
-  const requerSenhaMaster = novoPercentualDesconto > 15 && novoPercentualDesconto <= LIMITE_MAXIMO_ABSOLUTO;
-  const excedeLimite = novoPercentualDesconto > LIMITE_MAXIMO_ABSOLUTO;
+  const excedente = novoPercentualDesconto - limites.limiteTotal;
+  const dentroDoLimite = excedente <= 0;
+  const requerSenhaResponsavel = excedente > 0 && excedente <= 5;
+  const requerSenhaMaster = excedente > 5;
 
   const handleAplicar = () => {
     if (produtosSelecionados.every(sel => !sel)) {
@@ -91,11 +91,6 @@ export function DescontoVendaModal({
     }
 
     if (valorDescontoNumerico <= 0) {
-      return;
-    }
-
-    // Bloquear descontos acima de 20%
-    if (excedeLimite) {
       return;
     }
 
@@ -168,7 +163,7 @@ export function DescontoVendaModal({
               <p className="text-sm text-muted-foreground">Desconto Atual</p>
               <p className="text-2xl font-bold">{percentualDescontoAtual.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground">
-                Limite: {limites.limiteTotal}% | Com senha: até {LIMITE_MAXIMO_ABSOLUTO}%
+                Limite: {limites.limiteTotal}% | Com senha: sem limite
               </p>
             </div>
           </div>
@@ -285,7 +280,6 @@ export function DescontoVendaModal({
                     {dentroDoLimite && <Badge className="bg-green-500">Dentro do limite</Badge>}
                     {requerSenhaResponsavel && <Badge className="bg-amber-500">Requer senha do responsável</Badge>}
                     {requerSenhaMaster && <Badge className="bg-orange-500">Requer senha master</Badge>}
-                    {excedeLimite && <Badge variant="destructive">Excede limite de {LIMITE_MAXIMO_ABSOLUTO}%</Badge>}
                   </div>
                 </div>
               </div>
@@ -306,16 +300,7 @@ export function DescontoVendaModal({
             <Alert className="bg-orange-500/10 border-orange-500/20">
               <AlertTriangle className="h-4 w-4 text-orange-600" />
               <AlertDescription className="text-orange-900">
-                Este desconto excede 15%. Será necessária autorização com senha master ao criar a venda.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {excedeLimite && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                O desconto não pode exceder {LIMITE_MAXIMO_ABSOLUTO}% do valor total da venda.
+                Este desconto excede o limite em mais de 5%. Será necessária autorização com senha master ao criar a venda.
               </AlertDescription>
             </Alert>
           )}
@@ -329,8 +314,7 @@ export function DescontoVendaModal({
               onClick={handleAplicar}
               disabled={
                 !produtosSelecionados.some(sel => sel) ||
-                valorDescontoNumerico <= 0 ||
-                excedeLimite
+                valorDescontoNumerico <= 0
               }
             >
               Aplicar Desconto

@@ -97,8 +97,8 @@ export function validarDesconto(
   
   const excedente = percentualDesconto - limites.limiteTotal;
   const dentroDoLimite = excedente <= 0;
-  const requerSenha = excedente > 0 && percentualDesconto <= LIMITE_MAXIMO_ABSOLUTO;
-  const excedeLimiteMaximo = percentualDesconto > LIMITE_MAXIMO_ABSOLUTO;
+  const requerSenha = excedente > 0;
+  const excedeLimiteMaximo = false; // Sem limite máximo
 
   return {
     totalVenda,
@@ -131,11 +131,6 @@ export function formatarDesconto(
 export const RESPONSAVEL_SETOR_ID = 'cff6be68-3bc3-4d62-98e4-8eb9101415c6';
 
 /**
- * Limite máximo absoluto de desconto (com senha master)
- */
-export const LIMITE_MAXIMO_ABSOLUTO = 20;
-
-/**
  * Determina o tipo de autorização necessária baseado no desconto
  */
 export function getTipoAutorizacaoNecessaria(
@@ -143,11 +138,6 @@ export function getTipoAutorizacaoNecessaria(
 ): 'responsavel_setor' | 'master' | null {
   // Dentro do limite - não requer senha
   if (validacao.dentroDoLimite) {
-    return null;
-  }
-  
-  // Excede limite máximo absoluto - não permitido
-  if (validacao.excedeLimiteMaximo) {
     return null;
   }
   

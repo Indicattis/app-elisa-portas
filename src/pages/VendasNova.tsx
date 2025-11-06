@@ -26,7 +26,7 @@ import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
-import { validarDesconto, getTipoAutorizacaoNecessaria, LIMITE_MAXIMO_ABSOLUTO } from '@/utils/descontoVendasRules';
+import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Percent } from 'lucide-react';
@@ -243,16 +243,6 @@ export default function VendasNova() {
       formData.forma_pagamento,
       formData.venda_presencial
     );
-
-    // Verificar se excede limite máximo absoluto (20%)
-    if (validacao.excedeLimiteMaximo) {
-      toast({
-        variant: 'destructive',
-        title: 'Desconto não permitido',
-        description: `O desconto de ${validacao.percentualDesconto.toFixed(1)}% excede o limite máximo de ${LIMITE_MAXIMO_ABSOLUTO}%.`
-      });
-      return;
-    }
 
     // Verificar se precisa autorização
     const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
