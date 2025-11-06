@@ -102,30 +102,32 @@ export function ProdutoVendaForm({
     }
   });
 
-  // Buscar acessórios do estoque
+  // Buscar acessórios do catálogo de vendas
   const { data: acessorios } = useQuery({
-    queryKey: ['estoque-acessorios'],
+    queryKey: ['catalogo-acessorios'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('estoque')
+        .from('vendas_catalogo')
         .select('*')
         .eq('ativo', true)
         .eq('categoria', 'acessório')
+        .gt('quantidade', 0)
         .order('nome_produto');
       if (error) throw error;
       return data;
     }
   });
 
-  // Buscar adicionais do estoque
+  // Buscar adicionais do catálogo de vendas
   const { data: adicionais } = useQuery({
-    queryKey: ['estoque-adicionais'],
+    queryKey: ['catalogo-adicionais'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('estoque')
+        .from('vendas_catalogo')
         .select('*')
         .eq('ativo', true)
         .eq('categoria', 'adicional')
+        .gt('quantidade', 0)
         .order('nome_produto');
       if (error) throw error;
       return data;
@@ -294,7 +296,7 @@ export function ProdutoVendaForm({
         ...prev,
         tipo_produto: 'acessorio',
         descricao: acessorio.nome_produto,
-        valor_produto: Number(acessorio.preco_unitario),
+        valor_produto: Number(acessorio.preco_venda),
         estoque_id: acessorio.id
       }));
     }
@@ -307,7 +309,7 @@ export function ProdutoVendaForm({
         ...prev,
         tipo_produto: 'adicional',
         descricao: adicional.nome_produto,
-        valor_produto: Number(adicional.preco_unitario),
+        valor_produto: Number(adicional.preco_venda),
         estoque_id: adicional.id
       }));
     }
@@ -614,7 +616,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {acessorios?.map((acessorio) => (
                     <SelectItem key={acessorio.id} value={acessorio.id}>
-                      {acessorio.nome_produto} - R$ {Number(acessorio.preco_unitario).toFixed(2)}
+                      {acessorio.nome_produto} - R$ {Number(acessorio.preco_venda).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -636,7 +638,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {adicionais?.map((adicional) => (
                     <SelectItem key={adicional.id} value={adicional.id}>
-                      {adicional.nome_produto} - R$ {Number(adicional.preco_unitario).toFixed(2)}
+                      {adicional.nome_produto} - R$ {Number(adicional.preco_venda).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>

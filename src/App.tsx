@@ -79,6 +79,7 @@ import Compras from "./pages/Compras";
 import Fornecedores from "./pages/Fornecedores";
 import RequisicoesCompra from "./pages/RequisicoesCompra";
 import Estoque from "./pages/Estoque";
+import VendasCatalogo from "./pages/VendasCatalogo";
 import RHAdmin from "./pages/RHAdmin";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
@@ -908,6 +909,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Estoque />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vendas-catalogo"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <VendasCatalogo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

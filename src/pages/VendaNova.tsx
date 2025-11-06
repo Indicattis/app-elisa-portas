@@ -84,14 +84,16 @@ export default function VendaNova() {
     }
   };
 
+  // Buscar produtos do catálogo de vendas
   const { data: produtosAvulsos = [] } = useQuery({
-    queryKey: ['produtos-comercializaveis'],
+    queryKey: ['vendas-catalogo-disponiveis'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('estoque')
+        .from('vendas_catalogo')
         .select('*')
         .eq('ativo', true)
-        .eq('comercializado_individualmente', true)
+        .gt('quantidade', 0) // Apenas produtos disponíveis
+        .order('destaque', { ascending: false })
         .order('nome_produto');
       
       if (error) throw error;
@@ -544,7 +546,7 @@ export default function VendaNova() {
                             )}
                             <div className="flex items-center gap-2 mt-2">
                               <Badge variant="outline" className="text-xs">
-                                R$ {produto.preco_unitario.toFixed(2)}
+                                R$ {produto.preco_venda.toFixed(2)}
                               </Badge>
                               <Badge variant="secondary" className="text-xs">
                                 {produto.quantidade} {produto.unidade}
