@@ -282,12 +282,12 @@ export default function VendasCatalogo() {
             onChange={(e) => setBusca(e.target.value)}
           />
         </div>
-        <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
+        <Select value={categoriaFiltro || "todas"} onValueChange={(value) => setCategoriaFiltro(value === "todas" ? "" : value)}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Todas as categorias" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas</SelectItem>
+            <SelectItem value="todas">Todas</SelectItem>
             {categorias.map((cat) => (
               <SelectItem key={cat.id} value={cat.nome.toLowerCase()}>
                 {cat.nome}
