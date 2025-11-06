@@ -18,7 +18,7 @@ export function useLiderVendas() {
         .from("setores_lideres")
         .select("lider_id")
         .eq("setor", "vendas")
-        .single();
+        .maybeSingle();
 
       if (setorError) {
         console.error("Erro ao buscar líder de vendas:", setorError);
@@ -36,7 +36,7 @@ export function useLiderVendas() {
         .select("user_id, nome, email, role, foto_perfil_url")
         .eq("user_id", setorLider.lider_id)
         .eq("ativo", true)
-        .single();
+        .maybeSingle();
 
       if (usuarioError) {
         console.error("Erro ao buscar dados do líder:", usuarioError);
