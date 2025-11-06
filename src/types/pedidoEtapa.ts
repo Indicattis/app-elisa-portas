@@ -73,7 +73,7 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
     ]
   },
   aguardando_coleta: {
-    label: 'Aguardando Coleta',
+    label: 'Expedição Coleta',
     color: 'bg-indigo-500',
     icon: 'Package',
     checkboxes: [
@@ -82,7 +82,7 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
     ]
   },
   aguardando_instalacao: {
-    label: 'Aguardando Instalação',
+    label: 'Expedição Instalação',
     color: 'bg-cyan-500',
     icon: 'Wrench',
     checkboxes: [

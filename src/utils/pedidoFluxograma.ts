@@ -29,12 +29,12 @@ export const FLUXOGRAMA_ETAPAS: Record<EtapaPedido, FluxogramaEtapa> = {
   },
   aguardando_coleta: {
     id: 'aguardando_coleta',
-    label: 'Aguardando Coleta',
+    label: 'Expedição Coleta',
     color: 'bg-yellow-500'
   },
   aguardando_instalacao: {
     id: 'aguardando_instalacao',
-    label: 'Aguardando Instalação',
+    label: 'Expedição Instalação',
     color: 'bg-cyan-500'
   },
   finalizado: {

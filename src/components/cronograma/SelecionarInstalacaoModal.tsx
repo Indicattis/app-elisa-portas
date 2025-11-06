@@ -86,7 +86,7 @@ export function SelecionarInstalacaoModal({
             <div className="text-center py-12 text-muted-foreground">
               <p className="text-lg font-medium">Nenhuma instalação disponível</p>
               <p className="text-sm mt-2">
-                Não há instalações com pedidos em "Aguardando Coleta" ou "Finalizado"
+                Não há instalações com pedidos em "Expedição Coleta" ou "Finalizado"
               </p>
             </div>
           ) : (
@@ -121,7 +121,7 @@ export function SelecionarInstalacaoModal({
                             }
                           >
                             {inst.pedido?.etapa_atual === 'aguardando_coleta'
-                              ? 'Aguardando Coleta'
+                              ? 'Expedição Coleta'
                               : 'Finalizado'}
                           </Badge>
                         </div>

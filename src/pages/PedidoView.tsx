@@ -181,8 +181,8 @@ export default function PedidoView() {
       em_producao: "Em Produção",
       inspecao_qualidade: "Inspeção de Qualidade",
       aguardando_pintura: "Aguardando Pintura",
-      aguardando_coleta: "Aguardando Coleta",
-      aguardando_instalacao: "Aguardando Instalação",
+      aguardando_coleta: "Expedição Coleta",
+      aguardando_instalacao: "Expedição Instalação",
       finalizado: "Finalizado",
     };
     return etapas[etapa] || etapa;
