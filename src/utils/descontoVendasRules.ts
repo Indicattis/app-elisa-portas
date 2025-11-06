@@ -12,6 +12,7 @@ export interface DescontoCalculation {
   descontoAplicado: number;
   percentualDesconto: number;
   limitePermitido: number;
+  excedente: number; // Quanto % excede o limite
   dentroDoLimite: boolean;
   requerSenha: boolean;
   excedeLimiteMaximo: boolean;
@@ -94,8 +95,9 @@ export function validarDesconto(
   const percentualDesconto = calcularPercentualDesconto(descontoAplicado, totalVenda);
   const limites = calcularLimitesDesconto(formaPagamento, vendaPresencial);
   
-  const dentroDoLimite = percentualDesconto <= limites.limiteTotal;
-  const requerSenha = percentualDesconto > limites.limiteTotal && percentualDesconto <= LIMITE_MAXIMO_ABSOLUTO;
+  const excedente = percentualDesconto - limites.limiteTotal;
+  const dentroDoLimite = excedente <= 0;
+  const requerSenha = excedente > 0 && percentualDesconto <= LIMITE_MAXIMO_ABSOLUTO;
   const excedeLimiteMaximo = percentualDesconto > LIMITE_MAXIMO_ABSOLUTO;
 
   return {
@@ -103,6 +105,7 @@ export function validarDesconto(
     descontoAplicado,
     percentualDesconto,
     limitePermitido: limites.limiteTotal,
+    excedente: Math.max(0, excedente),
     dentroDoLimite,
     requerSenha,
     excedeLimiteMaximo
@@ -138,18 +141,24 @@ export const LIMITE_MAXIMO_ABSOLUTO = 20;
 export function getTipoAutorizacaoNecessaria(
   validacao: DescontoCalculation
 ): 'responsavel_setor' | 'master' | null {
+  // Dentro do limite - não requer senha
   if (validacao.dentroDoLimite) {
     return null;
   }
   
-  if (validacao.percentualDesconto > LIMITE_MAXIMO_ABSOLUTO) {
-    // Excede limite absoluto - não permitido
+  // Excede limite máximo absoluto - não permitido
+  if (validacao.excedeLimiteMaximo) {
     return null;
   }
   
-  if (validacao.percentualDesconto > 15) {
-    return 'master';
+  // Calcular quanto excedeu o limite permitido
+  const excedente = validacao.excedente;
+  
+  // Excedeu até 5% - requer senha do responsável do setor
+  if (excedente <= 5) {
+    return 'responsavel_setor';
   }
   
-  return 'responsavel_setor';
+  // Excedeu mais de 5% - requer senha master
+  return 'master';
 }
