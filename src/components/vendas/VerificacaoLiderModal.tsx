@@ -102,7 +102,7 @@ export function VerificacaoLiderModal({
       // Buscar dados do usuário líder
       const { data: userData, error: userError } = await supabase
         .from('admin_users')
-        .select('user_id, nome, role')
+        .select('user_id, nome, email, role')
         .eq('user_id', setorData.lider_id)
         .eq('ativo', true)
         .maybeSingle();
@@ -113,19 +113,47 @@ export function VerificacaoLiderModal({
         return;
       }
 
-      if (!userData) {
-        setErro('Usuário líder não encontrado ou inativo');
+      if (!userData || !userData.email) {
+        setErro('Usuário líder não encontrado ou sem email cadastrado');
         return;
       }
 
-      // Verificar senha usando a senha mestre (1qazxsw2)
-      const SENHA_MESTRE = "1qazxsw2";
+      // Verificar senha tentando fazer login com as credenciais do líder
+      // Salvamos a sessão atual primeiro
+      const { data: currentSession } = await supabase.auth.getSession();
       
-      if (senha === SENHA_MESTRE) {
+      try {
+        // Tenta fazer login com o email e senha do líder
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: senha
+        });
+
+        if (signInError) {
+          setErro('Senha incorreta');
+          return;
+        }
+
+        // Se chegou aqui, a senha está correta
+        // Restaurar a sessão original
+        if (currentSession?.session) {
+          await supabase.auth.setSession({
+            access_token: currentSession.session.access_token,
+            refresh_token: currentSession.session.refresh_token
+          });
+        }
+
         onSenhaCorreta();
         onOpenChange(false);
-      } else {
-        setErro('Senha incorreta');
+      } catch (err) {
+        // Restaurar sessão em caso de erro
+        if (currentSession?.session) {
+          await supabase.auth.setSession({
+            access_token: currentSession.session.access_token,
+            refresh_token: currentSession.session.refresh_token
+          });
+        }
+        throw err;
       }
     } catch (error) {
       console.error('Erro ao verificar senha:', error);
