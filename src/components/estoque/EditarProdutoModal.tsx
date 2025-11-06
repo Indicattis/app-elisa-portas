@@ -25,6 +25,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
     nome_produto: "",
     descricao_produto: "",
     quantidade: 0,
+    quantidade_ideal: 0,
     unidade: "UN",
     categoria: "geral",
     custo_unitario: 0,
@@ -40,6 +41,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
         nome_produto: produto.nome_produto,
         descricao_produto: produto.descricao_produto || "",
         quantidade: produto.quantidade,
+        quantidade_ideal: produto.quantidade_ideal,
         unidade: produto.unidade,
         categoria: produto.categoria,
         custo_unitario: produto.custo_unitario,
@@ -180,12 +182,32 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
               />
             </div>
             <div>
-              <Label>Unidade</Label>
+              <Label>Quantidade Ideal</Label>
               <Input 
-                value={formData.unidade} 
-                onChange={(e) => setFormData({...formData, unidade: e.target.value})} 
+                type="number" 
+                value={formData.quantidade_ideal} 
+                onChange={(e) => setFormData({...formData, quantidade_ideal: parseInt(e.target.value) || 0})} 
               />
             </div>
+          </div>
+          <div>
+            <Label>Unidade</Label>
+            <Select
+              value={formData.unidade}
+              onValueChange={(value) => setFormData({...formData, unidade: value})}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="UN">Unidade (UN)</SelectItem>
+                <SelectItem value="KG">Quilograma (KG)</SelectItem>
+                <SelectItem value="L">Litro (L)</SelectItem>
+                <SelectItem value="M">Metro (M)</SelectItem>
+                <SelectItem value="M2">Metro Quadrado (M²)</SelectItem>
+                <SelectItem value="CX">Caixa (CX)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Custo Unitário (R$)</Label>

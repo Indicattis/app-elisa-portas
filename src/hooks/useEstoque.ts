@@ -30,6 +30,7 @@ export interface ProdutoEstoque {
   peso_porta: number | null;
   setor_responsavel_producao: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
   fornecedor_id: string | null;
+  quantidade_ideal: number;
   subcategoria?: {
     id: string;
     nome: string;
@@ -51,6 +52,7 @@ export interface ProdutoEstoqueInput {
   peso_porta?: number | null;
   setor_responsavel_producao?: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
   fornecedor_id?: string | null;
+  quantidade_ideal?: number;
 }
 
 export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null = null) => {

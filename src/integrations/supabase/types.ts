@@ -940,6 +940,7 @@ export type Database = {
           nome_produto: string
           peso_porta: number | null
           quantidade: number
+          quantidade_ideal: number | null
           setor_responsavel_producao:
             | Database["public"]["Enums"]["setor_producao"]
             | null
@@ -959,6 +960,7 @@ export type Database = {
           nome_produto: string
           peso_porta?: number | null
           quantidade?: number
+          quantidade_ideal?: number | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
             | null
@@ -978,6 +980,7 @@ export type Database = {
           nome_produto?: string
           peso_porta?: number | null
           quantidade?: number
+          quantidade_ideal?: number | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
             | null

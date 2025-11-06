@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Plus, ArrowUpDown, History, Settings, Pencil, Trash2 } from "lucide-react";
+import { Package, Plus, ArrowUpDown, History, Settings, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import { GerenciarSubcategoriasModal } from "@/components/estoque/GerenciarSubca
 import { EditarProdutoModal } from "@/components/estoque/EditarProdutoModal";
 
 export default function Estoque() {
+  const navigate = useNavigate();
   const { produtos, loading, adicionarProduto, editarProduto, excluirProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
   const { categorias } = useCategorias();
   const { fornecedores } = useFornecedores();
@@ -37,6 +39,7 @@ export default function Estoque() {
     nome_produto: "",
     descricao_produto: "",
     quantidade: 0,
+    quantidade_ideal: 0,
     unidade: "UN",
     categoria: "geral",
     custo_unitario: 0,
@@ -61,7 +64,8 @@ export default function Estoque() {
     setFormData({ 
       nome_produto: "", 
       descricao_produto: "", 
-      quantidade: 0, 
+      quantidade: 0,
+      quantidade_ideal: 0, 
       unidade: "UN",
       categoria: "geral",
       custo_unitario: 0,
@@ -261,6 +265,14 @@ export default function Estoque() {
                   />
                 </div>
                 <div>
+                  <Label>Quantidade Ideal</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.quantidade_ideal} 
+                    onChange={(e) => setFormData({...formData, quantidade_ideal: parseInt(e.target.value) || 0})} 
+                  />
+                </div>
+                <div>
                   <Label>Custo Unitário (R$)</Label>
                   <Input 
                     type="number"
@@ -314,6 +326,7 @@ export default function Estoque() {
                 <TableHead>Fornecedor</TableHead>
                 <TableHead>Peso Porta</TableHead>
                 <TableHead>Setor Produção</TableHead>
+                <TableHead className="text-right">Status</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
                 <TableHead className="text-right">Custo Unit.</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -382,9 +395,24 @@ export default function Estoque() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="font-semibold">
-                      {produto.quantidade} {produto.unidade}
-                    </span>
+                    {produto.quantidade < produto.quantidade_ideal && (
+                      <Badge variant="destructive" className="gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Estoque Baixo
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="font-semibold">
+                        {produto.quantidade} {produto.unidade}
+                      </span>
+                      {produto.quantidade_ideal > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          Ideal: {produto.quantidade_ideal}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <span className="font-medium">
@@ -396,7 +424,7 @@ export default function Estoque() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleOpenEditar(produto)}
+                        onClick={() => navigate(`/dashboard/estoque/editar/${produto.id}`)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
