@@ -32,21 +32,23 @@ export function SelecionarAcessoriosModal({
 }: SelecionarAcessoriosModalProps) {
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
 
-  // Buscar produtos do estoque marcados como comercializáveis individualmente
+  // Buscar produtos do catálogo de vendas
   const { data: produtosEstoque = [], isLoading } = useQuery({
-    queryKey: ['estoque-comercializaveis'],
+    queryKey: ['vendas-catalogo-modal'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('estoque')
+        .from('vendas_catalogo')
         .select('*')
         .eq('ativo', true)
+        .gt('quantidade', 0)
+        .order('destaque', { ascending: false })
         .order('nome_produto');
       
       if (error) throw error;
       return data.map(item => ({
         id: item.id,
         nome: item.nome_produto,
-        preco: Number(item.preco_unitario),
+        preco: Number(item.preco_venda),
         tipo: (item.categoria === 'acessório' ? 'acessorio' : 'adicional') as 'acessorio' | 'adicional',
         descricao: item.descricao_produto,
         categoria: item.categoria
