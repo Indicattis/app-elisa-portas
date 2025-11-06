@@ -935,6 +935,7 @@ export type Database = {
           created_by: string | null
           custo_unitario: number
           descricao_produto: string | null
+          fornecedor_id: string | null
           id: string
           nome_produto: string
           peso_porta: number | null
@@ -953,6 +954,7 @@ export type Database = {
           created_by?: string | null
           custo_unitario?: number
           descricao_produto?: string | null
+          fornecedor_id?: string | null
           id?: string
           nome_produto: string
           peso_porta?: number | null
@@ -971,6 +973,7 @@ export type Database = {
           created_by?: string | null
           custo_unitario?: number
           descricao_produto?: string | null
+          fornecedor_id?: string | null
           id?: string
           nome_produto?: string
           peso_porta?: number | null
@@ -983,6 +986,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estoque_subcategoria_id_fkey"
             columns: ["subcategoria_id"]

@@ -29,7 +29,12 @@ export interface ProdutoEstoque {
   subcategoria_id: string | null;
   peso_porta: number | null;
   setor_responsavel_producao: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
+  fornecedor_id: string | null;
   subcategoria?: {
+    id: string;
+    nome: string;
+  } | null;
+  fornecedor?: {
     id: string;
     nome: string;
   } | null;
@@ -45,6 +50,7 @@ export interface ProdutoEstoqueInput {
   subcategoria_id?: string | null;
   peso_porta?: number | null;
   setor_responsavel_producao?: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
+  fornecedor_id?: string | null;
 }
 
 export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null = null) => {
@@ -59,7 +65,8 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
         .from("estoque")
         .select(`
           *,
-          subcategoria:estoque_subcategorias(id, nome)
+          subcategoria:estoque_subcategorias(id, nome),
+          fornecedor:fornecedores(id, nome)
         `)
         .eq("ativo", true)
         .order("nome_produto");

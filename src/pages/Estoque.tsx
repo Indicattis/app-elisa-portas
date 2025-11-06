@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
+import { useFornecedores } from "@/hooks/useFornecedores";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
@@ -21,6 +22,7 @@ import { EditarProdutoModal } from "@/components/estoque/EditarProdutoModal";
 export default function Estoque() {
   const { produtos, loading, adicionarProduto, editarProduto, excluirProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
   const { categorias } = useCategorias();
+  const { fornecedores } = useFornecedores();
   const [modalAberto, setModalAberto] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
   const [categoriasModal, setCategoriasModal] = useState(false);
@@ -41,6 +43,7 @@ export default function Estoque() {
     subcategoria_id: null as string | null,
     peso_porta: null as number | null,
     setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
+    fornecedor_id: null as string | null,
   });
 
   const getCategoriaColor = (categoriaValue: string) => {
@@ -65,6 +68,7 @@ export default function Estoque() {
       subcategoria_id: null,
       peso_porta: null,
       setor_responsavel_producao: null,
+      fornecedor_id: null,
     });
     setCategoriaSelecionada(null);
     setModalAberto(false);
@@ -257,13 +261,35 @@ export default function Estoque() {
                   />
                 </div>
                 <div>
-                  <Label>Custo Unitário</Label>
+                  <Label>Custo Unitário (R$)</Label>
                   <Input 
                     type="number"
                     step="0.01"
                     value={formData.custo_unitario} 
                     onChange={(e) => setFormData({...formData, custo_unitario: parseFloat(e.target.value) || 0})} 
                   />
+                </div>
+                <div>
+                  <Label>Fornecedor</Label>
+                  <Select 
+                    value={formData.fornecedor_id || "nenhum"} 
+                    onValueChange={(value) => setFormData({
+                      ...formData, 
+                      fornecedor_id: value === "nenhum" ? null : value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um fornecedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nenhum">Nenhum</SelectItem>
+                      {fornecedores.map((fornecedor) => (
+                        <SelectItem key={fornecedor.id} value={fornecedor.id}>
+                          {fornecedor.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={handleSubmit} className="w-full">Adicionar</Button>
               </div>
@@ -285,6 +311,7 @@ export default function Estoque() {
                 <TableHead>Descrição</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Subcategoria</TableHead>
+                <TableHead>Fornecedor</TableHead>
                 <TableHead>Peso Porta</TableHead>
                 <TableHead>Setor Produção</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
@@ -312,6 +339,15 @@ export default function Estoque() {
                       <Badge variant="outline">
                         {produto.subcategoria.nome}
                       </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {produto.fornecedor ? (
+                      <span className="text-sm font-medium">
+                        {produto.fornecedor.nome}
+                      </span>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
@@ -391,7 +427,7 @@ export default function Estoque() {
               ))}
               {produtos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     Nenhum produto cadastrado
                   </TableCell>
                 </TableRow>

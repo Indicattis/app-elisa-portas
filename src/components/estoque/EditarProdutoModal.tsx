@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
+import { useFornecedores } from "@/hooks/useFornecedores";
 import { useState, useEffect } from "react";
 
 interface EditarProdutoModalProps {
@@ -17,6 +18,7 @@ interface EditarProdutoModalProps {
 
 export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: EditarProdutoModalProps) {
   const { categorias } = useCategorias();
+  const { fornecedores } = useFornecedores();
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
   const { subcategorias } = useSubcategorias(categoriaSelecionada || undefined);
   const [formData, setFormData] = useState({
@@ -29,6 +31,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
     subcategoria_id: null as string | null,
     peso_porta: null as number | null,
     setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
+    fornecedor_id: null as string | null,
   });
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
         subcategoria_id: produto.subcategoria_id,
         peso_porta: produto.peso_porta,
         setor_responsavel_producao: produto.setor_responsavel_producao,
+        fornecedor_id: produto.fornecedor_id,
       });
 
       const catId = categorias.find(c => c.nome.toLowerCase() === produto.categoria.toLowerCase())?.id;
@@ -184,13 +188,35 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
             </div>
           </div>
           <div>
-            <Label>Custo Unitário</Label>
+            <Label>Custo Unitário (R$)</Label>
             <Input 
               type="number"
               step="0.01"
               value={formData.custo_unitario} 
               onChange={(e) => setFormData({...formData, custo_unitario: parseFloat(e.target.value) || 0})} 
             />
+          </div>
+          <div>
+            <Label>Fornecedor</Label>
+            <Select 
+              value={formData.fornecedor_id || "nenhum"} 
+              onValueChange={(value) => setFormData({
+                ...formData, 
+                fornecedor_id: value === "nenhum" ? null : value
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um fornecedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhum">Nenhum</SelectItem>
+                {fornecedores.map((fornecedor) => (
+                  <SelectItem key={fornecedor.id} value={fornecedor.id}>
+                    {fornecedor.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSubmit} className="flex-1">Salvar</Button>
