@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ProdutoVenda } from '@/hooks/useVendas';
-import { calcularLimitesDesconto, calcularTotalVenda } from '@/utils/descontoVendasRules';
+import { calcularLimitesDesconto, calcularTotalVenda, LIMITE_MAXIMO_ABSOLUTO } from '@/utils/descontoVendasRules';
 import { Percent, DollarSign, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface DescontoVendaModalProps {
@@ -81,8 +81,9 @@ export function DescontoVendaModal({
 
   // Determinar status do desconto
   const dentroDoLimite = novoPercentualDesconto <= limites.limiteTotal;
-  const requerSenha = novoPercentualDesconto > limites.limiteTotal && novoPercentualDesconto <= limites.limiteMaximo;
-  const excedeLimite = novoPercentualDesconto > limites.limiteMaximo;
+  const requerSenhaResponsavel = novoPercentualDesconto > limites.limiteTotal && novoPercentualDesconto <= 15;
+  const requerSenhaMaster = novoPercentualDesconto > 15 && novoPercentualDesconto <= LIMITE_MAXIMO_ABSOLUTO;
+  const excedeLimite = novoPercentualDesconto > LIMITE_MAXIMO_ABSOLUTO;
 
   const handleAplicar = () => {
     if (produtosSelecionados.every(sel => !sel)) {
@@ -93,6 +94,7 @@ export function DescontoVendaModal({
       return;
     }
 
+    // Bloquear descontos acima de 20%
     if (excedeLimite) {
       return;
     }
@@ -166,7 +168,7 @@ export function DescontoVendaModal({
               <p className="text-sm text-muted-foreground">Desconto Atual</p>
               <p className="text-2xl font-bold">{percentualDescontoAtual.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground">
-                Limite: {limites.limiteTotal}% | Máximo: {limites.limiteMaximo}%
+                Limite: {limites.limiteTotal}% | Com senha: até {LIMITE_MAXIMO_ABSOLUTO}%
               </p>
             </div>
           </div>
@@ -281,8 +283,9 @@ export function DescontoVendaModal({
                   <div className="flex items-center gap-2">
                     <p className="text-lg font-bold">{novoPercentualDesconto.toFixed(1)}%</p>
                     {dentroDoLimite && <Badge className="bg-green-500">Dentro do limite</Badge>}
-                    {requerSenha && <Badge className="bg-amber-500">Requer senha do líder</Badge>}
-                    {excedeLimite && <Badge variant="destructive">Excede limite máximo</Badge>}
+                    {requerSenhaResponsavel && <Badge className="bg-amber-500">Requer senha do responsável</Badge>}
+                    {requerSenhaMaster && <Badge className="bg-orange-500">Requer senha master</Badge>}
+                    {excedeLimite && <Badge variant="destructive">Excede limite de {LIMITE_MAXIMO_ABSOLUTO}%</Badge>}
                   </div>
                 </div>
               </div>
@@ -290,11 +293,20 @@ export function DescontoVendaModal({
           )}
 
           {/* Alertas */}
-          {requerSenha && (
+          {requerSenhaResponsavel && (
             <Alert className="bg-amber-500/10 border-amber-500/20">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-900">
-                Este desconto excede o limite de {limites.limiteTotal}%. Será necessária a senha do líder de vendas para aprovar.
+                Este desconto excede o limite de {limites.limiteTotal}%. Será necessária autorização do responsável do setor ao criar a venda.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {requerSenhaMaster && (
+            <Alert className="bg-orange-500/10 border-orange-500/20">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-900">
+                Este desconto excede 15%. Será necessária autorização com senha master ao criar a venda.
               </AlertDescription>
             </Alert>
           )}
@@ -303,7 +315,7 @@ export function DescontoVendaModal({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                O desconto não pode exceder {limites.limiteMaximo}% do valor total da venda.
+                O desconto não pode exceder {LIMITE_MAXIMO_ABSOLUTO}% do valor total da venda.
               </AlertDescription>
             </Alert>
           )}
