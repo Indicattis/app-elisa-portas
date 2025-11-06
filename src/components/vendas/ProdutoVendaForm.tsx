@@ -349,8 +349,12 @@ export function ProdutoVendaForm({
                       onBlur={buscarPrecos}
                       placeholder={formData.tipo_produto === 'porta_social' ? "Ex: 1.00" : "Ex: 2.50"}
                       className="h-12 text-lg"
+                      disabled={!!produtoEditando}
                       required
                     />
+                    {produtoEditando && (
+                      <p className="text-xs text-muted-foreground">Não é possível alterar medidas ao editar</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="altura" className="text-base">
@@ -367,8 +371,12 @@ export function ProdutoVendaForm({
                       onBlur={buscarPrecos}
                       placeholder={formData.tipo_produto === 'porta_social' ? "Ex: 2.10" : "Ex: 3.00"}
                       className="h-12 text-lg"
+                      disabled={!!produtoEditando}
                       required
                     />
+                    {produtoEditando && (
+                      <p className="text-xs text-muted-foreground">Não é possível alterar medidas ao editar</p>
+                    )}
                   </div>
                 </div>
 
@@ -513,8 +521,12 @@ export function ProdutoVendaForm({
                       onBlur={buscarPrecos}
                       placeholder="Ex: 2.00"
                       className="h-12 text-lg"
+                      disabled={!!produtoEditando}
                       required
                     />
+                    {produtoEditando && (
+                      <p className="text-xs text-muted-foreground">Não é possível alterar medidas ao editar</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="altura_pintura" className="text-base">Altura (m) *</Label>
@@ -528,8 +540,12 @@ export function ProdutoVendaForm({
                       onBlur={buscarPrecos}
                       placeholder="Ex: 2.50"
                       className="h-12 text-lg"
+                      disabled={!!produtoEditando}
                       required
                     />
+                    {produtoEditando && (
+                      <p className="text-xs text-muted-foreground">Não é possível alterar medidas ao editar</p>
+                    )}
                   </div>
                 </div>
 
@@ -661,7 +677,7 @@ export function ProdutoVendaForm({
           )}
 
           {/* Valores manuais para outros tipos de produto */}
-          {formData.tipo_produto !== 'porta_enrolar' && 
+           {formData.tipo_produto !== 'porta_enrolar' && 
            formData.tipo_produto !== 'porta_social' && 
            formData.tipo_produto !== 'pintura_epoxi' && (
             <div className="space-y-2">
@@ -678,8 +694,12 @@ export function ProdutoVendaForm({
                   const valor = parseFloat(e.target.value) || 0;
                   setFormData(prev => ({ ...prev, valor_produto: valor }));
                 }}
+                disabled={!!produtoEditando && (formData.tipo_produto === 'acessorio' || formData.tipo_produto === 'adicional')}
                 required
               />
+              {produtoEditando && (formData.tipo_produto === 'acessorio' || formData.tipo_produto === 'adicional') && (
+                <p className="text-xs text-muted-foreground">Não é possível alterar valores ao editar</p>
+              )}
             </div>
           )}
 

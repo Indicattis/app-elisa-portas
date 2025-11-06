@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, X } from 'lucide-react';
 import { ProdutoVenda } from '@/hooks/useVendas';
 
 interface ProdutosVendaTableProps {
@@ -10,6 +10,7 @@ interface ProdutosVendaTableProps {
   onRemoveProduto: (index: number) => void;
   onEditProduto?: (index: number) => void;
   onUpdateQuantidade?: (index: number, quantidade: number) => void;
+  onRemoverDesconto?: (index: number) => void;
 }
 
 const getTipoProdutoLabel = (tipo: string) => {
@@ -40,7 +41,7 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
   }
 };
 
-export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade }: ProdutosVendaTableProps) {
+export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade, onRemoverDesconto }: ProdutosVendaTableProps) {
   if (produtos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/50">
@@ -104,10 +105,26 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
               </TableCell>
               <TableCell>R$ {((produto.valor_produto + produto.valor_pintura + produto.valor_instalacao)).toFixed(2)}</TableCell>
               <TableCell>
-                {produto.tipo_desconto === 'valor' 
-                  ? `R$ ${produto.desconto_valor.toFixed(2)}`
-                  : `${produto.desconto_percentual}%`
-                }
+                <div className="flex items-center gap-1">
+                  <span>
+                    {produto.tipo_desconto === 'valor' 
+                      ? `R$ ${produto.desconto_valor.toFixed(2)}`
+                      : `${produto.desconto_percentual}%`
+                    }
+                  </span>
+                  {onRemoverDesconto && (produto.desconto_valor > 0 || produto.desconto_percentual > 0) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => onRemoverDesconto(index)}
+                      title="Remover desconto"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="font-semibold">R$ {valorTotal.toFixed(2)}</TableCell>
               <TableCell>

@@ -198,6 +198,33 @@ export default function VendasNova() {
     }));
   };
 
+  const handleRemoverDesconto = (index: number) => {
+    setPortas(prev => {
+      const newPortas = [...prev];
+      newPortas[index] = {
+        ...newPortas[index],
+        desconto_valor: 0,
+        desconto_percentual: 0
+      };
+      
+      // Recalcular valores
+      const valorTotal = newPortas.reduce((acc, p) => {
+        const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+        const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+        return acc + valorBase - desconto;
+      }, 0) + (formData.valor_frete || 0);
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+      }));
+      
+      return newPortas;
+    });
+    
+    toast({ title: "Desconto removido com sucesso" });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -689,6 +716,7 @@ export default function VendasNova() {
                   onRemoveProduto={handleRemovePorta}
                   onEditProduto={handleEditPorta}
                   onUpdateQuantidade={handleUpdateQuantidade}
+                  onRemoverDesconto={handleRemoverDesconto}
                 />
           </CardContent>
         </Card>
