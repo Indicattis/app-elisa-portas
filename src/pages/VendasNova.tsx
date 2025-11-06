@@ -317,38 +317,40 @@ export default function VendasNova() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Dados do Cliente */}
         <Card>
-          <CardHeader>
-            <CardTitle>Dados do Cliente</CardTitle>
-            <CardDescription>Informações do cliente</CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Dados do Cliente</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cliente_nome">Nome do Cliente *</Label>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="cliente_nome" className="text-sm">Nome *</Label>
               <Input
                 id="cliente_nome"
                 value={formData.cliente_nome}
                 onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
+                placeholder="Nome completo"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cliente_telefone">Telefone *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="cliente_telefone" className="text-sm">Telefone *</Label>
               <Input
                 id="cliente_telefone"
                 value={formData.cliente_telefone}
                 onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
+                placeholder="(00) 00000-0000"
                 required
               />
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="cliente_email">E-mail (opcional)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="cliente_email" className="text-sm">E-mail</Label>
               <Input
                 id="cliente_email"
                 type="email"
                 value={formData.cliente_email}
                 onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
+                placeholder="email@exemplo.com"
               />
             </div>
           </CardContent>
@@ -356,19 +358,19 @@ export default function VendasNova() {
 
         {/* Localização */}
         <Card>
-          <CardHeader>
-            <CardTitle>Localização</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Localização</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="estado">Estado *</Label>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="estado" className="text-sm">Estado *</Label>
               <Select
                 value={formData.estado}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, estado: value, cidade: '' }))}
                 required
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder="UF" />
                 </SelectTrigger>
                 <SelectContent>
                   {ESTADOS_BRASIL.map(estado => (
@@ -380,8 +382,8 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cidade">Cidade *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="cidade" className="text-sm">Cidade *</Label>
               <Select
                 value={formData.cidade}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, cidade: value }))}
@@ -389,7 +391,7 @@ export default function VendasNova() {
                 disabled={!formData.estado}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder="Selecione a cidade" />
                 </SelectTrigger>
                 <SelectContent>
                   {cidades.map(cidade => (
@@ -401,21 +403,23 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cep">CEP (opcional)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="cep" className="text-sm">CEP</Label>
               <Input
                 id="cep"
                 value={formData.cep}
                 onChange={(e) => setFormData(prev => ({ ...prev, cep: e.target.value }))}
+                placeholder="00000-000"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="bairro">Bairro (opcional)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="bairro" className="text-sm">Bairro</Label>
               <Input
                 id="bairro"
                 value={formData.bairro}
                 onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
+                placeholder="Nome do bairro"
               />
             </div>
           </CardContent>
@@ -423,24 +427,24 @@ export default function VendasNova() {
 
         {/* Dados da Venda */}
         <Card>
-          <CardHeader>
-            <CardTitle>Dados da Venda</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Dados da Venda</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="data_venda">Data da Venda</Label>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="data_venda" className="text-sm">Data</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal h-10",
                       !dataVenda && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dataVenda ? format(dataVenda, "PPP", { locale: ptBR }) : <span>Data atual (se não selecionar)</span>}
+                    {dataVenda ? format(dataVenda, "dd/MM/yyyy", { locale: ptBR }) : <span>Hoje</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -456,8 +460,8 @@ export default function VendasNova() {
               </Popover>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="publico_alvo">Público Alvo *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="publico_alvo" className="text-sm">Público *</Label>
               <Select
                 value={formData.publico_alvo}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, publico_alvo: value }))}
@@ -474,15 +478,15 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="canal_aquisicao_id">Canal de Aquisição *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="canal_aquisicao_id" className="text-sm">Canal *</Label>
               <Select
                 value={formData.canal_aquisicao_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
                 required
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder="Selecione o canal" />
                 </SelectTrigger>
                 <SelectContent>
                   {canais.map((canal) => (
@@ -499,11 +503,11 @@ export default function VendasNova() {
               onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
               showLabel={true}
               required={true}
-              className="space-y-2"
+              className="space-y-1.5"
             />
 
-            <div className="space-y-2">
-              <Label htmlFor="valor_frete">Valor Frete Total (R$)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="valor_frete" className="text-sm">Frete (R$)</Label>
               <Input
                 id="valor_frete"
                 type="number"
@@ -511,11 +515,12 @@ export default function VendasNova() {
                 min="0"
                 value={formData.valor_frete}
                 onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
+                placeholder="0,00"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="data_prevista_entrega">Previsão de Entrega *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="data_prevista_entrega" className="text-sm">Previsão Entrega *</Label>
               <Input
                 id="data_prevista_entrega"
                 type="date"
@@ -526,8 +531,8 @@ export default function VendasNova() {
               />
             </div>
 
-            <div className="space-y-3">
-              <Label>Tipo de Entrega *</Label>
+            <div className="space-y-2">
+              <Label className="text-sm">Tipo de Entrega *</Label>
               <RadioGroup
                 value={formData.tipo_entrega}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
@@ -536,21 +541,21 @@ export default function VendasNova() {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="instalacao" id="tipo-instalacao" />
-                  <Label htmlFor="tipo-instalacao" className="font-normal cursor-pointer">
+                  <Label htmlFor="tipo-instalacao" className="font-normal cursor-pointer text-sm">
                     Instalação
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="entrega" id="tipo-entrega" />
-                  <Label htmlFor="tipo-entrega" className="font-normal cursor-pointer">
+                  <Label htmlFor="tipo-entrega" className="font-normal cursor-pointer text-sm">
                     Entrega
                   </Label>
                 </div>
               </RadioGroup>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="valor_entrada">Valor de Entrada (R$)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="valor_entrada" className="text-sm">Entrada (R$)</Label>
               <Input
                 id="valor_entrada"
                 type="number"
@@ -571,31 +576,33 @@ export default function VendasNova() {
                     valor_a_receber: valorTotal - entrada
                   }));
                 }}
+                placeholder="0,00"
               />
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="observacoes_venda">Observações (opcional)</Label>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="observacoes_venda" className="text-sm">Observações</Label>
               <Textarea
                 id="observacoes_venda"
                 value={formData.observacoes_venda}
                 onChange={(e) => setFormData(prev => ({ ...prev, observacoes_venda: e.target.value }))}
-                rows={3}
+                rows={2}
+                placeholder="Informações adicionais sobre a venda"
               />
             </div>
 
             <div className="md:col-span-2">
-              <div className="flex items-start space-x-3 p-4 border-2 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 hover:from-muted/50 hover:to-muted/80 transition-all hover:shadow-md">
+              <div className="flex items-start space-x-3 p-3 border rounded-lg bg-muted/30">
                 <Checkbox 
                   id="venda_presencial"
                   checked={formData.venda_presencial}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))}
-                  className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  className="mt-0.5"
                 />
                 <Label htmlFor="venda_presencial" className="cursor-pointer flex-1">
-                  <span className="font-medium">Venda Presencial</span>
-                  <p className="text-sm text-muted-foreground font-normal mt-1">
-                    Esta venda foi realizada presencialmente (adiciona +5% de limite de desconto)
+                  <span className="text-sm font-medium">Venda Presencial</span>
+                  <p className="text-xs text-muted-foreground font-normal mt-0.5">
+                    Adiciona +5% de limite de desconto
                   </p>
                 </Label>
               </div>
@@ -605,11 +612,10 @@ export default function VendasNova() {
 
         {/* Produtos */}
         <Card>
-          <CardHeader>
-            <CardTitle>Produtos</CardTitle>
-            <CardDescription>Adicione portas, acessórios e adicionais desta venda</CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Produtos</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             <div className="flex gap-2 flex-wrap">
               <Button 
                 type="button" 
