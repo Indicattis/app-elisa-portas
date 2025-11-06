@@ -13,7 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ArrowLeft, Plus, CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
@@ -29,7 +30,6 @@ import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescont
 import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Percent } from 'lucide-react';
 
 export default function VendasNova() {
   const navigate = useNavigate();
@@ -715,6 +715,77 @@ export default function VendasNova() {
         {portas.length > 0 && (
           <>
             <VendaResumo produtos={portas} valorFrete={formData.valor_frete} />
+            
+            {/* Indicador de Autorização Necessária */}
+            {(() => {
+              const validacao = validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial);
+              const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
+              
+              if (validacao.dentroDoLimite) {
+                return (
+                  <Card className="border-green-200 bg-green-50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-green-900">Venda Dentro do Limite</p>
+                          <p className="text-sm text-green-700">
+                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (limite: {validacao.limitePermitido.toFixed(0)}%)
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+              
+              if (tipoAutorizacao === 'responsavel_setor') {
+                return (
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100">
+                          <ShieldCheck className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-amber-900">Autorização do Líder de Vendas Necessária</p>
+                          <p className="text-sm text-amber-700">
+                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede em {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
+                          </p>
+                        </div>
+                        <Badge className="bg-amber-500">Responsável</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+              
+              if (tipoAutorizacao === 'master') {
+                return (
+                  <Card className="border-orange-200 bg-orange-50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-100">
+                          <ShieldCheck className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-orange-900">Autorização Master Necessária</p>
+                          <p className="text-sm text-orange-700">
+                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede em {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
+                          </p>
+                        </div>
+                        <Badge className="bg-orange-500">Master</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+              
+              return null;
+            })()}
+            
             {formData.valor_entrada > 0 && (
               <Card>
                 <CardContent className="pt-6">
