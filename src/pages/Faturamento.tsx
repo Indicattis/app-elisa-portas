@@ -467,13 +467,14 @@ export default function Faturamento() {
       ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
     }, 0),
     
-    lucroPintura: vendasParaIndicadores.reduce((acc, v) => {
+    // Lucros apenas de vendas faturadas
+    lucroPintura: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
     }, 0),
     
-    lucroPortas: vendasParaIndicadores.reduce((acc, v) => {
+    lucroPortas: vendasParaIndicadores.filter(isFaturada).reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.reduce((sum: number, p: any) => 
         sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
