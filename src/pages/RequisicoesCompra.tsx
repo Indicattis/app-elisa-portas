@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Plus, Eye, Trash2, Calendar, User, Package as PackageIcon } from "lucide-react";
+import { ShoppingCart, Plus, Eye, Trash2, Calendar, User, Package as PackageIcon, FileText, Clock, CheckCircle, TruckIcon } from "lucide-react";
 import { useRequisicoesCompra, RequisicaoCompra } from "@/hooks/useRequisicoesCompra";
 import { RequisicaoCompraForm } from "@/components/compras/RequisicaoCompraForm";
 import { format } from "date-fns";
@@ -13,16 +13,22 @@ import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
   pendente_aprovacao: "bg-yellow-500",
+  em_analise: "bg-blue-500",
   aprovada: "bg-green-500",
+  aguardando_fornecedor: "bg-orange-500",
+  ok_financeiro: "bg-teal-500",
   rejeitada: "bg-red-500",
-  em_cotacao: "bg-blue-500",
+  em_cotacao: "bg-indigo-500",
   pedido_realizado: "bg-purple-500",
   concluida: "bg-gray-500",
 };
 
 const statusLabels: Record<string, string> = {
   pendente_aprovacao: "Pendente Aprovação",
+  em_analise: "Em Análise",
   aprovada: "Aprovada",
+  aguardando_fornecedor: "Aguardando Fornecedor",
+  ok_financeiro: "Ok Financeiro",
   rejeitada: "Rejeitada",
   em_cotacao: "Em Cotação",
   pedido_realizado: "Pedido Realizado",
@@ -55,6 +61,16 @@ export default function RequisicoesCompra() {
     }
   };
 
+  const indicadores = useMemo(() => {
+    const total = requisicoes.length;
+    const emAnalise = requisicoes.filter(r => r.status === "em_analise").length;
+    const aprovadas = requisicoes.filter(r => r.status === "aprovada").length;
+    const aguardandoFornecedor = requisicoes.filter(r => r.status === "aguardando_fornecedor").length;
+    const okFinanceiro = requisicoes.filter(r => r.status === "ok_financeiro").length;
+    
+    return { total, emAnalise, aprovadas, aguardandoFornecedor, okFinanceiro };
+  }, [requisicoes]);
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -69,6 +85,63 @@ export default function RequisicoesCompra() {
           <Plus className="h-4 w-4 mr-2" />
           Nova Requisição
         </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{indicadores.total}</div>
+            <p className="text-xs text-muted-foreground">requisições</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Em Análise</CardTitle>
+            <Clock className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{indicadores.emAnalise}</div>
+            <p className="text-xs text-muted-foreground">pendentes</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Aprovadas</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{indicadores.aprovadas}</div>
+            <p className="text-xs text-muted-foreground">aprovadas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Aguardando Fornecedor</CardTitle>
+            <TruckIcon className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{indicadores.aguardandoFornecedor}</div>
+            <p className="text-xs text-muted-foreground">em espera</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ok Financeiro</CardTitle>
+            <CheckCircle className="h-4 w-4 text-teal-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{indicadores.okFinanceiro}</div>
+            <p className="text-xs text-muted-foreground">liberadas</p>
+          </CardContent>
+        </Card>
       </div>
 
       {isLoading ? (

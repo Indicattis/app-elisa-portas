@@ -17,7 +17,7 @@ export interface RequisicaoCompra {
   numero_requisicao: string;
   fornecedor_id?: string;
   fornecedor_nome?: string;
-  status: "pendente_aprovacao" | "aprovada" | "rejeitada" | "em_cotacao" | "pedido_realizado" | "concluida";
+  status: "pendente_aprovacao" | "em_analise" | "aprovada" | "aguardando_fornecedor" | "ok_financeiro" | "rejeitada" | "em_cotacao" | "pedido_realizado" | "concluida";
   solicitante_id?: string;
   solicitante_nome?: string;
   data_necessidade?: string;
