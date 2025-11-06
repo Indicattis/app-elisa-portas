@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, getDay, startOfWeek, endOfWeek } from "date-fns";
+import { format, getDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { InstalacaoCadastrada } from "./useInstalacoesCadastradas";
@@ -16,12 +16,13 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
     try {
       setLoading(true);
       
-      // Calcular início e fim da semana
-      const inicioSemana = startOfWeek(semanaInicio, { weekStartsOn: 1 });
-      const fimSemana = endOfWeek(semanaInicio, { weekStartsOn: 1 });
+      // Sempre busca do início ao fim do range passado (pode ser semana ou mês)
+      const inicioFormatado = format(semanaInicio, 'yyyy-MM-dd');
       
-      const inicioFormatado = format(inicioSemana, 'yyyy-MM-dd');
-      const fimFormatado = format(fimSemana, 'yyyy-MM-dd');
+      // Calcular o fim baseado no início - se for dia 1, assume que é mês
+      const dia = semanaInicio.getDate();
+      const fimRange = dia === 1 ? endOfMonth(semanaInicio) : endOfWeek(semanaInicio, { weekStartsOn: 1 });
+      const fimFormatado = format(fimRange, 'yyyy-MM-dd');
       
       // Buscar instalações da semana que têm data_instalacao definida e são do tipo 'elisa'
       const { data, error } = await supabase

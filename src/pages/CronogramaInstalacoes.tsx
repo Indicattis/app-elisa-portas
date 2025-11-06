@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Download, Plus, Filter, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
+import { CronogramaInstalacaoMensal } from "@/components/cronograma/CronogramaInstalacaoMensal";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
 import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
-import { format, addDays, startOfWeek } from "date-fns";
+import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
 import { toast } from "sonner";
@@ -65,16 +66,28 @@ export default function CronogramaInstalacoes() {
 
   const handlePreviousWeek = () => {
     setSlideDirection('left');
-    setWeekStartDate(prev => addDays(prev, -7));
+    if (viewMode === 'month') {
+      setWeekStartDate(prev => addMonths(prev, -1));
+    } else {
+      setWeekStartDate(prev => addDays(prev, -7));
+    }
   };
 
   const handleNextWeek = () => {
     setSlideDirection('right');
-    setWeekStartDate(prev => addDays(prev, 7));
+    if (viewMode === 'month') {
+      setWeekStartDate(prev => addMonths(prev, 1));
+    } else {
+      setWeekStartDate(prev => addDays(prev, 7));
+    }
   };
 
   const handleToday = () => {
-    setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
+    if (viewMode === 'month') {
+      setWeekStartDate(startOfMonth(new Date()));
+    } else {
+      setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
+    }
   };
 
   if (loading || equipesLoading) {
@@ -93,7 +106,11 @@ export default function CronogramaInstalacoes() {
           <div>
             <h1 className="text-3xl font-bold">Cronograma de Instalações</h1>
             <p className="text-muted-foreground">
-              Semana de {format(weekStartDate, "dd/MM/yyyy", { locale: ptBR })} a {format(addDays(weekStartDate, 6), "dd/MM/yyyy", { locale: ptBR })}
+              {viewMode === 'week' ? (
+                <>Semana de {format(weekStartDate, "dd/MM/yyyy", { locale: ptBR })} a {format(addDays(weekStartDate, 6), "dd/MM/yyyy", { locale: ptBR })}</>
+              ) : (
+                <>{format(weekStartDate, "MMMM 'de' yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}</>
+              )}
             </p>
           </div>
         </div>
@@ -101,14 +118,20 @@ export default function CronogramaInstalacoes() {
         <div className="flex gap-2 flex-wrap items-center">
           <Button 
             variant={viewMode === 'week' ? 'default' : 'outline'} 
-            onClick={() => setViewMode('week')}
+            onClick={() => {
+              setViewMode('week');
+              setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
+            }}
           >
             <Calendar className="h-4 w-4 mr-2" />
             Semana
           </Button>
           <Button 
             variant={viewMode === 'month' ? 'default' : 'outline'} 
-            onClick={() => setViewMode('month')}
+            onClick={() => {
+              setViewMode('month');
+              setWeekStartDate(startOfMonth(new Date()));
+            }}
           >
             <CalendarDays className="h-4 w-4 mr-2" />
             Mês
@@ -200,18 +223,11 @@ export default function CronogramaInstalacoes() {
                 equipesFiltradas={equipesFiltradas}
               />
             ) : (
-              <div className="text-center py-20 space-y-4">
-                <CalendarDays className="h-16 w-16 mx-auto text-muted-foreground" />
-                <div>
-                  <h3 className="text-lg font-semibold">Visualização Mensal</h3>
-                  <p className="text-muted-foreground mt-2">
-                    A visualização mensal do cronograma será implementada em breve.
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Por enquanto, utilize a visualização semanal para gerenciar as instalações.
-                  </p>
-                </div>
-              </div>
+              <CronogramaInstalacaoMensal
+                currentMonth={weekStartDate}
+                onEditPonto={() => {}}
+                equipesFiltradas={equipesFiltradas}
+              />
             )}
           </div>
 
