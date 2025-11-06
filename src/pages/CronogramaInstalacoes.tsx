@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, Plus, Filter } from "lucide-react";
+import { Calendar, Download, Plus, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
 import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
@@ -24,6 +24,7 @@ export default function CronogramaInstalacoes() {
   const [equipesModalOpen, setEquipesModalOpen] = useState(false);
   const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [equipesSelecionadas, setEquipesSelecionadas] = useState<string[]>([]);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
 
   const { instalacoes, loading } = useInstalacoesCronograma(weekStartDate);
   const { equipes, loading: equipesLoading } = useEquipesInstalacao();
@@ -62,10 +63,12 @@ export default function CronogramaInstalacoes() {
   };
 
   const handlePreviousWeek = () => {
+    setSlideDirection('left');
     setWeekStartDate(prev => addDays(prev, -7));
   };
 
   const handleNextWeek = () => {
+    setSlideDirection('right');
     setWeekStartDate(prev => addDays(prev, 7));
   };
 
@@ -95,14 +98,8 @@ export default function CronogramaInstalacoes() {
         </div>
 
         <div className="flex gap-2 flex-wrap items-center">
-          <Button variant="outline" onClick={handlePreviousWeek}>
-            Anterior
-          </Button>
           <Button variant="outline" onClick={handleToday}>
             Hoje
-          </Button>
-          <Button variant="outline" onClick={handleNextWeek}>
-            Próxima
           </Button>
           
           <DropdownMenu>
@@ -162,16 +159,39 @@ export default function CronogramaInstalacoes() {
         </div>
       </div>
 
-      <Card>
+      <Card className="relative">
         <CardHeader>
           <CardTitle>Visualização Semanal</CardTitle>
         </CardHeader>
-        <CardContent>
-          <CronogramaInstalacao
-            currentWeek={weekStartDate}
-            onEditPonto={() => {}}
-            equipesFiltradas={equipesFiltradas}
-          />
+        <CardContent className="relative px-16">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handlePreviousWeek}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background hover:scale-110 shadow-lg transition-all"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          
+          <div 
+            key={weekStartDate.toISOString()}
+            className="animate-fade-in"
+          >
+            <CronogramaInstalacao
+              currentWeek={weekStartDate}
+              onEditPonto={() => {}}
+              equipesFiltradas={equipesFiltradas}
+            />
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleNextWeek}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background hover:scale-110 shadow-lg transition-all"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
         </CardContent>
       </Card>
 
