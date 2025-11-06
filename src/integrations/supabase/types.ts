@@ -3651,6 +3651,75 @@ export type Database = {
           },
         ]
       }
+      vendas_autorizacoes_desconto: {
+        Row: {
+          autorizado_por: string
+          created_at: string
+          id: string
+          observacoes: string | null
+          percentual_desconto: number
+          senha_usada: string
+          solicitado_por: string
+          venda_id: string
+        }
+        Insert: {
+          autorizado_por: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          percentual_desconto: number
+          senha_usada: string
+          solicitado_por: string
+          venda_id: string
+        }
+        Update: {
+          autorizado_por?: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          percentual_desconto?: number
+          senha_usada?: string
+          solicitado_por?: string
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_autorizacoes_desconto_autorizado_por_fkey"
+            columns: ["autorizado_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendas_autorizacoes_desconto_autorizado_por_fkey"
+            columns: ["autorizado_por"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendas_autorizacoes_desconto_solicitado_por_fkey"
+            columns: ["solicitado_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendas_autorizacoes_desconto_solicitado_por_fkey"
+            columns: ["solicitado_por"]
+            isOneToOne: false
+            referencedRelation: "user_permissions"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendas_autorizacoes_desconto_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas_catalogo: {
         Row: {
           ativo: boolean | null

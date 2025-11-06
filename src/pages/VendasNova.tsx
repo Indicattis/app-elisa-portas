@@ -25,8 +25,9 @@ import { cn } from '@/lib/utils';
 import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
-import { VerificacaoLiderModal } from '@/components/vendas/VerificacaoLiderModal';
+import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
 import { validarDesconto } from '@/utils/descontoVendasRules';
+import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Percent } from 'lucide-react';
 
@@ -35,6 +36,7 @@ export default function VendasNova() {
   const { toast } = useToast();
   const { createVenda, isCreating } = useVendas();
   const { canais } = useCanaisAquisicao();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState<VendaFormData>({
     cliente_nome: '',
@@ -64,8 +66,9 @@ export default function VendasNova() {
   const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
   const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
   const [descontoModalOpen, setDescontoModalOpen] = useState(false);
-  const [verificacaoLiderOpen, setVerificacaoLiderOpen] = useState(false);
+  const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
   const [produtosComDesconto, setProdutosComDesconto] = useState<ProdutoVenda[]>([]);
+  const [autorizadorId, setAutorizadorId] = useState<string | null>(null);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -212,18 +215,10 @@ export default function VendasNova() {
       formData.venda_presencial
     );
 
-    if (validacao.excedeLimiteMaximo) {
-      toast({
-        variant: 'destructive',
-        title: 'Desconto Excedido',
-        description: `O desconto de ${validacao.percentualDesconto.toFixed(1)}% excede o limite máximo de 15%.`
-      });
-      return;
-    }
-
-    if (validacao.requerSenha) {
+    // Validar se desconto excede 15%
+    if (validacao.percentualDesconto > 15) {
       setProdutosComDesconto(portas);
-      setVerificacaoLiderOpen(true);
+      setAutorizacaoDescontoOpen(true);
       return;
     }
 
@@ -242,14 +237,30 @@ export default function VendasNova() {
     }
   };
 
-  const handleSenhaCorretaLider = async () => {
+  const handleAutorizacaoDesconto = async (autorizadorUserId: string) => {
+    if (!user) return;
+    
+    setAutorizadorId(autorizadorUserId);
+    
     try {
+      const validacao = validarDesconto(
+        produtosComDesconto,
+        formData.forma_pagamento,
+        formData.venda_presencial
+      );
+
       await createVenda({ 
         vendaData: {
           ...formData,
           data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
         }, 
-        portas: produtosComDesconto
+        portas: produtosComDesconto,
+        autorizacaoDesconto: {
+          autorizado_por: autorizadorUserId,
+          solicitado_por: user.id,
+          percentual_desconto: validacao.percentualDesconto,
+          senha_usada: '1qazxsw2'
+        }
       });
       navigate('/dashboard/vendas');
     } catch (error) {
@@ -719,10 +730,10 @@ export default function VendasNova() {
         vendaPresencial={formData.venda_presencial}
       />
 
-      <VerificacaoLiderModal
-        open={verificacaoLiderOpen}
-        onOpenChange={setVerificacaoLiderOpen}
-        onSenhaCorreta={handleSenhaCorretaLider}
+      <AutorizacaoDescontoModal
+        open={autorizacaoDescontoOpen}
+        onOpenChange={setAutorizacaoDescontoOpen}
+        onAutorizado={handleAutorizacaoDesconto}
         percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).percentualDesconto}
       />
     </div>

@@ -48,6 +48,14 @@ export interface VendaFormData {
   venda_presencial?: boolean;
 }
 
+export interface AutorizacaoDesconto {
+  autorizado_por: string;
+  solicitado_por: string;
+  percentual_desconto: number;
+  senha_usada: string;
+  observacoes?: string;
+}
+
 export function useVendas() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -73,7 +81,15 @@ export function useVendas() {
   });
 
   const createVendaMutation = useMutation({
-    mutationFn: async ({ vendaData, portas }: { vendaData: VendaFormData, portas: ProdutoVenda[] }) => {
+    mutationFn: async ({ 
+      vendaData, 
+      portas, 
+      autorizacaoDesconto 
+    }: { 
+      vendaData: VendaFormData; 
+      portas: ProdutoVenda[];
+      autorizacaoDesconto?: AutorizacaoDesconto;
+    }) => {
       if (portas.length === 0) {
         throw new Error('É necessário adicionar pelo menos um produto');
       }
@@ -218,14 +234,33 @@ export function useVendas() {
         console.error('Erro ao atualizar instalação:', instalacaoError);
       }
 
-      // 7. Buscar a instalação para geocodificar
+      // 8. Salvar autorização de desconto, se houver
+      if (autorizacaoDesconto) {
+        const { error: autorizacaoError } = await supabase
+          .from('vendas_autorizacoes_desconto')
+          .insert([{
+            venda_id: venda.id,
+            percentual_desconto: autorizacaoDesconto.percentual_desconto,
+            autorizado_por: autorizacaoDesconto.autorizado_por,
+            solicitado_por: autorizacaoDesconto.solicitado_por,
+            senha_usada: autorizacaoDesconto.senha_usada,
+            observacoes: autorizacaoDesconto.observacoes || null
+          }]);
+
+        if (autorizacaoError) {
+          console.error('Erro ao salvar autorização:', autorizacaoError);
+          // Não bloquear a criação da venda por erro ao salvar autorização
+        }
+      }
+
+      // 9. Buscar a instalação para geocodificar
       const { data: instalacao } = await supabase
         .from('instalacoes_cadastradas')
         .select('id, cidade, estado')
         .eq('venda_id', venda.id)
         .single();
 
-      // 8. Chamar geocodificação
+      // 10. Chamar geocodificação
       if (instalacao) {
         try {
           await supabase.functions.invoke('geocode-instalacao', {
