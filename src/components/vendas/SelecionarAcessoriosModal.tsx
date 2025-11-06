@@ -40,7 +40,6 @@ export function SelecionarAcessoriosModal({
         .from('estoque')
         .select('*')
         .eq('ativo', true)
-        .eq('comercializado_individualmente', true)
         .order('nome_produto');
       
       if (error) throw error;

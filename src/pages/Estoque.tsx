@@ -1,11 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Plus, ArrowUpDown, History, Settings, Pencil, ShoppingCart } from "lucide-react";
+import { Package, Plus, ArrowUpDown, History, Settings, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
@@ -20,7 +19,7 @@ import { GerenciarSubcategoriasModal } from "@/components/estoque/GerenciarSubca
 import { EditarProdutoModal } from "@/components/estoque/EditarProdutoModal";
 
 export default function Estoque() {
-  const { produtos, loading, adicionarProduto, editarProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
+  const { produtos, loading, adicionarProduto, editarProduto, excluirProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
   const { categorias } = useCategorias();
   const [modalAberto, setModalAberto] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
@@ -39,7 +38,6 @@ export default function Estoque() {
     unidade: "UN",
     categoria: "geral",
     preco_unitario: 0,
-    comercializado_individualmente: false,
     subcategoria_id: null as string | null,
     peso_porta: null as number | null,
     setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
@@ -64,13 +62,18 @@ export default function Estoque() {
       unidade: "UN",
       categoria: "geral",
       preco_unitario: 0,
-      comercializado_individualmente: false,
       subcategoria_id: null,
       peso_porta: null,
       setor_responsavel_producao: null,
     });
     setCategoriaSelecionada(null);
     setModalAberto(false);
+  };
+
+  const handleExcluir = async (produto: ProdutoEstoque) => {
+    if (confirm(`Deseja realmente excluir o produto "${produto.nome_produto}"?`)) {
+      await excluirProduto(produto.id);
+    }
   };
 
   const handleMovimentar = async (tipo: 'entrada' | 'saida', quantidade: number, observacoes?: string) => {
@@ -262,18 +265,6 @@ export default function Estoque() {
                     onChange={(e) => setFormData({...formData, preco_unitario: parseFloat(e.target.value) || 0})} 
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="comercializado"
-                    checked={formData.comercializado_individualmente}
-                    onCheckedChange={(checked) => 
-                      setFormData({...formData, comercializado_individualmente: checked as boolean})
-                    }
-                  />
-                  <Label htmlFor="comercializado" className="cursor-pointer font-normal">
-                    Produto pode ser comercializado individualmente
-                  </Label>
-                </div>
                 <Button onClick={handleSubmit} className="w-full">Adicionar</Button>
               </div>
             </DialogContent>
@@ -294,7 +285,6 @@ export default function Estoque() {
                 <TableHead>Descrição</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Subcategoria</TableHead>
-                <TableHead>Venda Avulsa</TableHead>
                 <TableHead>Peso Porta</TableHead>
                 <TableHead>Setor Produção</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
@@ -324,18 +314,6 @@ export default function Estoque() {
                       </Badge>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {produto.comercializado_individualmente ? (
-                      <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                        <ShoppingCart className="h-3 w-3 mr-1" />
-                        Sim
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-muted-foreground">
-                        Não
-                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -400,13 +378,20 @@ export default function Estoque() {
                       >
                         <History className="h-4 w-4" />
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleExcluir(produto)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
               {produtos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     Nenhum produto cadastrado
                   </TableCell>
                 </TableRow>

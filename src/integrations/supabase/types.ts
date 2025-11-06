@@ -931,7 +931,6 @@ export type Database = {
         Row: {
           ativo: boolean | null
           categoria: string | null
-          comercializado_individualmente: boolean
           created_at: string | null
           created_by: string | null
           descricao_produto: string | null
@@ -950,7 +949,6 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           categoria?: string | null
-          comercializado_individualmente?: boolean
           created_at?: string | null
           created_by?: string | null
           descricao_produto?: string | null
@@ -969,7 +967,6 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           categoria?: string | null
-          comercializado_individualmente?: boolean
           created_at?: string | null
           created_by?: string | null
           descricao_produto?: string | null

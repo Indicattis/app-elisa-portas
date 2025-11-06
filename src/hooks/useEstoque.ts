@@ -26,7 +26,6 @@ export interface ProdutoEstoque {
   categoria: string;
   ativo: boolean;
   preco_unitario: number;
-  comercializado_individualmente: boolean;
   subcategoria_id: string | null;
   peso_porta: number | null;
   setor_responsavel_producao: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
@@ -43,7 +42,6 @@ export interface ProdutoEstoqueInput {
   unidade?: string;
   categoria?: string;
   preco_unitario?: number;
-  comercializado_individualmente?: boolean;
   subcategoria_id?: string | null;
   peso_porta?: number | null;
   setor_responsavel_producao?: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
@@ -302,6 +300,31 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
     },
   });
 
+  const excluirProduto = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("estoque")
+        .update({ ativo: false })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+      toast({
+        title: "Produto excluído",
+        description: "O produto foi excluído com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir produto",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const buscarProdutos = async (termo: string) => {
     setSearchTerm(termo);
   };
@@ -312,6 +335,7 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
     buscarProdutos,
     adicionarProduto: adicionarProduto.mutateAsync,
     editarProduto: editarProduto.mutateAsync,
+    excluirProduto: excluirProduto.mutateAsync,
     movimentarEstoque: movimentarEstoque.mutateAsync,
     alterarCategoria: alterarCategoria.mutateAsync,
     buscarMovimentacoes,
