@@ -392,6 +392,7 @@ export default function Faturamento() {
     // Calcular estatísticas com base nas vendas filtradas
     const vendasFaturadas = filteredVendas.filter(isFaturada);
     
+    // Usar a mesma lógica de cálculo dos indicadores
     const stats = {
       faturamentoTotal: filteredVendas.reduce((acc, v) => 
         acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
@@ -399,11 +400,34 @@ export default function Faturamento() {
         acc + (v.custo_produto || 0), 0),
       custosPintura: vendasFaturadas.reduce((acc, v) => 
         acc + (v.custo_pintura || 0), 0),
-      lucroBrutoTotal: 0, // Será calculado dentro do gerador
       instalacoesTotais: filteredVendas.reduce((acc, v) => 
         acc + (v.valor_instalacao || 0), 0),
       fretesTotais: filteredVendas.reduce((acc, v) => 
         acc + (v.valor_frete || 0), 0),
+      quantidadePortas: filteredVendas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas.reduce((sum: number, p: any) => sum + (p.quantidade || 0), 0);
+      }, 0),
+      // Lucros calculados usando lucro_item (corrigido)
+      lucroPintura: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas
+          .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      lucroPortas: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas
+          .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        const lucroItens = portas.reduce((sum: number, p: any) => 
+          sum + (p.lucro_item || 0), 0);
+        const valorInstalacoes = v.valor_instalacao || 0;
+        return acc + lucroItens + valorInstalacoes;
+      }, 0),
     };
 
     // Preparar dados do período

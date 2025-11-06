@@ -185,13 +185,18 @@ export const generateFaturamentoPDF = (data: FaturamentoPDFData) => {
     const descontos = calculateTotalDiscount(venda);
     const custosTotais = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
     const faturamento = (venda.valor_venda || 0) - (venda.valor_frete || 0);
-    const lucro = faturamento - custosTotais;
+    
+    // Calcular lucro usando lucro_item dos produtos (corrigido)
+    const portas = venda.portas || [];
+    const lucroItens = isFaturada(venda) 
+      ? portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0)
+      : 0;
     
     // Cálculos adicionais
     const valorOriginal = (venda.valor_produto || 0) + descontos;
     const percentualDesconto = valorOriginal > 0 ? (descontos / valorOriginal) * 100 : 0;
     const margem = custosTotais > 0 ? ((faturamento - custosTotais) / custosTotais) * 100 : 0;
-    const lucroLiquido = isFaturada(venda) ? (lucro + (venda.valor_instalacao || 0)) : 0;
+    const lucroLiquido = isFaturada(venda) ? (lucroItens + (venda.valor_instalacao || 0)) : 0;
     const valorFinal = faturamento;
     const valorFinalComFrete = venda.valor_venda || 0;
     
