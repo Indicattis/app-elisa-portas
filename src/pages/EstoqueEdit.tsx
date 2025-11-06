@@ -207,7 +207,6 @@ export default function EstoqueEdit() {
                     <SelectValue placeholder="Selecione um fornecedor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
                     {fornecedores.map((forn) => (
                       <SelectItem key={forn.id} value={forn.id}>
                         {forn.nome}
@@ -301,7 +300,6 @@ export default function EstoqueEdit() {
                     <SelectValue placeholder="Selecione um setor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
                     <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
                     <SelectItem value="solda">Solda</SelectItem>
                     <SelectItem value="separacao">Separação</SelectItem>
