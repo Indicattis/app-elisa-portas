@@ -18,7 +18,7 @@ interface AutorizacaoDescontoModalProps {
   limitePermitido: number;
 }
 
-const SENHA_MESTRE = "1qazxsw2";
+const SENHA_LIDER = "Lider@2025";
 
 export function AutorizacaoDescontoModal({
   open,
@@ -85,8 +85,8 @@ export function AutorizacaoDescontoModal({
     setErro('');
 
     try {
-      // Validar senha mestre
-      if (senha !== SENHA_MESTRE) {
+      // Validar senha do líder
+      if (senha !== SENHA_LIDER) {
         setErro('Senha incorreta');
         return;
       }
