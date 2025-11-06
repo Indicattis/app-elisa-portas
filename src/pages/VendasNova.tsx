@@ -26,7 +26,7 @@ import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
-import { validarDesconto } from '@/utils/descontoVendasRules';
+import { validarDesconto, getTipoAutorizacaoNecessaria, LIMITE_MAXIMO_ABSOLUTO } from '@/utils/descontoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Percent } from 'lucide-react';
@@ -69,6 +69,8 @@ export default function VendasNova() {
   const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
   const [produtosComDesconto, setProdutosComDesconto] = useState<ProdutoVenda[]>([]);
   const [autorizadorId, setAutorizadorId] = useState<string | null>(null);
+  const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master' | null>(null);
+  const [limitePermitido, setLimitePermitido] = useState<number>(10);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -215,13 +217,27 @@ export default function VendasNova() {
       formData.venda_presencial
     );
 
-    // Validar se desconto excede 15%
-    if (validacao.percentualDesconto > 15) {
+    // Verificar se excede limite máximo absoluto (20%)
+    if (validacao.excedeLimiteMaximo) {
+      toast({
+        variant: 'destructive',
+        title: 'Desconto não permitido',
+        description: `O desconto de ${validacao.percentualDesconto.toFixed(1)}% excede o limite máximo de ${LIMITE_MAXIMO_ABSOLUTO}%.`
+      });
+      return;
+    }
+
+    // Verificar se precisa autorização
+    const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
+    if (tipoAutorizacao) {
       setProdutosComDesconto(portas);
+      setTipoAutorizacaoNecessaria(tipoAutorizacao);
+      setLimitePermitido(validacao.limitePermitido);
       setAutorizacaoDescontoOpen(true);
       return;
     }
 
+    // Se está dentro do limite, criar venda normalmente
     try {
       await createVenda({ 
         vendaData: {
@@ -238,7 +254,7 @@ export default function VendasNova() {
   };
 
   const handleAutorizacaoDesconto = async (autorizadorUserId: string) => {
-    if (!user) return;
+    if (!user || !tipoAutorizacaoNecessaria) return;
     
     setAutorizadorId(autorizadorUserId);
     
@@ -259,7 +275,8 @@ export default function VendasNova() {
           autorizado_por: autorizadorUserId,
           solicitado_por: user.id,
           percentual_desconto: validacao.percentualDesconto,
-          senha_usada: '1qazxsw2'
+          senha_usada: '1qazxsw2',
+          tipo_autorizacao: tipoAutorizacaoNecessaria
         }
       });
       navigate('/dashboard/vendas');
@@ -730,12 +747,16 @@ export default function VendasNova() {
         vendaPresencial={formData.venda_presencial}
       />
 
-      <AutorizacaoDescontoModal
-        open={autorizacaoDescontoOpen}
-        onOpenChange={setAutorizacaoDescontoOpen}
-        onAutorizado={handleAutorizacaoDesconto}
-        percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).percentualDesconto}
-      />
+      {tipoAutorizacaoNecessaria && (
+        <AutorizacaoDescontoModal
+          open={autorizacaoDescontoOpen}
+          onOpenChange={setAutorizacaoDescontoOpen}
+          onAutorizado={handleAutorizacaoDesconto}
+          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).percentualDesconto}
+          tipoAutorizacao={tipoAutorizacaoNecessaria}
+          limitePermitido={limitePermitido}
+        />
+      )}
     </div>
   );
 }

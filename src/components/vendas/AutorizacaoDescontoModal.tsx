@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAllUsers } from '@/hooks/useAllUsers';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { RESPONSAVEL_SETOR_ID } from '@/utils/descontoVendasRules';
 
 interface AutorizacaoDescontoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAutorizado: (autorizadorId: string) => void;
   percentualDesconto: number;
+  tipoAutorizacao: 'responsavel_setor' | 'master';
+  limitePermitido: number;
 }
 
 const SENHA_MESTRE = "1qazxsw2";
@@ -21,7 +24,9 @@ export function AutorizacaoDescontoModal({
   open,
   onOpenChange,
   onAutorizado,
-  percentualDesconto
+  percentualDesconto,
+  tipoAutorizacao,
+  limitePermitido
 }: AutorizacaoDescontoModalProps) {
   const [senha, setSenha] = useState('');
   const [autorizadorId, setAutorizadorId] = useState('');
@@ -29,6 +34,14 @@ export function AutorizacaoDescontoModal({
   const [erro, setErro] = useState('');
   
   const { data: usuarios = [], isLoading: loadingUsuarios } = useAllUsers();
+  
+  // Filtrar usuários baseado no tipo de autorização
+  const usuariosFiltrados = useMemo(() => {
+    if (tipoAutorizacao === 'responsavel_setor') {
+      return usuarios.filter(u => u.user_id === RESPONSAVEL_SETOR_ID);
+    }
+    return usuarios;
+  }, [usuarios, tipoAutorizacao]);
 
   useEffect(() => {
     if (open) {
@@ -40,7 +53,7 @@ export function AutorizacaoDescontoModal({
 
   const handleAutorizar = async () => {
     if (!senha.trim()) {
-      setErro('Digite a senha mestre');
+      setErro(tipoAutorizacao === 'master' ? 'Digite a senha mestre' : 'Digite a senha do responsável');
       return;
     }
 
@@ -56,6 +69,12 @@ export function AutorizacaoDescontoModal({
       // Validar senha mestre
       if (senha !== SENHA_MESTRE) {
         setErro('Senha incorreta');
+        return;
+      }
+
+      // Para responsável do setor, validar que o usuário correto foi selecionado
+      if (tipoAutorizacao === 'responsavel_setor' && autorizadorId !== RESPONSAVEL_SETOR_ID) {
+        setErro('Usuário selecionado não é o responsável do setor');
         return;
       }
 
@@ -82,11 +101,16 @@ export function AutorizacaoDescontoModal({
         <DialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <ShieldCheck className="h-6 w-6 text-amber-500" />
-            <DialogTitle>Autorização de Desconto Necessária</DialogTitle>
+            <DialogTitle>
+              {tipoAutorizacao === 'master' ? 'Autorização Master Necessária' : 'Autorização do Responsável Necessária'}
+            </DialogTitle>
           </div>
           <DialogDescription>
             O desconto de <span className="font-bold text-foreground">{percentualDesconto.toFixed(1)}%</span> excede 
-            o limite permitido de 10%. É necessária autorização com senha mestre.
+            o limite permitido de <span className="font-bold text-foreground">{limitePermitido.toFixed(0)}%</span>. 
+            {tipoAutorizacao === 'master' 
+              ? ' É necessária autorização com senha master.'
+              : ' É necessária autorização do responsável do setor.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -105,7 +129,7 @@ export function AutorizacaoDescontoModal({
                 <SelectValue placeholder="Selecione o autorizador" />
               </SelectTrigger>
               <SelectContent>
-                {usuarios.map((usuario) => (
+                {usuariosFiltrados.map((usuario) => (
                   <SelectItem key={usuario.id} value={usuario.user_id}>
                     {usuario.nome} - {usuario.role}
                   </SelectItem>
@@ -115,7 +139,9 @@ export function AutorizacaoDescontoModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="senha">Senha Mestre *</Label>
+            <Label htmlFor="senha">
+              {tipoAutorizacao === 'master' ? 'Senha Master *' : 'Senha do Responsável *'}
+            </Label>
             <Input
               id="senha"
               type="password"
@@ -125,7 +151,7 @@ export function AutorizacaoDescontoModal({
                 setErro('');
               }}
               onKeyPress={handleKeyPress}
-              placeholder="Digite a senha mestre"
+              placeholder={tipoAutorizacao === 'master' ? 'Digite a senha master' : 'Digite a senha do responsável'}
               disabled={loading}
               autoFocus
             />

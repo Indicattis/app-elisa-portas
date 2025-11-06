@@ -53,6 +53,7 @@ export interface AutorizacaoDesconto {
   solicitado_por: string;
   percentual_desconto: number;
   senha_usada: string;
+  tipo_autorizacao: 'responsavel_setor' | 'master';
   observacoes?: string;
 }
 
@@ -244,6 +245,7 @@ export function useVendas() {
             autorizado_por: autorizacaoDesconto.autorizado_por,
             solicitado_por: autorizacaoDesconto.solicitado_por,
             senha_usada: autorizacaoDesconto.senha_usada,
+            tipo_autorizacao: autorizacaoDesconto.tipo_autorizacao,
             observacoes: autorizacaoDesconto.observacoes || null
           }]);
 

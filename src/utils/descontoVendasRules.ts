@@ -95,8 +95,8 @@ export function validarDesconto(
   const limites = calcularLimitesDesconto(formaPagamento, vendaPresencial);
   
   const dentroDoLimite = percentualDesconto <= limites.limiteTotal;
-  const requerSenha = percentualDesconto > limites.limiteTotal && percentualDesconto <= limites.limiteMaximo;
-  const excedeLimiteMaximo = percentualDesconto > limites.limiteMaximo;
+  const requerSenha = percentualDesconto > limites.limiteTotal && percentualDesconto <= LIMITE_MAXIMO_ABSOLUTO;
+  const excedeLimiteMaximo = percentualDesconto > LIMITE_MAXIMO_ABSOLUTO;
 
   return {
     totalVenda,
@@ -120,4 +120,36 @@ export function formatarDesconto(
     return `R$ ${valor.toFixed(2)}`;
   }
   return `${valor.toFixed(2)}%`;
+}
+
+/**
+ * ID do usuário responsável pelo setor
+ */
+export const RESPONSAVEL_SETOR_ID = 'cff6be68-3bc3-4d62-98e4-8eb9101415c6';
+
+/**
+ * Limite máximo absoluto de desconto (com senha master)
+ */
+export const LIMITE_MAXIMO_ABSOLUTO = 20;
+
+/**
+ * Determina o tipo de autorização necessária baseado no desconto
+ */
+export function getTipoAutorizacaoNecessaria(
+  validacao: DescontoCalculation
+): 'responsavel_setor' | 'master' | null {
+  if (validacao.dentroDoLimite) {
+    return null;
+  }
+  
+  if (validacao.percentualDesconto > LIMITE_MAXIMO_ABSOLUTO) {
+    // Excede limite absoluto - não permitido
+    return null;
+  }
+  
+  if (validacao.percentualDesconto > 15) {
+    return 'master';
+  }
+  
+  return 'responsavel_setor';
 }

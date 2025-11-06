@@ -3660,6 +3660,7 @@ export type Database = {
           percentual_desconto: number
           senha_usada: string
           solicitado_por: string
+          tipo_autorizacao: Database["public"]["Enums"]["tipo_autorizacao_desconto"]
           venda_id: string
         }
         Insert: {
@@ -3670,6 +3671,7 @@ export type Database = {
           percentual_desconto: number
           senha_usada: string
           solicitado_por: string
+          tipo_autorizacao: Database["public"]["Enums"]["tipo_autorizacao_desconto"]
           venda_id: string
         }
         Update: {
@@ -3680,6 +3682,7 @@ export type Database = {
           percentual_desconto?: number
           senha_usada?: string
           solicitado_por?: string
+          tipo_autorizacao?: Database["public"]["Enums"]["tipo_autorizacao_desconto"]
           venda_id?: string
         }
         Relationships: [
@@ -4247,6 +4250,7 @@ export type Database = {
       status_vaga: "em_analise" | "aberta" | "fechada" | "preenchida"
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
+      tipo_autorizacao_desconto: "responsavel_setor" | "master"
       tipo_instalacao_enum: "elisa" | "autorizados"
       tipo_parceiro: "autorizado" | "representante" | "franqueado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
@@ -4485,6 +4489,7 @@ export const Constants = {
       status_vaga: ["em_analise", "aberta", "fechada", "preenchida"],
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],
+      tipo_autorizacao_desconto: ["responsavel_setor", "master"],
       tipo_instalacao_enum: ["elisa", "autorizados"],
       tipo_parceiro: ["autorizado", "representante", "franqueado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],
