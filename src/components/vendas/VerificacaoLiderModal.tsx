@@ -39,25 +39,35 @@ export function VerificacaoLiderModal({
         .from('setores_lideres')
         .select('lider_id')
         .eq('setor', 'vendas')
-        .single();
+        .maybeSingle();
 
-      if (setorError) throw setorError;
+      if (setorError) {
+        console.error('Erro ao buscar setor líder:', setorError);
+        return;
+      }
       
-      if (setorData) {
-        const { data: userData, error: userError } = await supabase
-          .from('admin_users')
-          .select('nome')
-          .eq('id', setorData.lider_id)
-          .single();
-        
-        if (userError) throw userError;
-        if (userData) {
-          setLiderNome(userData.nome);
-        }
+      if (!setorData) {
+        console.log('Nenhum líder de vendas configurado');
+        return;
+      }
+      
+      const { data: userData, error: userError } = await supabase
+        .from('admin_users')
+        .select('nome')
+        .eq('user_id', setorData.lider_id)
+        .eq('ativo', true)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error('Erro ao buscar dados do usuário:', userError);
+        return;
+      }
+      
+      if (userData) {
+        setLiderNome(userData.nome);
       }
     } catch (error) {
       console.error('Erro ao buscar líder de vendas:', error);
-      setErro('Erro ao buscar informações do líder');
     }
   };
 
@@ -76,44 +86,46 @@ export function VerificacaoLiderModal({
         .from('setores_lideres')
         .select('lider_id')
         .eq('setor', 'vendas')
-        .single();
+        .maybeSingle();
 
-      if (setorError) throw setorError;
+      if (setorError) {
+        console.error('Erro ao buscar setor:', setorError);
+        setErro('Erro ao buscar líder do setor');
+        return;
+      }
 
       if (!setorData) {
-        setErro('Líder do setor de vendas não encontrado');
+        setErro('Líder do setor de vendas não encontrado. Configure em Configurações → Setores e Líderes.');
         return;
       }
 
-      // Tentar fazer login com as credenciais para verificar senha
-      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-        email: `${setorData.lider_id}@temp.com`, // Email temporário baseado no ID
-        password: senha
-      });
-
-      // Como não temos acesso direto à senha, vamos usar uma abordagem diferente
-      // Por enquanto, vamos apenas verificar se o usuário existe e tem permissão
+      // Buscar dados do usuário líder
       const { data: userData, error: userError } = await supabase
         .from('admin_users')
-        .select('id, nome, role')
-        .eq('id', setorData.lider_id)
-        .single();
+        .select('user_id, nome, role')
+        .eq('user_id', setorData.lider_id)
+        .eq('ativo', true)
+        .maybeSingle();
 
-      if (userError) throw userError;
-
-      if (!userData) {
-        setErro('Usuário não encontrado');
+      if (userError) {
+        console.error('Erro ao buscar usuário:', userError);
+        setErro('Erro ao buscar informações do líder');
         return;
       }
 
-      // ATENÇÃO: Este é um sistema simplificado
-      // Em produção, você deve implementar verificação adequada de senha
-      // Por ora, qualquer senha será aceita se o usuário for o líder correto
-      if (senha.length >= 4) {
+      if (!userData) {
+        setErro('Usuário líder não encontrado ou inativo');
+        return;
+      }
+
+      // Verificar senha usando a senha mestre (1qazxsw2)
+      const SENHA_MESTRE = "1qazxsw2";
+      
+      if (senha === SENHA_MESTRE) {
         onSenhaCorreta();
         onOpenChange(false);
       } else {
-        setErro('Senha deve ter pelo menos 4 caracteres');
+        setErro('Senha incorreta');
       }
     } catch (error) {
       console.error('Erro ao verificar senha:', error);
