@@ -471,16 +471,19 @@ export default function Faturamento() {
     }, 0),
     
     // Lucros calculados apenas de vendas faturadas
+    // Usar lucro_item ao invés de lucro_pintura/lucro_produto pois estes estão zerados
     lucroPintura: vendasParaLucros.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas.reduce((sum: number, p: any) => 
-        sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
+      return acc + portas
+        .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
     }, 0),
     
     lucroPortas: vendasParaLucros.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas.reduce((sum: number, p: any) => 
-        sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
+      return acc + portas
+        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
     }, 0),
     
     lucroInstalacoes: vendasParaLucros.reduce((acc, v) => 
@@ -488,15 +491,13 @@ export default function Faturamento() {
     
     lucroBrutoTotal: vendasParaLucros.reduce((acc, v) => {
       const portas = v.portas || [];
-      // Lucro das portas + Lucro da pintura
-      const lucroPortas = portas.reduce((sum: number, p: any) => 
-        sum + ((p.lucro_produto || 0) * (p.quantidade || 1)), 0);
-      const lucroPintura = portas.reduce((sum: number, p: any) => 
-        sum + ((p.lucro_pintura || 0) * (p.quantidade || 1)), 0);
-      // Valor das instalações
+      // Somar todos os lucros dos itens faturados
+      const lucroItens = portas.reduce((sum: number, p: any) => 
+        sum + (p.lucro_item || 0), 0);
+      // Adicionar valor das instalações (que é considerado lucro)
       const valorInstalacoes = v.valor_instalacao || 0;
       
-      return acc + lucroPortas + lucroPintura + valorInstalacoes;
+      return acc + lucroItens + valorInstalacoes;
     }, 0),
     
     faturamentoTotal: vendasParaIndicadores.reduce((acc, v) => 
