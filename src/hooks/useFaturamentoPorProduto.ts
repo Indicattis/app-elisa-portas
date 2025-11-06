@@ -1,36 +1,68 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 interface FaturamentoPorProduto {
   tipo_produto: string;
   quantidade: number;
   valor_total: number;
+  lucro_total: number;
 }
 
-export const useFaturamentoPorProduto = () => {
-  return useQuery({
-    queryKey: ['faturamento-por-produto'],
-    queryFn: async () => {
-      const hoje = new Date();
-      const inicioMes = startOfMonth(hoje);
-      const fimMes = endOfMonth(hoje);
+interface UseFaturamentoPorProdutoParams {
+  dateRange?: DateRange;
+  selectedAtendente?: string;
+  filterPublico?: string;
+}
 
-      // Buscar todas as vendas do mês com seus produtos
-      const { data: vendas, error } = await supabase
+export const useFaturamentoPorProduto = ({ 
+  dateRange, 
+  selectedAtendente = 'todos',
+  filterPublico = 'todos'
+}: UseFaturamentoPorProdutoParams = {}) => {
+  return useQuery({
+    queryKey: ['faturamento-por-produto', dateRange, selectedAtendente, filterPublico],
+    queryFn: async () => {
+      // Buscar todas as vendas com seus produtos
+      let query = supabase
         .from('vendas')
         .select(`
           id,
           data_venda,
           valor_venda,
           valor_frete,
+          atendente_id,
+          publico_alvo,
           produtos_vendas(
             tipo_produto,
-            quantidade
+            quantidade,
+            lucro_item,
+            faturamento
           )
         `)
-        .gte('data_venda', format(inicioMes, 'yyyy-MM-dd'))
-        .lte('data_venda', format(fimMes, 'yyyy-MM-dd'));
+        .order('data_venda', { ascending: false });
+
+      // Aplicar filtro de data
+      if (dateRange?.from && dateRange?.to) {
+        const startDate = format(dateRange.from, 'yyyy-MM-dd');
+        const endDate = format(dateRange.to, 'yyyy-MM-dd');
+        query = query
+          .gte('data_venda', startDate + ' 00:00:00')
+          .lte('data_venda', endDate + ' 23:59:59');
+      }
+
+      // Aplicar filtro de atendente
+      if (selectedAtendente !== 'todos') {
+        query = query.eq('atendente_id', selectedAtendente);
+      }
+
+      // Aplicar filtro de público
+      if (filterPublico !== 'todos') {
+        query = query.eq('publico_alvo', filterPublico);
+      }
+
+      const { data: vendas, error } = await query;
 
       if (error) {
         console.error('Erro ao buscar faturamento por produto:', error);
@@ -38,7 +70,7 @@ export const useFaturamentoPorProduto = () => {
       }
 
       // Agrupar por tipo de produto
-      const faturamentoMap = new Map<string, { quantidade: number; valor_total: number }>();
+      const faturamentoMap = new Map<string, { quantidade: number; valor_total: number; lucro_total: number }>();
 
       vendas?.forEach((venda: any) => {
         const produtos = venda.produtos_vendas || [];
@@ -49,7 +81,8 @@ export const useFaturamentoPorProduto = () => {
         // Se não há produtos, não contabilizar
         if (produtos.length === 0) return;
         
-        // Distribuir o valor proporcionalmente entre os produtos
+        // Filtrar produtos faturados (faturamento = true)
+        const produtosFaturados = produtos.filter((p: any) => p.faturamento === true);
         const totalQuantidade = produtos.reduce((sum: number, p: any) => sum + (p.quantidade || 0), 0);
         
         produtos.forEach((produto: any) => {
@@ -61,10 +94,14 @@ export const useFaturamentoPorProduto = () => {
             ? (quantidade / totalQuantidade) * valorSemFrete 
             : valorSemFrete / produtos.length;
           
-          const current = faturamentoMap.get(tipo) || { quantidade: 0, valor_total: 0 };
+          // Lucro vem do lucro_item apenas se produto está faturado
+          const lucroItem = produto.faturamento === true ? (produto.lucro_item || 0) : 0;
+          
+          const current = faturamentoMap.get(tipo) || { quantidade: 0, valor_total: 0, lucro_total: 0 };
           faturamentoMap.set(tipo, {
             quantidade: current.quantidade + quantidade,
-            valor_total: current.valor_total + valorProporcional
+            valor_total: current.valor_total + valorProporcional,
+            lucro_total: current.lucro_total + lucroItem
           });
         });
       });
@@ -74,7 +111,8 @@ export const useFaturamentoPorProduto = () => {
         .map(([tipo_produto, dados]) => ({
           tipo_produto,
           quantidade: dados.quantidade,
-          valor_total: dados.valor_total
+          valor_total: dados.valor_total,
+          lucro_total: dados.lucro_total
         }))
         .sort((a, b) => b.valor_total - a.valor_total);
 

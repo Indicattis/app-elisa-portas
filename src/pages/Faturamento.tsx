@@ -28,6 +28,7 @@ import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
 import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
+import { RelatorioProdutos } from "@/components/vendas/RelatorioProdutos";
 
 interface Venda {
   id: string;
@@ -881,6 +882,12 @@ export default function Faturamento() {
             </CardContent>
           </Card>
 
+          {/* Relatório por Produtos */}
+          <RelatorioProdutos 
+            dateRange={dateRange}
+            selectedAtendente={selectedAtendente}
+            filterPublico={filterPublico}
+          />
 
           {/* Tabela de Vendas */}
           <Card>
