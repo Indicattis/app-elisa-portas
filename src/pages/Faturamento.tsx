@@ -408,26 +408,29 @@ export default function Faturamento() {
         const portas = v.portas || [];
         return acc + portas.reduce((sum: number, p: any) => sum + (p.quantidade || 0), 0);
       }, 0),
-      // Lucros calculados usando lucro_item (corrigido)
-      lucroPintura: vendasFaturadas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        return acc + portas
-          .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
-          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-      }, 0),
-      lucroPortas: vendasFaturadas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        return acc + portas
-          .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
-          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-      }, 0),
-      lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        const lucroItens = portas.reduce((sum: number, p: any) => 
-          sum + (p.lucro_item || 0), 0);
-        const valorInstalacoes = v.valor_instalacao || 0;
-        return acc + lucroItens + valorInstalacoes;
-      }, 0),
+    // Lucros calculados usando lucro_item (corrigido) - SEM contar frete
+    lucroPintura: vendasFaturadas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+    }, 0),
+    lucroPortas: vendasFaturadas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+    }, 0),
+    // Lucro Bruto Total = Lucro dos Itens + Instalações (SEM incluir frete)
+    lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      const lucroItens = portas.reduce((sum: number, p: any) => 
+        sum + (p.lucro_item || 0), 0);
+      // Instalação é considerada lucro líquido
+      const valorInstalacoes = v.valor_instalacao || 0;
+      // NÃO incluir frete no lucro bruto
+      return acc + lucroItens + valorInstalacoes;
+    }, 0),
     };
 
     // Preparar dados do período

@@ -318,9 +318,11 @@ export const generateFaturamentoPDF = (data: FaturamentoPDFData) => {
   
   const lucroMedioFaturadas = vendasFaturadas.length > 0
     ? vendasFaturadas.reduce((acc, v) => {
-        const faturamento = (v.valor_venda || 0) - (v.valor_frete || 0);
-        const custos = (v.custo_produto || 0) + (v.custo_pintura || 0);
-        return acc + (faturamento - custos);
+        const portas = v.portas || [];
+        // Calcular lucro usando lucro_item + instalações (SEM frete)
+        const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+        const instalacao = v.valor_instalacao || 0;
+        return acc + lucroItens + instalacao;
       }, 0) / vendasFaturadas.length
     : 0;
   
