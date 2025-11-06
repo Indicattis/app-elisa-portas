@@ -87,6 +87,15 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
         diaSemana: getDay(novaData)
       });
 
+      // Buscar a instalação para pegar o pedido_id
+      const { data: instalacaoData, error: instalacaoError } = await supabase
+        .from('instalacoes_cadastradas')
+        .select('pedido_id')
+        .eq('id', id)
+        .single();
+
+      if (instalacaoError) throw instalacaoError;
+
       // Buscar o nome da equipe
       const { data: equipeData } = await supabase
         .from('equipes_instalacao')
@@ -94,6 +103,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
         .eq('id', novaEquipeId)
         .single();
 
+      // Atualizar a instalação
       const { error } = await supabase
         .from('instalacoes_cadastradas')
         .update({
@@ -105,6 +115,29 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Se houver pedido associado, verificar se já tem data_entrega definida
+      if (instalacaoData?.pedido_id) {
+        const { data: pedidoData, error: pedidoCheckError } = await supabase
+          .from('pedidos_producao')
+          .select('data_entrega')
+          .eq('id', instalacaoData.pedido_id)
+          .single();
+
+        if (pedidoCheckError) {
+          console.error('Erro ao verificar data_entrega do pedido:', pedidoCheckError);
+        } else if (!pedidoData?.data_entrega) {
+          // Se não tiver data_entrega, definir automaticamente
+          const { error: pedidoUpdateError } = await supabase
+            .from('pedidos_producao')
+            .update({ data_entrega: dataFormatada })
+            .eq('id', instalacaoData.pedido_id);
+
+          if (pedidoUpdateError) {
+            console.error('Erro ao atualizar data_entrega do pedido:', pedidoUpdateError);
+          }
+        }
+      }
 
       toast.success('Data da instalação atualizada');
       await fetchInstalacoes();
