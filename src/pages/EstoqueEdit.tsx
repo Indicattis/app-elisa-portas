@@ -170,11 +170,11 @@ export default function EstoqueEdit() {
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categorias.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.nome}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="geral">Geral</SelectItem>
+                    <SelectItem value="componente">Componente</SelectItem>
+                    <SelectItem value="materia_prima">Matéria Prima</SelectItem>
+                    <SelectItem value="ferramentas">Ferramentas</SelectItem>
+                    <SelectItem value="consumivel">Consumível</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
