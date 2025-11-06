@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, Plus, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Download, Plus, Filter, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
 import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
@@ -25,6 +25,7 @@ export default function CronogramaInstalacoes() {
   const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [equipesSelecionadas, setEquipesSelecionadas] = useState<string[]>([]);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
 
   const { instalacoes, loading } = useInstalacoesCronograma(weekStartDate);
   const { equipes, loading: equipesLoading } = useEquipesInstalacao();
@@ -98,6 +99,21 @@ export default function CronogramaInstalacoes() {
         </div>
 
         <div className="flex gap-2 flex-wrap items-center">
+          <Button 
+            variant={viewMode === 'week' ? 'default' : 'outline'} 
+            onClick={() => setViewMode('week')}
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Semana
+          </Button>
+          <Button 
+            variant={viewMode === 'month' ? 'default' : 'outline'} 
+            onClick={() => setViewMode('month')}
+          >
+            <CalendarDays className="h-4 w-4 mr-2" />
+            Mês
+          </Button>
+          
           <Button variant="outline" onClick={handleToday}>
             Hoje
           </Button>
@@ -161,7 +177,7 @@ export default function CronogramaInstalacoes() {
 
       <Card className="relative">
         <CardHeader>
-          <CardTitle>Visualização Semanal</CardTitle>
+          <CardTitle>{viewMode === 'week' ? 'Visualização Semanal' : 'Visualização Mensal'}</CardTitle>
         </CardHeader>
         <CardContent className="relative px-16">
           <Button
@@ -177,11 +193,26 @@ export default function CronogramaInstalacoes() {
             key={weekStartDate.toISOString()}
             className="animate-fade-in"
           >
-            <CronogramaInstalacao
-              currentWeek={weekStartDate}
-              onEditPonto={() => {}}
-              equipesFiltradas={equipesFiltradas}
-            />
+            {viewMode === 'week' ? (
+              <CronogramaInstalacao
+                currentWeek={weekStartDate}
+                onEditPonto={() => {}}
+                equipesFiltradas={equipesFiltradas}
+              />
+            ) : (
+              <div className="text-center py-20 space-y-4">
+                <CalendarDays className="h-16 w-16 mx-auto text-muted-foreground" />
+                <div>
+                  <h3 className="text-lg font-semibold">Visualização Mensal</h3>
+                  <p className="text-muted-foreground mt-2">
+                    A visualização mensal do cronograma será implementada em breve.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Por enquanto, utilize a visualização semanal para gerenciar as instalações.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <Button
