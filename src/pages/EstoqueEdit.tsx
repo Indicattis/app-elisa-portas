@@ -59,19 +59,24 @@ export default function EstoqueEdit() {
 
   useEffect(() => {
     if (produto) {
-      setFormData({
+      console.log('[EstoqueEdit] Carregando produto:', produto);
+      
+      const newFormData = {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
-        quantidade: produto.quantidade || 0,
-        quantidade_ideal: produto.quantidade_ideal || 0,
+        quantidade: Number(produto.quantidade) || 0,
+        quantidade_ideal: Number(produto.quantidade_ideal) || 0,
         unidade: produto.unidade || "UN",
         categoria: produto.categoria || "geral",
-        custo_unitario: produto.custo_unitario || 0,
+        custo_unitario: Number(produto.custo_unitario) || 0,
         subcategoria_id: produto.subcategoria_id || "",
-        peso_porta: produto.peso_porta || 0,
+        peso_porta: Number(produto.peso_porta) || 0,
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
         fornecedor_id: produto.fornecedor_id || "",
-      });
+      };
+      
+      console.log('[EstoqueEdit] Novo formData:', newFormData);
+      setFormData(newFormData);
     }
   }, [produto]);
 
