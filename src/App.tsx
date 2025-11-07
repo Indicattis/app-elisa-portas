@@ -101,6 +101,7 @@ import PedidoView from "./pages/PedidoView";
 import DRE from "./pages/DRE";
 import Despesas from "./pages/Despesas";
 import Vagas from "./pages/Vagas";
+import Etiquetas from "./pages/Etiquetas";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -560,6 +561,16 @@ const App = () => (
                     <ProtectedRoute requirePermission="producao">
                       <DashboardLayout>
                         <FabricaHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/fabrica/etiquetas"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <Etiquetas />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
