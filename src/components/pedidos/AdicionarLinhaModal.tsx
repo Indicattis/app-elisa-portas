@@ -18,9 +18,9 @@ interface AdicionarLinhaModalProps {
 }
 
 // Mapeamento de categoria para setor de produção
-const CATEGORIA_TO_SETOR: Record<CategoriaLinha, 'perfiladeira' | 'solda' | 'separacao' | 'pintura'> = {
+const CATEGORIA_TO_SETOR: Record<CategoriaLinha, 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura'> = {
   separacao: 'separacao',
-  solda: 'solda',
+  solda: 'soldagem',
   perfiladeira: 'perfiladeira',
 };
 

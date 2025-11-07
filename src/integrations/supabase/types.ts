@@ -4248,7 +4248,7 @@ export type Database = {
         | "qualificacao"
         | "proposta"
         | "contratado"
-      setor_producao: "perfiladeira" | "solda" | "separacao" | "pintura"
+      setor_producao: "perfiladeira" | "soldagem" | "separacao" | "pintura"
       status_vaga: "em_analise" | "aberta" | "fechada" | "preenchida"
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
@@ -4487,7 +4487,7 @@ export const Constants = {
         "proposta",
         "contratado",
       ],
-      setor_producao: ["perfiladeira", "solda", "separacao", "pintura"],
+      setor_producao: ["perfiladeira", "soldagem", "separacao", "pintura"],
       status_vaga: ["em_analise", "aberta", "fechada", "preenchida"],
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],

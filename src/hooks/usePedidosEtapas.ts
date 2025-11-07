@@ -367,26 +367,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       }
 
       // Lógica condicional quando sai de aguardando_coleta
+      // Se está em aguardando_coleta, é SEMPRE uma entrega e deve ir para finalizado
       if (etapaAtualNome === 'aguardando_coleta') {
-        const { data: pedidoData } = await supabase
-          .from('pedidos_producao')
-          .select('venda_id')
-          .eq('id', pedidoId)
-          .single();
-        
-        if (pedidoData?.venda_id) {
-          const { data: venda } = await supabase
-            .from('vendas')
-            .select('tipo_entrega')
-            .eq('id', pedidoData.venda_id)
-            .single();
-          
-          if (venda?.tipo_entrega === 'entrega') {
-            etapaDestino = 'finalizado';
-          } else {
-            etapaDestino = 'aguardando_instalacao';
-          }
-        }
+        etapaDestino = 'finalizado';
+        console.log('[moverParaProximaEtapa] Pedido em aguardando_coleta avançando para finalizado');
       }
 
       // Atualizar pedido e resetar prioridade
@@ -463,7 +447,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
         const temSolda = linhas?.some(l => 
           !l.estoque?.setor_responsavel_producao || 
-          l.estoque?.setor_responsavel_producao === 'solda'
+          l.estoque?.setor_responsavel_producao === 'soldagem'
         );
         const temPerfiladeira = linhas?.some(l => 
           l.estoque?.setor_responsavel_producao === 'perfiladeira'

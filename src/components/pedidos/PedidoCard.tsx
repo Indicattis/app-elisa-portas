@@ -216,7 +216,7 @@ export function PedidoCard({
 
       const temSolda = linhas?.some(l => 
         !l.estoque?.setor_responsavel_producao || 
-        l.estoque?.setor_responsavel_producao === 'solda'
+        l.estoque?.setor_responsavel_producao === 'soldagem'
       );
       const temPerfiladeira = linhas?.some(l => 
         l.estoque?.setor_responsavel_producao === 'perfiladeira'

@@ -50,12 +50,12 @@ export interface ProdutoEstoqueInput {
   custo_unitario?: number;
   subcategoria_id?: string | null;
   peso_porta?: number | null;
-  setor_responsavel_producao?: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
+  setor_responsavel_producao?: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null;
   fornecedor_id?: string | null;
   quantidade_ideal?: number;
 }
 
-export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null = null) => {
+export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null = null) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState(termoBuscaInicial);
