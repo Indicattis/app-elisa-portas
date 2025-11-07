@@ -64,7 +64,7 @@ import { baixarInstalacoesPDF } from '@/utils/instalacoesPDFGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { useInstalacoesFilters, isAtrasado } from '@/hooks/useInstalacoesFilters';
+import { isAtrasado } from '@/hooks/useInstalacoesFilters';
 
 interface InstalacoesTabelaViewProps {
   instalacoes: InstalacaoCadastrada[];
@@ -89,7 +89,6 @@ export const InstalacoesTabelaView = ({
   isAdmin,
 }: InstalacoesTabelaViewProps) => {
   const navigate = useNavigate();
-  const { filters, setFilters, filteredInstalacoes, clearFilters } = useInstalacoesFilters(instalacoes);
   const [detalhesInstalacao, setDetalhesInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [dataProducaoInstalacao, setDataProducaoInstalacao] = useState<InstalacaoCadastrada | null>(null);
   const [responsavelInstalacao, setResponsavelInstalacao] = useState<InstalacaoCadastrada | null>(null);
@@ -157,7 +156,7 @@ export const InstalacoesTabelaView = ({
   };
 
   const sortedInstalacoes = useMemo(() => {
-    const result = [...filteredInstalacoes];
+    const result = [...instalacoes];
 
     // Ordenar
     result.sort((a, b) => {
@@ -175,7 +174,7 @@ export const InstalacoesTabelaView = ({
     });
 
     return result;
-  }, [filteredInstalacoes, sortField, sortOrder]);
+  }, [instalacoes, sortField, sortOrder]);
 
   const paginatedInstalacoes = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -323,118 +322,6 @@ export const InstalacoesTabelaView = ({
           </div>
         </CardHeader>
         <CardContent className="p-3 sm:p-6 w-full max-w-full overflow-hidden">
-          {/* Filtros Compactos */}
-          <div className="h-[100px] overflow-hidden space-y-2 w-full max-w-full">
-            {/* Linha 1: Busca e Filtros Rápidos */}
-            <div className="flex items-center gap-1 w-full min-w-0">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar..."
-                  value={filters.search}
-                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="pl-7 h-8 text-[9px] w-full"
-                />
-              </div>
-              
-              <div className="flex gap-1 shrink-0">
-                <Button
-                  variant={filters.quickFilter === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilters({ ...filters, quickFilter: 'all' })}
-                  className="h-8 px-1.5 text-[9px] min-w-0"
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant={filters.quickFilter === 'sem_responsavel' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilters({ ...filters, quickFilter: 'sem_responsavel' })}
-                  className="h-8 px-1.5 text-[9px] min-w-0"
-                  title="Sem Responsável"
-                >
-                  <UserX className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant={filters.quickFilter === 'atrasados' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilters({ ...filters, quickFilter: 'atrasados' })}
-                  className="h-8 px-1.5 text-[9px] min-w-0"
-                  title="Atrasados"
-                >
-                  <Clock className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Linha 2: Selects em Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 w-full min-w-0">
-              <Select 
-                value={filters.status} 
-                onValueChange={(value) => setFilters({ ...filters, status: value, quickFilter: 'all' })}
-              >
-                <SelectTrigger className="h-8 text-[9px] min-w-0">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pendente_producao">Pendente</SelectItem>
-                  <SelectItem value="pronta_fabrica">Pronta</SelectItem>
-                  <SelectItem value="finalizada">Finalizada</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select 
-                value={filters.estado} 
-                onValueChange={(value) => setFilters({ ...filters, estado: value })}
-              >
-                <SelectTrigger className="h-8 text-[9px] min-w-0">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {ESTADOS_BRASIL.map((estado) => (
-                    <SelectItem key={estado.sigla} value={estado.sigla}>
-                      {estado.sigla}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {(filters.search || filters.status !== 'all' || filters.estado !== 'all' || filters.quickFilter !== 'all') && (
-                <Button 
-                  onClick={clearFilters} 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 text-[9px] gap-1 min-w-0 px-1.5"
-                >
-                  <X className="h-3 w-3" />
-                  <span className="hidden sm:inline">Limpar</span>
-                </Button>
-              )}
-            </div>
-
-            {/* Linha 3: Filtros Rápidos Adicionais (Mobile) */}
-            <div className="flex gap-1 w-full min-w-0">
-              <Button
-                variant={filters.quickFilter === 'pendente_producao' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilters({ ...filters, quickFilter: 'pendente_producao', status: 'all' })}
-                className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
-              >
-                Pendente
-              </Button>
-              <Button
-                variant={filters.quickFilter === 'pronta_fabrica' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilters({ ...filters, quickFilter: 'pronta_fabrica', status: 'all' })}
-                className="h-7 px-1.5 text-[9px] flex-1 min-w-0"
-              >
-                Pronta
-              </Button>
-            </div>
-          </div>
-
           {/* Tabela */}
           {sortedInstalacoes.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">

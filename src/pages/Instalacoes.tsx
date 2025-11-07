@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
 import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
 import { InstalacaoIndicadores } from "@/components/cadastro-instalacao/InstalacaoIndicadores";
+import { InstalacoesFiltros } from "@/components/cadastro-instalacao/InstalacoesFiltros";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
+import { useInstalacoesFilters } from "@/hooks/useInstalacoesFilters";
 
 export default function Instalacoes() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
@@ -24,6 +26,19 @@ export default function Instalacoes() {
     concluirInstalacao,
     geocodeInstalacao
   } = useInstalacoesCadastradas();
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    filterStatus,
+    setFilterStatus,
+    filterEstado,
+    setFilterEstado,
+    quickFilter,
+    setQuickFilter,
+    filteredInstalacoes,
+    estados,
+  } = useInstalacoesFilters(instalacoes);
 
   return (
     <>
@@ -53,8 +68,20 @@ export default function Instalacoes() {
 
         <InstalacaoIndicadores instalacoes={instalacoes} />
 
+        <InstalacoesFiltros
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterStatus={filterStatus}
+          onFilterStatusChange={setFilterStatus}
+          filterEstado={filterEstado}
+          onFilterEstadoChange={setFilterEstado}
+          estados={estados}
+          quickFilter={quickFilter}
+          onQuickFilterChange={setQuickFilter}
+        />
+
         <InstalacoesTabelaView
-          instalacoes={instalacoes}
+          instalacoes={filteredInstalacoes}
           onDelete={deleteInstalacao}
           onUpdate={updateInstalacao}
           onUpdateStatus={updateStatus}
