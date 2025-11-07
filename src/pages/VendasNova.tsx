@@ -26,8 +26,10 @@ import { cn } from '@/lib/utils';
 import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
+import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
+import { validarCredito } from '@/utils/creditoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -66,6 +68,7 @@ export default function VendasNova() {
   const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
   const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
   const [descontoModalOpen, setDescontoModalOpen] = useState(false);
+  const [creditoModalOpen, setCreditoModalOpen] = useState(false);
   const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
   const [produtosComDesconto, setProdutosComDesconto] = useState<ProdutoVenda[]>([]);
   const [autorizadorId, setAutorizadorId] = useState<string | null>(null);
@@ -101,7 +104,8 @@ export default function VendasNova() {
       const valorTotal = newPortas.reduce((acc, p) => {
         const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
         const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-        return acc + valorBase - desconto;
+        const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+        return acc + valorBase - desconto + credito;
       }, 0) + (formData.valor_frete || 0);
       
       setFormData(prev => ({
@@ -124,7 +128,8 @@ export default function VendasNova() {
       const valorTotal = newPortas.reduce((acc, p) => {
         const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
         const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-        return acc + valorBase - desconto;
+        const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+        return acc + valorBase - desconto + credito;
       }, 0) + (formData.valor_frete || 0);
       
       setFormData(prev => ({
@@ -148,7 +153,8 @@ export default function VendasNova() {
       const valorTotal = newPortas.reduce((acc, p) => {
         const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
         const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-        return acc + valorBase - desconto;
+        const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+        return acc + valorBase - desconto + credito;
       }, 0) + (formData.valor_frete || 0);
       
       setFormData(prev => ({
@@ -170,7 +176,8 @@ export default function VendasNova() {
       const valorTotal = newPortas.reduce((acc, p) => {
         const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
         const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-        return acc + valorBase - desconto;
+        const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+        return acc + valorBase - desconto + credito;
       }, 0) + (formData.valor_frete || 0);
       
       setFormData(prev => ({
@@ -189,7 +196,25 @@ export default function VendasNova() {
     const valorTotal = produtosAtualizados.reduce((acc, p) => {
       const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
       const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-      return acc + valorBase - desconto;
+      const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+      return acc + valorBase - desconto + credito;
+    }, 0) + (formData.valor_frete || 0);
+    
+    setFormData(prev => ({
+      ...prev,
+      valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+    }));
+  };
+
+  const handleAplicarCredito = (produtosAtualizados: ProdutoVenda[]) => {
+    setPortas(produtosAtualizados);
+    
+    // Recalcular valores
+    const valorTotal = produtosAtualizados.reduce((acc, p) => {
+      const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+      const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+      const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+      return acc + valorBase - desconto + credito;
     }, 0) + (formData.valor_frete || 0);
     
     setFormData(prev => ({
@@ -211,7 +236,8 @@ export default function VendasNova() {
       const valorTotal = newPortas.reduce((acc, p) => {
         const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
         const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-        return acc + valorBase - desconto;
+        const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+        return acc + valorBase - desconto + credito;
       }, 0) + (formData.valor_frete || 0);
       
       setFormData(prev => ({
@@ -223,6 +249,34 @@ export default function VendasNova() {
     });
     
     toast({ title: "Desconto removido com sucesso" });
+  };
+
+  const handleRemoverCredito = (index: number) => {
+    setPortas(prev => {
+      const newPortas = [...prev];
+      newPortas[index] = {
+        ...newPortas[index],
+        valor_credito: 0,
+        percentual_credito: 0
+      };
+      
+      // Recalcular valores
+      const valorTotal = newPortas.reduce((acc, p) => {
+        const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+        const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+        const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+        return acc + valorBase - desconto + credito;
+      }, 0) + (formData.valor_frete || 0);
+      
+      setFormData(prev => ({
+        ...prev,
+        valor_a_receber: valorTotal - (prev.valor_entrada || 0)
+      }));
+      
+      return newPortas;
+    });
+    
+    toast({ title: "Crédito removido com sucesso" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -713,6 +767,7 @@ export default function VendasNova() {
                   onEditProduto={handleEditPorta}
                   onUpdateQuantidade={handleUpdateQuantidade}
                   onRemoverDesconto={handleRemoverDesconto}
+                  onRemoverCredito={handleRemoverCredito}
                 />
           </CardContent>
         </Card>
@@ -816,7 +871,7 @@ export default function VendasNova() {
           <Button type="button" variant="outline" onClick={() => navigate('/dashboard/vendas')}>
             Cancelar
           </Button>
-          {portas.length > 0 && (
+          {portas.length > 0 && !validarCredito(portas).totalCredito && (
             <Button 
               type="button" 
               variant="outline"
@@ -824,6 +879,17 @@ export default function VendasNova() {
             >
               <Percent className="w-4 h-4 mr-2" />
               Adicionar Desconto
+            </Button>
+          )}
+          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).dentroDosLimites && (
+            <Button 
+              type="button" 
+              variant="outline"
+              className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              onClick={() => setCreditoModalOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Crédito
             </Button>
           )}
           <Button type="submit" disabled={isCreating || portas.length === 0}>
@@ -840,6 +906,13 @@ export default function VendasNova() {
         onAplicarDesconto={handleAplicarDesconto}
         formaPagamento={formData.forma_pagamento}
         vendaPresencial={formData.venda_presencial}
+      />
+
+      <CreditoVendaModal
+        open={creditoModalOpen}
+        onOpenChange={setCreditoModalOpen}
+        produtos={portas}
+        onAplicarCredito={handleAplicarCredito}
       />
 
       {tipoAutorizacaoNecessaria && (

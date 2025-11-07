@@ -22,6 +22,8 @@ export interface ProdutoVenda {
   desconto_valor: number;
   quantidade: number;
   descricao?: string;
+  valor_credito?: number;
+  percentual_credito?: number;
 }
 
 // Manter compatibilidade com código existente
@@ -141,7 +143,9 @@ export function useVendas() {
           ? (produto.desconto_valor || 0)
           : valorBase * ((produto.desconto_percentual || 0) / 100);
         
-        const valorComDesconto = valorBase - descontoAplicado;
+        const creditoAplicado = (produto.valor_credito || 0) * (produto.quantidade || 1);
+        
+        const valorComDesconto = valorBase - descontoAplicado + creditoAplicado;
         
         return {
           valor_produto: acc.valor_produto + (produto.valor_produto * (produto.quantidade || 1)),
@@ -202,7 +206,9 @@ export function useVendas() {
         desconto_percentual: produto.desconto_percentual,
         desconto_valor: produto.desconto_valor,
         quantidade: produto.quantidade,
-        descricao: produto.descricao || null
+        descricao: produto.descricao || null,
+        valor_credito: produto.valor_credito || 0,
+        percentual_credito: produto.percentual_credito || 0
       }));
       
       const { error: produtosError } = await supabase

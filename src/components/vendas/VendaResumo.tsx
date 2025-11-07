@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProdutoVenda } from '@/hooks/useVendas';
 import { calcularDescontoTotal, calcularPercentualDesconto, calcularTotalVenda } from '@/utils/descontoVendasRules';
+import { calcularCreditoTotal, calcularPercentualCredito } from '@/utils/creditoVendasRules';
 
 interface VendaResumoProps {
   produtos: ProdutoVenda[];
@@ -19,13 +20,15 @@ export function VendaResumo({ produtos, valorFrete = 0 }: VendaResumoProps) {
       ? produto.desconto_valor 
       : valorBase * (produto.desconto_percentual / 100);
     
-    const valorComDesconto = valorBase - descontoAplicado;
+    const creditoAplicado = (produto.valor_credito || 0) * produto.quantidade;
+    
+    const valorFinal = valorBase - descontoAplicado + creditoAplicado;
     
     return {
       produto: acc.produto + (produto.valor_produto * produto.quantidade),
       pintura: acc.pintura + (produto.valor_pintura * produto.quantidade),
       instalacao: acc.instalacao + (produto.valor_instalacao * produto.quantidade),
-      total: acc.total + valorComDesconto
+      total: acc.total + valorFinal
     };
   }, {
     produto: 0,
@@ -37,6 +40,11 @@ export function VendaResumo({ produtos, valorFrete = 0 }: VendaResumoProps) {
   const totalVendaSemDesconto = calcularTotalVenda(produtos);
   const descontoAplicado = calcularDescontoTotal(produtos);
   const percentualDesconto = calcularPercentualDesconto(descontoAplicado, totalVendaSemDesconto);
+  
+  const creditoAplicado = calcularCreditoTotal(produtos);
+  const totalSemCredito = totais.total - creditoAplicado;
+  const percentualCredito = calcularPercentualCredito(creditoAplicado, totalSemCredito);
+  
   const valorTotalComFrete = totais.total + valorFrete;
 
   return (
@@ -66,6 +74,14 @@ export function VendaResumo({ produtos, valorFrete = 0 }: VendaResumoProps) {
             <span className="font-medium">Desconto Aplicado:</span>
             <span className="font-semibold">
               -R$ {descontoAplicado.toFixed(2)} ({percentualDesconto.toFixed(2)}%)
+            </span>
+          </div>
+        )}
+        {creditoAplicado > 0 && (
+          <div className="flex justify-between text-blue-600 dark:text-blue-400">
+            <span className="font-medium">Crédito Aplicado:</span>
+            <span className="font-semibold">
+              +R$ {creditoAplicado.toFixed(2)} ({percentualCredito.toFixed(2)}%)
             </span>
           </div>
         )}

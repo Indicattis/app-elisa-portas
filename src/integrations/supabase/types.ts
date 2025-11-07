@@ -2974,12 +2974,14 @@ export type Database = {
           lucro_produto: number | null
           margem_pintura: number | null
           margem_produto: number | null
+          percentual_credito: number | null
           quantidade: number | null
           tamanho: string
           tipo_desconto: string | null
           tipo_pintura: string | null
           tipo_produto: string
           updated_at: string | null
+          valor_credito: number | null
           valor_frete: number
           valor_instalacao: number
           valor_pintura: number
@@ -3009,12 +3011,14 @@ export type Database = {
           lucro_produto?: number | null
           margem_pintura?: number | null
           margem_produto?: number | null
+          percentual_credito?: number | null
           quantidade?: number | null
           tamanho: string
           tipo_desconto?: string | null
           tipo_pintura?: string | null
           tipo_produto?: string
           updated_at?: string | null
+          valor_credito?: number | null
           valor_frete?: number
           valor_instalacao?: number
           valor_pintura?: number
@@ -3044,12 +3048,14 @@ export type Database = {
           lucro_produto?: number | null
           margem_pintura?: number | null
           margem_produto?: number | null
+          percentual_credito?: number | null
           quantidade?: number | null
           tamanho?: string
           tipo_desconto?: string | null
           tipo_pintura?: string | null
           tipo_produto?: string
           updated_at?: string | null
+          valor_credito?: number | null
           valor_frete?: number
           valor_instalacao?: number
           valor_pintura?: number
