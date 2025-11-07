@@ -881,7 +881,7 @@ export default function VendasNova() {
               Adicionar Desconto
             </Button>
           )}
-          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).dentroDosLimites && (
+          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).dentroDoLimite && (
             <Button 
               type="button" 
               variant="outline"
