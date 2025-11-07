@@ -6,7 +6,6 @@ export interface InstalacoesFilters {
   search: string;
   status: string;
   estado: string;
-  quickFilter: string;
 }
 
 export const isAtrasado = (instalacao: InstalacaoCadastrada) => {
@@ -19,7 +18,6 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterEstado, setFilterEstado] = useState<string>("all");
-  const [quickFilter, setQuickFilter] = useState<string>("all");
 
   const filteredInstalacoes = useMemo(() => {
     if (!instalacoes || !Array.isArray(instalacoes)) {
@@ -36,19 +34,8 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
         .includes(searchTerm.toLowerCase());
       if (!matchesSearch) return false;
 
-      // Filtro por quick filter (prioritário sobre status select)
-      if (quickFilter !== "all") {
-        if (quickFilter === "pendentes" && instalacao.status !== "pendente_producao") return false;
-        if (quickFilter === "prontas" && instalacao.status !== "pronta_fabrica") return false;
-        if (quickFilter === "concluidas" && instalacao.status !== "finalizada") return false;
-        if (quickFilter === "sem_responsavel" && instalacao.responsavel_instalacao_id) return false;
-        if (quickFilter === "atrasadas") {
-          const isAtrasada = instalacao.data_instalacao && 
-            new Date(instalacao.data_instalacao) < new Date() && 
-            instalacao.status !== "finalizada";
-          if (!isAtrasada) return false;
-        }
-      } else if (filterStatus !== "all" && instalacao.status !== filterStatus) {
+      // Filtro por status
+      if (filterStatus !== "all" && instalacao.status !== filterStatus) {
         return false;
       }
 
@@ -59,7 +46,7 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
 
       return true;
     });
-  }, [instalacoes, searchTerm, filterStatus, filterEstado, quickFilter]);
+  }, [instalacoes, searchTerm, filterStatus, filterEstado]);
 
   const sortedInstalacoes = useMemo(() => {
     return [...filteredInstalacoes].sort((a, b) => {
@@ -91,8 +78,6 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
     setFilterStatus,
     filterEstado,
     setFilterEstado,
-    quickFilter,
-    setQuickFilter,
     filteredInstalacoes: sortedInstalacoes,
     estados,
   };

@@ -34,8 +34,6 @@ export default function Instalacoes() {
     setFilterStatus,
     filterEstado,
     setFilterEstado,
-    quickFilter,
-    setQuickFilter,
     filteredInstalacoes,
     estados,
   } = useInstalacoesFilters(instalacoes);
@@ -76,8 +74,6 @@ export default function Instalacoes() {
           filterEstado={filterEstado}
           onFilterEstadoChange={setFilterEstado}
           estados={estados}
-          quickFilter={quickFilter}
-          onQuickFilterChange={setQuickFilter}
         />
 
         <InstalacoesTabelaView
