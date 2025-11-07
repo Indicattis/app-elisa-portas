@@ -25,7 +25,8 @@ export function useInstalacoesDisponiveis() {
   const fetchInstalacoesDisponiveis = async (): Promise<InstalacaoDisponivel[]> => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Buscar instalações com pedidos
+      const { data: instalacoes, error: instError } = await supabase
         .from('instalacoes_cadastradas')
         .select(`
           id,
@@ -38,22 +39,46 @@ export function useInstalacoesDisponiveis() {
           venda_id,
           pedido:pedidos_producao!instalacoes_cadastradas_pedido_id_fkey(
             id,
-            numero_pedido,
-            etapa_atual
+            numero_pedido
           )
         `)
         .not('pedido_id', 'is', null)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (instError) throw instError;
 
-      // Filtrar no cliente para instalações cujo pedido está em aguardando_coleta ou finalizado
-      const instalacoesFiltradas = (data || []).filter(
-        (inst: any) => 
-          inst.pedido && 
-          (inst.pedido.etapa_atual === 'aguardando_coleta' || 
-           inst.pedido.etapa_atual === 'finalizado')
-      );
+      // Para cada instalação, buscar a última etapa do pedido
+      const instalacoesFiltradas = [];
+      
+      for (const inst of instalacoes || []) {
+        if (!inst.pedido_id) continue;
+
+        // Buscar a última etapa do pedido
+        const { data: etapas, error: etapaError } = await supabase
+          .from('pedidos_etapas')
+          .select('etapa')
+          .eq('pedido_id', inst.pedido_id)
+          .order('data_entrada', { ascending: false })
+          .limit(1);
+
+        if (etapaError) {
+          console.error('Erro ao buscar etapa do pedido:', etapaError);
+          continue;
+        }
+
+        const ultimaEtapa = etapas?.[0]?.etapa;
+
+        // Filtrar apenas instalações com pedidos em "aguardando_instalacao" ou "finalizado"
+        if (ultimaEtapa === 'aguardando_instalacao' || ultimaEtapa === 'finalizado') {
+          instalacoesFiltradas.push({
+            ...inst,
+            pedido: inst.pedido ? {
+              ...inst.pedido,
+              etapa_atual: ultimaEtapa
+            } : null
+          });
+        }
+      }
 
       return instalacoesFiltradas as InstalacaoDisponivel[];
     } catch (error) {
