@@ -964,40 +964,18 @@ export function PedidoCard({
                 </Button>
                      )}
                    </>
-                 ) : etapaAtual === 'em_producao' ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-              >
-                <FileText className="h-3.5 w-3.5 mr-2" />
-                Ver Preparação
-              </Button>
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={() => setShowAvancarQualidade(true)}
-                disabled={!todasOrdensConcluidasEmProducao}
-                title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : ""}
-              >
-                <ArrowRight className="h-3.5 w-3.5 mr-2" />
-                Avançar para Qualidade
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-              >
-                <FileText className="h-3.5 w-3.5 mr-2" />
-                Ver Preparação
-              </Button>
-              {etapaAtual === 'inspecao_qualidade' ? (
+          ) : etapaAtual === 'em_producao' ? (
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => setShowAvancarQualidade(true)}
+              disabled={!todasOrdensConcluidasEmProducao}
+              title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : ""}
+            >
+              <ArrowRight className="h-3.5 w-3.5 mr-2" />
+              Avançar para Qualidade
+            </Button>
+          ) : etapaAtual === 'inspecao_qualidade' ? (
                 <Button
                   size="sm"
                   className="w-full"
@@ -1071,8 +1049,6 @@ export function PedidoCard({
                   Avançar para {ETAPAS_CONFIG[proximaEtapa].label}
                 </Button>
               ) : null}
-            </>
-          )}
         </CardFooter>
       </Card>
 
