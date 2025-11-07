@@ -4092,10 +4092,12 @@ export type Database = {
         Args: { p_pedido_id: string }
         Returns: undefined
       }
-      criar_ordens_producao_automaticas: {
-        Args: { p_pedido_id: string }
-        Returns: undefined
-      }
+      criar_ordens_producao_automaticas:
+        | {
+            Args: { p_pedido_id: string; p_pedido_numero: string }
+            Returns: undefined
+          }
+        | { Args: { p_pedido_id: string }; Returns: undefined }
       criar_requisicao_venda: {
         Args: { orcamento_uuid: string }
         Returns: string
