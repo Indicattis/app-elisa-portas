@@ -36,6 +36,10 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
+    /* Warning colors for yellow/pending states */
+    --warning: 45 93% 47%;
+    --warning-foreground: 45 100% 95%;
+
     /* Bordas em tons de azul claro */
     --border: 214 32% 88%;
     --input: 214 32% 88%;
@@ -79,6 +83,9 @@ All colors MUST be HSL.
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+
+    --warning: 45 93% 47%;
+    --warning-foreground: 45 100% 95%;
 
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;

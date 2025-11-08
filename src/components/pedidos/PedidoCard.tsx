@@ -547,7 +547,7 @@ export function PedidoCard({
                   size="icon"
                   onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
                   title="Preparar Pedido"
-                  className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/50 hover:bg-yellow-500/20"
+                  className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"
                   variant="outline"
                 >
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
@@ -675,7 +675,7 @@ export function PedidoCard({
                   variant="outline"
                   onClick={() => setShowRetrocederEtapa(true)}
                   title="Retroceder para etapa anterior"
-                  className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50 hover:bg-red-500/20"
+                  className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>
@@ -931,7 +931,7 @@ export function PedidoCard({
                   size="icon"
                   onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
                   title="Preparar Pedido"
-                  className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/50 hover:bg-yellow-500/20"
+                  className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"
                   variant="outline"
                 >
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
@@ -1059,7 +1059,7 @@ export function PedidoCard({
                   variant="outline"
                   onClick={() => setShowRetrocederEtapa(true)}
                   title="Retroceder para etapa anterior"
-                  className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50 hover:bg-red-500/20"
+                  className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>
