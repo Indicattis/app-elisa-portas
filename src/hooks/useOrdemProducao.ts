@@ -352,6 +352,44 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
   
   const ordensConcluidas = ordens.filter(o => o.status === 'concluido');
 
+  // Enviar ordem para histórico
+  const enviarParaHistorico = useMutation({
+    mutationFn: async (ordemId: string) => {
+      // Mapear nome da tabela de acordo com o tipo
+      const tabelasMap = {
+        soldagem: 'ordens_soldagem',
+        perfiladeira: 'ordens_perfiladeira',
+        separacao: 'ordens_separacao',
+        qualidade: 'ordens_qualidade',
+      } as const;
+
+      const nomeTabela = tabelasMap[tipoOrdem];
+
+      const { error } = await supabase
+        .from(nomeTabela as any)
+        .update({ historico: true })
+        .eq("id", ordemId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ordens-producao", tipoOrdem] });
+      queryClient.invalidateQueries({ queryKey: ["historico-ordens"] });
+      toast({
+        title: "Ordem enviada para histórico",
+        description: "A ordem não aparecerá mais na lista de produção",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Erro ao enviar ordem para histórico:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a ordem para o histórico",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     ordens,
     ordensAFazer,
@@ -360,5 +398,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
+    enviarParaHistorico,
   };
 }

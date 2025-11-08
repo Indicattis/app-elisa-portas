@@ -265,6 +265,34 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
     },
   });
 
+  // Enviar ordem para histórico
+  const enviarParaHistorico = useMutation({
+    mutationFn: async (ordemId: string) => {
+      const { error } = await supabase
+        .from("ordens_pintura" as any)
+        .update({ historico: true })
+        .eq("id", ordemId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ordens-pintura"] });
+      queryClient.invalidateQueries({ queryKey: ["historico-ordens"] });
+      toast({
+        title: "Ordem enviada para histórico",
+        description: "A ordem não aparecerá mais na lista de produção",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Erro ao enviar ordem para histórico:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a ordem para o histórico",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     ordens,
     ordensParaPintar,
@@ -273,5 +301,6 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
     capturarOrdem,
     finalizarPintura,
     marcarLinhaConcluida,
+    enviarParaHistorico,
   };
 }

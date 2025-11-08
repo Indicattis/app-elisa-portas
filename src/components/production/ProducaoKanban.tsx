@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, CheckCircle2, Clock, UserCheck, Timer, AlertTriangle } from "lucide-react";
+import { Package, CheckCircle2, Clock, UserCheck, Timer, AlertTriangle, Archive } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,8 @@ interface ProducaoKanbanProps {
   onCapturarOrdem?: (ordemId: string) => void;
   isCapturing?: boolean;
   tipoOrdem: TipoOrdem;
+  onEnviarParaHistorico?: (ordemId: string) => void;
+  isEnviandoHistorico?: boolean;
 }
 
 export function ProducaoKanban({
@@ -57,9 +59,11 @@ export function ProducaoKanban({
   onCapturarOrdem,
   isCapturing = false,
   tipoOrdem,
+  onEnviarParaHistorico,
+  isEnviandoHistorico = false,
 }: ProducaoKanbanProps) {
   
-  const renderOrdemCard = (ordem: Ordem) => {
+  const renderOrdemCard = (ordem: Ordem, isConcluida: boolean = false) => {
     const linhas = ordem.linhas || [];
     const linhasConcluidas = linhas.filter(l => l.concluida).length;
     const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
@@ -167,6 +171,23 @@ export function ProducaoKanban({
               {ordem.observacoes}
             </p>
           )}
+
+          {/* Botão para enviar ao histórico (apenas ordens concluídas) */}
+          {isConcluida && onEnviarParaHistorico && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEnviarParaHistorico(ordem.id);
+              }}
+              disabled={isEnviandoHistorico}
+            >
+              <Archive className="h-3 w-3 mr-2" />
+              Enviar para Histórico
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -205,7 +226,7 @@ export function ProducaoKanban({
           {isLoading ? (
             renderSkeletons()
           ) : ordensAFazer.length > 0 ? (
-            ordensAFazer.map(renderOrdemCard)
+            ordensAFazer.map(ordem => renderOrdemCard(ordem, false))
           ) : (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -233,7 +254,7 @@ export function ProducaoKanban({
           {isLoading ? (
             renderSkeletons()
           ) : ordensConcluidas.length > 0 ? (
-            ordensConcluidas.map(renderOrdemCard)
+            ordensConcluidas.map(ordem => renderOrdemCard(ordem, true))
           ) : (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">

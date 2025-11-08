@@ -27,6 +27,7 @@ export default function ProducaoPintura() {
     capturarOrdem,
     finalizarPintura,
     marcarLinhaConcluida,
+    enviarParaHistorico,
   } = useOrdemPintura(tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -73,6 +74,8 @@ export default function ProducaoPintura() {
             onFinalizarPintura={finalizarPintura.mutate}
             onCapturarOrdem={capturarOrdem.mutate}
             isCapturing={capturarOrdem.isPending}
+            onEnviarParaHistorico={(ordemId) => enviarParaHistorico.mutate(ordemId)}
+            isEnviandoHistorico={enviarParaHistorico.isPending}
           />
         </TabsContent>
 
@@ -100,6 +103,11 @@ export default function ProducaoPintura() {
         isCapturing={capturarOrdem.isPending}
         onFinalizarPintura={() => finalizarPintura.mutate(selectedOrdem?.id || '')}
         isFinalizando={finalizarPintura.isPending}
+        onEnviarParaHistorico={(ordemId) => {
+          enviarParaHistorico.mutate(ordemId);
+          setDetailsOpen(false);
+        }}
+        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangle } from "lucide-react";
+import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangle, Archive } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
@@ -32,6 +32,8 @@ interface ProducaoPinturaKanbanProps {
   onFinalizarPintura: (ordemId: string) => void;
   onCapturarOrdem: (ordemId: string) => void;
   isCapturing?: boolean;
+  onEnviarParaHistorico?: (ordemId: string) => void;
+  isEnviandoHistorico?: boolean;
 }
 
 export function ProducaoPinturaKanban({
@@ -42,8 +44,10 @@ export function ProducaoPinturaKanban({
   onFinalizarPintura,
   onCapturarOrdem,
   isCapturing = false,
+  onEnviarParaHistorico,
+  isEnviandoHistorico = false,
 }: ProducaoPinturaKanbanProps) {
-  const renderOrdemCard = (ordem: Ordem, showFinalizarButton = false) => {
+  const renderOrdemCard = (ordem: Ordem, showFinalizarButton = false, isPronta = false) => {
     const linhas = ordem.linhas || [];
     const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
     const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
@@ -169,6 +173,22 @@ export function ProducaoPinturaKanban({
               Marque todos os itens para finalizar
             </p>
           )}
+
+          {isPronta && onEnviarParaHistorico && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEnviarParaHistorico(ordem.id);
+              }}
+              disabled={isEnviandoHistorico}
+            >
+              <Archive className="h-3 w-3 mr-2" />
+              Enviar para Histórico
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -224,7 +244,7 @@ export function ProducaoPinturaKanban({
           </Badge>
         </div>
         <div className="space-y-3">
-          {ordensProntas.map((ordem) => renderOrdemCard(ordem, false))}
+          {ordensProntas.map((ordem) => renderOrdemCard(ordem, false, true))}
           {ordensProntas.length === 0 && (
             <Card className="border-dashed">
               <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
