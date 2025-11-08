@@ -5,15 +5,20 @@ import { PedidosList } from '@/components/etiquetas/PedidosList';
 import { LinhasList } from '@/components/etiquetas/LinhasList';
 import { EtiquetasDetalhes } from '@/components/etiquetas/EtiquetasDetalhes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tag, Package2, ListChecks } from 'lucide-react';
+import { Tag, Package2, ListChecks, Printer } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { gerarPDFEtiquetas, getTotalEtiquetas } from '@/utils/etiquetasPDFGenerator';
 
 export default function Etiquetas() {
   const [selectedPedidoId, setSelectedPedidoId] = useState<string | null>(null);
   const [selectedLinhaId, setSelectedLinhaId] = useState<string | null>(null);
   const [filtroPedido, setFiltroPedido] = useState('');
   const [filtroLinha, setFiltroLinha] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const { pedidos, loadingPedidos, buscarLinhasPedido, calcularEtiquetas } = useEtiquetas();
 
@@ -37,16 +42,74 @@ export default function Etiquetas() {
     setSelectedLinhaId(linhaId);
   };
 
+  const handleImprimirEtiquetas = async () => {
+    if (!selectedPedidoId) return;
+
+    setIsGeneratingPDF(true);
+    const toastId = toast.loading('Gerando PDF de etiquetas...');
+
+    try {
+      // Buscar todas as linhas do pedido
+      const linhasPedido = await buscarLinhasPedido(selectedPedidoId);
+
+      if (!linhasPedido || linhasPedido.length === 0) {
+        toast.error('Pedido sem linhas para impressão', { id: toastId });
+        return;
+      }
+
+      // Calcular etiquetas para cada linha
+      const calculos = linhasPedido.map(linha => calcularEtiquetas(linha));
+
+      // Encontrar o número do pedido
+      const pedidoSelecionado = pedidos.find(p => p.id === selectedPedidoId);
+      const numeroPedido = pedidoSelecionado?.numero_pedido || 'N/A';
+
+      // Gerar PDF
+      const pdf = gerarPDFEtiquetas(calculos, numeroPedido);
+
+      // Download do PDF
+      pdf.save(`etiquetas-pedido-${numeroPedido}.pdf`);
+
+      toast.success('PDF de etiquetas gerado com sucesso!', { id: toastId });
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF de etiquetas', { id: toastId });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  // Calcular total de etiquetas para o pedido selecionado
+  const totalEtiquetas = selectedPedidoId && linhas.length > 0
+    ? getTotalEtiquetas(linhas.map(linha => calcularEtiquetas(linha)))
+    : 0;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Tag className="h-8 w-8" />
-          Etiquetas de Produção
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Visualize e calcule a quantidade de etiquetas necessárias por pedido e linha de produção
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Tag className="h-8 w-8" />
+            Etiquetas de Produção
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Visualize e calcule a quantidade de etiquetas necessárias por pedido e linha de produção
+          </p>
+        </div>
+        <Button
+          onClick={handleImprimirEtiquetas}
+          disabled={!selectedPedidoId || isGeneratingPDF}
+          className="gap-2"
+          size="lg"
+        >
+          <Printer className="h-4 w-4" />
+          Imprimir Etiquetas
+          {totalEtiquetas > 0 && (
+            <Badge variant="secondary" className="ml-1">
+              {totalEtiquetas}
+            </Badge>
+          )}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

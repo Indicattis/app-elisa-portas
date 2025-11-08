@@ -1,0 +1,162 @@
+import jsPDF from 'jspdf';
+import { EtiquetaCalculo } from '@/types/etiqueta';
+
+interface TagData {
+  nomeProduto: string;
+  numeroPedido: string;
+  quantidade: number;
+  largura?: number;
+  altura?: number;
+  tagNumero: number;
+  totalTags: number;
+}
+
+// A4 dimensions in points (72 points = 1 inch, A4 = 210mm x 297mm)
+const A4_WIDTH = 595.28; // 210mm
+const A4_HEIGHT = 841.89; // 297mm
+
+// Layout configuration
+const MARGIN = 28.35; // 10mm
+const GAP = 14.17; // 5mm
+const COLUMNS = 3;
+const TAG_HEIGHT = 100; // 100px ≈ 35mm
+
+// Calculate tag width (30% of usable width)
+const USABLE_WIDTH = A4_WIDTH - (2 * MARGIN);
+const TAG_WIDTH = (USABLE_WIDTH - (2 * GAP)) / COLUMNS;
+
+// Calculate tags per page
+const USABLE_HEIGHT = A4_HEIGHT - (2 * MARGIN);
+const TAGS_PER_COLUMN = Math.floor(USABLE_HEIGHT / (TAG_HEIGHT + GAP));
+const TAGS_PER_PAGE = COLUMNS * TAGS_PER_COLUMN;
+
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+}
+
+function drawTag(
+  doc: jsPDF,
+  tag: TagData,
+  x: number,
+  y: number
+): void {
+  // Draw border
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.rect(x, y, TAG_WIDTH, TAG_HEIGHT);
+
+  // Padding
+  const px = x + 8;
+  const py = y + 12;
+
+  // Product name (bold, larger)
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  const truncatedName = truncateText(tag.nomeProduto, 35);
+  doc.text(truncatedName, px, py);
+
+  // Order number
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Pedido: ${tag.numeroPedido}`, px, py + 18);
+
+  // Quantity
+  doc.setFontSize(9);
+  doc.text(`Qtd: ${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, px, py + 30);
+
+  // Dimensions (if available)
+  if (tag.largura && tag.altura) {
+    const dimensoes = `Dimensões: ${tag.largura}m x ${tag.altura}m`;
+    doc.text(dimensoes, px, py + 42);
+  } else {
+    doc.setTextColor(150, 150, 150);
+    doc.text('Sem dimensões', px, py + 42);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  // Tag counter (bottom, gray)
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  if (tag.totalTags > 1) {
+    doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, px, py + TAG_HEIGHT - 20);
+  }
+  doc.setTextColor(0, 0, 0);
+}
+
+function calculateTagPosition(index: number): { x: number; y: number; page: number } {
+  const pageIndex = Math.floor(index / TAGS_PER_PAGE);
+  const indexInPage = index % TAGS_PER_PAGE;
+  
+  const column = indexInPage % COLUMNS;
+  const row = Math.floor(indexInPage / COLUMNS);
+
+  const x = MARGIN + (column * (TAG_WIDTH + GAP));
+  const y = MARGIN + (row * (TAG_HEIGHT + GAP));
+
+  return { x, y, page: pageIndex };
+}
+
+export function gerarPDFEtiquetas(
+  calculos: EtiquetaCalculo[],
+  numeroPedido: string
+): jsPDF {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'pt',
+    format: 'a4'
+  });
+
+  // Generate all tags data
+  const allTags: TagData[] = [];
+  
+  calculos.forEach((calculo) => {
+    const numEtiquetas = calculo.etiquetasNecessarias;
+    
+    for (let i = 1; i <= numEtiquetas; i++) {
+      allTags.push({
+        nomeProduto: calculo.nomeProduto,
+        numeroPedido,
+        quantidade: calculo.quantidade,
+        largura: calculo.largura,
+        altura: calculo.altura,
+        tagNumero: i,
+        totalTags: numEtiquetas
+      });
+    }
+  });
+
+  // Draw all tags
+  let currentPage = 0;
+  
+  allTags.forEach((tag, index) => {
+    const { x, y, page } = calculateTagPosition(index);
+    
+    // Add new page if needed
+    if (page > currentPage) {
+      doc.addPage();
+      currentPage = page;
+    }
+    
+    drawTag(doc, tag, x, y);
+  });
+
+  // Add footer with metadata
+  const totalPages = currentPage + 1;
+  for (let i = 0; i < totalPages; i++) {
+    doc.setPage(i + 1);
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      `Pedido ${numeroPedido} - Página ${i + 1} de ${totalPages} - Total: ${allTags.length} etiqueta${allTags.length !== 1 ? 's' : ''}`,
+      MARGIN,
+      A4_HEIGHT - 15
+    );
+  }
+
+  return doc;
+}
+
+export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
+  return calculos.reduce((total, calculo) => total + calculo.etiquetasNecessarias, 0);
+}
