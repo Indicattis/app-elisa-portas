@@ -407,7 +407,7 @@ export function PedidoCard({
   // Layout compacto para visualização em lista
   if (viewMode === 'list') {
     return <>
-        <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onClick={() => onSelecionarPedido?.(pedido)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
+        <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onMouseEnter={() => onSelecionarPedido?.(pedido)} onMouseLeave={() => onSelecionarPedido?.(null)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
           {/* Header com número do pedido e tempo */}
           <CardHeader className="py-2 px-4 bg-muted/30 border-b">
             <div className="flex items-center justify-between gap-2">
@@ -606,7 +606,7 @@ export function PedidoCard({
 
   // Layout em grid (padrão)
   return <>
-      <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onClick={() => onSelecionarPedido?.(pedido)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
+      <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onMouseEnter={() => onSelecionarPedido?.(pedido)} onMouseLeave={() => onSelecionarPedido?.(null)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
         {/* Header com número do pedido e tempo */}
         <CardHeader className="py-2 px-3 bg-muted/30 border-b">
           <div className="flex items-center justify-between gap-2">
