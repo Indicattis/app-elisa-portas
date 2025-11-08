@@ -1,0 +1,148 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+
+interface OrdemHistorico {
+  id: string;
+  numero_ordem: string;
+  tipo_ordem: TipoOrdem;
+  pedido_id: string;
+  status: string;
+  created_at: string;
+  data_conclusao?: string;
+  tempo_conclusao_segundos?: number;
+  responsavel_id?: string;
+  observacoes?: string;
+  pedido?: {
+    id: string;
+    numero_pedido: string;
+    cliente_nome: string;
+  };
+  admin_users?: {
+    nome: string;
+    foto_perfil_url?: string;
+  };
+}
+
+interface HistoricoFilters {
+  tipoOrdem?: TipoOrdem | 'todos';
+  dataInicio?: Date;
+  dataFim?: Date;
+  busca?: string;
+  responsavelId?: string;
+}
+
+const TABELA_MAP: Record<TipoOrdem, string> = {
+  soldagem: 'ordens_soldagem',
+  perfiladeira: 'ordens_perfiladeira',
+  separacao: 'ordens_separacao',
+  qualidade: 'ordens_qualidade',
+  pintura: 'ordens_pintura',
+};
+
+export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
+  return useQuery({
+    queryKey: ['historico-ordens', filters],
+    queryFn: async () => {
+      const allOrdens: OrdemHistorico[] = [];
+      
+      // Determinar quais tabelas buscar
+      const tiposParaBuscar: TipoOrdem[] = 
+        filters.tipoOrdem && filters.tipoOrdem !== 'todos' 
+          ? [filters.tipoOrdem]
+          : ['soldagem', 'perfiladeira', 'separacao', 'qualidade', 'pintura'];
+      
+      // Buscar de todas as tabelas em paralelo
+      const promises = tiposParaBuscar.map(async (tipo) => {
+        const tabela = TABELA_MAP[tipo];
+        
+        let query = supabase
+          .from(tabela as any)
+          .select(`
+            *,
+            pedido:pedidos_producao!pedido_id(
+              id,
+              numero_pedido,
+              cliente_nome
+            )
+          `)
+          .eq('historico', true)
+          .order('data_conclusao', { ascending: false });
+        
+        // Aplicar filtros
+        if (filters.dataInicio) {
+          query = query.gte('data_conclusao', filters.dataInicio.toISOString());
+        }
+        
+        if (filters.dataFim) {
+          const dataFimFinal = new Date(filters.dataFim);
+          dataFimFinal.setHours(23, 59, 59, 999);
+          query = query.lte('data_conclusao', dataFimFinal.toISOString());
+        }
+        
+        if (filters.responsavelId) {
+          query = query.eq('responsavel_id', filters.responsavelId);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        // Mapear dados adicionando o tipo de ordem
+        return (data || []).map((ordem: any) => ({
+          ...ordem,
+          tipo_ordem: tipo,
+        }));
+      });
+      
+      const results = await Promise.all(promises);
+      results.forEach(ordens => allOrdens.push(...ordens));
+      
+      // Buscar dados dos responsáveis
+      const responsavelIds = allOrdens
+        .map(o => o.responsavel_id)
+        .filter((id): id is string => id !== null && id !== undefined);
+      
+      let responsaveisMap: Record<string, any> = {};
+      if (responsavelIds.length > 0) {
+        const { data: responsaveis } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, foto_perfil_url')
+          .in('user_id', responsavelIds);
+        
+        if (responsaveis) {
+          responsaveisMap = responsaveis.reduce((acc, r) => {
+            acc[r.user_id] = r;
+            return acc;
+          }, {} as Record<string, any>);
+        }
+      }
+      
+      // Adicionar informações dos responsáveis e aplicar filtro de busca
+      let ordensComResponsaveis = allOrdens.map(ordem => ({
+        ...ordem,
+        admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
+      }));
+      
+      // Aplicar filtro de busca (cliente ou número da ordem)
+      if (filters.busca) {
+        const buscaLower = filters.busca.toLowerCase();
+        ordensComResponsaveis = ordensComResponsaveis.filter(ordem => 
+          ordem.numero_ordem.toLowerCase().includes(buscaLower) ||
+          ordem.pedido?.cliente_nome?.toLowerCase().includes(buscaLower) ||
+          ordem.pedido?.numero_pedido?.toLowerCase().includes(buscaLower)
+        );
+      }
+      
+      // Ordenar por data de conclusão (mais recente primeiro)
+      ordensComResponsaveis.sort((a, b) => {
+        const dataA = new Date(a.data_conclusao || a.created_at).getTime();
+        const dataB = new Date(b.data_conclusao || b.created_at).getTime();
+        return dataB - dataA;
+      });
+      
+      return ordensComResponsaveis as OrdemHistorico[];
+    },
+  });
+}

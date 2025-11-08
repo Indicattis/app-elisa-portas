@@ -57,8 +57,11 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     queryFn: async () => {
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
-      // Buscar ordens baseado no tipo
-      const { data: ordensData, error: ordensError } = await supabase
+      // Obter usuário atual para filtrar visibilidade
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Buscar ordens baseado no tipo, excluindo histórico
+      let query = supabase
         .from(tabelaOrdem)
         .select(`
           *,
@@ -73,8 +76,16 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             venda_id
           )
         `)
+        .eq('historico', false)
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: true });
+      
+      // Aplicar filtro de visibilidade: sem responsável OU responsável é o usuário atual
+      if (user) {
+        query = query.or(`responsavel_id.is.null,responsavel_id.eq.${user.id}`);
+      }
+      
+      const { data: ordensData, error: ordensError } = await query;
       
       if (ordensError) throw ordensError;
       if (!ordensData || ordensData.length === 0) return [];
@@ -281,13 +292,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         tempo_conclusao_segundos = Math.floor((agora.getTime() - captura.getTime()) / 1000);
       }
 
-      // Atualizar ordem
+      // Atualizar ordem e marcar como histórico
       const { error } = await supabase
         .from(tabelaOrdem)
         .update({ 
           status: 'concluido', 
           data_conclusao: new Date().toISOString(),
           tempo_conclusao_segundos,
+          historico: true,
         })
         .eq('id', ordemId);
         

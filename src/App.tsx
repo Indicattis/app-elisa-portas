@@ -106,6 +106,7 @@ import ProducaoLogin from "./pages/producao/ProducaoLogin";
 import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
 import { ProducaoLayout } from "@/components/ProducaoLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
+import HistoricoProducao from "./pages/HistoricoProducao";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -598,6 +599,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <NovoPedido />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/historico-producao"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout>
+                        <HistoricoProducao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

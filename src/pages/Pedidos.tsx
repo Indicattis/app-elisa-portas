@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, LayoutGrid, List } from "lucide-react";
+import { Package, LayoutGrid, List, History } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
@@ -13,6 +14,7 @@ import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState, useMemo } from "react";
 
 export default function Pedidos() {
+  const navigate = useNavigate();
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -146,6 +148,15 @@ export default function Pedidos() {
             </p>
           </div>
         </div>
+
+        <Button
+          variant="outline"
+          onClick={() => navigate('/dashboard/historico-producao')}
+          className="gap-2"
+        >
+          <History className="h-4 w-4" />
+          Histórico de Produção
+        </Button>
 
         {/* Controles de visualização */}
         <div className="flex items-center gap-1 border rounded-md p-1">

@@ -2016,6 +2016,7 @@ export type Database = {
           data_conclusao: string | null
           data_inicio: string | null
           em_backlog: boolean | null
+          historico: boolean
           id: string
           numero_ordem: string
           observacoes: string | null
@@ -2035,6 +2036,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem: string
           observacoes?: string | null
@@ -2054,6 +2056,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem?: string
           observacoes?: string | null
@@ -2085,6 +2088,7 @@ export type Database = {
           data_conclusao: string | null
           data_inicio: string | null
           em_backlog: boolean | null
+          historico: boolean
           id: string
           numero_ordem: string
           observacoes: string | null
@@ -2105,6 +2109,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem: string
           observacoes?: string | null
@@ -2125,6 +2130,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem?: string
           observacoes?: string | null
@@ -2217,6 +2223,7 @@ export type Database = {
           data_conclusao: string | null
           data_inicio: string | null
           em_backlog: boolean | null
+          historico: boolean
           id: string
           numero_ordem: string
           observacoes: string | null
@@ -2234,6 +2241,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem: string
           observacoes?: string | null
@@ -2251,6 +2259,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem?: string
           observacoes?: string | null
@@ -2307,6 +2316,7 @@ export type Database = {
           data_conclusao: string | null
           data_inicio: string | null
           em_backlog: boolean | null
+          historico: boolean
           id: string
           materiais_separados: Json | null
           numero_ordem: string
@@ -2326,6 +2336,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           materiais_separados?: Json | null
           numero_ordem: string
@@ -2345,6 +2356,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           materiais_separados?: Json | null
           numero_ordem?: string
@@ -2375,6 +2387,7 @@ export type Database = {
           data_conclusao: string | null
           data_inicio: string | null
           em_backlog: boolean | null
+          historico: boolean
           id: string
           numero_ordem: string
           observacoes: string | null
@@ -2393,6 +2406,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem: string
           observacoes?: string | null
@@ -2411,6 +2425,7 @@ export type Database = {
           data_conclusao?: string | null
           data_inicio?: string | null
           em_backlog?: boolean | null
+          historico?: boolean
           id?: string
           numero_ordem?: string
           observacoes?: string | null

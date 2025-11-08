@@ -13,12 +13,23 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ["ordens-pintura"],
     queryFn: async () => {
-      // Primeiro buscar as ordens
-      const { data: ordensData, error: ordensError } = await supabase
+      // Obter usuário atual para filtrar visibilidade
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Buscar as ordens, excluindo histórico
+      let query = supabase
         .from("ordens_pintura")
         .select('*, capturada_em, tempo_conclusao_segundos, em_backlog, prioridade')
+        .eq('historico', false)
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: false });
+      
+      // Aplicar filtro de visibilidade: sem responsável OU responsável é o usuário atual
+      if (user) {
+        query = query.or(`responsavel_id.is.null,responsavel_id.eq.${user.id}`);
+      }
+      
+      const { data: ordensData, error: ordensError } = await query;
 
       if (ordensError) throw ordensError;
       if (!ordensData) return [];
@@ -165,6 +176,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
           status: 'pronta',
           data_conclusao: new Date().toISOString(),
           tempo_conclusao_segundos,
+          historico: true,
         })
         .eq("id", ordemId);
 
