@@ -104,29 +104,29 @@ export function ProducaoKanban({
             </div>
             
             {ordem.responsavel_id ? (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Avatar className="h-6 w-6">
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <Avatar className="h-12 w-12 ring-2 ring-primary/20">
                   <AvatarImage src={ordem.admin_users?.foto_perfil_url} alt={ordem.admin_users?.nome} />
-                  <AvatarFallback className="text-xs">
+                  <AvatarFallback className="text-base font-semibold">
                     {ordem.admin_users?.nome?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs text-muted-foreground truncate max-w-20">
+                <span className="text-sm font-medium text-muted-foreground truncate max-w-24">
                   {ordem.admin_users?.nome}
                 </span>
               </div>
             ) : (
               <Button
-                size="sm"
+                size="lg"
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation();
                   onCapturarOrdem?.(ordem.id);
                 }}
                 disabled={isCapturing}
-                className="h-7 text-xs flex-shrink-0"
+                className="flex-shrink-0"
               >
-                <UserCheck className="h-3 w-3 mr-1" />
+                <UserCheck className="h-5 w-5 mr-2" />
                 Capturar
               </Button>
             )}
