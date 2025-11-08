@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
-import { Search, Edit, Save, X } from "lucide-react";
+import { Search, Edit, Save, X, Eye, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -35,7 +35,20 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
+  const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+
+  const toggleCodeVisibility = (userId: string) => {
+    setVisibleCodes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -308,9 +321,29 @@ export default function Users() {
                           className="max-w-xs"
                         />
                       ) : (
-                        <span className="text-sm font-mono">
-                          {user.codigo_usuario || <span className="text-muted-foreground">Não definido</span>}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-mono">
+                            {user.codigo_usuario ? (
+                              visibleCodes.has(user.id) ? user.codigo_usuario : "••••••"
+                            ) : (
+                              <span className="text-muted-foreground">Não definido</span>
+                            )}
+                          </span>
+                          {user.codigo_usuario && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleCodeVisibility(user.id)}
+                              className="h-6 w-6 p-0"
+                            >
+                              {visibleCodes.has(user.id) ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell>
