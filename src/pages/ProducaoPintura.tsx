@@ -61,7 +61,7 @@ export default function ProducaoPintura() {
       <Tabs defaultValue="ordens" className="space-y-6">
         <TabsList>
           <TabsTrigger value="ordens">Ordens de Pintura</TabsTrigger>
-          <TabsTrigger value="controle">Controle de Pintura</TabsTrigger>
+          <TabsTrigger value="controle">Controle de Fornadas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ordens" className="space-y-6">

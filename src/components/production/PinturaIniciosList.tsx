@@ -29,7 +29,7 @@ export function PinturaIniciosList({ inicios, isLoading }: PinturaIniciosListPro
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-600" />
-            Histórico de Inícios
+            Histórico de Fornadas
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -55,7 +55,7 @@ export function PinturaIniciosList({ inicios, isLoading }: PinturaIniciosListPro
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-600" />
-            Histórico de Inícios
+            Histórico de Fornadas
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -73,10 +73,10 @@ export function PinturaIniciosList({ inicios, isLoading }: PinturaIniciosListPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Flame className="h-5 w-5 text-orange-600" />
-          Histórico de Inícios
-        </CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Flame className="h-5 w-5 text-orange-600" />
+            Histórico de Fornadas
+          </CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
