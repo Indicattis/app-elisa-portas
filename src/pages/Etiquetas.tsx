@@ -67,10 +67,12 @@ export default function Etiquetas() {
       // Gerar PDF
       const pdf = gerarPDFEtiquetas(calculos, numeroPedido);
 
-      // Download do PDF
-      pdf.save(`etiquetas-pedido-${numeroPedido}.pdf`);
+      // Abrir PDF em nova aba
+      const pdfBlob = pdf.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, '_blank');
 
-      toast.success('PDF de etiquetas gerado com sucesso!', { id: toastId });
+      toast.success('PDF de etiquetas aberto em nova aba!', { id: toastId });
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF de etiquetas', { id: toastId });
