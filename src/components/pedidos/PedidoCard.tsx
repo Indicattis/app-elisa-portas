@@ -496,22 +496,6 @@ export function PedidoCard({
                 )}
               </div>
 
-              {isAberto && (
-                <div className="flex-shrink-0">
-                  {temLinhas ? (
-                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      {linhasCount}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      Sem linhas
-                    </Badge>
-                  )}
-                </div>
-              )}
-
               {(() => {
                 const actionButtons = [];
                 
@@ -523,8 +507,14 @@ export function PedidoCard({
                   size="icon"
                   onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
                   title="Preparar Pedido"
+                  className={cn(
+                    temLinhas 
+                      ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 hover:bg-green-500/20" 
+                      : "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50 hover:bg-orange-500/20"
+                  )}
+                  variant="outline"
                 >
-                  <FileText className="h-3.5 w-3.5" />
+                  <span className="text-xs font-semibold">{linhasCount || 0}</span>
                 </Button>
               );
               if (temLinhas && onMoverEtapa) {
@@ -905,23 +895,6 @@ export function PedidoCard({
             )}
           </div>
 
-          {/* Status das Linhas do Pedido */}
-          {isAberto && (
-            <div className="flex items-center gap-2 -mx-2 px-2">
-              {temLinhas ? (
-                <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  {linhasCount} {linhasCount === 1 ? 'linha' : 'linhas'}
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  Sem linhas
-                </Badge>
-              )}
-            </div>
-          )}
-
           {/* Produtos */}
           {!isAberto && produtos.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -969,8 +942,14 @@ export function PedidoCard({
                   size="icon"
                   onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
                   title="Preparar Pedido"
+                  className={cn(
+                    temLinhas 
+                      ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 hover:bg-green-500/20" 
+                      : "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50 hover:bg-orange-500/20"
+                  )}
+                  variant="outline"
                 >
-                  <FileText className="h-3.5 w-3.5" />
+                  <span className="text-xs font-semibold">{linhasCount || 0}</span>
                 </Button>
               );
               if (temLinhas && onMoverEtapa) {
