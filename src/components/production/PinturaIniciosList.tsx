@@ -127,7 +127,7 @@ export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogg
                   variant={inicio.recarga_realizada ? "default" : "outline"}
                   onClick={() => onToggleRecarga(inicio.id)}
                   disabled={isTogglingRecarga}
-                  className={inicio.recarga_realizada ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : ""}
+                  className={`h-full w-[30%] ${inicio.recarga_realizada ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : ""}`}
                   title={inicio.recarga_realizada ? "Recarga realizada" : "Marcar recarga"}
                 >
                   {inicio.recarga_realizada ? (
