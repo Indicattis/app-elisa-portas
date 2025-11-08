@@ -17,19 +17,14 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
       const { data: { user } } = await supabase.auth.getUser();
       
       // Buscar as ordens, excluindo histórico
-      let query = supabase
+      // Filtrar: (sem responsável OU responsável é o usuário atual) E não está no histórico
+      const { data: ordensData, error: ordensError } = await supabase
         .from("ordens_pintura")
         .select('*, capturada_em, tempo_conclusao_segundos, em_backlog, prioridade')
         .eq('historico', false)
+        .or(`responsavel_id.is.null,responsavel_id.eq.${user?.id || ''}`)
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: false });
-      
-      // Aplicar filtro de visibilidade: sem responsável OU responsável é o usuário atual
-      if (user) {
-        query = query.or(`responsavel_id.is.null,responsavel_id.eq.${user.id}`);
-      }
-      
-      const { data: ordensData, error: ordensError } = await query;
 
       if (ordensError) throw ordensError;
       if (!ordensData) return [];

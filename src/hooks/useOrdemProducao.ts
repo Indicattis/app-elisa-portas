@@ -61,7 +61,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       const { data: { user } } = await supabase.auth.getUser();
       
       // Buscar ordens baseado no tipo, excluindo histórico
-      let query = supabase
+      // Filtrar: (sem responsável OU responsável é o usuário atual) E não está no histórico
+      const { data: ordensData, error: ordensError } = await supabase
         .from(tabelaOrdem)
         .select(`
           *,
@@ -77,15 +78,9 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           )
         `)
         .eq('historico', false)
+        .or(`responsavel_id.is.null,responsavel_id.eq.${user?.id || ''}`)
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: true });
-      
-      // Aplicar filtro de visibilidade: sem responsável OU responsável é o usuário atual
-      if (user) {
-        query = query.or(`responsavel_id.is.null,responsavel_id.eq.${user.id}`);
-      }
-      
-      const { data: ordensData, error: ordensError } = await query;
       
       if (ordensError) throw ordensError;
       if (!ordensData || ordensData.length === 0) return [];
