@@ -420,14 +420,36 @@ export function PedidoCard({
               )}
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
-                  {!isAberto && pedido.numero_pedido && (
-                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                      {pedido.numero_pedido}
-                    </span>
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
+                    {!isAberto && pedido.numero_pedido && (
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {pedido.numero_pedido}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Círculos de cores à direita */}
+                  {coresUnicas.length > 0 && (
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      {coresUnicas.slice(0, 5).map((cor, idx) => (
+                        <div
+                          key={idx}
+                          className="w-3 h-3 rounded-full border border-border"
+                          style={{ backgroundColor: coresMap[cor] || '#999999' }}
+                          title={cor}
+                        />
+                      ))}
+                      {coresUnicas.length > 5 && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          +{coresUnicas.length - 5}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
+                
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{venda?.cliente_telefone}</span>
                   <span>•</span>
@@ -469,25 +491,6 @@ export function PedidoCard({
                         <Truck className="h-3 w-3 mr-1" />
                         Entrega
                       </Badge>
-                    )}
-                  </div>
-                )}
-                
-                {/* Círculos de cores */}
-                {coresUnicas.length > 0 && (
-                  <div className="flex items-center gap-0.5 mt-1">
-                    {coresUnicas.slice(0, 5).map((cor, idx) => (
-                      <div
-                        key={idx}
-                        className="w-3 h-3 rounded-full border border-border"
-                        style={{ backgroundColor: coresMap[cor] || '#999999' }}
-                        title={cor}
-                      />
-                    ))}
-                    {coresUnicas.length > 5 && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        +{coresUnicas.length - 5}
-                      </span>
                     )}
                   </div>
                 )}
@@ -842,13 +845,34 @@ export function PedidoCard({
 
           {/* Informações do cliente com background */}
           <div className="bg-muted/30 rounded-md p-2 -mx-2">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
-              <p className="text-[10px] text-muted-foreground">{venda?.cliente_telefone}</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
+                <p className="text-[10px] text-muted-foreground">{venda?.cliente_telefone}</p>
+              </div>
+              
+              {/* Círculos de cores à direita */}
+              {coresUnicas.length > 0 && (
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {coresUnicas.slice(0, 3).map((cor, idx) => (
+                    <div
+                      key={idx}
+                      className="w-3 h-3 rounded-full border border-border"
+                      style={{ backgroundColor: coresMap[cor] || '#999999' }}
+                      title={cor}
+                    />
+                  ))}
+                  {coresUnicas.length > 3 && (
+                    <span className="text-[10px] text-muted-foreground ml-0.5">
+                      +{coresUnicas.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             
-            {/* Flags e círculos de cores */}
-            {(config || temPintura || isInstalacao || isEntrega || coresUnicas.length > 0) && (
+            {/* Flags abaixo */}
+            {(config || temPintura || isInstalacao || isEntrega) && (
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                 {config && (
                   <Badge variant="outline" className={cn(
@@ -876,25 +900,6 @@ export function PedidoCard({
                     <Truck className="h-2.5 w-2.5 mr-0.5" />
                     Entrega
                   </Badge>
-                )}
-                
-                {/* Círculos de cores */}
-                {coresUnicas.length > 0 && (
-                  <div className="flex items-center gap-0.5 ml-auto">
-                    {coresUnicas.slice(0, 3).map((cor, idx) => (
-                      <div
-                        key={idx}
-                        className="w-3 h-3 rounded-full border border-border"
-                        style={{ backgroundColor: coresMap[cor] || '#999999' }}
-                        title={cor}
-                      />
-                    ))}
-                    {coresUnicas.length > 3 && (
-                      <span className="text-[10px] text-muted-foreground ml-0.5">
-                        +{coresUnicas.length - 3}
-                      </span>
-                    )}
-                  </div>
                 )}
               </div>
             )}
