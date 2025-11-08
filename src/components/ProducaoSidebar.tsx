@@ -3,16 +3,6 @@ import { Flame, Settings, Package, Paintbrush, ClipboardCheck } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { Badge } from "./ui/badge";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-} from "./ui/sidebar";
 import logoLight from "@/assets/logo-light.png";
 
 const menuItems = [
@@ -25,7 +15,6 @@ const menuItems = [
 
 export function ProducaoSidebar() {
   const { data: ordensCount } = useOrdensCount();
-  const { open } = useSidebar();
 
   const getCount = (tipo: string) => {
     if (!ordensCount) return 0;
@@ -40,64 +29,47 @@ export function ProducaoSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
-        <div className="p-6 border-b border-sidebar-border">
-          {open ? (
-            <>
-              <img src={logoLight} alt="Logo" className="h-12 w-auto mx-auto" />
-              <p className="text-center text-sm text-sidebar-foreground/60 mt-2 font-medium">
-                Interface de Produção
-              </p>
-            </>
-          ) : (
-            <img src={logoLight} alt="Logo" className="h-8 w-auto mx-auto" />
-          )}
-        </div>
+    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+      <div className="p-6 border-b border-sidebar-border">
+        <img src={logoLight} alt="Logo" className="h-12 w-auto mx-auto" />
+        <p className="text-center text-sm text-sidebar-foreground/60 mt-2 font-medium">
+          Interface de Produção
+        </p>
+      </div>
 
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const tipo = item.to.split("/").pop() || "";
-                const count = getCount(tipo);
-
-                return (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton asChild tooltip={item.label}>
-                      <NavLink
-                        to={item.to}
-                        className={({ isActive }) =>
-                          cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
-                            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                            isActive
-                              ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                              : "text-sidebar-foreground"
-                          )
-                        }
-                      >
-                        <Icon className="h-5 w-5 flex-shrink-0" />
-                        {open && (
-                          <>
-                            <span className="flex-1">{item.label}</span>
-                            {count > 0 && (
-                              <Badge variant="secondary" className="ml-auto">
-                                {count}
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+      <nav className="flex-1 p-4 space-y-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const tipo = item.to.split("/").pop() || "";
+          const count = getCount(tipo);
+          
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground"
+                )
+              }
+            >
+              <div className="flex items-center gap-3">
+                <Icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </div>
+              {count > 0 && (
+                <Badge variant="secondary" className="ml-auto">
+                  {count}
+                </Badge>
+              )}
+            </NavLink>
+          );
+        })}
+      </nav>
+    </aside>
   );
 }
