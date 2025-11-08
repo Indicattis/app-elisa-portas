@@ -44,6 +44,11 @@ export const usePedidoCreation = () => {
         .insert({
           venda_id: vendaId as any,
           numero_pedido: numeroPedido,
+          cliente_nome: venda.cliente_nome,
+          cliente_telefone: venda.cliente_telefone,
+          cliente_email: venda.cliente_email,
+          cidade: venda.cidade,
+          estado: venda.estado,
           etapa_atual: 'aberto',
           status: 'pendente',
           created_by: user.id,
