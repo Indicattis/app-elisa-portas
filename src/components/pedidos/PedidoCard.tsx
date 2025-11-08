@@ -418,15 +418,6 @@ export function PedidoCard({
                 </Badge>
               )}
 
-              {config && (
-                <Badge className={cn(
-                  "text-white text-xs px-2 py-0.5 flex-shrink-0",
-                  emBacklog ? "bg-red-500" : config.color
-                )}>
-                  {config.label}
-                </Badge>
-              )}
-
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
@@ -797,14 +788,6 @@ export function PedidoCard({
               )}
               {emBacklog && (
                 <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 animate-pulse" />
-              )}
-              {config && (
-                <Badge className={cn(
-                  "text-white text-[10px] px-1.5 py-0.5",
-                  emBacklog ? "bg-red-500" : config.color
-                )}>
-                  {config.label}
-                </Badge>
               )}
             </div>
             
