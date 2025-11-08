@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, ExternalLink, Paintbrush, Truck, Hammer, AlertTriangle } from "lucide-react";
+import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
@@ -399,6 +399,7 @@ export function PedidoCard({
             emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
           )}
           onClick={() => onSelecionarPedido?.(pedido)}
+          onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
         >
           <CardContent className="py-3">
             <div className="flex items-center gap-3">
@@ -628,16 +629,6 @@ export function PedidoCard({
                 <Button
                   size="icon"
                   variant="ghost"
-                  onClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
-                  title="Ver página do pedido"
-                  className="h-7 w-7"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-
-                <Button
-                  size="icon"
-                  variant="ghost"
                   onClick={() => setShowDetalhes(true)}
                   title="Ver detalhes"
                   className="h-7 w-7"
@@ -776,6 +767,7 @@ export function PedidoCard({
           emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
         )}
         onClick={() => onSelecionarPedido?.(pedido)}
+        onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
       >
         <CardContent className="pt-3 pb-2 space-y-2.5">
           {/* Header compacto com controles */}
@@ -793,16 +785,6 @@ export function PedidoCard({
             
             {/* Controles compactos */}
             <div className="flex items-center gap-0.5">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
-                title="Ver página do pedido"
-                className="h-6 w-6"
-              >
-                <ExternalLink className="h-3 w-3" />
-              </Button>
-
               <Button
                 size="icon"
                 variant="ghost"
