@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Package2 } from 'lucide-react';
 import { PedidoResumo } from '@/types/etiqueta';
 import { format } from 'date-fns';
@@ -68,8 +69,9 @@ export function PedidosList({ pedidos, loading, selectedPedidoId, onSelectPedido
   }
 
   return (
-    <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-      {pedidosFiltrados.map((pedido) => {
+    <ScrollArea className="h-[600px] pr-1">
+      <div className="space-y-2">
+        {pedidosFiltrados.map((pedido) => {
         const isSelected = pedido.id === selectedPedidoId;
         const numLinhas = contagensLinhas[pedido.id] || 0;
         
@@ -108,7 +110,8 @@ export function PedidosList({ pedidos, loading, selectedPedidoId, onSelectPedido
             </CardContent>
           </Card>
         );
-      })}
-    </div>
+        })}
+      </div>
+    </ScrollArea>
   );
 }

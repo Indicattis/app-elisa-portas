@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ListChecks } from 'lucide-react';
 import { LinhaResumo } from '@/types/etiqueta';
 
@@ -41,8 +42,9 @@ export function LinhasList({ linhas, loading, selectedLinhaId, onSelectLinha, fi
   }
 
   return (
-    <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-      {linhasFiltradas.map((linha) => {
+    <ScrollArea className="h-[600px] pr-1">
+      <div className="space-y-2">
+        {linhasFiltradas.map((linha) => {
         const nomeProduto = linha.nome_produto || linha.descricao_produto || 'Item sem nome';
         const isMeiaCana = nomeProduto.toLowerCase().includes('meia cana');
         const isSelected = linha.id === selectedLinhaId;
@@ -88,7 +90,8 @@ export function LinhasList({ linhas, loading, selectedLinhaId, onSelectLinha, fi
             </CardContent>
           </Card>
         );
-      })}
-    </div>
+        })}
+      </div>
+    </ScrollArea>
   );
 }
