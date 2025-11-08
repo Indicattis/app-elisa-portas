@@ -566,15 +566,10 @@ export function PedidoCard({
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>);
               }
-              return <div className="w-full space-y-1.5">
-                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-center">
-                  Ações
-                </div>
-                <div className="flex items-center gap-1 justify-center">
-                  {actionButtons.map(button => React.cloneElement(button, {
-                    className: `${button.props.className || ''} h-7 w-7`.trim()
-                  }))}
-                </div>
+              return <div className="flex items-center gap-1 justify-center">
+                {actionButtons.map(button => React.cloneElement(button, {
+                  className: `${button.props.className || ''} h-7 w-7`.trim()
+                }))}
               </div>;
             })()}
           </CardFooter>
@@ -779,10 +774,7 @@ export function PedidoCard({
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>);
           }
-          return <div className="w-full space-y-1.5">
-                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-center">
-                  Ações
-                </div>
+          return <div className="w-full">
                 {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                     {actionButtons.map(button => React.cloneElement(button, {
                       className: `${button.props.className || ''} h-7 w-full`.trim()
