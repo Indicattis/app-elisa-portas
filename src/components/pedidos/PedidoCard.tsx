@@ -459,12 +459,6 @@ export function PedidoCard({
 
           <CardContent className="py-3">
             <div className="flex items-center gap-3">
-              {posicao && (
-                <Badge variant="outline" className={cn("text-xs px-2 py-0.5 font-semibold flex-shrink-0", getBadgeColor())}>
-                  #{posicao}
-                </Badge>
-              )}
-
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 justify-between">
                   <div className="flex items-center gap-2 min-w-0">
@@ -672,21 +666,24 @@ export function PedidoCard({
               </Button>
             );
 
+            // Add retroceder button if available
+            if (isAdmin && etapaAnterior && onRetrocederEtapa) {
+              actionButtons.push(
+                <Button
+                  key="retroceder"
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setShowRetrocederEtapa(true)}
+                  title="Retroceder para etapa anterior"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                </Button>
+              );
+            }
+
             return (
               <div className="flex items-center gap-1 flex-shrink-0">
                 {actionButtons}
-                
-                {isAdmin && etapaAnterior && onRetrocederEtapa && (
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
-                    onClick={() => setShowRetrocederEtapa(true)}
-                    title="Retroceder para etapa anterior"
-                    className="h-7 w-7"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                  </Button>
-                )}
               </div>
             );
           })()}
@@ -824,26 +821,6 @@ export function PedidoCard({
         </CardHeader>
 
         <CardContent className="pt-3 pb-2 space-y-2.5">
-          {posicao && (
-            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 font-semibold inline-flex", getBadgeColor())}>
-              #{posicao}
-            </Badge>
-          )}
-          
-          {isAdmin && etapaAnterior && onRetrocederEtapa && (
-            <div className="flex justify-end -mt-2">
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                onClick={() => setShowRetrocederEtapa(true)}
-                title="Retroceder para etapa anterior"
-                className="h-6 w-6"
-              >
-                <ArrowLeft className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
-
           {/* Informações do cliente com background */}
           <div className="bg-muted/30 rounded-md p-2 -mx-2">
             <div className="flex items-center justify-between gap-2">
@@ -1071,6 +1048,21 @@ export function PedidoCard({
                 <Eye className="h-3.5 w-3.5" />
               </Button>
             );
+
+            // Add retroceder button if available
+            if (isAdmin && etapaAnterior && onRetrocederEtapa) {
+              actionButtons.push(
+                <Button
+                  key="retroceder"
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setShowRetrocederEtapa(true)}
+                  title="Retroceder para etapa anterior"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                </Button>
+              );
+            }
 
             return (
               <div className="w-full space-y-2">
