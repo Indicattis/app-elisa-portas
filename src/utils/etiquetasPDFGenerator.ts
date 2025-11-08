@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { EtiquetaCalculo } from '@/types/etiqueta';
+import { EtiquetaCalculo, TagIndividual } from '@/types/etiqueta';
 
 interface TagData {
   nomeProduto: string;
@@ -152,6 +152,51 @@ export function gerarPDFEtiquetas(
       MARGIN,
       A4_HEIGHT - 15
     );
+  }
+
+  return doc;
+}
+
+export function gerarPDFEtiquetaIndividual(tag: TagIndividual): jsPDF {
+  // 80px width x 60px height ≈ 28.22mm x 21.17mm
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [21.17, 28.22] // [height, width]
+  });
+
+  // Padding (2mm internal)
+  const px = 2;
+  const py = 2;
+
+  // Product name (8pt, bold)
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  const truncatedName = truncateText(tag.nomeProduto, 25);
+  doc.text(truncatedName, px, py + 3);
+
+  // Order number (6pt)
+  doc.setFontSize(6);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Pedido: ${tag.numeroPedido}`, px, py + 7);
+
+  // Quantity (6pt)
+  doc.text(`Qtd: ${tag.quantidade}`, px, py + 10.5);
+
+  // Dimensions (6pt)
+  if (tag.largura && tag.altura) {
+    doc.text(`${tag.largura}m x ${tag.altura}m`, px, py + 14);
+  } else {
+    doc.setTextColor(150, 150, 150);
+    doc.text('N/A', px, py + 14);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  // Tag counter (5pt, gray, bottom)
+  doc.setFontSize(5);
+  doc.setTextColor(120, 120, 120);
+  if (tag.totalTags > 1) {
+    doc.text(`${tag.tagNumero}/${tag.totalTags}`, px, py + 18);
   }
 
   return doc;

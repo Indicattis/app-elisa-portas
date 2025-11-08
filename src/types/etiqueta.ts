@@ -28,3 +28,13 @@ export interface LinhaResumo {
   altura: number | null;
   tamanho: string | null;
 }
+
+export interface TagIndividual {
+  tagNumero: number;
+  totalTags: number;
+  nomeProduto: string;
+  numeroPedido: string;
+  quantidade: number;
+  largura?: number;
+  altura?: number;
+}
