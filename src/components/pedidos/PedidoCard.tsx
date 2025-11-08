@@ -563,8 +563,15 @@ export function PedidoCard({
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>);
               }
-              return <div className="flex items-center gap-1 flex-shrink-0">
-                {actionButtons}
+              return <div className="flex flex-col gap-1.5">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide bg-muted/50 px-2 py-1 rounded">
+                  Ações
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {actionButtons.map(button => React.cloneElement(button, {
+                    className: `${button.props.className || ''} h-7 w-7`.trim()
+                  }))}
+                </div>
               </div>;
             })()}
         </div>
@@ -771,11 +778,16 @@ export function PedidoCard({
                 </Button>);
           }
           return <div className="w-full space-y-2">
-                {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-2 w-full">
+                {actionButtons.length > 0 && <>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide bg-muted/50 px-2 py-1 rounded text-center">
+                    Ações
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 w-full">
                     {actionButtons.map(button => React.cloneElement(button, {
-                className: `${button.props.className || ''} h-9 w-full`.trim()
-              }))}
-                  </div>}
+                      className: `${button.props.className || ''} h-7 w-full`.trim()
+                    }))}
+                  </div>
+                </>}
                 {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && <span className="text-xs text-warning text-center block">
                     Defina data de carregamento
                   </span>}
