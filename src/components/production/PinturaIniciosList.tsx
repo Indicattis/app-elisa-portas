@@ -1,15 +1,19 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Flame, Clock, User } from "lucide-react";
+import { Flame, Clock, User, Droplet, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 interface PinturaInicio {
   id: string;
   iniciado_em: string;
   observacoes?: string | null;
+  recarga_realizada: boolean;
+  recarga_realizada_em?: string | null;
+  recarga_realizada_por?: string | null;
   admin_users: {
     id: string;
     nome: string;
@@ -20,9 +24,11 @@ interface PinturaInicio {
 interface PinturaIniciosListProps {
   inicios: PinturaInicio[];
   isLoading: boolean;
+  onToggleRecarga: (inicioId: string) => void;
+  isTogglingRecarga?: boolean;
 }
 
-export function PinturaIniciosList({ inicios, isLoading }: PinturaIniciosListProps) {
+export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogglingRecarga }: PinturaIniciosListProps) {
   if (isLoading) {
     return (
       <Card>
@@ -115,6 +121,22 @@ export function PinturaIniciosList({ inicios, isLoading }: PinturaIniciosListPro
                     </p>
                   )}
                 </div>
+
+                <Button
+                  size="sm"
+                  variant={inicio.recarga_realizada ? "default" : "outline"}
+                  onClick={() => onToggleRecarga(inicio.id)}
+                  disabled={isTogglingRecarga}
+                  className={inicio.recarga_realizada ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : ""}
+                  title={inicio.recarga_realizada ? "Recarga realizada" : "Marcar recarga"}
+                >
+                  {inicio.recarga_realizada ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Droplet className="h-4 w-4 mr-2" />
+                  )}
+                  {inicio.recarga_realizada ? "Recargado" : "Recarregar"}
+                </Button>
               </div>
             ))}
           </div>

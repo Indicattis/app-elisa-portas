@@ -2889,6 +2889,9 @@ export type Database = {
           iniciado_em: string
           iniciado_por: string
           observacoes: string | null
+          recarga_realizada: boolean
+          recarga_realizada_em: string | null
+          recarga_realizada_por: string | null
           updated_at: string
         }
         Insert: {
@@ -2897,6 +2900,9 @@ export type Database = {
           iniciado_em?: string
           iniciado_por: string
           observacoes?: string | null
+          recarga_realizada?: boolean
+          recarga_realizada_em?: string | null
+          recarga_realizada_por?: string | null
           updated_at?: string
         }
         Update: {
@@ -2905,9 +2911,20 @@ export type Database = {
           iniciado_em?: string
           iniciado_por?: string
           observacoes?: string | null
+          recarga_realizada?: boolean
+          recarga_realizada_em?: string | null
+          recarga_realizada_por?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pintura_inicios_recarga_realizada_por_fkey"
+            columns: ["recarga_realizada_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pontos_instalacao: {
         Row: {

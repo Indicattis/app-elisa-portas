@@ -38,6 +38,58 @@ export function usePinturaInicios() {
     },
   });
 
+  // Alternar status de recarga
+  const toggleRecarga = useMutation({
+    mutationFn: async (inicioId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Buscar o usuário admin correspondente
+      const { data: adminUser } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!adminUser) throw new Error('Usuário admin não encontrado');
+
+      // Buscar o estado atual
+      const { data: inicioAtual } = await supabase
+        .from('pintura_inicios')
+        .select('recarga_realizada')
+        .eq('id', inicioId)
+        .single();
+
+      const novoStatus = !inicioAtual?.recarga_realizada;
+
+      const { error } = await supabase
+        .from('pintura_inicios')
+        .update({
+          recarga_realizada: novoStatus,
+          recarga_realizada_em: novoStatus ? new Date().toISOString() : null,
+          recarga_realizada_por: novoStatus ? adminUser.id : null,
+        })
+        .eq('id', inicioId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pintura-inicios'] });
+      toast({
+        title: "Status atualizado",
+        description: "Status de recarga atualizado com sucesso",
+      });
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar recarga:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status de recarga",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Criar novo início de pintura
   const criarInicio = useMutation({
     mutationFn: async (observacoes?: string) => {
@@ -77,5 +129,6 @@ export function usePinturaInicios() {
     inicios,
     isLoading,
     criarInicio,
+    toggleRecarga,
   };
 }

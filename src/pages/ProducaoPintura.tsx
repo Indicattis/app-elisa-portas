@@ -17,7 +17,7 @@ export default function ProducaoPintura() {
   const [novoInicioOpen, setNovoInicioOpen] = useState(false);
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
-  const { inicios, isLoading: isLoadingInicios, criarInicio } = usePinturaInicios();
+  const { inicios, isLoading: isLoadingInicios, criarInicio, toggleRecarga } = usePinturaInicios();
 
   const {
     ordens,
@@ -77,7 +77,12 @@ export default function ProducaoPintura() {
         </TabsContent>
 
         <TabsContent value="controle">
-          <PinturaIniciosList inicios={inicios} isLoading={isLoadingInicios} />
+          <PinturaIniciosList 
+            inicios={inicios} 
+            isLoading={isLoadingInicios}
+            onToggleRecarga={toggleRecarga.mutate}
+            isTogglingRecarga={toggleRecarga.isPending}
+          />
         </TabsContent>
       </Tabs>
 
