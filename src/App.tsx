@@ -107,6 +107,7 @@ import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
 import { ProducaoLayout } from "@/components/ProducaoLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import HistoricoProducao from "./pages/HistoricoProducao";
+import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -324,6 +325,16 @@ const App = () => (
                             <ProtectedProducaoRoute>
                               <ProducaoLayout>
                                 <ProducaoQualidade />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/carregamento"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoCarregamento />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }

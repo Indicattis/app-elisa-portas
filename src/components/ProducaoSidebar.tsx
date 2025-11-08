@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Flame, Settings, Package, Paintbrush, ClipboardCheck } from "lucide-react";
+import { Flame, Settings, Package, Paintbrush, ClipboardCheck, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { Badge } from "./ui/badge";
@@ -11,6 +11,7 @@ const menuItems = [
   { to: "/producao/separacao", label: "Separação", icon: Package },
   { to: "/producao/pintura", label: "Pintura", icon: Paintbrush },
   { to: "/producao/qualidade", label: "Qualidade", icon: ClipboardCheck },
+  { to: "/producao/carregamento", label: "Carregamento", icon: Truck },
 ];
 
 export function ProducaoSidebar() {
