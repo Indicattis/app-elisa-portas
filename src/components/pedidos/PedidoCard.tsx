@@ -507,11 +507,7 @@ export function PedidoCard({
                   size="icon"
                   onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
                   title="Preparar Pedido"
-                  className={cn(
-                    temLinhas 
-                      ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 hover:bg-green-500/20" 
-                      : "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50 hover:bg-orange-500/20"
-                  )}
+                  className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/50 hover:bg-yellow-500/20"
                   variant="outline"
                 >
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
@@ -942,11 +938,7 @@ export function PedidoCard({
                   size="icon"
                   onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
                   title="Preparar Pedido"
-                  className={cn(
-                    temLinhas 
-                      ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50 hover:bg-green-500/20" 
-                      : "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50 hover:bg-orange-500/20"
-                  )}
+                  className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/50 hover:bg-yellow-500/20"
                   variant="outline"
                 >
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
