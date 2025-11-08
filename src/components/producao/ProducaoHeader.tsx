@@ -1,6 +1,7 @@
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -45,13 +46,17 @@ export function ProducaoHeader() {
 
   return (
     <header className="h-16 bg-card border-b border-border px-6 flex items-center justify-between">
-      <div className="flex flex-col">
-        <span className="text-2xl font-bold text-foreground tabular-nums">
-          {formatTime(currentTime)}
-        </span>
-        <span className="text-sm text-muted-foreground capitalize">
-          {formatDate(currentTime)}
-        </span>
+      <div className="flex items-center gap-4">
+        <SidebarTrigger className="-ml-2" />
+        <div className="h-6 w-px bg-border" />
+        <div className="flex flex-col">
+          <span className="text-2xl font-bold text-foreground tabular-nums">
+            {formatTime(currentTime)}
+          </span>
+          <span className="text-sm text-muted-foreground capitalize">
+            {formatDate(currentTime)}
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
