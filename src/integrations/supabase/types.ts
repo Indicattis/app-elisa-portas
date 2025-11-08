@@ -84,6 +84,7 @@ export type Database = {
           id: string
           nome: string
           role: Database["public"]["Enums"]["user_role"] | null
+          setor: Database["public"]["Enums"]["setor_type"] | null
           telefone: string | null
           updated_at: string
           user_id: string
@@ -97,6 +98,7 @@ export type Database = {
           id?: string
           nome: string
           role?: Database["public"]["Enums"]["user_role"] | null
+          setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -110,6 +112,7 @@ export type Database = {
           id?: string
           nome?: string
           role?: Database["public"]["Enums"]["user_role"] | null
+          setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
           updated_at?: string
           user_id?: string
@@ -4275,6 +4278,12 @@ export type Database = {
         | "proposta"
         | "contratado"
       setor_producao: "perfiladeira" | "soldagem" | "separacao" | "pintura"
+      setor_type:
+        | "vendas"
+        | "marketing"
+        | "instalacoes"
+        | "fabrica"
+        | "administrativo"
       status_vaga: "em_analise" | "aberta" | "fechada" | "preenchida"
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
@@ -4514,6 +4523,13 @@ export const Constants = {
         "contratado",
       ],
       setor_producao: ["perfiladeira", "soldagem", "separacao", "pintura"],
+      setor_type: [
+        "vendas",
+        "marketing",
+        "instalacoes",
+        "fabrica",
+        "administrativo",
+      ],
       status_vaga: ["em_analise", "aberta", "fechada", "preenchida"],
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],

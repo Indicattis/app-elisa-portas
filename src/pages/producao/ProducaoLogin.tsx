@@ -46,9 +46,8 @@ export default function ProducaoLogin() {
         return;
       }
 
-      // Verificar se é usuário de produção
-      const rolesProducao = ['soldador', 'pintor', 'aux_geral', 'gerente_producao'];
-      if (!rolesProducao.includes(user.role)) {
+      // Verificar se é usuário da fábrica
+      if (user.setor !== 'fabrica') {
         toast({
           title: "Acesso negado",
           description: "Este login é apenas para colaboradores da produção",
