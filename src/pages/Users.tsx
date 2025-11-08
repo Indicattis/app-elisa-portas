@@ -22,6 +22,7 @@ interface AdminUser {
   nome: string;
   role: "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" | "diretor" | "gerente_marketing" | "gerente_financeiro" | "gerente_producao" | "gerente_instalacoes" | "instalador" | "aux_instalador" | "analista_marketing" | "assistente_marketing" | "coordenador_vendas" | "vendedor" | "assistente_administrativo" | "soldador" | "aux_geral" | "pintor" | "aux_pintura";
   setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
+  codigo_usuario: string | null;
   ativo: boolean;
   foto_perfil_url: string | null;
   created_at: string;
@@ -70,6 +71,7 @@ export default function Users() {
       nome: user.nome,
       role: user.role,
       setor: user.setor,
+      codigo_usuario: user.codigo_usuario,
       ativo: user.ativo,
     });
   };
@@ -82,6 +84,7 @@ export default function Users() {
           nome: editForm.nome,
           role: editForm.role,
           setor: editForm.setor,
+          codigo_usuario: editForm.codigo_usuario,
           ativo: editForm.ativo,
         })
         .eq("id", userId);
@@ -184,6 +187,7 @@ export default function Users() {
                   <TableHead>Email</TableHead>
                   <TableHead>Função</TableHead>
                   <TableHead>Setor</TableHead>
+                  <TableHead>Código</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data de Criação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -293,6 +297,20 @@ export default function Users() {
                            user.setor === "fabrica" ? "Fábrica" :
                            user.setor === "administrativo" ? "Administrativo" : "Não definido"}
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingUser === user.id ? (
+                        <Input
+                          value={editForm.codigo_usuario || ""}
+                          onChange={(e) => setEditForm({ ...editForm, codigo_usuario: e.target.value })}
+                          placeholder="Digite o código"
+                          className="max-w-xs"
+                        />
+                      ) : (
+                        <span className="text-sm font-mono">
+                          {user.codigo_usuario || <span className="text-muted-foreground">Não definido</span>}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
