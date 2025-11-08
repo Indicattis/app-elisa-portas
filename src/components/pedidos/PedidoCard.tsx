@@ -1072,7 +1072,7 @@ export function PedidoCard({
                   <div className="grid grid-cols-4 gap-2 w-full">
                     {actionButtons.map((button) => 
                       React.cloneElement(button, {
-                        className: "h-9 w-full"
+                        className: `${button.props.className || ''} h-9 w-full`.trim()
                       })
                     )}
                   </div>
