@@ -43,6 +43,7 @@ export default function ProducaoQualidade() {
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
+    enviarParaHistorico,
   } = useOrdemProducao('qualidade', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -66,6 +67,10 @@ export default function ProducaoQualidade() {
     setSheetOpen(false);
   };
 
+  const handleEnviarParaHistorico = async (ordemId: string) => {
+    await enviarParaHistorico.mutateAsync(ordemId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -81,6 +86,8 @@ export default function ProducaoQualidade() {
         onCapturarOrdem={handleCapturarOrdem}
         isCapturing={capturarOrdem.isPending}
         tipoOrdem="qualidade"
+        onEnviarParaHistorico={handleEnviarParaHistorico}
+        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <OrdemDetalhesSheet
@@ -91,8 +98,10 @@ export default function ProducaoQualidade() {
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
         onCapturarOrdem={handleCapturarOrdem}
+        onEnviarParaHistorico={handleEnviarParaHistorico}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
+        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
