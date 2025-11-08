@@ -510,7 +510,7 @@ export function PedidoCard({
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
                 </Button>);
                 if (temLinhas && onMoverEtapa) {
-                  actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção" className="bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" variant="outline">
+                  actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção">
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>);
                 }
@@ -718,7 +718,7 @@ export function PedidoCard({
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
                 </Button>);
             if (temLinhas && onMoverEtapa) {
-              actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção" className="bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" variant="outline">
+              actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção">
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>);
             }
