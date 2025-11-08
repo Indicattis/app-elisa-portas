@@ -497,8 +497,11 @@ export function PedidoCard({
                       </Badge>}
                   </div>}
               </div>
+            </div>
+          </CardContent>
 
-              {(() => {
+          <CardFooter className="pt-0 pb-2 bg-muted/20 border-t">
+            {(() => {
               const actionButtons = [];
 
               // Build action buttons array
@@ -563,19 +566,18 @@ export function PedidoCard({
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>);
               }
-              return <div className="flex flex-col gap-1.5">
-                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide bg-muted/50 px-2 py-1 rounded">
+              return <div className="w-full space-y-1.5">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-center">
                   Ações
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-1 justify-center">
                   {actionButtons.map(button => React.cloneElement(button, {
                     className: `${button.props.className || ''} h-7 w-7`.trim()
                   }))}
                 </div>
               </div>;
             })()}
-        </div>
-      </CardContent>
+          </CardFooter>
     </Card>
 
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
@@ -711,7 +713,7 @@ export function PedidoCard({
           {!isAberto && pedido.numero_pedido}
         </CardContent>
 
-        <CardFooter className="pt-0 pb-3">
+        <CardFooter className="pt-2 pb-2 bg-muted/20 border-t">
           {(() => {
           const actionButtons = [];
 
@@ -777,17 +779,15 @@ export function PedidoCard({
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>);
           }
-          return <div className="w-full space-y-2">
-                {actionButtons.length > 0 && <>
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide bg-muted/50 px-2 py-1 rounded text-center">
-                    Ações
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 w-full">
+          return <div className="w-full space-y-1.5">
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-center">
+                  Ações
+                </div>
+                {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                     {actionButtons.map(button => React.cloneElement(button, {
                       className: `${button.props.className || ''} h-7 w-full`.trim()
                     }))}
-                  </div>
-                </>}
+                  </div>}
                 {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && <span className="text-xs text-warning text-center block">
                     Defina data de carregamento
                   </span>}
