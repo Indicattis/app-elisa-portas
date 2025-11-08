@@ -12,22 +12,22 @@ export function EtiquetasDetalhes({ calculo }: EtiquetasDetalhesProps) {
   const getTipoCalculoBadge = () => {
     switch (calculo.tipoCalculo) {
       case 'meia_cana_grande':
-        return <Badge variant="default">Meia Cana - Porta Grande</Badge>;
+        return <Badge variant="default" className="text-xs">Meia Cana - Porta Grande</Badge>;
       case 'meia_cana_pequena':
-        return <Badge variant="secondary">Meia Cana - Porta Pequena</Badge>;
+        return <Badge variant="secondary" className="text-xs">Meia Cana - Porta Pequena</Badge>;
       default:
-        return <Badge variant="outline">Item Normal</Badge>;
+        return <Badge variant="outline" className="text-xs">Item Normal</Badge>;
     }
   };
 
   const getCalculoVisual = () => {
     if (calculo.tipoCalculo === 'normal') {
       return (
-        <div className="text-center py-4">
-          <div className="text-4xl font-bold text-primary mb-2">
+        <div className="text-center py-2">
+          <div className="text-2xl font-bold text-primary mb-1">
             {calculo.quantidade}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {calculo.quantidade} {calculo.quantidade === 1 ? 'unidade' : 'unidades'} = {calculo.etiquetasNecessarias} {calculo.etiquetasNecessarias === 1 ? 'etiqueta' : 'etiquetas'}
           </p>
         </div>
@@ -37,15 +37,15 @@ export function EtiquetasDetalhes({ calculo }: EtiquetasDetalhesProps) {
     const divisor = calculo.tipoCalculo === 'meia_cana_grande' ? 5 : 10;
     
     return (
-      <div className="text-center py-4">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <span className="text-2xl font-bold">{calculo.quantidade}</span>
-          <span className="text-xl text-muted-foreground">÷</span>
-          <span className="text-2xl font-bold">{divisor}</span>
-          <span className="text-xl text-muted-foreground">=</span>
-          <span className="text-4xl font-bold text-primary">{calculo.etiquetasNecessarias}</span>
+      <div className="text-center py-2">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <span className="text-lg font-bold">{calculo.quantidade}</span>
+          <span className="text-sm text-muted-foreground">÷</span>
+          <span className="text-lg font-bold">{divisor}</span>
+          <span className="text-sm text-muted-foreground">=</span>
+          <span className="text-2xl font-bold text-primary">{calculo.etiquetasNecessarias}</span>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {calculo.quantidade} meia canas ÷ {divisor} = {calculo.etiquetasNecessarias} {calculo.etiquetasNecessarias === 1 ? 'etiqueta' : 'etiquetas'}
         </p>
       </div>
@@ -54,30 +54,30 @@ export function EtiquetasDetalhes({ calculo }: EtiquetasDetalhesProps) {
 
   return (
     <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Tag className="h-5 w-5" />
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Tag className="h-4 w-4" />
           Cálculo de Etiquetas
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 pb-3">
         <div>
-          <p className="text-sm font-medium mb-2">Produto</p>
-          <p className="text-base font-semibold">{calculo.nomeProduto}</p>
+          <p className="text-xs font-medium mb-1">Produto</p>
+          <p className="text-sm font-semibold">{calculo.nomeProduto}</p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <div>
-            <p className="text-sm font-medium mb-1">Quantidade</p>
-            <Badge variant="secondary" className="text-base px-3 py-1">
+            <p className="text-xs font-medium mb-1">Quantidade</p>
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">
               {calculo.quantidade}
             </Badge>
           </div>
           
           {calculo.largura && calculo.altura && (
             <div>
-              <p className="text-sm font-medium mb-1">Dimensões</p>
-              <Badge variant="outline" className="text-base px-3 py-1">
+              <p className="text-xs font-medium mb-1">Dimensões</p>
+              <Badge variant="outline" className="text-xs px-2 py-0.5">
                 {calculo.largura}m × {calculo.altura}m
               </Badge>
             </div>
@@ -85,34 +85,34 @@ export function EtiquetasDetalhes({ calculo }: EtiquetasDetalhesProps) {
         </div>
 
         <div>
-          <p className="text-sm font-medium mb-2">Tipo de Cálculo</p>
+          <p className="text-xs font-medium mb-1">Tipo de Cálculo</p>
           {getTipoCalculoBadge()}
         </div>
 
         <Card className="bg-muted/50">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-2 mb-3">
-              <Calculator className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium mb-1">Cálculo</p>
+          <CardContent className="p-3">
+            <div className="flex items-start gap-2">
+              <Calculator className="h-3.5 w-3.5 mt-0.5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-xs font-medium mb-1">Cálculo</p>
                 {getCalculoVisual()}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription className="text-sm">
+        <Alert className="py-2">
+          <Info className="h-3.5 w-3.5" />
+          <AlertDescription className="text-xs">
             {calculo.explicacao}
           </AlertDescription>
         </Alert>
 
         <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-1">Total de Etiquetas Necessárias</p>
-              <div className="text-5xl font-bold text-primary">
+              <p className="text-xs text-muted-foreground mb-1">Total de Etiquetas Necessárias</p>
+              <div className="text-3xl font-bold text-primary">
                 {calculo.etiquetasNecessarias}
               </div>
             </div>
