@@ -6,12 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { PackageCheck, Loader2, Calendar } from "lucide-react";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
+import { useInstalacoesCadastradas, InstalacaoCadastrada } from "@/hooks/useInstalacoesCadastradas";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { InstalacaoCadastrada } from "@/hooks/useInstalacoesCadastradas";
 
 interface ConfirmarCarregamentoInstalacaoSheetProps {
   instalacao: InstalacaoCadastrada | null;
@@ -27,6 +27,7 @@ export function ConfirmarCarregamentoInstalacaoSheet({
   onSuccess,
 }: ConfirmarCarregamentoInstalacaoSheetProps) {
   const { linhas, isLoading, atualizarCheckbox } = usePedidoLinhas(instalacao?.pedido_id || "");
+  const { concluirInstalacao } = useInstalacoesCadastradas();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dataCarregamento, setDataCarregamento] = useState<string>(format(new Date(), "yyyy-MM-dd"));
 
@@ -58,21 +59,26 @@ export function ConfirmarCarregamentoInstalacaoSheet({
       return;
     }
 
+    if (!instalacao?.id) return;
+
     setIsSubmitting(true);
 
     try {
       // Salvar data de carregamento no pedido
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("pedidos_producao")
         .update({ data_carregamento: dataCarregamento })
-        .eq("id", instalacao?.pedido_id);
+        .eq("id", instalacao.pedido_id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      toast.success("Carregamento confirmado");
+      // Concluir a instalação e avançar o pedido
+      await concluirInstalacao(instalacao.id);
+
+      toast.success("Carregamento confirmado e instalação concluída");
       onSuccess();
     } catch (error) {
-      console.error("Erro ao salvar data de carregamento:", error);
+      console.error("Erro ao confirmar carregamento:", error);
       toast.error("Erro ao confirmar carregamento");
       setIsSubmitting(false);
     }
