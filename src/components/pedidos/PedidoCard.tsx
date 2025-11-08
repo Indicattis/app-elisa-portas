@@ -404,31 +404,61 @@ export function PedidoCard({
         >
           {/* Header com número do pedido e tempo */}
           <CardHeader className="py-2 px-4 bg-muted/30 border-b">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground">
-                {pedido.numero_pedido || 'Sem número'}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
-                  addSuffix: true,
-                  locale: ptBR 
-                })}
-              </span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {dragHandleProps && (
+                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                )}
+                
+                {emBacklog && (
+                  <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 animate-pulse" />
+                )}
+                
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {pedido.numero_pedido || 'Sem número'}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
+                    addSuffix: true,
+                    locale: ptBR 
+                  })}
+                </span>
+                
+                {onMoverPrioridade && posicao && total && (
+                  <>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      disabled={posicao === 1}
+                      onClick={() => onMoverPrioridade(pedido.id, 'frente')}
+                      title="Aumentar prioridade"
+                      className="h-6 w-6"
+                    >
+                      <ChevronUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      disabled={posicao === total}
+                      onClick={() => onMoverPrioridade(pedido.id, 'tras')}
+                      title="Diminuir prioridade"
+                      className="h-6 w-6"
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </CardHeader>
 
           <CardContent className="py-3">
             <div className="flex items-center gap-3">
-              {dragHandleProps && (
-                <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
-              
-              {emBacklog && (
-                <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 animate-pulse" />
-              )}
-
               {posicao && (
                 <Badge variant="outline" className={cn("text-xs px-2 py-0.5 font-semibold flex-shrink-0", getBadgeColor())}>
                   #{posicao}
@@ -629,42 +659,22 @@ export function PedidoCard({
               );
             }
 
+            // Add eye button to action buttons
+            actionButtons.push(
+              <Button
+                key="detalhes"
+                size="icon"
+                variant="ghost"
+                onClick={() => setShowDetalhes(true)}
+                title="Ver detalhes"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            );
+
             return (
               <div className="flex items-center gap-1 flex-shrink-0">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setShowDetalhes(true)}
-                  title="Ver detalhes"
-                  className="h-7 w-7"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                </Button>
-                
-                {onMoverPrioridade && posicao && total && (
-                  <>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      disabled={posicao === 1}
-                      onClick={() => onMoverPrioridade(pedido.id, 'frente')}
-                      title="Aumentar prioridade"
-                      className="h-7 w-7"
-                    >
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      disabled={posicao === total}
-                      onClick={() => onMoverPrioridade(pedido.id, 'tras')}
-                      title="Diminuir prioridade"
-                      className="h-7 w-7"
-                    >
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </>
-                )}
+                {actionButtons}
                 
                 {isAdmin && etapaAnterior && onRetrocederEtapa && (
                   <Button 
@@ -677,28 +687,12 @@ export function PedidoCard({
                     <ArrowLeft className="h-3.5 w-3.5" />
                   </Button>
                 )}
-
-                {actionButtons.length > 0 && (
-                  <div className="grid grid-cols-4 gap-1 ml-2">
-                    {actionButtons.map((button) => 
-                      React.cloneElement(button, {
-                        className: "h-8 w-8"
-                      })
-                    )}
-                  </div>
-                )}
-
-                    {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && (
-                      <span className="ml-2 text-xs text-warning flex-shrink-0">
-                        Defina data de carregamento
-                      </span>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            );
+          })()}
+        </div>
+      </CardContent>
+    </Card>
 
         <PedidoDetalhesSheet
           pedido={pedido}
@@ -776,44 +770,30 @@ export function PedidoCard({
       >
         {/* Header com número do pedido e tempo */}
         <CardHeader className="py-2 px-3 bg-muted/30 border-b">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-muted-foreground">
-              {pedido.numero_pedido || 'Sem número'}
-            </span>
-            <span className="text-[10px] text-muted-foreground">
-              {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
-                addSuffix: true,
-                locale: ptBR 
-              })}
-            </span>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-3 pb-2 space-y-2.5">
-          {/* Header compacto com controles */}
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1.5 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
               {dragHandleProps && (
                 <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
                 </div>
               )}
+              
               {emBacklog && (
-                <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 animate-pulse" />
+                <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0 animate-pulse" />
               )}
+              
+              <span className="text-[10px] font-semibold text-muted-foreground">
+                {pedido.numero_pedido || 'Sem número'}
+              </span>
             </div>
             
-            {/* Controles compactos */}
             <div className="flex items-center gap-0.5">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setShowDetalhes(true)}
-                title="Ver detalhes"
-                className="h-6 w-6"
-              >
-                <Eye className="h-3 w-3" />
-              </Button>
+              <span className="text-[10px] text-muted-foreground">
+                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
+                  addSuffix: true,
+                  locale: ptBR 
+                })}
+              </span>
               
               {onMoverPrioridade && posicao && total && (
                 <>
@@ -823,9 +803,9 @@ export function PedidoCard({
                     disabled={posicao === 1}
                     onClick={() => onMoverPrioridade(pedido.id, 'frente')}
                     title="Aumentar prioridade"
-                    className="h-6 w-6"
+                    className="h-5 w-5"
                   >
-                    <ChevronUp className="h-3 w-3" />
+                    <ChevronUp className="h-2.5 w-2.5" />
                   </Button>
                   <Button
                     size="icon"
@@ -833,32 +813,36 @@ export function PedidoCard({
                     disabled={posicao === total}
                     onClick={() => onMoverPrioridade(pedido.id, 'tras')}
                     title="Diminuir prioridade"
-                    className="h-6 w-6"
+                    className="h-5 w-5"
                   >
-                    <ChevronDown className="h-3 w-3" />
+                    <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </>
               )}
-              
-              {isAdmin && etapaAnterior && onRetrocederEtapa && (
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  onClick={() => setShowRetrocederEtapa(true)}
-                  title="Retroceder para etapa anterior"
-                  className="h-6 w-6"
-                >
-                  <ArrowLeft className="h-3 w-3" />
-                </Button>
-              )}
-              
-              {posicao && (
-                <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 font-semibold ml-0.5", getBadgeColor())}>
-                  #{posicao}
-                </Badge>
-              )}
             </div>
           </div>
+        </CardHeader>
+
+        <CardContent className="pt-3 pb-2 space-y-2.5">
+          {posicao && (
+            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 font-semibold inline-flex", getBadgeColor())}>
+              #{posicao}
+            </Badge>
+          )}
+          
+          {isAdmin && etapaAnterior && onRetrocederEtapa && (
+            <div className="flex justify-end -mt-2">
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={() => setShowRetrocederEtapa(true)}
+                title="Retroceder para etapa anterior"
+                className="h-6 w-6"
+              >
+                <ArrowLeft className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
 
           {/* Informações do cliente com background */}
           <div className="bg-muted/30 rounded-md p-2 -mx-2">
@@ -1074,6 +1058,19 @@ export function PedidoCard({
                 </Button>
               );
             }
+
+            // Add eye button to action buttons
+            actionButtons.push(
+              <Button
+                key="detalhes"
+                size="icon"
+                variant="ghost"
+                onClick={() => setShowDetalhes(true)}
+                title="Ver detalhes"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            );
 
             return (
               <div className="w-full space-y-2">
