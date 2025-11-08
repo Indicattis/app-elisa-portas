@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -102,6 +102,10 @@ import DRE from "./pages/DRE";
 import Despesas from "./pages/Despesas";
 import Vagas from "./pages/Vagas";
 import Etiquetas from "./pages/Etiquetas";
+import ProducaoLogin from "./pages/producao/ProducaoLogin";
+import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
+import { ProducaoLayout } from "@/components/ProducaoLayout";
+import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -265,6 +269,69 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
+
+                {/* Rotas de Produção */}
+                <Route path="/producao/login" element={<ProducaoLogin />} />
+                <Route
+                  path="/producao/*"
+                  element={
+                    <ProducaoAuthProvider>
+                      <Routes>
+                        <Route
+                          path="/solda"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoSolda />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/perfiladeira"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoPerfiladeira />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/separacao"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoSeparacao />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/pintura"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoPintura />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/qualidade"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoQualidade />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route path="/" element={<Navigate to="/producao/solda" replace />} />
+                      </Routes>
+                    </ProducaoAuthProvider>
+                  }
+                />
                 <Route
                   path="/dashboard"
                   element={

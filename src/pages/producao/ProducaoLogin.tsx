@@ -1,0 +1,137 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Lock, Loader2 } from "lucide-react";
+import logoDark from "@/assets/logo-dark.png";
+
+export default function ProducaoLogin() {
+  const [codigo, setCodigo] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!codigo.trim()) {
+      toast({
+        title: "Código necessário",
+        description: "Por favor, informe seu código de usuário",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Buscar usuário pelo código
+      const { data: user, error } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("codigo_usuario", codigo.trim())
+        .eq("ativo", true)
+        .single();
+
+      if (error || !user) {
+        toast({
+          title: "Código inválido",
+          description: "Código não encontrado ou usuário inativo",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Verificar se é usuário de produção
+      const rolesProducao = ['soldador', 'pintor', 'aux_geral', 'gerente_producao'];
+      if (!rolesProducao.includes(user.role)) {
+        toast({
+          title: "Acesso negado",
+          description: "Este login é apenas para colaboradores da produção",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Armazenar sessão de produção no localStorage
+      localStorage.setItem("producao_session", JSON.stringify({
+        user_id: user.user_id,
+        nome: user.nome,
+        role: user.role,
+        foto_perfil_url: user.foto_perfil_url,
+        codigo: codigo.trim(),
+        timestamp: new Date().toISOString(),
+      }));
+
+      toast({
+        title: "Login realizado",
+        description: `Bem-vindo, ${user.nome}!`,
+      });
+
+      navigate("/producao/solda");
+    } catch (error) {
+      console.error("Erro no login:", error);
+      toast({
+        title: "Erro no login",
+        description: "Ocorreu um erro ao tentar fazer login. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/30 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-4 text-center">
+          <div className="flex justify-center">
+            <img src={logoDark} alt="Logo" className="h-16" />
+          </div>
+          <div>
+            <CardTitle className="text-2xl font-bold">Interface de Produção</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Informe seu código de usuário para acessar
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Digite seu código"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value)}
+                  className="pl-10 h-12 text-lg"
+                  disabled={loading}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
