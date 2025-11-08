@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangle, Archive } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ interface Ordem {
   };
   admin_users?: {
     nome: string;
+    foto_perfil_url?: string;
   };
   linhas?: any[];
 }
@@ -102,9 +104,14 @@ export function ProducaoPinturaKanban({
         </CardHeader>
         <CardContent className="space-y-3">
           {ordem.admin_users && (
-            <div className="flex items-center gap-2 text-sm">
-              <UserCheck className="h-4 w-4 text-primary" />
-              <span className="text-muted-foreground truncate">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                <AvatarImage src={ordem.admin_users.foto_perfil_url} alt={ordem.admin_users.nome} />
+                <AvatarFallback className="text-base font-semibold">
+                  {ordem.admin_users.nome?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-muted-foreground truncate">
                 {ordem.admin_users.nome}
               </span>
             </div>
@@ -131,7 +138,7 @@ export function ProducaoPinturaKanban({
           {!ordem.responsavel_id && (
             <Button
               variant="outline"
-              size="sm"
+              size="lg"
               className="w-full"
               disabled={isCapturing}
               onClick={(e) => {
@@ -141,12 +148,12 @@ export function ProducaoPinturaKanban({
             >
               {isCapturing ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   Capturando...
                 </>
               ) : (
                 <>
-                  <UserCheck className="h-4 w-4 mr-2" />
+                  <UserCheck className="h-5 w-5 mr-2" />
                   Capturar
                 </>
               )}
