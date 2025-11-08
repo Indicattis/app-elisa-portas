@@ -20,7 +20,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-
 interface PedidoCardProps {
   pedido: any;
   onMoverEtapa?: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
@@ -35,9 +34,8 @@ interface PedidoCardProps {
   isSelecionado?: boolean;
   onSelecionarPedido?: (pedido: any) => void;
 }
-
-export function PedidoCard({ 
-  pedido, 
+export function PedidoCard({
+  pedido,
   onMoverEtapa,
   onRetrocederEtapa,
   onMoverPrioridade,
@@ -58,98 +56,119 @@ export function PedidoCard({
   const [showProgresso, setShowProgresso] = useState(false);
   const [showCarregamento, setShowCarregamento] = useState(false);
   const [processos, setProcessos] = useState<Processo[]>([]);
-  const { isAdmin } = useAuth();
-  const { toast } = useToast();
+  const {
+    isAdmin
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   // Buscar quantidade de linhas do pedido
-  const { data: linhasCount = 0 } = useQuery({
+  const {
+    data: linhasCount = 0
+  } = useQuery({
     queryKey: ['pedido-linhas-count', pedido.id],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from('pedido_linhas')
-        .select('*', { count: 'exact', head: true })
-        .eq('pedido_id', pedido.id);
-      
+      const {
+        count,
+        error
+      } = await supabase.from('pedido_linhas').select('*', {
+        count: 'exact',
+        head: true
+      }).eq('pedido_id', pedido.id);
       if (error) throw error;
       return count || 0;
-    },
+    }
   });
 
   // Verificar se todas as ordens de produção estão concluídas (para etapa em_producao)
-  const { data: ordensStatus } = useQuery({
+  const {
+    data: ordensStatus
+  } = useQuery({
     queryKey: ['pedido-ordens-status', pedido.id],
     queryFn: async () => {
       if (pedido.etapa_atual !== 'em_producao') return null;
-      
-      const { data: todasConcluidas } = await supabase
-        .rpc('verificar_ordens_pedido_concluidas', { p_pedido_id: pedido.id });
-      
+      const {
+        data: todasConcluidas
+      } = await supabase.rpc('verificar_ordens_pedido_concluidas', {
+        p_pedido_id: pedido.id
+      });
       return todasConcluidas;
     },
-    enabled: pedido.etapa_atual === 'em_producao',
+    enabled: pedido.etapa_atual === 'em_producao'
   });
 
   // Verificar se a ordem de qualidade está concluída (para etapa inspecao_qualidade)
-  const { data: ordemQualidadeStatus } = useQuery({
+  const {
+    data: ordemQualidadeStatus
+  } = useQuery({
     queryKey: ['pedido-qualidade-status', pedido.id],
     queryFn: async () => {
       if (pedido.etapa_atual !== 'inspecao_qualidade') return null;
-      
-      const { data: todasLinhasConcluidas } = await supabase
-        .rpc('verificar_ordem_qualidade_concluida', { p_pedido_id: pedido.id });
-      
+      const {
+        data: todasLinhasConcluidas
+      } = await supabase.rpc('verificar_ordem_qualidade_concluida', {
+        p_pedido_id: pedido.id
+      });
       return todasLinhasConcluidas;
     },
-    enabled: pedido.etapa_atual === 'inspecao_qualidade',
+    enabled: pedido.etapa_atual === 'inspecao_qualidade'
   });
 
   // Verificar se a ordem de pintura está concluída (para etapa aguardando_pintura)
-  const { data: ordemPinturaStatus } = useQuery({
+  const {
+    data: ordemPinturaStatus
+  } = useQuery({
     queryKey: ['pedido-pintura-status', pedido.id],
     queryFn: async () => {
       if (pedido.etapa_atual !== 'aguardando_pintura') return null;
-      
-      const { data: ordemConcluida } = await supabase
-        .rpc('verificar_ordem_pintura_concluida', { p_pedido_id: pedido.id });
-      
+      const {
+        data: ordemConcluida
+      } = await supabase.rpc('verificar_ordem_pintura_concluida', {
+        p_pedido_id: pedido.id
+      });
       return ordemConcluida;
     },
-    enabled: pedido.etapa_atual === 'aguardando_pintura',
+    enabled: pedido.etapa_atual === 'aguardando_pintura'
   });
 
   // Verificar se todos os itens do carregamento foram marcados e se tem data
-  const { data: carregamentoCompleto } = useQuery({
+  const {
+    data: carregamentoCompleto
+  } = useQuery({
     queryKey: ['pedido-carregamento', pedido.id],
     queryFn: async () => {
       if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'aguardando_instalacao') {
-        return { concluido: false, temData: true };
+        return {
+          concluido: false,
+          temData: true
+        };
       }
-      
-      // Verificar se tem data_carregamento
-      const { data: pedidoData } = await supabase
-        .from('pedidos_producao')
-        .select('data_carregamento')
-        .eq('id', pedido.id)
-        .single();
-      
-      const temData = !!pedidoData?.data_carregamento;
-      
-      // Verificar se todos os itens estão marcados
-      const { data: linhas } = await supabase
-        .from('pedido_linhas')
-        .select('check_coleta')
-        .eq('pedido_id', pedido.id);
-      
-      if (!linhas || linhas.length === 0) return { concluido: false, temData };
-      const todosMarcados = linhas.every(l => l.check_coleta === true);
-      
-      return { concluido: todosMarcados && temData, temData };
-    },
-    enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'aguardando_instalacao',
-  });
 
+      // Verificar se tem data_carregamento
+      const {
+        data: pedidoData
+      } = await supabase.from('pedidos_producao').select('data_carregamento').eq('id', pedido.id).single();
+      const temData = !!pedidoData?.data_carregamento;
+
+      // Verificar se todos os itens estão marcados
+      const {
+        data: linhas
+      } = await supabase.from('pedido_linhas').select('check_coleta').eq('pedido_id', pedido.id);
+      if (!linhas || linhas.length === 0) return {
+        concluido: false,
+        temData
+      };
+      const todosMarcados = linhas.every(l => l.check_coleta === true);
+      return {
+        concluido: todosMarcados && temData,
+        temData
+      };
+    },
+    enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'aguardando_instalacao'
+  });
   const carregamentoConcluido = carregamentoCompleto?.concluido || false;
   const temDataCarregamento = carregamentoCompleto?.temData || false;
 
@@ -160,31 +179,25 @@ export function PedidoCard({
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
-  
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
   const config = etapaAtual ? ETAPAS_CONFIG[etapaAtual] : null;
   const proximaEtapa = etapaAtual ? getProximaEtapa(etapaAtual) : null;
   const etapaAnterior = etapaAtual ? getEtapaAnterior(etapaAtual) : null;
-
   const produtos = venda?.produtos_vendas || [];
   const temLinhas = linhasCount > 0;
   const todasOrdensConcluidasEmProducao = ordensStatus === true;
   const ordemQualidadeConcluida = ordemQualidadeStatus === true;
   const ordemPinturaConcluida = ordemPinturaStatus === true;
-  
+
   // Identificar características do pedido
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
   const tipoEntrega = venda?.tipo_entrega;
   const isInstalacao = tipoEntrega === 'instalacao';
   const isEntrega = tipoEntrega === 'entrega';
-  
+
   // Extrair cores únicas dos produtos
-  const coresUnicas = Array.from(new Set(
-    produtos
-      .map((p: any) => p.cor?.nome)
-      .filter((cor: string | undefined) => cor !== undefined)
-  )) as string[];
-  
+  const coresUnicas = Array.from(new Set(produtos.map((p: any) => p.cor?.nome).filter((cor: string | undefined) => cor !== undefined))) as string[];
+
   // Mapeamento de cores para hex
   const coresMap: Record<string, string> = {
     'Branco': '#FFFFFF',
@@ -196,117 +209,125 @@ export function PedidoCard({
     'Amarelo': '#FFFF00',
     'Marrom': '#8B4513',
     'Bege': '#F5F5DC',
-    'Rosa': '#FFC0CB',
+    'Rosa': '#FFC0CB'
   };
 
   // Função para determinar processos que serão executados
   const determinarProcessos = async (pedidoId: string) => {
     const lista: Processo[] = [];
-
-    lista.push(
-      { id: 'fechar_etapa_atual', label: 'Fechando etapa atual', status: 'pending' },
-      { id: 'criar_nova_etapa', label: 'Criando nova etapa', status: 'pending' },
-      { id: 'atualizar_pedido', label: 'Atualizando status do pedido', status: 'pending' }
-    );
-
+    lista.push({
+      id: 'fechar_etapa_atual',
+      label: 'Fechando etapa atual',
+      status: 'pending'
+    }, {
+      id: 'criar_nova_etapa',
+      label: 'Criando nova etapa',
+      status: 'pending'
+    }, {
+      id: 'atualizar_pedido',
+      label: 'Atualizando status do pedido',
+      status: 'pending'
+    });
     if (etapaAtual === 'aberto') {
-      const { data: linhas } = await supabase
-        .from('pedido_linhas')
-        .select('*, estoque:estoque_id(setor_responsavel_producao)')
-        .eq('pedido_id', pedidoId);
-
-      const temSolda = linhas?.some(l => 
-        !l.estoque?.setor_responsavel_producao || 
-        l.estoque?.setor_responsavel_producao === 'soldagem'
-      );
-      const temPerfiladeira = linhas?.some(l => 
-        l.estoque?.setor_responsavel_producao === 'perfiladeira'
-      );
-      const temSeparacao = linhas?.some(l => 
-        l.estoque?.setor_responsavel_producao === 'separacao'
-      );
+      const {
+        data: linhas
+      } = await supabase.from('pedido_linhas').select('*, estoque:estoque_id(setor_responsavel_producao)').eq('pedido_id', pedidoId);
+      const temSolda = linhas?.some(l => !l.estoque?.setor_responsavel_producao || l.estoque?.setor_responsavel_producao === 'soldagem');
+      const temPerfiladeira = linhas?.some(l => l.estoque?.setor_responsavel_producao === 'perfiladeira');
+      const temSeparacao = linhas?.some(l => l.estoque?.setor_responsavel_producao === 'separacao');
 
       // Buscar dados da venda para determinar tipo de entrega
-      const { data: pedidoData } = await supabase
-        .from('pedidos_producao')
-        .select('venda_id')
-        .eq('id', pedidoId)
-        .single();
-
+      const {
+        data: pedidoData
+      } = await supabase.from('pedidos_producao').select('venda_id').eq('id', pedidoId).single();
       let tipoEntrega = venda?.tipo_entrega;
       if (!tipoEntrega && pedidoData?.venda_id) {
-        const { data: vendaData } = await supabase
-          .from('vendas')
-          .select('tipo_entrega')
-          .eq('id', pedidoData.venda_id)
-          .single();
+        const {
+          data: vendaData
+        } = await supabase.from('vendas').select('tipo_entrega').eq('id', pedidoData.venda_id).single();
         tipoEntrega = vendaData?.tipo_entrega;
       }
-
       const ordensProcessos: Processo[] = [];
       if (temPerfiladeira) {
-        ordensProcessos.push({ id: 'criar_ordem_perfiladeira', label: 'Criando ordem de perfiladeira', status: 'pending' });
+        ordensProcessos.push({
+          id: 'criar_ordem_perfiladeira',
+          label: 'Criando ordem de perfiladeira',
+          status: 'pending'
+        });
       }
       if (temSolda) {
-        ordensProcessos.push({ id: 'criar_ordem_solda', label: 'Criando ordem de solda', status: 'pending' });
+        ordensProcessos.push({
+          id: 'criar_ordem_solda',
+          label: 'Criando ordem de solda',
+          status: 'pending'
+        });
       }
       if (temSeparacao) {
-        ordensProcessos.push({ id: 'criar_ordem_separacao', label: 'Criando ordem de separação', status: 'pending' });
+        ordensProcessos.push({
+          id: 'criar_ordem_separacao',
+          label: 'Criando ordem de separação',
+          status: 'pending'
+        });
       }
-
       if (tipoEntrega === 'instalacao') {
-        ordensProcessos.push({ id: 'criar_instalacao', label: 'Criando instalação', status: 'pending' });
+        ordensProcessos.push({
+          id: 'criar_instalacao',
+          label: 'Criando instalação',
+          status: 'pending'
+        });
       } else if (tipoEntrega === 'entrega') {
-        ordensProcessos.push({ id: 'criar_entrega', label: 'Criando entrega', status: 'pending' });
+        ordensProcessos.push({
+          id: 'criar_entrega',
+          label: 'Criando entrega',
+          status: 'pending'
+        });
       }
-
       lista.unshift(...ordensProcessos);
     }
-
     if (proximaEtapa === 'inspecao_qualidade') {
-      lista.unshift({ id: 'criar_ordem_qualidade', label: 'Gerando ordem de qualidade', status: 'pending' });
+      lista.unshift({
+        id: 'criar_ordem_qualidade',
+        label: 'Gerando ordem de qualidade',
+        status: 'pending'
+      });
     }
-
     if (proximaEtapa === 'aguardando_pintura') {
-      lista.unshift({ id: 'criar_ordem_pintura', label: 'Gerando ordem de pintura', status: 'pending' });
+      lista.unshift({
+        id: 'criar_ordem_pintura',
+        label: 'Gerando ordem de pintura',
+        status: 'pending'
+      });
     }
 
     // Se está na etapa de inspeção de qualidade, determinar destino
     if (etapaAtual === 'inspecao_qualidade') {
       // Buscar produtos da venda para verificar se tem pintura
-      const { data: produtosComPintura } = await supabase
-        .from('produtos_vendas')
-        .select('id')
-        .eq('venda_id', pedido.venda_id)
-        .gt('valor_pintura', 0)
-        .limit(1);
-
+      const {
+        data: produtosComPintura
+      } = await supabase.from('produtos_vendas').select('id').eq('venda_id', pedido.venda_id).gt('valor_pintura', 0).limit(1);
       if (produtosComPintura && produtosComPintura.length > 0) {
         // Tem pintura
-        lista.push({ 
-          id: 'criar_ordem_pintura', 
-          label: 'Enviando para pintura', 
-          status: 'pending' 
+        lista.push({
+          id: 'criar_ordem_pintura',
+          label: 'Enviando para pintura',
+          status: 'pending'
         });
       } else {
         // Não tem pintura - verificar tipo de entrega
-        const { data: venda } = await supabase
-          .from('vendas')
-          .select('tipo_entrega')
-          .eq('id', pedido.venda_id)
-          .single();
-
+        const {
+          data: venda
+        } = await supabase.from('vendas').select('tipo_entrega').eq('id', pedido.venda_id).single();
         if (venda?.tipo_entrega === 'entrega') {
-          lista.push({ 
-            id: 'preparar_coleta', 
-            label: 'Enviando para Coleta', 
-            status: 'pending' 
+          lista.push({
+            id: 'preparar_coleta',
+            label: 'Enviando para Coleta',
+            status: 'pending'
           });
         } else {
-          lista.push({ 
-            id: 'preparar_instalacao', 
-            label: 'Enviando para Instalação', 
-            status: 'pending' 
+          lista.push({
+            id: 'preparar_instalacao',
+            label: 'Enviando para Instalação',
+            status: 'pending'
           });
         }
       }
@@ -314,65 +335,60 @@ export function PedidoCard({
 
     // Se está na etapa aguardando pintura, determinar destino
     if (etapaAtual === 'aguardando_pintura') {
-      const { data: venda } = await supabase
-        .from('vendas')
-        .select('tipo_entrega')
-        .eq('id', pedido.venda_id)
-        .single();
-
+      const {
+        data: venda
+      } = await supabase.from('vendas').select('tipo_entrega').eq('id', pedido.venda_id).single();
       if (venda?.tipo_entrega === 'entrega') {
-        lista.push({ 
-          id: 'preparar_coleta', 
-          label: 'Enviando para Coleta', 
-          status: 'pending' 
+        lista.push({
+          id: 'preparar_coleta',
+          label: 'Enviando para Coleta',
+          status: 'pending'
         });
       } else {
-        lista.push({ 
-          id: 'preparar_instalacao', 
-          label: 'Enviando para Instalação', 
-          status: 'pending' 
+        lista.push({
+          id: 'preparar_instalacao',
+          label: 'Enviando para Instalação',
+          status: 'pending'
         });
       }
     }
 
     // Se está na etapa aguardando_coleta, finalizando pedido
     if (etapaAtual === 'aguardando_coleta') {
-      lista.push({ 
-        id: 'finalizando_pedido', 
-        label: 'Finalizando Pedido', 
-        status: 'pending' 
+      lista.push({
+        id: 'finalizando_pedido',
+        label: 'Finalizando Pedido',
+        status: 'pending'
       });
     }
 
     // Se está na etapa aguardando_instalacao, finalizando pedido
     if (etapaAtual === 'aguardando_instalacao') {
-      lista.push({ 
-        id: 'finalizando_pedido', 
-        label: 'Finalizando Pedido', 
-        status: 'pending' 
+      lista.push({
+        id: 'finalizando_pedido',
+        label: 'Finalizando Pedido',
+        status: 'pending'
       });
     }
-
     return lista;
   };
 
   // Handler para confirmar avanço (após modal de confirmação)
   const handleConfirmarAvanco = async () => {
     setShowConfirmarAvanco(false);
-    
+
     // Se está na etapa aberto, aguardando_pintura, aguardando_coleta ou aguardando_instalacao, usa o sistema de processos
     if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura' || etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
       const listaProcessos = await determinarProcessos(pedido.id);
       setProcessos(listaProcessos);
       setShowProgresso(true);
-
       if (onMoverEtapa) {
         await onMoverEtapa(pedido.id, true, (processoId, status) => {
-          setProcessos(prev => 
-            prev.map(p => p.id === processoId ? { ...p, status } : p)
-          );
+          setProcessos(prev => prev.map(p => p.id === processoId ? {
+            ...p,
+            status
+          } : p));
         });
-
         await new Promise(resolve => setTimeout(resolve, 1000));
         setShowProgresso(false);
       }
@@ -390,31 +406,17 @@ export function PedidoCard({
 
   // Layout compacto para visualização em lista
   if (viewMode === 'list') {
-    return (
-      <>
-        <Card 
-          className={cn(
-            "hover:shadow-md transition-all cursor-pointer",
-            isDragging && "opacity-50 cursor-grabbing",
-            isSelecionado && "ring-2 ring-primary shadow-lg",
-            emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
-          )}
-          onClick={() => onSelecionarPedido?.(pedido)}
-          onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
-        >
+    return <>
+        <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onClick={() => onSelecionarPedido?.(pedido)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
           {/* Header com número do pedido e tempo */}
           <CardHeader className="py-2 px-4 bg-muted/30 border-b">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                {dragHandleProps && (
-                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
+                {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
                     <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                )}
+                  </div>}
                 
-                {emBacklog && (
-                  <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 animate-pulse" />
-                )}
+                {emBacklog && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 animate-pulse" />}
                 
                 <span className="text-xs font-semibold text-muted-foreground">
                   {pedido.numero_pedido || 'Sem número'}
@@ -423,36 +425,20 @@ export function PedidoCard({
               
               <div className="flex items-center gap-1">
                 <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
-                    addSuffix: true,
-                    locale: ptBR 
-                  })}
+                  {formatDistanceToNow(new Date(venda?.created_at || Date.now()), {
+                  addSuffix: true,
+                  locale: ptBR
+                })}
                 </span>
                 
-                {onMoverPrioridade && posicao && total && (
-                  <>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      disabled={posicao === 1}
-                      onClick={() => onMoverPrioridade(pedido.id, 'frente')}
-                      title="Aumentar prioridade"
-                      className="h-6 w-6"
-                    >
+                {onMoverPrioridade && posicao && total && <>
+                    <Button size="icon" variant="ghost" disabled={posicao === 1} onClick={() => onMoverPrioridade(pedido.id, 'frente')} title="Aumentar prioridade" className="h-6 w-6">
                       <ChevronUp className="h-3 w-3" />
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      disabled={posicao === total}
-                      onClick={() => onMoverPrioridade(pedido.id, 'tras')}
-                      title="Diminuir prioridade"
-                      className="h-6 w-6"
-                    >
+                    <Button size="icon" variant="ghost" disabled={posicao === total} onClick={() => onMoverPrioridade(pedido.id, 'tras')} title="Diminuir prioridade" className="h-6 w-6">
                       <ChevronDown className="h-3 w-3" />
                     </Button>
-                  </>
-                )}
+                  </>}
               </div>
             </div>
           </CardHeader>
@@ -463,31 +449,20 @@ export function PedidoCard({
                 <div className="flex items-center gap-2 justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
-                    {!isAberto && pedido.numero_pedido && (
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {!isAberto && pedido.numero_pedido && <span className="text-xs text-muted-foreground flex-shrink-0">
                         {pedido.numero_pedido}
-                      </span>
-                    )}
+                      </span>}
                   </div>
                   
                   {/* Círculos de cores à direita */}
-                  {coresUnicas.length > 0 && (
-                    <div className="flex items-center gap-0.5 flex-shrink-0">
-                      {coresUnicas.slice(0, 5).map((cor, idx) => (
-                        <div
-                          key={idx}
-                          className="w-3 h-3 rounded-full border border-border"
-                          style={{ backgroundColor: coresMap[cor] || '#999999' }}
-                          title={cor}
-                        />
-                      ))}
-                      {coresUnicas.length > 5 && (
-                        <span className="text-xs text-muted-foreground ml-1">
+                  {coresUnicas.length > 0 && <div className="flex items-center gap-0.5 flex-shrink-0">
+                      {coresUnicas.slice(0, 5).map((cor, idx) => <div key={idx} className="w-3 h-3 rounded-full border border-border" style={{
+                    backgroundColor: coresMap[cor] || '#999999'
+                  }} title={cor} />)}
+                      {coresUnicas.length > 5 && <span className="text-xs text-muted-foreground ml-1">
                           +{coresUnicas.length - 5}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                        </span>}
+                    </div>}
                 </div>
                 
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -501,284 +476,142 @@ export function PedidoCard({
                 </div>
                 
                 {/* Flags abaixo das informações */}
-                {(config || temPintura || isInstalacao || isEntrega) && (
-                  <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                    {config && (
-                      <Badge variant="outline" className={cn(
-                        "text-xs px-1.5 py-0",
-                        emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50"
-                      )}>
+                {(config || temPintura || isInstalacao || isEntrega) && <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                    {config && <Badge variant="outline" className={cn("text-xs px-1.5 py-0", emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50")}>
                         {config.label}
-                      </Badge>
-                    )}
+                      </Badge>}
                     
-                    {temPintura && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                    {temPintura && <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
                         <Paintbrush className="h-3 w-3 mr-1" />
                         Pintura
-                      </Badge>
-                    )}
+                      </Badge>}
                     
-                    {isInstalacao && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                    {isInstalacao && <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                         <Hammer className="h-3 w-3 mr-1" />
                         Instalação
-                      </Badge>
-                    )}
+                      </Badge>}
                     
-                    {isEntrega && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                    {isEntrega && <Badge variant="outline" className="text-xs px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                         <Truck className="h-3 w-3 mr-1" />
                         Entrega
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                      </Badge>}
+                  </div>}
               </div>
 
               {(() => {
-                const actionButtons = [];
-                
-                // Build action buttons array
-                if (isAberto) {
-              actionButtons.push(
-                <Button
-                  key="preparar"
-                  size="icon"
-                  onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-                  title="Preparar Pedido"
-                  className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"
-                  variant="outline"
-                >
+              const actionButtons = [];
+
+              // Build action buttons array
+              if (isAberto) {
+                actionButtons.push(<Button key="preparar" size="icon" onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)} title="Preparar Pedido" className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/50" variant="outline">
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
-                </Button>
-              );
-              if (temLinhas && onMoverEtapa) {
-                actionButtons.push(
-                  <Button
-                    key="iniciar"
-                    size="icon"
-                    onClick={() => setShowConfirmarAvanco(true)}
-                    title="Iniciar Produção"
-                  >
+                </Button>);
+                if (temLinhas && onMoverEtapa) {
+                  actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção">
                     <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                );
-              }
-            } else if (etapaAtual === 'em_producao') {
-              actionButtons.push(
-                <Button
-                  key="avançar-qualidade"
-                  size="icon"
-                  onClick={() => setShowAvancarQualidade(true)}
-                  disabled={!todasOrdensConcluidasEmProducao}
-                  title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}
-                >
+                  </Button>);
+                }
+              } else if (etapaAtual === 'em_producao') {
+                actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={() => setShowAvancarQualidade(true)} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}>
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            } else if (etapaAtual === 'inspecao_qualidade') {
-              actionButtons.push(
-                <Button
-                  key="avançar"
-                  size="icon"
-                  onClick={async () => {
-                    const processosNecessarios = await determinarProcessos(pedido.id);
-                    setProcessos(processosNecessarios);
-                    setShowProgresso(true);
-                    
-                    if (onMoverEtapa) {
-                      await onMoverEtapa(pedido.id, true, (processoId, status) => {
-                        setProcessos(prev => prev.map(p => 
-                          p.id === processoId ? { ...p, status } : p
-                        ));
-                      });
-
-                      await new Promise(resolve => setTimeout(resolve, 1000));
-                      setShowProgresso(false);
-                    }
-                  }}
-                  disabled={!ordemQualidadeConcluida}
-                  title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}
-                >
+                </Button>);
+              } else if (etapaAtual === 'inspecao_qualidade') {
+                actionButtons.push(<Button key="avançar" size="icon" onClick={async () => {
+                  const processosNecessarios = await determinarProcessos(pedido.id);
+                  setProcessos(processosNecessarios);
+                  setShowProgresso(true);
+                  if (onMoverEtapa) {
+                    await onMoverEtapa(pedido.id, true, (processoId, status) => {
+                      setProcessos(prev => prev.map(p => p.id === processoId ? {
+                        ...p,
+                        status
+                      } : p));
+                    });
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    setShowProgresso(false);
+                  }
+                }} disabled={!ordemQualidadeConcluida} title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}>
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            } else if (etapaAtual === 'aguardando_pintura') {
-              actionButtons.push(
-                <Button
-                  key="avançar"
-                  size="icon"
-                  onClick={() => setShowConfirmarAvanco(true)}
-                  disabled={!ordemPinturaConcluida}
-                  title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}
-                >
+                </Button>);
+              } else if (etapaAtual === 'aguardando_pintura') {
+                actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowConfirmarAvanco(true)} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}>
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-              actionButtons.push(
-                <Button
-                  key="carregar"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setShowCarregamento(true)}
-                  title="Carregar"
-                >
+                </Button>);
+              } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                actionButtons.push(<Button key="carregar" size="icon" variant="outline" onClick={() => setShowCarregamento(true)} title="Carregar">
                   <Package className="h-3.5 w-3.5" />
-                </Button>
-              );
-              if (carregamentoConcluido) {
-                actionButtons.push(
-                  <Button
-                    key="finalizar"
-                    size="icon"
-                    onClick={() => setShowConfirmarAvanco(true)}
-                    title="Finalizar"
-                  >
+                </Button>);
+                if (carregamentoConcluido) {
+                  actionButtons.push(<Button key="finalizar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Finalizar">
                     <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                );
-              }
-            } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-              actionButtons.push(
-                <Button
-                  key="avançar"
-                  size="icon"
-                  onClick={() => setShowAcaoEtapa(true)}
-                  title="Avançar"
-                >
+                  </Button>);
+                }
+              } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+                actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowAcaoEtapa(true)} title="Avançar">
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            }
+                </Button>);
+              }
 
-            // Add eye button to action buttons
-            actionButtons.push(
-              <Button
-                key="detalhes"
-                size="icon"
-                variant="ghost"
-                onClick={() => setShowDetalhes(true)}
-                title="Ver detalhes"
-              >
+              // Add eye button to action buttons
+              actionButtons.push(<Button key="detalhes" size="icon" variant="ghost" onClick={() => setShowDetalhes(true)} title="Ver detalhes">
                 <Eye className="h-3.5 w-3.5" />
-              </Button>
-            );
+              </Button>);
 
-            // Add retroceder button if available
-            if (isAdmin && etapaAnterior && onRetrocederEtapa) {
-              actionButtons.push(
-                <Button
-                  key="retroceder"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setShowRetrocederEtapa(true)}
-                  title="Retroceder para etapa anterior"
-                  className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
-                >
+              // Add retroceder button if available
+              if (isAdmin && etapaAnterior && onRetrocederEtapa) {
+                actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={() => setShowRetrocederEtapa(true)} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
                   <ArrowLeft className="h-3.5 w-3.5" />
-                </Button>
-              );
-            }
-
-            return (
-              <div className="flex items-center gap-1 flex-shrink-0">
+                </Button>);
+              }
+              return <div className="flex items-center gap-1 flex-shrink-0">
                 {actionButtons}
-              </div>
-            );
-          })()}
+              </div>;
+            })()}
         </div>
       </CardContent>
     </Card>
 
-        <PedidoDetalhesSheet
-          pedido={pedido}
-          open={showDetalhes}
-          onOpenChange={setShowDetalhes}
-        />
+        <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
-        <AcaoEtapaModal
-          pedido={pedido}
-          open={showAcaoEtapa}
-          onOpenChange={setShowAcaoEtapa}
-          onAvancar={onMoverEtapa || (() => {})}
-        />
+        <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
-      <RetrocederEtapaModal
-        pedido={pedido}
-        open={showRetrocederEtapa}
-        onOpenChange={setShowRetrocederEtapa}
-        onConfirmar={onRetrocederEtapa || (() => {})}
-      />
+      <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
 
-        <AvancarQualidadeModal
-          open={showAvancarQualidade}
-          onOpenChange={setShowAvancarQualidade}
-          onConfirmar={async () => {
-            setShowAvancarQualidade(false);
-            
-            const listaProcessos = await determinarProcessos(pedido.id);
-            setProcessos(listaProcessos);
-            setShowProgresso(true);
+        <AvancarQualidadeModal open={showAvancarQualidade} onOpenChange={setShowAvancarQualidade} onConfirmar={async () => {
+        setShowAvancarQualidade(false);
+        const listaProcessos = await determinarProcessos(pedido.id);
+        setProcessos(listaProcessos);
+        setShowProgresso(true);
+        if (onMoverEtapa) {
+          await onMoverEtapa(pedido.id, false, (processoId, status) => {
+            setProcessos(prev => prev.map(p => p.id === processoId ? {
+              ...p,
+              status
+            } : p));
+          });
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          setShowProgresso(false);
+        }
+      }} />
 
-            if (onMoverEtapa) {
-              await onMoverEtapa(pedido.id, false, (processoId, status) => {
-                setProcessos(prev => 
-                  prev.map(p => p.id === processoId ? { ...p, status } : p)
-                );
-              });
+        <ConfirmarAvancoModal open={showConfirmarAvanco} onOpenChange={setShowConfirmarAvanco} onConfirmar={handleConfirmarAvanco} pedido={pedido} etapaAtual={config?.label || ''} proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''} />
 
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              setShowProgresso(false);
-            }
-          }}
-        />
-
-        <ConfirmarAvancoModal
-          open={showConfirmarAvanco}
-          onOpenChange={setShowConfirmarAvanco}
-          onConfirmar={handleConfirmarAvanco}
-          pedido={pedido}
-          etapaAtual={config?.label || ''}
-          proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}
-        />
-
-        <ProcessoAvancoModal
-          open={showProgresso}
-          processos={processos}
-          onClose={() => setShowProgresso(false)}
-        />
-      </>
-    );
+        <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
+      </>;
   }
 
   // Layout em grid (padrão)
-  return (
-    <>
-      <Card 
-        className={cn(
-          "hover:shadow-md transition-all cursor-pointer",
-          isDragging && "opacity-50 cursor-grabbing",
-          isSelecionado && "ring-2 ring-primary shadow-lg",
-          emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
-        )}
-        onClick={() => onSelecionarPedido?.(pedido)}
-        onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
-      >
+  return <>
+      <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onClick={() => onSelecionarPedido?.(pedido)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
         {/* Header com número do pedido e tempo */}
         <CardHeader className="py-2 px-3 bg-muted/30 border-b">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
-              {dragHandleProps && (
-                <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
-                </div>
-              )}
+                </div>}
               
-              {emBacklog && (
-                <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0 animate-pulse" />
-              )}
+              {emBacklog && <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0 animate-pulse" />}
               
               <span className="text-[10px] font-semibold text-muted-foreground">
                 {pedido.numero_pedido || 'Sem número'}
@@ -787,36 +620,20 @@ export function PedidoCard({
             
             <div className="flex items-center gap-0.5">
               <span className="text-[10px] text-muted-foreground">
-                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
-                  addSuffix: true,
-                  locale: ptBR 
-                })}
+                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), {
+                addSuffix: true,
+                locale: ptBR
+              })}
               </span>
               
-              {onMoverPrioridade && posicao && total && (
-                <>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={posicao === 1}
-                    onClick={() => onMoverPrioridade(pedido.id, 'frente')}
-                    title="Aumentar prioridade"
-                    className="h-5 w-5"
-                  >
+              {onMoverPrioridade && posicao && total && <>
+                  <Button size="icon" variant="ghost" disabled={posicao === 1} onClick={() => onMoverPrioridade(pedido.id, 'frente')} title="Aumentar prioridade" className="h-5 w-5">
                     <ChevronUp className="h-2.5 w-2.5" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={posicao === total}
-                    onClick={() => onMoverPrioridade(pedido.id, 'tras')}
-                    title="Diminuir prioridade"
-                    className="h-5 w-5"
-                  >
+                  <Button size="icon" variant="ghost" disabled={posicao === total} onClick={() => onMoverPrioridade(pedido.id, 'tras')} title="Diminuir prioridade" className="h-5 w-5">
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
-                </>
-              )}
+                </>}
             </div>
           </div>
         </CardHeader>
@@ -831,75 +648,47 @@ export function PedidoCard({
               </div>
               
               {/* Círculos de cores à direita */}
-              {coresUnicas.length > 0 && (
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {coresUnicas.slice(0, 3).map((cor, idx) => (
-                    <div
-                      key={idx}
-                      className="w-3 h-3 rounded-full border border-border"
-                      style={{ backgroundColor: coresMap[cor] || '#999999' }}
-                      title={cor}
-                    />
-                  ))}
-                  {coresUnicas.length > 3 && (
-                    <span className="text-[10px] text-muted-foreground ml-0.5">
+              {coresUnicas.length > 0 && <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {coresUnicas.slice(0, 3).map((cor, idx) => <div key={idx} className="w-3 h-3 rounded-full border border-border" style={{
+                backgroundColor: coresMap[cor] || '#999999'
+              }} title={cor} />)}
+                  {coresUnicas.length > 3 && <span className="text-[10px] text-muted-foreground ml-0.5">
                       +{coresUnicas.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
+                    </span>}
+                </div>}
             </div>
             
             {/* Flags abaixo */}
-            {(config || temPintura || isInstalacao || isEntrega) && (
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                {config && (
-                  <Badge variant="outline" className={cn(
-                    "text-[10px] px-1.5 py-0.5",
-                    emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50"
-                  )}>
+            {(config || temPintura || isInstalacao || isEntrega) && <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                {config && <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5", emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50")}>
                     {config.label}
-                  </Badge>
-                )}
+                  </Badge>}
                 
-                {temPintura && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                {temPintura && <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
                     <Paintbrush className="h-2.5 w-2.5 mr-0.5" />
                     Pintura
-                  </Badge>
-                )}
-                {isInstalacao && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                  </Badge>}
+                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5 mr-0.5" />
                     Instalação
-                  </Badge>
-                )}
-                {isEntrega && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                  </Badge>}
+                {isEntrega && <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                     <Truck className="h-2.5 w-2.5 mr-0.5" />
                     Entrega
-                  </Badge>
-                )}
-              </div>
-            )}
+                  </Badge>}
+              </div>}
           </div>
 
           {/* Produtos */}
-          {!isAberto && produtos.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {produtos.slice(0, 2).map((prod: any, idx: number) => (
-                <Badge key={idx} variant="outline" className="text-[10px]">
+          {!isAberto && produtos.length > 0 && <div className="flex flex-wrap gap-1">
+              {produtos.slice(0, 2).map((prod: any, idx: number) => <Badge key={idx} variant="outline" className="text-[10px]">
                   <Package className="h-3 w-3 mr-1" />
                   {prod.tipo_produto}
-                </Badge>
-              ))}
-              {produtos.length > 2 && (
-                <Badge variant="outline" className="text-[10px]">
+                </Badge>)}
+              {produtos.length > 2 && <Badge variant="outline" className="text-[10px]">
                   +{produtos.length - 2}
-                </Badge>
-              )}
-            </div>
-          )}
+                </Badge>}
+            </div>}
 
           {/* Valor e Data */}
           <div className="flex justify-between items-center text-xs">
@@ -912,280 +701,152 @@ export function PedidoCard({
           </div>
 
           {/* Número do pedido */}
-          {!isAberto && pedido.numero_pedido && (
-            <div className="text-xs text-muted-foreground">
-              {pedido.numero_pedido}
-            </div>
-          )}
+          {!isAberto && pedido.numero_pedido}
         </CardContent>
 
         <CardFooter className="pt-0 pb-3">
           {(() => {
-            const actionButtons = [];
-            
-            // Build action buttons array
-            if (isAberto) {
-              actionButtons.push(
-                <Button
-                  key="preparar"
-                  size="icon"
-                  onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-                  title="Preparar Pedido"
-                  className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"
-                  variant="outline"
-                >
+          const actionButtons = [];
+
+          // Build action buttons array
+          if (isAberto) {
+            actionButtons.push(<Button key="preparar" size="icon" onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)} title="Preparar Pedido" className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/50" variant="outline">
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
-                </Button>
-              );
-              if (temLinhas && onMoverEtapa) {
-                actionButtons.push(
-                  <Button
-                    key="iniciar"
-                    size="icon"
-                    onClick={() => setShowConfirmarAvanco(true)}
-                    title="Iniciar Produção"
-                  >
+                </Button>);
+            if (temLinhas && onMoverEtapa) {
+              actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção">
                     <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                );
+                  </Button>);
+            }
+          } else if (etapaAtual === 'em_producao') {
+            actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={() => setShowAvancarQualidade(true)} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>);
+          } else if (etapaAtual === 'inspecao_qualidade') {
+            actionButtons.push(<Button key="avançar" size="icon" onClick={async () => {
+              const processosNecessarios = await determinarProcessos(pedido.id);
+              setProcessos(processosNecessarios);
+              setShowProgresso(true);
+              if (onMoverEtapa) {
+                await onMoverEtapa(pedido.id, true, (processoId, status) => {
+                  setProcessos(prev => prev.map(p => p.id === processoId ? {
+                    ...p,
+                    status
+                  } : p));
+                });
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setShowProgresso(false);
               }
-            } else if (etapaAtual === 'em_producao') {
-              actionButtons.push(
-                <Button
-                  key="avançar-qualidade"
-                  size="icon"
-                  onClick={() => setShowAvancarQualidade(true)}
-                  disabled={!todasOrdensConcluidasEmProducao}
-                  title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}
-                >
+            }} disabled={!ordemQualidadeConcluida} title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}>
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            } else if (etapaAtual === 'inspecao_qualidade') {
-              actionButtons.push(
-                <Button
-                  key="avançar"
-                  size="icon"
-                  onClick={async () => {
-                    const processosNecessarios = await determinarProcessos(pedido.id);
-                    setProcessos(processosNecessarios);
-                    setShowProgresso(true);
-                    
-                    if (onMoverEtapa) {
-                      await onMoverEtapa(pedido.id, true, (processoId, status) => {
-                        setProcessos(prev => prev.map(p => 
-                          p.id === processoId ? { ...p, status } : p
-                        ));
-                      });
-
-                      await new Promise(resolve => setTimeout(resolve, 1000));
-                      setShowProgresso(false);
-                    }
-                  }}
-                  disabled={!ordemQualidadeConcluida}
-                  title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}
-                >
+                </Button>);
+          } else if (etapaAtual === 'aguardando_pintura') {
+            actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowConfirmarAvanco(true)} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}>
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            } else if (etapaAtual === 'aguardando_pintura') {
-              actionButtons.push(
-                <Button
-                  key="avançar"
-                  size="icon"
-                  onClick={() => setShowConfirmarAvanco(true)}
-                  disabled={!ordemPinturaConcluida}
-                  title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}
-                >
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-              actionButtons.push(
-                <Button
-                  key="carregar"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setShowCarregamento(true)}
-                  title="Carregar"
-                >
+                </Button>);
+          } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+            actionButtons.push(<Button key="carregar" size="icon" variant="outline" onClick={() => setShowCarregamento(true)} title="Carregar">
                   <Package className="h-3.5 w-3.5" />
-                </Button>
-              );
-              if (carregamentoConcluido) {
-                actionButtons.push(
-                  <Button
-                    key="finalizar"
-                    size="icon"
-                    onClick={() => setShowConfirmarAvanco(true)}
-                    title="Finalizar"
-                  >
+                </Button>);
+            if (carregamentoConcluido) {
+              actionButtons.push(<Button key="finalizar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Finalizar">
                     <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                );
-              }
-            } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-              actionButtons.push(
-                <Button
-                  key="avançar"
-                  size="icon"
-                  onClick={() => setShowAcaoEtapa(true)}
-                  title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}
-                >
+                  </Button>);
+            }
+          } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+            actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowAcaoEtapa(true)} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}>
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              );
-            }
+                </Button>);
+          }
 
-            // Add eye button to action buttons
-            actionButtons.push(
-              <Button
-                key="detalhes"
-                size="icon"
-                variant="ghost"
-                onClick={() => setShowDetalhes(true)}
-                title="Ver detalhes"
-              >
+          // Add eye button to action buttons
+          actionButtons.push(<Button key="detalhes" size="icon" variant="ghost" onClick={() => setShowDetalhes(true)} title="Ver detalhes">
                 <Eye className="h-3.5 w-3.5" />
-              </Button>
-            );
+              </Button>);
 
-            // Add retroceder button if available
-            if (isAdmin && etapaAnterior && onRetrocederEtapa) {
-              actionButtons.push(
-                <Button
-                  key="retroceder"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setShowRetrocederEtapa(true)}
-                  title="Retroceder para etapa anterior"
-                  className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
-                >
+          // Add retroceder button if available
+          if (isAdmin && etapaAnterior && onRetrocederEtapa) {
+            actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={() => setShowRetrocederEtapa(true)} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
                   <ArrowLeft className="h-3.5 w-3.5" />
-                </Button>
-              );
-            }
-
-            return (
-              <div className="w-full space-y-2">
-                {actionButtons.length > 0 && (
-                  <div className="grid grid-cols-4 gap-2 w-full">
-                    {actionButtons.map((button) => 
-                      React.cloneElement(button, {
-                        className: `${button.props.className || ''} h-9 w-full`.trim()
-                      })
-                    )}
-                  </div>
-                )}
-                {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && (
-                  <span className="text-xs text-warning text-center block">
+                </Button>);
+          }
+          return <div className="w-full space-y-2">
+                {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-2 w-full">
+                    {actionButtons.map(button => React.cloneElement(button, {
+                className: `${button.props.className || ''} h-9 w-full`.trim()
+              }))}
+                  </div>}
+                {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && <span className="text-xs text-warning text-center block">
                     Defina data de carregamento
-                  </span>
-                )}
-              </div>
-            );
-          })()}
+                  </span>}
+              </div>;
+        })()}
         </CardFooter>
       </Card>
 
-      <PedidoDetalhesSheet
-        pedido={pedido}
-        open={showDetalhes}
-        onOpenChange={setShowDetalhes}
-      />
+      <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
-      <AcaoEtapaModal
-        pedido={pedido}
-        open={showAcaoEtapa}
-        onOpenChange={setShowAcaoEtapa}
-        onAvancar={onMoverEtapa || (() => {})}
-      />
+      <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
-      <RetrocederEtapaModal
-        pedido={pedido}
-        open={showRetrocederEtapa}
-        onOpenChange={setShowRetrocederEtapa}
-        onConfirmar={onRetrocederEtapa || (() => {})}
-      />
+      <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
 
-      <AvancarQualidadeModal
-        open={showAvancarQualidade}
-        onOpenChange={setShowAvancarQualidade}
-        onConfirmar={async () => {
-          setShowAvancarQualidade(false);
-          
-          const listaProcessos = await determinarProcessos(pedido.id);
-          setProcessos(listaProcessos);
-          setShowProgresso(true);
+      <AvancarQualidadeModal open={showAvancarQualidade} onOpenChange={setShowAvancarQualidade} onConfirmar={async () => {
+      setShowAvancarQualidade(false);
+      const listaProcessos = await determinarProcessos(pedido.id);
+      setProcessos(listaProcessos);
+      setShowProgresso(true);
+      if (onMoverEtapa) {
+        await onMoverEtapa(pedido.id, false, (processoId, status) => {
+          setProcessos(prev => prev.map(p => p.id === processoId ? {
+            ...p,
+            status
+          } : p));
+        });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setShowProgresso(false);
+      }
+    }} />
 
-          if (onMoverEtapa) {
-            await onMoverEtapa(pedido.id, false, (processoId, status) => {
-              setProcessos(prev => 
-                prev.map(p => p.id === processoId ? { ...p, status } : p)
-              );
-            });
+      <ConfirmarAvancoModal open={showConfirmarAvanco} onOpenChange={setShowConfirmarAvanco} onConfirmar={handleConfirmarAvanco} pedido={pedido} etapaAtual={config?.label || ''} proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''} />
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setShowProgresso(false);
-          }
-        }}
-      />
+      <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
 
-      <ConfirmarAvancoModal
-        open={showConfirmarAvanco}
-        onOpenChange={setShowConfirmarAvanco}
-        onConfirmar={handleConfirmarAvanco}
-        pedido={pedido}
-        etapaAtual={config?.label || ''}
-        proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''}
-      />
+      <ConfirmarCarregamentoSheet entrega={{
+      id: pedido.id,
+      nome_cliente: venda?.cliente_nome || 'Cliente',
+      pedido_id: pedido.id,
+      pedido: {
+        numero_pedido: pedido.numero_pedido || 'N/A'
+      }
+    } as any} open={showCarregamento} onOpenChange={setShowCarregamento} onSuccess={async () => {
+      setShowCarregamento(false);
 
-      <ProcessoAvancoModal
-        open={showProgresso}
-        processos={processos}
-        onClose={() => setShowProgresso(false)}
-      />
+      // Invalidar queries para atualizar o status do carregamento
+      await queryClient.invalidateQueries({
+        queryKey: ['pedido-carregamento', pedido.id]
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['pedido-linhas', pedido.id]
+      });
+      toast({
+        title: "Carregamento concluído",
+        description: "Finalizando pedido..."
+      });
 
-      <ConfirmarCarregamentoSheet
-        entrega={{
-          id: pedido.id,
-          nome_cliente: venda?.cliente_nome || 'Cliente',
-          pedido_id: pedido.id,
-          pedido: {
-            numero_pedido: pedido.numero_pedido || 'N/A'
-          }
-        } as any}
-        open={showCarregamento}
-        onOpenChange={setShowCarregamento}
-        onSuccess={async () => {
-          setShowCarregamento(false);
-          
-          // Invalidar queries para atualizar o status do carregamento
-          await queryClient.invalidateQueries({ queryKey: ['pedido-carregamento', pedido.id] });
-          await queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedido.id] });
-          
-          toast({
-            title: "Carregamento concluído",
-            description: "Finalizando pedido...",
-          });
-
-          // Avançar automaticamente para "Finalizado"
-          const listaProcessos = await determinarProcessos(pedido.id);
-          setProcessos(listaProcessos);
-          setShowProgresso(true);
-
-          if (onMoverEtapa) {
-            await onMoverEtapa(pedido.id, true, (processoId, status) => {
-              setProcessos(prev => 
-                prev.map(p => p.id === processoId ? { ...p, status } : p)
-              );
-            });
-
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setShowProgresso(false);
-          }
-        }}
-      />
-    </>
-  );
+      // Avançar automaticamente para "Finalizado"
+      const listaProcessos = await determinarProcessos(pedido.id);
+      setProcessos(listaProcessos);
+      setShowProgresso(true);
+      if (onMoverEtapa) {
+        await onMoverEtapa(pedido.id, true, (processoId, status) => {
+          setProcessos(prev => prev.map(p => p.id === processoId ? {
+            ...p,
+            status
+          } : p));
+        });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setShowProgresso(false);
+      }
+    }} />
+    </>;
 }
