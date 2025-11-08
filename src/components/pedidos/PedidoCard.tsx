@@ -513,198 +513,184 @@ export function PedidoCard({
                 
                 // Build action buttons array
                 if (isAberto) {
-                  actionButtons.push(
-                    <Button
-                      key="preparar"
-                      size="sm"
-                      onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
-                      title="Preparar Pedido"
-                    >
-                      <FileText className="h-3.5 w-3.5" />
-                      <span className="ml-2">Preparar</span>
-                    </Button>
-                  );
-                  if (temLinhas && onMoverEtapa) {
-                    actionButtons.push(
-                      <Button
-                        key="iniciar"
-                        size="sm"
-                        onClick={() => setShowConfirmarAvanco(true)}
-                        title="Iniciar Produção"
-                      >
-                        <ArrowRight className="h-3.5 w-3.5" />
-                        <span className="ml-2">Iniciar Produção</span>
-                      </Button>
-                    );
-                  }
-                } else if (etapaAtual === 'em_producao') {
-                  actionButtons.push(
-                    <Button
-                      key="avançar-qualidade"
-                      size="sm"
-                      onClick={() => setShowAvancarQualidade(true)}
-                      disabled={!todasOrdensConcluidasEmProducao}
-                      title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" />
-                      <span className="ml-2">Avançar para Qualidade</span>
-                    </Button>
-                  );
-                } else if (etapaAtual === 'inspecao_qualidade') {
-                  actionButtons.push(
-                    <Button
-                      key="avançar"
-                      size="sm"
-                      onClick={async () => {
-                        const processosNecessarios = await determinarProcessos(pedido.id);
-                        setProcessos(processosNecessarios);
-                        setShowProgresso(true);
-                        
-                        if (onMoverEtapa) {
-                          await onMoverEtapa(pedido.id, true, (processoId, status) => {
-                            setProcessos(prev => prev.map(p => 
-                              p.id === processoId ? { ...p, status } : p
-                            ));
-                          });
+              actionButtons.push(
+                <Button
+                  key="preparar"
+                  size="icon"
+                  onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
+                  title="Preparar Pedido"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                </Button>
+              );
+              if (temLinhas && onMoverEtapa) {
+                actionButtons.push(
+                  <Button
+                    key="iniciar"
+                    size="icon"
+                    onClick={() => setShowConfirmarAvanco(true)}
+                    title="Iniciar Produção"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              }
+            } else if (etapaAtual === 'em_producao') {
+              actionButtons.push(
+                <Button
+                  key="avançar-qualidade"
+                  size="icon"
+                  onClick={() => setShowAvancarQualidade(true)}
+                  disabled={!todasOrdensConcluidasEmProducao}
+                  title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              );
+            } else if (etapaAtual === 'inspecao_qualidade') {
+              actionButtons.push(
+                <Button
+                  key="avançar"
+                  size="icon"
+                  onClick={async () => {
+                    const processosNecessarios = await determinarProcessos(pedido.id);
+                    setProcessos(processosNecessarios);
+                    setShowProgresso(true);
+                    
+                    if (onMoverEtapa) {
+                      await onMoverEtapa(pedido.id, true, (processoId, status) => {
+                        setProcessos(prev => prev.map(p => 
+                          p.id === processoId ? { ...p, status } : p
+                        ));
+                      });
 
-                          await new Promise(resolve => setTimeout(resolve, 1000));
-                          setShowProgresso(false);
-                        }
-                      }}
-                      disabled={!ordemQualidadeConcluida}
-                      title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" />
-                      <span className="ml-2">Avançar</span>
-                    </Button>
-                  );
-                } else if (etapaAtual === 'aguardando_pintura') {
-                  actionButtons.push(
-                    <Button
-                      key="avançar"
-                      size="sm"
-                      onClick={() => setShowConfirmarAvanco(true)}
-                      disabled={!ordemPinturaConcluida}
-                      title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" />
-                      <span className="ml-2">Avançar</span>
-                    </Button>
-                  );
-                } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-                  actionButtons.push(
-                    <Button
-                      key="carregar"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowCarregamento(true)}
-                      title="Carregar"
-                    >
-                      <Package className="h-3.5 w-3.5" />
-                      <span className="ml-2">Carregar</span>
-                    </Button>
-                  );
-                  if (carregamentoConcluido) {
-                    actionButtons.push(
-                      <Button
-                        key="finalizar"
-                        size="sm"
-                        onClick={() => setShowConfirmarAvanco(true)}
-                        title="Finalizar"
-                      >
-                        <ArrowRight className="h-3.5 w-3.5" />
-                        <span className="ml-2">Finalizar</span>
-                      </Button>
-                    );
-                  }
-                } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-                  actionButtons.push(
-                    <Button
-                      key="avançar"
-                      size="sm"
-                      onClick={() => setShowAcaoEtapa(true)}
-                      title="Avançar"
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" />
-                      <span className="ml-2">Avançar</span>
-                    </Button>
-                  );
-                }
+                      await new Promise(resolve => setTimeout(resolve, 1000));
+                      setShowProgresso(false);
+                    }
+                  }}
+                  disabled={!ordemQualidadeConcluida}
+                  title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              );
+            } else if (etapaAtual === 'aguardando_pintura') {
+              actionButtons.push(
+                <Button
+                  key="avançar"
+                  size="icon"
+                  onClick={() => setShowConfirmarAvanco(true)}
+                  disabled={!ordemPinturaConcluida}
+                  title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              );
+            } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+              actionButtons.push(
+                <Button
+                  key="carregar"
+                  size="icon"
+                  variant="outline"
+                  onClick={() => setShowCarregamento(true)}
+                  title="Carregar"
+                >
+                  <Package className="h-3.5 w-3.5" />
+                </Button>
+              );
+              if (carregamentoConcluido) {
+                actionButtons.push(
+                  <Button
+                    key="finalizar"
+                    size="icon"
+                    onClick={() => setShowConfirmarAvanco(true)}
+                    title="Finalizar"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              }
+            } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+              actionButtons.push(
+                <Button
+                  key="avançar"
+                  size="icon"
+                  onClick={() => setShowAcaoEtapa(true)}
+                  title="Avançar"
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              );
+            }
 
-                const hasMultipleButtons = actionButtons.length > 1;
+            return (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
+                  title="Ver página do pedido"
+                  className="h-7 w-7"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
 
-                return (
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setShowDetalhes(true)}
+                  title="Ver detalhes"
+                  className="h-7 w-7"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                
+                {onMoverPrioridade && posicao && total && (
+                  <>
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
-                      title="Ver página do pedido"
+                      disabled={posicao === 1}
+                      onClick={() => onMoverPrioridade(pedido.id, 'frente')}
+                      title="Aumentar prioridade"
                       className="h-7 w-7"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <ChevronUp className="h-3.5 w-3.5" />
                     </Button>
-
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => setShowDetalhes(true)}
-                      title="Ver detalhes"
+                      disabled={posicao === total}
+                      onClick={() => onMoverPrioridade(pedido.id, 'tras')}
+                      title="Diminuir prioridade"
                       className="h-7 w-7"
                     >
-                      <Eye className="h-3.5 w-3.5" />
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </Button>
-                    
-                    {onMoverPrioridade && posicao && total && (
-                      <>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          disabled={posicao === 1}
-                          onClick={() => onMoverPrioridade(pedido.id, 'frente')}
-                          title="Aumentar prioridade"
-                          className="h-7 w-7"
-                        >
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          disabled={posicao === total}
-                          onClick={() => onMoverPrioridade(pedido.id, 'tras')}
-                          title="Diminuir prioridade"
-                          className="h-7 w-7"
-                        >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </>
-                    )}
-                    
-                    {isAdmin && etapaAnterior && onRetrocederEtapa && (
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={() => setShowRetrocederEtapa(true)}
-                        title="Retroceder para etapa anterior"
-                        className="h-7 w-7"
-                      >
-                        <ArrowLeft className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                  </>
+                )}
+                
+                {isAdmin && etapaAnterior && onRetrocederEtapa && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => setShowRetrocederEtapa(true)}
+                    title="Retroceder para etapa anterior"
+                    className="h-7 w-7"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                  </Button>
+                )}
 
-                    {actionButtons.length > 0 && (
-                      <div className={cn("grid gap-1 ml-2", hasMultipleButtons ? "grid-cols-4" : "grid-cols-1")}>
-                        {actionButtons.map((button) => 
-                          hasMultipleButtons
-                            ? React.cloneElement(button, {
-                                size: "icon",
-                                className: "h-8 w-8",
-                                children: button.props.children[0] // Only keep icon
-                              })
-                            : button
-                        )}
-                      </div>
+                {actionButtons.length > 0 && (
+                  <div className="grid grid-cols-4 gap-1 ml-2">
+                    {actionButtons.map((button) => 
+                      React.cloneElement(button, {
+                        className: "h-8 w-8"
+                      })
                     )}
+                  </div>
+                )}
 
                     {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && (
                       <span className="ml-2 text-xs text-warning flex-shrink-0">
@@ -992,24 +978,22 @@ export function PedidoCard({
               actionButtons.push(
                 <Button
                   key="preparar"
-                  size="sm"
+                  size="icon"
                   onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)}
                   title="Preparar Pedido"
                 >
                   <FileText className="h-3.5 w-3.5" />
-                  <span className="ml-2">Preparar Pedido</span>
                 </Button>
               );
               if (temLinhas && onMoverEtapa) {
                 actionButtons.push(
                   <Button
                     key="iniciar"
-                    size="sm"
+                    size="icon"
                     onClick={() => setShowConfirmarAvanco(true)}
                     title="Iniciar Produção"
                   >
                     <ArrowRight className="h-3.5 w-3.5" />
-                    <span className="ml-2">Iniciar Produção</span>
                   </Button>
                 );
               }
@@ -1017,20 +1001,19 @@ export function PedidoCard({
               actionButtons.push(
                 <Button
                   key="avançar-qualidade"
-                  size="sm"
+                  size="icon"
                   onClick={() => setShowAvancarQualidade(true)}
                   disabled={!todasOrdensConcluidasEmProducao}
                   title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
-                  <span className="ml-2">Avançar para Qualidade</span>
                 </Button>
               );
             } else if (etapaAtual === 'inspecao_qualidade') {
               actionButtons.push(
                 <Button
                   key="avançar"
-                  size="sm"
+                  size="icon"
                   onClick={async () => {
                     const processosNecessarios = await determinarProcessos(pedido.id);
                     setProcessos(processosNecessarios);
@@ -1051,45 +1034,41 @@ export function PedidoCard({
                   title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
-                  <span className="ml-2">Avançar</span>
                 </Button>
               );
             } else if (etapaAtual === 'aguardando_pintura') {
               actionButtons.push(
                 <Button
                   key="avançar"
-                  size="sm"
+                  size="icon"
                   onClick={() => setShowConfirmarAvanco(true)}
                   disabled={!ordemPinturaConcluida}
                   title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
-                  <span className="ml-2">Avançar</span>
                 </Button>
               );
             } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
               actionButtons.push(
                 <Button
                   key="carregar"
-                  size="sm"
+                  size="icon"
                   variant="outline"
                   onClick={() => setShowCarregamento(true)}
                   title="Carregar"
                 >
                   <Package className="h-3.5 w-3.5" />
-                  <span className="ml-2">Carregar</span>
                 </Button>
               );
               if (carregamentoConcluido) {
                 actionButtons.push(
                   <Button
                     key="finalizar"
-                    size="sm"
+                    size="icon"
                     onClick={() => setShowConfirmarAvanco(true)}
                     title="Finalizar"
                   >
                     <ArrowRight className="h-3.5 w-3.5" />
-                    <span className="ml-2">Finalizar</span>
                   </Button>
                 );
               }
@@ -1097,32 +1076,23 @@ export function PedidoCard({
               actionButtons.push(
                 <Button
                   key="avançar"
-                  size="sm"
+                  size="icon"
                   onClick={() => setShowAcaoEtapa(true)}
                   title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
-                  <span className="ml-2">Avançar para {ETAPAS_CONFIG[proximaEtapa].label}</span>
                 </Button>
               );
             }
 
-            const hasMultipleButtons = actionButtons.length > 1;
-
             return (
               <div className="w-full space-y-2">
                 {actionButtons.length > 0 && (
-                  <div className={cn("grid gap-2 w-full", hasMultipleButtons ? "grid-cols-4" : "grid-cols-1")}>
+                  <div className="grid grid-cols-4 gap-2 w-full">
                     {actionButtons.map((button) => 
-                      hasMultipleButtons
-                        ? React.cloneElement(button, {
-                            size: "icon",
-                            className: "h-9 w-full",
-                            children: button.props.children[0] // Only keep icon
-                          })
-                        : React.cloneElement(button, {
-                            className: "w-full"
-                          })
+                      React.cloneElement(button, {
+                        className: "h-9 w-full"
+                      })
                     )}
                   </div>
                 )}
