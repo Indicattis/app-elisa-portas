@@ -1,8 +1,9 @@
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -401,6 +402,21 @@ export function PedidoCard({
           onClick={() => onSelecionarPedido?.(pedido)}
           onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
         >
+          {/* Header com número do pedido e tempo */}
+          <CardHeader className="py-2 px-4 bg-muted/30 border-b">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">
+                {pedido.numero_pedido || 'Sem número'}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
+                  addSuffix: true,
+                  locale: ptBR 
+                })}
+              </span>
+            </div>
+          </CardHeader>
+
           <CardContent className="py-3">
             <div className="flex items-center gap-3">
               {dragHandleProps && (
@@ -758,6 +774,21 @@ export function PedidoCard({
         onClick={() => onSelecionarPedido?.(pedido)}
         onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}
       >
+        {/* Header com número do pedido e tempo */}
+        <CardHeader className="py-2 px-3 bg-muted/30 border-b">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              {pedido.numero_pedido || 'Sem número'}
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              {formatDistanceToNow(new Date(venda?.created_at || Date.now()), { 
+                addSuffix: true,
+                locale: ptBR 
+              })}
+            </span>
+          </div>
+        </CardHeader>
+
         <CardContent className="pt-3 pb-2 space-y-2.5">
           {/* Header compacto com controles */}
           <div className="flex items-center justify-between gap-1.5">
