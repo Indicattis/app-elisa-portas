@@ -47,7 +47,7 @@ export const usePedidoCreation = () => {
           etapa_atual: 'aberto',
           status: 'pendente',
           created_by: user.id,
-          prioridade_etapa: Date.now(),
+          prioridade_etapa: 0,
         } as any)
         .select()
         .single();
