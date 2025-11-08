@@ -672,9 +672,10 @@ export function PedidoCard({
                 <Button
                   key="retroceder"
                   size="icon"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setShowRetrocederEtapa(true)}
                   title="Retroceder para etapa anterior"
+                  className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50 hover:bg-red-500/20"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>
@@ -1055,9 +1056,10 @@ export function PedidoCard({
                 <Button
                   key="retroceder"
                   size="icon"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setShowRetrocederEtapa(true)}
                   title="Retroceder para etapa anterior"
+                  className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50 hover:bg-red-500/20"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>
