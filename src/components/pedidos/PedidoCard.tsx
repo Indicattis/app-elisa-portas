@@ -447,8 +447,17 @@ export function PedidoCard({
                 </div>
                 
                 {/* Flags abaixo das informações */}
-                {(temPintura || isInstalacao || isEntrega) && (
-                  <div className="flex items-center gap-1 mt-1.5">
+                {(config || temPintura || isInstalacao || isEntrega) && (
+                  <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                    {config && (
+                      <Badge variant="outline" className={cn(
+                        "text-xs px-1.5 py-0",
+                        emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50"
+                      )}>
+                        {config.label}
+                      </Badge>
+                    )}
+                    
                     {temPintura && (
                       <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
                         <Paintbrush className="h-3 w-3 mr-1" />
@@ -874,8 +883,17 @@ export function PedidoCard({
             </div>
             
             {/* Flags e círculos de cores */}
-            {(temPintura || isInstalacao || isEntrega || coresUnicas.length > 0) && (
+            {(config || temPintura || isInstalacao || isEntrega || coresUnicas.length > 0) && (
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                {config && (
+                  <Badge variant="outline" className={cn(
+                    "text-[10px] px-1.5 py-0.5",
+                    emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50"
+                  )}>
+                    {config.label}
+                  </Badge>
+                )}
+                
                 {temPintura && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
                     <Paintbrush className="h-2.5 w-2.5 mr-0.5" />
