@@ -21,6 +21,7 @@ interface AdminUser {
   email: string;
   nome: string;
   role: "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" | "diretor" | "gerente_marketing" | "gerente_financeiro" | "gerente_producao" | "gerente_instalacoes" | "instalador" | "aux_instalador" | "analista_marketing" | "assistente_marketing" | "coordenador_vendas" | "vendedor" | "assistente_administrativo" | "soldador" | "aux_geral" | "pintor" | "aux_pintura";
+  setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
   ativo: boolean;
   foto_perfil_url: string | null;
   created_at: string;
@@ -68,6 +69,7 @@ export default function Users() {
     setEditForm({
       nome: user.nome,
       role: user.role,
+      setor: user.setor,
       ativo: user.ativo,
     });
   };
@@ -79,6 +81,7 @@ export default function Users() {
         .update({
           nome: editForm.nome,
           role: editForm.role,
+          setor: editForm.setor,
           ativo: editForm.ativo,
         })
         .eq("id", userId);
@@ -180,6 +183,7 @@ export default function Users() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Função</TableHead>
+                  <TableHead>Setor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data de Criação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -261,6 +265,33 @@ export default function Users() {
                            user.role === "pintor" ? "Pintor(a)" :
                            user.role === "aux_pintura" ? "Aux. Pintura" :
                            user.role === "aux_geral" ? "Aux. Geral" : "Atendente"}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingUser === user.id ? (
+                        <Select
+                          value={editForm.setor || ""}
+                          onValueChange={(value) => setEditForm({ ...editForm, setor: value as AdminUser['setor'] })}
+                        >
+                          <SelectTrigger className="max-w-xs">
+                            <SelectValue placeholder="Selecione o setor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="vendas">Vendas</SelectItem>
+                            <SelectItem value="marketing">Marketing</SelectItem>
+                            <SelectItem value="instalacoes">Instalações</SelectItem>
+                            <SelectItem value="fabrica">Fábrica</SelectItem>
+                            <SelectItem value="administrativo">Administrativo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline">
+                          {user.setor === "vendas" ? "Vendas" :
+                           user.setor === "marketing" ? "Marketing" :
+                           user.setor === "instalacoes" ? "Instalações" :
+                           user.setor === "fabrica" ? "Fábrica" :
+                           user.setor === "administrativo" ? "Administrativo" : "Não definido"}
                         </Badge>
                       )}
                     </TableCell>
