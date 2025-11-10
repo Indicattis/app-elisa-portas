@@ -29,43 +29,22 @@ export default function ProducaoLogin() {
     setLoading(true);
 
     try {
-      // Buscar usuário pelo código
-      const { data: user, error } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("codigo_usuario", codigo.trim())
-        .eq("ativo", true)
-        .single();
-
-      if (error || !user) {
-        toast({
-          title: "Código inválido",
-          description: "Código não encontrado ou usuário inativo",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Verificar se é usuário da fábrica
-      if (user.setor !== 'fabrica') {
-        toast({
-          title: "Acesso negado",
-          description: "Este login é apenas para colaboradores da produção",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Configurar credenciais via edge function (usa Admin API)
-      const { error: setupError } = await supabase.functions.invoke('manage-producao-auth', {
+      // Configurar credenciais via edge function (valida e cria/atualiza usuário)
+      const { data: setupData, error: setupError } = await supabase.functions.invoke('manage-producao-auth', {
         body: { codigo_usuario: codigo.trim() }
       });
 
-      if (setupError) {
-        console.error("Erro ao configurar credenciais:", setupError);
+      if (setupError || !setupData?.success) {
+        console.error("Erro ao configurar credenciais:", setupError || setupData);
+        
+        // Mensagens específicas de erro
+        const errorMessage = setupData?.message || setupData?.error || setupError?.message;
+        
         toast({
-          title: "Erro de configuração",
-          description: "Não foi possível configurar credenciais. Tente novamente.",
+          title: "Erro de autenticação",
+          description: errorMessage === 'Usuário não encontrado' 
+            ? "Código não encontrado ou usuário inativo/não pertence à produção"
+            : "Não foi possível configurar credenciais. Tente novamente.",
           variant: "destructive",
         });
         return;
@@ -95,7 +74,7 @@ export default function ProducaoLogin() {
 
       toast({
         title: "Login realizado",
-        description: `Bem-vindo, ${user.nome}!`,
+        description: `Bem-vindo, ${setupData.user.nome}!`,
       });
 
       navigate("/producao/solda");
