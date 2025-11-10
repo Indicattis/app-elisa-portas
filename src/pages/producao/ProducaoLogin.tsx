@@ -60,13 +60,44 @@ export default function ProducaoLogin() {
       const email = `${codigo.trim()}@producao.local`;
       const password = 'Producao@2024'; // Senha padrão para operadores
       
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      let signInResult = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) {
-        console.error("Erro na autenticação Supabase:", signInError);
+      // Se a conta não existe, criar automaticamente
+      if (signInResult.error?.message === 'Invalid login credentials') {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              nome: user.nome,
+              codigo_usuario: codigo.trim(),
+              setor: 'fabrica'
+            }
+          }
+        });
+
+        if (signUpError) {
+          console.error("Erro ao criar conta:", signUpError);
+          toast({
+            title: "Erro de autenticação",
+            description: "Não foi possível criar conta. Contate o administrador.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Tentar login novamente
+        signInResult = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+      }
+
+      if (signInResult.error) {
+        console.error("Erro na autenticação Supabase:", signInResult.error);
         toast({
           title: "Erro de autenticação",
           description: "Não foi possível autenticar. Contate o administrador.",
