@@ -197,11 +197,13 @@ export function TabelaLinhasEditavel({
                 <TableCell>
                   {isReadOnly ? (
                     <p className="text-center text-sm">
-                      {tamanho || '—'}
+                      {tamanho ? parseFloat(tamanho).toFixed(2) : '—'}
                     </p>
                   ) : (
                     <Input
-                      type="text"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
                       value={tamanho || ''}
                       onChange={(e) =>
                         handleCampoChange(
@@ -211,7 +213,7 @@ export function TabelaLinhasEditavel({
                         )
                       }
                       className="h-8 text-center"
-                      placeholder="Ex: 2.0 x 2.5"
+                      placeholder="0.00"
                     />
                   )}
                 </TableCell>
