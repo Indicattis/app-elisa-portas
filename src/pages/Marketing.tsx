@@ -1,5 +1,6 @@
 import { BarChart3 } from "lucide-react";
 import MarketingAnalise from "@/components/marketing/MarketingAnalise";
+import { UltimasVendas } from "@/components/marketing/UltimasVendas";
 
 export default function Marketing() {
   return (
@@ -17,6 +18,8 @@ export default function Marketing() {
       </div>
 
       <MarketingAnalise />
+      
+      <UltimasVendas />
     </div>
   );
 }
