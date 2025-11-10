@@ -12,7 +12,18 @@ interface PedidoFluxogramaMapProps {
 }
 
 export function PedidoFluxogramaMap({ pedidoSelecionado, onClose }: PedidoFluxogramaMapProps) {
-  if (!pedidoSelecionado) return null;
+  // Se não há pedido selecionado, exibe apenas o título
+  if (!pedidoSelecionado) {
+    return (
+      <Card className="mb-4 border border-border/50">
+        <CardContent className="p-3">
+          <div className="text-center text-sm text-muted-foreground">
+            Passe o mouse sobre um pedido para ver seu fluxograma
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const fluxograma = determinarFluxograma(pedidoSelecionado);
   const etapaAtual = pedidoSelecionado.etapa_atual as EtapaPedido;

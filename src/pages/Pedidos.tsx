@@ -182,13 +182,11 @@ export default function Pedidos() {
       </div>
 
 
-      {/* Mapa de Fluxograma - aparece quando um pedido é selecionado */}
-      {pedidoSelecionado && (
-        <PedidoFluxogramaMap 
-          pedidoSelecionado={pedidoSelecionado}
-          onClose={() => setPedidoSelecionado(null)}
-        />
-      )}
+      {/* Mapa de Fluxograma - sempre exibido */}
+      <PedidoFluxogramaMap 
+        pedidoSelecionado={pedidoSelecionado}
+        onClose={() => setPedidoSelecionado(null)}
+      />
 
       {/* Tabs de Etapas */}
       <Tabs value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
