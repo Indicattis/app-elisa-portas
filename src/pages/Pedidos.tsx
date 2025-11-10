@@ -24,13 +24,14 @@ const ETAPA_ICONS = {
   aguardando_pintura: Paintbrush,
   aguardando_coleta: Package,
   aguardando_instalacao: Wrench,
-  finalizado: CheckCircle2,
+  finalizado: CheckCircle2
 };
-
 export default function Pedidos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -39,43 +40,42 @@ export default function Pedidos() {
   const [mostrarProntos, setMostrarProntos] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
   const contadores = usePedidosContadores();
-  
-  const { 
-    pedidos, 
-    isLoading, 
+  const {
+    pedidos,
+    isLoading,
     moverParaProximaEtapa,
     retrocederEtapa,
     atualizarPrioridade,
     reorganizarPedidos
   } = usePedidosEtapas(etapaAtiva);
-
   const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
-    await moverParaProximaEtapa.mutateAsync({ 
-      pedidoId, 
+    await moverParaProximaEtapa.mutateAsync({
+      pedidoId,
       skipCheckboxValidation: skipCheckboxValidation || false,
-      onProgress 
+      onProgress
     });
   };
-
   const handleRetrocederEtapa = (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => {
-    retrocederEtapa.mutate({ pedidoId, etapaDestino, motivo });
+    retrocederEtapa.mutate({
+      pedidoId,
+      etapaDestino,
+      motivo
+    });
   };
-
-  const handleReorganizar = async (atualizacoes: { id: string; prioridade: number }[]) => {
+  const handleReorganizar = async (atualizacoes: {
+    id: string;
+    prioridade: number;
+  }[]) => {
     await reorganizarPedidos.mutateAsync(atualizacoes);
   };
-
   const handleMoverPrioridade = async (pedidoId: string, direcao: DirecaoPrioridade) => {
     const index = pedidos.findIndex(p => p.id === pedidoId);
     if (index === -1) return;
-
     const pedidoAtual = pedidos[index];
-    
+
     // Verificar se é um pedido de produção (não uma venda)
     if (!('numero_pedido' in pedidoAtual)) return;
-
     let novaPrioridade: number;
-
     if (direcao === 'frente' && index > 0) {
       // Mover para frente: pegar prioridade do anterior + 1
       const anterior = pedidos[index - 1];
@@ -87,7 +87,6 @@ export default function Pedidos() {
     } else {
       return;
     }
-
     await atualizarPrioridade.mutateAsync({
       pedidoId,
       novaPrioridade
@@ -134,34 +133,29 @@ export default function Pedidos() {
     if (mostrarProntos) {
       filtered = filtered.filter((pedido: any) => {
         // Buscar a etapa atual nos pedidos_etapas
-        const etapaAtual = pedido.pedidos_etapas?.find(
-          (e: any) => e.etapa === etapaAtiva
-        );
-        
+        const etapaAtual = pedido.pedidos_etapas?.find((e: any) => e.etapa === etapaAtiva);
         if (!etapaAtual || !etapaAtual.checkboxes) return false;
-        
+
         // Verificar se todos os checkboxes obrigatórios estão marcados
         const checkboxes = etapaAtual.checkboxes as any[];
-        return checkboxes
-          .filter((cb: any) => cb.required)
-          .every((cb: any) => cb.checked === true);
+        return checkboxes.filter((cb: any) => cb.required).every((cb: any) => cb.checked === true);
       });
     }
-
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
-
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
-    queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    queryClient.invalidateQueries({
+      queryKey: ['pedidos-etapas']
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['pedidos-contadores']
+    });
     toast({
       title: "Atualizado",
-      description: "Lista de pedidos atualizada com sucesso",
+      description: "Lista de pedidos atualizada com sucesso"
     });
   };
-
-  return (
-    <div className="container mx-auto py-2 px-[5px] sm:py-6 sm:px-4 space-y-3 sm:space-y-6">
+  return <div className="container mx-auto py-2 px-[5px] sm:py-6 sm:px-4 space-y-3 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -175,33 +169,18 @@ export default function Pedidos() {
         </div>
 
         <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            className="gap-2"
-            size="sm"
-          >
+          <Button variant="outline" onClick={handleRefresh} className="gap-2" size="sm">
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline">Atualizar</span>
           </Button>
           
-          <Button
-            variant="outline"
-            onClick={() => navigate('/producao/login')}
-            className="gap-2"
-            size="sm"
-          >
+          <Button variant="outline" onClick={() => navigate('/producao/login')} className="gap-2" size="sm">
             <Factory className="h-4 w-4" />
             <span className="hidden lg:inline">Interface de Produção</span>
             <span className="lg:hidden hidden sm:inline">Produção</span>
           </Button>
           
-          <Button
-            variant="outline"
-            onClick={() => navigate('/dashboard/historico-producao')}
-            className="gap-2"
-            size="sm"
-          >
+          <Button variant="outline" onClick={() => navigate('/dashboard/historico-producao')} className="gap-2" size="sm">
             <History className="h-4 w-4" />
             <span className="hidden sm:inline">Histórico</span>
           </Button>
@@ -209,22 +188,10 @@ export default function Pedidos() {
 
         {/* Controles de visualização */}
         <div className="flex items-center gap-1 border rounded-md p-1">
-          <Button
-            size="icon"
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-            onClick={() => setViewMode('grid')}
-            title="Visualização em grade"
-            className="h-8 w-8"
-          >
+          <Button size="icon" variant={viewMode === 'grid' ? 'default' : 'ghost'} onClick={() => setViewMode('grid')} title="Visualização em grade" className="h-8 w-8">
             <LayoutGrid className="h-4 w-4" />
           </Button>
-          <Button
-            size="icon"
-            variant={viewMode === 'list' ? 'default' : 'ghost'}
-            onClick={() => setViewMode('list')}
-            title="Visualização em lista"
-            className="h-8 w-8"
-          >
+          <Button size="icon" variant={viewMode === 'list' ? 'default' : 'ghost'} onClick={() => setViewMode('list')} title="Visualização em lista" className="h-8 w-8">
             <List className="h-4 w-4" />
           </Button>
         </div>
@@ -232,43 +199,36 @@ export default function Pedidos() {
 
 
       {/* Mapa de Fluxograma - sempre exibido */}
-      <PedidoFluxogramaMap 
-        pedidoSelecionado={pedidoSelecionado}
-        onClose={() => setPedidoSelecionado(null)}
-      />
+      <PedidoFluxogramaMap pedidoSelecionado={pedidoSelecionado} onClose={() => setPedidoSelecionado(null)} />
 
       {/* Tabs de Etapas */}
       {/* Tabs de Etapas - Desktop */}
-      <Tabs value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
+      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
         {/* Seletor mobile - apenas em telas pequenas */}
         <div className="md:hidden mb-4">
-          <Select value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
+          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
             <SelectTrigger className="w-full h-12">
               <SelectValue>
                 {(() => {
-                  const config = ETAPAS_CONFIG[etapaAtiva];
-                  const count = contadores[etapaAtiva] || 0;
-                  const IconComponent = ETAPA_ICONS[etapaAtiva];
-                  return (
-                    <div className="flex items-center gap-2">
+                const config = ETAPAS_CONFIG[etapaAtiva];
+                const count = contadores[etapaAtiva] || 0;
+                const IconComponent = ETAPA_ICONS[etapaAtiva];
+                return <div className="flex items-center gap-2">
                       <IconComponent className="h-5 w-5" />
                       <span className="font-medium">{config.label}</span>
                       <Badge variant="secondary" className="ml-auto">
                         {count}
                       </Badge>
-                    </div>
-                  );
-                })()}
+                    </div>;
+              })()}
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
-              {ORDEM_ETAPAS.map((etapa) => {
-                const config = ETAPAS_CONFIG[etapa];
-                const count = contadores[etapa] || 0;
-                const IconComponent = ETAPA_ICONS[etapa];
-                
-                return (
-                  <SelectItem key={etapa} value={etapa} className="cursor-pointer">
+              {ORDEM_ETAPAS.map(etapa => {
+              const config = ETAPAS_CONFIG[etapa];
+              const count = contadores[etapa] || 0;
+              const IconComponent = ETAPA_ICONS[etapa];
+              return <SelectItem key={etapa} value={etapa} className="cursor-pointer">
                     <div className="flex items-center gap-2 w-full">
                       <IconComponent className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1">{config.label}</span>
@@ -276,38 +236,29 @@ export default function Pedidos() {
                         {count}
                       </Badge>
                     </div>
-                  </SelectItem>
-                );
-              })}
+                  </SelectItem>;
+            })}
             </SelectContent>
           </Select>
         </div>
 
         {/* Tabs - Desktop apenas */}
         <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 scrollbar-hide">
-          {ORDEM_ETAPAS.map((etapa) => {
-            const config = ETAPAS_CONFIG[etapa];
-            const count = contadores[etapa] || 0;
-            const IconComponent = ETAPA_ICONS[etapa];
-            
-            return (
-              <TabsTrigger
-                key={etapa}
-                value={etapa}
-                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2"
-              >
+          {ORDEM_ETAPAS.map(etapa => {
+          const config = ETAPAS_CONFIG[etapa];
+          const count = contadores[etapa] || 0;
+          const IconComponent = ETAPA_ICONS[etapa];
+          return <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2">
                 <IconComponent className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm">{config.label}</span>
+                <span className="text-xs">{config.label}</span>
                 <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
                   {count}
                 </span>
-              </TabsTrigger>
-            );
-          })}
+              </TabsTrigger>;
+        })}
         </TabsList>
 
-        {ORDEM_ETAPAS.map((etapa) => (
-          <TabsContent key={etapa} value={etapa} className="mt-3 sm:mt-6">
+        {ORDEM_ETAPAS.map(etapa => <TabsContent key={etapa} value={etapa} className="mt-3 sm:mt-6">
             <Card>
               <CardHeader className="pb-3 px-[5px] py-2 sm:px-6 sm:pb-4 sm:py-6">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -319,46 +270,18 @@ export default function Pedidos() {
                   </CardTitle>
                   
                   {/* Filtros minimalistas */}
-                  <PedidosFiltrosMinimalista
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    tipoEntrega={tipoEntrega}
-                    onTipoEntregaChange={setTipoEntrega}
-                    corPintura={corPintura}
-                    onCorPinturaChange={setCorPintura}
-                    mostrarProntos={mostrarProntos}
-                    onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
-                  />
+                  <PedidosFiltrosMinimalista searchTerm={searchTerm} onSearchChange={setSearchTerm} tipoEntrega={tipoEntrega} onTipoEntregaChange={setTipoEntrega} corPintura={corPintura} onCorPinturaChange={setCorPintura} mostrarProntos={mostrarProntos} onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} />
                 </div>
               </CardHeader>
               <CardContent className="px-[5px] py-2 sm:px-6 sm:py-6">
-                {isLoading ? (
-                  <div className="text-center py-8 text-muted-foreground">
+                {isLoading ? <div className="text-center py-8 text-muted-foreground">
                     Carregando...
-                  </div>
-                ) : pedidosFiltrados.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+                  </div> : pedidosFiltrados.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                     {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
-                  </div>
-                ) : (
-                  <PedidosDraggableList
-                    pedidos={pedidosFiltrados}
-                    etapa={etapa}
-                    isAberto={etapa === 'aberto'}
-                    viewMode={viewMode}
-                    pedidoSelecionado={pedidoSelecionado}
-                    onSelecionarPedido={setPedidoSelecionado}
-                    onMoverEtapa={handleMoverEtapa}
-                    onRetrocederEtapa={handleRetrocederEtapa}
-                    onReorganizar={handleReorganizar}
-                    onMoverPrioridade={handleMoverPrioridade}
-                  />
-                )}
+                  </div> : <PedidosDraggableList pedidos={pedidosFiltrados} etapa={etapa} isAberto={etapa === 'aberto'} viewMode={viewMode} pedidoSelecionado={pedidoSelecionado} onSelecionarPedido={setPedidoSelecionado} onMoverEtapa={handleMoverEtapa} onRetrocederEtapa={handleRetrocederEtapa} onReorganizar={handleReorganizar} onMoverPrioridade={handleMoverPrioridade} />}
               </CardContent>
             </Card>
-          </TabsContent>
-        ))}
+          </TabsContent>)}
       </Tabs>
-    </div>
-  );
+    </div>;
 }
