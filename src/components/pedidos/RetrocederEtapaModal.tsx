@@ -41,18 +41,33 @@ export function RetrocederEtapaModal({
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const produtos = vendaData?.produtos_vendas || [];
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
+  
+  // Verificar o tipo de entrega
+  const tipoEntrega = vendaData?.tipo_entrega || '';
+  const temInstalacao = tipoEntrega === 'instalacao';
+  const temEntrega = tipoEntrega === 'entrega' || tipoEntrega === 'entrega_retirada';
 
-  // Filtrar apenas etapas anteriores à atual, excluindo "inspecao_qualidade" e "aguardando_pintura" (se não tem pintura)
+  // Filtrar apenas etapas anteriores à atual, excluindo etapas inválidas
   const etapasDisponiveis = useMemo(() => {
     const indiceAtual = ORDEM_ETAPAS.indexOf(etapaAtual);
     return ORDEM_ETAPAS
       .slice(0, indiceAtual)
       .filter(etapa => {
+        // Sempre excluir inspeção de qualidade
         if (etapa === 'inspecao_qualidade') return false;
+        
+        // Excluir aguardando pintura se não tem pintura
         if (etapa === 'aguardando_pintura' && !temPintura) return false;
+        
+        // Excluir expedição instalação se não tem instalação
+        if (etapa === 'aguardando_instalacao' && !temInstalacao) return false;
+        
+        // Excluir expedição coleta/entrega se não tem entrega
+        if (etapa === 'aguardando_coleta' && !temEntrega) return false;
+        
         return true;
       });
-  }, [etapaAtual, temPintura]);
+  }, [etapaAtual, temPintura, temInstalacao, temEntrega]);
 
   const handleConfirmar = () => {
     if (!motivo.trim()) {
