@@ -161,7 +161,7 @@ export default function Pedidos() {
   };
 
   return (
-    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="container mx-auto py-2 px-[5px] sm:py-6 sm:px-4 space-y-3 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -307,9 +307,9 @@ export default function Pedidos() {
         </TabsList>
 
         {ORDEM_ETAPAS.map((etapa) => (
-          <TabsContent key={etapa} value={etapa} className="mt-6">
+          <TabsContent key={etapa} value={etapa} className="mt-3 sm:mt-6">
             <Card>
-              <CardHeader className="pb-4">
+              <CardHeader className="pb-3 px-[5px] py-2 sm:px-6 sm:pb-4 sm:py-6">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <span>{ETAPAS_CONFIG[etapa].label}</span>
@@ -331,7 +331,7 @@ export default function Pedidos() {
                   />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-[5px] py-2 sm:px-6 sm:py-6">
                 {isLoading ? (
                   <div className="text-center py-8 text-muted-foreground">
                     Carregando...
