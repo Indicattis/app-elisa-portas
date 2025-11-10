@@ -41,7 +41,6 @@ export const useSubcategorias = (categoriaId?: string) => {
       if (error) throw error;
       return data as Subcategoria[];
     },
-    enabled: categoriaId !== undefined,
   });
 
   const adicionarSubcategoria = useMutation({

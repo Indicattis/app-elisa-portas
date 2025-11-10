@@ -61,6 +61,12 @@ export default function EstoqueEdit() {
     if (produto) {
       console.log('[EstoqueEdit] Carregando produto:', produto);
       
+      // Normalizar valor de setor_responsavel_producao (soldagem -> solda)
+      let setorNormalizado = produto.setor_responsavel_producao || "";
+      if (setorNormalizado === "soldagem") {
+        setorNormalizado = "solda";
+      }
+      
       const newFormData = {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
@@ -71,7 +77,7 @@ export default function EstoqueEdit() {
         custo_unitario: Number(produto.custo_unitario) || 0,
         subcategoria_id: produto.subcategoria_id || "",
         peso_porta: Number(produto.peso_porta) || 0,
-        setor_responsavel_producao: produto.setor_responsavel_producao || "",
+        setor_responsavel_producao: setorNormalizado,
         fornecedor_id: produto.fornecedor_id || "",
       };
       
@@ -307,6 +313,7 @@ export default function EstoqueEdit() {
                   <SelectContent>
                     <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
                     <SelectItem value="solda">Solda</SelectItem>
+                    <SelectItem value="soldagem">Soldagem</SelectItem>
                     <SelectItem value="separacao">Separação</SelectItem>
                     <SelectItem value="pintura">Pintura</SelectItem>
                   </SelectContent>
