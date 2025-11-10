@@ -4,7 +4,9 @@ import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
-import { Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Package, RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Ordem {
   id: string;
@@ -25,6 +27,7 @@ interface Ordem {
 export default function ProducaoSeparacao() {
   const [ordemSelecionadaId, setOrdemSelecionadaId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
 
@@ -64,18 +67,28 @@ export default function ProducaoSeparacao() {
     await enviarParaHistorico.mutateAsync(ordemId);
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens-producao', 'separacao'] });
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-purple-500/10 rounded-lg">
-          <Package className="h-6 w-6 text-purple-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-purple-500/10 rounded-lg">
+            <Package className="h-6 w-6 text-purple-500" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Separação</h1>
+            <p className="text-muted-foreground">
+              Gerencie as ordens de separação em produção
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold">Separação</h1>
-          <p className="text-muted-foreground">
-            Gerencie as ordens de separação em produção
-          </p>
-        </div>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       <ProducaoKanban

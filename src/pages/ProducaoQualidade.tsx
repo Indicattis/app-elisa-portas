@@ -4,7 +4,9 @@ import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
-import { ClipboardCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ClipboardCheck, RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Ordem {
   id: string;
@@ -32,6 +34,7 @@ interface Ordem {
 export default function ProducaoQualidade() {
   const [ordemSelecionadaId, setOrdemSelecionadaId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
 
@@ -71,11 +74,21 @@ export default function ProducaoQualidade() {
     await enviarParaHistorico.mutateAsync(ordemId);
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens-producao', 'qualidade'] });
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <ClipboardCheck className="h-8 w-8" />
-        <h1 className="text-3xl font-bold">Inspeção de Qualidade</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <ClipboardCheck className="h-8 w-8" />
+          <h1 className="text-3xl font-bold">Inspeção de Qualidade</h1>
+        </div>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       <ProducaoKanban

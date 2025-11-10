@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Paintbrush, Flame } from "lucide-react";
+import { Paintbrush, Flame, RefreshCw } from "lucide-react";
 import { useOrdemPintura } from "@/hooks/useOrdemPintura";
 import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { usePinturaInicios } from "@/hooks/usePinturaInicios";
@@ -10,11 +10,13 @@ import { NovoInicioPinturaModal } from "@/components/production/NovoInicioPintur
 import { PinturaIniciosList } from "@/components/production/PinturaIniciosList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProducaoPintura() {
   const [selectedOrdemId, setSelectedOrdemId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [novoInicioOpen, setNovoInicioOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
   const { inicios, isLoading: isLoadingInicios, criarInicio, toggleRecarga } = usePinturaInicios();
@@ -38,6 +40,11 @@ export default function ProducaoPintura() {
     setDetailsOpen(true);
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
+    queryClient.invalidateQueries({ queryKey: ['pintura-inicios'] });
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -53,10 +60,16 @@ export default function ProducaoPintura() {
           </div>
         </div>
 
-        <Button onClick={() => setNovoInicioOpen(true)} className="gap-2">
-          <Flame className="h-4 w-4" />
-          Registrar Início
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleRefresh} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button onClick={() => setNovoInicioOpen(true)} className="gap-2">
+            <Flame className="h-4 w-4" />
+            Registrar Início
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="ordens" className="space-y-6">

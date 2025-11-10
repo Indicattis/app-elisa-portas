@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PackageCheck, Truck, Calendar, MapPin, Phone, User } from "lucide-react";
+import { PackageCheck, Truck, Calendar, MapPin, Phone, User, RefreshCw } from "lucide-react";
 import { useEntregas } from "@/hooks/useEntregas";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { ConfirmarCarregamentoSheet } from "@/components/entregas/ConfirmarCarregamentoSheet";
@@ -12,8 +12,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function ProducaoCarregamento() {
-  const { entregas, loading: loadingEntregas } = useEntregas();
-  const { instalacoes, loading: loadingInstalacoes } = useInstalacoesCadastradas();
+  const { entregas, loading: loadingEntregas, fetchEntregas } = useEntregas();
+  const { instalacoes, loading: loadingInstalacoes, fetchInstalacoes } = useInstalacoesCadastradas();
 
   const [entregaSelecionada, setEntregaSelecionada] = useState<any>(null);
   const [instalacaoSelecionada, setInstalacaoSelecionada] = useState<any>(null);
@@ -47,16 +47,27 @@ export default function ProducaoCarregamento() {
     }
   };
 
+  const handleRefresh = () => {
+    fetchEntregas();
+    fetchInstalacoes();
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Truck className="h-8 w-8" />
-          Carregamento
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Marque as coletas de entregas e instalações
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Truck className="h-8 w-8" />
+            Carregamento
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Marque as coletas de entregas e instalações
+          </p>
+        </div>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

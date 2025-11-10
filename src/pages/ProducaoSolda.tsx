@@ -4,7 +4,9 @@ import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
-import { Flame } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Flame, RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Ordem {
   id: string;
@@ -25,6 +27,7 @@ interface Ordem {
 export default function ProducaoSolda() {
   const [ordemSelecionadaId, setOrdemSelecionadaId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
 
@@ -65,18 +68,28 @@ export default function ProducaoSolda() {
     setSheetOpen(false);
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens-producao', 'soldagem'] });
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-orange-500/10 rounded-lg">
-          <Flame className="h-6 w-6 text-orange-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-orange-500/10 rounded-lg">
+            <Flame className="h-6 w-6 text-orange-500" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Solda</h1>
+            <p className="text-muted-foreground">
+              Gerencie as ordens de soldagem em produção
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold">Solda</h1>
-          <p className="text-muted-foreground">
-            Gerencie as ordens de soldagem em produção
-          </p>
-        </div>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       <ProducaoKanban
