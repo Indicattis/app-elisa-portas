@@ -14,13 +14,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Trash2, ChevronDown } from "lucide-react";
 import type { PedidoLinha, PedidoLinhaUpdate, CategoriaLinha } from "@/hooks/usePedidoLinhas";
 import { useEstoque } from "@/hooks/useEstoque";
@@ -58,16 +51,6 @@ export function TabelaLinhasEditavel({
     const novoMapa = new Map(linhasEditadas);
     const linhaAtual = novoMapa.get(linhaId) || { id: linhaId };
     
-    // Validar largura e altura para não permitir valores inválidos
-    if ((campo === 'largura' || campo === 'altura') && valor !== null) {
-      const numeroValor = parseFloat(String(valor));
-      // Se for 0 ou negativo, não permitir
-      if (numeroValor <= 0) {
-        return;
-      }
-      valor = numeroValor;
-    }
-    
     novoMapa.set(linhaId, {
       ...linhaAtual,
       [campo]: valor,
@@ -80,7 +63,8 @@ export function TabelaLinhasEditavel({
     linhaId: string,
     novoProdutoId: string,
     novoProdutoNome: string,
-    novoProdutoDescricao: string | null
+    novoProdutoDescricao: string | null,
+    novoSetorProducao: string | null
   ) => {
     const novoMapa = new Map(linhasEditadas);
     const linhaAtual = novoMapa.get(linhaId) || { id: linhaId };
@@ -90,6 +74,7 @@ export function TabelaLinhasEditavel({
       estoque_id: novoProdutoId,
       nome_produto: novoProdutoNome,
       descricao_produto: novoProdutoDescricao,
+      tipo_ordem: novoSetorProducao,
     });
     
     onChange(novoMapa);
@@ -114,28 +99,20 @@ export function TabelaLinhasEditavel({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[25%]">Produto</TableHead>
-            <TableHead className="w-[12%] text-center">Largura (m)</TableHead>
-            <TableHead className="w-[12%] text-center">Altura (m)</TableHead>
-            <TableHead className="w-[10%] text-center">Qtd</TableHead>
-            <TableHead className="w-[12%] text-center">Peso (kg)</TableHead>
-            <TableHead className="w-[16%]">Tipo Ordem</TableHead>
-            <TableHead className="w-[13%] text-right">Ações</TableHead>
+            <TableHead className="w-[30%]">Produto</TableHead>
+            <TableHead className="w-[20%] text-center">Tamanho</TableHead>
+            <TableHead className="w-[12%] text-center">Qtd</TableHead>
+            <TableHead className="w-[18%]">Tipo Ordem</TableHead>
+            <TableHead className="w-[20%] text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {linhas.map((linha) => {
-            const largura = getValorEditado(linha.id, 'largura') as number | null;
-            const altura = getValorEditado(linha.id, 'altura') as number | null;
+            const tamanho = getValorEditado(linha.id, 'tamanho') as string | null;
             const quantidade = getValorEditado(linha.id, 'quantidade') as number;
             const nomeProduto = getValorEditado(linha.id, 'nome_produto') as string;
             const descricaoProduto = getValorEditado(linha.id, 'descricao_produto') as string | null;
-            const tipoOrdem = getValorEditado(linha.id, 'tipo_ordem') as string || 'soldagem';
-
-            // Calcular peso: ((largura * altura * 12) * 2) * 0.3
-            const peso = largura && altura 
-              ? (((largura * altura * 12) * 2) * 0.3).toFixed(1)
-              : null;
+            const tipoOrdem = getValorEditado(linha.id, 'tipo_ordem') as string | null;
 
             const produtosSetor = getProdutosDoSetor(linha.categoria_linha);
             const temProdutosAlternativos = produtosSetor.length > 1;
@@ -193,7 +170,8 @@ export function TabelaLinhasEditavel({
                                       linha.id,
                                       prod.id,
                                       prod.nome_produto,
-                                      prod.descricao_produto
+                                      prod.descricao_produto,
+                                      prod.setor_responsavel_producao
                                     );
                                   }}
                                 >
@@ -215,52 +193,25 @@ export function TabelaLinhasEditavel({
                   )}
                 </TableCell>
 
-                {/* Largura */}
+                {/* Tamanho */}
                 <TableCell>
                   {isReadOnly ? (
                     <p className="text-center text-sm">
-                      {largura ? largura.toFixed(2) : '—'}
+                      {tamanho || '—'}
                     </p>
                   ) : (
                     <Input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      value={largura || ''}
+                      type="text"
+                      value={tamanho || ''}
                       onChange={(e) =>
                         handleCampoChange(
                           linha.id,
-                          'largura',
-                          e.target.value ? parseFloat(e.target.value) : null
+                          'tamanho',
+                          e.target.value || null
                         )
                       }
                       className="h-8 text-center"
-                      placeholder="0.00"
-                    />
-                  )}
-                </TableCell>
-
-                {/* Altura */}
-                <TableCell>
-                  {isReadOnly ? (
-                    <p className="text-center text-sm">
-                      {altura ? altura.toFixed(2) : '—'}
-                    </p>
-                  ) : (
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      value={altura || ''}
-                      onChange={(e) =>
-                        handleCampoChange(
-                          linha.id,
-                          'altura',
-                          e.target.value ? parseFloat(e.target.value) : null
-                        )
-                      }
-                      className="h-8 text-center"
-                      placeholder="0.00"
+                      placeholder="Ex: 2.0 x 2.5"
                     />
                   )}
                 </TableCell>
@@ -288,40 +239,11 @@ export function TabelaLinhasEditavel({
                   )}
                 </TableCell>
 
-                {/* Peso calculado */}
-                <TableCell className="text-center">
-                  {peso ? (
-                    <span className="text-sm font-medium">{peso} kg</span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-
                 {/* Tipo de Ordem */}
                 <TableCell>
-                  {isReadOnly ? (
-                    <Badge variant="outline">
-                      {tipoOrdem === 'soldagem' && 'Soldagem'}
-                      {tipoOrdem === 'perfiladeira' && 'Perfiladeira'}
-                      {tipoOrdem === 'separacao' && 'Separação'}
-                    </Badge>
-                  ) : (
-                    <Select
-                      value={tipoOrdem}
-                      onValueChange={(value) =>
-                        handleCampoChange(linha.id, 'tipo_ordem', value)
-                      }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="soldagem">Soldagem</SelectItem>
-                        <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
-                        <SelectItem value="separacao">Separação</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <Badge variant="outline" className="capitalize">
+                    {tipoOrdem || linha.categoria_linha}
+                  </Badge>
                 </TableCell>
 
                 {/* Ações */}

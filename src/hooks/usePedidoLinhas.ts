@@ -77,6 +77,18 @@ export function usePedidoLinhas(pedidoId: string) {
         ? Math.max(...linhas.map(l => l.ordem)) + 1 
         : 1;
 
+      // Se tiver estoque_id, buscar o setor_responsavel_producao para usar como tipo_ordem
+      let tipoOrdem = null;
+      if (linha.estoque_id) {
+        const { data: produtoEstoque } = await supabase
+          .from('estoque')
+          .select('setor_responsavel_producao')
+          .eq('id', linha.estoque_id)
+          .single();
+        
+        tipoOrdem = produtoEstoque?.setor_responsavel_producao || null;
+      }
+
       const { data, error } = await supabase
         .from('pedido_linhas')
         .insert({
@@ -90,6 +102,7 @@ export function usePedidoLinhas(pedidoId: string) {
           altura: linha.altura,
           estoque_id: linha.estoque_id,
           categoria_linha: linha.categoria_linha,
+          tipo_ordem: tipoOrdem,
           ordem: proximaOrdem,
           check_separacao: false,
           check_qualidade: false,
@@ -191,25 +204,11 @@ export function usePedidoLinhas(pedidoId: string) {
 
   const atualizarLinhasEmLote = useMutation({
     mutationFn: async (updates: PedidoLinhaUpdate[]) => {
-      // Validar antes de enviar
-      const updatesFiltrados = updates.filter(update => {
-        // Se tem largura ou altura definidas, garantir que são positivas
-        if (update.largura !== undefined && update.largura !== null && update.largura <= 0) {
-          console.warn(`Linha ${update.id} tem largura inválida: ${update.largura}`);
-          return false;
-        }
-        if (update.altura !== undefined && update.altura !== null && update.altura <= 0) {
-          console.warn(`Linha ${update.id} tem altura inválida: ${update.altura}`);
-          return false;
-        }
-        return true;
-      });
-
-      if (updatesFiltrados.length === 0) {
-        throw new Error('Nenhuma atualização válida para processar. Verifique se largura e altura são maiores que zero.');
+      if (updates.length === 0) {
+        throw new Error('Nenhuma atualização para processar.');
       }
 
-      const promises = updatesFiltrados.map(async (update) => {
+      const promises = updates.map(async (update) => {
         const { id, ...campos } = update;
         return supabase
           .from('pedido_linhas')
