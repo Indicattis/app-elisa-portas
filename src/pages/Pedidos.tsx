@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, LayoutGrid, List, History, RefreshCw } from "lucide-react";
+import { Package, LayoutGrid, List, History, RefreshCw, Factory } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
@@ -170,6 +170,15 @@ export default function Pedidos() {
           >
             <RefreshCw className="h-4 w-4" />
             Atualizar
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => navigate('/producao/login')}
+            className="gap-2"
+          >
+            <Factory className="h-4 w-4" />
+            Interface de Produção
           </Button>
           
           <Button
