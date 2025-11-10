@@ -14,7 +14,7 @@ interface ProducaoUser {
 interface ProducaoAuthContextType {
   user: ProducaoUser | null;
   loading: boolean;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 const ProducaoAuthContext = createContext<ProducaoAuthContextType | undefined>(undefined);
@@ -94,9 +94,16 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    navigate("/producao/login");
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      navigate("/producao/login", { replace: true });
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      // Mesmo com erro, limpar estado local e redirecionar
+      setUser(null);
+      navigate("/producao/login", { replace: true });
+    }
   };
 
   return (

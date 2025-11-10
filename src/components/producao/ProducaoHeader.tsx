@@ -73,7 +73,7 @@ export function ProducaoHeader() {
         <Button
           variant="outline"
           size="sm"
-          onClick={signOut}
+          onClick={() => signOut()}
           className="gap-2"
         >
           <LogOut className="h-4 w-4" />
