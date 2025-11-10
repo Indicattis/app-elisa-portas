@@ -108,6 +108,7 @@ import { ProducaoLayout } from "@/components/ProducaoLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
+import Ordens from "./pages/Ordens";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -620,6 +621,16 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <HistoricoProducao />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/ordens"
+                  element={
+                    <ProtectedRoute requirePermission="producao">
+                      <DashboardLayout>
+                        <Ordens />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
