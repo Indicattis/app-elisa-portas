@@ -51,7 +51,7 @@ export function usePinturaInicios() {
     },
   });
 
-  // Alternar status de recarga
+  // Alternar status de recarga (apenas permitir marcar como true, não desmarcar)
   const toggleRecarga = useMutation({
     mutationFn: async (inicioId: string) => {
       if (!producaoUser) throw new Error('Usuário não autenticado');
@@ -63,14 +63,17 @@ export function usePinturaInicios() {
         .eq('id', inicioId)
         .single();
 
-      const novoStatus = !inicioAtual?.recarga_realizada;
+      // Não permitir edição se já foi feita a recarga
+      if (inicioAtual?.recarga_realizada) {
+        throw new Error('Recarga já foi realizada e não pode ser alterada');
+      }
 
       const { error } = await supabase
         .from('pintura_inicios')
         .update({
-          recarga_realizada: novoStatus,
-          recarga_realizada_em: novoStatus ? new Date().toISOString() : null,
-          recarga_realizada_por: novoStatus ? producaoUser.user_id : null,
+          recarga_realizada: true,
+          recarga_realizada_em: new Date().toISOString(),
+          recarga_realizada_por: producaoUser.user_id,
         })
         .eq('id', inicioId);
 
@@ -79,15 +82,15 @@ export function usePinturaInicios() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pintura-inicios'] });
       toast({
-        title: "Status atualizado",
-        description: "Status de recarga atualizado com sucesso",
+        title: "Recarga registrada",
+        description: "Recarga da fornada registrada com sucesso",
       });
     },
     onError: (error) => {
-      console.error('Erro ao atualizar recarga:', error);
+      console.error('Erro ao registrar recarga:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o status de recarga",
+        description: error instanceof Error ? error.message : "Não foi possível registrar a recarga",
         variant: "destructive",
       });
     },

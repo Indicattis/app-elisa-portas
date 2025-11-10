@@ -1,11 +1,12 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Flame, Clock, User, Droplet, Check } from "lucide-react";
+import { Flame, Clock, User, Droplet, Check, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface PinturaInicio {
   id: string;
@@ -13,7 +14,10 @@ interface PinturaInicio {
   observacoes?: string | null;
   recarga_realizada: boolean;
   recarga_realizada_em?: string | null;
-  recarga_realizada_por?: string | null;
+  recarga_admin_users?: {
+    nome: string;
+    foto_perfil_url?: string | null;
+  } | null;
   admin_users: {
     id: string;
     nome: string;
@@ -90,7 +94,11 @@ export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogg
             {inicios.map((inicio) => (
               <div
                 key={inicio.id}
-                className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+                  inicio.recarga_realizada 
+                    ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800" 
+                    : "bg-card hover:bg-accent/50"
+                }`}
               >
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={inicio.admin_users?.foto_perfil_url || undefined} />
@@ -99,21 +107,45 @@ export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogg
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium">
                       {inicio.admin_users?.nome || "Usuário não encontrado"}
                     </span>
+                    {inicio.recarga_realizada && (
+                      <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Recarga Realizada
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5" />
+                      <span className="font-medium">Início:</span>
                       {format(new Date(inicio.iniciado_em), "dd/MM/yyyy 'às' HH:mm", {
                         locale: ptBR,
                       })}
                     </div>
                   </div>
+
+                  {inicio.recarga_realizada && inicio.recarga_realizada_em && (
+                    <div className="flex items-center gap-4 text-sm text-green-700 dark:text-green-400">
+                      <div className="flex items-center gap-1">
+                        <Droplet className="h-3.5 w-3.5" />
+                        <span className="font-medium">Recarga:</span>
+                        {format(new Date(inicio.recarga_realizada_em), "dd/MM/yyyy 'às' HH:mm", {
+                          locale: ptBR,
+                        })}
+                        {inicio.recarga_admin_users && (
+                          <span className="ml-1">
+                            por {inicio.recarga_admin_users.nome}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {inicio.observacoes && (
                     <p className="text-sm text-muted-foreground mt-2">
@@ -124,18 +156,29 @@ export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogg
 
                 <Button
                   size="sm"
-                  variant={inicio.recarga_realizada ? "default" : "outline"}
+                  variant={inicio.recarga_realizada ? "secondary" : "outline"}
                   onClick={() => onToggleRecarga(inicio.id)}
-                  disabled={isTogglingRecarga}
-                  className={`h-[85px] w-[30%] ${inicio.recarga_realizada ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : ""}`}
-                  title={inicio.recarga_realizada ? "Recarga realizada" : "Marcar recarga"}
+                  disabled={isTogglingRecarga || inicio.recarga_realizada}
+                  className={`min-h-[85px] w-[30%] ${
+                    inicio.recarga_realizada 
+                      ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30 cursor-not-allowed opacity-60" 
+                      : "hover:bg-primary/10 hover:text-primary hover:border-primary"
+                  }`}
+                  title={inicio.recarga_realizada ? "Recarga já realizada" : "Marcar recarga"}
                 >
-                  {inicio.recarga_realizada ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Droplet className="h-4 w-4 mr-2" />
-                  )}
-                  {inicio.recarga_realizada ? "Recargado" : "Recarregar"}
+                  <div className="flex flex-col items-center gap-1">
+                    {inicio.recarga_realizada ? (
+                      <>
+                        <CheckCircle2 className="h-5 w-5" />
+                        <span className="text-xs">Recargado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Droplet className="h-5 w-5" />
+                        <span className="text-xs">Recarregar</span>
+                      </>
+                    )}
+                  </div>
                 </Button>
               </div>
             ))}
