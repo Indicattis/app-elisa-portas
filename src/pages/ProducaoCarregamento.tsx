@@ -132,9 +132,10 @@ export default function ProducaoCarregamento() {
                           onClick={() => handleIniciarColeta(entrega, "entrega")}
                           className="w-full"
                           size="lg"
+                          disabled={entrega.status !== 'pronta_fabrica'}
                         >
                           <PackageCheck className="h-5 w-5 mr-2" />
-                          Iniciar Coleta
+                          {entrega.status === 'pronta_fabrica' ? 'Iniciar Coleta' : 'Aguardando Produção'}
                         </Button>
                       </CardContent>
                     </Card>
@@ -217,9 +218,10 @@ export default function ProducaoCarregamento() {
                           onClick={() => handleIniciarColeta(instalacao, "instalacao")}
                           className="w-full"
                           size="lg"
+                          disabled={instalacao.status !== 'pronta_fabrica'}
                         >
                           <PackageCheck className="h-5 w-5 mr-2" />
-                          Iniciar Coleta
+                          {instalacao.status === 'pronta_fabrica' ? 'Iniciar Coleta' : 'Aguardando Produção'}
                         </Button>
                       </CardContent>
                     </Card>
