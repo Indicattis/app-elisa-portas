@@ -13,7 +13,7 @@ import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
 import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
 import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
 import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
-import { ConfirmarCarregamentoSheet } from "@/components/entregas/ConfirmarCarregamentoSheet";
+import { DefinirDataCarregamentoModal } from "./DefinirDataCarregamentoModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,7 +54,7 @@ export function PedidoCard({
   const [showAvancarQualidade, setShowAvancarQualidade] = useState(false);
   const [showConfirmarAvanco, setShowConfirmarAvanco] = useState(false);
   const [showProgresso, setShowProgresso] = useState(false);
-  const [showCarregamento, setShowCarregamento] = useState(false);
+  const [showDefinirData, setShowDefinirData] = useState(false);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
     isAdmin
@@ -541,14 +541,9 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>);
               } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-                actionButtons.push(<Button key="carregar" size="icon" variant="outline" onClick={() => setShowCarregamento(true)} title="Carregar">
+                actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={() => setShowDefinirData(true)} title="Definir Data de Carregamento">
                   <Package className="h-3.5 w-3.5" />
                 </Button>);
-                if (carregamentoConcluido) {
-                  actionButtons.push(<Button key="finalizar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Finalizar">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>);
-                }
               } else if (proximaEtapa && etapaAtual !== 'finalizado') {
                 actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowAcaoEtapa(true)} title="Avançar">
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -749,14 +744,9 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>);
           } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-            actionButtons.push(<Button key="carregar" size="icon" variant="outline" onClick={() => setShowCarregamento(true)} title="Carregar">
+            actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={() => setShowDefinirData(true)} title="Definir Data de Carregamento">
                   <Package className="h-3.5 w-3.5" />
                 </Button>);
-            if (carregamentoConcluido) {
-              actionButtons.push(<Button key="finalizar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Finalizar">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>);
-            }
           } else if (proximaEtapa && etapaAtual !== 'finalizado') {
             actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowAcaoEtapa(true)} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -815,42 +805,20 @@ export function PedidoCard({
 
       <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
 
-      <ConfirmarCarregamentoSheet entrega={{
-      id: pedido.id,
-      nome_cliente: venda?.cliente_nome || 'Cliente',
-      pedido_id: pedido.id,
-      pedido: {
-        numero_pedido: pedido.numero_pedido || 'N/A'
-      }
-    } as any} open={showCarregamento} onOpenChange={setShowCarregamento} onSuccess={async () => {
-      setShowCarregamento(false);
-
-      // Invalidar queries para atualizar o status do carregamento
-      await queryClient.invalidateQueries({
-        queryKey: ['pedido-carregamento', pedido.id]
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['pedido-linhas', pedido.id]
-      });
-      toast({
-        title: "Carregamento concluído",
-        description: "Finalizando pedido..."
-      });
-
-      // Avançar automaticamente para "Finalizado"
-      const listaProcessos = await determinarProcessos(pedido.id);
-      setProcessos(listaProcessos);
-      setShowProgresso(true);
-      if (onMoverEtapa) {
-        await onMoverEtapa(pedido.id, true, (processoId, status) => {
-          setProcessos(prev => prev.map(p => p.id === processoId ? {
-            ...p,
-            status
-          } : p));
-        });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setShowProgresso(false);
-      }
-    }} />
+      <DefinirDataCarregamentoModal 
+        pedido={pedido} 
+        open={showDefinirData} 
+        onOpenChange={setShowDefinirData} 
+        onSuccess={async () => {
+          setShowDefinirData(false);
+          await queryClient.invalidateQueries({
+            queryKey: ['pedido-carregamento', pedido.id]
+          });
+          toast({
+            title: "Data definida",
+            description: "Data de carregamento atualizada com sucesso"
+          });
+        }} 
+      />
     </>;
 }
