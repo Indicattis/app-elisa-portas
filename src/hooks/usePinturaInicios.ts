@@ -23,20 +23,45 @@ export function usePinturaInicios() {
       // Buscar dados dos usuários
       const iniciosComUsuarios = await Promise.all(
         iniciosData.map(async (inicio) => {
-          const { data: userData } = await supabase
-            .from("admin_users")
-            .select("id, nome, foto_perfil_url")
-            .eq("id", inicio.iniciado_por)
-            .maybeSingle();
+          // Buscar por id primeiro, depois por user_id como fallback
+          let userData = null;
+          if (inicio.iniciado_por) {
+            const { data: dataById } = await supabase
+              .from("admin_users")
+              .select("id, nome, foto_perfil_url")
+              .eq("id", inicio.iniciado_por)
+              .maybeSingle();
+            
+            if (dataById) {
+              userData = dataById;
+            } else {
+              const { data: dataByUserId } = await supabase
+                .from("admin_users")
+                .select("id, nome, foto_perfil_url")
+                .eq("user_id", inicio.iniciado_por)
+                .maybeSingle();
+              userData = dataByUserId;
+            }
+          }
 
           let recargaUserData = null;
           if (inicio.recarga_realizada_por) {
-            const { data } = await supabase
+            const { data: dataById } = await supabase
               .from("admin_users")
               .select("id, nome, foto_perfil_url")
               .eq("id", inicio.recarga_realizada_por)
               .maybeSingle();
-            recargaUserData = data;
+            
+            if (dataById) {
+              recargaUserData = dataById;
+            } else {
+              const { data: dataByUserId } = await supabase
+                .from("admin_users")
+                .select("id, nome, foto_perfil_url")
+                .eq("user_id", inicio.recarga_realizada_por)
+                .maybeSingle();
+              recargaUserData = dataByUserId;
+            }
           }
 
           return {
