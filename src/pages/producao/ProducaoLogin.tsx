@@ -56,48 +56,35 @@ export default function ProducaoLogin() {
         return;
       }
 
+      // Configurar credenciais via edge function (usa Admin API)
+      const { error: setupError } = await supabase.functions.invoke('manage-producao-auth', {
+        body: { codigo_usuario: codigo.trim() }
+      });
+
+      if (setupError) {
+        console.error("Erro ao configurar credenciais:", setupError);
+        toast({
+          title: "Erro de configuração",
+          description: "Não foi possível configurar credenciais. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Aguardar um momento para propagação
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Autenticar via Supabase Auth
       const email = `${codigo.trim()}@producao.local`;
-      const password = 'Producao@2024'; // Senha padrão para operadores
+      const password = 'Producao@2024';
       
-      let signInResult = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      // Se a conta não existe, criar automaticamente
-      if (signInResult.error?.message === 'Invalid login credentials') {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              nome: user.nome,
-              codigo_usuario: codigo.trim(),
-              setor: 'fabrica'
-            }
-          }
-        });
-
-        if (signUpError) {
-          console.error("Erro ao criar conta:", signUpError);
-          toast({
-            title: "Erro de autenticação",
-            description: "Não foi possível criar conta. Contate o administrador.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Tentar login novamente
-        signInResult = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-      }
-
-      if (signInResult.error) {
-        console.error("Erro na autenticação Supabase:", signInResult.error);
+      if (signInError) {
+        console.error("Erro na autenticação Supabase:", signInError);
         toast({
           title: "Erro de autenticação",
           description: "Não foi possível autenticar. Contate o administrador.",
