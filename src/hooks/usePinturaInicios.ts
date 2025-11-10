@@ -27,9 +27,20 @@ export function usePinturaInicios() {
             .eq("user_id", inicio.iniciado_por)
             .maybeSingle();
 
+          let recargaUserData = null;
+          if (inicio.recarga_realizada_por) {
+            const { data } = await supabase
+              .from("admin_users")
+              .select("id, nome, foto_perfil_url")
+              .eq("user_id", inicio.recarga_realizada_por)
+              .maybeSingle();
+            recargaUserData = data;
+          }
+
           return {
             ...inicio,
             admin_users: userData,
+            recarga_admin_users: recargaUserData,
           };
         })
       );
@@ -43,15 +54,6 @@ export function usePinturaInicios() {
     mutationFn: async (inicioId: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
-
-      // Buscar o usuário admin correspondente
-      const { data: adminUser } = await supabase
-        .from('admin_users')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!adminUser) throw new Error('Usuário admin não encontrado');
 
       // Buscar o estado atual
       const { data: inicioAtual } = await supabase
@@ -67,7 +69,7 @@ export function usePinturaInicios() {
         .update({
           recarga_realizada: novoStatus,
           recarga_realizada_em: novoStatus ? new Date().toISOString() : null,
-          recarga_realizada_por: novoStatus ? adminUser.id : null,
+          recarga_realizada_por: novoStatus ? user.id : null,
         })
         .eq('id', inicioId);
 
