@@ -25,22 +25,28 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
+
     // Verificar sessão Supabase Auth
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
+        if (!mounted) return;
+        
         if (session?.user) {
           // Buscar dados complementares do usuário
-          const { data: adminUser } = await supabase
+          const { data: adminUser, error } = await supabase
             .from("admin_users")
             .select("*")
             .eq("user_id", session.user.id)
             .eq("setor", "fabrica")
             .eq("ativo", true)
-            .single();
+            .maybeSingle();
 
-          if (adminUser) {
+          if (!mounted) return;
+
+          if (adminUser && !error) {
             setUser({
               user_id: adminUser.user_id,
               admin_user_id: adminUser.id,
@@ -49,12 +55,23 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
               foto_perfil_url: adminUser.foto_perfil_url,
               codigo: adminUser.codigo_usuario,
             });
+          } else {
+            // Se não encontrou admin_user ou teve erro, fazer logout
+            await supabase.auth.signOut();
+            setUser(null);
           }
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error("Erro ao verificar sessão:", error);
+        if (mounted) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -63,16 +80,18 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
     // Monitorar mudanças na autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+
         if (event === 'SIGNED_IN' && session?.user) {
-          const { data: adminUser } = await supabase
+          const { data: adminUser, error } = await supabase
             .from("admin_users")
             .select("*")
             .eq("user_id", session.user.id)
             .eq("setor", "fabrica")
             .eq("ativo", true)
-            .single();
+            .maybeSingle();
 
-          if (adminUser) {
+          if (mounted && adminUser && !error) {
             setUser({
               user_id: adminUser.user_id,
               admin_user_id: adminUser.id,
@@ -83,12 +102,15 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
             });
           }
         } else if (event === 'SIGNED_OUT') {
-          setUser(null);
+          if (mounted) {
+            setUser(null);
+          }
         }
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
