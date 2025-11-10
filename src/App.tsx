@@ -824,56 +824,13 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/producao/solda"
-                  element={
-                    <ProtectedRoute requirePermission="producao">
-                      <DashboardLayout>
-                        <ProducaoSolda />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/producao/perfiladeira"
-                  element={
-                    <ProtectedRoute requirePermission="producao">
-                      <DashboardLayout>
-                        <ProducaoPerfiladeira />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/producao/separacao"
-                  element={
-                    <ProtectedRoute requirePermission="producao">
-                      <DashboardLayout>
-                        <ProducaoSeparacao />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/producao/qualidade"
-                  element={
-                    <ProtectedRoute requirePermission="producao">
-                      <DashboardLayout>
-                        <ProducaoQualidade />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/producao/pintura"
-                  element={
-                    <ProtectedRoute requirePermission="producao">
-                      <DashboardLayout>
-                        <ProducaoPintura />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Redirecionamentos para as novas rotas de produção */}
+                <Route path="/dashboard/producao/solda" element={<Navigate to="/producao/solda" replace />} />
+                <Route path="/dashboard/producao/perfiladeira" element={<Navigate to="/producao/perfiladeira" replace />} />
+                <Route path="/dashboard/producao/separacao" element={<Navigate to="/producao/separacao" replace />} />
+                <Route path="/dashboard/producao/qualidade" element={<Navigate to="/producao/qualidade" replace />} />
+                <Route path="/dashboard/producao/pintura" element={<Navigate to="/producao/pintura" replace />} />
+                <Route path="/dashboard/producao/carregamento" element={<Navigate to="/producao/carregamento" replace />} />
                 <Route
                   path="/dashboard/pedidos/edit/:id"
                   element={
