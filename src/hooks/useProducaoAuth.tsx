@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProducaoUser {
   user_id: string;
@@ -7,7 +8,6 @@ interface ProducaoUser {
   role: string;
   foto_perfil_url?: string;
   codigo: string;
-  timestamp: string;
 }
 
 interface ProducaoAuthContextType {
@@ -24,32 +24,74 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Verificar se há sessão armazenada
-    const sessionData = localStorage.getItem("producao_session");
-    if (sessionData) {
+    // Verificar sessão Supabase Auth
+    const checkSession = async () => {
       try {
-        const session = JSON.parse(sessionData) as ProducaoUser;
+        const { data: { session } } = await supabase.auth.getSession();
         
-        // Verificar se a sessão não expirou (24 horas)
-        const timestamp = new Date(session.timestamp);
-        const now = new Date();
-        const hoursDiff = (now.getTime() - timestamp.getTime()) / (1000 * 60 * 60);
-        
-        if (hoursDiff < 24) {
-          setUser(session);
-        } else {
-          localStorage.removeItem("producao_session");
+        if (session?.user) {
+          // Buscar dados complementares do usuário
+          const { data: adminUser } = await supabase
+            .from("admin_users")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .eq("setor", "fabrica")
+            .eq("ativo", true)
+            .single();
+
+          if (adminUser) {
+            setUser({
+              user_id: adminUser.user_id,
+              nome: adminUser.nome,
+              role: adminUser.role,
+              foto_perfil_url: adminUser.foto_perfil_url,
+              codigo: adminUser.codigo_usuario,
+            });
+          }
         }
       } catch (error) {
-        console.error("Erro ao carregar sessão:", error);
-        localStorage.removeItem("producao_session");
+        console.error("Erro ao verificar sessão:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    checkSession();
+
+    // Monitorar mudanças na autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const { data: adminUser } = await supabase
+            .from("admin_users")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .eq("setor", "fabrica")
+            .eq("ativo", true)
+            .single();
+
+          if (adminUser) {
+            setUser({
+              user_id: adminUser.user_id,
+              nome: adminUser.nome,
+              role: adminUser.role,
+              foto_perfil_url: adminUser.foto_perfil_url,
+              codigo: adminUser.codigo_usuario,
+            });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signOut = () => {
-    localStorage.removeItem("producao_session");
+  const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     navigate("/producao/login");
   };

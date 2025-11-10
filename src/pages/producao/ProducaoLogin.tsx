@@ -56,15 +56,24 @@ export default function ProducaoLogin() {
         return;
       }
 
-      // Armazenar sessão de produção no localStorage
-      localStorage.setItem("producao_session", JSON.stringify({
-        user_id: user.user_id,
-        nome: user.nome,
-        role: user.role,
-        foto_perfil_url: user.foto_perfil_url,
-        codigo: codigo.trim(),
-        timestamp: new Date().toISOString(),
-      }));
+      // Autenticar via Supabase Auth
+      const email = `${codigo.trim()}@producao.local`;
+      const password = 'Producao@2024'; // Senha padrão para operadores
+      
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        console.error("Erro na autenticação Supabase:", signInError);
+        toast({
+          title: "Erro de autenticação",
+          description: "Não foi possível autenticar. Contate o administrador.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Login realizado",

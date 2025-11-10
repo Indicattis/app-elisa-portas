@@ -4173,6 +4173,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
+      is_factory_operator: { Args: { _user_id: string }; Returns: boolean }
       is_lead_attendant: { Args: { lead_uuid: string }; Returns: boolean }
       map_etapa_to_instalacao_status: {
         Args: { etapa: string }
