@@ -26,7 +26,7 @@ export function usePinturaInicios() {
           const { data: userData } = await supabase
             .from("admin_users")
             .select("id, nome, foto_perfil_url")
-            .eq("user_id", inicio.iniciado_por)
+            .eq("id", inicio.iniciado_por)
             .maybeSingle();
 
           let recargaUserData = null;
@@ -34,7 +34,7 @@ export function usePinturaInicios() {
             const { data } = await supabase
               .from("admin_users")
               .select("id, nome, foto_perfil_url")
-              .eq("user_id", inicio.recarga_realizada_por)
+              .eq("id", inicio.recarga_realizada_por)
               .maybeSingle();
             recargaUserData = data;
           }
@@ -73,7 +73,7 @@ export function usePinturaInicios() {
         .update({
           recarga_realizada: true,
           recarga_realizada_em: new Date().toISOString(),
-          recarga_realizada_por: producaoUser.user_id,
+          recarga_realizada_por: producaoUser.admin_user_id,
         })
         .eq('id', inicioId);
 
@@ -104,7 +104,7 @@ export function usePinturaInicios() {
       const { data, error } = await supabase
         .from("pintura_inicios")
         .insert({
-          iniciado_por: producaoUser.user_id,
+          iniciado_por: producaoUser.admin_user_id,
           observacoes: observacoes || null,
         })
         .select()

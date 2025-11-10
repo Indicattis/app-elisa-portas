@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ProducaoUser {
   user_id: string;
+  admin_user_id: string;
   nome: string;
   role: string;
   foto_perfil_url?: string;
@@ -42,6 +43,7 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
           if (adminUser) {
             setUser({
               user_id: adminUser.user_id,
+              admin_user_id: adminUser.id,
               nome: adminUser.nome,
               role: adminUser.role,
               foto_perfil_url: adminUser.foto_perfil_url,
@@ -73,6 +75,7 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
           if (adminUser) {
             setUser({
               user_id: adminUser.user_id,
+              admin_user_id: adminUser.id,
               nome: adminUser.nome,
               role: adminUser.role,
               foto_perfil_url: adminUser.foto_perfil_url,
