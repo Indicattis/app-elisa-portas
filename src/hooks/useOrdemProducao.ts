@@ -157,12 +157,26 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
+      // Verificar se a ordem está em backlog
+      const { data: ordemAtual } = await supabase
+        .from(tabelaOrdem)
+        .select('em_backlog, capturada_em')
+        .eq('id', ordemId)
+        .maybeSingle() as { data: { em_backlog?: boolean; capturada_em?: string } | null };
+      
+      // Se está em backlog e já tem capturada_em, manter o tempo original
+      const updateData: any = {
+        responsavel_id: user.id,
+      };
+      
+      // Só atualizar capturada_em se NÃO estiver em backlog ou se ainda não tiver sido capturada
+      if (!ordemAtual?.em_backlog || !ordemAtual?.capturada_em) {
+        updateData.capturada_em = new Date().toISOString();
+      }
+      
       const { error } = await supabase
         .from(tabelaOrdem)
-        .update({
-          responsavel_id: user.id,
-          capturada_em: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', ordemId);
 
       if (error) throw error;
