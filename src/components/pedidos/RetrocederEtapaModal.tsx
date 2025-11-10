@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, ORDEM_ETAPAS } from "@/types/pedidoEtapa";
 
@@ -37,11 +37,22 @@ export function RetrocederEtapaModal({
   const configAtual = ETAPAS_CONFIG[etapaAtual];
   const configDestino = ETAPAS_CONFIG[etapaDestino];
 
-  // Filtrar apenas etapas anteriores à atual, excluindo "inspecao_qualidade"
-  const indiceAtual = ORDEM_ETAPAS.indexOf(etapaAtual);
-  const etapasDisponiveis = ORDEM_ETAPAS
-    .slice(0, indiceAtual)
-    .filter(etapa => etapa !== 'inspecao_qualidade');
+  // Verificar se o pedido tem pintura
+  const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+  const produtos = vendaData?.produtos_vendas || [];
+  const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
+
+  // Filtrar apenas etapas anteriores à atual, excluindo "inspecao_qualidade" e "aguardando_pintura" (se não tem pintura)
+  const etapasDisponiveis = useMemo(() => {
+    const indiceAtual = ORDEM_ETAPAS.indexOf(etapaAtual);
+    return ORDEM_ETAPAS
+      .slice(0, indiceAtual)
+      .filter(etapa => {
+        if (etapa === 'inspecao_qualidade') return false;
+        if (etapa === 'aguardando_pintura' && !temPintura) return false;
+        return true;
+      });
+  }, [etapaAtual, temPintura]);
 
   const handleConfirmar = () => {
     if (!motivo.trim()) {
