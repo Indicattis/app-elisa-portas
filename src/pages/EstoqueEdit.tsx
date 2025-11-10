@@ -73,13 +73,16 @@ export default function EstoqueEdit() {
     if (produto) {
       console.log('[EstoqueEdit] Carregando produto:', produto);
       
+      // Normalizar categoria: converter espaços para underscore
+      const categoriaNormalizada = produto.categoria?.replace(/ /g, '_') || "geral";
+      
       const newFormData = {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
         quantidade: Number(produto.quantidade) || 0,
         quantidade_ideal: Number(produto.quantidade_ideal) || 0,
         unidade: produto.unidade || "UN",
-        categoria: produto.categoria || "geral",
+        categoria: categoriaNormalizada,
         custo_unitario: Number(produto.custo_unitario) || 0,
         subcategoria_id: produto.subcategoria_id || "",
         peso_porta: Number(produto.peso_porta) || 0,
@@ -96,6 +99,9 @@ export default function EstoqueEdit() {
     e.preventDefault();
     
     try {
+      // Converter categoria de volta para formato do banco (underscore -> espaço)
+      const categoriaBanco = formData.categoria.replace(/_/g, ' ');
+      
       await editarProduto({
         id: id!,
         nome_produto: formData.nome_produto,
@@ -103,7 +109,7 @@ export default function EstoqueEdit() {
         quantidade: formData.quantidade,
         quantidade_ideal: formData.quantidade_ideal,
         unidade: formData.unidade,
-        categoria: formData.categoria,
+        categoria: categoriaBanco,
         custo_unitario: formData.custo_unitario,
         subcategoria_id: formData.subcategoria_id || null,
         peso_porta: formData.peso_porta || null,
