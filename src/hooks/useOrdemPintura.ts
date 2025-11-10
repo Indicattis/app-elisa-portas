@@ -39,12 +39,16 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             .eq('id', ordem.pedido_id)
             .maybeSingle();
 
-          // Buscar responsável
-          const { data: responsavel } = await supabase
-            .from('admin_users')
-            .select('id, nome')
-            .eq('user_id', ordem.responsavel_id || '')
-            .maybeSingle();
+          // Buscar responsável (apenas se houver responsavel_id)
+          let responsavel = null;
+          if (ordem.responsavel_id) {
+            const { data } = await supabase
+              .from('admin_users')
+              .select('id, nome')
+              .eq('user_id', ordem.responsavel_id)
+              .maybeSingle();
+            responsavel = data;
+          }
 
           // Buscar linhas
           const { data: linhas } = await supabase
