@@ -8,11 +8,11 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { codigo_usuario, email, new_password, action } = body
+    const { codigo_usuario, new_password, action } = body
 
-    // Se a ação for atualizar senha
+    // Se a ação foi atualizar senha
     if (action === 'update_password') {
-      if (!email || !new_password) {
+      if (!body.email || !new_password) {
         return new Response(
           JSON.stringify({ error: 'Email e nova senha são obrigatórios' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
       // Buscar usuário pelo email
       const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-      const user = users.find(u => u.email === email)
+      const user = users.find(u => u.email === body.email)
 
       if (!user) {
         return new Response(
