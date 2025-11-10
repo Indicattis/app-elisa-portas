@@ -287,14 +287,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         tempo_conclusao_segundos = Math.floor((agora.getTime() - captura.getTime()) / 1000);
       }
 
-      // Atualizar ordem e marcar como histórico
+      // Atualizar ordem como concluída (mas não enviar para histórico ainda)
       const { error } = await supabase
         .from(tabelaOrdem)
         .update({ 
           status: 'concluido', 
           data_conclusao: new Date().toISOString(),
           tempo_conclusao_segundos,
-          historico: true,
         })
         .eq('id', ordemId);
         
