@@ -39,6 +39,154 @@ interface Ordem {
   };
 }
 
+// Componente separado para o card de ordem
+interface OrdemCardProps {
+  ordem: Ordem;
+  isConcluida: boolean;
+  onOrdemClick: (ordem: Ordem) => void;
+  onCapturarOrdem?: (ordemId: string) => void;
+  isCapturing?: boolean;
+  onEnviarParaHistorico?: (ordemId: string) => void;
+  isEnviandoHistorico?: boolean;
+}
+
+function OrdemCard({
+  ordem,
+  isConcluida,
+  onOrdemClick,
+  onCapturarOrdem,
+  isCapturing = false,
+  onEnviarParaHistorico,
+  isEnviandoHistorico = false,
+}: OrdemCardProps) {
+  const linhas = ordem.linhas || [];
+  const linhasConcluidas = linhas.filter(l => l.concluida).length;
+  const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
+  const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
+
+  const tempoDecorrido = useCronometroOrdem({
+    capturada_em: ordem.capturada_em,
+    tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
+    todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
+  });
+
+  return (
+    <Card 
+      className={cn(
+        "hover:shadow-md transition-all",
+        ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
+      )}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div 
+            className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
+            onClick={() => onOrdemClick(ordem)}
+          >
+            {ordem.em_backlog && (
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
+            )}
+            <Package className="h-4 w-4 flex-shrink-0 text-primary" />
+            <CardTitle className="text-sm font-semibold truncate">
+              {ordem.numero_ordem}
+            </CardTitle>
+            {ordem.em_backlog && (
+              <Badge className="bg-red-500 text-white text-xs">
+                BACKLOG
+              </Badge>
+            )}
+          </div>
+          
+          {ordem.responsavel_id ? (
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                <AvatarImage src={ordem.admin_users?.foto_perfil_url} alt={ordem.admin_users?.nome} />
+                <AvatarFallback className="text-base font-semibold">
+                  {ordem.admin_users?.nome?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-muted-foreground truncate max-w-24">
+                {ordem.admin_users?.nome}
+              </span>
+            </div>
+          ) : (
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCapturarOrdem?.(ordem.id);
+              }}
+              disabled={isCapturing}
+              className="flex-shrink-0"
+            >
+              <UserCheck className="h-5 w-5 mr-2" />
+              Capturar
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      
+      <CardContent 
+        className="space-y-3 cursor-pointer"
+        onClick={() => onOrdemClick(ordem)}
+      >
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex-1 space-y-1 min-w-0">
+            <p className="text-xs text-muted-foreground">Cliente</p>
+            <p className="text-sm font-medium truncate">{ordem.pedido?.cliente_nome}</p>
+          </div>
+          
+          {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
+            <Badge variant="secondary" className="gap-1 flex-shrink-0">
+              <Timer className="h-3 w-3" />
+              {tempoDecorrido}
+            </Badge>
+          )}
+        </div>
+
+        {linhas.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Progresso</span>
+              <span className="font-medium">{linhasConcluidas}/{linhas.length} itens</span>
+            </div>
+            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-primary h-full transition-all duration-300"
+                style={{ width: `${progresso}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {ordem.observacoes && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {ordem.observacoes}
+          </p>
+        )}
+
+        {/* Botão para enviar ao histórico (apenas ordens concluídas) */}
+        {isConcluida && onEnviarParaHistorico && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEnviarParaHistorico(ordem.id);
+            }}
+            disabled={isEnviandoHistorico}
+          >
+            <Archive className="h-3 w-3 mr-2" />
+            Enviar para Histórico
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 interface ProducaoKanbanProps {
   ordensAFazer: Ordem[];
   ordensConcluidas: Ordem[];
@@ -62,136 +210,6 @@ export function ProducaoKanban({
   onEnviarParaHistorico,
   isEnviandoHistorico = false,
 }: ProducaoKanbanProps) {
-  
-  const renderOrdemCard = (ordem: Ordem, isConcluida: boolean = false) => {
-    const linhas = ordem.linhas || [];
-    const linhasConcluidas = linhas.filter(l => l.concluida).length;
-    const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
-    const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
-
-    const tempoDecorrido = useCronometroOrdem({
-      capturada_em: ordem.capturada_em,
-      tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
-      todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
-    });
-
-    return (
-      <Card 
-        key={ordem.id} 
-        className={cn(
-          "hover:shadow-md transition-all",
-          ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
-        )}
-      >
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-2">
-            <div 
-              className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
-              onClick={() => onOrdemClick(ordem)}
-            >
-              {ordem.em_backlog && (
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
-              )}
-              <Package className="h-4 w-4 flex-shrink-0 text-primary" />
-              <CardTitle className="text-sm font-semibold truncate">
-                {ordem.numero_ordem}
-              </CardTitle>
-              {ordem.em_backlog && (
-                <Badge className="bg-red-500 text-white text-xs">
-                  BACKLOG
-                </Badge>
-              )}
-            </div>
-            
-            {ordem.responsavel_id ? (
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                  <AvatarImage src={ordem.admin_users?.foto_perfil_url} alt={ordem.admin_users?.nome} />
-                  <AvatarFallback className="text-base font-semibold">
-                    {ordem.admin_users?.nome?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium text-muted-foreground truncate max-w-24">
-                  {ordem.admin_users?.nome}
-                </span>
-              </div>
-            ) : (
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCapturarOrdem?.(ordem.id);
-                }}
-                disabled={isCapturing}
-                className="flex-shrink-0"
-              >
-                <UserCheck className="h-5 w-5 mr-2" />
-                Capturar
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        
-        <CardContent 
-          className="space-y-3 cursor-pointer"
-          onClick={() => onOrdemClick(ordem)}
-        >
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex-1 space-y-1 min-w-0">
-              <p className="text-xs text-muted-foreground">Cliente</p>
-              <p className="text-sm font-medium truncate">{ordem.pedido?.cliente_nome}</p>
-            </div>
-            
-            {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
-              <Badge variant="secondary" className="gap-1 flex-shrink-0">
-                <Timer className="h-3 w-3" />
-                {tempoDecorrido}
-              </Badge>
-            )}
-          </div>
-
-          {linhas.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progresso</span>
-                <span className="font-medium">{linhasConcluidas}/{linhas.length} itens</span>
-              </div>
-              <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-primary h-full transition-all duration-300"
-                  style={{ width: `${progresso}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {ordem.observacoes && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {ordem.observacoes}
-            </p>
-          )}
-
-          {/* Botão para enviar ao histórico (apenas ordens concluídas) */}
-          {isConcluida && onEnviarParaHistorico && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEnviarParaHistorico(ordem.id);
-              }}
-              disabled={isEnviandoHistorico}
-            >
-              <Archive className="h-3 w-3 mr-2" />
-              Enviar para Histórico
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
 
   const renderSkeletons = () => (
     <>
@@ -226,7 +244,18 @@ export function ProducaoKanban({
           {isLoading ? (
             renderSkeletons()
           ) : ordensAFazer.length > 0 ? (
-            ordensAFazer.map(ordem => renderOrdemCard(ordem, false))
+            ordensAFazer.map(ordem => (
+              <OrdemCard
+                key={ordem.id}
+                ordem={ordem}
+                isConcluida={false}
+                onOrdemClick={onOrdemClick}
+                onCapturarOrdem={onCapturarOrdem}
+                isCapturing={isCapturing}
+                onEnviarParaHistorico={onEnviarParaHistorico}
+                isEnviandoHistorico={isEnviandoHistorico}
+              />
+            ))
           ) : (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -254,7 +283,18 @@ export function ProducaoKanban({
           {isLoading ? (
             renderSkeletons()
           ) : ordensConcluidas.length > 0 ? (
-            ordensConcluidas.map(ordem => renderOrdemCard(ordem, true))
+            ordensConcluidas.map(ordem => (
+              <OrdemCard
+                key={ordem.id}
+                ordem={ordem}
+                isConcluida={true}
+                onOrdemClick={onOrdemClick}
+                onCapturarOrdem={onCapturarOrdem}
+                isCapturing={isCapturing}
+                onEnviarParaHistorico={onEnviarParaHistorico}
+                isEnviandoHistorico={isEnviandoHistorico}
+              />
+            ))
           ) : (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
