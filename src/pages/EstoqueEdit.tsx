@@ -182,7 +182,7 @@ export default function EstoqueEdit() {
               <div className="space-y-2">
                 <Label htmlFor="subcategoria_id">Subcategoria</Label>
                 <Select
-                  value={formData.subcategoria_id}
+                  value={formData.subcategoria_id || undefined}
                   onValueChange={(value) =>
                     setFormData({ ...formData, subcategoria_id: value })
                   }
@@ -203,7 +203,7 @@ export default function EstoqueEdit() {
               <div className="space-y-2">
                 <Label htmlFor="fornecedor_id">Fornecedor</Label>
                 <Select
-                  value={formData.fornecedor_id}
+                  value={formData.fornecedor_id || undefined}
                   onValueChange={(value) =>
                     setFormData({ ...formData, fornecedor_id: value })
                   }
@@ -296,7 +296,7 @@ export default function EstoqueEdit() {
               <div className="space-y-2">
                 <Label htmlFor="setor_responsavel_producao">Setor de Produção</Label>
                 <Select
-                  value={formData.setor_responsavel_producao}
+                  value={formData.setor_responsavel_producao || undefined}
                   onValueChange={(value) =>
                     setFormData({ ...formData, setor_responsavel_producao: value })
                   }
