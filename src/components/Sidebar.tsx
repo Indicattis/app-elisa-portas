@@ -20,11 +20,6 @@ const navigation = [{
   href: "/dashboard/visitas",
   icon: Calendar
 }, {
-  name: "Produção",
-  href: "/dashboard/producao",
-  icon: Factory,
-  adminOrManagerFabril: true
-}, {
   name: "Usuários",
   href: "/dashboard/users",
   icon: Users,
@@ -79,7 +74,6 @@ export function Sidebar() {
   const filteredNavigation = navigation.filter(item => {
     if (item.adminOnly && !isAdmin) return false;
     if (item.adminOrManager && !isAdmin && !isGerenteComercial) return false;
-    if (item.adminOrManagerFabril && !isAdmin && !isGerenteComercial && !isGerenteFabril) return false;
     return true;
   });
   return (
