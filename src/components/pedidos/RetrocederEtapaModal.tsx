@@ -37,9 +37,11 @@ export function RetrocederEtapaModal({
   const configAtual = ETAPAS_CONFIG[etapaAtual];
   const configDestino = ETAPAS_CONFIG[etapaDestino];
 
-  // Filtrar apenas etapas anteriores à atual
+  // Filtrar apenas etapas anteriores à atual, excluindo "inspecao_qualidade"
   const indiceAtual = ORDEM_ETAPAS.indexOf(etapaAtual);
-  const etapasDisponiveis = ORDEM_ETAPAS.slice(0, indiceAtual);
+  const etapasDisponiveis = ORDEM_ETAPAS
+    .slice(0, indiceAtual)
+    .filter(etapa => etapa !== 'inspecao_qualidade');
 
   const handleConfirmar = () => {
     if (!motivo.trim()) {

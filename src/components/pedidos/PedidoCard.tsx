@@ -14,6 +14,7 @@ import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
 import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
 import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
 import { DefinirDataCarregamentoModal } from "./DefinirDataCarregamentoModal";
+import { VisualizarBacklogModal } from "./VisualizarBacklogModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +56,7 @@ export function PedidoCard({
   const [showConfirmarAvanco, setShowConfirmarAvanco] = useState(false);
   const [showProgresso, setShowProgresso] = useState(false);
   const [showDefinirData, setShowDefinirData] = useState(false);
+  const [showVisualizarBacklog, setShowVisualizarBacklog] = useState(false);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
     isAdmin
@@ -555,6 +557,13 @@ export function PedidoCard({
                 <Eye className="h-3.5 w-3.5" />
               </Button>);
 
+              // Add backlog button if applicable
+              if (emBacklog && motivoBacklog) {
+                actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={() => setShowVisualizarBacklog(true)} title="Ver justificativa do backlog" className="bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
+                  <FileText className="h-3.5 w-3.5" />
+                </Button>);
+              }
+
               // Add retroceder button if available
               if (isAdmin && etapaAnterior && onRetrocederEtapa) {
                 actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={() => setShowRetrocederEtapa(true)} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
@@ -575,6 +584,8 @@ export function PedidoCard({
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
       <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
+
+        <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
 
         <AvancarQualidadeModal open={showAvancarQualidade} onOpenChange={setShowAvancarQualidade} onConfirmar={async () => {
         setShowAvancarQualidade(false);
@@ -758,6 +769,13 @@ export function PedidoCard({
                 <Eye className="h-3.5 w-3.5" />
               </Button>);
 
+          // Add backlog button if applicable
+          if (emBacklog && motivoBacklog) {
+            actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={() => setShowVisualizarBacklog(true)} title="Ver justificativa do backlog" className="bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
+                  <FileText className="h-3.5 w-3.5" />
+                </Button>);
+          }
+
           // Add retroceder button if available
           if (isAdmin && etapaAnterior && onRetrocederEtapa) {
             actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={() => setShowRetrocederEtapa(true)} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
@@ -783,6 +801,8 @@ export function PedidoCard({
       <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
       <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
+
+      <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
 
       <AvancarQualidadeModal open={showAvancarQualidade} onOpenChange={setShowAvancarQualidade} onConfirmar={async () => {
       setShowAvancarQualidade(false);
