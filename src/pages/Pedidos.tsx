@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, LayoutGrid, List, History } from "lucide-react";
+import { Package, LayoutGrid, List, History, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
@@ -12,9 +13,12 @@ import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMi
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState, useMemo } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Pedidos() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -135,6 +139,15 @@ export default function Pedidos() {
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+    queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    toast({
+      title: "Atualizado",
+      description: "Lista de pedidos atualizada com sucesso",
+    });
+  };
+
   return (
     <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
       {/* Header */}
@@ -149,14 +162,25 @@ export default function Pedidos() {
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() => navigate('/dashboard/historico-producao')}
-          className="gap-2"
-        >
-          <History className="h-4 w-4" />
-          Histórico de Produção
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard/historico-producao')}
+            className="gap-2"
+          >
+            <History className="h-4 w-4" />
+            Histórico de Produção
+          </Button>
+        </div>
 
         {/* Controles de visualização */}
         <div className="flex items-center gap-1 border rounded-md p-1">
