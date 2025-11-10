@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 
 export function usePinturaInicios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: producaoUser } = useProducaoAuth();
 
   // Buscar inícios de pintura
   const { data: inicios = [], isLoading } = useQuery({
@@ -52,8 +54,7 @@ export function usePinturaInicios() {
   // Alternar status de recarga
   const toggleRecarga = useMutation({
     mutationFn: async (inicioId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!producaoUser) throw new Error('Usuário não autenticado');
 
       // Buscar o estado atual
       const { data: inicioAtual } = await supabase
@@ -69,7 +70,7 @@ export function usePinturaInicios() {
         .update({
           recarga_realizada: novoStatus,
           recarga_realizada_em: novoStatus ? new Date().toISOString() : null,
-          recarga_realizada_por: novoStatus ? user.id : null,
+          recarga_realizada_por: novoStatus ? producaoUser.user_id : null,
         })
         .eq('id', inicioId);
 
@@ -95,13 +96,12 @@ export function usePinturaInicios() {
   // Criar novo início de pintura
   const criarInicio = useMutation({
     mutationFn: async (observacoes?: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!producaoUser) throw new Error('Usuário não autenticado');
 
       const { data, error } = await supabase
         .from("pintura_inicios")
         .insert({
-          iniciado_por: user.id,
+          iniciado_por: producaoUser.user_id,
           observacoes: observacoes || null,
         })
         .select()
