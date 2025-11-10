@@ -162,32 +162,36 @@ export default function Pedidos() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
             onClick={handleRefresh}
             className="gap-2"
+            size="sm"
           >
             <RefreshCw className="h-4 w-4" />
-            Atualizar
+            <span className="hidden sm:inline">Atualizar</span>
           </Button>
           
           <Button
             variant="outline"
             onClick={() => navigate('/producao/login')}
             className="gap-2"
+            size="sm"
           >
             <Factory className="h-4 w-4" />
-            Interface de Produção
+            <span className="hidden lg:inline">Interface de Produção</span>
+            <span className="lg:hidden hidden sm:inline">Produção</span>
           </Button>
           
           <Button
             variant="outline"
             onClick={() => navigate('/dashboard/historico-producao')}
             className="gap-2"
+            size="sm"
           >
             <History className="h-4 w-4" />
-            Histórico de Produção
+            <span className="hidden sm:inline">Histórico</span>
           </Button>
         </div>
 
@@ -234,9 +238,10 @@ export default function Pedidos() {
                 value={etapa}
                 className="flex-shrink-0 text-xs sm:text-sm whitespace-nowrap"
               >
-                <span className={`inline-block w-2 h-2 rounded-full mr-2 ${config.color}`} />
-                {config.label}
-                <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                <span className={`inline-block w-2 h-2 rounded-full mr-1 sm:mr-2 ${config.color}`} />
+                <span className="hidden md:inline">{config.label}</span>
+                <span className="md:hidden">{config.label.split(' ')[0]}</span>
+                <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
                   {count}
                 </span>
               </TabsTrigger>
@@ -248,7 +253,7 @@ export default function Pedidos() {
           <TabsContent key={etapa} value={etapa} className="mt-6">
             <Card>
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <span>{ETAPAS_CONFIG[etapa].label}</span>
                     <span className="text-sm font-normal text-muted-foreground">

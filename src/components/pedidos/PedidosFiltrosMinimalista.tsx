@@ -42,9 +42,9 @@ export function PedidosFiltrosMinimalista({
   });
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
       {/* Pesquisa */}
-      <div className="relative w-48">
+      <div className="relative w-full sm:w-48">
         <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           placeholder="Cliente..."
@@ -56,7 +56,7 @@ export function PedidosFiltrosMinimalista({
 
       {/* Tipo de Entrega */}
       <Select value={tipoEntrega} onValueChange={onTipoEntregaChange}>
-        <SelectTrigger className="w-32 h-8 text-xs">
+        <SelectTrigger className="w-full sm:w-32 h-8 text-xs">
           <SelectValue placeholder="Entrega" />
         </SelectTrigger>
         <SelectContent>
@@ -68,7 +68,7 @@ export function PedidosFiltrosMinimalista({
 
       {/* Cor da Pintura */}
       <Select value={corPintura} onValueChange={onCorPinturaChange}>
-        <SelectTrigger className="w-32 h-8 text-xs">
+        <SelectTrigger className="w-full sm:w-32 h-8 text-xs">
           <SelectValue placeholder="Cor" />
         </SelectTrigger>
         <SelectContent className="max-h-80 bg-background z-50">
