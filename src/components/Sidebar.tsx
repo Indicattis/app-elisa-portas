@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, Factory, TrendingUp, CreditCard, CalendarDays, ChevronRight, DollarSign } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, TrendingUp, CreditCard, CalendarDays, ChevronRight, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 const navigation = [{
@@ -61,9 +61,7 @@ export function Sidebar() {
     user,
     isAdmin,
     userRole,
-    isGerenteFabril,
-    isGerenteComercial,
-    isFabrica
+    isGerenteComercial
   } = useAuth();
   const isActive = (path: string) => {
     if (path === "/dashboard") {
@@ -147,36 +145,6 @@ export function Sidebar() {
             </div>
           ))}
         </nav>
-
-        {/* Link para Interface de Produção */}
-        {(isFabrica || isAdmin) && (
-          <div className="px-4 pb-2">
-            <div className="relative group">
-              <NavLink 
-                to="/producao/login" 
-                className="relative flex items-center px-3 py-2 md:px-4 md:py-3 rounded-xl text-xs md:text-sm font-medium
-                  transition-colors duration-200
-                  text-muted-foreground hover:text-foreground hover:bg-muted
-                  justify-start
-                "
-              >
-                <Factory className={`h-4 w-4 md:h-5 md:w-5 ${collapsed ? "" : "mr-4"}`} />
-                
-                {!collapsed && (
-                  <span>Interface de Produção</span>
-                )}
-              </NavLink>
-              
-              {/* Tooltip for Collapsed State */}
-              {collapsed && (
-                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-popover text-popover-foreground text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 whitespace-nowrap">
-                  Interface de Produção
-                  <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-popover"></div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Botão de Configurações */}
         {isAdmin && (
