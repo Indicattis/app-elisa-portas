@@ -225,7 +225,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       if (pedidoError) throw pedidoError;
 
       const etapaAtualNome = pedido.etapa_atual as EtapaPedido;
-      const proximaEtapa = getProximaEtapa(etapaAtualNome);
+      let proximaEtapa = getProximaEtapa(etapaAtualNome);
 
       if (!proximaEtapa) {
         throw new Error('Pedido já está na última etapa');
@@ -284,26 +284,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         if (onProgress) onProgress('fechar_etapa_atual', 'completed');
       }
 
-      // Criar nova etapa com checkboxes
-      if (onProgress) onProgress('criar_nova_etapa', 'in_progress');
-      await executarComDelay(async () => {
-        const checkboxesNovos = ETAPAS_CONFIG[proximaEtapa].checkboxes.map(cb => ({
-          ...cb,
-          checked: false
-        }));
-
-        const { error: etapaError } = await supabase
-          .from('pedidos_etapas')
-          .insert({
-            pedido_id: pedidoId,
-            etapa: proximaEtapa,
-            checkboxes: checkboxesNovos as any
-          });
-
-        if (etapaError) throw etapaError;
-      });
-      if (onProgress) onProgress('criar_nova_etapa', 'completed');
-
+      // ===== CALCULAR ETAPA DESTINO ANTES DE CRIAR A NOVA ETAPA =====
       // Lógica condicional quando sai da inspeção de qualidade
       let etapaDestino = proximaEtapa;
       if (etapaAtualNome === 'inspecao_qualidade') {
@@ -381,6 +362,26 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         etapaDestino = 'finalizado';
         console.log('[moverParaProximaEtapa] Pedido em aguardando_coleta avançando para finalizado');
       }
+
+      // ===== CRIAR NOVA ETAPA COM A ETAPA DESTINO CORRETA =====
+      if (onProgress) onProgress('criar_nova_etapa', 'in_progress');
+      await executarComDelay(async () => {
+        const checkboxesNovos = ETAPAS_CONFIG[etapaDestino].checkboxes.map(cb => ({
+          ...cb,
+          checked: false
+        }));
+
+        const { error: etapaError } = await supabase
+          .from('pedidos_etapas')
+          .insert({
+            pedido_id: pedidoId,
+            etapa: etapaDestino,
+            checkboxes: checkboxesNovos as any
+          });
+
+        if (etapaError) throw etapaError;
+      });
+      if (onProgress) onProgress('criar_nova_etapa', 'completed');
 
       // Atualizar pedido e resetar prioridade
       if (onProgress) onProgress('atualizar_pedido', 'in_progress');
