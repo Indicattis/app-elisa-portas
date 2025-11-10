@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, LayoutGrid, List, History, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -237,8 +238,53 @@ export default function Pedidos() {
       />
 
       {/* Tabs de Etapas */}
+      {/* Tabs de Etapas - Desktop */}
       <Tabs value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
-        <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 scrollbar-hide">
+        {/* Seletor mobile - apenas em telas pequenas */}
+        <div className="md:hidden mb-4">
+          <Select value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
+            <SelectTrigger className="w-full h-12">
+              <SelectValue>
+                {(() => {
+                  const config = ETAPAS_CONFIG[etapaAtiva];
+                  const count = contadores[etapaAtiva] || 0;
+                  const IconComponent = ETAPA_ICONS[etapaAtiva];
+                  return (
+                    <div className="flex items-center gap-2">
+                      <IconComponent className="h-5 w-5" />
+                      <span className="font-medium">{config.label}</span>
+                      <Badge variant="secondary" className="ml-auto">
+                        {count}
+                      </Badge>
+                    </div>
+                  );
+                })()}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {ORDEM_ETAPAS.map((etapa) => {
+                const config = ETAPAS_CONFIG[etapa];
+                const count = contadores[etapa] || 0;
+                const IconComponent = ETAPA_ICONS[etapa];
+                
+                return (
+                  <SelectItem key={etapa} value={etapa} className="cursor-pointer">
+                    <div className="flex items-center gap-2 w-full">
+                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                      <span className="flex-1">{config.label}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {count}
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tabs - Desktop apenas */}
+        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 scrollbar-hide">
           {ORDEM_ETAPAS.map((etapa) => {
             const config = ETAPAS_CONFIG[etapa];
             const count = contadores[etapa] || 0;
@@ -251,7 +297,7 @@ export default function Pedidos() {
                 className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2"
               >
                 <IconComponent className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden md:inline text-sm">{config.label}</span>
+                <span className="text-sm">{config.label}</span>
                 <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
                   {count}
                 </span>
