@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Package, CheckCircle2, Clock, UserCheck, Timer, AlertTriangle, Archive } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
+import { useOrdemProgress } from "@/hooks/useOrdemProgress";
 import { cn } from "@/lib/utils";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
@@ -64,6 +65,8 @@ function OrdemCard({
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
 
+  const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
+
   const tempoDecorrido = useCronometroOrdem({
     capturada_em: ordem.capturada_em,
     tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
@@ -90,6 +93,11 @@ function OrdemCard({
             <CardTitle className="text-sm font-semibold truncate">
               {ordem.numero_ordem}
             </CardTitle>
+            {ordemProgress && ordemProgress.total > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {ordemProgress.concluidas}/{ordemProgress.total}
+              </Badge>
+            )}
             {ordem.em_backlog && (
               <Badge className="bg-red-500 text-white text-xs">
                 BACKLOG

@@ -6,11 +6,13 @@ import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangl
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
+import { useOrdemProgress } from "@/hooks/useOrdemProgress";
 
 interface Ordem {
   id: string;
   numero_ordem: string;
   status: string;
+  pedido_id: string;
   responsavel_id?: string;
   capturada_em?: string;
   tempo_conclusao_segundos?: number;
@@ -54,6 +56,7 @@ export function ProducaoPinturaKanban({
     const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
     const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
     const todasConcluidas = linhas.length > 0 && linhas.every((l: any) => l.concluida);
+    const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
     const tempoDecorrido = useCronometroOrdem({
       capturada_em: ordem.capturada_em,
       tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
@@ -79,6 +82,11 @@ export function ProducaoPinturaKanban({
                 <CardTitle className="text-base font-semibold truncate">
                   {ordem.numero_ordem}
                 </CardTitle>
+                {ordemProgress && ordemProgress.total > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    {ordemProgress.concluidas}/{ordemProgress.total}
+                  </Badge>
+                )}
                 {ordem.em_backlog && (
                   <Badge className="bg-red-500 text-white text-xs">
                     BACKLOG
