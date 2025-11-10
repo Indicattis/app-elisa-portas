@@ -79,28 +79,35 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
 
     // Monitorar mudanças na autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
 
+        // Apenas atualizações síncronas aqui
         if (event === 'SIGNED_IN' && session?.user) {
-          const { data: adminUser, error } = await supabase
-            .from("admin_users")
-            .select("*")
-            .eq("user_id", session.user.id)
-            .eq("setor", "fabrica")
-            .eq("ativo", true)
-            .maybeSingle();
-
-          if (mounted && adminUser && !error) {
-            setUser({
-              user_id: adminUser.user_id,
-              admin_user_id: adminUser.id,
-              nome: adminUser.nome,
-              role: adminUser.role,
-              foto_perfil_url: adminUser.foto_perfil_url,
-              codigo: adminUser.codigo_usuario,
-            });
-          }
+          // Deferir chamadas Supabase com setTimeout
+          setTimeout(() => {
+            if (!mounted) return;
+            
+            supabase
+              .from("admin_users")
+              .select("*")
+              .eq("user_id", session.user.id)
+              .eq("setor", "fabrica")
+              .eq("ativo", true)
+              .maybeSingle()
+              .then(({ data: adminUser, error }) => {
+                if (mounted && adminUser && !error) {
+                  setUser({
+                    user_id: adminUser.user_id,
+                    admin_user_id: adminUser.id,
+                    nome: adminUser.nome,
+                    role: adminUser.role,
+                    foto_perfil_url: adminUser.foto_perfil_url,
+                    codigo: adminUser.codigo_usuario,
+                  });
+                }
+              });
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
           if (mounted) {
             setUser(null);
