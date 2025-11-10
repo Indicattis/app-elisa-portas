@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
-import { Flame, Settings, Package, Paintbrush, ClipboardCheck, Truck } from "lucide-react";
+import { Flame, Settings, Package, Paintbrush, ClipboardCheck, Truck, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import logoLight from "@/assets/logo-light.png";
 
 const menuItems = [
@@ -71,6 +72,19 @@ export function ProducaoSidebar() {
           );
         })}
       </nav>
+
+      <div className="p-4 border-t border-sidebar-border">
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-3"
+          asChild
+        >
+          <NavLink to="/dashboard">
+            <LayoutDashboard className="h-5 w-5" />
+            <span>Voltar ao Dashboard</span>
+          </NavLink>
+        </Button>
+      </div>
     </aside>
   );
 }

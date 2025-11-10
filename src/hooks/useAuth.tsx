@@ -8,6 +8,7 @@ interface AdminUser {
   id: string;
   email: string;
   role: 'administrador' | 'atendente' | 'gerente_comercial' | 'gerente_fabril' | 'diretor' | 'gerente_marketing' | 'gerente_financeiro' | 'gerente_producao' | 'gerente_instalacoes' | 'instalador' | 'aux_instalador' | 'analista_marketing' | 'assistente_marketing' | 'coordenador_vendas' | 'vendedor' | 'assistente_administrativo' | 'soldador' | 'aux_geral' | 'pintor' | 'aux_pintura';
+  setor: 'vendas' | 'marketing' | 'instalacoes' | 'fabrica' | 'administrativo' | null;
   created_at: string;
   ativo: boolean;
   nome: string;
@@ -23,6 +24,7 @@ interface AuthContextType {
   isAtendente: boolean;
   isGerenteComercial: boolean;
   isGerenteFabril: boolean;
+  isFabrica: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata?: any) => Promise<void>;
@@ -196,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAtendente = userRole?.role === 'atendente';
   const isGerenteComercial = userRole?.role === 'gerente_comercial';
   const isGerenteFabril = userRole?.role === 'gerente_fabril';
+  const isFabrica = userRole?.setor === 'fabrica';
 
   return (
     <AuthContext.Provider value={{ 
@@ -206,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAtendente,
       isGerenteComercial,
       isGerenteFabril,
+      isFabrica,
       signOut,
       signIn,
       signUp

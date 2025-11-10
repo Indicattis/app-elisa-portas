@@ -29,7 +29,7 @@ export default function ProducaoLogin() {
     setLoading(true);
 
     try {
-      // Configurar credenciais via edge function (valida e cria/atualiza usuário)
+      // Validar código via edge function (retorna email real do usuário)
       const { data: setupData, error: setupError } = await supabase.functions.invoke('manage-producao-auth', {
         body: { codigo_usuario: codigo.trim() }
       });
@@ -50,11 +50,8 @@ export default function ProducaoLogin() {
         return;
       }
 
-      // Aguardar um momento para propagação
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Autenticar via Supabase Auth
-      const email = `${codigo.trim()}@producao.local`;
+      // Autenticar com o email real do usuário
+      const email = setupData.email;
       const password = 'Producao@2024';
       
       const { error: signInError } = await supabase.auth.signInWithPassword({

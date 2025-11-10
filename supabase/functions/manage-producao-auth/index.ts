@@ -7,8 +7,64 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { codigo_usuario } = await req.json()
+    const body = await req.json()
+    const { codigo_usuario, email, new_password, action } = body
 
+    // Se a ação for atualizar senha
+    if (action === 'update_password') {
+      if (!email || !new_password) {
+        return new Response(
+          JSON.stringify({ error: 'Email e nova senha são obrigatórios' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      )
+
+      // Buscar usuário pelo email
+      const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
+      const user = users.find(u => u.email === email)
+
+      if (!user) {
+        return new Response(
+          JSON.stringify({ error: 'Usuário não encontrado' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Atualizar senha
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        user.id,
+        { password: new_password }
+      )
+
+      if (updateError) {
+        console.error('Erro ao atualizar senha:', updateError)
+        return new Response(
+          JSON.stringify({ error: 'Erro ao atualizar senha' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: 'Senha atualizada com sucesso'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Fluxo original: validar código de usuário
     if (!codigo_usuario) {
       return new Response(
         JSON.stringify({ error: 'Código de usuário é obrigatório' }),
@@ -44,10 +100,11 @@ Deno.serve(async (req) => {
       )
     }
 
-    const email = `${codigo_usuario}@producao.local`
+    // Usar o email real do usuário
+    const email = adminUser.email
     const password = 'Producao@2024'
 
-    // Tentar buscar usuário auth existente
+    // Tentar buscar usuário auth existente pelo email real
     const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
     const existingUser = users.find(u => u.email === email)
 

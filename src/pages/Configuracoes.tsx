@@ -7,6 +7,7 @@ import Users from "@/pages/Users";
 import { RolePermissionManager } from "@/components/RolePermissionManager";
 import { RoleManager } from "@/components/RoleManager";
 import { SetoresLideresManager } from "@/components/SetoresLideresManager";
+import { ProducaoAuthManager } from "@/components/ProducaoAuthManager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +78,7 @@ export default function Configuracoes() {
 
         <TabsContent value="usuarios" className="space-y-6">
           <Users />
+          <ProducaoAuthManager />
         </TabsContent>
 
         <TabsContent value="permissoes" className="space-y-6">
