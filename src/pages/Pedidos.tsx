@@ -227,7 +227,7 @@ export default function Pedidos() {
 
       {/* Tabs de Etapas */}
       <Tabs value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
-        <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
+        <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 scrollbar-hide">
           {ORDEM_ETAPAS.map((etapa) => {
             const config = ETAPAS_CONFIG[etapa];
             const count = contadores[etapa] || 0;
@@ -236,12 +236,12 @@ export default function Pedidos() {
               <TabsTrigger
                 key={etapa}
                 value={etapa}
-                className="flex-shrink-0 text-xs sm:text-sm whitespace-nowrap"
+                className="flex-shrink-0 text-[10px] xs:text-xs sm:text-sm whitespace-nowrap px-2 xs:px-3 py-1.5"
               >
-                <span className={`inline-block w-2 h-2 rounded-full mr-1 sm:mr-2 ${config.color}`} />
+                <span className={`inline-block w-1.5 h-1.5 xs:w-2 xs:h-2 rounded-full mr-1 xs:mr-1.5 sm:mr-2 ${config.color}`} />
                 <span className="hidden md:inline">{config.label}</span>
                 <span className="md:hidden">{config.label.split(' ')[0]}</span>
-                <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                <span className="ml-1 xs:ml-1.5 sm:ml-2 px-1 xs:px-1.5 sm:px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] xs:text-xs font-semibold">
                   {count}
                 </span>
               </TabsTrigger>
