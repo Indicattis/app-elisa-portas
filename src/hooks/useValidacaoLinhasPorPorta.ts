@@ -36,12 +36,13 @@ export function useValidacaoLinhasPorPorta(
   
   const todasCompletas = statusPorPorta.every(s => s.completa);
   const portasCompletas = statusPorPorta.filter(s => s.completa).length;
+  const temPeloMenosUmaLinha = linhas.length > 0;
   
   return {
     statusPorPorta,
     todasCompletas,
     portasCompletas,
     totalPortas: portas.length,
-    podeSalvar: todasCompletas,
+    podeSalvar: temPeloMenosUmaLinha,
   };
 }

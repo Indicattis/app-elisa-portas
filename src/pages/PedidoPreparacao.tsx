@@ -240,14 +240,12 @@ export default function PedidoPreparacao() {
         {!isReadOnly && (
           <Button
             onClick={handleSalvarAlteracoes}
-            disabled={!podeSalvar || !temAlteracoesPendentes || salvando}
+            disabled={!temAlteracoesPendentes || salvando}
             size="sm"
             className="gap-2"
           >
             <Save className="h-3.5 w-3.5" />
-            {!podeSalvar 
-              ? `Faltam linhas (${portasCompletas}/${totalPortas} portas)`
-              : salvando 
+            {salvando 
               ? "Salvando..." 
               : `Salvar${linhasEditadas.size > 0 ? ` (${linhasEditadas.size})` : ''}`
             }
