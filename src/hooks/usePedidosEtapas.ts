@@ -351,6 +351,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           .eq('id', pedidoId)
           .single();
         
+        console.log('[moverParaProximaEtapa] Saindo de aguardando_pintura, pedidoId:', pedidoId, 'vendaId:', pedidoData?.venda_id);
+        
         if (pedidoData?.venda_id) {
           const { data: venda } = await supabase
             .from('vendas')
@@ -358,9 +360,16 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .eq('id', pedidoData.venda_id)
             .single();
           
+          console.log('[moverParaProximaEtapa] tipo_entrega da venda:', venda?.tipo_entrega);
+          
           if (venda?.tipo_entrega === 'entrega') {
             etapaDestino = 'aguardando_coleta';
+            console.log('[moverParaProximaEtapa] ✓ Pedido é ENTREGA → indo para aguardando_coleta');
+          } else if (venda?.tipo_entrega === 'instalacao') {
+            etapaDestino = 'aguardando_instalacao';
+            console.log('[moverParaProximaEtapa] ✓ Pedido é INSTALAÇÃO → indo para aguardando_instalacao');
           } else {
+            console.warn('[moverParaProximaEtapa] ⚠️ tipo_entrega desconhecido:', venda?.tipo_entrega, '→ usando aguardando_instalacao por padrão');
             etapaDestino = 'aguardando_instalacao';
           }
         }
@@ -494,11 +503,72 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
           if (venda?.tipo_entrega === 'instalacao' && onProgress) {
             onProgress('criar_instalacao', 'in_progress');
-            await executarComDelay(async () => {});
+            await executarComDelay(async () => {
+              console.log('[moverParaProximaEtapa] Criando instalação para pedido:', pedidoId);
+              
+              // Buscar dados da venda para criar a instalação
+              const { data: vendaCompleta } = await supabase
+                .from('vendas')
+                .select('cliente_nome, cliente_telefone, cidade, estado')
+                .eq('id', pedidoData.venda_id)
+                .single();
+              
+              if (vendaCompleta) {
+                const { error: instalacaoError } = await supabase
+                  .from('instalacoes_cadastradas')
+                  .insert({
+                    pedido_id: pedidoId,
+                    venda_id: pedidoData.venda_id,
+                    nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
+                    telefone_cliente: vendaCompleta.cliente_telefone || '',
+                    cidade: vendaCompleta.cidade || '',
+                    estado: vendaCompleta.estado || '',
+                    status: 'em_producao',
+                    tipo_instalacao: 'elisa',
+                    created_by: user.id
+                  });
+                
+                if (instalacaoError) {
+                  console.error('[moverParaProximaEtapa] Erro ao criar instalação:', instalacaoError);
+                } else {
+                  console.log('[moverParaProximaEtapa] ✓ Instalação criada com sucesso');
+                }
+              }
+            });
             onProgress('criar_instalacao', 'completed');
           } else if (venda?.tipo_entrega === 'entrega' && onProgress) {
             onProgress('criar_entrega', 'in_progress');
-            await executarComDelay(async () => {});
+            await executarComDelay(async () => {
+              console.log('[moverParaProximaEtapa] Criando entrega para pedido:', pedidoId);
+              
+              // Buscar dados da venda para criar a entrega
+              const { data: vendaCompleta } = await supabase
+                .from('vendas')
+                .select('cliente_nome, cliente_telefone, cidade, estado')
+                .eq('id', pedidoData.venda_id)
+                .single();
+              
+              if (vendaCompleta) {
+                const { error: entregaError } = await supabase
+                  .from('entregas')
+                  .insert({
+                    pedido_id: pedidoId,
+                    venda_id: pedidoData.venda_id,
+                    nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
+                    telefone_cliente: vendaCompleta.cliente_telefone || '',
+                    cidade: vendaCompleta.cidade || '',
+                    estado: vendaCompleta.estado || '',
+                    status: 'em_producao',
+                    created_by: user.id
+                  });
+                
+                if (entregaError) {
+                  console.error('[moverParaProximaEtapa] Erro ao criar entrega:', entregaError);
+                } else {
+                  console.log('[moverParaProximaEtapa] ✓ Entrega criada com sucesso');
+                }
+              }
+            });
             onProgress('criar_entrega', 'completed');
           }
         }
@@ -549,11 +619,67 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         if (onProgress) onProgress('preparar_coleta', 'completed');
       }
 
-      // Se avançou para aguardando_instalacao
+      // Se avançou para aguardando_instalacao, garantir que a instalação existe
       if (etapaDestino === 'aguardando_instalacao') {
         if (onProgress) onProgress('preparar_instalacao', 'in_progress');
         await executarComDelay(async () => {
           console.log('[moverParaProximaEtapa] Preparando instalação para pedido:', pedidoId);
+          
+          // Verificar se já existe instalação
+          const { data: instalacaoExistente } = await supabase
+            .from('instalacoes_cadastradas')
+            .select('id, status')
+            .eq('pedido_id', pedidoId)
+            .maybeSingle();
+          
+          if (instalacaoExistente) {
+            // Atualizar status da instalação existente
+            console.log('[moverParaProximaEtapa] Instalação já existe, atualizando status para pronta_fabrica');
+            await supabase
+              .from('instalacoes_cadastradas')
+              .update({ status: 'pronta_fabrica' })
+              .eq('id', instalacaoExistente.id);
+          } else {
+            // Criar instalação se não existir
+            console.log('[moverParaProximaEtapa] ⚠️ Instalação não existe, criando agora...');
+            
+            const { data: pedidoData } = await supabase
+              .from('pedidos_producao')
+              .select('venda_id')
+              .eq('id', pedidoId)
+              .single();
+            
+            if (pedidoData?.venda_id) {
+              const { data: vendaCompleta } = await supabase
+                .from('vendas')
+                .select('cliente_nome, cliente_telefone, cidade, estado')
+                .eq('id', pedidoData.venda_id)
+                .single();
+              
+              if (vendaCompleta) {
+                const { error: instalacaoError } = await supabase
+                  .from('instalacoes_cadastradas')
+                  .insert({
+                    pedido_id: pedidoId,
+                    venda_id: pedidoData.venda_id,
+                    nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
+                    telefone_cliente: vendaCompleta.cliente_telefone || '',
+                    cidade: vendaCompleta.cidade || '',
+                    estado: vendaCompleta.estado || '',
+                    status: 'pronta_fabrica',
+                    tipo_instalacao: 'elisa',
+                    created_by: user.id
+                  });
+                
+                if (instalacaoError) {
+                  console.error('[moverParaProximaEtapa] Erro ao criar instalação faltante:', instalacaoError);
+                  throw new Error('Não foi possível criar a instalação');
+                } else {
+                  console.log('[moverParaProximaEtapa] ✓ Instalação criada com sucesso (criação tardia)');
+                }
+              }
+            }
+          }
         });
         if (onProgress) onProgress('preparar_instalacao', 'completed');
       }
