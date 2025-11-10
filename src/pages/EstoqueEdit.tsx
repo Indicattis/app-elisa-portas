@@ -24,7 +24,19 @@ export default function EstoqueEdit() {
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    nome_produto: string;
+    descricao_produto: string;
+    quantidade: number;
+    quantidade_ideal: number;
+    unidade: string;
+    categoria: string;
+    custo_unitario: number;
+    subcategoria_id: string;
+    peso_porta: number;
+    setor_responsavel_producao: string;
+    fornecedor_id: string;
+  }>({
     nome_produto: "",
     descricao_produto: "",
     quantidade: 0,
@@ -61,12 +73,6 @@ export default function EstoqueEdit() {
     if (produto) {
       console.log('[EstoqueEdit] Carregando produto:', produto);
       
-      // Normalizar valor de setor_responsavel_producao (soldagem -> solda)
-      let setorNormalizado = produto.setor_responsavel_producao || "";
-      if (setorNormalizado === "soldagem") {
-        setorNormalizado = "solda";
-      }
-      
       const newFormData = {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
@@ -77,7 +83,7 @@ export default function EstoqueEdit() {
         custo_unitario: Number(produto.custo_unitario) || 0,
         subcategoria_id: produto.subcategoria_id || "",
         peso_porta: Number(produto.peso_porta) || 0,
-        setor_responsavel_producao: setorNormalizado,
+        setor_responsavel_producao: produto.setor_responsavel_producao || "",
         fornecedor_id: produto.fornecedor_id || "",
       };
       
@@ -101,7 +107,7 @@ export default function EstoqueEdit() {
         custo_unitario: formData.custo_unitario,
         subcategoria_id: formData.subcategoria_id || null,
         peso_porta: formData.peso_porta || null,
-        setor_responsavel_producao: formData.setor_responsavel_producao as any || null,
+        setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
         fornecedor_id: formData.fornecedor_id || null,
       });
 
@@ -312,7 +318,6 @@ export default function EstoqueEdit() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
-                    <SelectItem value="solda">Solda</SelectItem>
                     <SelectItem value="soldagem">Soldagem</SelectItem>
                     <SelectItem value="separacao">Separação</SelectItem>
                     <SelectItem value="pintura">Pintura</SelectItem>

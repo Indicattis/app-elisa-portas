@@ -28,7 +28,7 @@ export interface ProdutoEstoque {
   custo_unitario: number;
   subcategoria_id: string | null;
   peso_porta: number | null;
-  setor_responsavel_producao: 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null;
+  setor_responsavel_producao: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null;
   fornecedor_id: string | null;
   quantidade_ideal: number;
   subcategoria?: {

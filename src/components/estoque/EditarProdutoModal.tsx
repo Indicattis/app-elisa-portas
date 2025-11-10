@@ -31,7 +31,7 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
     custo_unitario: 0,
     subcategoria_id: null as string | null,
     peso_porta: null as number | null,
-    setor_responsavel_producao: null as 'perfiladeira' | 'solda' | 'separacao' | 'pintura' | null,
+    setor_responsavel_producao: null as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
     fornecedor_id: null as string | null,
   });
 

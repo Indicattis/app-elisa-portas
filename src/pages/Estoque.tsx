@@ -380,13 +380,13 @@ export default function Estoque() {
                         variant="secondary"
                         className={
                           produto.setor_responsavel_producao === 'perfiladeira' ? 'bg-blue-100 text-blue-800' :
-                          produto.setor_responsavel_producao === 'solda' ? 'bg-orange-100 text-orange-800' :
+                          produto.setor_responsavel_producao === 'soldagem' ? 'bg-orange-100 text-orange-800' :
                           produto.setor_responsavel_producao === 'separacao' ? 'bg-green-100 text-green-800' :
                           'bg-purple-100 text-purple-800'
                         }
                       >
                         {produto.setor_responsavel_producao === 'perfiladeira' ? 'Perfiladeira' :
-                         produto.setor_responsavel_producao === 'solda' ? 'Solda' :
+                         produto.setor_responsavel_producao === 'soldagem' ? 'Soldagem' :
                          produto.setor_responsavel_producao === 'separacao' ? 'Separação' :
                          'Pintura'}
                       </Badge>
