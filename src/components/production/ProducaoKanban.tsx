@@ -2,11 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, CheckCircle2, Clock, UserCheck, Timer, AlertTriangle, Archive } from "lucide-react";
+import { Package, CheckCircle2, Clock, UserCheck, Timer, AlertTriangle, Archive, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
@@ -60,6 +62,7 @@ function OrdemCard({
   onEnviarParaHistorico,
   isEnviandoHistorico = false,
 }: OrdemCardProps) {
+  const [backlogModalOpen, setBacklogModalOpen] = useState(false);
   const linhas = ordem.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
@@ -174,6 +177,22 @@ function OrdemCard({
           </p>
         )}
 
+        {/* Botão para visualizar backlog */}
+        {ordem.em_backlog && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2 border-red-500/50 text-red-600 hover:bg-red-500/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setBacklogModalOpen(true);
+            }}
+          >
+            <FileText className="h-3 w-3 mr-2" />
+            Ver Justificativa
+          </Button>
+        )}
+
         {/* Botão para enviar ao histórico (apenas ordens concluídas) */}
         {isConcluida && onEnviarParaHistorico && (
           <Button
@@ -191,6 +210,17 @@ function OrdemCard({
           </Button>
         )}
       </CardContent>
+
+      {/* Modal de Backlog */}
+      {ordem.em_backlog && (
+        <VisualizarBacklogOrdemModal
+          ordemId={ordem.id}
+          pedidoId={ordem.pedido_id}
+          numeroOrdem={ordem.numero_ordem}
+          open={backlogModalOpen}
+          onOpenChange={setBacklogModalOpen}
+        />
+      )}
     </Card>
   );
 }

@@ -2,11 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangle, Archive } from "lucide-react";
+import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangle, Archive, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
+import { useState } from "react";
+import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
 
 interface Ordem {
   id: string;
@@ -51,6 +53,9 @@ export function ProducaoPinturaKanban({
   onEnviarParaHistorico,
   isEnviandoHistorico = false,
 }: ProducaoPinturaKanbanProps) {
+  const [backlogModalOpen, setBacklogModalOpen] = useState(false);
+  const [selectedOrdem, setSelectedOrdem] = useState<Ordem | null>(null);
+
   const renderOrdemCard = (ordem: Ordem, showFinalizarButton = false, isPronta = false) => {
     const linhas = ordem.linhas || [];
     const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
@@ -189,6 +194,22 @@ export function ProducaoPinturaKanban({
             </p>
           )}
 
+          {ordem.em_backlog && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-red-500/50 text-red-600 hover:bg-red-500/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedOrdem(ordem);
+                setBacklogModalOpen(true);
+              }}
+            >
+              <FileText className="h-3 w-3 mr-2" />
+              Ver Justificativa
+            </Button>
+          )}
+
           {isPronta && onEnviarParaHistorico && (
             <Button
               variant="outline"
@@ -227,48 +248,61 @@ export function ProducaoPinturaKanban({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Coluna: Para Pintar */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Paintbrush className="h-5 w-5 text-orange-600" />
-          <h2 className="text-lg font-semibold">Para Pintar</h2>
-          <Badge variant="secondary" className="ml-auto">
-            {ordensParaPintar.length}
-          </Badge>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Coluna: Para Pintar */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Paintbrush className="h-5 w-5 text-orange-600" />
+            <h2 className="text-lg font-semibold">Para Pintar</h2>
+            <Badge variant="secondary" className="ml-auto">
+              {ordensParaPintar.length}
+            </Badge>
+          </div>
+          <div className="space-y-3">
+            {ordensParaPintar.map((ordem) => renderOrdemCard(ordem, true))}
+            {ordensParaPintar.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
+                  Nenhuma ordem pendente
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
-        <div className="space-y-3">
-          {ordensParaPintar.map((ordem) => renderOrdemCard(ordem, true))}
-          {ordensParaPintar.length === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
-                Nenhuma ordem pendente
-              </CardContent>
-            </Card>
-          )}
+
+        {/* Coluna: Pronta */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <h2 className="text-lg font-semibold">Pronta</h2>
+            <Badge variant="secondary" className="ml-auto">
+              {ordensProntas.length}
+            </Badge>
+          </div>
+          <div className="space-y-3">
+            {ordensProntas.map((ordem) => renderOrdemCard(ordem, false, true))}
+            {ordensProntas.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
+                  Nenhuma ordem concluída
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Coluna: Pronta */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
-          <h2 className="text-lg font-semibold">Pronta</h2>
-          <Badge variant="secondary" className="ml-auto">
-            {ordensProntas.length}
-          </Badge>
-        </div>
-        <div className="space-y-3">
-          {ordensProntas.map((ordem) => renderOrdemCard(ordem, false, true))}
-          {ordensProntas.length === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
-                Nenhuma ordem concluída
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
+      {/* Modal de Backlog */}
+      {selectedOrdem && (
+        <VisualizarBacklogOrdemModal
+          ordemId={selectedOrdem.id}
+          pedidoId={selectedOrdem.pedido_id}
+          numeroOrdem={selectedOrdem.numero_ordem}
+          open={backlogModalOpen}
+          onOpenChange={setBacklogModalOpen}
+        />
+      )}
+    </>
   );
 }
