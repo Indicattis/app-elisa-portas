@@ -49,6 +49,8 @@ export function ConfirmarCarregamentoInstalacaoSheet({
   };
 
   const handleConcluir = async () => {
+    console.log('[Carregamento Instalação] Iniciando conclusão...');
+    
     if (!todasMarcadas) {
       toast.error("Todos os itens devem ser marcados antes de concluir");
       return;
@@ -64,6 +66,7 @@ export function ConfirmarCarregamentoInstalacaoSheet({
     setIsSubmitting(true);
 
     try {
+      console.log('[Carregamento Instalação] Salvando data no pedido...');
       // Salvar data de carregamento no pedido
       const { error: updateError } = await supabase
         .from("pedidos_producao")
@@ -72,14 +75,21 @@ export function ConfirmarCarregamentoInstalacaoSheet({
 
       if (updateError) throw updateError;
 
+      console.log('[Carregamento Instalação] Chamando concluirInstalacao...');
       // Concluir a instalação e avançar o pedido
-      await concluirInstalacao(instalacao.id);
+      const success = await concluirInstalacao(instalacao.id);
+      
+      if (!success) {
+        throw new Error('Falha ao concluir instalação');
+      }
 
-      toast.success("Carregamento confirmado e instalação concluída");
+      console.log('[Carregamento Instalação] Sucesso! Fechando modal...');
+      toast.success("Carregamento confirmado e pedido finalizado");
       onSuccess();
-    } catch (error) {
-      console.error("Erro ao confirmar carregamento:", error);
-      toast.error("Erro ao confirmar carregamento");
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('[Carregamento Instalação] Erro:', error);
+      toast.error(error.message || "Erro ao confirmar carregamento");
       setIsSubmitting(false);
     }
   };
@@ -89,6 +99,18 @@ export function ConfirmarCarregamentoInstalacaoSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg">
+        {isSubmitting && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+            <div className="text-center space-y-3">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+              <p className="font-medium">Concluindo carregamento...</p>
+              <p className="text-sm text-muted-foreground">
+                Finalizando pedido e registrando conclusão
+              </p>
+            </div>
+          </div>
+        )}
+        
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <PackageCheck className="h-5 w-5" />
