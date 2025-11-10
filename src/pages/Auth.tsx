@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { Eye, EyeOff, Shield, Monitor, UserPlus, LogIn, ArrowRight, Zap } from "lucide-react";
+import { Eye, EyeOff, Shield, Monitor, UserPlus, LogIn, ArrowRight, Zap, Factory } from "lucide-react";
 import logoEmpresa from "@/assets/logo-empresa.png";
 import iconEmpresa from "@/assets/icon-empresa.png";
 export default function Auth() {
@@ -19,6 +19,7 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Get the intended destination from state, default to dashboard
   const from = location.state?.from?.pathname || "/dashboard";
@@ -156,6 +157,19 @@ export default function Auth() {
               
             </CardContent>
           </Card>
+
+          {/* Botão para acessar produção */}
+          <div className="mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Button 
+              onClick={() => navigate('/producao/login')}
+              variant="outline"
+              className="w-full group border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
+            >
+              <Factory className="h-4 w-4 mr-2 text-primary" />
+              <span>Acesso para Produção</span>
+              <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </div>
 
           {/* Footer */}
           <div className="text-center mt-8 text-sm text-muted-foreground animate-fade-in" style={{
