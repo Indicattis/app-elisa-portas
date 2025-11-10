@@ -13,8 +13,9 @@ import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 
 // Mapa de ícones para cada etapa
 const ETAPA_ICONS = {
@@ -39,6 +40,8 @@ export default function Pedidos() {
   const [corPintura, setCorPintura] = useState('todas');
   const [mostrarProntos, setMostrarProntos] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const ITENS_POR_PAGINA = 25;
   const contadores = usePedidosContadores();
   const {
     pedidos,
@@ -143,6 +146,17 @@ export default function Pedidos() {
     }
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
+
+  // Resetar página quando filtros mudarem
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
+
+  // Calcular paginação
+  const totalPaginas = Math.ceil(pedidosFiltrados.length / ITENS_POR_PAGINA);
+  const indiceInicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
+  const indiceFim = indiceInicio + ITENS_POR_PAGINA;
+  const pedidosPaginados = pedidosFiltrados.slice(indiceInicio, indiceFim);
   const handleRefresh = () => {
     queryClient.invalidateQueries({
       queryKey: ['pedidos-etapas']
@@ -266,6 +280,7 @@ export default function Pedidos() {
                     <span>{ETAPAS_CONFIG[etapa].label}</span>
                     <span className="text-sm font-normal text-muted-foreground">
                       {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
+                      {totalPaginas > 1 && ` (Página ${paginaAtual} de ${totalPaginas})`}
                     </span>
                   </CardTitle>
                   
@@ -278,7 +293,77 @@ export default function Pedidos() {
                     Carregando...
                   </div> : pedidosFiltrados.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                     {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
-                  </div> : <PedidosDraggableList pedidos={pedidosFiltrados} etapa={etapa} isAberto={etapa === 'aberto'} viewMode={viewMode} pedidoSelecionado={pedidoSelecionado} onSelecionarPedido={setPedidoSelecionado} onMoverEtapa={handleMoverEtapa} onRetrocederEtapa={handleRetrocederEtapa} onReorganizar={handleReorganizar} onMoverPrioridade={handleMoverPrioridade} />}
+                  </div> : (
+                    <>
+                      <PedidosDraggableList 
+                        pedidos={pedidosPaginados} 
+                        etapa={etapa} 
+                        isAberto={etapa === 'aberto'} 
+                        viewMode={viewMode} 
+                        pedidoSelecionado={pedidoSelecionado} 
+                        onSelecionarPedido={setPedidoSelecionado} 
+                        onMoverEtapa={handleMoverEtapa} 
+                        onRetrocederEtapa={handleRetrocederEtapa} 
+                        onReorganizar={handleReorganizar} 
+                        onMoverPrioridade={handleMoverPrioridade} 
+                      />
+                      
+                      {totalPaginas > 1 && (
+                        <div className="mt-6 flex justify-center">
+                          <Pagination>
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious 
+                                  onClick={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
+                                  className={paginaAtual === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                />
+                              </PaginationItem>
+                              
+                              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((pagina) => {
+                                // Mostrar primeira, última e páginas próximas à atual
+                                const mostrarPagina = 
+                                  pagina === 1 || 
+                                  pagina === totalPaginas || 
+                                  (pagina >= paginaAtual - 1 && pagina <= paginaAtual + 1);
+                                
+                                const mostrarEllipsisAntes = pagina === paginaAtual - 2 && paginaAtual > 3;
+                                const mostrarEllipsisDepois = pagina === paginaAtual + 2 && paginaAtual < totalPaginas - 2;
+                                
+                                if (mostrarEllipsisAntes || mostrarEllipsisDepois) {
+                                  return (
+                                    <PaginationItem key={pagina}>
+                                      <PaginationEllipsis />
+                                    </PaginationItem>
+                                  );
+                                }
+                                
+                                if (!mostrarPagina) return null;
+                                
+                                return (
+                                  <PaginationItem key={pagina}>
+                                    <PaginationLink
+                                      onClick={() => setPaginaAtual(pagina)}
+                                      isActive={paginaAtual === pagina}
+                                      className="cursor-pointer"
+                                    >
+                                      {pagina}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                );
+                              })}
+                              
+                              <PaginationItem>
+                                <PaginationNext 
+                                  onClick={() => setPaginaAtual(prev => Math.min(totalPaginas, prev + 1))}
+                                  className={paginaAtual === totalPaginas ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
+                        </div>
+                      )}
+                    </>
+                  )}
               </CardContent>
             </Card>
           </TabsContent>)}
