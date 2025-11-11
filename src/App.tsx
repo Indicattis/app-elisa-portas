@@ -146,45 +146,6 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </div>
               
               <div className="flex items-center gap-2 md:gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="hidden sm:flex">
-                      <Menu className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-background z-50">
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/paineis/tv-dashboard" className="flex items-center gap-2 cursor-pointer">
-                        <Tv className="h-4 w-4" />
-                        <span>Modo TV</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/paineis/mapa" className="flex items-center gap-2 cursor-pointer">
-                        <Map className="h-4 w-4" />
-                        <span>Mapa</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/paineis/diario-bordo" className="flex items-center gap-2 cursor-pointer">
-                        <BookOpen className="h-4 w-4" />
-                        <span>Diário de Bordo</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/paineis/calendario" className="flex items-center gap-2 cursor-pointer">
-                        <CalendarIcon className="h-4 w-4" />
-                        <span>Calendário</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/paineis/contador-vendas" className="flex items-center gap-2 cursor-pointer">
-                        <Calculator className="h-4 w-4" />
-                        <span>Contador de Vendas</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 <HeaderUserInfo />
               </div>
             </div>
