@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ROLE_LABELS, UserRole } from "@/types/permissions";
-import { getSetorFromRole } from "@/utils/setorMapping";
+import { UserRole } from "@/types/permissions";
 import {
   Table,
   TableBody,
@@ -27,11 +26,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Users, Eye } from "lucide-react";
+import { Users, Eye, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreateRoleModal } from "@/components/admin/CreateRoleModal";
+import { SETOR_LABELS } from "@/utils/setorMapping";
+
+interface SystemRole {
+  id: string;
+  key: string;
+  label: string;
+  setor: string | null;
+  descricao: string | null;
+  ativo: boolean;
+  ordem: number;
+}
 
 interface RoleStats {
-  role: UserRole;
+  role: string;
   count: number;
 }
 
@@ -45,7 +56,22 @@ interface UserWithRole {
 }
 
 export default function AdminRoles() {
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  // Buscar cargos do sistema
+  const { data: systemRoles = [] } = useQuery({
+    queryKey: ['system-roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('system_roles')
+        .select('*')
+        .order('ordem', { ascending: true });
+
+      if (error) throw error;
+      return data as SystemRole[];
+    },
+  });
 
   // Buscar estatísticas de roles
   const { data: roleStats = [] } = useQuery({
@@ -67,7 +93,7 @@ export default function AdminRoles() {
       });
 
       return Object.entries(stats).map(([role, count]) => ({
-        role: role as UserRole,
+        role,
         count,
       })) as RoleStats[];
     },
@@ -82,7 +108,7 @@ export default function AdminRoles() {
       const { data, error } = await supabase
         .from('admin_users')
         .select('id, nome, email, foto_perfil_url, role, setor')
-        .eq('role', selectedRole)
+        .eq('role', selectedRole as UserRole)
         .eq('ativo', true)
         .order('nome');
 
@@ -92,11 +118,9 @@ export default function AdminRoles() {
     enabled: !!selectedRole,
   });
 
-  const getRoleCount = (role: UserRole) => {
-    return roleStats.find(s => s.role === role)?.count || 0;
+  const getRoleCount = (roleKey: string) => {
+    return roleStats.find(s => s.role === roleKey)?.count || 0;
   };
-
-  const allRoles = Object.entries(ROLE_LABELS) as [UserRole, string][];
 
   return (
     <div className="space-y-6">
@@ -109,10 +133,18 @@ export default function AdminRoles() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Cargos do Sistema</CardTitle>
-          <CardDescription>
-            Lista completa de cargos e número de usuários ativos em cada um
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Cargos do Sistema</CardTitle>
+              <CardDescription>
+                Lista completa de cargos e número de usuários ativos em cada um
+              </CardDescription>
+            </div>
+            <Button onClick={() => setCreateModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Cargo
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -126,22 +158,30 @@ export default function AdminRoles() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {allRoles.map(([roleKey, roleLabel]) => {
-                const count = getRoleCount(roleKey);
-                const setor = getSetorFromRole(roleKey);
+              {systemRoles.map((role) => {
+                const count = getRoleCount(role.key);
 
                 return (
-                  <TableRow key={roleKey}>
-                    <TableCell className="font-medium">{roleLabel}</TableCell>
+                  <TableRow key={role.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {role.label}
+                        {!role.ativo && (
+                          <Badge variant="secondary" className="text-xs">
+                            Inativo
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <code className="text-xs bg-muted px-2 py-1 rounded">
-                        {roleKey}
+                        {role.key}
                       </code>
                     </TableCell>
                     <TableCell>
-                      {setor ? (
+                      {role.setor ? (
                         <Badge variant="outline" className="capitalize">
-                          {setor}
+                          {SETOR_LABELS[role.setor as keyof typeof SETOR_LABELS] || role.setor}
                         </Badge>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
@@ -157,7 +197,7 @@ export default function AdminRoles() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedRole(roleKey)}
+                        onClick={() => setSelectedRole(role.key)}
                         disabled={count === 0}
                       >
                         <Eye className="h-4 w-4 mr-2" />
@@ -177,7 +217,7 @@ export default function AdminRoles() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Usuários com o cargo: {selectedRole && ROLE_LABELS[selectedRole]}
+              Usuários com o cargo: {selectedRole && systemRoles.find(r => r.key === selectedRole)?.label}
             </DialogTitle>
             <DialogDescription>
               Lista de usuários ativos com este cargo
@@ -220,6 +260,9 @@ export default function AdminRoles() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de criação de cargo */}
+      <CreateRoleModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
     </div>
   );
 }

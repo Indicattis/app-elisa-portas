@@ -3273,6 +3273,45 @@ export type Database = {
         }
         Relationships: []
       }
+      system_roles: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          key: string
+          label: string
+          ordem: number
+          setor: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          key: string
+          label: string
+          ordem?: number
+          setor?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          key?: string
+          label?: string
+          ordem?: number
+          setor?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tabela_precos_portas: {
         Row: {
           altura: number
