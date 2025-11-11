@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck, ChevronRight } from "lucide-react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck, ChevronRight, Tv, ClipboardList } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -368,7 +368,7 @@ export function AppSidebar() {
         {/* Botões de acesso rápido a outras interfaces */}
         <div className="space-y-2">
           <Link to="/paineis" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
-            <LayoutDashboard className="h-4 w-4" />
+            <Tv className="h-4 w-4" />
             <span>Painéis</span>
           </Link>
           
@@ -378,7 +378,7 @@ export function AppSidebar() {
           </Link>
           
           <Link to="/todo" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
-            <CheckSquare className="h-4 w-4" />
+            <ClipboardList className="h-4 w-4" />
             <span>Tarefas</span>
           </Link>
         </div>
