@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck, ChevronRight, Tv, ClipboardList } from "lucide-react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck, ChevronRight, Tv, ClipboardList, Shield, Building2, FileBarChart, PieChart, Wallet, BadgeDollarSign, Users2, Hammer, PackageCheck, ClipboardSignature, CalendarCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,10 +40,12 @@ const iconMap: Record<string, any> = {
   ShoppingCart,
   Calendar,
   CalendarDays,
+  CalendarCheck,
   MapPin,
   Factory,
   Cog,
   Users,
+  Users2,
   Handshake,
   FolderOpen,
   Wrench,
@@ -53,16 +55,26 @@ const iconMap: Record<string, any> = {
   Banknote,
   Network,
   DollarSign,
+  BadgeDollarSign,
   Target,
   Settings,
   Briefcase,
   Package,
+  PackageCheck,
   UserCog,
   Award,
   BookOpen,
   Truck,
   CheckSquare,
-  ClipboardCheck
+  ClipboardCheck,
+  ClipboardList,
+  ClipboardSignature,
+  Shield,
+  Building2,
+  FileBarChart,
+  PieChart,
+  Wallet,
+  Hammer
 };
 export function AppSidebar() {
   const location = useLocation();
