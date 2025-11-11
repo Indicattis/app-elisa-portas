@@ -20,7 +20,7 @@ interface AdminUser {
   user_id: string;
   email: string;
   nome: string;
-  role: "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril" | "diretor" | "gerente_marketing" | "gerente_financeiro" | "gerente_producao" | "gerente_instalacoes" | "instalador" | "aux_instalador" | "analista_marketing" | "assistente_marketing" | "coordenador_vendas" | "vendedor" | "assistente_administrativo" | "soldador" | "aux_geral" | "pintor" | "aux_pintura";
+  role: string; // TEXT in database, validated via FK against system_roles.key
   setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
   codigo_usuario: string | null;
   ativo: boolean;

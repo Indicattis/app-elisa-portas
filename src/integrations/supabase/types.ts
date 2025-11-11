@@ -83,7 +83,7 @@ export type Database = {
           foto_perfil_url: string | null
           id: string
           nome: string
-          role: Database["public"]["Enums"]["user_role"] | null
+          role: string
           setor: Database["public"]["Enums"]["setor_type"] | null
           telefone: string | null
           updated_at: string
@@ -97,7 +97,7 @@ export type Database = {
           foto_perfil_url?: string | null
           id?: string
           nome: string
-          role?: Database["public"]["Enums"]["user_role"] | null
+          role: string
           setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
           updated_at?: string
@@ -111,13 +111,21 @@ export type Database = {
           foto_perfil_url?: string | null
           id?: string
           nome?: string
-          role?: Database["public"]["Enums"]["user_role"] | null
+          role?: string
           setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "system_roles"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       app_routes: {
         Row: {
@@ -4088,13 +4096,15 @@ export type Database = {
         Args: { tipo_documento: string }
         Returns: number
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["user_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | { Args: { _role: string; _user_id: string }; Returns: boolean }
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["user_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
       has_route_access: {
         Args: { _route_key: string; _user_id: string }
         Returns: boolean

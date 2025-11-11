@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AdminUser {
   id: string;
   email: string;
-  role: 'administrador' | 'atendente' | 'gerente_comercial' | 'gerente_fabril' | 'diretor' | 'gerente_marketing' | 'gerente_financeiro' | 'gerente_producao' | 'gerente_instalacoes' | 'instalador' | 'aux_instalador' | 'analista_marketing' | 'assistente_marketing' | 'coordenador_vendas' | 'vendedor' | 'assistente_administrativo' | 'soldador' | 'aux_geral' | 'pintor' | 'aux_pintura';
+  role: string; // TEXT in database, validated via FK against system_roles.key
   setor: 'vendas' | 'marketing' | 'instalacoes' | 'fabrica' | 'administrativo' | null;
   created_at: string;
   ativo: boolean;

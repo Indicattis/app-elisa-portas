@@ -8,28 +8,9 @@
 // - has_route_access(): Única função de verificação de permissão
 // - Administradores sempre têm acesso total (via is_admin())
 
-export type UserRole = 
-  | 'administrador' 
-  | 'gerente_comercial' 
-  | 'gerente_fabril' 
-  | 'atendente' 
-  | 'diretor' 
-  | 'gerente_marketing' 
-  | 'gerente_financeiro' 
-  | 'gerente_producao' 
-  | 'gerente_instalacoes' 
-  | 'instalador' 
-  | 'aux_instalador' 
-  | 'analista_marketing' 
-  | 'assistente_marketing' 
-  | 'coordenador_vendas' 
-  | 'vendedor' 
-  | 'assistente_administrativo' 
-  | 'soldador' 
-  | 'aux_geral' 
-  | 'pintor' 
-  | 'aux_pintura'
-  | 'tecnico_qualidade';
+// Role agora é TEXT no banco, validado via FK contra system_roles.key
+// Isso permite criar novos roles dinamicamente sem precisar de migrations
+export type UserRole = string;
 
 export interface UserRoleAssignment {
   id: string;
@@ -39,7 +20,10 @@ export interface UserRoleAssignment {
   created_by: string | null;
 }
 
-export const ROLE_LABELS: Record<UserRole, string> = {
+// Labels dos roles mais comuns
+// NOTA: Esta lista não precisa mais estar completa pois roles são dinâmicos
+// Os labels devem vir de system_roles.label quando possível
+export const ROLE_LABELS: Record<string, string> = {
   administrador: 'Administrador',
   gerente_comercial: 'Gerente Comercial',
   gerente_fabril: 'Gerente Fabril',
