@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 
 interface AddUserDialogProps {
   onUserAdded: () => void;
@@ -20,9 +21,24 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     nome: "",
     email: "",
     password: "",
-    role: "atendente" as "administrador" | "atendente" | "gerente_comercial" | "gerente_fabril",
+    role: "",
   });
   const { toast } = useToast();
+
+  // Buscar cargos ativos do sistema
+  const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
+    queryKey: ['system-roles-active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('system_roles')
+        .select('key, label')
+        .eq('ativo', true)
+        .order('ordem', { ascending: true });
+
+      if (error) throw error;
+      return data as { key: string; label: string }[];
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +65,9 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
             user_id: authData.user.id,
             email: formData.email,
             nome: formData.nome,
-            role: formData.role,
+            role: formData.role as any,
             ativo: true,
-          });
+          } as any);
 
         if (insertError) throw insertError;
 
@@ -64,7 +80,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
           nome: "",
           email: "",
           password: "",
-          role: "atendente",
+          role: "",
         });
         setOpen(false);
         onUserAdded();
@@ -143,32 +159,28 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
               </Label>
               <Select
                 value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value as any })}
+                onValueChange={(value) => setFormData({ ...formData, role: value })}
+                disabled={loadingRoles}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue />
+                  <SelectValue placeholder="Selecione um cargo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="administrador">Administrador</SelectItem>
-                  <SelectItem value="diretor">Diretor</SelectItem>
-                  <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
-                  <SelectItem value="gerente_marketing">Gerente de Marketing</SelectItem>
-                  <SelectItem value="gerente_financeiro">Gerente Financeiro</SelectItem>
-                  <SelectItem value="gerente_producao">Gerente de Produção</SelectItem>
-                  <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
-                  <SelectItem value="gerente_instalacoes">Gerente de Instalações</SelectItem>
-                  <SelectItem value="coordenador_vendas">Coordenador(a) de Vendas</SelectItem>
-                  <SelectItem value="vendedor">Vendedor(a)</SelectItem>
-                  <SelectItem value="analista_marketing">Analista de Marketing</SelectItem>
-                  <SelectItem value="assistente_marketing">Assistente de Marketing</SelectItem>
-                  <SelectItem value="assistente_administrativo">Assistente Administrativo</SelectItem>
-                  <SelectItem value="atendente">Atendente</SelectItem>
-                  <SelectItem value="instalador">Instalador</SelectItem>
-                  <SelectItem value="aux_instalador">Aux. Instalador</SelectItem>
-                  <SelectItem value="soldador">Soldador</SelectItem>
-                  <SelectItem value="pintor">Pintor(a)</SelectItem>
-                  <SelectItem value="aux_pintura">Aux. Pintura</SelectItem>
-                  <SelectItem value="aux_geral">Aux. Geral</SelectItem>
+                  {loadingRoles ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  ) : systemRoles.length === 0 ? (
+                    <div className="text-sm text-muted-foreground text-center py-4">
+                      Nenhum cargo ativo disponível
+                    </div>
+                  ) : (
+                    systemRoles.map((role) => (
+                      <SelectItem key={role.key} value={role.key}>
+                        {role.label}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
