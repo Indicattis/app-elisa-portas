@@ -106,6 +106,7 @@ import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import Ordens from "./pages/Ordens";
 import AdminHome from "./pages/admin/AdminHome";
+import AdminPermissions from "./pages/admin/AdminPermissions";
 import ParceiroHome from "./pages/ParceiroHome";
 import ComprasHome from "./pages/ComprasHome";
 import FinanceiroHome from "./pages/FinanceiroHome";
@@ -1092,6 +1093,16 @@ const App = () => (
                     <ProtectedRoute routeKey="admin">
                       <DashboardLayout>
                         <AdminHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/permissions"
+                  element={
+                    <ProtectedRoute routeKey="admin_permissions">
+                      <DashboardLayout>
+                        <AdminPermissions />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
