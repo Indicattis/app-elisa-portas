@@ -13,18 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    // Create regular client for auth verification
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
-
-    // Create admin client for user creation
+    // Create admin client for all operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -36,37 +25,65 @@ serve(async (req) => {
       }
     );
 
-    // Verify the requesting user is authenticated
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Get and verify JWT token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Extract JWT token
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verify token and get user
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !user) {
-      console.error('Auth error:', userError);
+      console.error('Invalid token:', userError?.message);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized - invalid session' }),
+        JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     console.log('Authenticated user:', user.id);
 
-    // Check if user is admin using the regular client (respects RLS)
-    const { data: adminUser, error: adminCheckError } = await supabaseClient
+    // Check if user is admin (using admin client to bypass RLS)
+    const { data: adminUser, error: adminCheckError } = await supabaseAdmin
       .from('admin_users')
-      .select('role')
+      .select('role, ativo')
       .eq('user_id', user.id)
-      .eq('ativo', true)
       .single();
 
-    if (adminCheckError || !adminUser) {
-      console.error('Admin check error:', adminCheckError);
+    if (adminCheckError) {
+      console.error('Error checking admin status:', adminCheckError);
       return new Response(
-        JSON.stringify({ error: 'User not found or not active' }),
+        JSON.stringify({ error: 'Failed to verify user permissions' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!adminUser) {
+      console.error('User not found in admin_users:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'User not found' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!adminUser.ativo) {
+      console.error('User is not active:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'User account is inactive' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (adminUser.role !== 'administrador') {
-      console.error('Insufficient permissions:', adminUser.role);
+      console.error('Insufficient permissions - role:', adminUser.role);
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions - admin role required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
