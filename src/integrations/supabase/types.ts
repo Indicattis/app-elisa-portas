@@ -3373,6 +3373,8 @@ export type Database = {
           responsavel_id: string
           setor: string | null
           status: Database["public"]["Enums"]["tarefa_status"]
+          template_id: string | null
+          tipo_recorrencia: string | null
           updated_at: string
         }
         Insert: {
@@ -3385,6 +3387,8 @@ export type Database = {
           responsavel_id: string
           setor?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
+          template_id?: string | null
+          tipo_recorrencia?: string | null
           updated_at?: string
         }
         Update: {
@@ -3397,6 +3401,8 @@ export type Database = {
           responsavel_id?: string
           setor?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
+          template_id?: string | null
+          tipo_recorrencia?: string | null
           updated_at?: string
         }
         Relationships: []
