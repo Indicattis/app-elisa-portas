@@ -587,6 +587,16 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/dashboard/instalacoes/listagem"
+                  element={
+                    <ProtectedRoute routeKey="instalacoes_listagem">
+                      <DashboardLayout>
+                        <Instalacoes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/instalacoes/cronograma-instalacoes"
                   element={
                     <ProtectedRoute routeKey="cronograma_instalacoes">
@@ -672,16 +682,6 @@ const App = () => (
                     <ProtectedRoute routeKey="etiquetas">
                       <DashboardLayout>
                         <Etiquetas />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_home">
-                      <DashboardLayout>
-                        <InstalacoesHome />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
