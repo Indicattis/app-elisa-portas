@@ -84,7 +84,7 @@ import RHAdmin from "./pages/RHAdmin";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
-import ForcaVendas from "./pages/ForcaVendas";
+
 import DiarioBordo from "./pages/DiarioBordo";
 import Frota from "./pages/Frota";
 import FrotaNovo from "./pages/FrotaNovo";
@@ -422,16 +422,6 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <Vendas />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/vendas/forca-vendas"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <ForcaVendas />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
