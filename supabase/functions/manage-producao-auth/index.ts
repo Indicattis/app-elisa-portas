@@ -85,24 +85,47 @@ Deno.serve(async (req) => {
     )
 
     // Buscar usuário em admin_users
+    console.log('Buscando usuário com código:', codigo_usuario)
+    
     const { data: adminUser, error: adminError } = await supabaseAdmin
       .from('admin_users')
       .select('*')
       .eq('codigo_usuario', codigo_usuario)
       .eq('setor', 'fabrica')
       .eq('ativo', true)
-      .single()
+      .maybeSingle()
 
-    if (adminError || !adminUser) {
+    console.log('Resultado da busca:', { adminUser, adminError })
+
+    if (adminError) {
+      console.error('Erro na query:', adminError)
       return new Response(
-        JSON.stringify({ error: 'Usuário não encontrado ou inativo' }),
+        JSON.stringify({ error: 'Erro ao buscar usuário', details: adminError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!adminUser) {
+      console.log('Usuário não encontrado com código:', codigo_usuario)
+      return new Response(
+        JSON.stringify({ error: 'Usuário não encontrado', message: 'Código não encontrado ou usuário inativo/não pertence à produção' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     // Usar o email real do usuário
+    if (!adminUser.email) {
+      console.error('Usuário sem email cadastrado:', adminUser)
+      return new Response(
+        JSON.stringify({ error: 'Usuário sem email', message: 'Este usuário não possui email cadastrado. Contate o administrador.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const email = adminUser.email
     const password = 'Producao@2024'
+
+    console.log('Configurando autenticação para email:', email)
 
     // Tentar buscar usuário auth existente pelo email real
     const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
