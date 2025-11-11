@@ -126,25 +126,21 @@ export function AppSidebar() {
     staleTime: 5 * 60 * 1000,
   });
   
-  // Filtrar rotas: separar raiz de filhas, ocultar dashboard da lista
-  const rootRoutes = routes.filter(route => !route.parent_key && route.key !== 'dashboard');
-  const childRoutes = routes.filter(route => route.parent_key);
+  // Função recursiva para construir árvore completa de 3+ níveis
+  const buildRouteTree = (routes: AppRoute[], parentKey: string | null = null): any[] => {
+    return routes
+      .filter(route => route.parent_key === parentKey)
+      .map(route => ({
+        ...route,
+        children: buildRouteTree(routes, route.key)
+      }));
+  };
 
-  // Construir árvore hierárquica: cada rota raiz com seus filhos
-  const routeTree = rootRoutes.map(parent => ({
-    ...parent,
-    children: childRoutes.filter(child => child.parent_key === parent.key)
-  }));
-
-  // Agrupar rotas raiz por grupo
-  const groupedRoutes = routeTree.reduce((acc, route) => {
-    const groupName = route.group || 'Outros';
-    if (!acc[groupName]) {
-      acc[groupName] = [];
-    }
-    acc[groupName].push(route);
-    return acc;
-  }, {} as Record<string, (AppRoute & { children: AppRoute[] })[]>);
+  // Construir árvore completa (excluindo dashboard da lista)
+  const routeTree = buildRouteTree(
+    routes.filter(r => r.key !== 'dashboard'), 
+    null
+  );
   
   // Persistir estado dos grupos no localStorage
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -162,28 +158,32 @@ export function AppSidebar() {
 
   // Auto-expandir grupo na primeira vez (apenas se não houver estado salvo)
   useEffect(() => {
-    if (hasInitialized.current || Object.keys(groupedRoutes).length === 0) return;
+    if (hasInitialized.current || routeTree.length === 0) return;
     
     const saved = localStorage.getItem('sidebar-groups-state');
     const hasSavedState = saved && Object.keys(JSON.parse(saved)).length > 0;
     
     // Só auto-expande se não houver estado salvo previamente
     if (!hasSavedState) {
-      Object.entries(groupedRoutes).forEach(([groupName, groupRoutes]) => {
-        const hasActiveChild = groupRoutes.some(route => 
-          location.pathname === route.path || 
-          location.pathname.startsWith(route.path + '/') ||
-          route.children?.some(child => location.pathname === child.path || location.pathname.startsWith(child.path + '/'))
-        );
-        
-        if (hasActiveChild) {
-          setOpenGroups(prev => ({ ...prev, [groupName]: true }));
+      const checkActiveRoute = (route: any): boolean => {
+        if (location.pathname === route.path || location.pathname.startsWith(route.path + '/')) {
+          return true;
+        }
+        if (route.children) {
+          return route.children.some((child: any) => checkActiveRoute(child));
+        }
+        return false;
+      };
+
+      routeTree.forEach(route => {
+        if (checkActiveRoute(route)) {
+          setOpenGroups(prev => ({ ...prev, [route.key]: true }));
         }
       });
     }
     
     hasInitialized.current = true;
-  }, [groupedRoutes, location.pathname]);
+  }, [routeTree, location.pathname]);
   
   // Determinar qual logo usar baseado no tema
   const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -200,36 +200,29 @@ export function AppSidebar() {
     return iconMap[iconName] || icons[iconName as keyof typeof icons] || Settings;
   };
 
-  const handleGroupToggle = (groupKey: string) => {
-    setOpenGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
-  };
-
-  const toggleChildGroup = (routeKey: string, open: boolean) => {
+  const toggleGroup = (routeKey: string, open: boolean) => {
     setOpenGroups(prev => ({ ...prev, [routeKey]: open }));
   };
 
   const handleOpenAll = () => {
-    const allOpen = Object.keys(groupedRoutes).reduce((acc, group) => {
-      acc[group] = true;
+    const getAllKeys = (routes: any[]): string[] => {
+      return routes.flatMap(route => [
+        route.key,
+        ...(route.children ? getAllKeys(route.children) : [])
+      ]);
+    };
+    
+    const allKeys = getAllKeys(routeTree);
+    const allOpen = allKeys.reduce((acc, key) => {
+      acc[key] = true;
       return acc;
     }, {} as Record<string, boolean>);
-    
-    // Também abrir todas as rotas com filhos
-    routeTree.forEach(route => {
-      if (route.children && route.children.length > 0) {
-        allOpen[route.key] = true;
-      }
-    });
     
     setOpenGroups(allOpen);
   };
 
   const handleCloseAll = () => {
-    const allClosed = Object.keys(groupedRoutes).reduce((acc, group) => {
-      acc[group] = false;
-      return acc;
-    }, {} as Record<string, boolean>);
-    setOpenGroups(allClosed);
+    setOpenGroups({});
   };
 
   // Estado para o relógio
@@ -261,6 +254,88 @@ export function AppSidebar() {
     'producao_separacao': ordensCount?.separacao || 0,
     'producao_qualidade': ordensCount?.qualidade || 0,
     'producao_pintura': ordensCount?.pintura || 0,
+  };
+
+  // Função recursiva para renderizar itens da sidebar
+  const renderRouteItem = (route: any, level: number): React.ReactNode => {
+    const RouteIcon = getIcon(route.icon);
+    const canAccess = route.can_access;
+    const itemIsActive = canAccess && isActive(route.path);
+    const hasChildren = route.children && route.children.length > 0;
+    const count = ordensCountMap[route.key] || 0;
+    
+    // Se não tem acesso e não tem children acessíveis, não renderizar
+    if (!canAccess && !hasChildren) return null;
+    
+    // Rota com children (pasta)
+    if (hasChildren) {
+      const hasAccessToChildren = route.children.some((c: any) => c.can_access || (c.children && c.children.length > 0));
+      if (!hasAccessToChildren && !canAccess) return null;
+      
+      const isOpen = openGroups[route.key] ?? false;
+      
+      return (
+        <Collapsible
+          key={route.key}
+          open={isOpen}
+          onOpenChange={(open) => toggleGroup(route.key, open)}
+          className="group/collapsible"
+        >
+          <SidebarMenuItem>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton 
+                className="w-full cursor-pointer"
+                onClick={(e) => {
+                  // Se a rota tem path válido, navegar ao clicar
+                  if (canAccess && route.path && route.path !== '#') {
+                    e.preventDefault();
+                    navigate(route.path);
+                  }
+                }}
+              >
+                <RouteIcon className="h-5 w-5" />
+                <span>{route.label}</span>
+                <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="transition-all duration-300 ease-in-out">
+              <SidebarMenuSub>
+                {route.children.map((child: any) => renderRouteItem(child, level + 1))}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          </SidebarMenuItem>
+        </Collapsible>
+      );
+    }
+    
+    // Rota sem children (item final)
+    return (
+      <SidebarMenuSubItem key={route.key}>
+        <SidebarMenuSubButton
+          asChild={canAccess}
+          isActive={itemIsActive}
+          className={cn(!canAccess && "opacity-50 cursor-not-allowed")}
+        >
+          {canAccess ? (
+            <Link to={route.path} className="flex items-center gap-2 w-full">
+              <RouteIcon className="h-4 w-4" />
+              <span>{route.label}</span>
+              {count > 0 && (
+                <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold">
+                  {count}
+                </Badge>
+              )}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2 w-full">
+              <RouteIcon className="h-4 w-4" />
+              <span>{route.label}</span>
+              <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
+            </div>
+          )}
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    );
   };
 
   return (
@@ -304,127 +379,7 @@ export function AppSidebar() {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                Object.entries(groupedRoutes).map(([groupName, groupRoutes]) => {
-                  const firstRoute = groupRoutes[0];
-                  const GroupIcon = getIcon(firstRoute?.icon);
-                  const isGroupOpen = openGroups[groupName] ?? false;
-                  
-                  return (
-                    <Collapsible
-                      key={groupName}
-                      open={isGroupOpen}
-                      onOpenChange={() => handleGroupToggle(groupName)}
-                    >
-                      <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full">
-                            <GroupIcon className="h-5 w-5" />
-                            <span>{groupName}</span>
-                            <ChevronDown 
-                              className={cn(
-                                "ml-auto h-4 w-4 transition-transform duration-200",
-                                isGroupOpen && "rotate-180"
-                              )} 
-                            />
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        
-                        <CollapsibleContent className="transition-all duration-300 ease-in-out">
-                          <SidebarMenuSub>
-                            {groupRoutes.map((route) => {
-                              const RouteIcon = getIcon(route.icon);
-                              const canAccess = route.can_access;
-                              const itemIsActive = canAccess && isActive(route.path);
-                              const count = ordensCountMap[route.key] || 0;
-                              
-                              // Se a rota tem filhos, renderizar como collapsible
-                              if (route.children && route.children.length > 0) {
-                                const hasAccessToChildren = route.children.some(child => child.can_access);
-                                if (!hasAccessToChildren && !canAccess) return null;
-
-                                return (
-                                  <Collapsible
-                                    key={route.key}
-                                    open={openGroups[route.key]}
-                                    onOpenChange={(open) => toggleChildGroup(route.key, open)}
-                                    className="group/collapsible"
-                                  >
-                                    <SidebarMenuSubItem>
-                                      <CollapsibleTrigger asChild>
-                                        <SidebarMenuSubButton className="cursor-pointer">
-                                          <RouteIcon className="h-4 w-4" />
-                                          <span>{route.label}</span>
-                                          <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                        </SidebarMenuSubButton>
-                                      </CollapsibleTrigger>
-                                      <CollapsibleContent>
-                                        <SidebarMenuSub className="ml-4">
-                                          {route.children.map((childRoute) => {
-                                            const childCanAccess = childRoute.can_access;
-                                            if (!childCanAccess) return null;
-
-                                            const ChildIcon = getIcon(childRoute.icon);
-                                            const childActive = isActive(childRoute.path);
-
-                                            return (
-                                              <SidebarMenuSubItem key={childRoute.key}>
-                                                <SidebarMenuSubButton asChild isActive={childActive}>
-                                                  <Link to={childRoute.path} className="flex items-center gap-2 w-full">
-                                                    <ChildIcon className="h-4 w-4" />
-                                                    <span>{childRoute.label}</span>
-                                                  </Link>
-                                                </SidebarMenuSubButton>
-                                              </SidebarMenuSubItem>
-                                            );
-                                          })}
-                                        </SidebarMenuSub>
-                                      </CollapsibleContent>
-                                    </SidebarMenuSubItem>
-                                  </Collapsible>
-                                );
-                              }
-
-                              // Rota sem filhos (simples)
-                              return (
-                                <SidebarMenuSubItem key={route.key}>
-                                  <SidebarMenuSubButton 
-                                    asChild={canAccess}
-                                    isActive={itemIsActive}
-                                    className={cn(
-                                      !canAccess ? "opacity-50 cursor-not-allowed" : ""
-                                    )}
-                                    data-active={itemIsActive}
-                                  >
-                                    {canAccess ? (
-                                      <Link to={route.path} className="flex items-center gap-2 w-full">
-                                        <RouteIcon className="h-4 w-4" />
-                                        <span>{route.label}</span>
-                                        {count > 0 && (
-                                          <Badge 
-                                            variant="secondary" 
-                                            className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
-                                          >
-                                            {count}
-                                          </Badge>
-                                        )}
-                                      </Link>
-                                    ) : (
-                                      <div className="flex items-center gap-2 w-full">
-                                        <RouteIcon className="h-4 w-4" />
-                                        <span>{route.label}</span>
-                                        <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
-                                      </div>
-                                    )}
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              );
-                            })}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
-                      </SidebarMenuItem>
-                    </Collapsible>
-                  );
-                })
+                routeTree.map((route) => renderRouteItem(route, 0))
               )}
             </SidebarMenu>
           </SidebarGroupContent>
