@@ -38,6 +38,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   gerente_financeiro: 'Gerente Financeiro',
   assistente_administrativo: 'Assistente Administrativo',
   atendente: 'Atendente',
+  tecnico_qualidade: 'Técnico de Qualidade',
 };
 
 export default function Todo() {

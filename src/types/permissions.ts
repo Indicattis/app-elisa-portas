@@ -28,7 +28,8 @@ export type UserRole =
   | 'soldador' 
   | 'aux_geral' 
   | 'pintor' 
-  | 'aux_pintura';
+  | 'aux_pintura'
+  | 'tecnico_qualidade';
 
 export interface UserRoleAssignment {
   id: string;
@@ -58,5 +59,6 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   soldador: 'Soldador',
   aux_geral: 'Aux. Geral',
   pintor: 'Pintor(a)',
-  aux_pintura: 'Aux. Pintura'
+  aux_pintura: 'Aux. Pintura',
+  tecnico_qualidade: 'Técnico de Qualidade'
 };
