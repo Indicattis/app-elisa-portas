@@ -13,6 +13,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarGroup, Si
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { icons } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 interface AppRoute {
   key: string;
   path: string;
@@ -348,15 +349,17 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {isLoading ? <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                </div> : routeTree.map(route => renderRouteItem(route, 0))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <ScrollArea className="flex-1 px-2">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {isLoading ? <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  </div> : routeTree.map(route => renderRouteItem(route, 0))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </ScrollArea>
       </SidebarContent>
 
       <SidebarFooter className="p-4 space-y-3">
