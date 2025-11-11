@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Settings } from "lucide-react";
+import { LogOut, User, Settings, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +11,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function PaineisHeader() {
+interface PaineisHeaderProps {
+  sidebarVisible: boolean;
+  onToggleSidebar: () => void;
+}
+
+export function PaineisHeader({ sidebarVisible, onToggleSidebar }: PaineisHeaderProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -23,7 +28,17 @@ export function PaineisHeader() {
   return (
     <header className="border-b bg-card sticky top-0 z-10">
       <div className="flex items-center justify-between px-4 h-14">
-        <h1 className="text-xl font-semibold text-foreground">Painéis</h1>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onToggleSidebar}
+            title={sidebarVisible ? "Esconder sidebar" : "Mostrar sidebar"}
+          >
+            {sidebarVisible ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+          <h1 className="text-xl font-semibold text-foreground">Painéis</h1>
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
