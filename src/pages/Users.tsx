@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
-import { Search, Edit, Save, X, Eye, EyeOff } from "lucide-react";
+import { Search, Edit, Save, X, Eye, EyeOff, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -37,6 +38,27 @@ export default function Users() {
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+
+  // Buscar cargos ativos do sistema
+  const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
+    queryKey: ['system-roles-active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('system_roles')
+        .select('key, label')
+        .eq('ativo', true)
+        .order('ordem', { ascending: true });
+
+      if (error) throw error;
+      return data as { key: string; label: string }[];
+    },
+  });
+
+  // Criar mapa de key -> label para exibição
+  const roleLabelsMap = systemRoles.reduce((acc, role) => {
+    acc[role.key] = role.label;
+    return acc;
+  }, {} as Record<string, string>);
 
   const toggleCodeVisibility = (userId: string) => {
     setVisibleCodes(prev => {
@@ -233,55 +255,33 @@ export default function Users() {
                       {editingUser === user.id ? (
                         <Select
                           value={editForm.role}
-                          onValueChange={(value) => setEditForm({ ...editForm, role: value as AdminUser['role'] })}
+                          onValueChange={(value) => setEditForm({ ...editForm, role: value })}
+                          disabled={loadingRoles}
                         >
                           <SelectTrigger className="max-w-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="administrador">Administrador</SelectItem>
-                            <SelectItem value="diretor">Diretor</SelectItem>
-                            <SelectItem value="gerente_comercial">Gerente Comercial</SelectItem>
-                            <SelectItem value="gerente_marketing">Gerente de Marketing</SelectItem>
-                            <SelectItem value="gerente_financeiro">Gerente Financeiro</SelectItem>
-                            <SelectItem value="gerente_producao">Gerente de Produção</SelectItem>
-                            <SelectItem value="gerente_fabril">Gerente Fabril</SelectItem>
-                            <SelectItem value="gerente_instalacoes">Gerente de Instalações</SelectItem>
-                            <SelectItem value="coordenador_vendas">Coordenador(a) de Vendas</SelectItem>
-                            <SelectItem value="vendedor">Vendedor(a)</SelectItem>
-                            <SelectItem value="analista_marketing">Analista de Marketing</SelectItem>
-                            <SelectItem value="assistente_marketing">Assistente de Marketing</SelectItem>
-                            <SelectItem value="assistente_administrativo">Assistente Administrativo</SelectItem>
-                            <SelectItem value="atendente">Atendente</SelectItem>
-                            <SelectItem value="instalador">Instalador</SelectItem>
-                            <SelectItem value="aux_instalador">Aux. Instalador</SelectItem>
-                            <SelectItem value="soldador">Soldador</SelectItem>
-                            <SelectItem value="pintor">Pintor(a)</SelectItem>
-                            <SelectItem value="aux_pintura">Aux. Pintura</SelectItem>
-                            <SelectItem value="aux_geral">Aux. Geral</SelectItem>
+                            {loadingRoles ? (
+                              <div className="flex items-center justify-center py-4">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              </div>
+                            ) : systemRoles.length === 0 ? (
+                              <div className="text-sm text-muted-foreground text-center py-4">
+                                Nenhum cargo ativo disponível
+                              </div>
+                            ) : (
+                              systemRoles.map((role) => (
+                                <SelectItem key={role.key} value={role.key}>
+                                  {role.label}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       ) : (
                         <Badge variant={user.role === "administrador" ? "default" : "secondary"}>
-                          {user.role === "administrador" ? "Administrador" :
-                           user.role === "diretor" ? "Diretor" :
-                           user.role === "gerente_comercial" ? "Gerente Comercial" :
-                           user.role === "gerente_marketing" ? "Gerente de Marketing" :
-                           user.role === "gerente_financeiro" ? "Gerente Financeiro" :
-                           user.role === "gerente_producao" ? "Gerente de Produção" :
-                           user.role === "gerente_fabril" ? "Gerente Fabril" :
-                           user.role === "gerente_instalacoes" ? "Gerente de Instalações" :
-                           user.role === "coordenador_vendas" ? "Coordenador(a) de Vendas" :
-                           user.role === "vendedor" ? "Vendedor(a)" :
-                           user.role === "analista_marketing" ? "Analista de Marketing" :
-                           user.role === "assistente_marketing" ? "Assistente de Marketing" :
-                           user.role === "assistente_administrativo" ? "Assistente Administrativo" :
-                           user.role === "instalador" ? "Instalador" :
-                           user.role === "aux_instalador" ? "Aux. Instalador" :
-                           user.role === "soldador" ? "Soldador" :
-                           user.role === "pintor" ? "Pintor(a)" :
-                           user.role === "aux_pintura" ? "Aux. Pintura" :
-                           user.role === "aux_geral" ? "Aux. Geral" : "Atendente"}
+                          {roleLabelsMap[user.role] || user.role}
                         </Badge>
                       )}
                     </TableCell>
