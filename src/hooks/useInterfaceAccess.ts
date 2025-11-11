@@ -13,23 +13,15 @@ export function useInterfaceAccess(interfaceType: InterfaceType) {
       
       // Admin tem acesso a tudo
       if (isAdmin) {
-        console.log('[useInterfaceAccess] Admin tem acesso total:', interfaceType);
         return true;
       }
-
-      console.log('[useInterfaceAccess] Verificando acesso para:', { user_id: user.id, interface: interfaceType });
 
       const { data, error } = await supabase.rpc('has_interface_access', {
         _user_id: user.id,
         _interface: interfaceType
       });
 
-      if (error) {
-        console.error('[useInterfaceAccess] Erro ao verificar acesso:', error);
-        throw error;
-      }
-
-      console.log('[useInterfaceAccess] Resultado:', data);
+      if (error) throw error;
       return data || false;
     },
     enabled: !!user?.id,
