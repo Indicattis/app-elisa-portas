@@ -119,6 +119,45 @@ export type Database = {
         }
         Relationships: []
       }
+      app_routes: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          group: string | null
+          icon: string | null
+          key: string
+          label: string
+          path: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          group?: string | null
+          icon?: string | null
+          key: string
+          label: string
+          path: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          group?: string | null
+          icon?: string | null
+          key?: string
+          label?: string
+          path?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       app_tabs: {
         Row: {
           active: boolean
@@ -3524,6 +3563,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_route_access: {
+        Row: {
+          can_access: boolean | null
+          created_at: string | null
+          id: string
+          route_key: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          can_access?: boolean | null
+          created_at?: string | null
+          id?: string
+          route_key: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          can_access?: boolean | null
+          created_at?: string | null
+          id?: string
+          route_key?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_route_access_route_key_fkey"
+            columns: ["route_key"]
+            isOneToOne: false
+            referencedRelation: "app_routes"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       vagas: {
         Row: {
           cargo: Database["public"]["Enums"]["user_role"]
@@ -4262,6 +4336,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["user_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      has_route_access: {
+        Args: { _route_key: string; _user_id: string }
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
