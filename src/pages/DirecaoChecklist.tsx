@@ -44,9 +44,15 @@ export default function DirecaoChecklist() {
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
-  // Separar tarefas por status
-  const tarefasEmAndamento = tarefas.filter(t => t.status === 'em_andamento');
-  const tarefasConcluidas = tarefas.filter(t => t.status === 'concluida');
+  // Ordenar tarefas: em andamento primeiro, depois concluídas
+  const tarefasOrdenadas = [...tarefas].sort((a, b) => {
+    if (a.status === 'em_andamento' && b.status === 'concluida') return -1;
+    if (a.status === 'concluida' && b.status === 'em_andamento') return 1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const totalEmAndamento = tarefas.filter(t => t.status === 'em_andamento').length;
+  const totalConcluidas = tarefas.filter(t => t.status === 'concluida').length;
 
   if (isLoading || loadingUsers) {
     return (
@@ -114,156 +120,104 @@ export default function DirecaoChecklist() {
         </CardContent>
       </Card>
 
-      {/* Tabela de Tarefas em Andamento */}
+      {/* Tabela Unificada de Tarefas */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Tarefas em Andamento ({tarefasEmAndamento.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {tarefasEmAndamento.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma tarefa em andamento
-            </p>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="w-[200px]">Responsável</TableHead>
-                    <TableHead className="w-[120px]">Data</TableHead>
-                    <TableHead className="w-[100px]">Tipo</TableHead>
-                    {podeGerenciar && <TableHead className="w-12"></TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tarefasEmAndamento.map((tarefa) => (
-                    <TableRow key={tarefa.id} className="hover:bg-accent/30">
-                      <TableCell>
-                        <Checkbox
-                          checked={false}
-                          onCheckedChange={() => marcarConcluida.mutate(tarefa.id)}
-                          disabled={!podeGerenciar}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{tarefa.descricao}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={tarefa.responsavel?.foto_perfil_url} />
-                            <AvatarFallback className="text-xs">
-                              {tarefa.responsavel?.nome?.substring(0, 2).toUpperCase() || '??'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm truncate">{tarefa.responsavel?.nome}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(tarefa.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell>
-                        {tarefa.recorrente ? (
-                          <Badge variant="secondary" className="text-xs">
-                            <Repeat className="h-3 w-3 mr-1" />
-                            Recorrente
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">Única</Badge>
-                        )}
-                      </TableCell>
-                      {podeGerenciar && (
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setTarefaParaDeletar(tarefa.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Todas as Tarefas</CardTitle>
+            <div className="flex gap-2">
+              <Badge variant="destructive" className="text-xs">
+                {totalEmAndamento} pendente(s)
+              </Badge>
+              <Badge className="bg-success text-success-foreground text-xs">
+                {totalConcluidas} concluída(s)
+              </Badge>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tabela de Tarefas Concluídas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Tarefas Concluídas ({tarefasConcluidas.length})
-          </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          {tarefasConcluidas.length === 0 ? (
+        <CardContent className="pt-0">
+          {tarefas.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              Nenhuma tarefa concluída
+              Nenhuma tarefa encontrada
             </p>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="w-[200px]">Responsável</TableHead>
-                    <TableHead className="w-[120px]">Data</TableHead>
-                    <TableHead className="w-[100px]">Tipo</TableHead>
-                    {podeGerenciar && <TableHead className="w-12"></TableHead>}
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-10 h-8"></TableHead>
+                    <TableHead className="h-8">Descrição</TableHead>
+                    <TableHead className="w-[180px] h-8">Responsável</TableHead>
+                    <TableHead className="w-[90px] h-8">Status</TableHead>
+                    <TableHead className="w-[100px] h-8">Data</TableHead>
+                    <TableHead className="w-[90px] h-8">Tipo</TableHead>
+                    {podeGerenciar && <TableHead className="w-10 h-8"></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tarefasConcluidas.map((tarefa) => (
-                    <TableRow key={tarefa.id} className="opacity-50">
-                      <TableCell>
+                  {tarefasOrdenadas.map((tarefa) => (
+                    <TableRow 
+                      key={tarefa.id} 
+                      className={`h-10 ${tarefa.status === 'concluida' ? 'opacity-60' : 'hover:bg-accent/30'}`}
+                    >
+                      <TableCell className="py-1">
                         <Checkbox
-                          checked={true}
-                          onCheckedChange={() => reabrirTarefa.mutate(tarefa.id)}
+                          checked={tarefa.status === 'concluida'}
+                          onCheckedChange={() => {
+                            if (tarefa.status === 'concluida') {
+                              reabrirTarefa.mutate(tarefa.id);
+                            } else {
+                              marcarConcluida.mutate(tarefa.id);
+                            }
+                          }}
                           disabled={!podeGerenciar}
+                          className="h-4 w-4"
                         />
                       </TableCell>
-                      <TableCell className="font-medium line-through">{tarefa.descricao}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
+                      <TableCell className={`py-1 text-sm ${tarefa.status === 'concluida' ? 'line-through' : 'font-medium'}`}>
+                        {tarefa.descricao}
+                      </TableCell>
+                      <TableCell className="py-1">
+                        <div className="flex items-center gap-1.5">
+                          <Avatar className="h-5 w-5">
                             <AvatarImage src={tarefa.responsavel?.foto_perfil_url} />
-                            <AvatarFallback className="text-xs">
+                            <AvatarFallback className="text-[10px]">
                               {tarefa.responsavel?.nome?.substring(0, 2).toUpperCase() || '??'}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm truncate">{tarefa.responsavel?.nome}</span>
+                          <span className="text-xs truncate">{tarefa.responsavel?.nome}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(tarefa.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                      <TableCell className="py-1">
+                        <Badge 
+                          variant={tarefa.status === 'em_andamento' ? 'destructive' : 'default'}
+                          className="text-[10px] h-5 px-1.5"
+                        >
+                          {tarefa.status === 'em_andamento' ? 'Pendente' : 'Concluída'}
+                        </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-1 text-xs text-muted-foreground">
+                        {format(new Date(tarefa.created_at), "dd/MM/yy", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="py-1">
                         {tarefa.recorrente ? (
-                          <Badge variant="outline" className="text-xs">
-                            <Repeat className="h-3 w-3 mr-1" />
-                            Recorrente
+                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                            <Repeat className="h-2.5 w-2.5 mr-0.5" />
+                            Rec.
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-xs">Única</Badge>
+                          <Badge variant="outline" className="text-[10px] h-5 px-1.5">Única</Badge>
                         )}
                       </TableCell>
                       {podeGerenciar && (
-                        <TableCell>
+                        <TableCell className="py-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-6 w-6"
                             onClick={() => setTarefaParaDeletar(tarefa.id)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-3 w-3 text-destructive" />
                           </Button>
                         </TableCell>
                       )}
