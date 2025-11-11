@@ -102,6 +102,7 @@ import Etiquetas from "./pages/Etiquetas";
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
 import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
 import { ProducaoLayout } from "@/components/ProducaoLayout";
+import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
@@ -146,25 +147,25 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 bg-background z-50">
                     <DropdownMenuItem asChild>
-                      <NavLink to="/tv-dashboard" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/paineis/tv-dashboard" className="flex items-center gap-2 cursor-pointer">
                         <Tv className="h-4 w-4" />
                         <span>Modo TV</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/paineis/mapa" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/paineis/mapa" className="flex items-center gap-2 cursor-pointer">
                         <Map className="h-4 w-4" />
                         <span>Mapa</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/paineis/diario-bordo" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/paineis/diario-bordo" className="flex items-center gap-2 cursor-pointer">
                         <BookOpen className="h-4 w-4" />
                         <span>Diário de Bordo</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/paineis/calendario" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/paineis/calendario" className="flex items-center gap-2 cursor-pointer">
                         <CalendarIcon className="h-4 w-4" />
                         <span>Calendário</span>
                       </NavLink>
@@ -354,7 +355,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/performance"
+                  path="/dashboard/marketing/performance"
                   element={
                     <ProtectedRoute routeKey="performance">
                       <DashboardLayout>
@@ -704,12 +705,12 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/paineis/calendario"
+                  path="/paineis/calendario"
                   element={
                     <ProtectedRoute routeKey="calendario">
-                      <DashboardLayout>
+                      <PaineisLayout>
                         <Calendario />
-                      </DashboardLayout>
+                      </PaineisLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -794,12 +795,12 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/paineis/mapa"
+                  path="/paineis/mapa"
                   element={
                     <ProtectedRoute routeKey="mapa_autorizados">
-                      <DashboardLayout>
+                      <PaineisLayout>
                         <MapaAutorizados />
-                      </DashboardLayout>
+                      </PaineisLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -833,10 +834,10 @@ const App = () => (
                 <Route
                   path="/paineis/contador-vendas"
                   element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
+                    <ProtectedRoute routeKey="contador_vendas">
+                      <PaineisLayout>
                         <ContadorVendas />
-                      </DashboardLayout>
+                      </PaineisLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -981,22 +982,22 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/tv-dashboard"
+                  path="/paineis/tv-dashboard"
                   element={
                     <ProtectedRoute routeKey="tv_dashboard">
-                      <DashboardLayout>
+                      <PaineisLayout>
                         <TvDashboard />
-                      </DashboardLayout>
+                      </PaineisLayout>
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/dashboard/paineis/diario-bordo"
+                  path="/paineis/diario-bordo"
                   element={
                     <ProtectedRoute routeKey="diario_bordo">
-                      <DashboardLayout>
+                      <PaineisLayout>
                         <DiarioBordo />
-                      </DashboardLayout>
+                      </PaineisLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -1073,6 +1074,13 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+
+                {/* Redirects para novas URLs */}
+                <Route path="/tv-dashboard" element={<Navigate to="/paineis/tv-dashboard" replace />} />
+                <Route path="/dashboard/paineis/calendario" element={<Navigate to="/paineis/calendario" replace />} />
+                <Route path="/dashboard/paineis/diario-bordo" element={<Navigate to="/paineis/diario-bordo" replace />} />
+                <Route path="/dashboard/paineis/mapa" element={<Navigate to="/paineis/mapa" replace />} />
+                <Route path="/dashboard/performance" element={<Navigate to="/dashboard/marketing/performance" replace />} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
