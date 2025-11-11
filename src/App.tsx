@@ -115,6 +115,8 @@ import ComprasHome from "./pages/ComprasHome";
 import FinanceiroHome from "./pages/FinanceiroHome";
 import RHHome from "./pages/RHHome";
 import PaineisHome from "./pages/PaineisHome";
+import DirecaoHome from "./pages/DirecaoHome";
+import DirecaoChecklist from "./pages/DirecaoChecklist";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -327,6 +329,26 @@ const App = () => (
                     <ProtectedRoute routeKey="dashboard">
                       <DashboardLayout>
                         <Dashboard />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/direcao"
+                  element={
+                    <ProtectedRoute routeKey="direcao">
+                      <DashboardLayout>
+                        <DirecaoHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/direcao/checklist"
+                  element={
+                    <ProtectedRoute routeKey="direcao_checklist">
+                      <DashboardLayout>
+                        <DirecaoChecklist />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
