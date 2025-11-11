@@ -55,13 +55,13 @@ export function UserRouteAccessManager() {
     queryKey: ['app-routes'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('app_routes')
+        .from('app_routes' as any)
         .select('*')
         .eq('active', true)
         .order('sort_order');
       
       if (error) throw error;
-      return data as AppRoute[];
+      return data as unknown as AppRoute[];
     },
     enabled: isAdmin,
   });
@@ -73,12 +73,12 @@ export function UserRouteAccessManager() {
       if (!selectedUserId) return [];
       
       const { data, error } = await supabase
-        .from('user_route_access')
+        .from('user_route_access' as any)
         .select('*')
         .eq('user_id', selectedUserId);
       
       if (error) throw error;
-      return data as UserRouteAccess[];
+      return data as unknown as UserRouteAccess[];
     },
     enabled: !!selectedUserId && isAdmin,
   });
@@ -89,14 +89,14 @@ export function UserRouteAccessManager() {
       if (canAccess) {
         // Adicionar acesso
         const { error } = await supabase
-          .from('user_route_access')
+          .from('user_route_access' as any)
           .upsert({ user_id: userId, route_key: routeKey, can_access: true });
         
         if (error) throw error;
       } else {
         // Remover acesso
         const { error } = await supabase
-          .from('user_route_access')
+          .from('user_route_access' as any)
           .delete()
           .eq('user_id', userId)
           .eq('route_key', routeKey);
@@ -126,7 +126,7 @@ export function UserRouteAccessManager() {
       }));
 
       const { error } = await supabase
-        .from('user_route_access')
+        .from('user_route_access' as any)
         .upsert(accesses);
       
       if (error) throw error;
@@ -144,7 +144,7 @@ export function UserRouteAccessManager() {
   const revokeAllMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await supabase
-        .from('user_route_access')
+        .from('user_route_access' as any)
         .delete()
         .eq('user_id', userId);
       

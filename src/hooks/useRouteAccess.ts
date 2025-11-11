@@ -15,7 +15,7 @@ export function useRouteAccess(routeKey: string) {
         return true;
       }
 
-      const { data, error } = await supabase.rpc('has_route_access', {
+      const { data, error } = await supabase.rpc('has_route_access' as any, {
         _user_id: user.id,
         _route_key: routeKey
       });
