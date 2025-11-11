@@ -3314,6 +3314,30 @@ export type Database = {
         }
         Relationships: []
       }
+      setor_interfaces: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          interface: Database["public"]["Enums"]["interface_type"]
+          setor: Database["public"]["Enums"]["setor_type"]
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interface: Database["public"]["Enums"]["interface_type"]
+          setor: Database["public"]["Enums"]["setor_type"]
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interface?: Database["public"]["Enums"]["interface_type"]
+          setor?: Database["public"]["Enums"]["setor_type"]
+        }
+        Relationships: []
+      }
       setores_lideres: {
         Row: {
           atribuido_por: string
@@ -3419,6 +3443,36 @@ export type Database = {
           setor?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_crud_permissions: {
+        Row: {
+          action: Database["public"]["Enums"]["crud_action"]
+          created_at: string | null
+          granted_by: string | null
+          id: string
+          observacoes: string | null
+          resource: Database["public"]["Enums"]["crud_resource"]
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["crud_action"]
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          observacoes?: string | null
+          resource: Database["public"]["Enums"]["crud_resource"]
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["crud_action"]
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          observacoes?: string | null
+          resource?: Database["public"]["Enums"]["crud_resource"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -4157,6 +4211,21 @@ export type Database = {
         Args: { tipo_documento: string }
         Returns: number
       }
+      has_crud_permission: {
+        Args: {
+          _action: Database["public"]["Enums"]["crud_action"]
+          _resource: Database["public"]["Enums"]["crud_resource"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_interface_access: {
+        Args: {
+          _interface: Database["public"]["Enums"]["interface_type"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_permission: {
         Args: {
           _permission: Database["public"]["Enums"]["app_permission"]
@@ -4261,6 +4330,22 @@ export type Database = {
         | "dp_rh"
       autorizado_etapa: "ativo" | "premium" | "perdido"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
+      crud_action: "create" | "read" | "update" | "delete"
+      crud_resource:
+        | "vendas"
+        | "pedidos"
+        | "orcamentos"
+        | "leads"
+        | "autorizados"
+        | "instalacoes"
+        | "entregas"
+        | "estoque"
+        | "ordens_producao"
+        | "usuarios"
+        | "fornecedores"
+        | "veiculos"
+        | "despesas"
+        | "investimentos"
       documento_categoria:
         | "manual"
         | "procedimento"
@@ -4269,6 +4354,15 @@ export type Database = {
         | "politica"
         | "outros"
       franqueado_etapa: "inicial" | "avaliacao" | "aprovacao" | "ativo"
+      interface_type:
+        | "dashboard"
+        | "producao"
+        | "admin"
+        | "vendas_home"
+        | "instalacoes_home"
+        | "fabrica_home"
+        | "logistica_home"
+        | "administrativo_home"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -4501,6 +4595,23 @@ export const Constants = {
       ],
       autorizado_etapa: ["ativo", "premium", "perdido"],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
+      crud_action: ["create", "read", "update", "delete"],
+      crud_resource: [
+        "vendas",
+        "pedidos",
+        "orcamentos",
+        "leads",
+        "autorizados",
+        "instalacoes",
+        "entregas",
+        "estoque",
+        "ordens_producao",
+        "usuarios",
+        "fornecedores",
+        "veiculos",
+        "despesas",
+        "investimentos",
+      ],
       documento_categoria: [
         "manual",
         "procedimento",
@@ -4510,6 +4621,16 @@ export const Constants = {
         "outros",
       ],
       franqueado_etapa: ["inicial", "avaliacao", "aprovacao", "ativo"],
+      interface_type: [
+        "dashboard",
+        "producao",
+        "admin",
+        "vendas_home",
+        "instalacoes_home",
+        "fabrica_home",
+        "logistica_home",
+        "administrativo_home",
+      ],
       lead_status: [
         "aguardando_atendimento",
         "em_andamento",

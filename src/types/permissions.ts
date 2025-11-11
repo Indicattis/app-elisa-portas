@@ -289,3 +289,84 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   pintor: 'Pintor(a)',
   aux_pintura: 'Aux. Pintura'
 };
+
+// =============================================
+// CAMADA 2: INTERFACES POR SETOR
+// =============================================
+
+export type InterfaceType = 
+  | 'dashboard'
+  | 'producao'
+  | 'admin'
+  | 'vendas_home'
+  | 'instalacoes_home'
+  | 'fabrica_home'
+  | 'logistica_home'
+  | 'administrativo_home';
+
+export const INTERFACE_LABELS: Record<InterfaceType, string> = {
+  dashboard: 'Dashboard Principal',
+  producao: 'Produção',
+  admin: 'Administração',
+  vendas_home: 'Home Vendas',
+  instalacoes_home: 'Home Instalações',
+  fabrica_home: 'Home Fábrica',
+  logistica_home: 'Home Logística',
+  administrativo_home: 'Home Administrativo'
+};
+
+// =============================================
+// CAMADA 3: PERMISSÕES CRUD POR USUÁRIO
+// =============================================
+
+export type CrudResource = 
+  | 'vendas'
+  | 'pedidos'
+  | 'orcamentos'
+  | 'leads'
+  | 'autorizados'
+  | 'instalacoes'
+  | 'entregas'
+  | 'estoque'
+  | 'ordens_producao'
+  | 'usuarios'
+  | 'fornecedores'
+  | 'veiculos'
+  | 'despesas'
+  | 'investimentos';
+
+export type CrudAction = 'create' | 'read' | 'update' | 'delete';
+
+export interface CrudPermission {
+  id: string;
+  user_id: string;
+  resource: CrudResource;
+  action: CrudAction;
+  granted_by: string | null;
+  created_at: string;
+  observacoes: string | null;
+}
+
+export const CRUD_RESOURCE_LABELS: Record<CrudResource, string> = {
+  vendas: 'Vendas',
+  pedidos: 'Pedidos',
+  orcamentos: 'Orçamentos',
+  leads: 'Leads',
+  autorizados: 'Autorizados',
+  instalacoes: 'Instalações',
+  entregas: 'Entregas',
+  estoque: 'Estoque',
+  ordens_producao: 'Ordens de Produção',
+  usuarios: 'Usuários',
+  fornecedores: 'Fornecedores',
+  veiculos: 'Veículos',
+  despesas: 'Despesas',
+  investimentos: 'Investimentos'
+};
+
+export const CRUD_ACTION_LABELS: Record<CrudAction, string> = {
+  create: 'Criar',
+  read: 'Visualizar',
+  update: 'Editar',
+  delete: 'Excluir'
+};

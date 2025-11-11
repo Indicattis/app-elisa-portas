@@ -109,6 +109,8 @@ import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import Ordens from "./pages/Ordens";
+import AdminHome from "./pages/admin/AdminHome";
+import { ProtectedInterface } from "./components/ProtectedInterface";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -1112,6 +1114,21 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+
+                {/* Rotas Admin - Interface de Administração */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <ProtectedInterface interface="admin">
+                        <DashboardLayout>
+                          <AdminHome />
+                        </DashboardLayout>
+                      </ProtectedInterface>
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
