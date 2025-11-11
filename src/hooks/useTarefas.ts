@@ -61,12 +61,10 @@ export function useTarefas(userId?: string, setor?: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Buscar tarefas do usuário
+  // Buscar tarefas do usuário ou todas as tarefas
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ['tarefas', userId, setor],
     queryFn: async () => {
-      if (!userId) return [];
-
       let query = supabase
         .from('tarefas')
         .select('id, descricao, responsavel_id, status, recorrente, tipo_recorrencia, template_id, setor, created_by, created_at, updated_at');
@@ -74,10 +72,11 @@ export function useTarefas(userId?: string, setor?: string) {
       // Se setor foi especificado, buscar tarefas de todos os usuários do setor
       if (setor) {
         query = query.eq('setor', setor);
-      } else {
-        // Caso contrário, apenas as do usuário
+      } else if (userId) {
+        // Se userId foi especificado, apenas as do usuário
         query = query.eq('responsavel_id', userId);
       }
+      // Se nem setor nem userId foram especificados, busca todas as tarefas
 
       const { data: tarefasData, error: tarefasError } = await query
         .order('created_at', { ascending: false });
@@ -107,7 +106,6 @@ export function useTarefas(userId?: string, setor?: string) {
         criador: usersMap.get(tarefa.created_by)
       })) as Tarefa[];
     },
-    enabled: !!userId,
   });
 
   // Buscar templates recorrentes
@@ -149,7 +147,6 @@ export function useTarefas(userId?: string, setor?: string) {
         criador: usersMap.get(template.created_by)
       })) as TarefaTemplate[];
     },
-    enabled: !!userId,
   });
 
   // Criar template de recorrência
