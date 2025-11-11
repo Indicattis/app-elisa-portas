@@ -113,6 +113,7 @@ import ParceiroHome from "./pages/ParceiroHome";
 import ComprasHome from "./pages/ComprasHome";
 import FinanceiroHome from "./pages/FinanceiroHome";
 import RHHome from "./pages/RHHome";
+import PaineisHome from "./pages/PaineisHome";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -716,6 +717,16 @@ const App = () => (
                       <DashboardLayout>
                         <Investimentos />
                       </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/paineis"
+                  element={
+                    <ProtectedRoute>
+                      <PaineisLayout>
+                        <PaineisHome />
+                      </PaineisLayout>
                     </ProtectedRoute>
                   }
                 />

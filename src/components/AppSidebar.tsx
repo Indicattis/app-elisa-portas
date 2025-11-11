@@ -434,13 +434,40 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 space-y-3">
         <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary/10 text-primary">
           <Clock className="h-5 w-5 shrink-0" />
           <div className="text-sm font-medium text-center">
             <div>{brasiliaTime.split(', ')[0]}</div>
             <div>{brasiliaTime.split(', ')[1]}</div>
           </div>
+        </div>
+
+        {/* Botões de acesso rápido a outras interfaces */}
+        <div className="space-y-2">
+          <Link 
+            to="/paineis" 
+            className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Painéis</span>
+          </Link>
+          
+          <Link 
+            to="/producao" 
+            className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium"
+          >
+            <Factory className="h-4 w-4" />
+            <span>Produção</span>
+          </Link>
+          
+          <Link 
+            to="/todo" 
+            className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium"
+          >
+            <CheckSquare className="h-4 w-4" />
+            <span>Tarefas</span>
+          </Link>
         </div>
       </SidebarFooter>
     </Sidebar>
