@@ -149,6 +149,20 @@ serve(async (req) => {
       );
     }
 
+    // Grant default access to /dashboard route
+    const { error: routeAccessError } = await supabaseAdmin
+      .from('user_route_access')
+      .insert({
+        user_id: newUser.user.id,
+        route_key: 'dashboard',
+        can_access: true,
+      });
+
+    if (routeAccessError) {
+      console.error('Warning: Could not grant dashboard access:', routeAccessError);
+      // Don't fail user creation if route access fails, just log it
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
