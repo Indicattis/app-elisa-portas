@@ -195,6 +195,30 @@ export function AppSidebar() {
     return location.pathname === path;
   };
 
+  // Fechar outros grupos ao navegar
+  useEffect(() => {
+    // Encontrar qual grupo contém a rota atual
+    const findParentKey = (routes: any[], targetPath: string, parentKey: string | null = null): string | null => {
+      for (const route of routes) {
+        if (route.path === targetPath) {
+          return parentKey;
+        }
+        if (route.children) {
+          const found = findParentKey(route.children, targetPath, route.key);
+          if (found !== null) return found;
+        }
+      }
+      return null;
+    };
+
+    const activeParentKey = findParentKey(routeTree, location.pathname);
+    
+    // Se estamos em uma rota válida, fechar todos os grupos exceto o ativo
+    if (activeParentKey) {
+      setOpenGroups({ [activeParentKey]: true });
+    }
+  }, [location.pathname, routeTree]);
+
   const getIcon = (iconName: string | null | undefined) => {
     if (!iconName) return Settings;
     return iconMap[iconName] || icons[iconName as keyof typeof icons] || Settings;
@@ -273,6 +297,7 @@ export function AppSidebar() {
       if (!hasAccessToChildren && !canAccess) return null;
       
       const isOpen = openGroups[route.key] ?? false;
+      const isHomeActive = canAccess && isActive(route.path);
       
       return (
         <Collapsible
@@ -282,22 +307,45 @@ export function AppSidebar() {
           className="group/collapsible"
         >
           <SidebarMenuItem>
-            <CollapsibleTrigger asChild>
+            <div className="flex items-center w-full">
+              {/* Link para navegação (clique no item) */}
               <SidebarMenuButton 
-                className="w-full cursor-pointer"
-                onClick={(e) => {
-                  // Se a rota tem path válido, navegar ao clicar
-                  if (canAccess && route.path && route.path !== '#') {
-                    e.preventDefault();
-                    navigate(route.path);
-                  }
-                }}
+                asChild={canAccess}
+                isActive={isHomeActive}
+                className={cn(
+                  "flex-1 cursor-pointer",
+                  !canAccess && "opacity-50"
+                )}
               >
-                <RouteIcon className="h-5 w-5" />
-                <span>{route.label}</span>
-                <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                {canAccess ? (
+                  <Link to={route.path} className="flex items-center gap-2">
+                    <RouteIcon className="h-5 w-5" />
+                    <span>{route.label}</span>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <RouteIcon className="h-5 w-5" />
+                    <span>{route.label}</span>
+                  </div>
+                )}
               </SidebarMenuButton>
-            </CollapsibleTrigger>
+              
+              {/* Botão separado para expandir/colapsar */}
+              <CollapsibleTrigger asChild>
+                <button
+                  className="flex items-center justify-center h-8 w-8 hover:bg-accent rounded-md transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <ChevronRight className={cn(
+                    "h-4 w-4 transition-transform duration-200",
+                    isOpen && "rotate-90"
+                  )} />
+                </button>
+              </CollapsibleTrigger>
+            </div>
+            
             <CollapsibleContent className="transition-all duration-300 ease-in-out">
               <SidebarMenuSub>
                 {route.children.map((child: any) => renderRouteItem(child, level + 1))}
