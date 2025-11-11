@@ -109,7 +109,6 @@ import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import Ordens from "./pages/Ordens";
 import AdminHome from "./pages/admin/AdminHome";
-import { ProtectedInterface } from "./components/ProtectedInterface";
 
 const queryClient = new QueryClient({
   defaultOptions: {

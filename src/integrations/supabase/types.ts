@@ -158,54 +158,6 @@ export type Database = {
         }
         Relationships: []
       }
-      app_tabs: {
-        Row: {
-          active: boolean
-          created_at: string
-          created_by: string | null
-          href: string
-          icon: string | null
-          id: string
-          key: string
-          label: string
-          parent_key: string | null
-          permission: Database["public"]["Enums"]["app_permission"] | null
-          sort_order: number
-          tab_group: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          created_by?: string | null
-          href: string
-          icon?: string | null
-          id?: string
-          key: string
-          label: string
-          parent_key?: string | null
-          permission?: Database["public"]["Enums"]["app_permission"] | null
-          sort_order?: number
-          tab_group?: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          created_by?: string | null
-          href?: string
-          icon?: string | null
-          id?: string
-          key?: string
-          label?: string
-          parent_key?: string | null
-          permission?: Database["public"]["Enums"]["app_permission"] | null
-          sort_order?: number
-          tab_group?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       atas_participantes: {
         Row: {
           ata_id: string
@@ -505,13 +457,6 @@ export type Database = {
             columns: ["atendente_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "contador_vendas_dias_atendente_id_fkey"
-            columns: ["atendente_id"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
         ]
@@ -1241,13 +1186,6 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "fk_eventos_membros_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       fornecedores: {
@@ -1395,13 +1333,6 @@ export type Database = {
             columns: ["alterado_para_correcao_por"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "instalacoes_cadastradas_alterado_para_correcao_por_fkey"
-            columns: ["alterado_para_correcao_por"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
           {
@@ -1636,13 +1567,6 @@ export type Database = {
             columns: ["concluida_por"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "linhas_ordens_concluida_por_fkey"
-            columns: ["concluida_por"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
           {
@@ -1960,13 +1884,6 @@ export type Database = {
             columns: ["atendente_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "orcamentos_atendente_id_fkey"
-            columns: ["atendente_id"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
           {
@@ -2318,13 +2235,6 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "ordens_qualidade_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "ordens_qualidade_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
@@ -2336,13 +2246,6 @@ export type Database = {
             columns: ["responsavel_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "ordens_qualidade_responsavel_id_fkey"
-            columns: ["responsavel_id"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
         ]
@@ -3329,78 +3232,6 @@ export type Database = {
         }
         Relationships: []
       }
-      role_interface_access: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          id: string
-          interface: Database["public"]["Enums"]["interface_type"]
-          role: Database["public"]["Enums"]["user_role"]
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          interface: Database["public"]["Enums"]["interface_type"]
-          role: Database["public"]["Enums"]["user_role"]
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          interface?: Database["public"]["Enums"]["interface_type"]
-          role?: Database["public"]["Enums"]["user_role"]
-        }
-        Relationships: []
-      }
-      role_permissions: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          id: string
-          permission: Database["public"]["Enums"]["app_permission"]
-          role: Database["public"]["Enums"]["user_role"]
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          permission: Database["public"]["Enums"]["app_permission"]
-          role: Database["public"]["Enums"]["user_role"]
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          permission?: Database["public"]["Enums"]["app_permission"]
-          role?: Database["public"]["Enums"]["user_role"]
-        }
-        Relationships: []
-      }
-      setor_interfaces: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          id: string
-          interface: Database["public"]["Enums"]["interface_type"]
-          setor: Database["public"]["Enums"]["setor_type"]
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          interface: Database["public"]["Enums"]["interface_type"]
-          setor: Database["public"]["Enums"]["setor_type"]
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          interface?: Database["public"]["Enums"]["interface_type"]
-          setor?: Database["public"]["Enums"]["setor_type"]
-        }
-        Relationships: []
-      }
       setores_lideres: {
         Row: {
           atribuido_por: string
@@ -3506,36 +3337,6 @@ export type Database = {
           setor?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
           updated_at?: string
-        }
-        Relationships: []
-      }
-      user_crud_permissions: {
-        Row: {
-          action: Database["public"]["Enums"]["crud_action"]
-          created_at: string | null
-          granted_by: string | null
-          id: string
-          observacoes: string | null
-          resource: Database["public"]["Enums"]["crud_resource"]
-          user_id: string
-        }
-        Insert: {
-          action: Database["public"]["Enums"]["crud_action"]
-          created_at?: string | null
-          granted_by?: string | null
-          id?: string
-          observacoes?: string | null
-          resource: Database["public"]["Enums"]["crud_resource"]
-          user_id: string
-        }
-        Update: {
-          action?: Database["public"]["Enums"]["crud_action"]
-          created_at?: string | null
-          granted_by?: string | null
-          id?: string
-          observacoes?: string | null
-          resource?: Database["public"]["Enums"]["crud_resource"]
-          user_id?: string
         }
         Relationships: []
       }
@@ -3832,13 +3633,6 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "fk_vendas_atendente"
-            columns: ["atendente_id"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "vendas_canal_aquisicao_id_fkey"
             columns: ["canal_aquisicao_id"]
             isOneToOne: false
@@ -3890,24 +3684,10 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "vendas_autorizacoes_desconto_autorizado_por_fkey"
-            columns: ["autorizado_por"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "vendas_autorizacoes_desconto_solicitado_por_fkey"
             columns: ["solicitado_por"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "vendas_autorizacoes_desconto_solicitado_por_fkey"
-            columns: ["solicitado_por"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
           {
@@ -3986,13 +3766,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "vendas_catalogo_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "user_permissions"
             referencedColumns: ["user_id"]
           },
           {
@@ -4184,54 +3957,7 @@ export type Database = {
       }
     }
     Views: {
-      user_permissions: {
-        Row: {
-          ativo: boolean | null
-          permission: Database["public"]["Enums"]["app_permission"] | null
-          role: Database["public"]["Enums"]["user_role"] | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
-      user_tab_access: {
-        Row: {
-          can_access: boolean | null
-          href: string | null
-          icon: string | null
-          id: string | null
-          key: string | null
-          label: string | null
-          parent_key: string | null
-          permission: Database["public"]["Enums"]["app_permission"] | null
-          sort_order: number | null
-          tab_group: string | null
-        }
-        Insert: {
-          can_access?: never
-          href?: string | null
-          icon?: string | null
-          id?: string | null
-          key?: string | null
-          label?: string | null
-          parent_key?: string | null
-          permission?: Database["public"]["Enums"]["app_permission"] | null
-          sort_order?: number | null
-          tab_group?: string | null
-        }
-        Update: {
-          can_access?: never
-          href?: string | null
-          icon?: string | null
-          id?: string | null
-          key?: string | null
-          label?: string | null
-          parent_key?: string | null
-          permission?: Database["public"]["Enums"]["app_permission"] | null
-          sort_order?: number | null
-          tab_group?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       analyze_database_storage: {
@@ -4309,28 +4035,6 @@ export type Database = {
         Args: { tipo_documento: string }
         Returns: number
       }
-      has_crud_permission: {
-        Args: {
-          _action: Database["public"]["Enums"]["crud_action"]
-          _resource: Database["public"]["Enums"]["crud_resource"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      has_interface_access: {
-        Args: {
-          _interface: Database["public"]["Enums"]["interface_type"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      has_permission: {
-        Args: {
-          _permission: Database["public"]["Enums"]["app_permission"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
@@ -4388,66 +4092,8 @@ export type Database = {
       }
     }
     Enums: {
-      app_permission:
-        | "dashboard"
-        | "leads"
-        | "orcamentos"
-        | "vendas"
-        | "producao"
-        | "calendario"
-        | "marketing"
-        | "faturamento"
-        | "contas_receber"
-        | "visitas"
-        | "organograma"
-        | "users"
-        | "contador_vendas"
-        | "configuracoes"
-        | "autorizados"
-        | "performance"
-        | "tv_dashboard"
-        | "instalacoes"
-        | "documentos"
-        | "diario_bordo"
-        | "estoque"
-        | "compras"
-        | "cronograma_instalacoes"
-        | "rh_admin"
-        | "representantes"
-        | "franqueados"
-        | "investimentos"
-        | "pedidos"
-        | "canais_aquisicao"
-        | "forca_vendas"
-        | "tabela_precos"
-        | "checklist_lideranca"
-        | "aparencia"
-        | "direcao"
-        | "logistica"
-        | "fornecedores"
-        | "vagas"
-        | "dre"
-        | "entregas"
-        | "despesas"
-        | "dp_rh"
       autorizado_etapa: "ativo" | "premium" | "perdido"
       autorizado_rating_categoria: "instalacao" | "suporte" | "atendimento"
-      crud_action: "create" | "read" | "update" | "delete"
-      crud_resource:
-        | "vendas"
-        | "pedidos"
-        | "orcamentos"
-        | "leads"
-        | "autorizados"
-        | "instalacoes"
-        | "entregas"
-        | "estoque"
-        | "ordens_producao"
-        | "usuarios"
-        | "fornecedores"
-        | "veiculos"
-        | "despesas"
-        | "investimentos"
       documento_categoria:
         | "manual"
         | "procedimento"
@@ -4456,15 +4102,6 @@ export type Database = {
         | "politica"
         | "outros"
       franqueado_etapa: "inicial" | "avaliacao" | "aprovacao" | "ativo"
-      interface_type:
-        | "dashboard"
-        | "producao"
-        | "admin"
-        | "vendas_home"
-        | "instalacoes_home"
-        | "fabrica_home"
-        | "logistica_home"
-        | "administrativo_home"
       lead_status:
         | "aguardando_atendimento"
         | "em_andamento"
@@ -4652,68 +4289,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_permission: [
-        "dashboard",
-        "leads",
-        "orcamentos",
-        "vendas",
-        "producao",
-        "calendario",
-        "marketing",
-        "faturamento",
-        "contas_receber",
-        "visitas",
-        "organograma",
-        "users",
-        "contador_vendas",
-        "configuracoes",
-        "autorizados",
-        "performance",
-        "tv_dashboard",
-        "instalacoes",
-        "documentos",
-        "diario_bordo",
-        "estoque",
-        "compras",
-        "cronograma_instalacoes",
-        "rh_admin",
-        "representantes",
-        "franqueados",
-        "investimentos",
-        "pedidos",
-        "canais_aquisicao",
-        "forca_vendas",
-        "tabela_precos",
-        "checklist_lideranca",
-        "aparencia",
-        "direcao",
-        "logistica",
-        "fornecedores",
-        "vagas",
-        "dre",
-        "entregas",
-        "despesas",
-        "dp_rh",
-      ],
       autorizado_etapa: ["ativo", "premium", "perdido"],
       autorizado_rating_categoria: ["instalacao", "suporte", "atendimento"],
-      crud_action: ["create", "read", "update", "delete"],
-      crud_resource: [
-        "vendas",
-        "pedidos",
-        "orcamentos",
-        "leads",
-        "autorizados",
-        "instalacoes",
-        "entregas",
-        "estoque",
-        "ordens_producao",
-        "usuarios",
-        "fornecedores",
-        "veiculos",
-        "despesas",
-        "investimentos",
-      ],
       documento_categoria: [
         "manual",
         "procedimento",
@@ -4723,16 +4300,6 @@ export const Constants = {
         "outros",
       ],
       franqueado_etapa: ["inicial", "avaliacao", "aprovacao", "ativo"],
-      interface_type: [
-        "dashboard",
-        "producao",
-        "admin",
-        "vendas_home",
-        "instalacoes_home",
-        "fabrica_home",
-        "logistica_home",
-        "administrativo_home",
-      ],
       lead_status: [
         "aguardando_atendimento",
         "em_andamento",

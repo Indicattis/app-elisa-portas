@@ -2,8 +2,8 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useTabsAccess } from "@/hooks/useTabsAccess";
-import { useGroupedTabs } from "@/hooks/useGroupedTabs";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/ThemeProvider";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { Badge } from "@/components/ui/badge";
@@ -71,13 +71,58 @@ const iconMap: Record<string, any> = {
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { state } = useSidebar();
-  const { data: tabs = [], isLoading } = useTabsAccess('sidebar', user?.id);
   const { data: ordensCount } = useOrdensCount();
-  
-  const groupedTabs = useGroupedTabs(tabs);
   const { theme } = useTheme();
+  
+  // Buscar rotas com verificação de acesso usando has_route_access
+  const { data: routes = [], isLoading } = useQuery({
+    queryKey: ['sidebar-routes', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('app_routes')
+        .select('*')
+        .eq('active', true)
+        .order('sort_order', { ascending: true });
+      
+      if (error) throw error;
+      
+      // Verificar acesso para cada rota
+      const routesWithAccess = await Promise.all(
+        (data || []).map(async (route) => {
+          // Admin sempre tem acesso
+          if (isAdmin) {
+            return { ...route, can_access: true };
+          }
+          
+          // Verificar acesso via função RLS
+          const { data: hasAccess } = await supabase.rpc('has_route_access', {
+            _user_id: user.id,
+            _route_key: route.key
+          });
+          
+          return { ...route, can_access: hasAccess || false };
+        })
+      );
+      
+      return routesWithAccess;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+  
+  // Agrupar rotas por grupo
+  const groupedRoutes = routes.reduce((acc, route) => {
+    const groupName = route.group || 'Outros';
+    if (!acc[groupName]) {
+      acc[groupName] = [];
+    }
+    acc[groupName].push(route);
+    return acc;
+  }, {} as Record<string, typeof routes>);
   
   // Persistir estado dos grupos no localStorage
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -95,26 +140,26 @@ export function AppSidebar() {
 
   // Auto-expandir grupo na primeira vez (apenas se não houver estado salvo)
   useEffect(() => {
-    if (hasInitialized.current || groupedTabs.length === 0) return;
+    if (hasInitialized.current || Object.keys(groupedRoutes).length === 0) return;
     
     const saved = localStorage.getItem('sidebar-groups-state');
     const hasSavedState = saved && Object.keys(JSON.parse(saved)).length > 0;
     
     // Só auto-expande se não houver estado salvo previamente
     if (!hasSavedState) {
-      groupedTabs.forEach(group => {
-        const hasActiveChild = group.children.some(child => 
-          location.pathname === child.href || location.pathname.startsWith(child.href + '/')
+      Object.entries(groupedRoutes).forEach(([groupName, groupRoutes]) => {
+        const hasActiveChild = groupRoutes.some(route => 
+          location.pathname === route.path || location.pathname.startsWith(route.path + '/')
         );
         
         if (hasActiveChild) {
-          setOpenGroups(prev => ({ ...prev, [group.key]: true }));
+          setOpenGroups(prev => ({ ...prev, [groupName]: true }));
         }
       });
     }
     
     hasInitialized.current = true;
-  }, [groupedTabs]);
+  }, [groupedRoutes, location.pathname]);
   
   // Determinar qual logo usar baseado no tema
   const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -136,16 +181,16 @@ export function AppSidebar() {
   };
 
   const handleOpenAll = () => {
-    const allOpen = groupedTabs.reduce((acc, group) => {
-      acc[group.key] = true;
+    const allOpen = Object.keys(groupedRoutes).reduce((acc, group) => {
+      acc[group] = true;
       return acc;
     }, {} as Record<string, boolean>);
     setOpenGroups(allOpen);
   };
 
   const handleCloseAll = () => {
-    const allClosed = groupedTabs.reduce((acc, group) => {
-      acc[group.key] = false;
+    const allClosed = Object.keys(groupedRoutes).reduce((acc, group) => {
+      acc[group] = false;
       return acc;
     }, {} as Record<string, boolean>);
     setOpenGroups(allClosed);
@@ -214,21 +259,22 @@ export function AppSidebar() {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                groupedTabs.map((group) => {
-                  const GroupIcon = getIcon(group.icon);
-                  const isGroupOpen = openGroups[group.key] ?? false;
+                Object.entries(groupedRoutes).map(([groupName, groupRoutes]) => {
+                  const firstRoute = groupRoutes[0];
+                  const GroupIcon = getIcon(firstRoute?.icon);
+                  const isGroupOpen = openGroups[groupName] ?? false;
                   
                   return (
                     <Collapsible
-                      key={group.key}
+                      key={groupName}
                       open={isGroupOpen}
-                      onOpenChange={() => handleGroupToggle(group.key)}
+                      onOpenChange={() => handleGroupToggle(groupName)}
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton className="w-full">
                             <GroupIcon className="h-5 w-5" />
-                            <span>{group.label}</span>
+                            <span>{groupName}</span>
                             <ChevronDown 
                               className={cn(
                                 "ml-auto h-4 w-4 transition-transform duration-200",
@@ -238,16 +284,12 @@ export function AppSidebar() {
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         
-                        <CollapsibleContent className="transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2">
+                        <CollapsibleContent className="transition-all duration-300 ease-in-out">
                           <SidebarMenuSub>
-                            {group.children.map((subItem) => {
-                              const SubIcon = getIcon(subItem.icon);
-                              const canAccess = subItem.can_access;
-                              const itemIsActive = canAccess && isActive(subItem.href);
-                              
-                              // Verificar se este subItem também é um grupo (tem children)
-                              const isNestedGroup = tabs.some(t => t.parent_key === subItem.key);
-                              const nestedChildren = tabs.filter(t => t.parent_key === subItem.key);
+                            {groupRoutes.map((route) => {
+                              const RouteIcon = getIcon(route.icon);
+                              const canAccess = route.can_access;
+                              const itemIsActive = canAccess && isActive(route.path);
                               
                               // Mapeamento de keys para counts de ordens
                               const ordensCountMap: Record<string, number> = {
@@ -258,105 +300,33 @@ export function AppSidebar() {
                                 'producao_pintura': ordensCount?.pintura || 0,
                               };
                               
-                              if (isNestedGroup && nestedChildren.length > 0) {
-                                // Renderizar como um grupo aninhado
-                                const isNestedGroupOpen = openGroups[subItem.key] ?? false;
-                                
-                                return (
-                                  <SidebarMenuSubItem key={subItem.key}>
-                                    <Collapsible
-                                      open={isNestedGroupOpen}
-                                      onOpenChange={() => handleGroupToggle(subItem.key)}
-                                    >
-                                      <CollapsibleTrigger asChild>
-                                        <SidebarMenuSubButton className="w-full">
-                                          <SubIcon className="h-4 w-4" />
-                                          <span>{subItem.label}</span>
-                                          <ChevronDown 
-                                            className={cn(
-                                              "ml-auto h-3 w-3 transition-transform duration-200",
-                                              isNestedGroupOpen && "rotate-180"
-                                            )} 
-                                          />
-                                        </SidebarMenuSubButton>
-                                      </CollapsibleTrigger>
-                                      
-                                      <CollapsibleContent className="pl-4">
-                                        <SidebarMenuSub>
-                                          {nestedChildren.map((nestedItem) => {
-                                            const NestedIcon = getIcon(nestedItem.icon);
-                                            const nestedCanAccess = nestedItem.can_access;
-                                            const nestedIsActive = nestedCanAccess && isActive(nestedItem.href);
-                                            
-                                             return (
-                                              <SidebarMenuSubItem key={nestedItem.key}>
-                                                 <SidebarMenuSubButton 
-                                                  asChild={nestedCanAccess}
-                                                  isActive={nestedIsActive}
-                                                  className={cn(
-                                                    !nestedCanAccess ? "opacity-50 cursor-not-allowed" : ""
-                                                  )}
-                                                  data-active={nestedIsActive}
-                                                >
-                                                  {nestedCanAccess ? (
-                                                    <Link to={nestedItem.href} className="flex items-center gap-2 w-full">
-                                                      <NestedIcon className="h-4 w-4" />
-                                                      <span>{nestedItem.label}</span>
-                                                      {ordensCountMap[nestedItem.key] > 0 && (
-                                                        <Badge 
-                                                          variant="secondary" 
-                                                          className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
-                                                        >
-                                                          {ordensCountMap[nestedItem.key]}
-                                                        </Badge>
-                                                      )}
-                                                    </Link>
-                                                  ) : (
-                                                    <div className="flex items-center gap-2 w-full">
-                                                      <NestedIcon className="h-4 w-4" />
-                                                      <span>{nestedItem.label}</span>
-                                                      <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
-                                                    </div>
-                                                  )}
-                                                </SidebarMenuSubButton>
-                                              </SidebarMenuSubItem>
-                                            );
-                                          })}
-                                        </SidebarMenuSub>
-                                      </CollapsibleContent>
-                                    </Collapsible>
-                                  </SidebarMenuSubItem>
-                                );
-                              }
-                              
-                              // Renderizar como item normal
                               return (
-                                <SidebarMenuSubItem key={subItem.key}>
-                                <SidebarMenuSubButton 
-                                  asChild={canAccess}
-                                  isActive={itemIsActive}
-                                  className={cn(
-                                    !canAccess ? "opacity-50 cursor-not-allowed" : ""
-                                  )}
-                                  data-active={itemIsActive}
-                                >
-                                  {canAccess ? (
-                                    <Link to={subItem.href} className="flex items-center gap-2 w-full">
-                                      <SubIcon className="h-4 w-4" />
-                                      <span>{subItem.label}</span>
-                                      {ordensCountMap[subItem.key] > 0 && (
-                                        <Badge 
-                                          variant="secondary" 
-                                          className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
-                                        >
-                                          {ordensCountMap[subItem.key]}
-                                        </Badge>
-                                      )}
-                                    </Link>
+                                <SidebarMenuSubItem key={route.key}>
+                                  <SidebarMenuSubButton 
+                                    asChild={canAccess}
+                                    isActive={itemIsActive}
+                                    className={cn(
+                                      !canAccess ? "opacity-50 cursor-not-allowed" : ""
+                                    )}
+                                    data-active={itemIsActive}
+                                  >
+                                    {canAccess ? (
+                                      <Link to={route.path} className="flex items-center gap-2 w-full">
+                                        <RouteIcon className="h-4 w-4" />
+                                        <span>{route.label}</span>
+                                        {ordensCountMap[route.key] > 0 && (
+                                          <Badge 
+                                            variant="secondary" 
+                                            className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
+                                          >
+                                            {ordensCountMap[route.key]}
+                                          </Badge>
+                                        )}
+                                      </Link>
                                     ) : (
                                       <div className="flex items-center gap-2 w-full">
-                                        <SubIcon className="h-4 w-4" />
-                                        <span>{subItem.label}</span>
+                                        <RouteIcon className="h-4 w-4" />
+                                        <span>{route.label}</span>
                                         <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
                                       </div>
                                     )}
