@@ -1,5 +1,5 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck, ChevronRight, Tv, ClipboardList, Shield, Building2, FileBarChart, PieChart, Wallet, BadgeDollarSign, Users2, Hammer, PackageCheck, ClipboardSignature, CalendarCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -154,42 +154,10 @@ export function AppSidebar() {
     return saved ? JSON.parse(saved) : {};
   });
 
-  // Ref para controlar se já fizemos a inicialização automática
-  const hasInitialized = useRef(false);
-
   // Salvar estado quando mudar
   useEffect(() => {
     localStorage.setItem('sidebar-groups-state', JSON.stringify(openGroups));
   }, [openGroups]);
-
-  // Auto-expandir grupo na primeira vez (apenas se não houver estado salvo)
-  useEffect(() => {
-    if (hasInitialized.current || routeTree.length === 0) return;
-    const saved = localStorage.getItem('sidebar-groups-state');
-    const hasSavedState = saved && Object.keys(JSON.parse(saved)).length > 0;
-
-    // Só auto-expande se não houver estado salvo previamente
-    if (!hasSavedState) {
-      const checkActiveRoute = (route: any): boolean => {
-        if (location.pathname === route.path || location.pathname.startsWith(route.path + '/')) {
-          return true;
-        }
-        if (route.children) {
-          return route.children.some((child: any) => checkActiveRoute(child));
-        }
-        return false;
-      };
-      routeTree.forEach(route => {
-        if (checkActiveRoute(route)) {
-          setOpenGroups(prev => ({
-            ...prev,
-            [route.key]: true
-          }));
-        }
-      });
-    }
-    hasInitialized.current = true;
-  }, [routeTree, location.pathname]);
 
   // Determinar qual logo usar baseado no tema
   const isDarkMode = theme === "dark" || theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -199,31 +167,6 @@ export function AppSidebar() {
     // Comparação exata para evitar que itens pais fiquem ativos
     return location.pathname === path;
   };
-
-  // Fechar outros grupos ao navegar
-  useEffect(() => {
-    // Encontrar qual grupo contém a rota atual
-    const findParentKey = (routes: any[], targetPath: string, parentKey: string | null = null): string | null => {
-      for (const route of routes) {
-        if (route.path === targetPath) {
-          return parentKey;
-        }
-        if (route.children) {
-          const found = findParentKey(route.children, targetPath, route.key);
-          if (found !== null) return found;
-        }
-      }
-      return null;
-    };
-    const activeParentKey = findParentKey(routeTree, location.pathname);
-
-    // Se estamos em uma rota válida, fechar todos os grupos exceto o ativo
-    if (activeParentKey) {
-      setOpenGroups({
-        [activeParentKey]: true
-      });
-    }
-  }, [location.pathname, routeTree]);
   const getIcon = (iconName: string | null | undefined) => {
     if (!iconName) return Settings;
     return iconMap[iconName] || icons[iconName as keyof typeof icons] || Settings;
