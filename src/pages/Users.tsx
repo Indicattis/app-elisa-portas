@@ -12,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
-import { Search, Edit, Save, X, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ResetPasswordModal } from "@/components/ResetPasswordModal";
+import { Search, Edit, Save, X, Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -37,6 +38,7 @@ export default function Users() {
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
+  const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
   const { toast } = useToast();
 
   // Buscar cargos ativos do sistema
@@ -397,6 +399,14 @@ export default function Users() {
                              >
                                <Edit className="w-4 h-4" />
                              </Button>
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => setResetPasswordUser(user)}
+                               title="Redefinir senha"
+                             >
+                               <KeyRound className="w-4 h-4" />
+                             </Button>
                            </>
                          )}
                       </div>
@@ -408,6 +418,14 @@ export default function Users() {
           </div>
         </CardContent>
       </Card>
+
+      <ResetPasswordModal
+        open={!!resetPasswordUser}
+        onOpenChange={(open) => !open && setResetPasswordUser(null)}
+        userId={resetPasswordUser?.user_id || ""}
+        userName={resetPasswordUser?.nome || ""}
+        userEmail={resetPasswordUser?.email || ""}
+      />
     </div>
   );
 }
