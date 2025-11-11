@@ -74,7 +74,7 @@ export default function ProducaoLogin() {
         description: `Bem-vindo, ${setupData.user.nome}!`,
       });
 
-      navigate("/producao/solda");
+      navigate("/producao");
     } catch (error) {
       console.error("Erro no login:", error);
       toast({
