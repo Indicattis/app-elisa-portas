@@ -105,6 +105,7 @@ import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
+import ProducaoHome from "./pages/ProducaoHome";
 import Ordens from "./pages/Ordens";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminPermissions from "./pages/admin/AdminPermissions";
@@ -345,7 +346,16 @@ const App = () => (
                             </ProtectedProducaoRoute>
                           }
                         />
-                        <Route path="/" element={<Navigate to="/producao/solda" replace />} />
+                        <Route 
+                          path="/" 
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoHome />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          } 
+                        />
                       </Routes>
                     </ProducaoAuthProvider>
                   }
