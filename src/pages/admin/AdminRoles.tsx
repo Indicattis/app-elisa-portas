@@ -26,9 +26,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Users, Eye, Plus } from "lucide-react";
+import { Users, Eye, Plus, Pencil } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateRoleModal } from "@/components/admin/CreateRoleModal";
+import { EditRoleModal } from "@/components/admin/EditRoleModal";
 import { SETOR_LABELS } from "@/utils/setorMapping";
 
 interface SystemRole {
@@ -58,6 +59,7 @@ interface UserWithRole {
 export default function AdminRoles() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<SystemRole | null>(null);
 
   // Buscar cargos do sistema
   const { data: systemRoles = [] } = useQuery({
@@ -194,15 +196,27 @@ export default function AdminRoles() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedRole(role.key)}
-                        disabled={count === 0}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver usuários
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingRole(role)}
+                          disabled={count > 0}
+                          title={count > 0 ? "Não é possível editar cargos com usuários associados" : "Editar cargo"}
+                        >
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedRole(role.key)}
+                          disabled={count === 0}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver usuários
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -263,6 +277,13 @@ export default function AdminRoles() {
 
       {/* Modal de criação de cargo */}
       <CreateRoleModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
+
+      {/* Modal de edição de cargo */}
+      <EditRoleModal 
+        open={!!editingRole} 
+        onOpenChange={(open) => !open && setEditingRole(null)} 
+        role={editingRole}
+      />
     </div>
   );
 }
