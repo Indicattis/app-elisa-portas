@@ -192,7 +192,6 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum setor</SelectItem>
                       {Object.entries(SETOR_LABELS).map(([key, label]) => (
                         <SelectItem key={key} value={key}>
                           {label}
