@@ -100,6 +100,7 @@ import Etiquetas from "./pages/Etiquetas";
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
 import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
 import { ProducaoLayout } from "@/components/ProducaoLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import HistoricoProducao from "./pages/HistoricoProducao";
@@ -401,9 +402,9 @@ const App = () => (
                   path="/admin/users"
                   element={
                     <ProtectedRoute routeKey="users">
-                      <DashboardLayout>
+                      <AdminLayout>
                         <Users />
-                      </DashboardLayout>
+                      </AdminLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -1091,9 +1092,9 @@ const App = () => (
                   path="/admin"
                   element={
                     <ProtectedRoute routeKey="admin">
-                      <DashboardLayout>
+                      <AdminLayout>
                         <AdminHome />
-                      </DashboardLayout>
+                      </AdminLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -1101,9 +1102,9 @@ const App = () => (
                   path="/admin/permissions"
                   element={
                     <ProtectedRoute routeKey="admin_permissions">
-                      <DashboardLayout>
+                      <AdminLayout>
                         <AdminPermissions />
-                      </DashboardLayout>
+                      </AdminLayout>
                     </ProtectedRoute>
                   }
                 />
