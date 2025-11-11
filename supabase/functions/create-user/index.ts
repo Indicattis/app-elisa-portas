@@ -13,7 +13,18 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client with service role key for admin operations
+    // Create regular client for auth verification
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    );
+
+    // Create admin client for user creation
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -25,40 +36,44 @@ serve(async (req) => {
       }
     );
 
-    // Verify the requesting user is authenticated and has admin role
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Get the requesting user
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    // Verify the requesting user is authenticated
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
     if (userError || !user) {
+      console.error('Auth error:', userError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized - invalid session' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if user is admin
-    const { data: adminUser, error: adminCheckError } = await supabaseAdmin
+    console.log('Authenticated user:', user.id);
+
+    // Check if user is admin using the regular client (respects RLS)
+    const { data: adminUser, error: adminCheckError } = await supabaseClient
       .from('admin_users')
       .select('role')
       .eq('user_id', user.id)
       .eq('ativo', true)
       .single();
 
-    if (adminCheckError || !adminUser || adminUser.role !== 'administrador') {
+    if (adminCheckError || !adminUser) {
+      console.error('Admin check error:', adminCheckError);
       return new Response(
-        JSON.stringify({ error: 'Insufficient permissions' }),
+        JSON.stringify({ error: 'User not found or not active' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (adminUser.role !== 'administrador') {
+      console.error('Insufficient permissions:', adminUser.role);
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions - admin role required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Admin verified:', user.id);
 
     // Get request body
     const { email, password, nome, role } = await req.json();
