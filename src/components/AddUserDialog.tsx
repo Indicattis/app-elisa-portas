@@ -45,46 +45,42 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     setLoading(true);
 
     try {
-      // Criar usuário na autenticação
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: formData.password,
-        email_confirm: true,
-        user_metadata: {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Você precisa estar autenticado para criar usuários");
+      }
+
+      // Call edge function to create user
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: formData.email,
+          password: formData.password,
           nome: formData.nome,
-        }
+          role: formData.role,
+        },
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Criar registro na tabela admin_users
-        const { error: insertError } = await supabase
-          .from("admin_users")
-          .insert({
-            user_id: authData.user.id,
-            email: formData.email,
-            nome: formData.nome,
-            role: formData.role as any,
-            ativo: true,
-          } as any);
-
-        if (insertError) throw insertError;
-
-        toast({
-          title: "Sucesso",
-          description: "Usuário criado com sucesso",
-        });
-
-        setFormData({
-          nome: "",
-          email: "",
-          password: "",
-          role: "",
-        });
-        setOpen(false);
-        onUserAdded();
+      if (error) throw error;
+      
+      if (!data?.success) {
+        throw new Error(data?.error || "Erro ao criar usuário");
       }
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário criado com sucesso",
+      });
+
+      setFormData({
+        nome: "",
+        email: "",
+        password: "",
+        role: "",
+      });
+      setOpen(false);
+      onUserAdded();
     } catch (error: any) {
       console.error("Erro ao criar usuário:", error);
       toast({
