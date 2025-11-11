@@ -3401,6 +3401,80 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefas_historico: {
+        Row: {
+          concluida_por: string
+          created_at: string
+          data_conclusao: string
+          id: string
+          tarefa_id: string
+          template_id: string
+        }
+        Insert: {
+          concluida_por: string
+          created_at?: string
+          data_conclusao: string
+          id?: string
+          tarefa_id: string
+          template_id: string
+        }
+        Update: {
+          concluida_por?: string
+          created_at?: string
+          data_conclusao?: string
+          id?: string
+          tarefa_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_historico_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas_templates: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          created_by: string
+          data_proxima_criacao: string
+          descricao: string
+          id: string
+          responsavel_id: string
+          setor: string | null
+          tipo_recorrencia: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          created_by: string
+          data_proxima_criacao: string
+          descricao: string
+          id?: string
+          responsavel_id: string
+          setor?: string | null
+          tipo_recorrencia: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          created_by?: string
+          data_proxima_criacao?: string
+          descricao?: string
+          id?: string
+          responsavel_id?: string
+          setor?: string | null
+          tipo_recorrencia?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
