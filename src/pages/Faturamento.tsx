@@ -191,7 +191,6 @@ export default function Faturamento() {
     const { data } = await supabase
       .from('admin_users')
       .select('user_id, nome')
-      .eq('ativo', true)
       .order('nome');
     if (data) setAtendentes(data);
   };
@@ -265,11 +264,10 @@ export default function Faturamento() {
         return;
       }
 
-      // Buscar todos os usuários ativos para mapear atendentes
+      // Buscar todos os usuários para mapear atendentes
       const { data: todosUsuarios } = await supabase
         .from("admin_users")
-        .select("user_id, nome, foto_perfil_url")
-        .eq("ativo", true);
+        .select("user_id, nome, foto_perfil_url");
 
       const atendenteMap = new Map();
       if (todosUsuarios) {

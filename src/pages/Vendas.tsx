@@ -58,7 +58,6 @@ export default function Vendas() {
       const { data } = await supabase
         .from('admin_users')
         .select('id, nome, user_id')
-        .eq('ativo', true)
         .order('nome');
       if (data) setAtendentes(data);
     };
