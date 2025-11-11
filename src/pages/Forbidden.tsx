@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock } from 'lucide-react';
+import { Lock, LogIn } from 'lucide-react';
 
 export default function Forbidden() {
   const navigate = useNavigate();
@@ -28,6 +28,10 @@ export default function Forbidden() {
             </Button>
             <Button variant="outline" onClick={() => navigate(-1)} className="w-full">
               Voltar à Página Anterior
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/auth')} className="w-full">
+              <LogIn className="h-4 w-4 mr-2" />
+              Fazer Login
             </Button>
           </div>
         </CardContent>
