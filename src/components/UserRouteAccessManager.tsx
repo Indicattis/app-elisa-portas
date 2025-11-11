@@ -34,6 +34,7 @@ export function UserRouteAccessManager() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedInterface, setSelectedInterface] = useState<string>('dashboard');
   const [searchTerm, setSearchTerm] = useState("");
 
   // Buscar todos os usuários ativos
@@ -186,23 +187,16 @@ export function UserRouteAccessManager() {
   };
 
   // Agrupar rotas por interface primeiro, depois por grupo
-  const groupedByInterface = routes?.reduce((acc, route) => {
-    const interfaceName = route.interface || 'dashboard';
-    if (!acc[interfaceName]) {
-      acc[interfaceName] = {};
-    }
-    
+  const filteredRoutesByInterface = routes?.filter(route => route.interface === selectedInterface) || [];
+  
+  const groupedRoutes = filteredRoutesByInterface.reduce((acc, route) => {
     const group = route.group || 'outros';
-    if (!acc[interfaceName][group]) {
-      acc[interfaceName][group] = [];
+    if (!acc[group]) {
+      acc[group] = [];
     }
-    
-    acc[interfaceName][group].push(route);
+    acc[group].push(route);
     return acc;
-  }, {} as Record<string, Record<string, AppRoute[]>>);
-
-  // Para compatibilidade com código existente, usar apenas dashboard
-  const groupedRoutes = groupedByInterface?.['dashboard'] || {};
+  }, {} as Record<string, AppRoute[]>);
 
   // Filtrar rotas pela busca
   const filteredRoutes = routes?.filter(route => 
@@ -224,6 +218,16 @@ export function UserRouteAccessManager() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Tabs de Interface */}
+        <Tabs value={selectedInterface} onValueChange={setSelectedInterface}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="producao">Produção</TabsTrigger>
+            <TabsTrigger value="paineis">Painéis</TabsTrigger>
+            <TabsTrigger value="admin">Admin</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {/* Seleção de usuário */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Selecione o usuário</label>
@@ -271,7 +275,7 @@ export function UserRouteAccessManager() {
 
             {/* Contador */}
             <div className="text-sm text-muted-foreground">
-              {grantedCount} de {totalCount} rotas liberadas
+              {grantedCount} de {filteredRoutesByInterface.length} rotas liberadas nesta interface
             </div>
 
             {/* Lista de rotas */}

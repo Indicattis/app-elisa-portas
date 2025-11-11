@@ -126,8 +126,8 @@ export function AppSidebar() {
     staleTime: 5 * 60 * 1000,
   });
   
-  // Separar rotas raiz (sem parent_key) das rotas filhas
-  const rootRoutes = routes.filter(route => !route.parent_key);
+  // Filtrar rotas: separar raiz de filhas, ocultar dashboard da lista
+  const rootRoutes = routes.filter(route => !route.parent_key && route.key !== 'dashboard');
   const childRoutes = routes.filter(route => route.parent_key);
 
   // Construir árvore hierárquica: cada rota raiz com seus filhos

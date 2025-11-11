@@ -38,8 +38,6 @@ import NovoOrcamento from "./pages/NovoOrcamento";
 import OrcamentoEdit from "./pages/OrcamentoEdit";
 import NotFound from "./pages/NotFound";
 import VendaDetails from "./pages/VendaDetails";
-import Visitas from "./pages/Visitas";
-import VisitaNova from "./pages/VisitaNova";
 import ProducaoSolda from "./pages/ProducaoSolda";
 import ProducaoPerfiladeira from "./pages/ProducaoPerfiladeira";
 import ProducaoSeparacao from "./pages/ProducaoSeparacao";
@@ -108,6 +106,10 @@ import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import Ordens from "./pages/Ordens";
 import AdminHome from "./pages/admin/AdminHome";
+import ParceiroHome from "./pages/ParceiroHome";
+import ComprasHome from "./pages/ComprasHome";
+import FinanceiroHome from "./pages/FinanceiroHome";
+import RHHome from "./pages/RHHome";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -365,7 +367,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/orcamentos"
+                  path="/dashboard/vendas/orcamentos"
                   element={
                     <ProtectedRoute routeKey="orcamentos">
                       <DashboardLayout>
@@ -375,7 +377,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/orcamentos/novo"
+                  path="/dashboard/vendas/orcamentos/novo"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -385,7 +387,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/orcamentos/editar/:id"
+                  path="/dashboard/vendas/orcamentos/editar/:id"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -405,9 +407,9 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/financeiro/faturamento"
+                  path="/dashboard/administrativo/financeiro/faturamento"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="faturamento">
                       <DashboardLayout>
                         <Faturamento />
                       </DashboardLayout>
@@ -417,9 +419,9 @@ const App = () => (
                 <Route
                   path="/dashboard/vendas"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="vendas_home">
                       <DashboardLayout>
-                        <Vendas />
+                        <VendasHome />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -465,7 +467,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/financeiro/faturamento/:id/editar"
+                  path="/dashboard/administrativo/financeiro/faturamento/:id/editar"
                   element={
                     <ProtectedRoute routeKey="faturamento">
                       <DashboardLayout>
@@ -480,26 +482,6 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <VendaDetails />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/vendas/visitas"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <Visitas />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/visitas/nova/:leadId"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <VisitaNova />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -535,17 +517,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_cadastradas">
-                      <DashboardLayout>
-                        <Instalacoes />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/instalacoes/frota"
+                  path="/dashboard/logistica/frota"
                   element={
                     <ProtectedRoute routeKey="frota">
                       <DashboardLayout>
@@ -555,7 +527,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/instalacoes/frota/novo"
+                  path="/dashboard/logistica/frota/novo"
                   element={
                     <ProtectedRoute routeKey="frota">
                       <DashboardLayout>
@@ -565,7 +537,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/instalacoes/frota/:id/editar"
+                  path="/dashboard/logistica/frota/:id/editar"
                   element={
                     <ProtectedRoute routeKey="frota">
                       <DashboardLayout>
@@ -575,7 +547,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/instalacoes/frota/conferencia"
+                  path="/dashboard/logistica/frota/conferencia"
                   element={
                     <ProtectedRoute routeKey="frota">
                       <DashboardLayout>
@@ -585,7 +557,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/instalacoes/frota/:id/conferencias"
+                  path="/dashboard/logistica/frota/:id/conferencias"
                   element={
                     <ProtectedRoute routeKey="frota">
                       <DashboardLayout>
@@ -595,7 +567,27 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/novo-pedido"
+                  path="/dashboard/instalacoes"
+                  element={
+                    <ProtectedRoute routeKey="instalacoes_home">
+                      <DashboardLayout>
+                        <InstalacoesHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/instalacoes/cronograma-instalacoes"
+                  element={
+                    <ProtectedRoute routeKey="cronograma_instalacoes">
+                      <DashboardLayout>
+                        <CronogramaInstalacoes />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/fabrica/novo-pedido"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -605,9 +597,9 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/historico-producao"
+                  path="/dashboard/fabrica/historico-producao"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="historico_producao">
                       <DashboardLayout>
                         <HistoricoProducao />
                       </DashboardLayout>
@@ -615,7 +607,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/ordens"
+                  path="/dashboard/fabrica/ordens"
                   element={
                     <ProtectedRoute routeKey="ordens">
                       <DashboardLayout>
@@ -625,7 +617,27 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/marketing/home"
+                  path="/dashboard/fabrica/pedidos"
+                  element={
+                    <ProtectedRoute routeKey="pedidos">
+                      <DashboardLayout>
+                        <Pedidos />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/fabrica/etiquetas"
+                  element={
+                    <ProtectedRoute routeKey="etiquetas">
+                      <DashboardLayout>
+                        <Etiquetas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/marketing"
                   element={
                     <ProtectedRoute routeKey="marketing">
                       <DashboardLayout>
@@ -635,7 +647,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/vendas/home"
+                  path="/dashboard/vendas"
                   element={
                     <ProtectedRoute routeKey="vendas_home">
                       <DashboardLayout>
@@ -695,7 +707,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/financeiro/investimentos"
+                  path="/dashboard/marketing/investimentos"
                   element={
                     <ProtectedRoute routeKey="investimentos">
                       <DashboardLayout>
@@ -715,17 +727,17 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/vendas/parceiros/autorizados"
+                  path="/dashboard/vendas/parceiros"
                   element={
-                    <ProtectedRoute routeKey="autorizados">
+                    <ProtectedRoute routeKey="parceiros_home">
                       <DashboardLayout>
-                        <Autorizados />
+                        <ParceiroHome />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/dashboard/parceiros"
+                  path="/dashboard/vendas/parceiros/autorizados"
                   element={
                     <ProtectedRoute routeKey="autorizados">
                       <DashboardLayout>
@@ -801,16 +813,6 @@ const App = () => (
                       <PaineisLayout>
                         <MapaAutorizados />
                       </PaineisLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/pedidos"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <Pedidos />
-                      </DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -922,9 +924,19 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/compras/fornecedores"
+                  path="/dashboard/administrativo/compras"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="compras_home">
+                      <DashboardLayout>
+                        <ComprasHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/compras/fornecedores"
+                  element={
+                    <ProtectedRoute routeKey="fornecedores">
                       <DashboardLayout>
                         <Fornecedores />
                       </DashboardLayout>
@@ -932,9 +944,9 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/compras/requisicoes-compra"
+                  path="/dashboard/administrativo/compras/requisicoes-compra"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="requisicoes_compra">
                       <DashboardLayout>
                         <RequisicoesCompra />
                       </DashboardLayout>
@@ -942,9 +954,9 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/compras/estoque"
+                  path="/dashboard/administrativo/compras/estoque"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="estoque">
                       <DashboardLayout>
                         <Estoque />
                       </DashboardLayout>
@@ -952,9 +964,9 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/compras/estoque/editar/:id"
+                  path="/dashboard/administrativo/compras/estoque/editar/:id"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="estoque">
                       <DashboardLayout>
                         <EstoqueEdit />
                       </DashboardLayout>
@@ -962,21 +974,11 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/vendas-catalogo"
+                  path="/dashboard/vendas/vendas-catalogo"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="vendas_catalogo">
                       <DashboardLayout>
                         <VendasCatalogo />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/instalacoes/cronograma"
-                  element={
-                    <ProtectedRoute routeKey="cronograma_instalacoes">
-                      <DashboardLayout>
-                        <CronogramaInstalacoes />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -1002,9 +1004,19 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/financeiro/dre"
+                  path="/dashboard/administrativo/financeiro"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="financeiro_home">
+                      <DashboardLayout>
+                        <FinanceiroHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/dre"
+                  element={
+                    <ProtectedRoute routeKey="dre">
                       <DashboardLayout>
                         <DRE />
                       </DashboardLayout>
@@ -1012,9 +1024,9 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/financeiro/despesas"
+                  path="/dashboard/administrativo/financeiro/despesas"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="despesas">
                       <DashboardLayout>
                         <Despesas />
                       </DashboardLayout>
@@ -1022,9 +1034,19 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/dashboard/administrativo/rh"
+                  element={
+                    <ProtectedRoute routeKey="rh_home">
+                      <DashboardLayout>
+                        <RHHome />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/administrativo/rh/vagas"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="vagas">
                       <DashboardLayout>
                         <Vagas />
                       </DashboardLayout>
@@ -1081,8 +1103,120 @@ const App = () => (
                 <Route path="/dashboard/paineis/diario-bordo" element={<Navigate to="/paineis/diario-bordo" replace />} />
                 <Route path="/dashboard/paineis/mapa" element={<Navigate to="/paineis/mapa" replace />} />
                 <Route path="/dashboard/performance" element={<Navigate to="/dashboard/marketing/performance" replace />} />
+                
+                {/* Redirects Marketing */}
+                <Route path="/dashboard/marketing/home" element={<Navigate to="/dashboard/marketing" replace />} />
+                
+                {/* Redirects Vendas */}
+                <Route path="/dashboard/vendas/home" element={<Navigate to="/dashboard/vendas" replace />} />
+                <Route path="/dashboard/orcamentos" element={<Navigate to="/dashboard/vendas/orcamentos" replace />} />
+                <Route path="/dashboard/orcamentos/novo" element={<Navigate to="/dashboard/vendas/orcamentos/novo" replace />} />
+                <Route path="/dashboard/orcamentos/editar/:id" element={<Navigate to="/dashboard/vendas/orcamentos/editar/:id" replace />} />
+                <Route path="/dashboard/vendas-catalogo" element={<Navigate to="/dashboard/vendas/vendas-catalogo" replace />} />
+                <Route path="/dashboard/autorizados" element={<Navigate to="/dashboard/vendas/parceiros/autorizados" replace />} />
+                <Route path="/dashboard/parceiros" element={<Navigate to="/dashboard/vendas/parceiros" replace />} />
+                <Route path="/dashboard/representantes" element={<Navigate to="/dashboard/vendas/parceiros/representantes" replace />} />
+                <Route path="/dashboard/franqueados" element={<Navigate to="/dashboard/vendas/parceiros/franqueados" replace />} />
+                
+                {/* Redirects Fábrica */}
+                <Route path="/dashboard/pedidos" element={<Navigate to="/dashboard/fabrica/pedidos" replace />} />
+                <Route path="/dashboard/ordens" element={<Navigate to="/dashboard/fabrica/ordens" replace />} />
+                <Route path="/dashboard/etiquetas" element={<Navigate to="/dashboard/fabrica/etiquetas" replace />} />
+                <Route path="/dashboard/historico-producao" element={<Navigate to="/dashboard/fabrica/historico-producao" replace />} />
+                <Route path="/dashboard/novo-pedido" element={<Navigate to="/dashboard/fabrica/novo-pedido" replace />} />
+                
+                {/* Redirects Logística */}
+                <Route path="/dashboard/entregas" element={<Navigate to="/dashboard/logistica/entregas" replace />} />
+                <Route path="/dashboard/frota" element={<Navigate to="/dashboard/logistica/frota" replace />} />
+                <Route path="/dashboard/instalacoes/frota" element={<Navigate to="/dashboard/logistica/frota" replace />} />
+                <Route path="/dashboard/instalacoes/frota/novo" element={<Navigate to="/dashboard/logistica/frota/novo" replace />} />
+                <Route path="/dashboard/instalacoes/frota/:id/editar" element={<Navigate to="/dashboard/logistica/frota/:id/editar" replace />} />
+                <Route path="/dashboard/instalacoes/frota/conferencia" element={<Navigate to="/dashboard/logistica/frota/conferencia" replace />} />
+                <Route path="/dashboard/instalacoes/frota/:id/conferencias" element={<Navigate to="/dashboard/logistica/frota/:id/conferencias" replace />} />
+                
+                {/* Redirects Instalações */}
+                <Route path="/dashboard/instalacoes/cronograma" element={<Navigate to="/dashboard/instalacoes/cronograma-instalacoes" replace />} />
+                
+                {/* Redirects Administrativo - Compras */}
+                <Route path="/dashboard/compras/fornecedores" element={<Navigate to="/dashboard/administrativo/compras/fornecedores" replace />} />
+                <Route path="/dashboard/compras/requisicoes-compra" element={<Navigate to="/dashboard/administrativo/compras/requisicoes-compra" replace />} />
+                <Route path="/dashboard/compras/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
+                <Route path="/dashboard/compras/estoque/editar/:id" element={<Navigate to="/dashboard/administrativo/compras/estoque/editar/:id" replace />} />
+                <Route path="/dashboard/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
+                <Route path="/dashboard/fornecedores" element={<Navigate to="/dashboard/administrativo/compras/fornecedores" replace />} />
+                
+                {/* Redirects Administrativo - Financeiro */}
+                <Route path="/dashboard/faturamento" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento" replace />} />
+                <Route path="/dashboard/faturamento/:id/editar" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento/:id/editar" replace />} />
+                <Route path="/dashboard/financeiro/faturamento" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento" replace />} />
+                <Route path="/dashboard/financeiro/faturamento/:id/editar" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento/:id/editar" replace />} />
+                <Route path="/dashboard/financeiro/dre" element={<Navigate to="/dashboard/administrativo/financeiro/dre" replace />} />
+                <Route path="/dashboard/financeiro/despesas" element={<Navigate to="/dashboard/administrativo/financeiro/despesas" replace />} />
+                <Route path="/dashboard/dre" element={<Navigate to="/dashboard/administrativo/financeiro/dre" replace />} />
+                <Route path="/dashboard/despesas" element={<Navigate to="/dashboard/administrativo/financeiro/despesas" replace />} />
+                <Route path="/dashboard/financeiro/investimentos" element={<Navigate to="/dashboard/marketing/investimentos" replace />} />
+                <Route path="/dashboard/investimentos" element={<Navigate to="/dashboard/marketing/investimentos" replace />} />
 
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                {/* Redirects para novas URLs */}
+                <Route path="/tv-dashboard" element={<Navigate to="/paineis/tv-dashboard" replace />} />
+                <Route path="/dashboard/paineis/calendario" element={<Navigate to="/paineis/calendario" replace />} />
+                <Route path="/dashboard/paineis/diario-bordo" element={<Navigate to="/paineis/diario-bordo" replace />} />
+                <Route path="/dashboard/paineis/mapa" element={<Navigate to="/paineis/mapa" replace />} />
+                <Route path="/dashboard/performance" element={<Navigate to="/dashboard/marketing/performance" replace />} />
+                
+                {/* Redirects Marketing */}
+                <Route path="/dashboard/marketing/home" element={<Navigate to="/dashboard/marketing" replace />} />
+                
+                {/* Redirects Vendas */}
+                <Route path="/dashboard/vendas/home" element={<Navigate to="/dashboard/vendas" replace />} />
+                <Route path="/dashboard/orcamentos" element={<Navigate to="/dashboard/vendas/orcamentos" replace />} />
+                <Route path="/dashboard/orcamentos/novo" element={<Navigate to="/dashboard/vendas/orcamentos/novo" replace />} />
+                <Route path="/dashboard/orcamentos/editar/:id" element={<Navigate to="/dashboard/vendas/orcamentos/editar/:id" replace />} />
+                <Route path="/dashboard/vendas-catalogo" element={<Navigate to="/dashboard/vendas/vendas-catalogo" replace />} />
+                <Route path="/dashboard/autorizados" element={<Navigate to="/dashboard/vendas/parceiros/autorizados" replace />} />
+                <Route path="/dashboard/parceiros" element={<Navigate to="/dashboard/vendas/parceiros" replace />} />
+                <Route path="/dashboard/representantes" element={<Navigate to="/dashboard/vendas/parceiros/representantes" replace />} />
+                <Route path="/dashboard/franqueados" element={<Navigate to="/dashboard/vendas/parceiros/franqueados" replace />} />
+                
+                {/* Redirects Fábrica */}
+                <Route path="/dashboard/pedidos" element={<Navigate to="/dashboard/fabrica/pedidos" replace />} />
+                <Route path="/dashboard/ordens" element={<Navigate to="/dashboard/fabrica/ordens" replace />} />
+                <Route path="/dashboard/etiquetas" element={<Navigate to="/dashboard/fabrica/etiquetas" replace />} />
+                <Route path="/dashboard/historico-producao" element={<Navigate to="/dashboard/fabrica/historico-producao" replace />} />
+                <Route path="/dashboard/novo-pedido" element={<Navigate to="/dashboard/fabrica/novo-pedido" replace />} />
+                
+                {/* Redirects Logística */}
+                <Route path="/dashboard/entregas" element={<Navigate to="/dashboard/logistica/entregas" replace />} />
+                <Route path="/dashboard/frota" element={<Navigate to="/dashboard/logistica/frota" replace />} />
+                <Route path="/dashboard/instalacoes/frota" element={<Navigate to="/dashboard/logistica/frota" replace />} />
+                <Route path="/dashboard/instalacoes/frota/novo" element={<Navigate to="/dashboard/logistica/frota/novo" replace />} />
+                <Route path="/dashboard/instalacoes/frota/:id/editar" element={<Navigate to="/dashboard/logistica/frota/:id/editar" replace />} />
+                <Route path="/dashboard/instalacoes/frota/conferencia" element={<Navigate to="/dashboard/logistica/frota/conferencia" replace />} />
+                <Route path="/dashboard/instalacoes/frota/:id/conferencias" element={<Navigate to="/dashboard/logistica/frota/:id/conferencias" replace />} />
+                
+                {/* Redirects Instalações */}
+                <Route path="/dashboard/instalacoes/cronograma" element={<Navigate to="/dashboard/instalacoes/cronograma-instalacoes" replace />} />
+                
+                {/* Redirects Administrativo - Compras */}
+                <Route path="/dashboard/compras/fornecedores" element={<Navigate to="/dashboard/administrativo/compras/fornecedores" replace />} />
+                <Route path="/dashboard/compras/requisicoes-compra" element={<Navigate to="/dashboard/administrativo/compras/requisicoes-compra" replace />} />
+                <Route path="/dashboard/compras/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
+                <Route path="/dashboard/compras/estoque/editar/:id" element={<Navigate to="/dashboard/administrativo/compras/estoque/editar/:id" replace />} />
+                <Route path="/dashboard/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
+                <Route path="/dashboard/fornecedores" element={<Navigate to="/dashboard/administrativo/compras/fornecedores" replace />} />
+                
+                {/* Redirects Administrativo - Financeiro */}
+                <Route path="/dashboard/faturamento" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento" replace />} />
+                <Route path="/dashboard/faturamento/:id/editar" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento/:id/editar" replace />} />
+                <Route path="/dashboard/financeiro/faturamento" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento" replace />} />
+                <Route path="/dashboard/financeiro/faturamento/:id/editar" element={<Navigate to="/dashboard/administrativo/financeiro/faturamento/:id/editar" replace />} />
+                <Route path="/dashboard/financeiro/dre" element={<Navigate to="/dashboard/administrativo/financeiro/dre" replace />} />
+                <Route path="/dashboard/financeiro/despesas" element={<Navigate to="/dashboard/administrativo/financeiro/despesas" replace />} />
+                <Route path="/dashboard/dre" element={<Navigate to="/dashboard/administrativo/financeiro/dre" replace />} />
+                <Route path="/dashboard/despesas" element={<Navigate to="/dashboard/administrativo/financeiro/despesas" replace />} />
+                <Route path="/dashboard/financeiro/investimentos" element={<Navigate to="/dashboard/marketing/investimentos" replace />} />
+                <Route path="/dashboard/investimentos" element={<Navigate to="/dashboard/marketing/investimentos" replace />} />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
