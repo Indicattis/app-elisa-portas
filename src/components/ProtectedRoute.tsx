@@ -1,23 +1,19 @@
-
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useHasPermission } from "@/hooks/usePermissions";
-import { AppPermission } from "@/types/permissions";
+import { useRouteAccess } from "@/hooks/useRouteAccess";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  routeKey?: string;
   requireAdmin?: boolean;
-  requirePermission?: AppPermission;
 }
 
-export function ProtectedRoute({ children, requireAdmin = false, requirePermission }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, routeKey, requireAdmin = false }: ProtectedRouteProps) {
   const { user, loading, isAdmin } = useAuth();
   const location = useLocation();
-  const { hasPermission, isLoading: permissionLoading } = useHasPermission(requirePermission!, user?.id);
+  const { data: hasAccess, isLoading: accessLoading } = useRouteAccess(routeKey || '');
 
-  const isLoadingPermissions = requirePermission && permissionLoading;
-
-  if (loading || isLoadingPermissions) {
+  if (loading || (routeKey && accessLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -34,8 +30,8 @@ export function ProtectedRoute({ children, requireAdmin = false, requirePermissi
     return <Navigate to="/forbidden" replace />;
   }
 
-  // Verificação de permissões específicas (admin sempre tem acesso)
-  if (requirePermission && !isAdmin && !hasPermission) {
+  // Verificação de acesso à rota (admin sempre tem acesso)
+  if (routeKey && !isAdmin && !hasAccess) {
     return <Navigate to="/forbidden" replace />;
   }
 
