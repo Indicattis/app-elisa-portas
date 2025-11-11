@@ -20,10 +20,12 @@ export interface Tarefa {
     nome: string;
     email: string;
     role: string;
+    foto_perfil_url?: string;
   };
   criador?: {
     nome: string;
     email: string;
+    foto_perfil_url?: string;
   };
 }
 
@@ -42,10 +44,12 @@ export interface TarefaTemplate {
     nome: string;
     email: string;
     role: string;
+    foto_perfil_url?: string;
   };
   criador?: {
     nome: string;
     email: string;
+    foto_perfil_url?: string;
   };
 }
 
@@ -94,7 +98,7 @@ export function useTarefas(userId?: string, setor?: string) {
 
       const { data: usersData } = await supabase
         .from('admin_users')
-        .select('user_id, nome, email, role')
+        .select('user_id, nome, email, role, foto_perfil_url')
         .in('user_id', userIds);
 
       const usersMap = new Map(usersData?.map(u => [u.user_id, u]) || []);
@@ -136,7 +140,7 @@ export function useTarefas(userId?: string, setor?: string) {
 
       const { data: usersData } = await supabase
         .from('admin_users')
-        .select('user_id, nome, email, role')
+        .select('user_id, nome, email, role, foto_perfil_url')
         .in('user_id', userIds);
 
       const usersMap = new Map(usersData?.map(u => [u.user_id, u]) || []);
