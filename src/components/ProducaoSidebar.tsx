@@ -1,57 +1,86 @@
 import { NavLink } from "react-router-dom";
-import { Flame, Settings, Package, Paintbrush, ClipboardCheck, Truck, LayoutDashboard } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import * as icons from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
 import logoLight from "@/assets/logo-light.png";
-const menuItems = [{
-  to: "/producao/solda",
-  label: "Solda",
-  icon: Flame
-}, {
-  to: "/producao/perfiladeira",
-  label: "Perfiladeira",
-  icon: Settings
-}, {
-  to: "/producao/separacao",
-  label: "Separação",
-  icon: Package
-}, {
-  to: "/producao/pintura",
-  label: "Pintura",
-  icon: Paintbrush
-}, {
-  to: "/producao/qualidade",
-  label: "Qualidade",
-  icon: ClipboardCheck
-}, {
-  to: "/producao/carregamento",
-  label: "Carregamento",
-  icon: Truck
-}];
+
+interface AppRoute {
+  key: string;
+  path: string;
+  label: string;
+  icon?: string;
+  sort_order: number;
+  interface?: string;
+}
+
 export function ProducaoSidebar() {
-  const {
-    data: ordensCount
-  } = useOrdensCount();
-  const getCount = (tipo: string) => {
+  const { user, isAdmin } = useAuth();
+  const { data: ordensCount } = useOrdensCount();
+
+  // Buscar rotas da interface producao
+  const { data: routes = [] } = useQuery({
+    queryKey: ['producao-routes', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data: routesData, error } = await supabase
+        .from('app_routes')
+        .select('*')
+        .eq('active', true)
+        .eq('interface', 'producao')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+
+      // Verificar acesso para cada rota
+      if (isAdmin) return routesData || [];
+
+      const accessibleRoutes = [];
+      for (const route of routesData || []) {
+        const { data: hasAccess } = await supabase.rpc('has_route_access', {
+          _user_id: user.id,
+          _route_key: route.key
+        });
+        
+        if (hasAccess) {
+          accessibleRoutes.push(route);
+        }
+      }
+
+      return accessibleRoutes as AppRoute[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const getIcon = (iconName?: string) => {
+    if (!iconName) return icons.Circle;
+    const IconComponent = (icons as any)[iconName];
+    return IconComponent || icons.Circle;
+  };
+  const getCount = (routeKey: string) => {
     if (!ordensCount) return 0;
-    switch (tipo) {
-      case "solda":
+    switch (routeKey) {
+      case "producao_solda":
         return ordensCount.soldagem || 0;
-      case "perfiladeira":
+      case "producao_perfiladeira":
         return ordensCount.perfiladeira || 0;
-      case "separacao":
+      case "producao_separacao":
         return ordensCount.separacao || 0;
-      case "pintura":
+      case "producao_pintura":
         return ordensCount.pintura || 0;
-      case "qualidade":
+      case "producao_qualidade":
         return ordensCount.qualidade || 0;
       default:
         return 0;
     }
   };
-  return <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+
+  return (
+    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
         <img src={logoLight} alt="Logo" className="h-12 w-auto mx-auto" />
         <p className="text-center text-sm text-sidebar-foreground/60 mt-2 font-medium">
@@ -60,24 +89,37 @@ export function ProducaoSidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
-        {menuItems.map(item => {
-        const Icon = item.icon;
-        const tipo = item.to.split("/").pop() || "";
-        const count = getCount(tipo);
-        return <NavLink key={item.to} to={item.to} className={({
-          isActive
-        }) => cn("flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium", "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground")}>
+        {routes.map((route) => {
+          const Icon = getIcon(route.icon);
+          const count = getCount(route.key);
+
+          return (
+            <NavLink
+              key={route.key}
+              to={route.path}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground"
+                )
+              }
+            >
               <div className="flex items-center gap-3">
                 <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                <span>{route.label}</span>
               </div>
-              {count > 0 && <Badge variant="secondary" className="ml-auto">
+              {count > 0 && (
+                <Badge variant="secondary" className="ml-auto">
                   {count}
-                </Badge>}
-            </NavLink>;
-      })}
+                </Badge>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
-
-      
-    </aside>;
+    </aside>
+  );
 }

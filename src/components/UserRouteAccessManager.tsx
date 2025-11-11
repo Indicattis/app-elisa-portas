@@ -19,6 +19,8 @@ interface AppRoute {
   description: string | null;
   group: string | null;
   sort_order: number;
+  interface?: string;
+  parent_key?: string | null;
 }
 
 interface UserRouteAccess {
@@ -183,15 +185,24 @@ export function UserRouteAccessManager() {
     });
   };
 
-  // Agrupar rotas por grupo
-  const groupedRoutes = routes?.reduce((acc, route) => {
-    const group = route.group || 'outros';
-    if (!acc[group]) {
-      acc[group] = [];
+  // Agrupar rotas por interface primeiro, depois por grupo
+  const groupedByInterface = routes?.reduce((acc, route) => {
+    const interfaceName = route.interface || 'dashboard';
+    if (!acc[interfaceName]) {
+      acc[interfaceName] = {};
     }
-    acc[group].push(route);
+    
+    const group = route.group || 'outros';
+    if (!acc[interfaceName][group]) {
+      acc[interfaceName][group] = [];
+    }
+    
+    acc[interfaceName][group].push(route);
     return acc;
-  }, {} as Record<string, AppRoute[]>);
+  }, {} as Record<string, Record<string, AppRoute[]>>);
+
+  // Para compatibilidade com código existente, usar apenas dashboard
+  const groupedRoutes = groupedByInterface?.['dashboard'] || {};
 
   // Filtrar rotas pela busca
   const filteredRoutes = routes?.filter(route => 
@@ -281,7 +292,15 @@ export function UserRouteAccessManager() {
                       htmlFor={`route-${route.key}`}
                       className="flex-1 text-sm cursor-pointer"
                     >
-                      <div className="font-medium">{route.label}</div>
+                      <div className="font-medium">
+                        {route.parent_key && '↳ '}
+                        {route.label}
+                        {route.interface && route.interface !== 'dashboard' && (
+                          <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">
+                            {route.interface}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">{route.path}</div>
                       {route.description && (
                         <div className="text-xs text-muted-foreground">{route.description}</div>
@@ -312,7 +331,15 @@ export function UserRouteAccessManager() {
                           htmlFor={`route-${route.key}`}
                           className="flex-1 text-sm cursor-pointer"
                         >
-                          <div className="font-medium">{route.label}</div>
+                          <div className="font-medium">
+                            {route.parent_key && '↳ '}
+                            {route.label}
+                            {route.interface && route.interface !== 'dashboard' && (
+                              <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">
+                                {route.interface}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-muted-foreground">{route.path}</div>
                           {route.description && (
                             <div className="text-xs text-muted-foreground">{route.description}</div>

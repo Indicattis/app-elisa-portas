@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck } from "lucide-react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,19 @@ import {
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { icons } from "lucide-react";
+
+interface AppRoute {
+  key: string;
+  path: string;
+  label: string;
+  icon?: string;
+  group?: string;
+  description?: string | null;
+  sort_order: number;
+  interface?: string;
+  parent_key?: string | null;
+  can_access?: boolean;
+}
 
 // Mapeamento de ícones do Lucide
 const iconMap: Record<string, any> = {
@@ -66,8 +79,6 @@ const iconMap: Record<string, any> = {
   ClipboardCheck,
 };
 
-// Checklist colors removed - now using global task system
-
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -76,7 +87,7 @@ export function AppSidebar() {
   const { data: ordensCount } = useOrdensCount();
   const { theme } = useTheme();
   
-  // Buscar rotas com verificação de acesso usando has_route_access
+  // Buscar rotas apenas da interface dashboard
   const { data: routes = [], isLoading } = useQuery({
     queryKey: ['sidebar-routes', user?.id],
     queryFn: async () => {
@@ -86,6 +97,7 @@ export function AppSidebar() {
         .from('app_routes')
         .select('*')
         .eq('active', true)
+        .eq('interface', 'dashboard')
         .order('sort_order', { ascending: true });
       
       if (error) throw error;
@@ -108,21 +120,31 @@ export function AppSidebar() {
         })
       );
       
-      return routesWithAccess;
+      return routesWithAccess as AppRoute[];
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
   
-  // Agrupar rotas por grupo
-  const groupedRoutes = routes.reduce((acc, route) => {
+  // Separar rotas raiz (sem parent_key) das rotas filhas
+  const rootRoutes = routes.filter(route => !route.parent_key);
+  const childRoutes = routes.filter(route => route.parent_key);
+
+  // Construir árvore hierárquica: cada rota raiz com seus filhos
+  const routeTree = rootRoutes.map(parent => ({
+    ...parent,
+    children: childRoutes.filter(child => child.parent_key === parent.key)
+  }));
+
+  // Agrupar rotas raiz por grupo
+  const groupedRoutes = routeTree.reduce((acc, route) => {
     const groupName = route.group || 'Outros';
     if (!acc[groupName]) {
       acc[groupName] = [];
     }
     acc[groupName].push(route);
     return acc;
-  }, {} as Record<string, typeof routes>);
+  }, {} as Record<string, (AppRoute & { children: AppRoute[] })[]>);
   
   // Persistir estado dos grupos no localStorage
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -149,7 +171,9 @@ export function AppSidebar() {
     if (!hasSavedState) {
       Object.entries(groupedRoutes).forEach(([groupName, groupRoutes]) => {
         const hasActiveChild = groupRoutes.some(route => 
-          location.pathname === route.path || location.pathname.startsWith(route.path + '/')
+          location.pathname === route.path || 
+          location.pathname.startsWith(route.path + '/') ||
+          route.children?.some(child => location.pathname === child.path || location.pathname.startsWith(child.path + '/'))
         );
         
         if (hasActiveChild) {
@@ -171,7 +195,7 @@ export function AppSidebar() {
     return location.pathname === path;
   };
 
-  const getIcon = (iconName: string | null) => {
+  const getIcon = (iconName: string | null | undefined) => {
     if (!iconName) return Settings;
     return iconMap[iconName] || icons[iconName as keyof typeof icons] || Settings;
   };
@@ -180,11 +204,23 @@ export function AppSidebar() {
     setOpenGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
   };
 
+  const toggleChildGroup = (routeKey: string, open: boolean) => {
+    setOpenGroups(prev => ({ ...prev, [routeKey]: open }));
+  };
+
   const handleOpenAll = () => {
     const allOpen = Object.keys(groupedRoutes).reduce((acc, group) => {
       acc[group] = true;
       return acc;
     }, {} as Record<string, boolean>);
+    
+    // Também abrir todas as rotas com filhos
+    routeTree.forEach(route => {
+      if (route.children && route.children.length > 0) {
+        allOpen[route.key] = true;
+      }
+    });
+    
     setOpenGroups(allOpen);
   };
 
@@ -217,6 +253,15 @@ export function AppSidebar() {
     month: '2-digit',
     year: 'numeric'
   });
+
+  // Mapeamento de keys para counts de ordens
+  const ordensCountMap: Record<string, number> = {
+    'producao_solda': ordensCount?.soldagem || 0,
+    'producao_perfiladeira': ordensCount?.perfiladeira || 0,
+    'producao_separacao': ordensCount?.separacao || 0,
+    'producao_qualidade': ordensCount?.qualidade || 0,
+    'producao_pintura': ordensCount?.pintura || 0,
+  };
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r">
@@ -290,16 +335,56 @@ export function AppSidebar() {
                               const RouteIcon = getIcon(route.icon);
                               const canAccess = route.can_access;
                               const itemIsActive = canAccess && isActive(route.path);
+                              const count = ordensCountMap[route.key] || 0;
                               
-                              // Mapeamento de keys para counts de ordens
-                              const ordensCountMap: Record<string, number> = {
-                                'producao_solda': ordensCount?.soldagem || 0,
-                                'producao_perfiladeira': ordensCount?.perfiladeira || 0,
-                                'producao_separacao': ordensCount?.separacao || 0,
-                                'producao_qualidade': ordensCount?.qualidade || 0,
-                                'producao_pintura': ordensCount?.pintura || 0,
-                              };
-                              
+                              // Se a rota tem filhos, renderizar como collapsible
+                              if (route.children && route.children.length > 0) {
+                                const hasAccessToChildren = route.children.some(child => child.can_access);
+                                if (!hasAccessToChildren && !canAccess) return null;
+
+                                return (
+                                  <Collapsible
+                                    key={route.key}
+                                    open={openGroups[route.key]}
+                                    onOpenChange={(open) => toggleChildGroup(route.key, open)}
+                                    className="group/collapsible"
+                                  >
+                                    <SidebarMenuSubItem>
+                                      <CollapsibleTrigger asChild>
+                                        <SidebarMenuSubButton className="cursor-pointer">
+                                          <RouteIcon className="h-4 w-4" />
+                                          <span>{route.label}</span>
+                                          <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                        </SidebarMenuSubButton>
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent>
+                                        <SidebarMenuSub className="ml-4">
+                                          {route.children.map((childRoute) => {
+                                            const childCanAccess = childRoute.can_access;
+                                            if (!childCanAccess) return null;
+
+                                            const ChildIcon = getIcon(childRoute.icon);
+                                            const childActive = isActive(childRoute.path);
+
+                                            return (
+                                              <SidebarMenuSubItem key={childRoute.key}>
+                                                <SidebarMenuSubButton asChild isActive={childActive}>
+                                                  <Link to={childRoute.path} className="flex items-center gap-2 w-full">
+                                                    <ChildIcon className="h-4 w-4" />
+                                                    <span>{childRoute.label}</span>
+                                                  </Link>
+                                                </SidebarMenuSubButton>
+                                              </SidebarMenuSubItem>
+                                            );
+                                          })}
+                                        </SidebarMenuSub>
+                                      </CollapsibleContent>
+                                    </SidebarMenuSubItem>
+                                  </Collapsible>
+                                );
+                              }
+
+                              // Rota sem filhos (simples)
                               return (
                                 <SidebarMenuSubItem key={route.key}>
                                   <SidebarMenuSubButton 
@@ -314,12 +399,12 @@ export function AppSidebar() {
                                       <Link to={route.path} className="flex items-center gap-2 w-full">
                                         <RouteIcon className="h-4 w-4" />
                                         <span>{route.label}</span>
-                                        {ordensCountMap[route.key] > 0 && (
+                                        {count > 0 && (
                                           <Badge 
                                             variant="secondary" 
                                             className="ml-auto h-5 min-w-5 px-1.5 text-xs font-semibold"
                                           >
-                                            {ordensCountMap[route.key]}
+                                            {count}
                                           </Badge>
                                         )}
                                       </Link>

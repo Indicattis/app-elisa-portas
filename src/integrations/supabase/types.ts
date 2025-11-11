@@ -126,8 +126,10 @@ export type Database = {
           description: string | null
           group: string | null
           icon: string | null
+          interface: string | null
           key: string
           label: string
+          parent_key: string | null
           path: string
           sort_order: number | null
           updated_at: string | null
@@ -138,8 +140,10 @@ export type Database = {
           description?: string | null
           group?: string | null
           icon?: string | null
+          interface?: string | null
           key: string
           label: string
+          parent_key?: string | null
           path: string
           sort_order?: number | null
           updated_at?: string | null
@@ -150,13 +154,23 @@ export type Database = {
           description?: string | null
           group?: string | null
           icon?: string | null
+          interface?: string | null
           key?: string
           label?: string
+          parent_key?: string | null
           path?: string
           sort_order?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "app_routes_parent_key_fkey"
+            columns: ["parent_key"]
+            isOneToOne: false
+            referencedRelation: "app_routes"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       atas_participantes: {
         Row: {
