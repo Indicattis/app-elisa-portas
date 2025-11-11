@@ -3290,6 +3290,30 @@ export type Database = {
         }
         Relationships: []
       }
+      role_interface_access: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          interface: Database["public"]["Enums"]["interface_type"]
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interface: Database["public"]["Enums"]["interface_type"]
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interface?: Database["public"]["Enums"]["interface_type"]
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           created_at: string | null
