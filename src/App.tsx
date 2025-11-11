@@ -60,7 +60,6 @@ import Autorizados from "./pages/Autorizados";
 import ParceiroNovo from "./pages/ParceiroNovo";
 import ParceiroEdit from "./pages/ParceiroEdit";
 import MapaAutorizados from "./pages/MapaAutorizados";
-import Configuracoes from "./pages/Configuracoes";
 import ContadorVendas from "./pages/ContadorVendas";
 import Forbidden from "./pages/Forbidden";
 import Pedidos from "./pages/Pedidos";
@@ -245,7 +244,7 @@ function HeaderUserInfo() {
           </Button>
 
           <Button variant="ghost" size="sm" asChild>
-            <NavLink to="/dashboard/configuracoes">
+            <NavLink to="/admin">
               <Settings className="h-4 w-4" />
             </NavLink>
           </Button>
@@ -813,16 +812,6 @@ const App = () => (
                     <ProtectedRoute requirePermission="autorizados">
                       <DashboardLayout>
                         <MapaAutorizados />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/configuracoes"
-                  element={
-                    <ProtectedRoute requirePermission="configuracoes">
-                      <DashboardLayout>
-                        <Configuracoes />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
