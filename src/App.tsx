@@ -427,6 +427,16 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/dashboard/vendas/listagem"
+                  element={
+                    <ProtectedRoute routeKey="vendas_listagem">
+                      <DashboardLayout>
+                        <Vendas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/vendas/tabela-precos"
                   element={
                     <ProtectedRoute routeKey="tabela_precos">
@@ -642,16 +652,6 @@ const App = () => (
                     <ProtectedRoute routeKey="marketing">
                       <DashboardLayout>
                         <Marketing />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/vendas"
-                  element={
-                    <ProtectedRoute routeKey="vendas_home">
-                      <DashboardLayout>
-                        <VendasHome />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
