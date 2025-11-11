@@ -11,7 +11,6 @@ export interface Tarefa {
   dia_recorrencia: number | null;
   tipo_recorrencia: string | null;
   template_id: string | null;
-  data_referencia: string | null;
   setor: string | null;
   created_by: string;
   created_at: string;
@@ -70,7 +69,7 @@ export function useTarefas(userId?: string, setor?: string) {
 
       let query = supabase
         .from('tarefas')
-        .select('id, descricao, responsavel_id, status, recorrente, tipo_recorrencia, template_id, data_referencia, setor, created_by, created_at, updated_at');
+        .select('id, descricao, responsavel_id, status, recorrente, tipo_recorrencia, template_id, setor, created_by, created_at, updated_at');
 
       // Se setor foi especificado, buscar tarefas de todos os usuários do setor
       if (setor) {
@@ -230,7 +229,6 @@ export function useTarefas(userId?: string, setor?: string) {
           recorrente: false,
           tipo_recorrencia: null,
           setor: input.setor,
-          data_referencia: new Date().toISOString().split('T')[0],
           created_by: user.id,
         }])
         .select()
@@ -264,7 +262,7 @@ export function useTarefas(userId?: string, setor?: string) {
       // Buscar dados da tarefa
       const { data: tarefa } = await supabase
         .from('tarefas')
-        .select('id, template_id, data_referencia')
+        .select('id, template_id')
         .eq('id', tarefaId)
         .single();
       
@@ -279,13 +277,12 @@ export function useTarefas(userId?: string, setor?: string) {
       if (updateError) throw updateError;
 
       // Se for recorrente, registrar no histórico
-      if ((tarefa as any).template_id && (tarefa as any).data_referencia) {
+      if ((tarefa as any).template_id) {
         const { error: historicoError } = await supabase
           .from('tarefas_historico' as any)
           .insert({
             template_id: (tarefa as any).template_id,
             tarefa_id: tarefaId,
-            data_referencia: (tarefa as any).data_referencia,
             data_conclusao: new Date().toISOString(),
             concluida_por: user.id
           });
