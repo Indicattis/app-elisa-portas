@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       .from('admin_users')
       .select('*')
       .eq('codigo_usuario', codigo_usuario)
-      .eq('setor', 'fabrica')
+      .in('setor', ['fabrica', 'administrativo'])
       .eq('ativo', true)
       .maybeSingle()
 
