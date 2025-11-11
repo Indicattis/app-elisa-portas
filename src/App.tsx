@@ -74,13 +74,11 @@ import Documentos from "./pages/Documentos";
 import DocumentoNovo from "./pages/DocumentoNovo";
 import Vendas from "./pages/Vendas";
 import VendasNova from "./pages/VendasNova";
-import Compras from "./pages/Compras";
 import Fornecedores from "./pages/Fornecedores";
 import RequisicoesCompra from "./pages/RequisicoesCompra";
 import Estoque from "./pages/Estoque";
 import EstoqueEdit from "./pages/EstoqueEdit";
 import VendasCatalogo from "./pages/VendasCatalogo";
-import RHAdmin from "./pages/RHAdmin";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
@@ -154,25 +152,25 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/mapa-autorizados" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/dashboard/paineis/mapa" className="flex items-center gap-2 cursor-pointer">
                         <Map className="h-4 w-4" />
                         <span>Mapa</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/diario-bordo" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/dashboard/paineis/diario-bordo" className="flex items-center gap-2 cursor-pointer">
                         <BookOpen className="h-4 w-4" />
                         <span>Diário de Bordo</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/calendario" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/dashboard/paineis/calendario" className="flex items-center gap-2 cursor-pointer">
                         <CalendarIcon className="h-4 w-4" />
                         <span>Calendário</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/dashboard/contador-vendas" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/paineis/contador-vendas" className="flex items-center gap-2 cursor-pointer">
                         <Calculator className="h-4 w-4" />
                         <span>Contador de Vendas</span>
                       </NavLink>
@@ -396,7 +394,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/users"
+                  path="/admin/users"
                   element={
                     <ProtectedRoute routeKey="users">
                       <DashboardLayout>
@@ -406,7 +404,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/faturamento"
+                  path="/dashboard/financeiro/faturamento"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -466,7 +464,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/faturamento/:id/editar"
+                  path="/dashboard/financeiro/faturamento/:id/editar"
                   element={
                     <ProtectedRoute routeKey="faturamento">
                       <DashboardLayout>
@@ -486,7 +484,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/visitas"
+                  path="/dashboard/vendas/visitas"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -506,7 +504,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/logistica/home"
+                  path="/dashboard/logistica"
                   element={
                     <ProtectedRoute routeKey="logistica_home">
                       <DashboardLayout>
@@ -626,7 +624,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/marketing"
+                  path="/dashboard/marketing/home"
                   element={
                     <ProtectedRoute routeKey="marketing">
                       <DashboardLayout>
@@ -646,7 +644,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/fabrica/home"
+                  path="/dashboard/fabrica"
                   element={
                     <ProtectedRoute routeKey="fabrica_home">
                       <DashboardLayout>
@@ -666,7 +664,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/instalacoes/home"
+                  path="/dashboard/instalacoes"
                   element={
                     <ProtectedRoute routeKey="instalacoes_home">
                       <DashboardLayout>
@@ -676,7 +674,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/administrativo/home"
+                  path="/dashboard/administrativo"
                   element={
                     <ProtectedRoute routeKey="administrativo_home">
                       <DashboardLayout>
@@ -686,7 +684,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/canais-aquisicao"
+                  path="/dashboard/marketing/canais-aquisicao"
                   element={
                     <ProtectedRoute routeKey="canais_aquisicao">
                       <DashboardLayout>
@@ -696,7 +694,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/investimentos"
+                  path="/dashboard/financeiro/investimentos"
                   element={
                     <ProtectedRoute routeKey="investimentos">
                       <DashboardLayout>
@@ -706,7 +704,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/calendario"
+                  path="/dashboard/paineis/calendario"
                   element={
                     <ProtectedRoute routeKey="calendario">
                       <DashboardLayout>
@@ -716,7 +714,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/autorizados"
+                  path="/dashboard/vendas/parceiros/autorizados"
                   element={
                     <ProtectedRoute routeKey="autorizados">
                       <DashboardLayout>
@@ -736,7 +734,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/representantes"
+                  path="/dashboard/vendas/parceiros/representantes"
                   element={
                     <ProtectedRoute routeKey="representantes">
                       <DashboardLayout>
@@ -746,7 +744,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/licenciados"
+                  path="/dashboard/vendas/parceiros/franqueados"
                   element={
                     <ProtectedRoute routeKey="franqueados">
                       <DashboardLayout>
@@ -796,7 +794,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/mapa-autorizados"
+                  path="/dashboard/paineis/mapa"
                   element={
                     <ProtectedRoute routeKey="mapa_autorizados">
                       <DashboardLayout>
@@ -833,7 +831,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/contador-vendas"
+                  path="/paineis/contador-vendas"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -903,7 +901,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/documentos"
+                  path="/dashboard/administrativo/documentos"
                   element={
                     <ProtectedRoute routeKey="documentos">
                       <DashboardLayout>
@@ -913,21 +911,11 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/documentos/novo"
+                  path="/dashboard/administrativo/documentos/novo"
                   element={
                     <ProtectedRoute routeKey="documentos">
                       <DashboardLayout>
                         <DocumentoNovo />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/compras"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <Compras />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -943,7 +931,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/compras/requisicoes"
+                  path="/dashboard/compras/requisicoes-compra"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -953,7 +941,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/estoque"
+                  path="/dashboard/compras/estoque"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -963,7 +951,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/estoque/editar/:id"
+                  path="/dashboard/compras/estoque/editar/:id"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -978,36 +966,6 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <VendasCatalogo />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/rh-admin"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <RHAdmin />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/parceiros/representantes"
-                  element={
-                    <ProtectedRoute routeKey="representantes">
-                      <DashboardLayout>
-                        <Representantes />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/parceiros/franqueados"
-                  element={
-                    <ProtectedRoute routeKey="franqueados">
-                      <DashboardLayout>
-                        <Franqueados />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -1033,7 +991,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/diario-bordo"
+                  path="/dashboard/paineis/diario-bordo"
                   element={
                     <ProtectedRoute routeKey="diario_bordo">
                       <DashboardLayout>
@@ -1043,7 +1001,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/direcao/dre"
+                  path="/dashboard/financeiro/dre"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -1053,7 +1011,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/direcao/despesas"
+                  path="/dashboard/financeiro/despesas"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -1063,7 +1021,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dp-rh/vagas"
+                  path="/dashboard/administrativo/rh/vagas"
                   element={
                     <ProtectedRoute>
                       <DashboardLayout>
@@ -1088,6 +1046,17 @@ const App = () => (
                     <ProtectedRoute>
                       <DashboardLayout>
                         <PedidoView />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/todo"
+                  element={
+                    <ProtectedRoute routeKey="todo">
+                      <DashboardLayout>
+                        <Todo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
