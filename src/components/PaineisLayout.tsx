@@ -10,9 +10,9 @@ export function PaineisLayout({ children }: PaineisLayoutProps) {
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {sidebarVisible && <PaineisSidebar />}
-      <div className="flex-1 flex flex-col">
+      <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarVisible ? 'ml-64' : 'ml-0'}`}>
         <PaineisHeader 
           sidebarVisible={sidebarVisible}
           onToggleSidebar={() => setSidebarVisible(!sidebarVisible)}
