@@ -91,7 +91,7 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
                 <h4 className="font-semibold mb-3">Ordens de Produção</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {pedido.ordens.map((ordem) => (
-                    <OrdemCard key={ordem.id} ordem={ordem} />
+                    <OrdemCard key={ordem.id} ordem={ordem} pedidoStatus={pedido.status} />
                   ))}
                 </div>
               </div>

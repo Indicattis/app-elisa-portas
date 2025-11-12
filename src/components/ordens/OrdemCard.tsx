@@ -50,9 +50,10 @@ const ORDEM_ROUTES = {
 
 interface OrdemCardProps {
   ordem: OrdemBase;
+  pedidoStatus: string;
 }
 
-export function OrdemCard({ ordem }: OrdemCardProps) {
+export function OrdemCard({ ordem, pedidoStatus }: OrdemCardProps) {
   const navigate = useNavigate();
   const Icon = ORDEM_ICONS[ordem.tipo];
 
@@ -74,8 +75,8 @@ export function OrdemCard({ ordem }: OrdemCardProps) {
               <p className="text-xs text-muted-foreground">{ORDEM_LABELS[ordem.tipo]}</p>
             </div>
           </div>
-          <Badge variant={STATUS_VARIANTS[ordem.status as keyof typeof STATUS_VARIANTS] || 'outline'}>
-            {STATUS_LABELS[ordem.status as keyof typeof STATUS_LABELS] || ordem.status}
+          <Badge variant="outline">
+            {pedidoStatus}
           </Badge>
         </div>
       </CardHeader>
