@@ -61,6 +61,7 @@ export interface TarefaInput {
   setor?: string;
   dias_semana?: number[];
   hora_criacao?: string;
+  data_proxima_criacao?: string;
 }
 
 export function useTarefas(userId?: string, setor?: string) {
@@ -161,9 +162,12 @@ export function useTarefas(userId?: string, setor?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      const amanha = new Date();
-      amanha.setDate(amanha.getDate() + 1);
-      const proximaData = amanha.toISOString().split('T')[0];
+      // Use provided data_proxima_criacao or default to tomorrow
+      const dataProximaCriacao = input.data_proxima_criacao || (() => {
+        const amanha = new Date();
+        amanha.setDate(amanha.getDate() + 1);
+        return amanha.toISOString().split('T')[0];
+      })();
 
       const tipoRecorrencia = input.dias_semana && input.dias_semana.length > 0 
         ? 'semanal' 
@@ -178,7 +182,7 @@ export function useTarefas(userId?: string, setor?: string) {
           tipo_recorrencia: tipoRecorrencia,
           dias_semana: input.dias_semana || null,
           hora_criacao: input.hora_criacao || '00:00:00',
-          data_proxima_criacao: proximaData,
+          data_proxima_criacao: dataProximaCriacao,
           ativa: true,
           created_by: user.id
         })

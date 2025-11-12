@@ -7,6 +7,7 @@ import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { EditarRecorrenteModal } from "@/components/todo/EditarRecorrenteModal";
+import { ProcessarTarefasButton } from "@/components/todo/ProcessarTarefasButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +105,7 @@ export default function DirecaoChecklist() {
 
         {podeGerenciar && (
           <div className="flex gap-2 shrink-0">
+            <ProcessarTarefasButton />
             <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
               <List className="h-4 w-4 mr-2" />
               Recorrentes ({templates.length})

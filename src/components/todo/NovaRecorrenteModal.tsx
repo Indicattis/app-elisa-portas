@@ -20,6 +20,7 @@ interface NovaRecorrenteModalProps {
     setor?: string;
     dias_semana: number[];
     hora_criacao?: string;
+    data_proxima_criacao?: string;
   }) => void;
   setor?: string;
 }
@@ -84,12 +85,31 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: Nov
       return;
     }
 
+    // Calculate data_proxima_criacao
+    const agora = new Date();
+    const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    const horaAgora = agora.getHours() * 60 + agora.getMinutes();
+    const [horaAgendada, minutoAgendado] = horaCriacao.split(':').map(Number);
+    const minutoAgendado_total = horaAgendada * 60 + minutoAgendado;
+    const diaHoje = agora.getDay();
+    
+    let dataProximaCriacao = new Date(hoje);
+    
+    // Se hoje está nos dias selecionados E ainda não passou o horário, agendar para hoje
+    if (diasSelecionados.includes(diaHoje) && horaAgora < minutoAgendado_total) {
+      // Já está como hoje
+    } else {
+      // Senão, agendar para amanhã (a edge function vai buscar o próximo dia correto)
+      dataProximaCriacao.setDate(dataProximaCriacao.getDate() + 1);
+    }
+
     onSubmit({
       descricao: descricao.trim(),
       responsavel_id: responsavelId,
       setor,
       dias_semana: diasSelecionados,
       hora_criacao: horaCriacao,
+      data_proxima_criacao: dataProximaCriacao.toISOString().split('T')[0],
     });
 
     // Reset
