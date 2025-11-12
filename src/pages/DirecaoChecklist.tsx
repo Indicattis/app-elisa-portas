@@ -12,8 +12,11 @@ import { TemplatesTabela } from "@/components/todo/TemplatesTabela";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, ArrowLeft, Trash } from "lucide-react";
-import { format, isSameDay, parseISO } from "date-fns";
+import { Plus, CalendarDays, ArrowLeft, Trash, CalendarPlus } from "lucide-react";
+import { format, isSameDay, parseISO, addDays, startOfWeek } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function DirecaoChecklist() {
@@ -46,8 +49,75 @@ export default function DirecaoChecklist() {
   const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
   const [templateParaEditar, setTemplateParaEditar] = useState<any>(null);
+  const [processandoProximaSemana, setProcessandoProximaSemana] = useState(false);
+  const queryClient = useQueryClient();
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
+
+  const criarTarefasProximaSemana = async () => {
+    setProcessandoProximaSemana(true);
+    try {
+      const hoje = new Date();
+      const inicioProximaSemana = startOfWeek(addDays(hoje, 7), { weekStartsOn: 0 }); // Domingo
+      const diasSemana = Array.from({ length: 7 }, (_, i) => addDays(inicioProximaSemana, i));
+      
+      let totalCriadas = 0;
+      
+      for (const template of templates) {
+        if (!template.dias_semana || template.dias_semana.length === 0) continue;
+        
+        for (const dia of diasSemana) {
+          const diaSemana = dia.getDay();
+          
+          // Verifica se o template deve rodar neste dia
+          if (!template.dias_semana.includes(diaSemana)) continue;
+          
+          const dataReferencia = format(dia, 'yyyy-MM-dd');
+          
+          // Verifica se já existe tarefa para este dia
+          const { data: tarefaExistente } = await supabase
+            .from('tarefas')
+            .select('id')
+            .eq('template_id', template.id)
+            .eq('data_referencia', dataReferencia)
+            .maybeSingle();
+          
+          if (tarefaExistente) continue;
+          
+          // Cria a tarefa
+          const horaCreated = template.hora_criacao || '00:00:00';
+          const dataHoraCreated = `${dataReferencia}T${horaCreated}`;
+          
+          const { error } = await supabase
+            .from('tarefas')
+            .insert({
+              descricao: template.descricao,
+              responsavel_id: template.responsavel_id,
+              setor: template.setor,
+              status: 'em_andamento',
+              recorrente: true,
+              tipo_recorrencia: template.tipo_recorrencia,
+              template_id: template.id,
+              data_referencia: dataReferencia,
+              created_by: template.created_by,
+              created_at: dataHoraCreated
+            });
+          
+          if (!error) {
+            totalCriadas++;
+          }
+        }
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['tarefas'] });
+      toast.success(`${totalCriadas} tarefa(s) criada(s) para próxima semana`);
+    } catch (error) {
+      console.error('Erro ao criar tarefas:', error);
+      toast.error('Erro ao criar tarefas da próxima semana');
+    } finally {
+      setProcessandoProximaSemana(false);
+    }
+  };
 
   // Aplicar filtros às tarefas
   const tarefasFiltradas = useMemo(() => {
@@ -157,7 +227,20 @@ export default function DirecaoChecklist() {
       {/* Tabela de Templates Recorrentes */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Templates Recorrentes</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Templates Recorrentes</CardTitle>
+            {podeGerenciar && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={criarTarefasProximaSemana}
+                disabled={processandoProximaSemana}
+              >
+                <CalendarPlus className="h-4 w-4 mr-2" />
+                {processandoProximaSemana ? 'Processando...' : 'Criar Próxima Semana'}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="pt-0">
           <TemplatesTabela
