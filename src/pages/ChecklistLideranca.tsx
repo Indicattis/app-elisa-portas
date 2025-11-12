@@ -271,11 +271,7 @@ export default function ChecklistLideranca() {
         open={modalAberto}
         onOpenChange={setModalAberto}
         onSubmit={(tarefa) => {
-          if (tarefa.recorrente) {
-            criarTemplate.mutate(tarefa);
-          } else {
-            criarTarefa.mutate(tarefa);
-          }
+          criarTarefa.mutate(tarefa);
         }}
         setor={setor}
       />

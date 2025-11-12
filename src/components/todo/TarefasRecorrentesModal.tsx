@@ -13,6 +13,7 @@ interface TarefaTemplate {
   id: string;
   descricao: string;
   tipo_recorrencia: string;
+  dias_semana?: number[] | null;
   data_proxima_criacao: string;
   ativa: boolean;
   setor: string | null;
@@ -41,15 +42,35 @@ export function TarefasRecorrentesModal({
 }: TarefasRecorrentesModalProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const getTipoLabel = (tipo: string) => {
+  const getDiasSemanaNomes = (dias: number[]) => {
+    const nomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const diasNomes = dias.sort((a, b) => a - b).map(d => nomes[d]);
+    
+    if (diasNomes.length === 7) return "Todos os dias";
+    if (diasNomes.length === 1) return `Toda ${diasNomes[0]}`;
+    if (diasNomes.length === 2) return `Toda ${diasNomes[0]} e ${diasNomes[1]}`;
+    
+    const ultimos = diasNomes.slice(-1)[0];
+    const primeiros = diasNomes.slice(0, -1).join(", ");
+    return `Toda ${primeiros} e ${ultimos}`;
+  };
+
+  const getTipoLabel = (template: TarefaTemplate) => {
+    // New format: day of week based
+    if (template.dias_semana && template.dias_semana.length > 0) {
+      return getDiasSemanaNomes(template.dias_semana);
+    }
+    
+    // Old format: interval based
     const labels: Record<string, string> = {
       'todos_os_dias': 'Diária',
       'primeiro_dia_mes': '1° dia do mês',
       'cada_7_dias': 'Semanal (7 dias)',
       'cada_15_dias': 'Quinzenal (15 dias)',
-      'cada_30_dias': 'Mensal (30 dias)'
+      'cada_30_dias': 'Mensal (30 dias)',
+      'semanal': 'Semanal'
     };
-    return labels[tipo] || tipo;
+    return labels[template.tipo_recorrencia] || template.tipo_recorrencia;
   };
 
   return (
@@ -78,7 +99,7 @@ export function TarefasRecorrentesModal({
                           <p className="font-medium">{template.descricao}</p>
                           <Badge variant={template.ativa ? "default" : "secondary"}>
                             <Repeat className="h-3 w-3 mr-1" />
-                            {getTipoLabel(template.tipo_recorrencia)}
+                            {getTipoLabel(template)}
                           </Badge>
                           {!template.ativa && (
                             <Badge variant="outline" className="text-muted-foreground">

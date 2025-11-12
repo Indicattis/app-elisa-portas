@@ -35,6 +35,7 @@ export interface TarefaTemplate {
   responsavel_id: string;
   setor: string | null;
   tipo_recorrencia: string;
+  dias_semana?: number[] | null;
   ativa: boolean;
   data_proxima_criacao: string;
   created_by: string;
@@ -56,9 +57,8 @@ export interface TarefaTemplate {
 export interface TarefaInput {
   descricao: string;
   responsavel_id: string;
-  recorrente: boolean;
-  tipo_recorrencia?: 'todos_os_dias' | 'primeiro_dia_mes' | 'cada_7_dias' | 'cada_15_dias' | 'cada_30_dias' | null;
-  setor: string;
+  setor?: string;
+  dias_semana?: number[];
 }
 
 export function useTarefas(userId?: string, setor?: string) {
@@ -118,7 +118,7 @@ export function useTarefas(userId?: string, setor?: string) {
     queryFn: async () => {
       let query = supabase
         .from('tarefas_templates' as any)
-        .select('id, descricao, responsavel_id, setor, tipo_recorrencia, ativa, data_proxima_criacao, created_by, created_at, updated_at');
+        .select('id, descricao, responsavel_id, setor, tipo_recorrencia, dias_semana, ativa, data_proxima_criacao, created_by, created_at, updated_at');
       
       if (setor) {
         query = query.eq('setor', setor);
@@ -159,39 +159,24 @@ export function useTarefas(userId?: string, setor?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      if (!input.tipo_recorrencia) {
-        throw new Error('Tipo de recorrência é obrigatório');
-      }
+      const amanha = new Date();
+      amanha.setDate(amanha.getDate() + 1);
+      const proximaData = amanha.toISOString().split('T')[0];
 
-      // Calcular primeira data de criação
-      let proximaData = new Date();
-      switch (input.tipo_recorrencia) {
-        case 'todos_os_dias':
-          proximaData.setDate(proximaData.getDate() + 1);
-          break;
-        case 'primeiro_dia_mes':
-          proximaData.setMonth(proximaData.getMonth() + 1);
-          proximaData.setDate(1);
-          break;
-        case 'cada_7_dias':
-          proximaData.setDate(proximaData.getDate() + 7);
-          break;
-        case 'cada_15_dias':
-          proximaData.setDate(proximaData.getDate() + 15);
-          break;
-        case 'cada_30_dias':
-          proximaData.setDate(proximaData.getDate() + 30);
-          break;
-      }
+      const tipoRecorrencia = input.dias_semana && input.dias_semana.length > 0 
+        ? 'semanal' 
+        : 'cada_7_dias';
 
       const { data, error } = await supabase
         .from('tarefas_templates' as any)
         .insert({
           descricao: input.descricao,
           responsavel_id: input.responsavel_id,
-          setor: input.setor,
-          tipo_recorrencia: input.tipo_recorrencia,
-          data_proxima_criacao: proximaData.toISOString().split('T')[0],
+          setor: input.setor || null,
+          tipo_recorrencia: tipoRecorrencia,
+          dias_semana: input.dias_semana || null,
+          data_proxima_criacao: proximaData,
+          ativa: true,
           created_by: user.id
         })
         .select()

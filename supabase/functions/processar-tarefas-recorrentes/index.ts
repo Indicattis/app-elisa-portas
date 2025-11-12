@@ -7,6 +7,7 @@ interface TarefaTemplate {
   responsavel_id: string;
   setor: string | null;
   tipo_recorrencia: string;
+  dias_semana: number[] | null;
   data_proxima_criacao: string;
   created_by: string;
 }
@@ -44,6 +45,16 @@ Deno.serve(async (req) => {
 
     for (const template of templates || []) {
       console.log(`Processando template ${template.id}: ${template.descricao}`);
+
+      // Check if this is a day-of-week based recurrence
+      if (template.dias_semana && template.dias_semana.length > 0) {
+        const hojeDiaSemana = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        if (!template.dias_semana.includes(hojeDiaSemana)) {
+          console.log(`  ⏭️ Hoje (${hojeDiaSemana}) não está nos dias configurados: ${template.dias_semana}`);
+          continue;
+        }
+      }
 
       // Verificar se já existe tarefa criada para hoje
       const { data: tarefaExistente } = await supabase
@@ -84,23 +95,30 @@ Deno.serve(async (req) => {
 
       // Calcular próxima data de criação
       let proximaData = new Date(hoje);
-      switch (template.tipo_recorrencia) {
-        case 'todos_os_dias':
-          proximaData.setDate(proximaData.getDate() + 1);
-          break;
-        case 'primeiro_dia_mes':
-          proximaData.setMonth(proximaData.getMonth() + 1);
-          proximaData.setDate(1);
-          break;
-        case 'cada_7_dias':
-          proximaData.setDate(proximaData.getDate() + 7);
-          break;
-        case 'cada_15_dias':
-          proximaData.setDate(proximaData.getDate() + 15);
-          break;
-        case 'cada_30_dias':
-          proximaData.setDate(proximaData.getDate() + 30);
-          break;
+      
+      // For day-of-week based recurrence, always set next execution for tomorrow
+      if (template.dias_semana && template.dias_semana.length > 0) {
+        proximaData.setDate(proximaData.getDate() + 1);
+      } else {
+        // Old interval-based recurrence logic
+        switch (template.tipo_recorrencia) {
+          case 'todos_os_dias':
+            proximaData.setDate(proximaData.getDate() + 1);
+            break;
+          case 'primeiro_dia_mes':
+            proximaData.setMonth(proximaData.getMonth() + 1);
+            proximaData.setDate(1);
+            break;
+          case 'cada_7_dias':
+            proximaData.setDate(proximaData.getDate() + 7);
+            break;
+          case 'cada_15_dias':
+            proximaData.setDate(proximaData.getDate() + 15);
+            break;
+          case 'cada_30_dias':
+            proximaData.setDate(proximaData.getDate() + 30);
+            break;
+        }
       }
 
       const proximaDataStr = proximaData.toISOString().split('T')[0];

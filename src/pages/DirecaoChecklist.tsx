@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useAllUsers } from "@/hooks/useAllUsers";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
+import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ export default function DirecaoChecklist() {
   } = useTarefas(userId);
   
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
   const [modalRecorrentes, setModalRecorrentes] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
 
@@ -89,6 +91,10 @@ export default function DirecaoChecklist() {
             <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
               <List className="h-4 w-4 mr-2" />
               Recorrentes ({templates.length})
+            </Button>
+            <Button variant="outline" onClick={() => setModalRecorrenteAberto(true)}>
+              <CalendarDays className="h-4 w-4 mr-2" />
+              Nova Recorrente
             </Button>
             <Button onClick={() => setModalAberto(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -235,11 +241,16 @@ export default function DirecaoChecklist() {
         open={modalAberto}
         onOpenChange={setModalAberto}
         onSubmit={(tarefa) => {
-          if (tarefa.recorrente) {
-            criarTemplate.mutate(tarefa);
-          } else {
-            criarTarefa.mutate(tarefa);
-          }
+          criarTarefa.mutate(tarefa);
+        }}
+      />
+
+      {/* Modal Nova Recorrente */}
+      <NovaRecorrenteModal
+        open={modalRecorrenteAberto}
+        onOpenChange={setModalRecorrenteAberto}
+        onSubmit={(template) => {
+          criarTemplate.mutate(template);
         }}
       />
 

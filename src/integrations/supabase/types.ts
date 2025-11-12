@@ -3449,6 +3449,7 @@ export type Database = {
           created_by: string
           data_proxima_criacao: string
           descricao: string
+          dias_semana: number[] | null
           id: string
           responsavel_id: string
           setor: string | null
@@ -3461,6 +3462,7 @@ export type Database = {
           created_by: string
           data_proxima_criacao: string
           descricao: string
+          dias_semana?: number[] | null
           id?: string
           responsavel_id: string
           setor?: string | null
@@ -3473,6 +3475,7 @@ export type Database = {
           created_by?: string
           data_proxima_criacao?: string
           descricao?: string
+          dias_semana?: number[] | null
           id?: string
           responsavel_id?: string
           setor?: string | null
