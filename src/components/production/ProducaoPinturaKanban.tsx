@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Paintbrush, CheckCircle2, Play, UserCheck, Loader2, Timer, AlertTriangle, Archive, FileText } from "lucide-react";
+import { Paintbrush, CheckCircle2, UserCheck, Loader2, Timer, AlertTriangle, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
@@ -33,26 +33,20 @@ interface Ordem {
 interface OrdemCardProps {
   ordem: Ordem;
   showFinalizarButton?: boolean;
-  isPronta?: boolean;
   isCapturing?: boolean;
-  isEnviandoHistorico?: boolean;
   onOrdemClick: (ordem: Ordem) => void;
   onFinalizarPintura: (ordemId: string) => void;
   onCapturarOrdem: (ordemId: string) => void;
-  onEnviarParaHistorico?: (ordemId: string) => void;
   onBacklogClick: (ordem: Ordem) => void;
 }
 
 function OrdemCard({
   ordem,
   showFinalizarButton = false,
-  isPronta = false,
   isCapturing = false,
-  isEnviandoHistorico = false,
   onOrdemClick,
   onFinalizarPintura,
   onCapturarOrdem,
-  onEnviarParaHistorico,
   onBacklogClick,
 }: OrdemCardProps) {
   const linhas = ordem.linhas || [];
@@ -205,22 +199,6 @@ function OrdemCard({
             Ver Justificativa
           </Button>
         )}
-
-        {isPronta && onEnviarParaHistorico && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEnviarParaHistorico(ordem.id);
-            }}
-            disabled={isEnviandoHistorico}
-          >
-            <Archive className="h-3 w-3 mr-2" />
-            Enviar para Histórico
-          </Button>
-        )}
       </CardContent>
     </Card>
   );
@@ -228,26 +206,20 @@ function OrdemCard({
 
 interface ProducaoPinturaKanbanProps {
   ordensParaPintar: Ordem[];
-  ordensProntas: Ordem[];
   isLoading: boolean;
   onOrdemClick: (ordem: Ordem) => void;
   onFinalizarPintura: (ordemId: string) => void;
   onCapturarOrdem: (ordemId: string) => void;
   isCapturing?: boolean;
-  onEnviarParaHistorico?: (ordemId: string) => void;
-  isEnviandoHistorico?: boolean;
 }
 
 export function ProducaoPinturaKanban({
   ordensParaPintar,
-  ordensProntas,
   isLoading,
   onOrdemClick,
   onFinalizarPintura,
   onCapturarOrdem,
   isCapturing = false,
-  onEnviarParaHistorico,
-  isEnviandoHistorico = false,
 }: ProducaoPinturaKanbanProps) {
   const [backlogModalOpen, setBacklogModalOpen] = useState(false);
   const [selectedOrdem, setSelectedOrdem] = useState<Ordem | null>(null);
@@ -276,70 +248,34 @@ export function ProducaoPinturaKanban({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Coluna: Para Pintar */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Paintbrush className="h-5 w-5 text-orange-600" />
-            <h2 className="text-lg font-semibold">Para Pintar</h2>
-            <Badge variant="secondary" className="ml-auto">
-              {ordensParaPintar.length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {ordensParaPintar.map((ordem) => (
-              <OrdemCard
-                key={ordem.id}
-                ordem={ordem}
-                showFinalizarButton={true}
-                isCapturing={isCapturing}
-                onOrdemClick={onOrdemClick}
-                onFinalizarPintura={onFinalizarPintura}
-                onCapturarOrdem={onCapturarOrdem}
-                onBacklogClick={handleBacklogClick}
-              />
-            ))}
-            {ordensParaPintar.length === 0 && (
-              <Card className="border-dashed">
-                <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
-                  Nenhuma ordem pendente
-                </CardContent>
-              </Card>
-            )}
-          </div>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Paintbrush className="h-5 w-5 text-orange-600" />
+          <h2 className="text-lg font-semibold">Para Pintar</h2>
+          <Badge variant="secondary" className="ml-auto">
+            {ordensParaPintar.length}
+          </Badge>
         </div>
-
-        {/* Coluna: Pronta */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <h2 className="text-lg font-semibold">Pronta</h2>
-            <Badge variant="secondary" className="ml-auto">
-              {ordensProntas.length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {ordensProntas.map((ordem) => (
-              <OrdemCard
-                key={ordem.id}
-                ordem={ordem}
-                isPronta={true}
-                isEnviandoHistorico={isEnviandoHistorico}
-                onOrdemClick={onOrdemClick}
-                onFinalizarPintura={onFinalizarPintura}
-                onCapturarOrdem={onCapturarOrdem}
-                onEnviarParaHistorico={onEnviarParaHistorico}
-                onBacklogClick={handleBacklogClick}
-              />
-            ))}
-            {ordensProntas.length === 0 && (
-              <Card className="border-dashed">
-                <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
-                  Nenhuma ordem concluída
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {ordensParaPintar.map((ordem) => (
+            <OrdemCard
+              key={ordem.id}
+              ordem={ordem}
+              showFinalizarButton={true}
+              isCapturing={isCapturing}
+              onOrdemClick={onOrdemClick}
+              onFinalizarPintura={onFinalizarPintura}
+              onCapturarOrdem={onCapturarOrdem}
+              onBacklogClick={handleBacklogClick}
+            />
+          ))}
+          {ordensParaPintar.length === 0 && (
+            <Card className="border-dashed col-span-full">
+              <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
+                Nenhuma ordem pendente
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
