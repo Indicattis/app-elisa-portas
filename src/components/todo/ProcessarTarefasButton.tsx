@@ -3,9 +3,11 @@ import { Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ProcessarTarefasButton() {
   const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleProcessar = async () => {
     setLoading(true);
@@ -15,6 +17,9 @@ export function ProcessarTarefasButton() {
       if (error) throw error;
       
       toast.success(`Processamento concluído! ${data?.criadas || 0} tarefas criadas.`);
+      
+      // Refresh tasks list
+      queryClient.invalidateQueries({ queryKey: ['tarefas'] });
     } catch (error: any) {
       console.error('Erro ao processar tarefas:', error);
       toast.error(error.message || "Erro ao processar tarefas recorrentes");

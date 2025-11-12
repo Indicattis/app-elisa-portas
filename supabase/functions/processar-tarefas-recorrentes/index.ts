@@ -29,11 +29,11 @@ Deno.serve(async (req) => {
     console.log(`[${hoje}] Iniciando processamento de tarefas recorrentes`);
 
     // Buscar templates que precisam criar tarefa hoje
+    // Inclui templates com data_proxima_criacao <= hoje OU templates com dias_semana que incluem hoje
     const { data: templates, error: templatesError } = await supabase
       .from('tarefas_templates')
       .select('*')
-      .eq('ativa', true)
-      .lte('data_proxima_criacao', hoje);
+      .eq('ativa', true);
 
     if (templatesError) {
       console.error('Erro ao buscar templates:', templatesError);
@@ -47,14 +47,40 @@ Deno.serve(async (req) => {
     for (const template of templates || []) {
       console.log(`Processando template ${template.id}: ${template.descricao}`);
 
-      // Check if this is a day-of-week based recurrence
+      // Check if this template should run today
+      const agora = new Date();
+      const hojeDiaSemana = agora.getDay();
+      const horaAgora = agora.getHours();
+      const minutoAgora = agora.getMinutes();
+      
+      let deveProcessarHoje = false;
+      
       if (template.dias_semana && template.dias_semana.length > 0) {
-        const hojeDiaSemana = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-        
+        // Day-of-week based recurrence
         if (!template.dias_semana.includes(hojeDiaSemana)) {
           console.log(`  ⏭️ Hoje (${hojeDiaSemana}) não está nos dias configurados: ${template.dias_semana}`);
           continue;
         }
+        
+        // Check if the scheduled time has passed
+        const [horaAgendada, minutoAgendado] = (template.hora_criacao || '00:00:00').split(':').map(Number);
+        const tempoAgora = horaAgora * 60 + minutoAgora;
+        const tempoAgendado = horaAgendada * 60 + minutoAgendado;
+        
+        if (tempoAgora >= tempoAgendado) {
+          deveProcessarHoje = true;
+          console.log(`  ⏰ Horário passou: ${horaAgendada}:${minutoAgendado.toString().padStart(2, '0')}`);
+        } else {
+          console.log(`  ⏰ Ainda não é hora: ${horaAgendada}:${minutoAgendado.toString().padStart(2, '0')}`);
+          continue;
+        }
+      } else {
+        // Date-based recurrence
+        if (template.data_proxima_criacao > hoje) {
+          console.log(`  📅 Data futura: ${template.data_proxima_criacao}`);
+          continue;
+        }
+        deveProcessarHoje = true;
       }
 
       // Verificar se já existe tarefa criada para hoje
