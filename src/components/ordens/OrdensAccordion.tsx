@@ -82,6 +82,12 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
                   <span className="font-medium">Status:</span>{" "}
                   <Badge variant="outline" className="ml-2">{pedido.status}</Badge>
                 </p>
+                {pedido.etapa_atual && (
+                  <p className="text-sm">
+                    <span className="font-medium">Etapa:</span>{" "}
+                    <Badge variant="secondary" className="ml-2">{pedido.etapa_atual}</Badge>
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">
                   Criado em {format(new Date(pedido.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </p>

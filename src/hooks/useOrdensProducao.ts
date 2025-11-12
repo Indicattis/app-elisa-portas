@@ -9,6 +9,7 @@ export interface OrdemBase {
   created_at: string;
   historico?: boolean;
   tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura' | 'qualidade' | 'instalacao';
+  responsavel_nome?: string;
 }
 
 export interface PedidoComOrdens {
@@ -16,6 +17,7 @@ export interface PedidoComOrdens {
   numero_pedido: string;
   cliente_nome: string;
   status: string;
+  etapa_atual?: string;
   created_at: string;
   ordens: OrdemBase[];
   total_ordens: number;
@@ -45,7 +47,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
       // Buscar pedidos
       let pedidosQuery = supabase
         .from('pedidos_producao')
-        .select('*')
+        .select('id, numero_pedido, cliente_nome, status, etapa_atual, created_at')
         .order('created_at', { ascending: false });
 
       if (search) {
@@ -72,13 +74,28 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         { data: ordensQualidade },
         { data: ordensInstalacao }
       ] = await Promise.all([
-        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_instalacao').select('id, numero_ordem, pedido_id, status, created_at').in('pedido_id', pedidoIds)
+        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
+        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
+        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
+        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
+        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
+        supabase.from('ordens_instalacao').select('id, numero_ordem, pedido_id, status, created_at, responsavel_id').in('pedido_id', pedidoIds)
       ]);
+
+      // Buscar nomes dos responsáveis
+      const responsavelIds = new Set<string>();
+      [ordensSoldagem, ordensPerfiladeira, ordensSeparacao, ordensPintura, ordensQualidade, ordensInstalacao].forEach(ordens => {
+        ordens?.forEach((o: any) => {
+          if (o.responsavel_id) responsavelIds.add(o.responsavel_id);
+        });
+      });
+
+      const { data: usuarios } = await supabase
+        .from('admin_users')
+        .select('user_id, nome')
+        .in('user_id', Array.from(responsavelIds));
+
+      const usuariosMap = new Map(usuarios?.map(u => [u.user_id, u.nome]) || []);
 
       // Agrupar ordens por pedido
       const pedidosComOrdens: PedidoComOrdens[] = pedidos.map(pedido => {
@@ -90,7 +107,8 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             status: o.status,
             created_at: o.created_at,
             historico: o.historico,
-            tipo: 'soldagem' as const 
+            tipo: 'soldagem' as const,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
           })) || []),
           ...(ordensPerfiladeira?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -99,7 +117,8 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             status: o.status,
             created_at: o.created_at,
             historico: o.historico,
-            tipo: 'perfiladeira' as const 
+            tipo: 'perfiladeira' as const,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
           })) || []),
           ...(ordensSeparacao?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -108,7 +127,8 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             status: o.status,
             created_at: o.created_at,
             historico: o.historico,
-            tipo: 'separacao' as const 
+            tipo: 'separacao' as const,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
           })) || []),
           ...(ordensPintura?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -117,7 +137,8 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             status: o.status,
             created_at: o.created_at,
             historico: o.historico,
-            tipo: 'pintura' as const 
+            tipo: 'pintura' as const,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
           })) || []),
           ...(ordensQualidade?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -126,7 +147,8 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             status: o.status,
             created_at: o.created_at,
             historico: o.historico,
-            tipo: 'qualidade' as const 
+            tipo: 'qualidade' as const,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
           })) || []),
           ...(ordensInstalacao?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -135,7 +157,8 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             status: o.status,
             created_at: o.created_at,
             historico: false,
-            tipo: 'instalacao' as const 
+            tipo: 'instalacao' as const,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
           })) || [])
         ];
 
@@ -149,6 +172,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
           numero_pedido: pedido.numero_pedido,
           cliente_nome: pedido.cliente_nome,
           status: pedido.status,
+          etapa_atual: pedido.etapa_atual,
           created_at: pedido.created_at,
           ordens: ordensFiltradas,
           total_ordens: ordensFiltradas.length,

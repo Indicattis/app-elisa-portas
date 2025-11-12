@@ -85,6 +85,11 @@ export function OrdemCard({ ordem, pedidoStatus }: OrdemCardProps) {
           <p className="text-xs text-muted-foreground">
             Criado em {format(new Date(ordem.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
           </p>
+          {ordem.responsavel_nome && (
+            <p className="text-xs">
+              <span className="font-medium">Responsável:</span> {ordem.responsavel_nome}
+            </p>
+          )}
           {ordem.historico && (
             <Badge variant="outline" className="text-xs">
               Histórico
