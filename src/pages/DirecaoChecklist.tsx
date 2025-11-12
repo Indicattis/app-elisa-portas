@@ -1,30 +1,31 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
-import { useAllUsers } from "@/hooks/useAllUsers";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
-import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { EditarRecorrenteModal } from "@/components/todo/EditarRecorrenteModal";
-import { ProcessarTarefasButton } from "@/components/todo/ProcessarTarefasButton";
+import { ChecklistFiltros } from "@/components/todo/ChecklistFiltros";
+import { CalendarioSemanal } from "@/components/todo/CalendarioSemanal";
+import { TarefasTabela } from "@/components/todo/TarefasTabela";
+import { TemplatesTabela } from "@/components/todo/TemplatesTabela";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Calendar, Repeat, Trash2, List, CalendarDays, ArrowLeft, Edit } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Plus, CalendarDays, ArrowLeft, Trash } from "lucide-react";
+import { format, isSameDay, parseISO } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function DirecaoChecklist() {
   const navigate = useNavigate();
-  const { user, userRole } = useAuth();
+  const { userRole } = useAuth();
+  
+  // Filtros
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<string>("todos");
-  const { data: todosUsuarios, isLoading: loadingUsers } = useAllUsers();
+  const [tipoSelecionado, setTipoSelecionado] = useState<string>("todos");
+  const [statusSelecionado, setStatusSelecionado] = useState<string>("todos");
+  const [dataSelecionada, setDataSelecionada] = useState<Date | undefined>(undefined);
+  const [mostrarLixeira, setMostrarLixeira] = useState(false);
   
   const userId = usuarioSelecionado === "todos" ? undefined : usuarioSelecionado;
   
@@ -37,43 +38,51 @@ export default function DirecaoChecklist() {
     marcarConcluida, 
     reabrirTarefa, 
     deletarTarefa,
-    toggleTemplate,
     deletarTemplate,
     atualizarTemplate
   } = useTarefas(userId);
   
   const [modalAberto, setModalAberto] = useState(false);
   const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
-  const [modalRecorrentes, setModalRecorrentes] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
   const [templateParaEditar, setTemplateParaEditar] = useState<any>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
-  // Merge tarefas regulares e templates em uma única lista
-  const todasTarefas = [
-    ...tarefas.map(t => ({ ...t, tipo: 'regular' as const })),
-    ...templates.map(t => ({ ...t, tipo: 'template' as const }))
-  ];
+  // Aplicar filtros às tarefas
+  const tarefasFiltradas = useMemo(() => {
+    return tarefas.filter(tarefa => {
+      // Filtro de tipo
+      if (tipoSelecionado === "unica" && tarefa.recorrente) return false;
+      if (tipoSelecionado === "recorrente" && !tarefa.recorrente) return false;
 
-  // Ordenar: templates primeiro, depois em andamento, depois concluídas
-  const tarefasOrdenadas = [...todasTarefas].sort((a, b) => {
-    if (a.tipo === 'template' && b.tipo !== 'template') return -1;
-    if (a.tipo !== 'template' && b.tipo === 'template') return 1;
-    
-    if ('status' in a && 'status' in b) {
-      if (a.status === 'em_andamento' && b.status === 'concluida') return -1;
-      if (a.status === 'concluida' && b.status === 'em_andamento') return 1;
-    }
-    
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+      // Filtro de status
+      if (statusSelecionado === "em_andamento" && tarefa.status !== "em_andamento") return false;
+      if (statusSelecionado === "concluida" && tarefa.status !== "concluida") return false;
+
+      // Filtro de data
+      if (dataSelecionada) {
+        const dataTarefa = parseISO(tarefa.created_at);
+        if (!isSameDay(dataTarefa, dataSelecionada)) return false;
+      }
+
+      // Filtro de lixeira (concluídas)
+      if (!mostrarLixeira && tarefa.status === 'concluida') return false;
+      if (mostrarLixeira && tarefa.status !== 'concluida') return false;
+
+      return true;
+    });
+  }, [tarefas, tipoSelecionado, statusSelecionado, dataSelecionada, mostrarLixeira]);
+
+  // Separar tarefas regulares das concluídas
+  const tarefasAtivas = tarefasFiltradas.filter(t => t.status === 'em_andamento');
+  const tarefasConcluidas = tarefasFiltradas.filter(t => t.status === 'concluida');
 
   const totalEmAndamento = tarefas.filter(t => t.status === 'em_andamento').length;
   const totalConcluidas = tarefas.filter(t => t.status === 'concluida').length;
   const totalTemplates = templates.length;
 
-  if (isLoading || loadingUsers) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -105,11 +114,6 @@ export default function DirecaoChecklist() {
 
         {podeGerenciar && (
           <div className="flex gap-2 shrink-0">
-            <ProcessarTarefasButton />
-            <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
-              <List className="h-4 w-4 mr-2" />
-              Recorrentes ({templates.length})
-            </Button>
             <Button variant="outline" onClick={() => setModalRecorrenteAberto(true)}>
               <CalendarDays className="h-4 w-4 mr-2" />
               Nova Recorrente
@@ -122,186 +126,74 @@ export default function DirecaoChecklist() {
         )}
       </div>
 
-      {/* Filtro de usuário */}
+      {/* Badges de resumo */}
+      <div className="flex gap-2">
+        <Badge variant="secondary" className="text-sm px-3 py-1">
+          {totalTemplates} template(s)
+        </Badge>
+        <Badge variant="destructive" className="text-sm px-3 py-1">
+          {totalEmAndamento} pendente(s)
+        </Badge>
+        <Badge className="bg-success text-success-foreground text-sm px-3 py-1">
+          {totalConcluidas} concluída(s)
+        </Badge>
+      </div>
+
+      {/* Calendário Semanal */}
+      <CalendarioSemanal tarefas={tarefas} />
+
+      {/* Filtros */}
+      <ChecklistFiltros
+        usuarioSelecionado={usuarioSelecionado}
+        setUsuarioSelecionado={setUsuarioSelecionado}
+        tipoSelecionado={tipoSelecionado}
+        setTipoSelecionado={setTipoSelecionado}
+        statusSelecionado={statusSelecionado}
+        setStatusSelecionado={setStatusSelecionado}
+        dataSelecionada={dataSelecionada}
+        setDataSelecionada={setDataSelecionada}
+      />
+
+      {/* Tabela de Templates Recorrentes */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filtrar por responsável</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Templates Recorrentes</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Select value={usuarioSelecionado} onValueChange={setUsuarioSelecionado}>
-            <SelectTrigger className="w-full sm:w-[300px]">
-              <SelectValue placeholder="Selecione um usuário" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os usuários</SelectItem>
-              {todosUsuarios?.map((usuario) => (
-                <SelectItem key={usuario.user_id} value={usuario.user_id}>
-                  {usuario.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <CardContent className="pt-0">
+          <TemplatesTabela
+            templates={templates}
+            podeGerenciar={podeGerenciar}
+            onEditar={setTemplateParaEditar}
+            onDeletar={(id) => deletarTemplate.mutate(id)}
+          />
         </CardContent>
       </Card>
 
-      {/* Tabela Unificada de Tarefas */}
+      {/* Tabela de Tarefas Normais */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Todas as Tarefas</CardTitle>
-            <div className="flex gap-2">
-              <Badge variant="secondary" className="text-xs">
-                {totalTemplates} recorrente(s)
-              </Badge>
-              <Badge variant="destructive" className="text-xs">
-                {totalEmAndamento} pendente(s)
-              </Badge>
-              <Badge className="bg-success text-success-foreground text-xs">
-                {totalConcluidas} concluída(s)
-              </Badge>
-            </div>
+            <CardTitle className="text-lg">
+              {mostrarLixeira ? "Tarefas Concluídas (Lixeira)" : "Tarefas Ativas"}
+            </CardTitle>
+            <Button
+              variant={mostrarLixeira ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMostrarLixeira(!mostrarLixeira)}
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              {mostrarLixeira ? "Voltar para Ativas" : `Lixeira (${totalConcluidas})`}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          {todasTarefas.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma tarefa encontrada
-            </p>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-10 h-8"></TableHead>
-                    <TableHead className="h-8">Descrição</TableHead>
-                    <TableHead className="w-[180px] h-8">Responsável</TableHead>
-                    <TableHead className="w-[90px] h-8">Status</TableHead>
-                    <TableHead className="w-[100px] h-8">Data</TableHead>
-                    <TableHead className="w-[90px] h-8">Tipo</TableHead>
-                    {podeGerenciar && <TableHead className="w-10 h-8"></TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tarefasOrdenadas.map((item) => {
-                    const isTemplate = item.tipo === 'template';
-                    const tarefa = isTemplate ? null : item;
-                    const template = isTemplate ? item : null;
-                    
-                    return (
-                      <TableRow 
-                        key={item.id} 
-                        className={`h-10 ${
-                          isTemplate ? 'bg-secondary/20' : 
-                          tarefa?.status === 'concluida' ? 'opacity-60' : 'hover:bg-accent/30'
-                        }`}
-                      >
-                        <TableCell className="py-1">
-                          {isTemplate ? (
-                            <Repeat className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Checkbox
-                              checked={tarefa?.status === 'concluida'}
-                              onCheckedChange={() => {
-                                if (tarefa?.status === 'concluida') {
-                                  reabrirTarefa.mutate(item.id);
-                                } else {
-                                  marcarConcluida.mutate(item.id);
-                                }
-                              }}
-                              disabled={!podeGerenciar}
-                              className="h-4 w-4"
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell className={`py-1 text-sm ${
-                          isTemplate ? 'font-medium text-primary' :
-                          tarefa?.status === 'concluida' ? 'line-through' : 'font-medium'
-                        }`}>
-                          {item.descricao}
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex items-center gap-1.5">
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage src={item.responsavel?.foto_perfil_url} />
-                              <AvatarFallback className="text-[10px]">
-                                {item.responsavel?.nome?.substring(0, 2).toUpperCase() || '??'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs truncate">{item.responsavel?.nome}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          {isTemplate ? (
-                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                              Template
-                            </Badge>
-                          ) : (
-                            <Badge 
-                              variant={tarefa?.status === 'em_andamento' ? 'destructive' : 'default'}
-                              className="text-[10px] h-5 px-1.5"
-                            >
-                              {tarefa?.status === 'em_andamento' ? 'Pendente' : 'Concluída'}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-1 text-xs text-muted-foreground">
-                          {isTemplate 
-                            ? template?.hora_criacao || '00:00'
-                            : format(new Date(item.created_at), "dd/MM/yy", { locale: ptBR })
-                          }
-                        </TableCell>
-                        <TableCell className="py-1">
-                          {isTemplate ? (
-                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                              <Repeat className="h-2.5 w-2.5 mr-0.5" />
-                              Recorrente
-                            </Badge>
-                          ) : tarefa?.recorrente ? (
-                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                              <Repeat className="h-2.5 w-2.5 mr-0.5" />
-                              Rec.
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] h-5 px-1.5">Única</Badge>
-                          )}
-                        </TableCell>
-                        {podeGerenciar && (
-                          <TableCell className="py-1">
-                            <div className="flex gap-1">
-                              {isTemplate && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => setTemplateParaEditar(template)}
-                                >
-                                  <Edit className="h-3 w-3 text-primary" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  if (isTemplate) {
-                                    deletarTemplate.mutate(item.id);
-                                  } else {
-                                    setTarefaParaDeletar(item.id);
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-3 w-3 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <TarefasTabela
+            tarefas={mostrarLixeira ? tarefasConcluidas : tarefasAtivas}
+            podeGerenciar={podeGerenciar}
+            onMarcarConcluida={(id) => marcarConcluida.mutate(id)}
+            onReabrir={(id) => reabrirTarefa.mutate(id)}
+            onDeletar={(id) => setTarefaParaDeletar(id)}
+          />
         </CardContent>
       </Card>
 
@@ -323,16 +215,6 @@ export default function DirecaoChecklist() {
         }}
       />
 
-      {/* Modal Tarefas Recorrentes */}
-      <TarefasRecorrentesModal
-        open={modalRecorrentes}
-        onOpenChange={setModalRecorrentes}
-        templates={templates}
-        onToggle={(id, ativa) => toggleTemplate.mutate({ id, ativa })}
-        onDelete={(id) => deletarTemplate.mutate(id)}
-        onEdit={(id, updates) => atualizarTemplate.mutate({ id, ...updates })}
-        podeGerenciar={podeGerenciar}
-      />
 
       {/* Modal Editar Recorrente */}
       {templateParaEditar && (
