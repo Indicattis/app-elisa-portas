@@ -8,6 +8,7 @@ interface TarefaTemplate {
   setor: string | null;
   tipo_recorrencia: string;
   dias_semana: number[] | null;
+  hora_criacao: string | null;
   data_proxima_criacao: string;
   created_by: string;
 }
@@ -69,7 +70,10 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Criar nova instância da tarefa
+      // Criar nova instância da tarefa com horário específico
+      const horaCreated = template.hora_criacao || '00:00:00';
+      const dataHoraCreated = `${hoje}T${horaCreated}`;
+      
       const { data: novaTarefa, error: tarefaError } = await supabase
         .from('tarefas')
         .insert({
@@ -81,7 +85,8 @@ Deno.serve(async (req) => {
           tipo_recorrencia: template.tipo_recorrencia,
           template_id: template.id,
           data_referencia: hoje,
-          created_by: template.created_by
+          created_by: template.created_by,
+          created_at: dataHoraCreated
         })
         .select()
         .single();

@@ -4,24 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Repeat, Calendar, User, Trash2 } from "lucide-react";
+import { Repeat, Calendar, User, Trash2, Edit, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
-
-interface TarefaTemplate {
-  id: string;
-  descricao: string;
-  tipo_recorrencia: string;
-  dias_semana?: number[] | null;
-  data_proxima_criacao: string;
-  ativa: boolean;
-  setor: string | null;
-  responsavel?: {
-    nome: string;
-    email: string;
-  };
-}
+import { EditarRecorrenteModal } from "./EditarRecorrenteModal";
+import { TarefaTemplate } from "@/hooks/useTarefas";
 
 interface TarefasRecorrentesModalProps {
   open: boolean;
@@ -29,6 +17,7 @@ interface TarefasRecorrentesModalProps {
   templates: TarefaTemplate[];
   onToggle: (id: string, ativa: boolean) => void;
   onDelete: (id: string) => void;
+  onEdit: (id: string, updates: any) => void;
   podeGerenciar: boolean;
 }
 
@@ -38,9 +27,22 @@ export function TarefasRecorrentesModal({
   templates,
   onToggle,
   onDelete,
+  onEdit,
   podeGerenciar
 }: TarefasRecorrentesModalProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TarefaTemplate | null>(null);
+
+  const handleEdit = (template: TarefaTemplate) => {
+    setSelectedTemplate(template);
+    setEditModalOpen(true);
+  };
+
+  const handleEditSubmit = (id: string, updates: any) => {
+    onEdit(id, updates);
+    setEditModalOpen(false);
+  };
 
   const getDiasSemanaNomes = (dias: number[]) => {
     const nomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -117,6 +119,12 @@ export function TarefasRecorrentesModal({
                             <Calendar className="h-3.5 w-3.5" />
                             Próxima: {format(new Date(template.data_proxima_criacao), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
+                          {template.hora_criacao && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {template.hora_criacao.substring(0, 5)}
+                            </span>
+                          )}
                         </div>
 
                         {template.setor && (
@@ -132,6 +140,13 @@ export function TarefasRecorrentesModal({
                             checked={template.ativa}
                             onCheckedChange={(checked) => onToggle(template.id, checked)}
                           />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(template)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -175,6 +190,13 @@ export function TarefasRecorrentesModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditarRecorrenteModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        template={selectedTemplate}
+        onSubmit={handleEditSubmit}
+      />
     </>
   );
 }

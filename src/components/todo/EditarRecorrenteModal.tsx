@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAllUsers } from "@/hooks/useAllUsers";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,18 +10,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Info, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TarefaTemplate } from "@/hooks/useTarefas";
 
-interface NovaRecorrenteModalProps {
+interface EditarRecorrenteModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (template: {
+  template: TarefaTemplate | null;
+  onSubmit: (id: string, updates: {
     descricao: string;
     responsavel_id: string;
-    setor?: string;
     dias_semana: number[];
-    hora_criacao?: string;
+    hora_criacao: string;
   }) => void;
-  setor?: string;
 }
 
 const DIAS_SEMANA = [
@@ -36,7 +36,7 @@ const DIAS_SEMANA = [
 
 const DIAS_SEMANA_NOMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: NovaRecorrenteModalProps) {
+export function EditarRecorrenteModal({ open, onOpenChange, template, onSubmit }: EditarRecorrenteModalProps) {
   const { userRole } = useAuth();
   const { data: todosUsuarios } = useAllUsers();
   
@@ -46,6 +46,16 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: Nov
   const [horaCriacao, setHoraCriacao] = useState("08:00");
 
   const podeEscolherResponsavel = userRole?.role === 'diretor' || userRole?.role === 'administrador';
+
+  // Load template data when opened
+  useEffect(() => {
+    if (template && open) {
+      setDescricao(template.descricao);
+      setResponsavelId(template.responsavel_id);
+      setDiasSelecionados(template.dias_semana || []);
+      setHoraCriacao(template.hora_criacao?.substring(0, 5) || "08:00");
+    }
+  }, [template, open]);
 
   const previewDias = useMemo(() => {
     if (diasSelecionados.length === 0) return "";
@@ -72,7 +82,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: Nov
   };
 
   const handleSubmit = () => {
-    if (!descricao.trim()) {
+    if (!template || !descricao.trim() || diasSelecionados.length === 0) {
       return;
     }
 
@@ -80,23 +90,13 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: Nov
       return;
     }
 
-    if (diasSelecionados.length === 0) {
-      return;
-    }
-
-    onSubmit({
+    onSubmit(template.id, {
       descricao: descricao.trim(),
       responsavel_id: responsavelId,
-      setor,
       dias_semana: diasSelecionados,
       hora_criacao: horaCriacao,
     });
 
-    // Reset
-    setDescricao("");
-    setResponsavelId("");
-    setDiasSelecionados([]);
-    setHoraCriacao("08:00");
     onOpenChange(false);
   };
 
@@ -104,9 +104,9 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: Nov
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Nova Tarefa Recorrente</DialogTitle>
+          <DialogTitle>Editar Tarefa Recorrente</DialogTitle>
           <DialogDescription>
-            Crie uma tarefa que será criada automaticamente nos dias selecionados
+            Altere as configurações da tarefa recorrente
           </DialogDescription>
         </DialogHeader>
 
@@ -203,7 +203,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: Nov
             onClick={handleSubmit}
             disabled={!descricao.trim() || diasSelecionados.length === 0 || (podeEscolherResponsavel && !responsavelId)}
           >
-            Criar Tarefa Recorrente
+            Salvar Alterações
           </Button>
         </div>
       </DialogContent>

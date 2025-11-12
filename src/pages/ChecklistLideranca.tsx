@@ -55,7 +55,8 @@ export default function ChecklistLideranca() {
     reabrirTarefa, 
     deletarTarefa,
     toggleTemplate,
-    deletarTemplate
+    deletarTemplate,
+    atualizarTemplate
   } = useTarefas(user?.id, setor);
   const { data: responsavelSetor } = useSetorInfo(setor);
   const [modalAberto, setModalAberto] = useState(false);
@@ -283,6 +284,7 @@ export default function ChecklistLideranca() {
         templates={templates}
         onToggle={(id, ativa) => toggleTemplate.mutate({ id, ativa })}
         onDelete={(id) => deletarTemplate.mutate(id)}
+        onEdit={(id, updates) => atualizarTemplate.mutate({ id, ...updates })}
         podeGerenciar={podeGerenciar}
       />
 

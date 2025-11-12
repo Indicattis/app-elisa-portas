@@ -36,6 +36,7 @@ export interface TarefaTemplate {
   setor: string | null;
   tipo_recorrencia: string;
   dias_semana?: number[] | null;
+  hora_criacao?: string | null;
   ativa: boolean;
   data_proxima_criacao: string;
   created_by: string;
@@ -59,6 +60,7 @@ export interface TarefaInput {
   responsavel_id: string;
   setor?: string;
   dias_semana?: number[];
+  hora_criacao?: string;
 }
 
 export function useTarefas(userId?: string, setor?: string) {
@@ -118,7 +120,7 @@ export function useTarefas(userId?: string, setor?: string) {
     queryFn: async () => {
       let query = supabase
         .from('tarefas_templates' as any)
-        .select('id, descricao, responsavel_id, setor, tipo_recorrencia, dias_semana, ativa, data_proxima_criacao, created_by, created_at, updated_at');
+        .select('id, descricao, responsavel_id, setor, tipo_recorrencia, dias_semana, hora_criacao, ativa, data_proxima_criacao, created_by, created_at, updated_at');
       
       if (setor) {
         query = query.eq('setor', setor);
@@ -175,6 +177,7 @@ export function useTarefas(userId?: string, setor?: string) {
           setor: input.setor || null,
           tipo_recorrencia: tipoRecorrencia,
           dias_semana: input.dias_semana || null,
+          hora_criacao: input.hora_criacao || '00:00:00',
           data_proxima_criacao: proximaData,
           ativa: true,
           created_by: user.id
@@ -365,6 +368,28 @@ export function useTarefas(userId?: string, setor?: string) {
     },
   });
 
+  // Atualizar template
+  const atualizarTemplate = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<TarefaTemplate> & { id: string }) => {
+      const { error } = await supabase
+        .from('tarefas_templates' as any)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tarefas-templates'] });
+      toast({
+        title: "Template atualizado",
+        description: "A tarefa recorrente foi atualizada.",
+      });
+    },
+  });
+
   return {
     tarefas,
     isLoading,
@@ -376,5 +401,6 @@ export function useTarefas(userId?: string, setor?: string) {
     deletarTarefa,
     toggleTemplate,
     deletarTemplate,
+    atualizarTemplate,
   };
 }

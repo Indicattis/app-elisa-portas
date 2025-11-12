@@ -40,6 +40,7 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
     deletarTarefa,
     toggleTemplate,
     deletarTemplate,
+    atualizarTemplate,
   } = useTarefas(user?.id);
 
   const tarefasEmAndamento = tarefas.filter((t) => t.status === "em_andamento");
@@ -246,6 +247,7 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
           templates={templates}
           onToggle={(id, ativa) => toggleTemplate.mutate({ id, ativa })}
           onDelete={(id) => deletarTemplate.mutate(id)}
+          onEdit={(id, updates) => atualizarTemplate.mutate({ id, ...updates })}
           podeGerenciar={podeGerenciar}
         />
       )}

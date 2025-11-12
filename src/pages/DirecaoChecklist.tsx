@@ -36,7 +36,8 @@ export default function DirecaoChecklist() {
     reabrirTarefa, 
     deletarTarefa,
     toggleTemplate,
-    deletarTemplate
+    deletarTemplate,
+    atualizarTemplate
   } = useTarefas(userId);
   
   const [modalAberto, setModalAberto] = useState(false);
@@ -261,6 +262,7 @@ export default function DirecaoChecklist() {
         templates={templates}
         onToggle={(id, ativa) => toggleTemplate.mutate({ id, ativa })}
         onDelete={(id) => deletarTemplate.mutate(id)}
+        onEdit={(id, updates) => atualizarTemplate.mutate({ id, ...updates })}
         podeGerenciar={podeGerenciar}
       />
 
