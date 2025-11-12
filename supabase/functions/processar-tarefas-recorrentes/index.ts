@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { toZonedTime, format } from 'https://esm.sh/date-fns-tz@3.2.0';
 
 interface TarefaTemplate {
   id: string;
@@ -24,9 +25,13 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const hoje = new Date().toISOString().split('T')[0];
+    // Use Brazil timezone (America/Sao_Paulo)
+    const TIMEZONE = 'America/Sao_Paulo';
+    const agoraUTC = new Date();
+    const agoraBrasil = toZonedTime(agoraUTC, TIMEZONE);
+    const hoje = format(agoraBrasil, 'yyyy-MM-dd', { timeZone: TIMEZONE });
 
-    console.log(`[${hoje}] Iniciando processamento de tarefas recorrentes`);
+    console.log(`[${hoje}] Iniciando processamento de tarefas recorrentes (Timezone: ${TIMEZONE})`);
 
     // Buscar templates que precisam criar tarefa hoje
     // Inclui templates com data_proxima_criacao <= hoje OU templates com dias_semana que incluem hoje
@@ -47,11 +52,10 @@ Deno.serve(async (req) => {
     for (const template of templates || []) {
       console.log(`Processando template ${template.id}: ${template.descricao}`);
 
-      // Check if this template should run today
-      const agora = new Date();
-      const hojeDiaSemana = agora.getDay();
-      const horaAgora = agora.getHours();
-      const minutoAgora = agora.getMinutes();
+      // Check if this template should run today (using Brazil timezone)
+      const hojeDiaSemana = agoraBrasil.getDay();
+      const horaAgora = agoraBrasil.getHours();
+      const minutoAgora = agoraBrasil.getMinutes();
       
       let deveProcessarHoje = false;
       
