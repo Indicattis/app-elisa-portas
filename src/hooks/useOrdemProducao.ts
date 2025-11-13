@@ -60,11 +60,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     queryFn: async () => {
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
-      // Obter usuário atual para filtrar visibilidade
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // Buscar ordens baseado no tipo, excluindo histórico
-      // Filtrar: (sem responsável OU responsável é o usuário atual) E não está no histórico
+      // Buscar todas as ordens ativas (não histórico) - visíveis para todos
       const { data: ordensData, error: ordensError } = await supabase
         .from(tabelaOrdem)
         .select(`
@@ -82,7 +78,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           )
         `)
         .eq('historico', false)
-        .or(`responsavel_id.is.null,responsavel_id.eq.${user?.id || ''}`)
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: true });
       
