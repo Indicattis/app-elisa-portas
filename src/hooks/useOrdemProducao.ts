@@ -33,6 +33,9 @@ interface Ordem {
     numero_pedido: string;
     cliente_nome: string;
     venda_id?: string;
+    vendas?: {
+      data_prevista_entrega?: string;
+    };
   };
   admin_users?: {
     nome: string;
@@ -74,7 +77,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             id,
             numero_pedido,
             cliente_nome,
-            venda_id
+            venda_id,
+            vendas(data_prevista_entrega)
           )
         `)
         .eq('historico', false)
@@ -119,7 +123,10 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       return ordensData.map((ordem: any) => ({
         ...ordem,
         linhas: (linhasData || []).filter((linha: any) => linha.ordem_id === ordem.id),
-        pedido: ordem.pedido || null,
+        pedido: ordem.pedido ? {
+          ...ordem.pedido,
+          vendas: ordem.pedido.vendas?.[0] || null,
+        } : null,
         admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
       })) as Ordem[];
     },

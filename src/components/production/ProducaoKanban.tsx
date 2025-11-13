@@ -35,6 +35,11 @@ interface Ordem {
   linhas?: LinhaOrdem[];
   pedido?: {
     cliente_nome: string;
+    numero_pedido: string;
+    venda_id?: string;
+    vendas?: {
+      data_prevista_entrega?: string;
+    };
   };
   admin_users?: {
     nome: string;
@@ -76,31 +81,31 @@ function OrdemCard({
     todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
   });
 
+  const formatarData = (data?: string) => {
+    if (!data) return '--/--/----';
+    const date = new Date(data);
+    return date.toLocaleDateString('pt-BR');
+  };
+
   return (
     <Card 
       className={cn(
-        "hover:shadow-md transition-all",
+        "hover:shadow-md transition-all overflow-hidden",
         ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
       )}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2">
-          <div 
-            className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
-            onClick={() => onOrdemClick(ordem)}
-          >
-            {ordem.em_backlog && (
-              <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
-            )}
-            <Package className="h-4 w-4 flex-shrink-0 text-primary" />
-            <CardTitle className="text-sm font-semibold truncate">
-              {ordem.numero_ordem}
-            </CardTitle>
-            {ordemProgress && ordemProgress.total > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {ordemProgress.concluidas}/{ordemProgress.total}
-              </Badge>
-            )}
+      {/* HEADER */}
+      <CardHeader className="pb-3 border-b bg-muted/30">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {ordem.em_backlog && (
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
+              )}
+              <span className="text-xs font-medium text-muted-foreground">
+                Pedido #{ordem.pedido?.numero_pedido}
+              </span>
+            </div>
             {ordem.em_backlog && (
               <Badge className="bg-red-500 text-white text-xs">
                 BACKLOG
@@ -108,91 +113,141 @@ function OrdemCard({
             )}
           </div>
           
-          {ordem.responsavel_id ? (
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                <AvatarImage src={ordem.admin_users?.foto_perfil_url} alt={ordem.admin_users?.nome} />
-                <AvatarFallback className="text-base font-semibold">
-                  {ordem.admin_users?.nome?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-muted-foreground truncate max-w-24">
-                {ordem.admin_users?.nome}
-              </span>
+          <div className="space-y-1">
+            <CardTitle className="text-lg font-bold">
+              {ordem.numero_ordem}
+            </CardTitle>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium">{ordem.pedido?.cliente_nome}</span>
+              <span>Entrega: {formatarData(ordem.pedido?.vendas?.data_prevista_entrega)}</span>
             </div>
-          ) : (
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCapturarOrdem?.(ordem.id);
-              }}
-              disabled={isCapturing}
-              className="flex-shrink-0"
-            >
-              <UserCheck className="h-5 w-5 mr-2" />
-              Capturar
-            </Button>
-          )}
+          </div>
         </div>
       </CardHeader>
       
-      <CardContent 
-        className="space-y-3 cursor-pointer"
-        onClick={() => onOrdemClick(ordem)}
-      >
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex-1 space-y-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Cliente</p>
-            <p className="text-sm font-medium truncate">{ordem.pedido?.cliente_nome}</p>
+      {/* BODY */}
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          {/* LATERAL ESQUERDA - Foto do responsável */}
+          <div 
+            className="flex-shrink-0 cursor-pointer"
+            onClick={() => onOrdemClick(ordem)}
+          >
+            {ordem.responsavel_id ? (
+              <Avatar className="h-[100px] w-[100px] ring-2 ring-primary/20">
+                <AvatarImage 
+                  src={ordem.admin_users?.foto_perfil_url} 
+                  alt={ordem.admin_users?.nome}
+                />
+                <AvatarFallback className="text-3xl font-bold">
+                  {ordem.admin_users?.nome?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className="h-[100px] w-[100px] rounded-full bg-muted/50 flex items-center justify-center">
+                <UserCheck className="h-10 w-10 text-muted-foreground/50" />
+              </div>
+            )}
           </div>
-          
-          {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
-            <Badge variant="secondary" className="gap-1 flex-shrink-0">
-              <Timer className="h-3 w-3" />
-              {tempoDecorrido}
-            </Badge>
-          )}
-        </div>
 
-        {linhas.length > 0 && (
+          {/* CENTRO - Informações */}
+          <div 
+            className="flex-1 space-y-3 cursor-pointer min-w-0"
+            onClick={() => onOrdemClick(ordem)}
+          >
+            {ordem.responsavel_id && ordem.admin_users?.nome && (
+              <div>
+                <p className="text-xs text-muted-foreground">Responsável</p>
+                <p className="text-sm font-semibold truncate">{ordem.admin_users.nome}</p>
+              </div>
+            )}
+
+            {ordemProgress && ordemProgress.total > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Progresso Geral</p>
+                <Badge variant="outline" className="text-xs mt-1">
+                  {ordemProgress.concluidas}/{ordemProgress.total} ordens
+                </Badge>
+              </div>
+            )}
+
+            {ordem.observacoes && (
+              <div>
+                <p className="text-xs text-muted-foreground">Observações</p>
+                <p className="text-xs line-clamp-2">{ordem.observacoes}</p>
+              </div>
+            )}
+
+            {/* Botão para visualizar backlog */}
+            {ordem.em_backlog && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-red-500/50 text-red-600 hover:bg-red-500/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBacklogModalOpen(true);
+                }}
+              >
+                <FileText className="h-3 w-3 mr-2" />
+                Ver Justificativa
+              </Button>
+            )}
+          </div>
+
+          {/* LATERAL DIREITA - Botão Capturar ou Cronômetro */}
+          <div className="flex-shrink-0">
+            {!ordem.responsavel_id ? (
+              <Button
+                size="lg"
+                variant="default"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCapturarOrdem?.(ordem.id);
+                }}
+                disabled={isCapturing}
+                className="h-[100px] w-[100px] flex flex-col gap-2 p-2"
+              >
+                <UserCheck className="h-8 w-8" />
+                <span className="text-xs font-semibold">Capturar</span>
+              </Button>
+            ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' ? (
+              <div 
+                className="h-[100px] w-[100px] rounded-lg bg-primary/10 flex flex-col items-center justify-center gap-2 border-2 border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                onClick={() => onOrdemClick(ordem)}
+              >
+                <Timer className="h-6 w-6 text-primary" />
+                <span className="text-lg font-mono font-bold text-primary">{tempoDecorrido}</span>
+              </div>
+            ) : (
+              <div 
+                className="h-[100px] w-[100px] rounded-lg bg-muted/30 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onOrdemClick(ordem)}
+              >
+                <Clock className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+
+      {/* FOOTER - Barra de Progresso */}
+      {linhas.length > 0 && (
+        <div className="border-t bg-muted/20 px-4 py-3">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Progresso</span>
-              <span className="font-medium">{linhasConcluidas}/{linhas.length} itens</span>
+              <span className="text-muted-foreground font-medium">Progresso da Ordem</span>
+              <span className="font-semibold">{linhasConcluidas}/{linhas.length} itens</span>
             </div>
-            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
               <div
                 className="bg-primary h-full transition-all duration-300"
                 style={{ width: `${progresso}%` }}
               />
             </div>
           </div>
-        )}
-
-        {ordem.observacoes && (
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {ordem.observacoes}
-          </p>
-        )}
-
-        {/* Botão para visualizar backlog */}
-        {ordem.em_backlog && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full mt-2 border-red-500/50 text-red-600 hover:bg-red-500/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              setBacklogModalOpen(true);
-            }}
-          >
-            <FileText className="h-3 w-3 mr-2" />
-            Ver Justificativa
-          </Button>
-        )}
-      </CardContent>
+        </div>
+      )}
 
       {/* Modal de Backlog */}
       {ordem.em_backlog && (
