@@ -40,8 +40,8 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
             .from("admin_users")
             .select("*")
             .eq("user_id", session.user.id)
-            .eq("setor", "fabrica")
             .eq("ativo", true)
+            .or("setor.eq.fabrica,setor.eq.administrativo")
             .maybeSingle();
 
           if (!mounted) return;
@@ -92,8 +92,8 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
               .from("admin_users")
               .select("*")
               .eq("user_id", session.user.id)
-              .eq("setor", "fabrica")
               .eq("ativo", true)
+              .or("setor.eq.fabrica,setor.eq.administrativo")
               .maybeSingle()
               .then(({ data: adminUser, error }) => {
                 if (mounted && adminUser && !error) {
