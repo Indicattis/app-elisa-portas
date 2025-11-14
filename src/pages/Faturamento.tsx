@@ -1103,7 +1103,7 @@ export default function Faturamento() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/dashboard/faturamento/${venda.id}/editar`);
+                                navigate(`/dashboard/administrativo/financeiro/faturamento/${venda.id}/editar`);
                               }}
                               title="Editar faturamento"
                             >
