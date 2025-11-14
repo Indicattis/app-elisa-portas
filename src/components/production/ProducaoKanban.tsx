@@ -95,33 +95,30 @@ function OrdemCard({
       )}
     >
       {/* HEADER */}
-      <CardHeader className="pb-3 border-b bg-muted/30">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              {ordem.em_backlog && (
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
-              )}
-              <span className="text-xs font-medium text-muted-foreground">
-                Pedido #{ordem.pedido?.numero_pedido}
-              </span>
-            </div>
+      <CardHeader className="h-[30px] py-0 px-4 border-b bg-muted/30 flex items-center">
+        <div className="flex items-center justify-between w-full gap-4">
+          <div className="flex items-center gap-3 text-xs">
             {ordem.em_backlog && (
-              <Badge className="bg-red-500 text-white text-xs">
-                BACKLOG
-              </Badge>
+              <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-red-500 animate-pulse" />
             )}
-          </div>
-          
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-bold">
+            <span className="font-medium text-muted-foreground">
+              Pedido #{ordem.pedido?.numero_pedido}
+            </span>
+            <span className="font-bold">
               {ordem.numero_ordem}
-            </CardTitle>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-medium">{ordem.pedido?.cliente_nome}</span>
-              <span>Entrega: {formatarData(ordem.pedido?.vendas?.data_prevista_entrega)}</span>
-            </div>
+            </span>
+            <span className="text-muted-foreground">
+              {ordem.pedido?.cliente_nome}
+            </span>
+            <span className="text-muted-foreground">
+              Entrega: {formatarData(ordem.pedido?.vendas?.data_prevista_entrega)}
+            </span>
           </div>
+          {ordem.em_backlog && (
+            <Badge className="bg-red-500 text-white text-xs h-5">
+              BACKLOG
+            </Badge>
+          )}
         </div>
       </CardHeader>
       
@@ -178,21 +175,6 @@ function OrdemCard({
               </div>
             )}
 
-            {/* Botão para visualizar backlog */}
-            {ordem.em_backlog && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-red-500/50 text-red-600 hover:bg-red-500/10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setBacklogModalOpen(true);
-                }}
-              >
-                <FileText className="h-3 w-3 mr-2" />
-                Ver Justificativa
-              </Button>
-            )}
           </div>
 
           {/* LATERAL DIREITA - Botão Capturar ou Cronômetro */}
@@ -213,11 +195,12 @@ function OrdemCard({
               </Button>
             ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' ? (
               <div 
-                className="h-[100px] w-[100px] rounded-lg bg-primary/10 flex flex-col items-center justify-center gap-2 border-2 border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                className="h-[100px] w-[100px] rounded-full bg-primary/10 flex flex-col items-center justify-center gap-1 border-2 border-primary cursor-pointer hover:bg-primary/20 transition-colors relative overflow-hidden"
                 onClick={() => onOrdemClick(ordem)}
               >
-                <Timer className="h-6 w-6 text-primary" />
-                <span className="text-lg font-mono font-bold text-primary">{tempoDecorrido}</span>
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
+                <Timer className="h-5 w-5 text-primary relative z-10" />
+                <span className="text-sm font-mono font-bold text-primary relative z-10">{tempoDecorrido}</span>
               </div>
             ) : (
               <div 
@@ -231,19 +214,38 @@ function OrdemCard({
         </div>
       </CardContent>
 
-      {/* FOOTER - Barra de Progresso */}
+      {/* FOOTER - Barra de Progresso e Ações */}
       {linhas.length > 0 && (
-        <div className="border-t bg-muted/20 px-4 py-3">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground font-medium">Progresso da Ordem</span>
-              <span className="font-semibold">{linhasConcluidas}/{linhas.length} itens</span>
+        <div className="border-t bg-muted/20 px-4 py-2">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold">{linhasConcluidas}/{linhas.length} itens</span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-primary h-full transition-all duration-300"
+                  style={{ width: `${progresso}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-primary h-full transition-all duration-300"
-                style={{ width: `${progresso}%` }}
-              />
+            
+            {/* Ações */}
+            <div className="flex items-center gap-2">
+              {ordem.em_backlog && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500/50 text-red-600 hover:bg-red-500/10 h-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setBacklogModalOpen(true);
+                  }}
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  Ver Justificativa
+                </Button>
+              )}
             </div>
           </div>
         </div>
