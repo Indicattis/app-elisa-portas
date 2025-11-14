@@ -189,7 +189,7 @@ function OrdemCard({
                   onCapturarOrdem?.(ordem.id);
                 }}
                 disabled={isCapturing}
-                className="h-[100px] w-[100px] flex flex-col gap-2 p-2"
+                className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2"
               >
                 <UserCheck className="h-8 w-8" />
                 <span className="text-xs font-semibold">Capturar</span>
