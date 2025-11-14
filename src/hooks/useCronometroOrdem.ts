@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
+import { formatCronometroExtended } from '@/utils/timeFormat';
 
 interface UseCronometroOrdemParams {
   capturada_em?: string | null;
   tempo_conclusao_segundos?: number | null;
   todas_linhas_concluidas?: boolean;
+  responsavel_id?: string | null;
 }
 
-export function useCronometroOrdem(params: UseCronometroOrdemParams | string | null | undefined) {
+interface CronometroResult {
+  tempoDecorrido: string;
+  deveAnimar: boolean;
+}
+
+export function useCronometroOrdem(params: UseCronometroOrdemParams | string | null | undefined): CronometroResult {
   const [tempoDecorrido, setTempoDecorrido] = useState<string>('00:00:00');
+  const [deveAnimar, setDeveAnimar] = useState<boolean>(false);
 
   // Suporte para ambos os formatos: objeto ou string direta (retrocompatibilidade)
   const capturadaEm = typeof params === 'string' || params === null || params === undefined 
@@ -19,21 +27,23 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
   const todasLinhasConcluidas = typeof params === 'object' && params !== null 
     ? params.todas_linhas_concluidas 
     : false;
+  const responsavelId = typeof params === 'object' && params !== null 
+    ? params.responsavel_id 
+    : null;
 
   useEffect(() => {
-    // Se tem tempo de conclusão E está concluída, mostrar tempo parado
+    // Se tem tempo de conclusão E está concluída, mostrar tempo parado (sem animação)
     if (tempoConclusao !== null && tempoConclusao !== undefined && todasLinhasConcluidas) {
-      const horas = Math.floor(tempoConclusao / 3600);
-      const minutos = Math.floor((tempoConclusao % 3600) / 60);
-      const segundos = tempoConclusao % 60;
-      const formatado = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+      const formatado = formatCronometroExtended(tempoConclusao);
       setTempoDecorrido(formatado);
+      setDeveAnimar(false);
       return; // Não iniciar intervalo, cronômetro parado
     }
 
-    // Se não está capturada, não mostrar tempo
-    if (!capturadaEm) {
+    // Se não está capturada ou não tem responsável, não mostrar tempo (sem animação)
+    if (!capturadaEm || !responsavelId) {
       setTempoDecorrido('--:--:--');
+      setDeveAnimar(false);
       return;
     }
 
@@ -44,19 +54,14 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
 
       if (diff < 0) {
         setTempoDecorrido('00:00:00');
+        setDeveAnimar(true);
         return;
       }
 
       const segundos = Math.floor(diff / 1000);
-      const minutos = Math.floor(segundos / 60);
-      const horas = Math.floor(minutos / 60);
-
-      const s = segundos % 60;
-      const m = minutos % 60;
-      const h = horas;
-
-      const formatado = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      const formatado = formatCronometroExtended(segundos);
       setTempoDecorrido(formatado);
+      setDeveAnimar(true);
     };
 
     // Calcular imediatamente
@@ -66,7 +71,7 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
     const interval = setInterval(calcularTempo, 1000);
 
     return () => clearInterval(interval);
-  }, [capturadaEm, tempoConclusao, todasLinhasConcluidas]);
+  }, [capturadaEm, tempoConclusao, todasLinhasConcluidas, responsavelId]);
 
-  return tempoDecorrido;
+  return { tempoDecorrido, deveAnimar };
 }
