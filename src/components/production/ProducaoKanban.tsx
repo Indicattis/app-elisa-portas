@@ -95,8 +95,8 @@ function OrdemCard({
       )}
     >
       {/* HEADER */}
-      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center">
-        <div className="flex items-center justify-between w-full gap-4">
+      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center justify-center">
+        <div className="flex items-center justify-between w-full gap-4 h-full">
           <div className="flex items-center gap-3 text-xs">
             {ordem.em_backlog && (
               <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-red-500 animate-pulse" />
