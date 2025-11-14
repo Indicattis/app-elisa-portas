@@ -21,8 +21,8 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
     : false;
 
   useEffect(() => {
-    // Se tem tempo de conclusão armazenado, mostrar esse tempo (parado)
-    if (tempoConclusao !== null && tempoConclusao !== undefined) {
+    // Se tem tempo de conclusão E está concluída, mostrar tempo parado
+    if (tempoConclusao !== null && tempoConclusao !== undefined && todasLinhasConcluidas) {
       const horas = Math.floor(tempoConclusao / 3600);
       const minutos = Math.floor((tempoConclusao % 3600) / 60);
       const segundos = tempoConclusao % 60;
@@ -31,12 +31,7 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
       return; // Não iniciar intervalo, cronômetro parado
     }
 
-    // Se todas as linhas estão concluídas mas não tem tempo armazenado, não mostrar
-    if (todasLinhasConcluidas) {
-      setTempoDecorrido('--:--:--');
-      return;
-    }
-
+    // Se não está capturada, não mostrar tempo
     if (!capturadaEm) {
       setTempoDecorrido('--:--:--');
       return;
