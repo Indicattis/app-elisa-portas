@@ -101,10 +101,11 @@ export function OrdemDetalhesSheet({
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
   
-  const tempoDecorrido = useCronometroOrdem({
+  const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
     capturada_em: ordem?.capturada_em,
     tempo_conclusao_segundos: ordem?.tempo_conclusao_segundos,
     todas_linhas_concluidas: todasConcluidas && ordem?.status === 'concluido',
+    responsavel_id: ordem?.responsavel_id,
   });
   
   if (!ordem) return null;
@@ -131,51 +132,41 @@ export function OrdemDetalhesSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <div className="flex items-center justify-between">
-            <SheetTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {ordem.numero_ordem}
-            </SheetTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadPDF}
-              disabled={isDownloadingPDF}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloadingPDF ? "Gerando..." : "PDF"}
-            </Button>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto flex flex-col">
+        {/* Header fixo de 50px */}
+        <div className="h-[50px] flex-shrink-0 flex items-center justify-between gap-4 pb-4 border-b">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-semibold truncate">{ordem.numero_ordem}</span>
+            <span className="text-sm text-muted-foreground truncate">{ordem.pedido?.cliente_nome}</span>
           </div>
-          <SheetDescription>
-            Detalhes da ordem de {TIPO_LABELS[tipoOrdem].toLowerCase()}
-          </SheetDescription>
-        </SheetHeader>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs text-muted-foreground">Ped. {ordem.pedido?.numero_pedido}</span>
+            {ordem.capturada_em && (
+              <div className="flex items-center gap-1">
+                <Clock className={`h-3.5 w-3.5 text-orange-500 ${deveAnimar ? 'animate-pulse' : ''}`} />
+                <span className="text-xs font-mono text-orange-600 dark:text-orange-400">
+                  {tempoDecorrido}
+                </span>
+              </div>
+            )}
+            <Badge variant={
+              ordem.status === 'concluido' || ordem.status === 'pronta' ? 'default' : 'secondary'
+            } className="text-xs">
+              {tipoOrdem === 'pintura' ? (
+                ordem.status === 'pendente' ? 'Para Pintar' :
+                ordem.status === 'pintando' ? 'Pintando' :
+                ordem.status === 'pronta' ? 'Pronta' : ordem.status
+              ) : (
+                ordem.status === 'concluido' ? 'Concluído' : 'Pendente'
+              )}
+            </Badge>
+          </div>
+        </div>
 
-        <div className="mt-6 space-y-6">
+        {/* Conteúdo scrollável */}
+        <div className="flex-1 overflow-y-auto mt-6 space-y-6">
           {/* Informações da ordem */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Cliente</span>
-              <span className="text-sm font-medium">{ordem.pedido?.cliente_nome}</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Status</span>
-              <Badge variant={
-                ordem.status === 'concluido' || ordem.status === 'pronta' ? 'default' : 'secondary'
-              }>
-                {tipoOrdem === 'pintura' ? (
-                  ordem.status === 'pendente' ? 'Para Pintar' :
-                  ordem.status === 'pintando' ? 'Pintando' :
-                  ordem.status === 'pronta' ? 'Pronta' : ordem.status
-                ) : (
-                  ordem.status === 'concluido' ? 'Concluído' : 'Pendente'
-                )}
-              </Badge>
-            </div>
-
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Progresso</span>
               <div className="flex items-center gap-2">
@@ -203,37 +194,7 @@ export function OrdemDetalhesSheet({
                 <Badge variant="secondary">Não atribuído</Badge>
               )}
             </div>
-
-            {/* Cronômetro */}
-            {ordem.capturada_em && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Tempo decorrido</span>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm font-mono font-medium text-orange-600 dark:text-orange-400">
-                    {tempoDecorrido}
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
-
-          {/* Origem - Pedido e Venda */}
-          {(ordem.pedido?.id || ordem.pedido?.venda_id) && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Documentos de Origem</span>
-                <OrigemBadges
-                  pedidoId={ordem.pedido?.id}
-                  pedidoNumero={ordem.pedido?.numero_pedido}
-                  vendaId={ordem.pedido?.venda_id}
-                  size="default"
-                  orientation="horizontal"
-                />
-              </div>
-            </>
-          )}
 
           {/* Botão de capturar ordem */}
           {!temResponsavel && ordem.status !== 'concluido' && ordem.status !== 'pronta' && onCapturarOrdem && (

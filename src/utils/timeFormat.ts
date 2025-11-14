@@ -37,3 +37,35 @@ export function formatDuration(seconds: number): string {
 
   return `${minutes}min`;
 }
+
+/**
+ * Formata segundos para exibição em cronômetro com dias e semanas
+ * @param seconds - Número de segundos
+ * @returns String formatada com dias/semanas quando aplicável
+ */
+export function formatCronometroExtended(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const weeks = Math.floor(days / 7);
+  
+  // Se mais de 7 dias, mostrar semanas
+  if (days >= 7) {
+    const remainingDays = days % 7;
+    if (remainingDays > 0) {
+      return `${weeks}sem ${remainingDays}d`;
+    }
+    return `${weeks}sem`;
+  }
+  
+  // Se mais de 24 horas, mostrar dias
+  if (days >= 1) {
+    const remainingSeconds = seconds % 86400;
+    const hours = Math.floor(remainingSeconds / 3600);
+    if (hours > 0) {
+      return `${days}d ${hours}h`;
+    }
+    return `${days}d`;
+  }
+  
+  // Menos de 24h, formato normal HH:MM:SS
+  return formatCronometro(seconds);
+}
