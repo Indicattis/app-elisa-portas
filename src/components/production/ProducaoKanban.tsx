@@ -95,7 +95,7 @@ function OrdemCard({
       )}
     >
       {/* HEADER */}
-      <CardHeader className="h-[30px] py-0 px-4 border-b bg-muted/30 flex items-center">
+      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center">
         <div className="flex items-center justify-between w-full gap-4">
           <div className="flex items-center gap-3 text-xs">
             {ordem.em_backlog && (
