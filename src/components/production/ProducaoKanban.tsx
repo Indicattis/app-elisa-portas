@@ -75,10 +75,11 @@ function OrdemCard({
 
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
 
-  const tempoDecorrido = useCronometroOrdem({
+  const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
     capturada_em: ordem.capturada_em,
     tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
     todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
+    responsavel_id: ordem.responsavel_id,
   });
 
   const formatarData = (data?: string) => {
@@ -193,12 +194,14 @@ function OrdemCard({
                 <UserCheck className="h-8 w-8" />
                 <span className="text-xs font-semibold">Capturar</span>
               </Button>
-            ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' ? (
+            ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' && ordem.responsavel_id ? (
               <div 
                 className="h-[100px] w-[100px] rounded-full bg-primary/10 flex flex-col items-center justify-center gap-1 border-2 border-primary cursor-pointer hover:bg-primary/20 transition-colors relative overflow-hidden"
                 onClick={() => onOrdemClick(ordem)}
               >
-                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
+                {deveAnimar && (
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
+                )}
                 <Timer className="h-5 w-5 text-primary relative z-10" />
                 <span className="text-sm font-mono font-bold text-primary relative z-10">{tempoDecorrido}</span>
               </div>

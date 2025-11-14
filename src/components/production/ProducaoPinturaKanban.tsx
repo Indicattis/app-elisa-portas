@@ -54,10 +54,11 @@ function OrdemCard({
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
   const todasConcluidas = linhas.length > 0 && linhas.every((l: any) => l.concluida);
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
-  const tempoDecorrido = useCronometroOrdem({
+  const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
     capturada_em: ordem.capturada_em,
     tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
     todas_linhas_concluidas: todasConcluidas && ordem.status === 'pronta',
+    responsavel_id: ordem.responsavel_id,
   });
 
   return (
@@ -89,7 +90,13 @@ function OrdemCard({
                 </Badge>
               )}
               {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
-                <Badge variant="outline" className="gap-1 flex-shrink-0">
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "gap-1 flex-shrink-0",
+                    deveAnimar && "animate-pulse"
+                  )}
+                >
                   <Timer className="h-3 w-3" />
                   {tempoDecorrido}
                 </Badge>
