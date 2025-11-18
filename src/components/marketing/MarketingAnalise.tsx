@@ -667,7 +667,7 @@ export default function MarketingAnalise() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {regioes.map((regiao) => (
+                {regioes.filter(regiao => regiao && regiao.trim() !== '').map((regiao) => (
                   <SelectItem key={regiao} value={regiao}>
                     {regiao}
                   </SelectItem>
@@ -681,7 +681,7 @@ export default function MarketingAnalise() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {canais.map((canal) => (
+                {canais.filter(canal => canal.id && canal.id.trim() !== '').map((canal) => (
                   <SelectItem key={canal.id} value={canal.id}>
                     {canal.nome}
                   </SelectItem>
@@ -1007,7 +1007,7 @@ export default function MarketingAnalise() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="geral">Geral</SelectItem>
-                      {regioes.map((regiao) => (
+                      {regioes.filter(regiao => regiao && regiao.trim() !== '').map((regiao) => (
                         <SelectItem key={regiao} value={regiao}>
                           {regiao}
                         </SelectItem>
