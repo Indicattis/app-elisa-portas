@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { EtiquetaCalculo, TagIndividual } from '@/types/etiqueta';
+import { EtiquetaCalculo, TagIndividual, TagProducao } from '@/types/etiqueta';
 
 interface TagData {
   nomeProduto: string;
@@ -206,7 +206,7 @@ export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
   return calculos.reduce((total, calculo) => total + calculo.etiquetasNecessarias, 0);
 }
 
-export function gerarPDFEtiquetaProducao(tag: TagIndividual): jsPDF {
+export function gerarPDFEtiquetaProducao(tag: TagProducao): jsPDF {
   // 800mm width x 400mm height (80cm x 40cm)
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -214,40 +214,144 @@ export function gerarPDFEtiquetaProducao(tag: TagIndividual): jsPDF {
     format: [400, 800] // [height, width]
   });
 
-  // Padding (20mm internal)
-  const px = 20;
-  const py = 20;
-
-  // Product name (48pt, bold)
-  doc.setFontSize(48);
-  doc.setFont('helvetica', 'bold');
-  const truncatedName = truncateText(tag.nomeProduto, 60);
-  doc.text(truncatedName, px, py + 40);
-
-  // Order number (36pt)
-  doc.setFontSize(36);
+  const pageWidth = 800;
+  const pageHeight = 400;
+  
+  // Header background
+  doc.setFillColor(240, 240, 240);
+  doc.rect(0, 0, pageWidth, 80, 'F');
+  
+  // Logo (if available - centered in header)
+  try {
+    const logoImg = '/src/assets/logo-empresa.png';
+    doc.addImage(logoImg, 'PNG', 30, 15, 120, 50);
+  } catch (error) {
+    // Logo not available, skip
+    doc.setFontSize(32);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ELISA PORTAS', 30, 45);
+  }
+  
+  // Data de impressão (right side of header)
+  const dataHoje = new Date().toLocaleDateString('pt-BR', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  doc.setFontSize(18);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Pedido: ${tag.numeroPedido}`, px, py + 100);
+  doc.setTextColor(80, 80, 80);
+  doc.text(dataHoje, pageWidth - 30, 45, { align: 'right' });
+  
+  // Reset color
+  doc.setTextColor(0, 0, 0);
+  
+  // Content area
+  const contentX = 30;
+  let currentY = 120;
+  const lineSpacing = 55;
 
-  // Quantity (32pt)
-  doc.setFontSize(32);
-  doc.text(`Qtd: ${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, px, py + 160);
-
-  // Dimensions (28pt)
-  doc.setFontSize(28);
-  if (tag.largura && tag.altura) {
-    doc.text(`Dimensões: ${tag.largura}m x ${tag.altura}m`, px, py + 220);
-  } else {
-    doc.setTextColor(150, 150, 150);
-    doc.text('Sem dimensões especificadas', px, py + 220);
+  // Cliente
+  if (tag.clienteNome) {
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 60, 60);
+    doc.text('CLIENTE:', contentX, currentY);
+    
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
+    doc.setFontSize(32);
+    const truncatedCliente = truncateText(tag.clienteNome, 50);
+    doc.text(truncatedCliente, contentX + 150, currentY);
+    currentY += lineSpacing;
   }
 
-  // Tag counter (24pt, gray, bottom)
-  doc.setFontSize(24);
+  // Product name
+  doc.setFontSize(28);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  doc.text('PRODUTO:', contentX, currentY);
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(38);
+  const truncatedName = truncateText(tag.nomeProduto, 50);
+  doc.text(truncatedName, contentX + 150, currentY);
+  currentY += lineSpacing;
+
+  // Tamanho da porta
+  if (tag.tamanho) {
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 60, 60);
+    doc.text('TAMANHO:', contentX, currentY);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(32);
+    doc.text(tag.tamanho, contentX + 150, currentY);
+    currentY += lineSpacing;
+  }
+
+  // Dimensions
+  if (tag.largura && tag.altura) {
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 60, 60);
+    doc.text('DIMENSÕES:', contentX, currentY);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(32);
+    doc.text(`${tag.largura}m x ${tag.altura}m`, contentX + 150, currentY);
+    currentY += lineSpacing;
+  }
+
+  // Cor/Pintura
+  if (tag.corNome || tag.tipoPintura) {
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 60, 60);
+    doc.text('PINTURA:', contentX, currentY);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(32);
+    const pinturaTexto = [tag.corNome, tag.tipoPintura].filter(Boolean).join(' - ');
+    doc.text(pinturaTexto || 'Sem pintura', contentX + 150, currentY);
+    currentY += lineSpacing;
+  }
+
+  // Quantity
+  doc.setFontSize(28);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  doc.text('QUANTIDADE:', contentX, currentY);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(32);
+  doc.text(`${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, contentX + 200, currentY);
+  currentY += lineSpacing;
+
+  // Order number
+  doc.setFontSize(28);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  doc.text('PEDIDO:', contentX, currentY);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(32);
+  doc.text(tag.numeroPedido, contentX + 150, currentY);
+
+  // Footer com contador de etiquetas
+  doc.setFontSize(22);
   doc.setTextColor(120, 120, 120);
   if (tag.totalTags > 1) {
-    doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, px, 400 - 40);
+    doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, pageWidth / 2, pageHeight - 30, { align: 'center' });
   }
 
   return doc;

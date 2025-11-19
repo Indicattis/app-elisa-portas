@@ -121,7 +121,7 @@ export function OrdemDetalhesSheet({
     try {
       const calculo = calcularEtiquetasLinha(linha);
       
-      // Gerar PDFs para cada etiqueta necessária
+      // Gerar PDFs para cada etiqueta necessária e abrir popup de impressão
       for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
         const tag = {
           tagNumero: i,
@@ -131,14 +131,25 @@ export function OrdemDetalhesSheet({
           quantidade: calculo.quantidade,
           largura: calculo.largura,
           altura: calculo.altura,
+          clienteNome: ordem?.pedido?.cliente_nome,
+          tamanho: linha.tamanho,
+          corNome: linha.cor_nome,
+          tipoPintura: linha.tipo_pintura,
         };
         
         const doc = gerarPDFEtiquetaProducao(tag);
-        const nomeArquivo = `etiqueta_${ordem?.numero_ordem}_${linha.item}_${i}.pdf`;
-        doc.save(nomeArquivo);
+        
+        // Abrir popup de impressão ao invés de baixar
+        doc.autoPrint();
+        window.open(doc.output('bloburl'), '_blank');
+        
+        // Pequeno delay entre etiquetas para não sobrecarregar
+        if (i < calculo.etiquetasNecessarias) {
+          setTimeout(() => {}, 300);
+        }
       }
       
-      toast.success(`${calculo.etiquetasNecessarias} etiqueta(s) gerada(s) com sucesso!`);
+      toast.success(`Abrindo ${calculo.etiquetasNecessarias} etiqueta(s) para impressão`);
     } catch (error) {
       console.error('Erro ao gerar etiquetas:', error);
       toast.error('Erro ao gerar etiquetas');

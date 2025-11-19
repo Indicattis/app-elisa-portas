@@ -38,3 +38,10 @@ export interface TagIndividual {
   largura?: number;
   altura?: number;
 }
+
+export interface TagProducao extends TagIndividual {
+  clienteNome?: string;
+  tamanho?: string;
+  corNome?: string;
+  tipoPintura?: string;
+}
