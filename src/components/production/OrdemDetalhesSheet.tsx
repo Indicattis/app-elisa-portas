@@ -5,13 +5,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
 import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
 import { toast } from "sonner";
 import { OrigemBadges } from "@/components/shared/OrigemBadges";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
+import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
+import { gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -95,6 +97,7 @@ export function OrdemDetalhesSheet({
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
+  const { calcularEtiquetasLinha } = useEtiquetasProducao();
   
   const linhas = ordem?.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
@@ -113,6 +116,34 @@ export function OrdemDetalhesSheet({
   const isResponsavel = ordem.responsavel_id === user?.id;
   const temResponsavel = !!ordem.responsavel_id;
   const podeMarcarLinhas = temResponsavel && isResponsavel;
+
+  const handleImprimirEtiqueta = (linha: LinhaOrdem) => {
+    try {
+      const calculo = calcularEtiquetasLinha(linha);
+      
+      // Gerar PDFs para cada etiqueta necessária
+      for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
+        const tag = {
+          tagNumero: i,
+          totalTags: calculo.etiquetasNecessarias,
+          nomeProduto: calculo.nomeProduto,
+          numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
+          quantidade: calculo.quantidade,
+          largura: calculo.largura,
+          altura: calculo.altura,
+        };
+        
+        const doc = gerarPDFEtiquetaProducao(tag);
+        const nomeArquivo = `etiqueta_${ordem?.numero_ordem}_${linha.item}_${i}.pdf`;
+        doc.save(nomeArquivo);
+      }
+      
+      toast.success(`${calculo.etiquetasNecessarias} etiqueta(s) gerada(s) com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao gerar etiquetas:', error);
+      toast.error('Erro ao gerar etiquetas');
+    }
+  };
 
   const handleDownloadPDF = async () => {
     if (!ordem) return;
@@ -332,6 +363,19 @@ export function OrdemDetalhesSheet({
                                   {linha.tamanho && <span>{linha.tamanho}</span>}
                                 </div>
                               </div>
+                              
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 flex-shrink-0"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleImprimirEtiqueta(linha);
+                                }}
+                                title="Imprimir etiqueta"
+                              >
+                                <Printer className="h-4 w-4" />
+                              </Button>
                             </Label>
                           ))}
                         </div>
@@ -372,6 +416,19 @@ export function OrdemDetalhesSheet({
                         {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
                       </div>
                     </div>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleImprimirEtiqueta(linha);
+                      }}
+                      title="Imprimir etiqueta"
+                    >
+                      <Printer className="h-4 w-4" />
+                    </Button>
                   </Label>
                 ))
               )}

@@ -205,3 +205,50 @@ export function gerarPDFEtiquetaIndividual(tag: TagIndividual): jsPDF {
 export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
   return calculos.reduce((total, calculo) => total + calculo.etiquetasNecessarias, 0);
 }
+
+export function gerarPDFEtiquetaProducao(tag: TagIndividual): jsPDF {
+  // 800mm width x 400mm height (80cm x 40cm)
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [400, 800] // [height, width]
+  });
+
+  // Padding (20mm internal)
+  const px = 20;
+  const py = 20;
+
+  // Product name (48pt, bold)
+  doc.setFontSize(48);
+  doc.setFont('helvetica', 'bold');
+  const truncatedName = truncateText(tag.nomeProduto, 60);
+  doc.text(truncatedName, px, py + 40);
+
+  // Order number (36pt)
+  doc.setFontSize(36);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Pedido: ${tag.numeroPedido}`, px, py + 100);
+
+  // Quantity (32pt)
+  doc.setFontSize(32);
+  doc.text(`Qtd: ${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, px, py + 160);
+
+  // Dimensions (28pt)
+  doc.setFontSize(28);
+  if (tag.largura && tag.altura) {
+    doc.text(`Dimensões: ${tag.largura}m x ${tag.altura}m`, px, py + 220);
+  } else {
+    doc.setTextColor(150, 150, 150);
+    doc.text('Sem dimensões especificadas', px, py + 220);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  // Tag counter (24pt, gray, bottom)
+  doc.setFontSize(24);
+  doc.setTextColor(120, 120, 120);
+  if (tag.totalTags > 1) {
+    doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, px, 400 - 40);
+  }
+
+  return doc;
+}
