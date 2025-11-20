@@ -257,7 +257,7 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     doc.setFontSize(76);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
-    doc.text(`TAMANHO: ${tag.tamanho}`, pageWidth / 2, currentY, { align: 'center' });
+    doc.text(`TAMANHO: ${tag.tamanho}m`, pageWidth / 2, currentY, { align: 'center' });
     currentY += lineSpacing;
   }
 
