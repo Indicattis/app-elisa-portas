@@ -206,17 +206,8 @@ export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
   return calculos.reduce((total, calculo) => total + calculo.etiquetasNecessarias, 0);
 }
 
-export function gerarPDFEtiquetaProducao(tag: TagProducao): jsPDF {
-  // 800mm width x 400mm height (80cm x 40cm)
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'mm',
-    format: [400, 800] // [height, width]
-  });
-
-  const pageWidth = 800;
-  const pageHeight = 400;
-  
+// Função auxiliar para desenhar uma etiqueta de produção
+function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: number, pageHeight: number): void {
   // Header background
   doc.setFillColor(240, 240, 240);
   doc.rect(0, 0, pageWidth, 80, 'F');
@@ -352,6 +343,47 @@ export function gerarPDFEtiquetaProducao(tag: TagProducao): jsPDF {
   doc.setTextColor(120, 120, 120);
   if (tag.totalTags > 1) {
     doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, pageWidth / 2, pageHeight - 30, { align: 'center' });
+  }
+}
+
+export function gerarPDFEtiquetaProducao(tag: TagProducao): jsPDF {
+  // 800mm width x 400mm height (80cm x 40cm)
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [400, 800] // [height, width]
+  });
+
+  const pageWidth = 800;
+  const pageHeight = 400;
+  
+  desenharEtiquetaProducao(doc, tag, pageWidth, pageHeight);
+
+  return doc;
+}
+
+export function gerarPDFEtiquetasProducaoMultiplas(tags: TagProducao[]): jsPDF {
+  if (tags.length === 0) {
+    throw new Error('Nenhuma etiqueta para gerar');
+  }
+
+  // 800mm width x 400mm height (80cm x 40cm)
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [400, 800] // [height, width]
+  });
+
+  const pageWidth = 800;
+  const pageHeight = 400;
+
+  // Desenhar primeira etiqueta
+  desenharEtiquetaProducao(doc, tags[0], pageWidth, pageHeight);
+
+  // Adicionar páginas para as demais etiquetas
+  for (let i = 1; i < tags.length; i++) {
+    doc.addPage([400, 800]);
+    desenharEtiquetaProducao(doc, tags[i], pageWidth, pageHeight);
   }
 
   return doc;

@@ -145,7 +145,7 @@ export function OrdemDetalhesSheet({
         : gerarPDFEtiquetaProducao(tags[0]);
       
       // Criar iframe oculto para impressão na aba atual
-      const blobUrl = doc.output('bloburl');
+      const blobUrl = String(doc.output('bloburl'));
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
       iframe.style.right = '0';
