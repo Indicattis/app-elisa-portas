@@ -209,19 +209,19 @@ export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
 
 // Função auxiliar para desenhar uma etiqueta de produção
 function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: number, pageHeight: number): void {
-  // Header background - PRETO
+  // Header background - PRETO (30% maior)
   doc.setFillColor(0, 0, 0);
-  doc.rect(0, 0, pageWidth, 80, 'F');
+  doc.rect(0, 0, pageWidth, 104, 'F');
   
   // Logo (centered in header) - Branca no fundo preto
   try {
-    doc.addImage(logoEtiqueta, 'PNG', 30, 10, 200, 60);
+    doc.addImage(logoEtiqueta, 'PNG', 30, 13, 260, 78);
   } catch (error) {
     // Se logo não disponível, usar texto branco
-    doc.setFontSize(40);
+    doc.setFontSize(80);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text('ELISA PORTAS', 30, 50);
+    doc.text('ELISA PORTAS', 30, 65);
   }
   
   // Data de impressão (right side of header) - BRANCO
@@ -232,115 +232,115 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     hour: '2-digit',
     minute: '2-digit'
   });
-  doc.setFontSize(22);
+  doc.setFontSize(44);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(255, 255, 255);
-  doc.text(dataHoje, pageWidth - 30, 50, { align: 'right' });
+  doc.text(dataHoje, pageWidth - 30, 65, { align: 'right' });
   
   // Reset color
   doc.setTextColor(0, 0, 0);
   
   // Content area
   const contentX = 30;
-  let currentY = 130;
+  let currentY = 154;
   const lineSpacing = 65;
 
   // Cliente
   if (tag.clienteNome) {
-    doc.setFontSize(32);
+    doc.setFontSize(64);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('CLIENTE:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(38);
+    doc.setFontSize(76);
     const truncatedCliente = truncateText(tag.clienteNome, 50);
-    doc.text(truncatedCliente, contentX + 180, currentY);
+    doc.text(truncatedCliente, contentX + 360, currentY);
     currentY += lineSpacing;
   }
 
   // Product name
-  doc.setFontSize(32);
+  doc.setFontSize(64);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(60, 60, 60);
   doc.text('PRODUTO:', contentX, currentY);
   
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(42);
+  doc.setFontSize(84);
   const truncatedName = truncateText(tag.nomeProduto, 50);
-  doc.text(truncatedName, contentX + 180, currentY);
+  doc.text(truncatedName, contentX + 360, currentY);
   currentY += lineSpacing;
 
   // Tamanho da porta (informação do cadastro)
   if (tag.tamanho) {
-    doc.setFontSize(32);
+    doc.setFontSize(64);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('TAMANHO:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(38);
-    doc.text(tag.tamanho, contentX + 180, currentY);
+    doc.setFontSize(76);
+    doc.text(tag.tamanho, contentX + 360, currentY);
     currentY += lineSpacing;
   }
 
   // Dimensions (medidas exatas)
   if (tag.largura && tag.altura) {
-    doc.setFontSize(32);
+    doc.setFontSize(64);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('DIMENSÕES:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(38);
-    doc.text(`${tag.largura}m x ${tag.altura}m`, contentX + 180, currentY);
+    doc.setFontSize(76);
+    doc.text(`${tag.largura}m x ${tag.altura}m`, contentX + 360, currentY);
     currentY += lineSpacing;
   }
 
   // Cor/Pintura
   if (tag.corNome || tag.tipoPintura) {
-    doc.setFontSize(32);
+    doc.setFontSize(64);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('PINTURA:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(38);
+    doc.setFontSize(76);
     const pinturaTexto = [tag.corNome, tag.tipoPintura].filter(Boolean).join(' - ');
-    doc.text(pinturaTexto || 'Sem pintura', contentX + 180, currentY);
+    doc.text(pinturaTexto || 'Sem pintura', contentX + 360, currentY);
     currentY += lineSpacing;
   }
 
   // Quantity
-  doc.setFontSize(32);
+  doc.setFontSize(64);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(60, 60, 60);
   doc.text('QUANTIDADE:', contentX, currentY);
   
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(38);
-  doc.text(`${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, contentX + 180, currentY);
+  doc.setFontSize(76);
+  doc.text(`${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, contentX + 360, currentY);
   currentY += lineSpacing;
 
   // Order number
-  doc.setFontSize(32);
+  doc.setFontSize(64);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(60, 60, 60);
   doc.text('PEDIDO:', contentX, currentY);
   
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(38);
-  doc.text(tag.numeroPedido, contentX + 180, currentY);
+  doc.setFontSize(76);
+  doc.text(tag.numeroPedido, contentX + 360, currentY);
 
   // Footer com contador de etiquetas
-  doc.setFontSize(26);
+  doc.setFontSize(52);
   doc.setTextColor(120, 120, 120);
   if (tag.totalTags > 1) {
     doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, pageWidth / 2, pageHeight - 30, { align: 'center' });
