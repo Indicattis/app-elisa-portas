@@ -232,7 +232,7 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   
   // Content area centralizado
   let currentY = 154;
-  const lineSpacing = 65;
+  const lineSpacing = 50; // Reduzido de 65 para 50
 
   // Cliente
   if (tag.clienteNome) {
@@ -292,13 +292,6 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   doc.text(`PEDIDO: ${tag.numeroPedido}`, pageWidth / 2, currentY, { align: 'center' });
-
-  // Footer com contador de etiquetas
-  doc.setFontSize(52);
-  doc.setTextColor(120, 120, 120);
-  if (tag.totalTags > 1) {
-    doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, pageWidth / 2, pageHeight - 30, { align: 'center' });
-  }
 }
 
 export function gerarPDFEtiquetaProducao(tag: TagProducao): jsPDF {
