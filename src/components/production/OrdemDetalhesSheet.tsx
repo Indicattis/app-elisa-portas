@@ -150,21 +150,46 @@ export function OrdemDetalhesSheet({
       iframe.style.position = 'fixed';
       iframe.style.right = '0';
       iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
       iframe.style.border = 'none';
-      iframe.src = blobUrl;
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
       document.body.appendChild(iframe);
       
       iframe.onload = () => {
         setTimeout(() => {
-          iframe.contentWindow?.print();
-          // Remover iframe após 1 segundo
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 1000);
-        }, 250);
+          try {
+            iframe.contentWindow?.print();
+            
+            // Detectar quando o diálogo de impressão for fechado
+            const checkPrintClosed = () => {
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+              }, 100);
+            };
+            
+            // Remover iframe após um tempo maior para garantir que a impressão seja concluída
+            window.addEventListener('focus', checkPrintClosed, { once: true });
+            
+            // Backup: remover após 10 segundos caso o evento de foco não funcione
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 10000);
+          } catch (error) {
+            console.error('Erro ao imprimir:', error);
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }
+        }, 500);
       };
+      
+      iframe.src = blobUrl;
       
       toast.success(`${calculo.etiquetasNecessarias} etiqueta(s) pronta(s) para impressão`);
     } catch (error) {
