@@ -525,6 +525,99 @@ export type Database = {
         }
         Relationships: []
       }
+      contratos_templates: {
+        Row: {
+          ativo: boolean | null
+          conteudo: string
+          created_at: string | null
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          conteudo: string
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          conteudo?: string
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      contratos_vendas: {
+        Row: {
+          arquivo_url: string
+          created_at: string | null
+          id: string
+          nome_arquivo: string
+          observacoes: string | null
+          status: string | null
+          tamanho_arquivo: number
+          template_id: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+          venda_id: string
+        }
+        Insert: {
+          arquivo_url: string
+          created_at?: string | null
+          id?: string
+          nome_arquivo: string
+          observacoes?: string | null
+          status?: string | null
+          tamanho_arquivo: number
+          template_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          venda_id: string
+        }
+        Update: {
+          arquivo_url?: string
+          created_at?: string | null
+          id?: string
+          nome_arquivo?: string
+          observacoes?: string | null
+          status?: string | null
+          tamanho_arquivo?: number
+          template_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_vendas_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_vendas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       despesas_mensais: {
         Row: {
           categoria: string
