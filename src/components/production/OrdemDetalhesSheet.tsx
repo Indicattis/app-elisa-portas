@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { OrigemBadges } from "@/components/shared/OrigemBadges";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
-import { gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
+import { gerarPDFEtiquetaProducao, gerarPDFEtiquetasProducaoMultiplas } from "@/utils/etiquetasPDFGenerator";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -121,9 +121,10 @@ export function OrdemDetalhesSheet({
     try {
       const calculo = calcularEtiquetasLinha(linha);
       
-      // Gerar PDFs para cada etiqueta necessária e abrir popup de impressão
+      // Criar array com todas as tags necessárias
+      const tags = [];
       for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
-        const tag = {
+        tags.push({
           tagNumero: i,
           totalTags: calculo.etiquetasNecessarias,
           nomeProduto: calculo.nomeProduto,
@@ -135,21 +136,37 @@ export function OrdemDetalhesSheet({
           tamanho: linha.tamanho,
           corNome: linha.cor_nome,
           tipoPintura: linha.tipo_pintura,
-        };
-        
-        const doc = gerarPDFEtiquetaProducao(tag);
-        
-        // Abrir popup de impressão ao invés de baixar
-        doc.autoPrint();
-        window.open(doc.output('bloburl'), '_blank');
-        
-        // Pequeno delay entre etiquetas para não sobrecarregar
-        if (i < calculo.etiquetasNecessarias) {
-          setTimeout(() => {}, 300);
-        }
+        });
       }
       
-      toast.success(`Abrindo ${calculo.etiquetasNecessarias} etiqueta(s) para impressão`);
+      // Gerar PDF único com todas as etiquetas (uma por página)
+      const doc = calculo.etiquetasNecessarias > 1 
+        ? gerarPDFEtiquetasProducaoMultiplas(tags)
+        : gerarPDFEtiquetaProducao(tags[0]);
+      
+      // Criar iframe oculto para impressão na aba atual
+      const blobUrl = doc.output('bloburl');
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = 'none';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow?.print();
+          // Remover iframe após 1 segundo
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+        }, 250);
+      };
+      
+      toast.success(`${calculo.etiquetasNecessarias} etiqueta(s) pronta(s) para impressão`);
     } catch (error) {
       console.error('Erro ao gerar etiquetas:', error);
       toast.error('Erro ao gerar etiquetas');
