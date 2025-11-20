@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { EtiquetaCalculo, TagIndividual, TagProducao } from '@/types/etiqueta';
+import logoEtiqueta from '@/assets/logo-etiqueta.png';
 
 interface TagData {
   nomeProduto: string;
@@ -208,22 +209,22 @@ export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
 
 // Função auxiliar para desenhar uma etiqueta de produção
 function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: number, pageHeight: number): void {
-  // Header background
-  doc.setFillColor(240, 240, 240);
+  // Header background - PRETO
+  doc.setFillColor(0, 0, 0);
   doc.rect(0, 0, pageWidth, 80, 'F');
   
-  // Logo (if available - centered in header)
+  // Logo (centered in header) - Branca no fundo preto
   try {
-    const logoImg = '/src/assets/logo-empresa.png';
-    doc.addImage(logoImg, 'PNG', 30, 15, 120, 50);
+    doc.addImage(logoEtiqueta, 'PNG', 30, 10, 200, 60);
   } catch (error) {
-    // Logo not available, skip
-    doc.setFontSize(32);
+    // Se logo não disponível, usar texto branco
+    doc.setFontSize(40);
     doc.setFont('helvetica', 'bold');
-    doc.text('ELISA PORTAS', 30, 45);
+    doc.setTextColor(255, 255, 255);
+    doc.text('ELISA PORTAS', 30, 50);
   }
   
-  // Data de impressão (right side of header)
+  // Data de impressão (right side of header) - BRANCO
   const dataHoje = new Date().toLocaleDateString('pt-BR', { 
     day: '2-digit', 
     month: '2-digit', 
@@ -231,115 +232,115 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     hour: '2-digit',
     minute: '2-digit'
   });
-  doc.setFontSize(18);
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(80, 80, 80);
-  doc.text(dataHoje, pageWidth - 30, 45, { align: 'right' });
+  doc.setTextColor(255, 255, 255);
+  doc.text(dataHoje, pageWidth - 30, 50, { align: 'right' });
   
   // Reset color
   doc.setTextColor(0, 0, 0);
   
   // Content area
   const contentX = 30;
-  let currentY = 120;
-  const lineSpacing = 55;
+  let currentY = 130;
+  const lineSpacing = 65;
 
   // Cliente
   if (tag.clienteNome) {
-    doc.setFontSize(28);
+    doc.setFontSize(32);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('CLIENTE:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(32);
+    doc.setFontSize(38);
     const truncatedCliente = truncateText(tag.clienteNome, 50);
-    doc.text(truncatedCliente, contentX + 150, currentY);
+    doc.text(truncatedCliente, contentX + 180, currentY);
     currentY += lineSpacing;
   }
 
   // Product name
-  doc.setFontSize(28);
+  doc.setFontSize(32);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(60, 60, 60);
   doc.text('PRODUTO:', contentX, currentY);
   
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(38);
+  doc.setFontSize(42);
   const truncatedName = truncateText(tag.nomeProduto, 50);
-  doc.text(truncatedName, contentX + 150, currentY);
+  doc.text(truncatedName, contentX + 180, currentY);
   currentY += lineSpacing;
 
-  // Tamanho da porta
+  // Tamanho da porta (informação do cadastro)
   if (tag.tamanho) {
-    doc.setFontSize(28);
+    doc.setFontSize(32);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('TAMANHO:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(32);
-    doc.text(tag.tamanho, contentX + 150, currentY);
+    doc.setFontSize(38);
+    doc.text(tag.tamanho, contentX + 180, currentY);
     currentY += lineSpacing;
   }
 
-  // Dimensions
+  // Dimensions (medidas exatas)
   if (tag.largura && tag.altura) {
-    doc.setFontSize(28);
+    doc.setFontSize(32);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('DIMENSÕES:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(32);
-    doc.text(`${tag.largura}m x ${tag.altura}m`, contentX + 150, currentY);
+    doc.setFontSize(38);
+    doc.text(`${tag.largura}m x ${tag.altura}m`, contentX + 180, currentY);
     currentY += lineSpacing;
   }
 
   // Cor/Pintura
   if (tag.corNome || tag.tipoPintura) {
-    doc.setFontSize(28);
+    doc.setFontSize(32);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
     doc.text('PINTURA:', contentX, currentY);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(32);
+    doc.setFontSize(38);
     const pinturaTexto = [tag.corNome, tag.tipoPintura].filter(Boolean).join(' - ');
-    doc.text(pinturaTexto || 'Sem pintura', contentX + 150, currentY);
+    doc.text(pinturaTexto || 'Sem pintura', contentX + 180, currentY);
     currentY += lineSpacing;
   }
 
   // Quantity
-  doc.setFontSize(28);
+  doc.setFontSize(32);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(60, 60, 60);
   doc.text('QUANTIDADE:', contentX, currentY);
   
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(32);
-  doc.text(`${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, contentX + 200, currentY);
+  doc.setFontSize(38);
+  doc.text(`${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, contentX + 180, currentY);
   currentY += lineSpacing;
 
   // Order number
-  doc.setFontSize(28);
+  doc.setFontSize(32);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(60, 60, 60);
   doc.text('PEDIDO:', contentX, currentY);
   
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(32);
-  doc.text(tag.numeroPedido, contentX + 150, currentY);
+  doc.setFontSize(38);
+  doc.text(tag.numeroPedido, contentX + 180, currentY);
 
   // Footer com contador de etiquetas
-  doc.setFontSize(22);
+  doc.setFontSize(26);
   doc.setTextColor(120, 120, 120);
   if (tag.totalTags > 1) {
     doc.text(`Etiqueta ${tag.tagNumero} de ${tag.totalTags}`, pageWidth / 2, pageHeight - 30, { align: 'center' });
