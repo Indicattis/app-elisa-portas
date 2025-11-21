@@ -44,19 +44,20 @@ export const DroppableDay = ({
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[120px] border rounded-lg p-2 space-y-1 transition-colors",
-        isOver && "bg-primary/5 border-primary",
-        isWeekend && "bg-muted/30",
-        !isCurrentMonth && "opacity-40",
-        isCurrentDay && "border-primary border-2"
+        "min-h-[120px] border border-border bg-background p-2 space-y-1 transition-colors group",
+        isOver && "bg-primary/10 border-primary ring-2 ring-primary/20",
+        isWeekend && "bg-muted/20",
+        !isCurrentMonth && "opacity-40 bg-muted/10",
+        isCurrentDay && "ring-2 ring-primary"
       )}
     >
       {/* Header do dia */}
       <div className="flex items-center justify-between mb-1">
         <span
           className={cn(
-            "text-sm font-medium",
-            isCurrentDay ? "text-primary" : "text-foreground",
+            "text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full",
+            isCurrentDay && "bg-primary text-primary-foreground",
+            !isCurrentDay && isCurrentMonth && "text-foreground",
             !isCurrentMonth && "text-muted-foreground"
           )}
         >
