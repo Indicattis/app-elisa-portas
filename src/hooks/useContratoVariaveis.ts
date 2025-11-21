@@ -20,11 +20,20 @@ export function useContratoVariaveis(vendaId: string) {
       
       if (error) throw error;
 
-      // Formatar lista de produtos
+      // Buscar configurações da empresa
+      const { data: empresa, error: empresaError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .single();
+      
+      if (empresaError) throw empresaError;
+
+      // Formatar lista de produtos incluindo o tipo
       const produtosLista = venda.produtos
-        ?.map((p: any) => 
-          `${p.quantidade || 1}x ${p.descricao || 'Produto'} - ${formatCurrency(p.valor_total || 0)}`
-        )
+        ?.map((p: any) => {
+          const tipo = p.tipo_produto ? ` (${p.tipo_produto})` : '';
+          return `${p.quantidade || 1}x ${p.descricao || 'Produto'}${tipo} - ${formatCurrency(p.valor_total || 0)}`;
+        })
         .join('\n') || '';
 
       const produtosQuantidadeTotal = venda.produtos?.reduce(
@@ -66,12 +75,12 @@ export function useContratoVariaveis(vendaId: string) {
         atendente_nome: venda.atendente?.nome || '',
         atendente_telefone: venda.atendente?.telefone || '',
         
-        // Empresa (valores fixos - podem ser configuráveis depois)
-        empresa_nome: 'ELISA PORTAS E ACESSÓRIOS LTDA',
-        empresa_cnpj: '00.000.000/0001-00',
-        empresa_endereco: 'Endereço da empresa',
-        empresa_cidade: 'Cidade - Estado',
-        empresa_cep: '00000-000',
+        // Empresa (configurável via admin)
+        empresa_nome: empresa.nome || '',
+        empresa_cnpj: empresa.cnpj || '',
+        empresa_endereco: empresa.endereco || '',
+        empresa_cidade: empresa.cidade || '',
+        empresa_cep: empresa.cep || '',
         
         // Data de geração
         data_geracao: new Date().toLocaleDateString('pt-BR')

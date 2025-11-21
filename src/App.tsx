@@ -111,6 +111,7 @@ import Ordens from "./pages/Ordens";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminPermissions from "./pages/admin/AdminPermissions";
 import AdminRoles from "./pages/admin/AdminRoles";
+import CompanySettings from "./pages/admin/CompanySettings";
 import ParceiroHome from "./pages/ParceiroHome";
 import ComprasHome from "./pages/ComprasHome";
 import FinanceiroHome from "./pages/FinanceiroHome";
@@ -1130,6 +1131,16 @@ const App = () => (
                     <ProtectedRoute routeKey="admin_roles">
                       <AdminLayout>
                         <AdminRoles />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/company"
+                  element={
+                    <ProtectedRoute routeKey="admin">
+                      <AdminLayout>
+                        <CompanySettings />
                       </AdminLayout>
                     </ProtectedRoute>
                   }
