@@ -30,7 +30,7 @@ interface ContratosListProps {
 }
 
 export function ContratosList({ vendaId }: ContratosListProps) {
-  const { contratos, isLoading, deleteContrato } = useContratosVendas(vendaId);
+  const { contratos, isLoading, deleteContrato } = useContratosVendas({ vendaId });
 
   const getStatusBadge = (status: string) => {
     const variants = {

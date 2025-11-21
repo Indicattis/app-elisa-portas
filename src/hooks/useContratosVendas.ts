@@ -3,22 +3,49 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ContratoVenda } from "@/types/contrato";
 
-export function useContratosVendas(vendaId?: string) {
+interface ContratosVendasFilters {
+  vendaId?: string;
+  clienteNome?: string;
+  clienteCpf?: string;
+  dataInicio?: Date;
+  dataFim?: Date;
+}
+
+export function useContratosVendas(filters: ContratosVendasFilters = {}) {
   const queryClient = useQueryClient();
 
   const { data: contratos, isLoading } = useQuery({
-    queryKey: ['contratos-vendas', vendaId],
+    queryKey: ['contratos-vendas', filters],
     queryFn: async () => {
       let query = supabase
         .from('contratos_vendas')
         .select(`
           *,
-          template:contratos_templates(*)
+          template:contratos_templates(*),
+          venda:vendas(cliente_nome, cpf_cliente)
         `)
         .order('created_at', { ascending: false });
       
-      if (vendaId) {
-        query = query.eq('venda_id', vendaId);
+      if (filters.vendaId) {
+        query = query.eq('venda_id', filters.vendaId);
+      }
+      
+      if (filters.clienteNome) {
+        query = query.ilike('venda.cliente_nome', `%${filters.clienteNome}%`);
+      }
+      
+      if (filters.clienteCpf) {
+        query = query.ilike('venda.cpf_cliente', `%${filters.clienteCpf}%`);
+      }
+      
+      if (filters.dataInicio) {
+        const dataInicioStr = filters.dataInicio.toISOString().split('T')[0];
+        query = query.gte('created_at', dataInicioStr);
+      }
+      
+      if (filters.dataFim) {
+        const dataFimStr = new Date(filters.dataFim.getTime() + 86400000).toISOString().split('T')[0];
+        query = query.lte('created_at', dataFimStr);
       }
       
       const { data, error } = await query;

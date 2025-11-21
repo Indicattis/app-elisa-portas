@@ -1,338 +1,202 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useContratosTemplates } from "@/hooks/useContratosTemplates";
+import { Plus, Download, Settings } from "lucide-react";
 import { useContratosVendas } from "@/hooks/useContratosVendas";
-import { TemplateForm } from "@/components/contratos/TemplateForm";
-import { GerarContratoModal } from "@/components/contratos/GerarContratoModal";
 import { UploadContratoModal } from "@/components/contratos/UploadContratoModal";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { 
-  Plus, 
-  FileText, 
-  Edit, 
-  Power, 
-  PowerOff, 
-  FileDown,
-  Upload,
-  Loader2,
-  Download
-} from "lucide-react";
-import { ContratoTemplate } from "@/types/contrato";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ContratosFilters } from "@/components/contratos/ContratosFilters";
+import { useNavigate } from "react-router-dom";
 
 export default function ContratoVendas() {
-  const [showTemplateForm, setShowTemplateForm] = useState(false);
-  const [showGerarContrato, setShowGerarContrato] = useState(false);
-  const [showUploadContrato, setShowUploadContrato] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<ContratoTemplate | undefined>();
+  const navigate = useNavigate();
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [filters, setFilters] = useState({
+    clienteNome: '',
+    clienteCpf: '',
+    dataInicio: undefined as Date | undefined,
+    dataFim: undefined as Date | undefined,
+  });
 
   const {
-    templates,
+    contratos,
     isLoading,
-    createTemplate,
-    isCreating,
-    updateTemplate,
-    isUpdating,
-    toggleTemplate
-  } = useContratosTemplates();
+  } = useContratosVendas(filters);
 
-  const { contratos, isLoading: isLoadingContratos } = useContratosVendas();
-
-  const templatesAtivos = templates?.filter(t => t.ativo).length || 0;
-  const templatesInativos = templates?.filter(t => !t.ativo).length || 0;
-
-  const handleDownloadContrato = (contrato: any) => {
-    const link = document.createElement('a');
-    link.href = contrato.arquivo_url;
-    link.download = contrato.nome_arquivo;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadContrato = (url: string, nomeArquivo: string) => {
+    window.open(url, '_blank');
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      'pendente_assinatura': { label: 'Pendente', variant: 'secondary' as const },
-      'assinado': { label: 'Assinado', variant: 'default' as const },
-      'cancelado': { label: 'Cancelado', variant: 'destructive' as const }
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['pendente_assinatura'];
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const handleSubmitTemplate = (data: Partial<ContratoTemplate>) => {
-    if (editingTemplate) {
-      updateTemplate({ ...data, id: editingTemplate.id }, {
-        onSuccess: () => {
-          setShowTemplateForm(false);
-          setEditingTemplate(undefined);
-        }
-      });
-    } else {
-      createTemplate(data, {
-        onSuccess: () => {
-          setShowTemplateForm(false);
-        }
-      });
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
+    } catch {
+      return dateString;
     }
   };
 
-  const handleEdit = (template: ContratoTemplate) => {
-    setEditingTemplate(template);
-    setShowTemplateForm(true);
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      pendente_assinatura: "secondary",
+      assinado: "default",
+      cancelado: "destructive"
+    } as const;
+
+    const labels = {
+      pendente_assinatura: "Pendente",
+      assinado: "Assinado",
+      cancelado: "Cancelado"
+    };
+
+    return (
+      <Badge variant={variants[status as keyof typeof variants] || "default"}>
+        {labels[status as keyof typeof labels] || status}
+      </Badge>
+    );
   };
 
-  const handleCloseForm = () => {
-    setShowTemplateForm(false);
-    setEditingTemplate(undefined);
-  };
+  const contratosPendentes = contratos?.filter(c => c.status === 'pendente_assinatura').length || 0;
+  const contratosAssinados = contratos?.filter(c => c.status === 'assinado').length || 0;
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">Carregando...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Contratos de Vendas</h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie templates e contratos de vendas
-          </p>
+          <p className="text-muted-foreground">Gerencie os contratos das vendas</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setShowUploadContrato(true)} variant="outline">
-            <Upload className="h-4 w-4 mr-2" />
-            Adicionar Contrato
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard/vendas/contratos/templates')}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Gerenciar Templates
           </Button>
-          <Button onClick={() => setShowGerarContrato(true)}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Gerar Contrato
+          <Button onClick={() => setShowUploadModal(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Contrato
           </Button>
         </div>
       </div>
 
-      {/* Estatísticas */}
+      {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <FileText className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Templates Ativos</p>
-              <p className="text-2xl font-bold">{templatesAtivos}</p>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-muted rounded-lg">
-              <FileText className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Templates Inativos</p>
-              <p className="text-2xl font-bold">{templatesInativos}</p>
-            </div>
-          </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Contratos Pendentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{contratosPendentes}</div>
+          </CardContent>
         </Card>
 
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <FileText className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total de Templates</p>
-              <p className="text-2xl font-bold">{templates?.length || 0}</p>
-            </div>
-          </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Contratos Assinados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{contratosAssinados}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total de Contratos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{contratos?.length || 0}</div>
+          </CardContent>
         </Card>
       </div>
 
-      {/* Lista de Templates */}
-      <Card>
-        <div className="p-6 border-b flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Templates de Contratos</h2>
-          <Button onClick={() => setShowTemplateForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Template
-          </Button>
-        </div>
+      {/* Filtros */}
+      <ContratosFilters onFiltersChange={setFilters} />
 
-        {isLoading ? (
-          <div className="p-12 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : templates && templates.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {templates.map((template) => (
-                <TableRow key={template.id}>
-                  <TableCell className="font-medium">{template.nome}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {template.descricao || 'Sem descrição'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={template.ativo ? 'default' : 'secondary'}>
-                      {template.ativo ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(template)}
-                        title="Editar"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => toggleTemplate({ id: template.id, ativo: !template.ativo })}
-                        title={template.ativo ? 'Desativar' : 'Ativar'}
-                      >
-                        {template.ativo ? (
-                          <PowerOff className="h-4 w-4 text-orange-500" />
-                        ) : (
-                          <Power className="h-4 w-4 text-green-500" />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
+      {/* Tabela de Contratos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Contratos Cadastrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!contratos || contratos.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {filters.clienteNome || filters.clienteCpf || filters.dataInicio || filters.dataFim
+                ? "Nenhum contrato encontrado com os filtros aplicados"
+                : "Nenhum contrato cadastrado"}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Arquivo</TableHead>
+                  <TableHead>Template</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="p-12 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Nenhum template cadastrado
-            </p>
-            <Button onClick={() => setShowTemplateForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Primeiro Template
-            </Button>
-          </div>
-        )}
-      </Card>
-
-      {/* Lista de Contratos Cadastrados */}
-      <Card>
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold">Contratos Cadastrados</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Todos os contratos vinculados a vendas
-          </p>
-        </div>
-
-        {isLoadingContratos ? (
-          <div className="p-12 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : contratos && contratos.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Arquivo</TableHead>
-                <TableHead>Template</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contratos.map((contrato) => (
-                <TableRow key={contrato.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{contrato.nome_arquivo}</p>
-                        {contrato.observacoes && (
-                          <p className="text-xs text-muted-foreground">{contrato.observacoes}</p>
-                        )}
+              </TableHeader>
+              <TableBody>
+                {contratos.map((contrato) => (
+                  <TableRow key={contrato.id}>
+                    <TableCell>
+                      <div className="font-medium">{contrato.venda?.cliente_nome || '-'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {contrato.venda?.cpf_cliente || ''}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {contrato.template?.nome || <span className="text-muted-foreground">Sem template</span>}
-                  </TableCell>
-                  <TableCell>
-                    {getStatusBadge(contrato.status)}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(contrato.created_at)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDownloadContrato(contrato)}
-                      title="Baixar contrato"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="p-12 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Nenhum contrato cadastrado
-            </p>
-            <Button onClick={() => setShowUploadContrato(true)} variant="outline">
-              <Upload className="h-4 w-4 mr-2" />
-              Adicionar Primeiro Contrato
-            </Button>
-          </div>
-        )}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {contrato.nome_arquivo}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {contrato.template?.nome || 'Manual'}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(contrato.status)}
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(contrato.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadContrato(contrato.arquivo_url, contrato.nome_arquivo)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
       </Card>
 
       {/* Modals */}
-      <TemplateForm
-        open={showTemplateForm}
-        onOpenChange={handleCloseForm}
-        onSubmit={handleSubmitTemplate}
-        template={editingTemplate}
-        isLoading={isCreating || isUpdating}
-      />
-
-      <GerarContratoModal
-        open={showGerarContrato}
-        onOpenChange={setShowGerarContrato}
-      />
-
       <UploadContratoModal
-        open={showUploadContrato}
-        onOpenChange={setShowUploadContrato}
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
       />
     </div>
   );
