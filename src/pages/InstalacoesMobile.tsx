@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CalendarioSemanalMobile } from "@/components/instalacoes/CalendarioSemanalMobile";
+import { CalendarioMensalDesktop } from "@/components/instalacoes/CalendarioMensalDesktop";
 import { EquipesSlider } from "@/components/instalacoes/EquipesSlider";
 import { useInstalacoes } from "@/hooks/useInstalacoes";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Instalacao } from "@/types/instalacao";
-import { addWeeks, subWeeks } from "date-fns";
+import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -30,6 +32,7 @@ import { InstalacaoForm } from "@/components/instalacoes/InstalacaoForm";
 
 export default function InstalacoesMobile() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [equipeSelecionadaId, setEquipeSelecionadaId] = useState<string | null>(null);
   const { instalacoes, isLoading, deleteInstalacao, updateInstalacao, isUpdating } = useInstalacoes(currentDate);
@@ -51,8 +54,20 @@ export default function InstalacoesMobile() {
     setCurrentDate(addWeeks(currentDate, 1));
   };
 
+  const handlePreviousMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
+  };
+
   const handleToday = () => {
     setCurrentDate(new Date());
+  };
+
+  const handleUpdateInstalacao = async (params: { id: string; data: Partial<Instalacao> }) => {
+    await updateInstalacao(params);
   };
 
   const handleDayClick = (date: Date) => {
@@ -134,16 +149,28 @@ export default function InstalacoesMobile() {
               onEquipeChange={setEquipeSelecionadaId}
             />
             
-            <CalendarioSemanalMobile
-              startDate={currentDate}
-              instalacoes={instalacoesFiltradas}
-              onPreviousWeek={handlePreviousWeek}
-              onNextWeek={handleNextWeek}
-              onToday={handleToday}
-              onDayClick={handleDayClick}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            {isMobile ? (
+              <CalendarioSemanalMobile
+                startDate={currentDate}
+                instalacoes={instalacoesFiltradas}
+                onPreviousWeek={handlePreviousWeek}
+                onNextWeek={handleNextWeek}
+                onToday={handleToday}
+                onDayClick={handleDayClick}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ) : (
+              <CalendarioMensalDesktop
+                currentMonth={currentDate}
+                instalacoes={instalacoesFiltradas}
+                onMonthChange={setCurrentDate}
+                onUpdateInstalacao={handleUpdateInstalacao}
+                onDayClick={handleDayClick}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
           </>
         )}
       </main>

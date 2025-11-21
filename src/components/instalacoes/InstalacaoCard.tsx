@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash2, Clock, MapPin, Package, Users } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Package, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -15,61 +15,54 @@ interface InstalacaoCardProps {
 
 export const InstalacaoCard = ({ instalacao, onEdit, onDelete }: InstalacaoCardProps) => {
   return (
-    <Card className="w-full hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-foreground truncate text-base">
-                {instalacao.nome_cliente}
-              </h3>
-              
-              {instalacao.equipe && (
-                <Badge 
-                  variant="secondary" 
-                  className="text-xs gap-1 flex-shrink-0"
-                  style={
-                    instalacao.equipe.cor
-                      ? {
-                          backgroundColor: `${instalacao.equipe.cor}20`,
-                          borderColor: instalacao.equipe.cor,
-                          color: instalacao.equipe.cor,
-                        }
-                      : {}
-                  }
-                >
-                  <Users className="h-3 w-3" />
-                  {instalacao.equipe.nome}
-                </Badge>
-              )}
-            </div>
+    <Card className="w-full h-[60px] hover:shadow-md transition-shadow">
+      <CardContent className="p-2 h-full">
+        <div className="flex items-center justify-between gap-2 h-full">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            {/* Nome do Cliente */}
+            <span className="font-medium text-xs text-foreground truncate flex-shrink-0 max-w-[100px]">
+              {instalacao.nome_cliente}
+            </span>
             
-            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4 flex-shrink-0" />
-              <span>{instalacao.hora}</span>
-            </div>
-
-            <div className="flex items-start gap-2 mt-1 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-1">{instalacao.cidade}, {instalacao.estado}</span>
-            </div>
-
-            <div className="flex items-start gap-2 mt-1 text-sm text-muted-foreground">
-              <Package className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">{instalacao.produto}</span>
-            </div>
-
-            {instalacao.descricao && (
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                {instalacao.descricao}
-              </p>
+            {/* Equipe Badge */}
+            {instalacao.equipe && (
+              <Badge 
+                variant="secondary" 
+                className="text-[10px] gap-1 flex-shrink-0 px-1.5 py-0.5"
+                style={
+                  instalacao.equipe.cor
+                    ? {
+                        backgroundColor: `${instalacao.equipe.cor}20`,
+                        borderColor: instalacao.equipe.cor,
+                        color: instalacao.equipe.cor,
+                      }
+                    : {}
+                }
+              >
+                <Users className="h-2.5 w-2.5" />
+                {instalacao.equipe.nome}
+              </Badge>
             )}
+
+            {/* Cidade */}
+            <span className="text-xs text-muted-foreground truncate flex-shrink min-w-0">
+              {instalacao.cidade}
+            </span>
+
+            {/* Produto */}
+            <div className="flex items-center gap-1 flex-shrink min-w-0">
+              <Package className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground truncate">
+                {instalacao.produto}
+              </span>
+            </div>
           </div>
 
+          {/* Menu de Ações */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                <MoreVertical className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
+                <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
