@@ -442,6 +442,48 @@ export type Database = {
         }
         Relationships: []
       }
+      chamados_suporte: {
+        Row: {
+          cpf: string
+          created_at: string | null
+          data_compra: string
+          descricao_problema: string
+          email: string
+          id: string
+          nome: string
+          notas: string | null
+          status: string | null
+          telefone: string
+          updated_at: string | null
+        }
+        Insert: {
+          cpf: string
+          created_at?: string | null
+          data_compra: string
+          descricao_problema: string
+          email: string
+          id?: string
+          nome: string
+          notas?: string | null
+          status?: string | null
+          telefone: string
+          updated_at?: string | null
+        }
+        Update: {
+          cpf?: string
+          created_at?: string | null
+          data_compra?: string
+          descricao_problema?: string
+          email?: string
+          id?: string
+          nome?: string
+          notas?: string | null
+          status?: string | null
+          telefone?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           cep: string
