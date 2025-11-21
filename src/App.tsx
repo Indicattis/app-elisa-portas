@@ -123,6 +123,7 @@ import RHHome from "./pages/RHHome";
 import PaineisHome from "./pages/PaineisHome";
 import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
+import Caixa from "./pages/Caixa";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -1088,6 +1089,16 @@ const App = () => (
                     <ProtectedRoute routeKey="despesas">
                       <DashboardLayout>
                         <Despesas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/caixa"
+                  element={
+                    <ProtectedRoute routeKey="financeiro_caixa">
+                      <DashboardLayout>
+                        <Caixa />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

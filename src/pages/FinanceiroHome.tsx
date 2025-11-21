@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, TrendingUp, CreditCard } from "lucide-react";
+import { Receipt, TrendingUp, CreditCard, Wallet } from "lucide-react";
 
 export default function FinanceiroHome() {
   const navigate = useNavigate();
@@ -26,6 +26,13 @@ export default function FinanceiroHome() {
       icon: CreditCard,
       path: "/dashboard/administrativo/financeiro/despesas",
       color: "text-red-600"
+    },
+    {
+      title: "Gestão de Caixa",
+      description: "Controle de depósitos e movimentações",
+      icon: Wallet,
+      path: "/dashboard/administrativo/financeiro/caixa",
+      color: "text-purple-600"
     }
   ];
 
