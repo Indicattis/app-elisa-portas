@@ -1,4 +1,4 @@
-export type CategoriaDeposito = 'giro_caixa' | 'travesseiro' | 'precaucoes';
+export type CategoriaDeposito = 'travesseiro' | 'precaucoes';
 
 export interface DepositoCaixa {
   id: string;
@@ -19,7 +19,6 @@ export interface DepositoCaixaFormData {
 }
 
 export const CATEGORIAS_DEPOSITO = {
-  giro_caixa: { label: 'Giro de Caixa', color: 'hsl(var(--success))' },
   travesseiro: { label: 'Travesseiro', color: 'hsl(var(--info))' },
   precaucoes: { label: 'Precauções', color: 'hsl(var(--warning))' }
 } as const;

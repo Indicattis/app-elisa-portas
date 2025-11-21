@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, Calendar, CalendarDays } from "lucide-react";
-import { addWeeks, addMonths, startOfMonth } from "date-fns";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Wallet, Calendar, CalendarDays, Settings } from "lucide-react";
+import { addWeeks, addMonths } from "date-fns";
 import { useDepositosCaixa } from "@/hooks/useDepositosCaixa";
 import { CaixaIndicadores } from "@/components/caixa/CaixaIndicadores";
 import { CalendarioSemanalCaixa } from "@/components/caixa/CalendarioSemanalCaixa";
@@ -16,8 +18,10 @@ export default function Caixa() {
   const [depositoModal, setDepositoModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDeposito, setSelectedDeposito] = useState<DepositoCaixa | null>(null);
-
-  console.log('🔍 Caixa - viewMode:', viewMode, 'currentDate:', currentDate);
+  
+  // Estados para Giro de Caixa
+  const [giroCaixaTotal, setGiroCaixaTotal] = useState<number>(500000);
+  const [capitalTomado, setCapitalTomado] = useState<number>(200000);
 
   const { 
     depositos, 
@@ -25,12 +29,7 @@ export default function Caixa() {
     createDeposito, 
     updateDeposito, 
     deleteDeposito 
-  } = useDepositosCaixa(
-    viewMode === 'month' ? startOfMonth(currentDate) : currentDate,
-    viewMode
-  );
-
-  console.log('📊 Caixa - depositos:', depositos.length, 'loading:', loading);
+  } = useDepositosCaixa(currentDate, viewMode);
 
   const handleAddDeposito = (date: Date) => {
     setSelectedDate(date);
@@ -77,8 +76,54 @@ export default function Caixa() {
         </div>
       </div>
 
+      {/* Configuração de Giro de Caixa */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Configuração de Giro de Caixa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="giro-total">Giro de Caixa (Total)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                <Input
+                  id="giro-total"
+                  type="number"
+                  className="pl-10"
+                  value={giroCaixaTotal}
+                  onChange={(e) => setGiroCaixaTotal(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="capital-tomado">Capital Tomado</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                <Input
+                  id="capital-tomado"
+                  type="number"
+                  className="pl-10"
+                  value={capitalTomado}
+                  onChange={(e) => setCapitalTomado(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Indicadores */}
-      {!loading && <CaixaIndicadores depositos={depositos} />}
+      {!loading && (
+        <CaixaIndicadores 
+          depositos={depositos} 
+          giroCaixaTotal={giroCaixaTotal}
+          capitalTomado={capitalTomado}
+        />
+      )}
 
       {/* Calendário */}
       <Card>

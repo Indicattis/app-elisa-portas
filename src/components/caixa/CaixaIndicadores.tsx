@@ -1,17 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, Shield, AlertCircle } from "lucide-react";
+import { DollarSign, TrendingUp, Shield, AlertCircle, Wallet } from "lucide-react";
 import { DepositoCaixa } from "@/types/caixa";
 
 interface CaixaIndicadoresProps {
   depositos: DepositoCaixa[];
+  giroCaixaTotal: number;
+  capitalTomado: number;
 }
 
-export function CaixaIndicadores({ depositos }: CaixaIndicadoresProps) {
-  const total = depositos.reduce((sum, dep) => sum + Number(dep.valor), 0);
-  
-  const giroCaixa = depositos
-    .filter(d => d.categoria === 'giro_caixa')
-    .reduce((sum, dep) => sum + Number(dep.valor), 0);
+export function CaixaIndicadores({ depositos, giroCaixaTotal, capitalTomado }: CaixaIndicadoresProps) {
+  const valorDisponivel = giroCaixaTotal - capitalTomado;
   
   const travesseiro = depositos
     .filter(d => d.categoria === 'travesseiro')
@@ -20,6 +18,8 @@ export function CaixaIndicadores({ depositos }: CaixaIndicadoresProps) {
   const precaucoes = depositos
     .filter(d => d.categoria === 'precaucoes')
     .reduce((sum, dep) => sum + Number(dep.valor), 0);
+  
+  const totalDepositos = travesseiro + precaucoes;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -29,31 +29,49 @@ export function CaixaIndicadores({ depositos }: CaixaIndicadoresProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Depositado</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Giro de Caixa (Total)</CardTitle>
+          <Wallet className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(total)}</div>
+          <div className="text-2xl font-bold">{formatCurrency(giroCaixaTotal)}</div>
           <p className="text-xs text-muted-foreground">
-            {depositos.length} {depositos.length === 1 ? 'depósito' : 'depósitos'}
+            Capital disponível
           </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Giro de Caixa</CardTitle>
-          <TrendingUp className="h-4 w-4" style={{ color: 'hsl(var(--success))' }} />
+          <CardTitle className="text-sm font-medium">Capital Tomado</CardTitle>
+          <TrendingUp className="h-4 w-4 text-destructive" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold" style={{ color: 'hsl(var(--success))' }}>
-            {formatCurrency(giroCaixa)}
+          <div className="text-2xl font-bold text-destructive">
+            {formatCurrency(capitalTomado)}
           </div>
           <p className="text-xs text-muted-foreground">
-            {((giroCaixa / total) * 100 || 0).toFixed(1)}% do total
+            Capital utilizado
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Valor Disponível</CardTitle>
+          <DollarSign className="h-4 w-4" style={{ color: valorDisponivel >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }} />
+        </CardHeader>
+        <CardContent>
+          <div 
+            className="text-2xl font-bold" 
+            style={{ color: valorDisponivel >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}
+          >
+            {formatCurrency(valorDisponivel)}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Giro - Capital Tomado
           </p>
         </CardContent>
       </Card>
@@ -68,7 +86,7 @@ export function CaixaIndicadores({ depositos }: CaixaIndicadoresProps) {
             {formatCurrency(travesseiro)}
           </div>
           <p className="text-xs text-muted-foreground">
-            {((travesseiro / total) * 100 || 0).toFixed(1)}% do total
+            {((travesseiro / totalDepositos) * 100 || 0).toFixed(1)}% dos depósitos
           </p>
         </CardContent>
       </Card>
@@ -83,7 +101,7 @@ export function CaixaIndicadores({ depositos }: CaixaIndicadoresProps) {
             {formatCurrency(precaucoes)}
           </div>
           <p className="text-xs text-muted-foreground">
-            {((precaucoes / total) * 100 || 0).toFixed(1)}% do total
+            {((precaucoes / totalDepositos) * 100 || 0).toFixed(1)}% dos depósitos
           </p>
         </CardContent>
       </Card>

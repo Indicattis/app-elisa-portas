@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DepositoCaixa, DepositoCaixaFormData } from "@/types/caixa";
 import { useToast } from "@/hooks/use-toast";
-import { format, endOfWeek, endOfMonth } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
-export function useDepositosCaixa(inicioRange: Date, viewMode: 'week' | 'month' = 'week') {
+export function useDepositosCaixa(currentDate: Date, viewMode: 'week' | 'month' = 'week') {
   const [depositos, setDepositos] = useState<DepositoCaixa[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -13,19 +13,17 @@ export function useDepositosCaixa(inicioRange: Date, viewMode: 'week' | 'month' 
     try {
       setLoading(true);
       
-      // Determinar fim do range baseado no modo de visualização
+      // Determinar ranges baseado no modo de visualização
+      const inicioRange = viewMode === 'month' 
+        ? startOfMonth(currentDate)
+        : startOfWeek(currentDate, { weekStartsOn: 1 });
+      
       const fimRange = viewMode === 'month'
-        ? endOfMonth(inicioRange) 
-        : endOfWeek(inicioRange, { weekStartsOn: 1 });
+        ? endOfMonth(currentDate)
+        : endOfWeek(currentDate, { weekStartsOn: 1 });
       
       const inicioFormatado = format(inicioRange, 'yyyy-MM-dd');
       const fimFormatado = format(fimRange, 'yyyy-MM-dd');
-      
-      console.log('🔍 useDepositosCaixa - Buscando depósitos:', {
-        viewMode,
-        inicioRange: inicioFormatado,
-        fimRange: fimFormatado
-      });
       
       const { data, error } = await supabase
         .from('depositos_caixa')
@@ -35,8 +33,6 @@ export function useDepositosCaixa(inicioRange: Date, viewMode: 'week' | 'month' 
         .order('data_deposito', { ascending: true });
 
       if (error) throw error;
-      
-      console.log('✅ useDepositosCaixa - Depósitos carregados:', data?.length || 0);
       
       setDepositos((data || []) as DepositoCaixa[]);
     } catch (error) {
@@ -69,7 +65,7 @@ export function useDepositosCaixa(inicioRange: Date, viewMode: 'week' | 'month' 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [inicioRange, viewMode]);
+  }, [currentDate, viewMode]);
 
   const createDeposito = async (data: DepositoCaixaFormData) => {
     try {
