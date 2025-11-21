@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy, TrendingUp, FileText, X, Edit, DoorClosed, Home } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy, TrendingUp, FileText, X, Edit, DoorClosed, Home, FileSignature } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { useToast } from '@/hooks/use-toast';
+import { ContratosVendaModal } from '@/components/vendas/ContratosVendaModal';
 
 export default function Vendas() {
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ export default function Vendas() {
   const { vendas, isLoading, deleteVenda } = useVendas();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [contratosModalOpen, setContratosModalOpen] = useState(false);
+  const [selectedVendaId, setSelectedVendaId] = useState<string>('');
   
   // Estados para filtros avançados
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -444,11 +447,22 @@ export default function Vendas() {
                           </div>
                         </TableCell>
 
-                        {/* Mobile: Coluna 2 - Valor + Ações */}
+                         {/* Mobile: Coluna 2 - Valor + Ações */}
                         <TableCell className="py-2 px-2 sm:py-4 sm:px-4 md:hidden text-right">
                           <div className="space-y-1">
                             <div className="font-bold text-xs">{formatCurrency(venda.valor_venda || 0)}</div>
                             <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedVendaId(venda.id);
+                                  setContratosModalOpen(true);
+                                }}
+                                className="h-7 w-7"
+                              >
+                                <FileSignature className="h-3 w-3" />
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -517,6 +531,17 @@ export default function Vendas() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => {
+                                setSelectedVendaId(venda.id);
+                                setContratosModalOpen(true);
+                              }}
+                              title="Ver Contratos"
+                            >
+                              <FileSignature className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => navigate(`/dashboard/vendas/${venda.id}/view`)}
                             >
                               <Eye className="w-4 h-4" />
@@ -564,6 +589,12 @@ export default function Vendas() {
           </div>
         </CardContent>
       </Card>
+
+      <ContratosVendaModal 
+        open={contratosModalOpen} 
+        onOpenChange={setContratosModalOpen}
+        vendaId={selectedVendaId}
+      />
     </div>
   );
 }
