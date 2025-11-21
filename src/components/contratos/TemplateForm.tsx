@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,11 +25,22 @@ interface TemplateFormProps {
 
 export function TemplateForm({ open, onOpenChange, onSubmit, template, isLoading }: TemplateFormProps) {
   const [formData, setFormData] = useState<Partial<ContratoTemplate>>({
-    nome: template?.nome || '',
-    descricao: template?.descricao || '',
-    conteudo: template?.conteudo || ''
+    nome: '',
+    descricao: '',
+    conteudo: ''
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Atualizar formData quando o template ou dialog open mudar
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        nome: template?.nome || '',
+        descricao: template?.descricao || '',
+        conteudo: template?.conteudo || ''
+      });
+    }
+  }, [template, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
