@@ -23,6 +23,12 @@ export const useInstalacoes = (startDate?: Date) => {
             cidade,
             cep,
             data_venda
+          ),
+          equipe:equipes_instalacao(
+            id,
+            nome,
+            cor,
+            ativa
           )
         `)
         .order("data", { ascending: true })

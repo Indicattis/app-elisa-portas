@@ -23,6 +23,7 @@ const instalacaoSchema = z.object({
   endereco: z.string().optional(),
   cep: z.string().optional(),
   descricao: z.string().optional(),
+  equipe_id: z.string().optional(),
 });
 
 interface InstalacaoFormProps {
@@ -33,8 +34,10 @@ interface InstalacaoFormProps {
 
 export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoFormProps) => {
   const [vendas, setVendas] = useState<any[]>([]);
+  const [equipes, setEquipes] = useState<any[]>([]);
   const [loadingVendas, setLoadingVendas] = useState(false);
   const [loadingVendaData, setLoadingVendaData] = useState(false);
+  const [loadingEquipes, setLoadingEquipes] = useState(false);
 
   const {
     register,
@@ -51,6 +54,7 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
 
   useEffect(() => {
     loadVendas();
+    loadEquipes();
   }, []);
 
   const loadVendas = async () => {
@@ -69,6 +73,25 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
       toast.error("Erro ao carregar vendas");
     } finally {
       setLoadingVendas(false);
+    }
+  };
+
+  const loadEquipes = async () => {
+    setLoadingEquipes(true);
+    try {
+      const { data, error } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true)
+        .order("nome");
+
+      if (error) throw error;
+      setEquipes(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar equipes:", error);
+      toast.error("Erro ao carregar equipes");
+    } finally {
+      setLoadingEquipes(false);
     }
   };
 
@@ -207,6 +230,35 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
         {errors.produto && (
           <p className="text-sm text-destructive">{errors.produto.message}</p>
         )}
+      </div>
+
+      {/* Equipe */}
+      <div className="space-y-2">
+        <Label htmlFor="equipe_id">Equipe de Instalação</Label>
+        <Select
+          value={watch("equipe_id") || ""}
+          onValueChange={(value) => setValue("equipe_id", value || undefined)}
+        >
+          <SelectTrigger className="text-base">
+            <SelectValue placeholder={loadingEquipes ? "Carregando..." : "Selecione uma equipe"} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Sem equipe</SelectItem>
+            {equipes.map((equipe) => (
+              <SelectItem key={equipe.id} value={equipe.id}>
+                <div className="flex items-center gap-2">
+                  {equipe.cor && (
+                    <span
+                      className="h-3 w-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: equipe.cor }}
+                    />
+                  )}
+                  {equipe.nome}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Estado e Cidade */}

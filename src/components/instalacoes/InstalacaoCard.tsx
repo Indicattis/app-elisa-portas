@@ -1,8 +1,9 @@
 import { Instalacao } from "@/types/instalacao";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash2, Clock, MapPin, Package } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Clock, MapPin, Package, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -18,9 +19,30 @@ export const InstalacaoCard = ({ instalacao, onEdit, onDelete }: InstalacaoCardP
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate text-base">
-              {instalacao.nome_cliente}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-foreground truncate text-base">
+                {instalacao.nome_cliente}
+              </h3>
+              
+              {instalacao.equipe && (
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs gap-1 flex-shrink-0"
+                  style={
+                    instalacao.equipe.cor
+                      ? {
+                          backgroundColor: `${instalacao.equipe.cor}20`,
+                          borderColor: instalacao.equipe.cor,
+                          color: instalacao.equipe.cor,
+                        }
+                      : {}
+                  }
+                >
+                  <Users className="h-3 w-3" />
+                  {instalacao.equipe.nome}
+                </Badge>
+              )}
+            </div>
             
             <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4 flex-shrink-0" />

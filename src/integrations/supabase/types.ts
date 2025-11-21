@@ -1402,6 +1402,7 @@ export type Database = {
           data: string
           descricao: string | null
           endereco: string | null
+          equipe_id: string | null
           estado: string
           hora: string
           id: string
@@ -1418,6 +1419,7 @@ export type Database = {
           data: string
           descricao?: string | null
           endereco?: string | null
+          equipe_id?: string | null
           estado: string
           hora: string
           id?: string
@@ -1434,6 +1436,7 @@ export type Database = {
           data?: string
           descricao?: string | null
           endereco?: string | null
+          equipe_id?: string | null
           estado?: string
           hora?: string
           id?: string
@@ -1443,6 +1446,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "instalacoes_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes_instalacao"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "instalacoes_id_venda_fkey"
             columns: ["id_venda"]

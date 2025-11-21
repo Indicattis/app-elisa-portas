@@ -10,10 +10,19 @@ export interface Instalacao {
   endereco?: string | null;
   cep?: string | null;
   descricao?: string | null;
+  equipe_id?: string | null;
   created_by?: string | null;
   created_at: string;
   updated_at: string;
   venda?: VendaSimplificada;
+  equipe?: EquipeInstalacao;
+}
+
+export interface EquipeInstalacao {
+  id: string;
+  nome: string;
+  cor: string | null;
+  ativa: boolean;
 }
 
 export interface VendaSimplificada {
@@ -38,4 +47,5 @@ export interface InstalacaoFormData {
   endereco?: string;
   cep?: string;
   descricao?: string;
+  equipe_id?: string;
 }
