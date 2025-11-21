@@ -74,7 +74,14 @@ export function EquipesSlider({ equipeSelecionadaId, onEquipeChange }: EquipesSl
                   style={{ backgroundColor: equipe.cor }}
                 />
               )}
-              {equipe.nome}
+              <div className="flex flex-col items-start">
+                <span className="font-medium">{equipe.nome}</span>
+                {equipe.responsavel_nome && (
+                  <span className="text-[10px] opacity-80">
+                    {equipe.responsavel_nome}
+                  </span>
+                )}
+              </div>
             </Button>
           ))}
         </div>

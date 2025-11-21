@@ -8,6 +8,7 @@ interface EquipeInstalacao {
   ativa: boolean;
   cor: string;
   responsavel_id?: string;
+  responsavel_nome?: string;
   created_at: string;
   updated_at: string;
 }
@@ -20,12 +21,24 @@ export function useEquipesInstalacao() {
     try {
       const { data, error } = await supabase
         .from('equipes_instalacao')
-        .select('*')
+        .select(`
+          *,
+          responsavel:responsavel_id (
+            nome
+          )
+        `)
         .eq('ativa', true)
         .order('nome');
 
       if (error) throw error;
-      setEquipes(data || []);
+      
+      // Mapear os dados para incluir o nome do responsável
+      const equipesComResponsavel = (data || []).map((equipe: any) => ({
+        ...equipe,
+        responsavel_nome: equipe.responsavel?.nome
+      }));
+      
+      setEquipes(equipesComResponsavel);
     } catch (error) {
       console.error('Erro ao buscar equipes:', error);
       toast.error('Erro ao carregar equipes de instalação');
