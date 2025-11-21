@@ -23,6 +23,10 @@ export interface ContratoVenda {
   created_at: string;
   updated_at: string;
   template?: ContratoTemplate;
+  venda?: {
+    cliente_nome: string;
+    cpf_cliente: string;
+  };
 }
 
 export interface ContratoVariaveis {
