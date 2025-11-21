@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ContratoTemplate } from "@/types/contrato";
 import { VariaveisList } from "./VariaveisList";
+import { Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Type } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TemplateFormProps {
   open: boolean;
@@ -21,10 +29,42 @@ export function TemplateForm({ open, onOpenChange, onSubmit, template, isLoading
     descricao: template?.descricao || '',
     conteudo: template?.conteudo || ''
   });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  const insertFormatting = (prefix: string, suffix: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = formData.conteudo || '';
+    const selectedText = text.substring(start, end);
+
+    const newText = text.substring(0, start) + prefix + selectedText + suffix + text.substring(end);
+    setFormData({ ...formData, conteudo: newText });
+
+    // Restore cursor position
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
+
+  const applyFormatting = (tag: string) => {
+    insertFormatting(`<${tag}>`, `</${tag}>`);
+  };
+
+  const applyAlignment = (align: string) => {
+    insertFormatting(`<div style="text-align: ${align};">`, `</div>`);
+  };
+
+  const applyFontSize = (size: string) => {
+    insertFormatting(`<span style="font-size: ${size};">`, `</span>`);
   };
 
   return (
@@ -59,7 +99,115 @@ export function TemplateForm({ open, onOpenChange, onSubmit, template, isLoading
 
             <div className="space-y-2">
               <Label htmlFor="conteudo">Conteúdo do Template *</Label>
+              
+              {/* Toolbar de Formatação */}
+              <div className="flex flex-wrap items-center gap-1 p-2 border rounded-md bg-muted/50">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="ghost" size="sm" title="Tamanho da fonte">
+                      <Type className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => applyFontSize('12px')}>
+                      Pequeno
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => applyFontSize('16px')}>
+                      Normal
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => applyFontSize('20px')}>
+                      Grande
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => applyFontSize('24px')}>
+                      Muito Grande
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Separator orientation="vertical" className="h-6" />
+
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => applyFormatting('b')}
+                  title="Negrito"
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => applyFormatting('i')}
+                  title="Itálico"
+                >
+                  <Italic className="h-4 w-4" />
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => applyFormatting('u')}
+                  title="Sublinhado"
+                >
+                  <Underline className="h-4 w-4" />
+                </Button>
+
+                <Separator orientation="vertical" className="h-6" />
+
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => insertFormatting('• ', '\n')}
+                  title="Lista não ordenada"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => insertFormatting('1. ', '\n')}
+                  title="Lista ordenada"
+                >
+                  <ListOrdered className="h-4 w-4" />
+                </Button>
+
+                <Separator orientation="vertical" className="h-6" />
+
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => applyAlignment('left')}
+                  title="Alinhar à esquerda"
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => applyAlignment('center')}
+                  title="Alinhar ao centro"
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => applyAlignment('right')}
+                  title="Alinhar à direita"
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+              </div>
+
               <Textarea
+                ref={textareaRef}
                 id="conteudo"
                 value={formData.conteudo}
                 onChange={(e) => setFormData({ ...formData, conteudo: e.target.value })}
@@ -68,7 +216,7 @@ export function TemplateForm({ open, onOpenChange, onSubmit, template, isLoading
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Use as variáveis disponíveis na lista ao lado para inserir dados dinâmicos
+                Use as variáveis disponíveis na lista ao lado e os botões de formatação acima para estilizar o texto
               </p>
             </div>
 
