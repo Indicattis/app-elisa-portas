@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Menu } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CalendarioSemanalMobile } from "@/components/instalacoes/CalendarioSemanalMobile";
 import { CalendarioMensalDesktop } from "@/components/instalacoes/CalendarioMensalDesktop";
@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Instalacao } from "@/types/instalacao";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import { format } from "date-fns";
+import logoInstalacoes from "@/assets/logo-instalacoes.png";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -116,9 +117,11 @@ export default function InstalacoesMobile() {
       <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Menu className="h-5 w-5" />
-            </Button>
+            <img 
+              src={logoInstalacoes} 
+              alt="Logo" 
+              className="h-9 w-9 object-contain"
+            />
             <div>
               <h1 className="text-lg font-semibold text-foreground">Instalações</h1>
               <p className="text-xs text-muted-foreground">Gerenciar instalações</p>
