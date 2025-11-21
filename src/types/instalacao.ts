@@ -47,5 +47,5 @@ export interface InstalacaoFormData {
   endereco?: string;
   cep?: string;
   descricao?: string;
-  equipe_id?: string;
+  equipe_id: string;
 }

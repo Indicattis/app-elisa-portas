@@ -24,7 +24,7 @@ const instalacaoSchema = z.object({
   endereco: z.string().optional(),
   cep: z.string().optional(),
   descricao: z.string().optional(),
-  equipe_id: z.string().optional(),
+  equipe_id: z.string().min(1, "Selecione uma equipe"),
 });
 
 interface InstalacaoFormProps {
@@ -242,16 +242,15 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
 
       {/* Equipe */}
       <div className="space-y-2">
-        <Label htmlFor="equipe_id">Equipe de Instalação</Label>
+        <Label htmlFor="equipe_id">Equipe de Instalação *</Label>
         <Select
-          value={watch("equipe_id") || "none"}
-          onValueChange={(value) => setValue("equipe_id", value === "none" ? undefined : value)}
+          value={watch("equipe_id") || ""}
+          onValueChange={(value) => setValue("equipe_id", value)}
         >
           <SelectTrigger className="text-base">
             <SelectValue placeholder={loadingEquipes ? "Carregando..." : "Selecione uma equipe"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">Sem equipe</SelectItem>
             {equipes.map((equipe) => (
               <SelectItem key={equipe.id} value={equipe.id}>
                 <div className="flex items-center gap-2">
@@ -267,6 +266,9 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
             ))}
           </SelectContent>
         </Select>
+        {errors.equipe_id && (
+          <p className="text-sm text-destructive">{errors.equipe_id.message}</p>
+        )}
       </div>
 
       {/* Estado e Cidade */}
