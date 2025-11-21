@@ -12,7 +12,10 @@ export function useContratoVariaveis(vendaId: string) {
         .from('vendas')
         .select(`
           *,
-          produtos:produtos_vendas(*),
+          produtos:produtos_vendas(
+            *,
+            cor:catalogo_cores(nome)
+          ),
           atendente:admin_users(nome, telefone)
         `)
         .eq('id', vendaId)
@@ -28,11 +31,40 @@ export function useContratoVariaveis(vendaId: string) {
       
       if (empresaError) throw empresaError;
 
-      // Formatar lista de produtos incluindo o tipo
+      // Formatar lista de produtos incluindo o tipo e detalhes
       const produtosLista = venda.produtos
         ?.map((p: any) => {
-          const tipo = p.tipo_produto ? ` (${p.tipo_produto})` : '';
-          return `${p.quantidade || 1}x ${p.descricao || 'Produto'}${tipo} - ${formatCurrency(p.valor_total || 0)}`;
+          const partes = [];
+          
+          // Quantidade e descrição
+          partes.push(`${p.quantidade || 1}x ${p.descricao || 'Produto'}`);
+          
+          // Tipo do produto
+          if (p.tipo_produto) {
+            partes.push(`(${p.tipo_produto})`);
+          }
+          
+          // Tamanho
+          if (p.tamanho) {
+            partes.push(`- Tamanho: ${p.tamanho}`);
+          }
+          
+          // Cor
+          if (p.cor?.nome) {
+            partes.push(`- Cor: ${p.cor.nome}`);
+          }
+          
+          // Instalação
+          if (p.valor_instalacao && p.valor_instalacao > 0) {
+            partes.push(`- Instalação: ${formatCurrency(p.valor_instalacao)}`);
+          } else {
+            partes.push(`- Sem instalação`);
+          }
+          
+          // Valor total do item
+          partes.push(`- Valor: ${formatCurrency(p.valor_total || 0)}`);
+          
+          return partes.join(' ');
         })
         .join('\n') || '';
 
