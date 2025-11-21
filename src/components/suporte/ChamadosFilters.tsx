@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { ChamadosFilters as Filters } from "@/types/suporte";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -44,137 +42,125 @@ export function ChamadosFilters({
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome</Label>
-            <Input
-              id="nome"
-              placeholder="Buscar por nome..."
-              value={localFilters.nome || ""}
-              onChange={(e) => handleFilterChange("nome", e.target.value)}
-            />
-          </div>
+    <div className="flex flex-wrap items-end gap-2 p-3 bg-muted/30 rounded-lg border">
+      <div className="flex-1 min-w-[150px]">
+        <Input
+          placeholder="Nome..."
+          value={localFilters.nome || ""}
+          onChange={(e) => handleFilterChange("nome", e.target.value)}
+          className="h-9"
+        />
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cpf">CPF</Label>
-            <Input
-              id="cpf"
-              placeholder="Buscar por CPF..."
-              value={localFilters.cpf || ""}
-              onChange={(e) => handleFilterChange("cpf", e.target.value)}
-            />
-          </div>
+      <div className="flex-1 min-w-[120px]">
+        <Input
+          placeholder="CPF..."
+          value={localFilters.cpf || ""}
+          onChange={(e) => handleFilterChange("cpf", e.target.value)}
+          className="h-9"
+        />
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="telefone">Telefone</Label>
-            <Input
-              id="telefone"
-              placeholder="Buscar por telefone..."
-              value={localFilters.telefone || ""}
-              onChange={(e) => handleFilterChange("telefone", e.target.value)}
-            />
-          </div>
+      <div className="flex-1 min-w-[130px]">
+        <Input
+          placeholder="Telefone..."
+          value={localFilters.telefone || ""}
+          onChange={(e) => handleFilterChange("telefone", e.target.value)}
+          className="h-9"
+        />
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={localFilters.status || "todos"}
-              onValueChange={(value) =>
-                handleFilterChange("status", value === "todos" ? "" : value)
-              }
+      <div className="min-w-[120px]">
+        <Select
+          value={localFilters.status || "todos"}
+          onValueChange={(value) =>
+            handleFilterChange("status", value === "todos" ? "" : value)
+          }
+        >
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            <SelectItem value="pendente">Pendente</SelectItem>
+            <SelectItem value="resolvido">Resolvido</SelectItem>
+            <SelectItem value="cancelado">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="min-w-[140px]">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "h-9 w-full justify-start text-left font-normal text-sm",
+                !localFilters.dataInicio && "text-muted-foreground"
+              )}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="resolvido">Resolvido</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+              {localFilters.dataInicio
+                ? format(new Date(localFilters.dataInicio), "dd/MM/yy")
+                : "Data inicial"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={
+                localFilters.dataInicio
+                  ? new Date(localFilters.dataInicio)
+                  : undefined
+              }
+              onSelect={(date) =>
+                handleFilterChange(
+                  "dataInicio",
+                  date ? date.toISOString() : ""
+                )
+              }
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
 
-          <div className="space-y-2">
-            <Label>Data Inicial</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !localFilters.dataInicio && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {localFilters.dataInicio
-                    ? format(new Date(localFilters.dataInicio), "dd/MM/yyyy")
-                    : "Selecionar data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={
-                    localFilters.dataInicio
-                      ? new Date(localFilters.dataInicio)
-                      : undefined
-                  }
-                  onSelect={(date) =>
-                    handleFilterChange(
-                      "dataInicio",
-                      date ? date.toISOString() : ""
-                    )
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+      <div className="min-w-[140px]">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "h-9 w-full justify-start text-left font-normal text-sm",
+                !localFilters.dataFim && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+              {localFilters.dataFim
+                ? format(new Date(localFilters.dataFim), "dd/MM/yy")
+                : "Data final"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={
+                localFilters.dataFim
+                  ? new Date(localFilters.dataFim)
+                  : undefined
+              }
+              onSelect={(date) =>
+                handleFilterChange("dataFim", date ? date.toISOString() : "")
+              }
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
 
-          <div className="space-y-2">
-            <Label>Data Final</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !localFilters.dataFim && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {localFilters.dataFim
-                    ? format(new Date(localFilters.dataFim), "dd/MM/yyyy")
-                    : "Selecionar data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={
-                    localFilters.dataFim
-                      ? new Date(localFilters.dataFim)
-                      : undefined
-                  }
-                  onSelect={(date) =>
-                    handleFilterChange("dataFim", date ? date.toISOString() : "")
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <Button variant="outline" onClick={handleClearFilters}>
-            Limpar Filtros
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <Button variant="outline" onClick={handleClearFilters} size="sm" className="h-9">
+        Limpar
+      </Button>
+    </div>
   );
 }
