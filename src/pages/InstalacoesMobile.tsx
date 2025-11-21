@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { CalendarioSemanalMobile } from "@/components/instalacoes/CalendarioSemanalMobile";
 import { CalendarioMensalDesktop } from "@/components/instalacoes/CalendarioMensalDesktop";
 import { EquipesSlider } from "@/components/instalacoes/EquipesSlider";
@@ -30,6 +31,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { InstalacaoForm } from "@/components/instalacoes/InstalacaoForm";
+import { useInstalacoesPDFData } from "@/hooks/useInstalacoesPDFData";
+import { baixarCronogramaInstalacoesPDF } from "@/utils/instalacoesCronogramaPDF";
 
 export default function InstalacoesMobile() {
   const navigate = useNavigate();
@@ -37,6 +40,7 @@ export default function InstalacoesMobile() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [equipeSelecionadaId, setEquipeSelecionadaId] = useState<string | null>(null);
   const { instalacoes, isLoading, deleteInstalacao, updateInstalacao, isUpdating } = useInstalacoes(currentDate);
+  const { prepararDadosPDF } = useInstalacoesPDFData();
   
   const [instalacaoToDelete, setInstalacaoToDelete] = useState<string | null>(null);
   const [instalacaoToEdit, setInstalacaoToEdit] = useState<Instalacao | null>(null);
@@ -111,6 +115,23 @@ export default function InstalacoesMobile() {
     }
   };
 
+  const handleBaixarPDF = () => {
+    if (instalacoesFiltradas.length === 0) {
+      toast.info("Não há instalações para gerar o PDF");
+      return;
+    }
+
+    const dadosPDF = prepararDadosPDF(
+      instalacoesFiltradas,
+      equipeSelecionadaId,
+      currentDate,
+      isMobile ? 'semanal' : 'mensal'
+    );
+    
+    baixarCronogramaInstalacoesPDF(dadosPDF);
+    toast.success("PDF gerado com sucesso!");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header Fixo */}
@@ -128,14 +149,25 @@ export default function InstalacoesMobile() {
             </div>
           </div>
           
-          <Button
-            onClick={() => navigate("/instalacoes/nova")}
-            size="sm"
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Nova</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleBaixarPDF}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+            <Button
+              onClick={() => navigate("/instalacoes/nova")}
+              size="sm"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Nova</span>
+            </Button>
+          </div>
         </div>
       </header>
 
