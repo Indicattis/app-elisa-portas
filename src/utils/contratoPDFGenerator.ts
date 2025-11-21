@@ -94,7 +94,7 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
   const conteudoProcessado = substituirVariaveis(data.template, data.variaveis);
   const linhas = conteudoProcessado.split('\n');
   
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(60, 60, 60);
 
@@ -105,6 +105,10 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
       doc.addPage();
       currentY = margin;
       // NÃO adicionar header nas páginas seguintes
+      // Resetar estilos do texto
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
     }
 
     // Processar linha (quebrar se muito longa)
@@ -116,6 +120,10 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
           doc.addPage();
           currentY = margin;
           // NÃO adicionar header nas páginas seguintes
+          // Resetar estilos do texto
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
         }
         doc.text(linhaQuebrada, margin, currentY);
         currentY += 6;
@@ -139,35 +147,25 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
     // Título da seção
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(59, 130, 246);
-    doc.text('ASSINATURAS', pageWidth / 2, currentY, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    doc.text('ASSINATURA', pageWidth / 2, currentY, { align: 'center' });
     currentY += 15;
 
-    // Assinatura do Cliente
+    // Assinatura do Cliente (centralizada)
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     
-    const col1X = margin + 10;
-    const col2X = pageWidth / 2 + 10;
+    const centerX = pageWidth / 2;
     const signatureY = currentY;
 
     // Cliente
-    doc.text('CONTRATANTE:', col1X, signatureY);
-    doc.line(col1X, signatureY + 15, col1X + 70, signatureY + 15);
+    doc.text('CONTRATANTE:', centerX, signatureY, { align: 'center' });
+    doc.line(centerX - 35, signatureY + 15, centerX + 35, signatureY + 15);
     doc.setFontSize(9);
-    doc.text(data.variaveis.cliente_nome, col1X, signatureY + 20);
-    doc.text(`CPF: ${data.variaveis.cliente_cpf || '___.___.___-__'}`, col1X, signatureY + 25);
-    doc.text(`Data: ___/___/_____`, col1X, signatureY + 30);
-
-    // Empresa
-    doc.setFontSize(10);
-    doc.text('CONTRATADA:', col2X, signatureY);
-    doc.line(col2X, signatureY + 15, col2X + 70, signatureY + 15);
-    doc.setFontSize(9);
-    doc.text(data.companySettings.nome, col2X, signatureY + 20);
-    doc.text(`CNPJ: ${data.companySettings.cnpj}`, col2X, signatureY + 25);
-    doc.text(`Data: ___/___/_____`, col2X, signatureY + 30);
+    doc.text(data.variaveis.cliente_nome, centerX, signatureY + 20, { align: 'center' });
+    doc.text(`CPF: ${data.variaveis.cliente_cpf || '___.___.___-__'}`, centerX, signatureY + 25, { align: 'center' });
+    doc.text(`Data: ___/___/_____`, centerX, signatureY + 30, { align: 'center' });
   };
 
   addSignatures();
