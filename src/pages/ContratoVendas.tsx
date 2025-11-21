@@ -3,9 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useContratosTemplates } from "@/hooks/useContratosTemplates";
+import { useContratosVendas } from "@/hooks/useContratosVendas";
 import { TemplateForm } from "@/components/contratos/TemplateForm";
 import { GerarContratoModal } from "@/components/contratos/GerarContratoModal";
 import { UploadContratoModal } from "@/components/contratos/UploadContratoModal";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   Plus, 
   FileText, 
@@ -14,7 +17,8 @@ import {
   PowerOff, 
   FileDown,
   Upload,
-  Loader2
+  Loader2,
+  Download
 } from "lucide-react";
 import { ContratoTemplate } from "@/types/contrato";
 import {
@@ -42,8 +46,34 @@ export default function ContratoVendas() {
     toggleTemplate
   } = useContratosTemplates();
 
+  const { contratos, isLoading: isLoadingContratos } = useContratosVendas();
+
   const templatesAtivos = templates?.filter(t => t.ativo).length || 0;
   const templatesInativos = templates?.filter(t => !t.ativo).length || 0;
+
+  const handleDownloadContrato = (contrato: any) => {
+    const link = document.createElement('a');
+    link.href = contrato.arquivo_url;
+    link.download = contrato.nome_arquivo;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      'pendente_assinatura': { label: 'Pendente', variant: 'secondary' as const },
+      'assinado': { label: 'Assinado', variant: 'default' as const },
+      'cancelado': { label: 'Cancelado', variant: 'destructive' as const }
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['pendente_assinatura'];
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
 
   const handleSubmitTemplate = (data: Partial<ContratoTemplate>) => {
     if (editingTemplate) {
@@ -206,6 +236,81 @@ export default function ContratoVendas() {
             <Button onClick={() => setShowTemplateForm(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Criar Primeiro Template
+            </Button>
+          </div>
+        )}
+      </Card>
+
+      {/* Lista de Contratos Cadastrados */}
+      <Card>
+        <div className="p-6 border-b">
+          <h2 className="text-xl font-semibold">Contratos Cadastrados</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Todos os contratos vinculados a vendas
+          </p>
+        </div>
+
+        {isLoadingContratos ? (
+          <div className="p-12 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : contratos && contratos.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Arquivo</TableHead>
+                <TableHead>Template</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {contratos.map((contrato) => (
+                <TableRow key={contrato.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{contrato.nome_arquivo}</p>
+                        {contrato.observacoes && (
+                          <p className="text-xs text-muted-foreground">{contrato.observacoes}</p>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {contrato.template?.nome || <span className="text-muted-foreground">Sem template</span>}
+                  </TableCell>
+                  <TableCell>
+                    {getStatusBadge(contrato.status)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(contrato.created_at)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDownloadContrato(contrato)}
+                      title="Baixar contrato"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="p-12 text-center">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">
+              Nenhum contrato cadastrado
+            </p>
+            <Button onClick={() => setShowUploadContrato(true)} variant="outline">
+              <Upload className="h-4 w-4 mr-2" />
+              Adicionar Primeiro Contrato
             </Button>
           </div>
         )}
