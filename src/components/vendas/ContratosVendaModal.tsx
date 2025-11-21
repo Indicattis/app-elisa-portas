@@ -2,12 +2,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Calendar, User, AlertCircle } from "lucide-react";
+import { FileText, Download, Calendar, User, AlertCircle, FilePlus, Upload } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { GerarContratoModal } from "@/components/contratos/GerarContratoModal";
+import { UploadContratoModal } from "@/components/contratos/UploadContratoModal";
+import { useState } from "react";
 
 interface ContratosVendaModalProps {
   open: boolean;
@@ -16,6 +19,9 @@ interface ContratosVendaModalProps {
 }
 
 export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVendaModalProps) {
+  const [gerarModalOpen, setGerarModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
   const { data: contratos, isLoading } = useQuery({
     queryKey: ['contratos-venda', vendaId],
     queryFn: async () => {
@@ -71,14 +77,34 @@ export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVe
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Contratos da Venda
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Contratos da Venda
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex gap-2 mb-4">
+            <Button
+              onClick={() => setGerarModalOpen(true)}
+              variant="outline"
+              className="flex-1"
+            >
+              <FilePlus className="w-4 h-4 mr-2" />
+              Gerar Contrato
+            </Button>
+            <Button
+              onClick={() => setUploadModalOpen(true)}
+              variant="outline"
+              className="flex-1"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Contrato
+            </Button>
+          </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -143,7 +169,20 @@ export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVe
             </AlertDescription>
           </Alert>
         )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <GerarContratoModal
+        open={gerarModalOpen}
+        onOpenChange={setGerarModalOpen}
+        vendaIdInicial={vendaId}
+      />
+
+      <UploadContratoModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        vendaIdInicial={vendaId}
+      />
+    </>
   );
 }
