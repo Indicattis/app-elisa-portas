@@ -273,12 +273,23 @@ export default function VendaNova() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="cpf_cliente">CPF</Label>
+                  <Label htmlFor="cpf_cliente">CPF *</Label>
                   <Input
                     id="cpf_cliente"
                     placeholder="000.000.000-00"
                     value={formData.cpf_cliente}
-                    onChange={(e) => setFormData({ ...formData, cpf_cliente: e.target.value })}
+                    onChange={(e) => {
+                      // Máscara de CPF
+                      let value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 11) {
+                        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                      }
+                      setFormData({ ...formData, cpf_cliente: value });
+                    }}
+                    maxLength={14}
+                    required
                   />
                 </div>
               </div>
