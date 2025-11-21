@@ -41,26 +41,32 @@ export function useEquipesInstalacao() {
       
       // Buscar membros de cada equipe
       const equipesComDetalhes = await Promise.all((data || []).map(async (equipe: any) => {
+        // Buscar IDs dos membros
         const { data: membrosData } = await supabase
           .from('equipes_instalacao_membros')
-          .select(`
-            user_id,
-            admin_users!inner (
-              id,
-              nome,
-              foto_perfil_url
-            )
-          `)
+          .select('user_id')
           .eq('equipe_id', equipe.id);
 
-        const membros = (membrosData || [])
-          .map((m: any) => ({
-            id: m.admin_users.id,
-            nome: m.admin_users.nome,
-            foto_perfil_url: m.admin_users.foto_perfil_url
-          }))
+        let membros: Array<{ id: string; nome: string; foto_perfil_url?: string }> = [];
+        
+        if (membrosData && membrosData.length > 0) {
+          const userIds = membrosData.map(m => m.user_id);
+          
+          // Buscar detalhes dos usuários
+          const { data: usersData } = await supabase
+            .from('admin_users')
+            .select('id, nome, foto_perfil_url')
+            .in('user_id', userIds);
+
           // Filtrar o responsável dos membros para não duplicar
-          .filter((m: any) => m.id !== equipe.responsavel_id);
+          membros = (usersData || [])
+            .filter((u: any) => u.id !== equipe.responsavel_id)
+            .map((u: any) => ({
+              id: u.id,
+              nome: u.nome,
+              foto_perfil_url: u.foto_perfil_url
+            }));
+        }
 
         return {
           ...equipe,
