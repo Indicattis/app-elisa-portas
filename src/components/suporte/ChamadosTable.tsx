@@ -79,11 +79,10 @@ export function ChamadosTable({
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-md border text-[6px]">
         <Table>
           <TableHeader>
             <TableRow className="h-10">
-              <TableHead className="w-[100px]">ID</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>CPF</TableHead>
               <TableHead>Telefone</TableHead>
@@ -97,14 +96,11 @@ export function ChamadosTable({
           <TableBody>
             {chamados.map((chamado) => (
               <TableRow key={chamado.id} className="h-12">
-                <TableCell className="font-mono text-xs">
-                  #{chamado.id.slice(0, 8)}
-                </TableCell>
                 <TableCell className="font-medium">{chamado.nome}</TableCell>
-                <TableCell className="text-sm">{chamado.cpf}</TableCell>
-                <TableCell className="text-sm">{chamado.telefone}</TableCell>
-                <TableCell className="text-sm">{chamado.email}</TableCell>
-                <TableCell className="text-sm">
+                <TableCell>{chamado.cpf}</TableCell>
+                <TableCell>{chamado.telefone}</TableCell>
+                <TableCell>{chamado.email}</TableCell>
+                <TableCell>
                   {format(new Date(chamado.created_at), "dd/MM/yyyy")}
                 </TableCell>
                 <TableCell>{getStatusBadge(chamado.status)}</TableCell>
@@ -119,7 +115,7 @@ export function ChamadosTable({
                       <FileText className="h-3.5 w-3.5" />
                     </Button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">-</span>
+                    <span className="text-muted-foreground">-</span>
                   )}
                 </TableCell>
                 <TableCell>
