@@ -610,7 +610,7 @@ const App = () => (
                 <Route
                   path="/instalacoes"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="instalacoes_calendario">
                       <InstalacoesMobile />
                     </ProtectedRoute>
                   }
@@ -618,7 +618,7 @@ const App = () => (
                 <Route
                   path="/instalacoes/nova"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="instalacoes_nova">
                       <InstalacoesNovas />
                     </ProtectedRoute>
                   }

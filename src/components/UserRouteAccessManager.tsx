@@ -218,14 +218,15 @@ export function UserRouteAccessManager() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Tabs de Interface */}
-        <Tabs value={selectedInterface} onValueChange={setSelectedInterface}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="producao">Produção</TabsTrigger>
-            <TabsTrigger value="paineis">Painéis</TabsTrigger>
-            <TabsTrigger value="admin">Admin</TabsTrigger>
-          </TabsList>
+      {/* Tabs de Interface */}
+      <Tabs value={selectedInterface} onValueChange={setSelectedInterface}>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="instalacoes">Instalações</TabsTrigger>
+          <TabsTrigger value="producao">Produção</TabsTrigger>
+          <TabsTrigger value="paineis">Painéis</TabsTrigger>
+          <TabsTrigger value="admin">Admin</TabsTrigger>
+        </TabsList>
         </Tabs>
 
         {/* Seleção de usuário */}
