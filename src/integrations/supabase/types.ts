@@ -442,6 +442,48 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          cep: string
+          cidade: string
+          cnpj: string
+          created_at: string | null
+          email: string | null
+          endereco: string
+          id: string
+          nome: string
+          site: string | null
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cep?: string
+          cidade?: string
+          cnpj?: string
+          created_at?: string | null
+          email?: string | null
+          endereco?: string
+          id?: string
+          nome?: string
+          site?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cep?: string
+          cidade?: string
+          cnpj?: string
+          created_at?: string | null
+          email?: string | null
+          endereco?: string
+          id?: string
+          nome?: string
+          site?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contador_vendas_dias: {
         Row: {
           atendente_id: string

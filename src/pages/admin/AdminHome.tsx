@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Users } from "lucide-react";
+import { Shield, Users, Building2 } from "lucide-react";
 
 export default function AdminHome() {
   return (
@@ -46,6 +46,25 @@ export default function AdminHome() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Adicionar, editar e desativar usuários
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/admin/company">
+          <Card className="hover:bg-accent transition-colors cursor-pointer h-full">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-primary" />
+                <CardTitle>Empresa</CardTitle>
+              </div>
+              <CardDescription>
+                Configurações da empresa
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Gerenciar informações da empresa nos contratos
               </p>
             </CardContent>
           </Card>
