@@ -1393,6 +1393,65 @@ export type Database = {
         }
         Relationships: []
       }
+      instalacoes: {
+        Row: {
+          cep: string | null
+          cidade: string
+          created_at: string
+          created_by: string | null
+          data: string
+          descricao: string | null
+          endereco: string | null
+          estado: string
+          hora: string
+          id: string
+          id_venda: string | null
+          nome_cliente: string
+          produto: string
+          updated_at: string
+        }
+        Insert: {
+          cep?: string | null
+          cidade: string
+          created_at?: string
+          created_by?: string | null
+          data: string
+          descricao?: string | null
+          endereco?: string | null
+          estado: string
+          hora: string
+          id?: string
+          id_venda?: string | null
+          nome_cliente: string
+          produto: string
+          updated_at?: string
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          endereco?: string | null
+          estado?: string
+          hora?: string
+          id?: string
+          id_venda?: string | null
+          nome_cliente?: string
+          produto?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instalacoes_id_venda_fkey"
+            columns: ["id_venda"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instalacoes_cadastradas: {
         Row: {
           alterado_para_correcao_em: string | null

@@ -43,7 +43,9 @@ import ProducaoPerfiladeira from "./pages/ProducaoPerfiladeira";
 import ProducaoSeparacao from "./pages/ProducaoSeparacao";
 import ProducaoQualidade from "./pages/ProducaoQualidade";
 import ProducaoPintura from "./pages/ProducaoPintura";
-import Instalacoes from "./pages/Instalacoes";
+import InstalacoesAdmin from "./pages/InstalacoesAdmin";
+import InstalacoesMobile from "./pages/InstalacoesMobile";
+import InstalacoesNovas from "./pages/InstalacoesNovas";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
@@ -600,8 +602,24 @@ const App = () => (
                   element={
                     <ProtectedRoute routeKey="instalacoes_listagem">
                       <DashboardLayout>
-                        <Instalacoes />
+                        <InstalacoesAdmin />
                       </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instalacoes"
+                  element={
+                    <ProtectedRoute>
+                      <InstalacoesMobile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instalacoes/nova"
+                  element={
+                    <ProtectedRoute>
+                      <InstalacoesNovas />
                     </ProtectedRoute>
                   }
                 />
