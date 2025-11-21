@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CalendarioSemanalMobile } from "@/components/instalacoes/CalendarioSemanalMobile";
+import { EquipesSlider } from "@/components/instalacoes/EquipesSlider";
 import { useInstalacoes } from "@/hooks/useInstalacoes";
 import { Instalacao } from "@/types/instalacao";
 import { addWeeks, subWeeks } from "date-fns";
@@ -30,11 +31,17 @@ import { InstalacaoForm } from "@/components/instalacoes/InstalacaoForm";
 export default function InstalacoesMobile() {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [equipeSelecionadaId, setEquipeSelecionadaId] = useState<string | null>(null);
   const { instalacoes, isLoading, deleteInstalacao, updateInstalacao, isUpdating } = useInstalacoes(currentDate);
   
   const [instalacaoToDelete, setInstalacaoToDelete] = useState<string | null>(null);
   const [instalacaoToEdit, setInstalacaoToEdit] = useState<Instalacao | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+
+  // Filtrar instalações por equipe
+  const instalacoesFiltradas = equipeSelecionadaId
+    ? instalacoes.filter((inst) => inst.equipe_id === equipeSelecionadaId)
+    : instalacoes;
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -115,22 +122,29 @@ export default function InstalacoesMobile() {
       </header>
 
       {/* Conteúdo */}
-      <main className="p-4 pb-8">
+      <main className="p-4 pb-8 space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">Carregando...</p>
           </div>
         ) : (
-          <CalendarioSemanalMobile
-            startDate={currentDate}
-            instalacoes={instalacoes}
-            onPreviousWeek={handlePreviousWeek}
-            onNextWeek={handleNextWeek}
-            onToday={handleToday}
-            onDayClick={handleDayClick}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <>
+            <EquipesSlider
+              equipeSelecionadaId={equipeSelecionadaId}
+              onEquipeChange={setEquipeSelecionadaId}
+            />
+            
+            <CalendarioSemanalMobile
+              startDate={currentDate}
+              instalacoes={instalacoesFiltradas}
+              onPreviousWeek={handlePreviousWeek}
+              onNextWeek={handleNextWeek}
+              onToday={handleToday}
+              onDayClick={handleDayClick}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </>
         )}
       </main>
 
@@ -176,6 +190,7 @@ export default function InstalacoesMobile() {
                   endereco: instalacaoToEdit.endereco || "",
                   cep: instalacaoToEdit.cep || "",
                   descricao: instalacaoToEdit.descricao || "",
+                  equipe_id: instalacaoToEdit.equipe_id || undefined,
                 }}
                 isLoading={isUpdating}
               />
