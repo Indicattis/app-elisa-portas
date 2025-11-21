@@ -332,6 +332,11 @@ export function AppSidebar() {
             <span>Produção</span>
           </Link>
           
+          <Link to="/instalacoes" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
+            <CalendarCheck className="h-4 w-4" />
+            <span>Instalações</span>
+          </Link>
+          
           <Link to="/todo" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
             <ClipboardList className="h-4 w-4" />
             <span>Tarefas</span>
