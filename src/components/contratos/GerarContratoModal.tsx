@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,13 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
 
   const templatesAtivos = templates?.filter(t => t.ativo) || [];
   const templateSelecionado = templatesAtivos.find(t => t.id === templateId);
+
+  // Sincronizar vendaId quando vendaIdInicial mudar ou modal abrir
+  useEffect(() => {
+    if (open && vendaIdInicial) {
+      setVendaId(vendaIdInicial);
+    }
+  }, [open, vendaIdInicial]);
 
   const handleGerar = () => {
     if (!vendaId || !templateId || !templateSelecionado || !variaveis || !companySettings) {

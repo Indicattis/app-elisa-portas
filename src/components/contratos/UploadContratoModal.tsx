@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,13 @@ export function UploadContratoModal({ open, onOpenChange, vendaIdInicial }: Uplo
   const { vendas } = useVendas();
 
   const templatesAtivos = templates?.filter(t => t.ativo) || [];
+
+  // Sincronizar vendaId quando vendaIdInicial mudar ou modal abrir
+  useEffect(() => {
+    if (open && vendaIdInicial) {
+      setVendaId(vendaIdInicial);
+    }
+  }, [open, vendaIdInicial]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
