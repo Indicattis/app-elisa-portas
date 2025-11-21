@@ -22,7 +22,7 @@ const hexToRgb = (hex: string): [number, number, number] => {
 
 export const gerarCronogramaInstalacoesPDF = (data: CronogramaInstalacoesPDFData): jsPDF => {
   const doc = new jsPDF({
-    orientation: "landscape",
+    orientation: "portrait",
     unit: "mm",
     format: "a4",
   });
@@ -54,141 +54,148 @@ export const gerarCronogramaInstalacoesPDF = (data: CronogramaInstalacoesPDFData
 
   yPosition += 10;
 
-  // Preparar dados da tabela
-  const diasPeriodo = eachDayOfInterval({
+  // Preparar dados - dias do período
+  const periodoDias = eachDayOfInterval({
     start: data.periodoInicio,
     end: data.periodoFim,
   });
 
-  const equipesParaMostrar = data.equipeSelecionada
-    ? [data.equipeSelecionada]
-    : data.equipes.filter(e => e.ativa);
+  // Iterar por cada dia e listar instalações
+  periodoDias.forEach((dia) => {
+    // Verificar quebra de página
+    if (yPosition > pageHeight - 60) {
+      doc.addPage();
+      yPosition = 20;
+    }
 
-  // Cabeçalho da tabela
-  const headerRow = [
-    "Equipe",
-    ...diasPeriodo.map(dia => 
-      format(dia, data.tipoVisualizacao === 'semanal' ? "EEE\ndd/MM" : "dd", { locale: ptBR })
-    ),
-  ];
-
-  // Linhas de dados
-  const bodyRows = equipesParaMostrar.map(equipe => {
-    const row = [equipe.nome];
-    
-    diasPeriodo.forEach(dia => {
-      const instalacoesNoDia = data.instalacoes.filter(
-        inst => inst.equipe_id === equipe.id && isSameDay(new Date(inst.data), dia)
-      );
-
-      if (instalacoesNoDia.length === 0) {
-        row.push("-");
-      } else {
-        const texto = instalacoesNoDia
-          .map(inst => `${inst.nome_cliente}\n${inst.cidade}\n${inst.produto}`)
-          .join("\n\n");
-        row.push(texto);
-      }
-    });
-
-    return row;
-  });
-
-  // Gerar tabela
-  autoTable(doc, {
-    head: [headerRow],
-    body: bodyRows,
-    startY: yPosition,
-    theme: "grid",
-    styles: {
-      fontSize: data.tipoVisualizacao === 'mensal' ? 7 : 8,
-      cellPadding: 2,
-      lineColor: [200, 200, 200],
-      lineWidth: 0.1,
-    },
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-      halign: "center",
-      valign: "middle",
-    },
-    columnStyles: {
-      0: {
-        cellWidth: 30,
-        fontStyle: "bold",
-        fillColor: [245, 245, 245],
-      },
-    },
-    didParseCell: (data) => {
-      if (data.section === "body" && data.column.index > 0) {
-        const equipeIndex = data.row.index;
-        const equipe = equipesParaMostrar[equipeIndex];
-        
-        if (equipe?.cor && data.cell.text.join("") !== "-") {
-          const rgb = hexToRgb(equipe.cor);
-          data.cell.styles.fillColor = [rgb[0], rgb[1], rgb[2], 0.15] as any;
-        }
-      }
-    },
-    margin: { left: 10, right: 10 },
-  });
-
-  // Calcular posição após tabela
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
-
-  // Legenda de cores das equipes
-  if (!data.equipeSelecionada && equipesParaMostrar.length > 0) {
-    doc.setFontSize(9);
+    // Título do dia
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text("Legenda de Equipes:", 15, finalY);
+    doc.setTextColor(0, 0, 0);
+    doc.text(
+      format(dia, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+      15,
+      yPosition
+    );
 
-    let legendaX = 15;
-    let legendaY = finalY + 5;
+    // Linha separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, yPosition + 1, pageWidth - 15, yPosition + 1);
+    yPosition += 6;
 
-    equipesParaMostrar.forEach((equipe, index) => {
-      if (equipe.cor) {
-        const rgb = hexToRgb(equipe.cor);
-        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-        doc.rect(legendaX, legendaY - 3, 4, 4, "F");
-      }
+    // Buscar instalações do dia
+    const instalacoesNoDia = data.instalacoes.filter((inst) =>
+      isSameDay(new Date(inst.data), dia)
+    );
 
-      doc.setFont("helvetica", "normal");
-      doc.text(equipe.nome, legendaX + 6, legendaY);
+    // Filtrar por equipe se selecionada
+    const instalacoesExibir = data.equipeSelecionada
+      ? instalacoesNoDia.filter((inst) => inst.equipe_id === data.equipeSelecionada!.id)
+      : instalacoesNoDia;
 
-      legendaX += 50;
-      if ((index + 1) % 5 === 0) {
-        legendaX = 15;
-        legendaY += 6;
-      }
-    });
+    if (instalacoesExibir.length === 0) {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(150, 150, 150);
+      doc.text("  [sem instalações]", 20, yPosition);
+      yPosition += 8;
+    } else {
+      // Listar cada instalação
+      instalacoesExibir.forEach((inst, index) => {
+        // Verificar quebra de página
+        if (yPosition > pageHeight - 40) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        // Encontrar equipe
+        const equipe = data.equipes.find((e) => e.id === inst.equipe_id);
+
+        // Cor da equipe (retângulo pequeno)
+        if (equipe?.cor) {
+          const rgb = hexToRgb(equipe.cor);
+          doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+          doc.rect(18, yPosition - 3, 2, 4, "F");
+        }
+
+        // Hora e equipe
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 0, 0);
+        doc.text(`⏰ ${inst.hora} • ${equipe?.nome || "Sem equipe"}`, 22, yPosition);
+
+        // Cliente
+        yPosition += 5;
+        doc.setFont("helvetica", "normal");
+        doc.text(`👤 ${inst.nome_cliente}`, 22, yPosition);
+
+        // Cidade/Estado
+        yPosition += 5;
+        doc.text(`📍 ${inst.cidade} - ${inst.estado}`, 22, yPosition);
+
+        // Produto
+        yPosition += 5;
+        doc.text(`🔧 ${inst.produto}`, 22, yPosition);
+
+        // Descrição (se houver)
+        if (inst.descricao) {
+          yPosition += 5;
+          doc.setFontSize(8);
+          doc.setTextColor(100, 100, 100);
+          const descricaoLinhas = doc.splitTextToSize(inst.descricao, pageWidth - 45);
+          doc.text(descricaoLinhas, 22, yPosition);
+          yPosition += descricaoLinhas.length * 3;
+          doc.setFontSize(9);
+        }
+
+        // Linha separadora entre instalações
+        yPosition += 4;
+        doc.setDrawColor(220, 220, 220);
+        doc.line(22, yPosition, pageWidth - 20, yPosition);
+        yPosition += 6;
+      });
+    }
+
+    // Espaço extra entre dias
+    yPosition += 3;
+  });
+
+  // Posição para resumo
+  let resumoY = yPosition + 5;
+
+  // Adicionar nova página para resumo se necessário
+  if (resumoY > pageHeight - 40) {
+    doc.addPage();
+    resumoY = 20;
   }
 
   // Resumo estatístico
   const totalInstalacoes = data.instalacoes.length;
-  const equipesAtivas = equipesParaMostrar.length;
-  
-  const instalacooesPorDia = diasPeriodo.map(dia => ({
-    dia,
-    quantidade: data.instalacoes.filter(inst => isSameDay(new Date(inst.data), dia)).length,
-  }));
-  
-  const diaMovimentado = instalacooesPorDia.reduce((max, item) => 
-    item.quantidade > max.quantidade ? item : max
-  , { dia: diasPeriodo[0], quantidade: 0 });
+  const equipesAtivas = data.equipes.filter((e) => e.ativa).length;
 
-  const resumoY = pageHeight - 25;
-  doc.setFontSize(9);
+  const instalacooesPorDia = periodoDias.map((dia) => ({
+    dia,
+    quantidade: data.instalacoes.filter((inst) => isSameDay(new Date(inst.data), dia)).length,
+  }));
+
+  const diaMovimentado = instalacooesPorDia.reduce(
+    (max, item) => (item.quantidade > max.quantidade ? item : max),
+    { dia: periodoDias[0], quantidade: 0 }
+  );
+
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
   doc.text("Resumo:", 15, resumoY);
-  
+
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`Total de instalações: ${totalInstalacoes}`, 15, resumoY + 5);
-  doc.text(`Equipes ativas: ${equipesAtivas}`, 15, resumoY + 10);
+  doc.text(`Total de instalações: ${totalInstalacoes}`, 15, resumoY + 6);
+  doc.text(`Equipes ativas: ${equipesAtivas}`, 15, resumoY + 12);
   doc.text(
     `Dia mais movimentado: ${format(diaMovimentado.dia, "dd/MM/yyyy", { locale: ptBR })} (${diaMovimentado.quantidade} instalações)`,
     15,
-    resumoY + 15
+    resumoY + 18
   );
 
   // Rodapé com informações da empresa
