@@ -1,11 +1,13 @@
 import jsPDF from 'jspdf';
 import { ContratoVariaveis } from '@/types/contrato';
 import { substituirVariaveis } from '@/hooks/useContratoVariaveis';
+import { CompanySettings } from '@/types/company';
 
 interface ContratoPDFData {
   template: string;
   variaveis: ContratoVariaveis;
   numeroContrato: string;
+  companySettings: CompanySettings;
 }
 
 export const generateContratoPDF = (data: ContratoPDFData) => {
@@ -16,41 +18,40 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
   const maxWidth = pageWidth - (margin * 2);
   let currentY = margin;
 
-  // === HEADER (PADRÃO) ===
+  // === HEADER (APENAS PRIMEIRA PÁGINA) ===
   const addHeader = () => {
-    // Logo placeholder (pode ser substituído por logo real)
-    doc.setFillColor(59, 130, 246);
-    doc.rect(margin, currentY, 30, 12, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ELISA', margin + 15, currentY + 8, { align: 'center' });
+    // Logo da empresa
+    try {
+      const logo = new Image();
+      logo.src = '/images/logo-elisa-contrato.png';
+      doc.addImage(logo, 'PNG', margin, currentY, 40, 12);
+    } catch (error) {
+      console.error('Erro ao carregar logo:', error);
+    }
     
     // Informações da empresa
     doc.setTextColor(60, 60, 60);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    const infoX = margin + 35;
-    doc.text('ELISA PORTAS E ACESSÓRIOS LTDA', infoX, currentY + 3);
-    doc.text('CNPJ: 00.000.000/0001-00', infoX, currentY + 7);
-    doc.text('Endereço da empresa - Cidade/UF - CEP: 00000-000', infoX, currentY + 11);
+    const infoX = margin + 45;
+    doc.text(data.companySettings.nome, infoX, currentY + 3);
+    doc.text(`CNPJ: ${data.companySettings.cnpj}`, infoX, currentY + 7);
+    doc.text(`${data.companySettings.endereco} - ${data.companySettings.cidade} - CEP: ${data.companySettings.cep}`, infoX, currentY + 11);
     
     currentY += 20;
     
     // Título do contrato
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(59, 130, 246);
-    doc.text('CONTRATO DE COMPRA E VENDA', pageWidth / 2, currentY, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    doc.text('Contrato De Prestação de Serviço', pageWidth / 2, currentY, { align: 'center' });
     
     currentY += 8;
     
-    // Número e data
+    // Data (sem número de contrato)
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 100, 100);
-    doc.text(`Contrato Nº: ${data.numeroContrato}`, pageWidth / 2, currentY, { align: 'center' });
-    currentY += 5;
     doc.text(`Data: ${data.variaveis.data_geracao}`, pageWidth / 2, currentY, { align: 'center' });
     
     currentY += 10;
@@ -61,7 +62,7 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
     currentY += 10;
   };
 
-  // === FOOTER (PADRÃO) ===
+  // === FOOTER (TODAS AS PÁGINAS) ===
   const addFooter = (pageNum: number, totalPages: number) => {
     const footerY = pageHeight - 15;
     
@@ -73,13 +74,20 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
     doc.setFont('helvetica', 'normal');
-    doc.text('www.elisaportas.com.br | contato@elisaportas.com.br | (00) 0000-0000', pageWidth / 2, footerY, { align: 'center' });
+    
+    const footerInfo = [
+      data.companySettings.site || '',
+      data.companySettings.email || '',
+      data.companySettings.telefone || ''
+    ].filter(Boolean).join(' | ');
+    
+    doc.text(footerInfo, pageWidth / 2, footerY, { align: 'center' });
     
     // Número da página
     doc.text(`Página ${pageNum} de ${totalPages}`, pageWidth - margin, footerY, { align: 'right' });
   };
 
-  // Adicionar header inicial
+  // Adicionar header apenas na primeira página
   addHeader();
 
   // === CONTEÚDO DO TEMPLATE ===
@@ -96,7 +104,7 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
       addFooter(doc.getCurrentPageInfo().pageNumber, 1); // Será atualizado depois
       doc.addPage();
       currentY = margin;
-      addHeader();
+      // NÃO adicionar header nas páginas seguintes
     }
 
     // Processar linha (quebrar se muito longa)
@@ -107,7 +115,7 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
           addFooter(doc.getCurrentPageInfo().pageNumber, 1);
           doc.addPage();
           currentY = margin;
-          addHeader();
+          // NÃO adicionar header nas páginas seguintes
         }
         doc.text(linhaQuebrada, margin, currentY);
         currentY += 6;
@@ -157,8 +165,8 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
     doc.text('CONTRATADA:', col2X, signatureY);
     doc.line(col2X, signatureY + 15, col2X + 70, signatureY + 15);
     doc.setFontSize(9);
-    doc.text(data.variaveis.empresa_nome, col2X, signatureY + 20);
-    doc.text(`CNPJ: ${data.variaveis.empresa_cnpj}`, col2X, signatureY + 25);
+    doc.text(data.companySettings.nome, col2X, signatureY + 20);
+    doc.text(`CNPJ: ${data.companySettings.cnpj}`, col2X, signatureY + 25);
     doc.text(`Data: ___/___/_____`, col2X, signatureY + 30);
   };
 
