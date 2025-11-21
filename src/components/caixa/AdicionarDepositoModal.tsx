@@ -34,7 +34,7 @@ export function AdicionarDepositoModal({
 }: AdicionarDepositoModalProps) {
   const [date, setDate] = useState<Date | undefined>(selectedDate || new Date());
   const [valor, setValor] = useState("");
-  const [categoria, setCategoria] = useState<CategoriaDeposito>("giro_caixa");
+  const [categoria, setCategoria] = useState<CategoriaDeposito>("travesseiro");
   const [observacoes, setObservacoes] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -47,7 +47,7 @@ export function AdicionarDepositoModal({
     } else if (selectedDate) {
       setDate(selectedDate);
       setValor("");
-      setCategoria("giro_caixa");
+      setCategoria("travesseiro");
       setObservacoes("");
     }
   }, [deposito, selectedDate]);
@@ -95,7 +95,7 @@ export function AdicionarDepositoModal({
   const handleClose = () => {
     setDate(selectedDate || new Date());
     setValor("");
-    setCategoria("giro_caixa");
+    setCategoria("travesseiro");
     setObservacoes("");
     onOpenChange(false);
   };
