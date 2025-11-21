@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,13 +29,15 @@ interface GerenciarMembrosEquipeProps {
   onOpenChange: (open: boolean) => void;
   equipeId: string;
   equipeNome: string;
+  liderId?: string;
 }
 
 export function GerenciarMembrosEquipe({
   open,
   onOpenChange,
   equipeId,
-  equipeNome
+  equipeNome,
+  liderId
 }: GerenciarMembrosEquipeProps) {
   const { membros, loading, adicionarMembro, removerMembro } = useEquipesMembros(equipeId);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -80,9 +82,19 @@ export function GerenciarMembrosEquipe({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Nota sobre o Líder */}
+          {liderId && (
+            <div className="bg-muted/50 border border-border rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">
+                <strong>Nota:</strong> O líder da equipe é definido nas configurações da equipe. 
+                Clique no botão "Editar" na lista de equipes para alterar o líder.
+              </p>
+            </div>
+          )}
+
           {/* Adicionar Membro */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Adicionar Membro</label>
+            <label className="text-sm font-medium">Adicionar Membro (Subordinado)</label>
             <div className="flex gap-2">
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger>
@@ -121,28 +133,39 @@ export function GerenciarMembrosEquipe({
               </div>
             ) : (
               <div className="space-y-2">
-                {membros.map((membro) => (
-                  <div
-                    key={membro.id}
-                    className="flex items-center justify-between p-2 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {membro.user?.nome || 'Usuário'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {membro.user?.email}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removerMembro(membro.id)}
+                {membros.map((membro) => {
+                  const isLider = membro.user_id === liderId;
+                  return (
+                    <div
+                      key={membro.id}
+                      className="flex items-center justify-between p-2 border rounded-lg"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 flex-1">
+                        {isLider && (
+                          <Crown className="h-4 w-4 text-yellow-500" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">
+                            {membro.user?.nome || 'Usuário'}
+                            {isLider && <span className="text-xs text-yellow-600 ml-2">(Líder)</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {membro.user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      {!isLider && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removerMembro(membro.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,11 +8,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FormEquipeProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  equipe?: {
+    id: string;
+    nome: string;
+    cor: string;
+    responsavel_id?: string;
+  };
 }
 
 const CORES_EQUIPES = [
@@ -20,22 +34,62 @@ const CORES_EQUIPES = [
   "#8B5CF6", "#F97316", "#06B6D4", "#84CC16"
 ];
 
-export function FormEquipe({ open, onOpenChange }: FormEquipeProps) {
+export function FormEquipe({ open, onOpenChange, equipe }: FormEquipeProps) {
   const [nome, setNome] = useState("");
   const [cor, setCor] = useState(CORES_EQUIPES[0]);
+  const [responsavelId, setResponsavelId] = useState<string>("");
+  const [usuarios, setUsuarios] = useState<Array<{ id: string; nome: string }>>([]);
   const [loading, setLoading] = useState(false);
-  const { createEquipe } = useEquipesInstalacao();
+  const { createEquipe, updateEquipe } = useEquipesInstalacao();
+
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      const { data } = await supabase
+        .from('admin_users')
+        .select('id, nome')
+        .eq('ativo', true)
+        .order('nome');
+      
+      if (data) {
+        setUsuarios(data);
+      }
+    };
+
+    fetchUsuarios();
+  }, []);
+
+  useEffect(() => {
+    if (equipe) {
+      setNome(equipe.nome);
+      setCor(equipe.cor);
+      setResponsavelId(equipe.responsavel_id || "");
+    } else {
+      setNome("");
+      setCor(CORES_EQUIPES[0]);
+      setResponsavelId("");
+    }
+  }, [equipe, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim()) return;
 
     setLoading(true);
-    const success = await createEquipe({ nome: nome.trim(), cor });
+    
+    const dados = {
+      nome: nome.trim(),
+      cor,
+      responsavel_id: responsavelId || undefined
+    };
+
+    const success = equipe 
+      ? await updateEquipe(equipe.id, dados)
+      : await createEquipe(dados);
     
     if (success) {
       setNome("");
       setCor(CORES_EQUIPES[0]);
+      setResponsavelId("");
       onOpenChange(false);
     }
     setLoading(false);
@@ -45,7 +99,9 @@ export function FormEquipe({ open, onOpenChange }: FormEquipeProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova Equipe de Instalação</DialogTitle>
+          <DialogTitle>
+            {equipe ? 'Editar Equipe' : 'Nova Equipe de Instalação'}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,6 +133,23 @@ export function FormEquipe({ open, onOpenChange }: FormEquipeProps) {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="responsavel">Líder da Equipe (Opcional)</Label>
+            <Select value={responsavelId} onValueChange={setResponsavelId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o líder da equipe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Nenhum líder</SelectItem>
+                {usuarios.map((usuario) => (
+                  <SelectItem key={usuario.id} value={usuario.id}>
+                    {usuario.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex justify-end gap-2">
             <Button 
               type="button" 
@@ -86,7 +159,7 @@ export function FormEquipe({ open, onOpenChange }: FormEquipeProps) {
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Criando..." : "Criar Equipe"}
+              {loading ? (equipe ? "Salvando..." : "Criando...") : (equipe ? "Salvar" : "Criar Equipe")}
             </Button>
           </div>
         </form>
