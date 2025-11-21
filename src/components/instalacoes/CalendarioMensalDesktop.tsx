@@ -126,13 +126,13 @@ export const CalendarioMensalDesktop = ({
         </div>
 
         {/* Grid do calendário */}
-        <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="rounded-lg overflow-hidden bg-muted/20 border border-border">
           {/* Cabeçalho dos dias da semana */}
-          <div className="grid grid-cols-7 border-b bg-muted/50">
+          <div className="grid grid-cols-7 border-b border-border bg-muted/40">
             {weekDays.map((day) => (
               <div
                 key={day}
-                className="p-2 text-center text-sm font-medium text-muted-foreground"
+                className="p-3 text-center text-sm font-semibold text-foreground"
               >
                 {day}
               </div>
@@ -140,7 +140,7 @@ export const CalendarioMensalDesktop = ({
           </div>
 
           {/* Grid de dias */}
-          <div className="grid grid-cols-7 gap-px bg-border">
+          <div className="grid grid-cols-7">
             {days.map((day) => (
               <DroppableDay
                 key={day.toISOString()}
