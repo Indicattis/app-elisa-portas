@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import * as icons from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoLight from "@/assets/logo-light.png";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface AppRoute {
   key: string;
@@ -13,6 +15,8 @@ interface AppRoute {
   icon?: string;
   sort_order: number;
   interface?: string;
+  parent_key?: string | null;
+  group?: string | null;
 }
 
 export function AdminSidebar() {
@@ -59,6 +63,28 @@ export function AdminSidebar() {
     return IconComponent || icons.Circle;
   };
 
+  // Agrupar rotas por parent_key
+  const parentRoutes = routes.filter(r => !r.parent_key);
+  const childRoutesByParent = routes.reduce((acc, route) => {
+    if (route.parent_key) {
+      if (!acc[route.parent_key]) {
+        acc[route.parent_key] = [];
+      }
+      acc[route.parent_key].push(route);
+    }
+    return acc;
+  }, {} as Record<string, AppRoute[]>);
+
+  // Estado para controlar quais grupos estão expandidos
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
@@ -68,27 +94,77 @@ export function AdminSidebar() {
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {routes.map((route) => {
+      <nav className="flex-1 p-4 space-y-1 overflow-auto">
+        {parentRoutes.map((route) => {
           const Icon = getIcon(route.icon);
+          const hasChildren = childRoutesByParent[route.key]?.length > 0;
+          const isExpanded = expandedGroups[route.key];
 
           return (
-            <NavLink
-              key={route.key}
-              to={route.path}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
-                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground"
-                )
-              }
-            >
-              <Icon className="h-5 w-5" />
-              <span>{route.label}</span>
-            </NavLink>
+            <div key={route.key}>
+              {hasChildren ? (
+                <>
+                  <button
+                    onClick={() => toggleGroup(route.key)}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="flex-1 text-left">{route.label}</span>
+                    <ChevronDown 
+                      className={cn(
+                        "h-4 w-4 transition-transform",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      {childRoutesByParent[route.key].map((childRoute) => {
+                        const ChildIcon = getIcon(childRoute.icon);
+                        return (
+                          <NavLink
+                            key={childRoute.key}
+                            to={childRoute.path}
+                            className={({ isActive }) =>
+                              cn(
+                                "flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm font-medium",
+                                "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                isActive
+                                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                  : "text-sidebar-foreground"
+                              )
+                            }
+                          >
+                            <ChildIcon className="h-4 w-4" />
+                            <span>{childRoute.label}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <NavLink
+                  to={route.path}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground"
+                    )
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{route.label}</span>
+                </NavLink>
+              )}
+            </div>
           );
         })}
       </nav>
