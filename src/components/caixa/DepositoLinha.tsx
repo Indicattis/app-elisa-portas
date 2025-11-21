@@ -28,22 +28,19 @@ export function DepositoLinha({ deposito, onClick }: DepositoLinhaProps) {
           className="w-3 h-3 rounded-full flex-shrink-0" 
           style={{ backgroundColor: categoria.color }}
         />
-        <span className="text-sm font-medium truncate">{categoria.label}</span>
-      </div>
-      <div className="flex items-center gap-2">
         <span className="text-sm font-bold">{formatCurrency(Number(deposito.valor))}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-        >
-          <Edit2 className="h-3 w-3" />
-        </Button>
       </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+      >
+        <Edit2 className="h-3 w-3" />
+      </Button>
     </div>
   );
 }
