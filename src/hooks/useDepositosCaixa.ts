@@ -4,7 +4,7 @@ import { DepositoCaixa, DepositoCaixaFormData } from "@/types/caixa";
 import { useToast } from "@/hooks/use-toast";
 import { format, endOfWeek, endOfMonth } from "date-fns";
 
-export function useDepositosCaixa(inicioRange: Date) {
+export function useDepositosCaixa(inicioRange: Date, viewMode: 'week' | 'month' = 'week') {
   const [depositos, setDepositos] = useState<DepositoCaixa[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -13,9 +13,8 @@ export function useDepositosCaixa(inicioRange: Date) {
     try {
       setLoading(true);
       
-      // Determinar se é visualização mensal ou semanal
-      const dia = inicioRange.getDate();
-      const fimRange = dia === 1 
+      // Determinar fim do range baseado no modo de visualização
+      const fimRange = viewMode === 'month'
         ? endOfMonth(inicioRange) 
         : endOfWeek(inicioRange, { weekStartsOn: 1 });
       
@@ -62,7 +61,7 @@ export function useDepositosCaixa(inicioRange: Date) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [inicioRange]);
+  }, [inicioRange, viewMode]);
 
   const createDeposito = async (data: DepositoCaixaFormData) => {
     try {

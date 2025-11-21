@@ -23,7 +23,10 @@ export default function Caixa() {
     createDeposito, 
     updateDeposito, 
     deleteDeposito 
-  } = useDepositosCaixa(viewMode === 'month' ? startOfMonth(currentDate) : currentDate);
+  } = useDepositosCaixa(
+    viewMode === 'month' ? startOfMonth(currentDate) : currentDate,
+    viewMode
+  );
 
   const handleAddDeposito = (date: Date) => {
     setSelectedDate(date);
