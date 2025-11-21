@@ -122,20 +122,20 @@ export const gerarCronogramaInstalacoesPDF = (data: CronogramaInstalacoesPDFData
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(0, 0, 0);
-        doc.text(`⏰ ${inst.hora} • ${equipe?.nome || "Sem equipe"}`, 22, yPosition);
+        doc.text(`${inst.hora} - ${equipe?.nome || "Sem equipe"}`, 22, yPosition);
 
         // Cliente
         yPosition += 5;
         doc.setFont("helvetica", "normal");
-        doc.text(`👤 ${inst.nome_cliente}`, 22, yPosition);
+        doc.text(`Cliente: ${inst.nome_cliente}`, 22, yPosition);
 
         // Cidade/Estado
         yPosition += 5;
-        doc.text(`📍 ${inst.cidade} - ${inst.estado}`, 22, yPosition);
+        doc.text(`Local: ${inst.cidade} - ${inst.estado}`, 22, yPosition);
 
         // Produto
         yPosition += 5;
-        doc.text(`🔧 ${inst.produto}`, 22, yPosition);
+        doc.text(`Produto: ${inst.produto}`, 22, yPosition);
 
         // Descrição (se houver)
         if (inst.descricao) {
