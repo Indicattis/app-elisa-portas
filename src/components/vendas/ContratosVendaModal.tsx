@@ -65,17 +65,6 @@ export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVe
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      'pendente_assinatura': { label: 'Pendente Assinatura', variant: 'secondary' as const },
-      'assinado': { label: 'Assinado', variant: 'default' as const },
-      'cancelado': { label: 'Cancelado', variant: 'destructive' as const }
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['pendente_assinatura'];
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,7 +109,6 @@ export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVe
                       <div className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-primary" />
                         <h3 className="font-semibold">{contrato.nome_arquivo}</h3>
-                        {getStatusBadge(contrato.status)}
                       </div>
 
                       {contrato.template && (
