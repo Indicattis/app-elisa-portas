@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
+import { SelecionarVendaModal } from "./SelecionarVendaModal";
 
 const instalacaoSchema = z.object({
   id_venda: z.string().nullable(),
@@ -33,11 +34,11 @@ interface InstalacaoFormProps {
 }
 
 export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoFormProps) => {
-  const [vendas, setVendas] = useState<any[]>([]);
   const [equipes, setEquipes] = useState<any[]>([]);
-  const [loadingVendas, setLoadingVendas] = useState(false);
   const [loadingVendaData, setLoadingVendaData] = useState(false);
   const [loadingEquipes, setLoadingEquipes] = useState(false);
+  const [modalVendaOpen, setModalVendaOpen] = useState(false);
+  const [vendaSelecionada, setVendaSelecionada] = useState<any>(null);
 
   const {
     register,
@@ -53,28 +54,9 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
   const vendaId = watch("id_venda");
 
   useEffect(() => {
-    loadVendas();
     loadEquipes();
   }, []);
 
-  const loadVendas = async () => {
-    setLoadingVendas(true);
-    try {
-      const { data, error } = await supabase
-        .from("vendas")
-        .select("id, cliente_nome, data_venda")
-        .order("data_venda", { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      setVendas(data || []);
-    } catch (error) {
-      console.error("Erro ao carregar vendas:", error);
-      toast.error("Erro ao carregar vendas");
-    } finally {
-      setLoadingVendas(false);
-    }
-  };
 
   const loadEquipes = async () => {
     setLoadingEquipes(true);
@@ -95,32 +77,33 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
     }
   };
 
-  const handleVendaSelect = async (vendaId: string) => {
-    if (!vendaId) return;
+  const handleVendaSelect = async (venda: any) => {
+    setVendaSelecionada(venda);
+    setValue("id_venda", venda.id);
 
     setLoadingVendaData(true);
     try {
-      const { data: venda, error } = await supabase
+      const { data: vendaCompleta, error } = await supabase
         .from("vendas")
         .select(`
           *,
           produtos:produtos_vendas(*)
         `)
-        .eq("id", vendaId)
+        .eq("id", venda.id)
         .single();
 
       if (error) throw error;
 
       // Preencher dados do cliente
-      setValue("nome_cliente", venda.cliente_nome || "");
-      setValue("estado", venda.estado || "");
-      setValue("cidade", venda.cidade || "");
-      setValue("cep", venda.cep || "");
-      setValue("endereco", `${venda.bairro || ""}, ${venda.cidade || ""}`.trim());
+      setValue("nome_cliente", vendaCompleta.cliente_nome || "");
+      setValue("estado", vendaCompleta.estado || "");
+      setValue("cidade", vendaCompleta.cidade || "");
+      setValue("cep", vendaCompleta.cep || "");
+      setValue("endereco", `${vendaCompleta.bairro || ""}, ${vendaCompleta.cidade || ""}`.trim());
 
       // Formatar produtos
-      if (venda.produtos && venda.produtos.length > 0) {
-        const produtosTexto = venda.produtos
+      if (vendaCompleta.produtos && vendaCompleta.produtos.length > 0) {
+        const produtosTexto = vendaCompleta.produtos
           .map((p: any) => {
             const partes = [
               p.tipo_produto,
@@ -143,30 +126,47 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
     }
   };
 
+  const handleRemoverVenda = () => {
+    setVendaSelecionada(null);
+    setValue("id_venda", null);
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Seletor de Venda */}
+      {/* Buscar Venda */}
       <div className="space-y-2">
         <Label>Venda (opcional)</Label>
-        <Select
-          value={vendaId || ""}
-          onValueChange={(value) => {
-            setValue("id_venda", value);
-            handleVendaSelect(value);
-          }}
-          disabled={loadingVendas || loadingVendaData}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={loadingVendas ? "Carregando..." : "Selecione uma venda"} />
-          </SelectTrigger>
-          <SelectContent>
-            {vendas.map((venda) => (
-              <SelectItem key={venda.id} value={venda.id}>
-                {venda.cliente_nome} - {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        
+        {vendaSelecionada ? (
+          <div className="flex items-center gap-2 p-3 border rounded-lg bg-accent/50">
+            <div className="flex-1">
+              <p className="font-medium">{vendaSelecionada.cliente_nome}</p>
+              <p className="text-sm text-muted-foreground">
+                {new Date(vendaSelecionada.data_venda).toLocaleDateString("pt-BR")}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleRemoverVenda}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setModalVendaOpen(true)}
+            className="w-full justify-start gap-2"
+          >
+            <Search className="h-4 w-4" />
+            Buscar venda
+          </Button>
+        )}
+        
         {loadingVendaData && (
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -339,6 +339,14 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
           "Salvar Instalação"
         )}
       </Button>
+
+      {/* Modal de Buscar Venda */}
+      <SelecionarVendaModal
+        open={modalVendaOpen}
+        onOpenChange={setModalVendaOpen}
+        onSelect={handleVendaSelect}
+        vendaSelecionada={vendaSelecionada?.id}
+      />
     </form>
   );
 };
