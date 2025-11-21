@@ -699,6 +699,39 @@ export type Database = {
           },
         ]
       }
+      depositos_caixa: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          created_by: string | null
+          data_deposito: string
+          id: string
+          observacoes: string | null
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          created_by?: string | null
+          data_deposito: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string | null
+          valor?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          created_by?: string | null
+          data_deposito?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       despesas_mensais: {
         Row: {
           categoria: string

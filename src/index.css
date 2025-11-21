@@ -40,6 +40,14 @@ All colors MUST be HSL.
     --warning: 45 93% 47%;
     --warning-foreground: 45 100% 95%;
 
+    /* Success colors for green states */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Info colors for blue states */
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
     /* Bordas em tons de azul claro */
     --border: 214 32% 88%;
     --input: 214 32% 88%;
@@ -86,6 +94,12 @@ All colors MUST be HSL.
 
     --warning: 45 93% 47%;
     --warning-foreground: 45 100% 95%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
 
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
