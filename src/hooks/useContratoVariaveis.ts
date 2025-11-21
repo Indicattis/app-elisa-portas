@@ -54,15 +54,8 @@ export function useContratoVariaveis(vendaId: string) {
             partes.push(`- Cor: ${p.cor.nome}`);
           }
           
-          // Instalação
-          if (p.valor_instalacao && p.valor_instalacao > 0) {
-            partes.push(`- Instalação: ${formatCurrency(p.valor_instalacao)}`);
-          } else {
-            partes.push(`- Sem instalação`);
-          }
-          
           // Valor total do item
-          partes.push(`- Valor: ${formatCurrency(p.valor_total || 0)}`);
+          partes.push(`- Valor Total: ${formatCurrency(p.valor_total || 0)}`);
           
           return partes.join(' ');
         })
