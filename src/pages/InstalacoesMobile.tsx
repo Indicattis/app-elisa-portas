@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { CalendarioSemanalMobile } from "@/components/instalacoes/CalendarioSemanalMobile";
 import { CalendarioMensalDesktop } from "@/components/instalacoes/CalendarioMensalDesktop";
+import { CalendarioSemanalDesktop } from "@/components/instalacoes/CalendarioSemanalDesktop";
 import { EquipesSlider } from "@/components/instalacoes/EquipesSlider";
 import { useInstalacoes } from "@/hooks/useInstalacoes";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -39,6 +40,7 @@ export default function InstalacoesMobile() {
   const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [equipeSelecionadaId, setEquipeSelecionadaId] = useState<string | null>(null);
+  const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
   const { instalacoes, isLoading, deleteInstalacao, updateInstalacao, isUpdating } = useInstalacoes(currentDate);
   const { prepararDadosPDF } = useInstalacoesPDFData();
   
@@ -125,7 +127,7 @@ export default function InstalacoesMobile() {
       instalacoesFiltradas,
       equipeSelecionadaId,
       currentDate,
-      isMobile ? 'semanal' : 'mensal'
+      isMobile ? 'semanal' : tipoVisualizacao
     );
     
     baixarCronogramaInstalacoesPDF(dadosPDF);
@@ -150,6 +152,26 @@ export default function InstalacoesMobile() {
           </div>
           
           <div className="flex gap-2">
+            {!isMobile && (
+              <div className="flex gap-1 border rounded-md p-1 mr-2">
+                <Button
+                  variant={tipoVisualizacao === 'semanal' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setTipoVisualizacao('semanal')}
+                  className="h-8 text-xs"
+                >
+                  Semana
+                </Button>
+                <Button
+                  variant={tipoVisualizacao === 'mensal' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setTipoVisualizacao('mensal')}
+                  className="h-8 text-xs"
+                >
+                  Mês
+                </Button>
+              </div>
+            )}
             <Button
               onClick={handleBaixarPDF}
               variant="outline"
@@ -196,15 +218,31 @@ export default function InstalacoesMobile() {
                 onDelete={handleDelete}
               />
             ) : (
-              <CalendarioMensalDesktop
-                currentMonth={currentDate}
-                instalacoes={instalacoesFiltradas}
-                onMonthChange={setCurrentDate}
-                onUpdateInstalacao={handleUpdateInstalacao}
-                onDayClick={handleDayClick}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
+              <>
+                {tipoVisualizacao === 'semanal' ? (
+                  <CalendarioSemanalDesktop
+                    startDate={currentDate}
+                    instalacoes={instalacoesFiltradas}
+                    onPreviousWeek={handlePreviousWeek}
+                    onNextWeek={handleNextWeek}
+                    onToday={handleToday}
+                    onUpdateInstalacao={handleUpdateInstalacao}
+                    onDayClick={handleDayClick}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ) : (
+                  <CalendarioMensalDesktop
+                    currentMonth={currentDate}
+                    instalacoes={instalacoesFiltradas}
+                    onMonthChange={setCurrentDate}
+                    onUpdateInstalacao={handleUpdateInstalacao}
+                    onDayClick={handleDayClick}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                )}
+              </>
             )}
           </>
         )}
