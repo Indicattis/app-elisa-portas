@@ -45,6 +45,7 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<InstalacaoFormData>({
     resolver: zodResolver(instalacaoSchema),
@@ -56,6 +57,13 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
   useEffect(() => {
     loadEquipes();
   }, []);
+
+  // Atualizar valores do formulário quando initialData mudar
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
 
   const loadEquipes = async () => {
