@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DepositoCaixa, CATEGORIAS_DEPOSITO } from "@/types/caixa";
@@ -105,11 +105,16 @@ export function CalendarioMensalCaixa({
                   )}
                   onClick={() => onAddDeposito(day)}
                 >
-                  <div className={cn(
-                    "text-sm font-medium mb-1",
-                    isDayToday && "text-primary font-bold"
-                  )}>
-                    {format(day, 'd')}
+                  <div className="flex items-center justify-between mb-1">
+                    <div className={cn(
+                      "text-sm font-medium",
+                      isDayToday && "text-primary font-bold"
+                    )}>
+                      {format(day, 'd')}
+                    </div>
+                    {depositosDoDia.length === 0 && isCurrentMonth && (
+                      <AlertCircle className="h-3 w-3 text-destructive" />
+                    )}
                   </div>
                   
                   <div className="space-y-1">
@@ -118,16 +123,19 @@ export function CalendarioMensalCaixa({
                       return (
                         <div
                           key={deposito.id}
-                          className="text-xs p-1 rounded hover:opacity-80 transition-opacity"
+                          className="flex items-center gap-1.5 text-xs p-1 rounded hover:opacity-80 transition-opacity cursor-pointer"
                           style={{ 
-                            backgroundColor: `${categoria.color}20`,
-                            borderLeft: `3px solid ${categoria.color}`
+                            backgroundColor: `${categoria.color}20`
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
                             onEditDeposito(deposito);
                           }}
                         >
+                          <div 
+                            className="w-2 h-2 rounded-full flex-shrink-0" 
+                            style={{ backgroundColor: categoria.color }}
+                          />
                           <div className="font-medium truncate" style={{ color: categoria.color }}>
                             {formatCurrency(Number(deposito.valor))}
                           </div>

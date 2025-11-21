@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DepositoCaixa } from "@/types/caixa";
@@ -54,7 +54,10 @@ export function DiaDepositoCard({ date, depositos, onAddDeposito, onEditDeposito
             </div>
           </>
         ) : (
-          <div className="text-center py-4 text-sm text-muted-foreground">Sem depósitos</div>
+          <div className="flex flex-col items-center justify-center py-4 gap-2">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+            <span className="text-xs text-muted-foreground">Sem depósitos</span>
+          </div>
         )}
       </CardContent>
     </Card>
