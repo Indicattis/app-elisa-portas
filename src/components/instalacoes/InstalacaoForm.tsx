@@ -62,7 +62,7 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
     try {
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, numero_venda, cliente_nome, data_venda")
+        .select("id, cliente_nome, data_venda")
         .order("data_venda", { ascending: false })
         .limit(100);
 
@@ -162,7 +162,7 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
           <SelectContent>
             {vendas.map((venda) => (
               <SelectItem key={venda.id} value={venda.id}>
-                #{venda.numero_venda} - {venda.cliente_nome}
+                {venda.cliente_nome} - {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
               </SelectItem>
             ))}
           </SelectContent>
@@ -236,14 +236,14 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
       <div className="space-y-2">
         <Label htmlFor="equipe_id">Equipe de Instalação</Label>
         <Select
-          value={watch("equipe_id") || ""}
-          onValueChange={(value) => setValue("equipe_id", value || undefined)}
+          value={watch("equipe_id") || "none"}
+          onValueChange={(value) => setValue("equipe_id", value === "none" ? undefined : value)}
         >
           <SelectTrigger className="text-base">
             <SelectValue placeholder={loadingEquipes ? "Carregando..." : "Selecione uma equipe"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Sem equipe</SelectItem>
+            <SelectItem value="none">Sem equipe</SelectItem>
             {equipes.map((equipe) => (
               <SelectItem key={equipe.id} value={equipe.id}>
                 <div className="flex items-center gap-2">
