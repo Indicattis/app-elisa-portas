@@ -3,7 +3,7 @@ import { useChamadosSuporte } from "@/hooks/useChamadosSuporte";
 import { ChamadosFilters } from "@/types/suporte";
 import { ChamadosIndicadores } from "@/components/suporte/ChamadosIndicadores";
 import { ChamadosFilters as FiltersComponent } from "@/components/suporte/ChamadosFilters";
-import { ChamadoCard } from "@/components/suporte/ChamadoCard";
+import { ChamadosTable } from "@/components/suporte/ChamadosTable";
 
 export default function Suporte() {
   const [filters, setFilters] = useState<ChamadosFilters>({});
@@ -21,7 +21,7 @@ export default function Suporte() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-4">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Suporte</h1>
@@ -33,23 +33,18 @@ export default function Suporte() {
       {/* Filtros */}
       <FiltersComponent filters={filters} onFiltersChange={setFilters} />
 
-      {/* Lista de Chamados */}
-      <div className="space-y-4">
-        {chamados.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Nenhum chamado encontrado</p>
-          </div>
-        ) : (
-          chamados.map((chamado) => (
-            <ChamadoCard
-              key={chamado.id}
-              chamado={chamado}
-              onUpdateNotas={(data) => updateNotas.mutate(data)}
-              onUpdateStatus={(data) => updateStatus.mutate(data)}
-            />
-          ))
-        )}
-      </div>
+      {/* Tabela de Chamados */}
+      {chamados.length === 0 ? (
+        <div className="text-center py-12 border rounded-lg">
+          <p className="text-muted-foreground">Nenhum chamado encontrado</p>
+        </div>
+      ) : (
+        <ChamadosTable
+          chamados={chamados}
+          onUpdateNotas={(data) => updateNotas.mutate(data)}
+          onUpdateStatus={(data) => updateStatus.mutate(data)}
+        />
+      )}
     </div>
   );
 }
