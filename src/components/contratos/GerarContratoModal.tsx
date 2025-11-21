@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useContratosTemplates } from "@/hooks/useContratosTemplates";
 import { useVendas } from "@/hooks/useVendas";
 import { useContratoVariaveis, substituirVariaveis } from "@/hooks/useContratoVariaveis";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { generateContratoPDF } from "@/utils/contratoPDFGenerator";
 import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,12 +25,13 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
   const { templates } = useContratosTemplates();
   const { vendas } = useVendas();
   const { data: variaveis, isLoading: isLoadingVariaveis } = useContratoVariaveis(vendaId);
+  const { settings: companySettings } = useCompanySettings();
 
   const templatesAtivos = templates?.filter(t => t.ativo) || [];
   const templateSelecionado = templatesAtivos.find(t => t.id === templateId);
 
   const handleGerar = () => {
-    if (!vendaId || !templateId || !templateSelecionado || !variaveis) {
+    if (!vendaId || !templateId || !templateSelecionado || !variaveis || !companySettings) {
       toast.error('Selecione uma venda e um template');
       return;
     }
@@ -38,7 +40,8 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
       generateContratoPDF({
         template: templateSelecionado.conteudo,
         variaveis,
-        numeroContrato: `CONT-${variaveis.venda_numero}-${Date.now()}`
+        numeroContrato: `CONT-${variaveis.venda_numero}-${Date.now()}`,
+        companySettings
       });
       
       toast.success('Contrato gerado com sucesso!');
@@ -126,7 +129,7 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
           </Button>
           <Button 
             onClick={handleGerar} 
-            disabled={!vendaId || !templateId || isLoadingVariaveis}
+            disabled={!vendaId || !templateId || isLoadingVariaveis || !companySettings}
           >
             <FileDown className="h-4 w-4 mr-2" />
             Gerar PDF
