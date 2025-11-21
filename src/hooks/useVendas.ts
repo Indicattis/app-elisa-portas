@@ -33,6 +33,7 @@ export interface VendaFormData {
   cliente_nome: string;
   cliente_telefone: string;
   cliente_email?: string;
+  cpf_cliente?: string;
   estado: string;
   cidade: string;
   cep?: string;
@@ -168,6 +169,7 @@ export function useVendas() {
       // 4. Criar venda com valores calculados
       const vendaPayload = {
         ...vendaData,
+        cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
         valor_venda: valor_total_venda, // Soma de todos os produtos + frete

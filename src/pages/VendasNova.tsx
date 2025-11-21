@@ -44,6 +44,7 @@ export default function VendasNova() {
     cliente_nome: '',
     cliente_telefone: '',
     cliente_email: '',
+    cpf_cliente: '',
     estado: '',
     cidade: '',
     cep: '',
@@ -291,6 +292,16 @@ export default function VendasNova() {
       return;
     }
 
+    // Validar CPF
+    if (formData.cpf_cliente && formData.cpf_cliente.replace(/\D/g, '').length !== 11) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'CPF inválido. Digite um CPF válido com 11 dígitos.'
+      });
+      return;
+    }
+
     // Validar desconto
     const validacao = validarDesconto(
       portas,
@@ -374,7 +385,7 @@ export default function VendasNova() {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Dados do Cliente</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="cliente_nome" className="text-sm">Nome *</Label>
               <Input
@@ -405,6 +416,26 @@ export default function VendasNova() {
                 value={formData.cliente_email}
                 onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
                 placeholder="email@exemplo.com"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cpf_cliente" className="text-sm">CPF *</Label>
+              <Input
+                id="cpf_cliente"
+                value={formData.cpf_cliente}
+                onChange={(e) => {
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length <= 11) {
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                  }
+                  setFormData(prev => ({ ...prev, cpf_cliente: value }));
+                }}
+                placeholder="000.000.000-00"
+                maxLength={14}
+                required
               />
             </div>
           </CardContent>
