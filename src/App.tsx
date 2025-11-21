@@ -76,6 +76,7 @@ import Vendas from "./pages/Vendas";
 import VendasNova from "./pages/VendasNova";
 import ContratoVendas from "./pages/ContratoVendas";
 import ContratoTemplates from "./pages/ContratoTemplates";
+import Suporte from "./pages/Suporte";
 import Fornecedores from "./pages/Fornecedores";
 import RequisicoesCompra from "./pages/RequisicoesCompra";
 import Estoque from "./pages/Estoque";
@@ -464,6 +465,16 @@ const App = () => (
                     <ProtectedRoute routeKey="vendas">
                       <DashboardLayout>
                         <ContratoTemplates />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vendas/suporte"
+                  element={
+                    <ProtectedRoute routeKey="vendas">
+                      <DashboardLayout>
+                        <Suporte />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
