@@ -9,6 +9,12 @@ interface EquipeInstalacao {
   cor: string;
   responsavel_id?: string;
   responsavel_nome?: string;
+  responsavel_foto?: string;
+  membros?: Array<{
+    id: string;
+    nome: string;
+    foto_perfil_url?: string;
+  }>;
   created_at: string;
   updated_at: string;
 }
@@ -24,7 +30,8 @@ export function useEquipesInstalacao() {
         .select(`
           *,
           responsavel:responsavel_id (
-            nome
+            nome,
+            foto_perfil_url
           )
         `)
         .eq('ativa', true)
@@ -32,13 +39,38 @@ export function useEquipesInstalacao() {
 
       if (error) throw error;
       
-      // Mapear os dados para incluir o nome do responsável
-      const equipesComResponsavel = (data || []).map((equipe: any) => ({
-        ...equipe,
-        responsavel_nome: equipe.responsavel?.nome
+      // Buscar membros de cada equipe
+      const equipesComDetalhes = await Promise.all((data || []).map(async (equipe: any) => {
+        const { data: membrosData } = await supabase
+          .from('equipes_instalacao_membros')
+          .select(`
+            user_id,
+            admin_users!inner (
+              id,
+              nome,
+              foto_perfil_url
+            )
+          `)
+          .eq('equipe_id', equipe.id);
+
+        const membros = (membrosData || [])
+          .map((m: any) => ({
+            id: m.admin_users.id,
+            nome: m.admin_users.nome,
+            foto_perfil_url: m.admin_users.foto_perfil_url
+          }))
+          // Filtrar o responsável dos membros para não duplicar
+          .filter((m: any) => m.id !== equipe.responsavel_id);
+
+        return {
+          ...equipe,
+          responsavel_nome: equipe.responsavel?.nome,
+          responsavel_foto: equipe.responsavel?.foto_perfil_url,
+          membros
+        };
       }));
       
-      setEquipes(equipesComResponsavel);
+      setEquipes(equipesComDetalhes);
     } catch (error) {
       console.error('Erro ao buscar equipes:', error);
       toast.error('Erro ao carregar equipes de instalação');
