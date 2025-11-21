@@ -32,17 +32,6 @@ interface ContratosListProps {
 export function ContratosList({ vendaId }: ContratosListProps) {
   const { contratos, isLoading, deleteContrato } = useContratosVendas({ vendaId });
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      pendente_assinatura: { variant: 'secondary' as const, label: 'Pendente' },
-      assinado: { variant: 'default' as const, label: 'Assinado' },
-      cancelado: { variant: 'destructive' as const, label: 'Cancelado' },
-    };
-    
-    const config = variants[status as keyof typeof variants] || variants.pendente_assinatura;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -65,13 +54,12 @@ export function ContratosList({ vendaId }: ContratosListProps) {
     <Card>
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Arquivo</TableHead>
-            <TableHead>Template</TableHead>
-            <TableHead>Data Upload</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
+            <TableRow>
+              <TableHead>Arquivo</TableHead>
+              <TableHead>Template</TableHead>
+              <TableHead>Data Upload</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
         </TableHeader>
         <TableBody>
           {contratos.map((contrato) => (
@@ -84,9 +72,6 @@ export function ContratosList({ vendaId }: ContratosListProps) {
               </TableCell>
               <TableCell>
                 {format(new Date(contrato.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-              </TableCell>
-              <TableCell>
-                {getStatusBadge(contrato.status)}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">

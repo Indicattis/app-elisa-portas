@@ -38,28 +38,6 @@ export default function ContratoVendas() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      pendente_assinatura: "secondary",
-      assinado: "default",
-      cancelado: "destructive"
-    } as const;
-
-    const labels = {
-      pendente_assinatura: "Pendente",
-      assinado: "Assinado",
-      cancelado: "Cancelado"
-    };
-
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || "default"}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    );
-  };
-
-  const contratosPendentes = contratos?.filter(c => c.status === 'pendente_assinatura').length || 0;
-  const contratosAssinados = contratos?.filter(c => c.status === 'assinado').length || 0;
 
   if (isLoading) {
     return (
@@ -93,29 +71,7 @@ export default function ContratoVendas() {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Contratos Pendentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{contratosPendentes}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Contratos Assinados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{contratosAssinados}</div>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -124,6 +80,23 @@ export default function ContratoVendas() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{contratos?.length || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Contratos este Mês
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {contratos?.filter(c => {
+                const date = new Date(c.created_at);
+                const now = new Date();
+                return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+              }).length || 0}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -150,7 +123,6 @@ export default function ContratoVendas() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Arquivo</TableHead>
                   <TableHead>Template</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -169,9 +141,6 @@ export default function ContratoVendas() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {contrato.template?.nome || 'Manual'}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(contrato.status)}
                     </TableCell>
                     <TableCell>
                       {formatDate(contrato.created_at)}

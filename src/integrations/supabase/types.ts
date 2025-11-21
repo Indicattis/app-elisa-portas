@@ -610,7 +610,6 @@ export type Database = {
           id: string
           nome_arquivo: string
           observacoes: string | null
-          status: string | null
           tamanho_arquivo: number
           template_id: string | null
           updated_at: string | null
@@ -623,7 +622,6 @@ export type Database = {
           id?: string
           nome_arquivo: string
           observacoes?: string | null
-          status?: string | null
           tamanho_arquivo: number
           template_id?: string | null
           updated_at?: string | null
@@ -636,7 +634,6 @@ export type Database = {
           id?: string
           nome_arquivo?: string
           observacoes?: string | null
-          status?: string | null
           tamanho_arquivo?: number
           template_id?: string | null
           updated_at?: string | null

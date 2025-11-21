@@ -17,7 +17,6 @@ export interface ContratoVenda {
   arquivo_url: string;
   nome_arquivo: string;
   tamanho_arquivo: number;
-  status: 'pendente_assinatura' | 'assinado' | 'cancelado';
   observacoes?: string;
   uploaded_by: string;
   created_at: string;

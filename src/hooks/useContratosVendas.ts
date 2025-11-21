@@ -110,24 +110,6 @@ export function useContratosVendas(filters: ContratosVendasFilters = {}) {
     }
   });
 
-  const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: ContratoVenda['status'] }) => {
-      const { error } = await supabase
-        .from('contratos_vendas')
-        .update({ status })
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contratos-vendas'] });
-      toast.success('Status atualizado com sucesso');
-    },
-    onError: (error) => {
-      console.error('Erro ao atualizar status:', error);
-      toast.error('Erro ao atualizar status');
-    }
-  });
 
   const deleteContrato = useMutation({
     mutationFn: async (id: string) => {
@@ -170,7 +152,6 @@ export function useContratosVendas(filters: ContratosVendasFilters = {}) {
     isLoading,
     uploadContrato: uploadContrato.mutate,
     isUploading: uploadContrato.isPending,
-    updateStatus: updateStatus.mutate,
     deleteContrato: deleteContrato.mutate,
     isDeleting: deleteContrato.isPending
   };
