@@ -17,6 +17,8 @@ export default function Caixa() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDeposito, setSelectedDeposito] = useState<DepositoCaixa | null>(null);
 
+  console.log('🔍 Caixa - viewMode:', viewMode, 'currentDate:', currentDate);
+
   const { 
     depositos, 
     loading, 
@@ -27,6 +29,8 @@ export default function Caixa() {
     viewMode === 'month' ? startOfMonth(currentDate) : currentDate,
     viewMode
   );
+
+  console.log('📊 Caixa - depositos:', depositos.length, 'loading:', loading);
 
   const handleAddDeposito = (date: Date) => {
     setSelectedDate(date);

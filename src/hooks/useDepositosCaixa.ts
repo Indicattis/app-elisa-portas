@@ -21,6 +21,12 @@ export function useDepositosCaixa(inicioRange: Date, viewMode: 'week' | 'month' 
       const inicioFormatado = format(inicioRange, 'yyyy-MM-dd');
       const fimFormatado = format(fimRange, 'yyyy-MM-dd');
       
+      console.log('🔍 useDepositosCaixa - Buscando depósitos:', {
+        viewMode,
+        inicioRange: inicioFormatado,
+        fimRange: fimFormatado
+      });
+      
       const { data, error } = await supabase
         .from('depositos_caixa')
         .select('*')
@@ -29,6 +35,8 @@ export function useDepositosCaixa(inicioRange: Date, viewMode: 'week' | 'month' 
         .order('data_deposito', { ascending: true });
 
       if (error) throw error;
+      
+      console.log('✅ useDepositosCaixa - Depósitos carregados:', data?.length || 0);
       
       setDepositos((data || []) as DepositoCaixa[]);
     } catch (error) {
