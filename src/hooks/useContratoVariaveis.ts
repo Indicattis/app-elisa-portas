@@ -54,8 +54,11 @@ export function useContratoVariaveis(vendaId: string) {
             partes.push(`- Cor: ${p.cor.nome}`);
           }
           
-          // Valor total do item
-          partes.push(`- Valor Total: ${formatCurrency(p.valor_total || 0)}`);
+          // Valor total do item (incluindo instalação se for porta_enrolar)
+          const valorTotal = p.tipo_produto === 'porta_enrolar' 
+            ? (p.valor_total || 0) + (p.valor_instalacao || 0)
+            : (p.valor_total || 0);
+          partes.push(`- Valor Total: ${formatCurrency(valorTotal)}`);
           
           return partes.join(' ');
         })
