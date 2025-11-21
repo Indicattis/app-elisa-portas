@@ -25,8 +25,7 @@ export function useContratosVendas(vendaId?: string) {
       
       if (error) throw error;
       return data as ContratoVenda[];
-    },
-    enabled: !!vendaId
+    }
   });
 
   const uploadContrato = useMutation({
