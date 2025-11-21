@@ -190,7 +190,7 @@ export default function InstalacoesMobile() {
                   endereco: instalacaoToEdit.endereco || "",
                   cep: instalacaoToEdit.cep || "",
                   descricao: instalacaoToEdit.descricao || "",
-                  equipe_id: instalacaoToEdit.equipe_id || undefined,
+                  equipe_id: instalacaoToEdit.equipe_id || "",
                 }}
                 isLoading={isUpdating}
               />
