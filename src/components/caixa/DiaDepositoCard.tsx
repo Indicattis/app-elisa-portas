@@ -13,22 +13,15 @@ interface DiaDepositoCardProps {
   onEditDeposito: (deposito: DepositoCaixa) => void;
 }
 
-export function DiaDepositoCard({
-  date,
-  depositos,
-  onAddDeposito,
-  onEditDeposito
-}: DiaDepositoCardProps) {
-  const depositosDoDia = depositos.filter(d => 
-    isSameDay(new Date(d.data_deposito), date)
-  );
+export function DiaDepositoCard({ date, depositos, onAddDeposito, onEditDeposito }: DiaDepositoCardProps) {
+  const depositosDoDia = depositos.filter((d) => isSameDay(new Date(d.data_deposito), date));
 
   const totalDia = depositosDoDia.reduce((sum, dep) => sum + Number(dep.valor), 0);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -37,19 +30,10 @@ export function DiaDepositoCard({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold">
-              {format(date, "EEE", { locale: ptBR }).toUpperCase()}
-            </div>
-            <div className="text-xs text-muted-foreground font-normal">
-              {format(date, "dd/MM")}
-            </div>
+            <div className="text-xs font-bold">{format(date, "EEE", { locale: ptBR }).toUpperCase()}</div>
+            <div className="text-xs text-muted-foreground font-normal">{format(date, "dd/MM")}</div>
           </div>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-7 w-7"
-            onClick={() => onAddDeposito(date)}
-          >
+          <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => onAddDeposito(date)}>
             <Plus className="h-4 w-4" />
           </Button>
         </CardTitle>
@@ -59,11 +43,7 @@ export function DiaDepositoCard({
           <>
             <div className="space-y-1">
               {depositosDoDia.map((deposito) => (
-                <DepositoLinha
-                  key={deposito.id}
-                  deposito={deposito}
-                  onClick={() => onEditDeposito(deposito)}
-                />
+                <DepositoLinha key={deposito.id} deposito={deposito} onClick={() => onEditDeposito(deposito)} />
               ))}
             </div>
             <div className="pt-2 border-t">
@@ -74,9 +54,7 @@ export function DiaDepositoCard({
             </div>
           </>
         ) : (
-          <div className="text-center py-4 text-sm text-muted-foreground">
-            Sem depósitos
-          </div>
+          <div className="text-center py-4 text-sm text-muted-foreground">Sem depósitos</div>
         )}
       </CardContent>
     </Card>
