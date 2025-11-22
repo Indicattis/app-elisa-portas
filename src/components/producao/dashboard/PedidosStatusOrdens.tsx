@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePedidosComOrdens } from "@/hooks/usePedidosComOrdens";
-import { Hammer, Package, Boxes, Sparkles, CheckSquare, User } from "lucide-react";
+import { Hammer, Package, Boxes, Sparkles, CheckSquare, User, AlertCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -125,7 +125,9 @@ export function PedidosStatusOrdens() {
                                 <User className="h-3 w-3" />
                               </div>
                             ) : (
-                              <div className="h-6 w-6 rounded-full border-2 border-dashed border-gray-300" />
+                              <div className="h-6 w-6 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                              </div>
                             )}
                           </div>
                         ) : (
