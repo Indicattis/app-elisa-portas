@@ -4488,6 +4488,7 @@ export type Database = {
       get_pedidos_com_status_ordens: {
         Args: never
         Returns: {
+          data_carregamento: string
           data_entrega: string
           etapa_atual: string
           nome_cliente: string

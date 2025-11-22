@@ -90,6 +90,7 @@ export function PedidosStatusOrdens() {
                 <TableHead className="h-6 text-[10px] py-0.5 px-2">Pedido</TableHead>
                 <TableHead className="h-6 text-[10px] py-0.5 px-2">Cliente</TableHead>
                 <TableHead className="h-6 text-[10px] py-0.5 px-2">Entrega</TableHead>
+                <TableHead className="h-6 text-[10px] py-0.5 px-2">Carregamento</TableHead>
                 <TableHead className="h-6 text-[10px] py-0.5 px-2">Etapa</TableHead>
                 {Object.entries(ordemLabels).map(([key, label]) => (
                   <TableHead key={key} className="text-center h-6 text-[10px] py-0.5 px-1">
@@ -109,6 +110,9 @@ export function PedidosStatusOrdens() {
                   </TableCell>
                   <TableCell className="text-[11px] py-1 px-2">
                     {pedido.data_entrega ? new Date(pedido.data_entrega).toLocaleDateString('pt-BR') : '-'}
+                  </TableCell>
+                  <TableCell className="text-[11px] py-1 px-2">
+                    {pedido.data_carregamento ? new Date(pedido.data_carregamento).toLocaleDateString('pt-BR') : '-'}
                   </TableCell>
                   <TableCell className="py-1 px-2">
                     <Badge variant="outline" className="text-[8px] px-1 py-0">
