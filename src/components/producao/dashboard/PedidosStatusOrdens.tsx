@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePedidosComOrdens } from "@/hooks/usePedidosComOrdens";
-import { Hammer, Package, Boxes, Sparkles, CheckSquare, User, AlertCircle } from "lucide-react";
+import { Hammer, Package, Boxes, Sparkles, CheckSquare, User, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,6 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+const ITEMS_PER_PAGE = 11;
 
 const ordemIcons = {
   soldagem: Hammer,
@@ -30,6 +34,12 @@ const ordemLabels = {
 
 export function PedidosStatusOrdens() {
   const { data: pedidos = [], isLoading } = usePedidosComOrdens();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(pedidos.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentPedidos = pedidos.slice(startIndex, endIndex);
 
   if (isLoading) {
     return (
@@ -100,7 +110,7 @@ export function PedidosStatusOrdens() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pedidos.map((pedido) => (
+              {currentPedidos.map((pedido) => (
                 <TableRow key={pedido.numero_pedido} className="border-b last:border-0">
                   <TableCell className="font-medium text-[11px] py-1 px-2">
                     {pedido.numero_pedido}
@@ -153,6 +163,39 @@ export function PedidosStatusOrdens() {
             </TableBody>
           </Table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-2 py-2 border-t mt-2">
+            <div className="text-[10px] text-muted-foreground">
+              Mostrando {startIndex + 1}-{Math.min(endIndex, pedidos.length)} de {pedidos.length} pedidos
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-7 text-[10px]"
+              >
+                <ChevronLeft className="h-3 w-3 mr-1" />
+                Anterior
+              </Button>
+              <span className="text-[10px] text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="h-7 text-[10px]"
+              >
+                Próximo
+                <ChevronRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

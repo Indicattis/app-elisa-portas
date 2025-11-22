@@ -16,6 +16,9 @@ export default function ProducaoControle() {
       {/* Indicadores */}
       <IndicadoresProducao />
 
+      {/* Pedidos com Ordens Pendentes */}
+      <PedidosStatusOrdens />
+
       {/* Grid de Métricas - Rankings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Ranking de Materiais */}
@@ -24,9 +27,6 @@ export default function ProducaoControle() {
         {/* Cores Pintadas Hoje */}
         <CoresPintadasHoje />
       </div>
-
-      {/* Pedidos com Ordens Pendentes - Linha separada */}
-      <PedidosStatusOrdens />
     </div>
   );
 }

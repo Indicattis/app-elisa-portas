@@ -4468,6 +4468,15 @@ export type Database = {
           quantidade_pecas: number
         }[]
       }
+      get_materiais_ranking_completo: {
+        Args: never
+        Returns: {
+          item: string
+          metragem_m2: number
+          ocorrencias: number
+          total_quantidade: number
+        }[]
+      }
       get_materiais_ranking_metragem: {
         Args: never
         Returns: {
