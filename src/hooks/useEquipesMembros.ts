@@ -41,20 +41,23 @@ export function useEquipesMembros(equipeId?: string) {
         const userIds = [...new Set(data.map(m => m.user_id))];
         const { data: usersData } = await supabase
           .from('admin_users')
-          .select('user_id, nome, email, foto_perfil_url')
+          .select('id, user_id, nome, email, foto_perfil_url')
           .in('user_id', userIds);
 
-        const membrosComUsuarios = data.map(membro => ({
-          ...membro,
-          user: usersData?.find(u => u.user_id === membro.user_id)
-            ? {
-                id: usersData.find(u => u.user_id === membro.user_id)!.user_id,
-                nome: usersData.find(u => u.user_id === membro.user_id)!.nome,
-                email: usersData.find(u => u.user_id === membro.user_id)!.email,
-                foto_perfil_url: usersData.find(u => u.user_id === membro.user_id)?.foto_perfil_url
-              }
-            : undefined
-        }));
+        const membrosComUsuarios = data.map(membro => {
+          const usuario = usersData?.find(u => u.user_id === membro.user_id);
+          return {
+            ...membro,
+            user: usuario
+              ? {
+                  id: usuario.id,
+                  nome: usuario.nome,
+                  email: usuario.email,
+                  foto_perfil_url: usuario.foto_perfil_url
+                }
+              : undefined
+          };
+        });
 
         setMembros(membrosComUsuarios);
       } else {
