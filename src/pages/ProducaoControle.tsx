@@ -1,6 +1,8 @@
 import { PortasEnrolarCounter } from "@/components/producao/dashboard/PortasEnrolarCounter";
 import { MateriaisRanking } from "@/components/producao/dashboard/MateriaisRanking";
 import { PedidosStatusOrdens } from "@/components/producao/dashboard/PedidosStatusOrdens";
+import { IndicadoresProducao } from "@/components/producao/dashboard/IndicadoresProducao";
+import { CoresPintadasHoje } from "@/components/producao/dashboard/CoresPintadasHoje";
 
 export default function ProducaoControle() {
   return (
@@ -12,16 +14,22 @@ export default function ProducaoControle() {
         </p>
       </div>
 
+      {/* Novos Indicadores */}
+      <IndicadoresProducao />
+
       {/* KPI: Portas de Enrolar Produzidas Hoje */}
       <PortasEnrolarCounter />
 
       {/* Grid de Métricas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ranking de Materiais */}
         <MateriaisRanking />
 
         {/* Pedidos com Ordens Pendentes */}
         <PedidosStatusOrdens />
+
+        {/* Cores Pintadas Hoje */}
+        <CoresPintadasHoje />
       </div>
     </div>
   );
