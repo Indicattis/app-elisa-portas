@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, Clock, UserCheck, Timer, AlertTriangle, FileText } from "lucide-react";
+import { Package, Clock, UserCheck, Timer, AlertTriangle, FileText, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
@@ -271,6 +271,7 @@ interface ProducaoKanbanProps {
   onCapturarOrdem?: (ordemId: string) => void;
   isCapturing?: boolean;
   tipoOrdem: TipoOrdem;
+  onRefresh?: () => void;
 }
 
 export function ProducaoKanban({
@@ -280,6 +281,7 @@ export function ProducaoKanban({
   onCapturarOrdem,
   isCapturing = false,
   tipoOrdem,
+  onRefresh,
 }: ProducaoKanbanProps) {
 
   const renderSkeletons = () => (
@@ -302,12 +304,20 @@ export function ProducaoKanban({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Clock className="h-5 w-5 text-orange-500" />
-          Ordens Pendentes
-        </h2>
-        <Badge variant="secondary">{isLoading ? '...' : ordensAFazer.length}</Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Clock className="h-5 w-5 text-orange-500" />
+            Ordens Pendentes
+          </h2>
+          <Badge variant="secondary">{isLoading ? '...' : ordensAFazer.length}</Badge>
+        </div>
+        {onRefresh && (
+          <Button onClick={onRefresh} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+        )}
       </div>
 
       {/* Lista de Ordens */}

@@ -54,33 +54,19 @@ export default function ProducaoPintura() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-orange-500/10">
-            <Paintbrush className="h-6 w-6 text-orange-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Produção - Pintura</h1>
-            <p className="text-muted-foreground">
-              Gerencie as ordens de pintura e controle o forno
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button onClick={handleRefresh} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
-          <Button onClick={() => setConcluidasOpen(true)} variant="outline" size="sm">
-            <History className="h-4 w-4 mr-2" />
-            Concluídas ({ordensProntas.length})
-          </Button>
-          <Button onClick={() => setNovoInicioOpen(true)} className="gap-2">
-            <Flame className="h-4 w-4" />
-            Registrar Início
-          </Button>
-        </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
+        <Button onClick={() => setConcluidasOpen(true)} variant="outline" size="sm">
+          <History className="h-4 w-4 mr-2" />
+          Concluídas ({ordensProntas.length})
+        </Button>
+        <Button onClick={() => setNovoInicioOpen(true)} className="gap-2">
+          <Flame className="h-4 w-4" />
+          Registrar Início
+        </Button>
       </div>
 
       <Tabs defaultValue="ordens" className="space-y-6">
