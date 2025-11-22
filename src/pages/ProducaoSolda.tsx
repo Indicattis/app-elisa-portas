@@ -34,12 +34,10 @@ export default function ProducaoSolda() {
   const {
     ordens,
     ordensAFazer,
-    ordensConcluidas,
     isLoading,
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
-    enviarParaHistorico,
   } = useOrdemProducao('soldagem', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -60,11 +58,6 @@ export default function ProducaoSolda() {
 
   const handleConcluirOrdem = (ordemId: string) => {
     concluirOrdem.mutate(ordemId);
-    setSheetOpen(false);
-  };
-
-  const handleEnviarParaHistorico = (ordemId: string) => {
-    enviarParaHistorico.mutate(ordemId);
     setSheetOpen(false);
   };
 
@@ -94,14 +87,11 @@ export default function ProducaoSolda() {
 
       <ProducaoKanban
         ordensAFazer={ordensAFazer}
-        ordensConcluidas={ordensConcluidas}
         isLoading={isLoading}
         onOrdemClick={handleOrdemClick}
         onCapturarOrdem={handleCapturarOrdem}
         isCapturing={capturarOrdem.isPending}
         tipoOrdem="soldagem"
-        onEnviarParaHistorico={handleEnviarParaHistorico}
-        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <OrdemDetalhesSheet
@@ -114,8 +104,6 @@ export default function ProducaoSolda() {
         onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
-        onEnviarParaHistorico={handleEnviarParaHistorico}
-        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

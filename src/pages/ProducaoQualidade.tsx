@@ -41,12 +41,10 @@ export default function ProducaoQualidade() {
   const {
     ordens,
     ordensAFazer,
-    ordensConcluidas,
     isLoading,
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
-    enviarParaHistorico,
   } = useOrdemProducao('qualidade', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -70,10 +68,6 @@ export default function ProducaoQualidade() {
     setSheetOpen(false);
   };
 
-  const handleEnviarParaHistorico = async (ordemId: string) => {
-    await enviarParaHistorico.mutateAsync(ordemId);
-  };
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['ordens-producao', 'qualidade'] });
   };
@@ -93,14 +87,11 @@ export default function ProducaoQualidade() {
 
       <ProducaoKanban
         ordensAFazer={ordensAFazer}
-        ordensConcluidas={ordensConcluidas}
         isLoading={isLoading}
         onOrdemClick={handleOrdemClick}
         onCapturarOrdem={handleCapturarOrdem}
         isCapturing={capturarOrdem.isPending}
         tipoOrdem="qualidade"
-        onEnviarParaHistorico={handleEnviarParaHistorico}
-        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <OrdemDetalhesSheet
@@ -111,10 +102,8 @@ export default function ProducaoQualidade() {
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
         onCapturarOrdem={handleCapturarOrdem}
-        onEnviarParaHistorico={handleEnviarParaHistorico}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
-        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

@@ -34,12 +34,10 @@ export default function ProducaoPerfiladeira() {
   const {
     ordens,
     ordensAFazer,
-    ordensConcluidas,
     isLoading,
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
-    enviarParaHistorico,
   } = useOrdemProducao('perfiladeira', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -61,10 +59,6 @@ export default function ProducaoPerfiladeira() {
   const handleConcluirOrdem = (ordemId: string) => {
     concluirOrdem.mutate(ordemId);
     setSheetOpen(false);
-  };
-
-  const handleEnviarParaHistorico = async (ordemId: string) => {
-    await enviarParaHistorico.mutateAsync(ordemId);
   };
 
   const handleRefresh = () => {
@@ -93,14 +87,11 @@ export default function ProducaoPerfiladeira() {
 
       <ProducaoKanban
         ordensAFazer={ordensAFazer}
-        ordensConcluidas={ordensConcluidas}
         isLoading={isLoading}
         onOrdemClick={handleOrdemClick}
         onCapturarOrdem={handleCapturarOrdem}
         isCapturing={capturarOrdem.isPending}
         tipoOrdem="perfiladeira"
-        onEnviarParaHistorico={handleEnviarParaHistorico}
-        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <OrdemDetalhesSheet
@@ -111,10 +102,8 @@ export default function ProducaoPerfiladeira() {
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
         onCapturarOrdem={handleCapturarOrdem}
-        onEnviarParaHistorico={handleEnviarParaHistorico}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
-        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

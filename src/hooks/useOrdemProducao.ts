@@ -291,7 +291,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
-  // Concluir ordem
+  // Concluir ordem e enviar diretamente para histórico
   const concluirOrdem = useMutation({
     mutationFn: async (ordemId: string) => {
       let pedidoId: string | null = null;
@@ -317,13 +317,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         tempo_conclusao_segundos = Math.floor((agora.getTime() - captura.getTime()) / 1000);
       }
 
-      // Atualizar ordem como concluída (mas não enviar para histórico ainda)
+      // Atualizar ordem como concluída E enviar para histórico
       const { error } = await supabase
         .from(tabelaOrdem)
         .update({ 
           status: 'concluido', 
           data_conclusao: new Date().toISOString(),
           tempo_conclusao_segundos,
+          historico: true, // Enviar diretamente para histórico
         })
         .eq('id', ordemId);
         
@@ -335,6 +336,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     onSuccess: async (pedidoId) => {
       queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
       queryClient.invalidateQueries({ queryKey: ['pedido-ordens-status', pedidoId] });
+      queryClient.invalidateQueries({ queryKey: ['historico-ordens'] });
       
       // Invalidar também status de qualidade se for ordem de qualidade
       if (tipoOrdem === 'qualidade') {
@@ -344,8 +346,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       }
       
       toast({
-        title: "Ordem concluída",
-        description: "A ordem foi concluída com sucesso.",
+        title: "Ordem concluída e arquivada",
+        description: "A ordem foi enviada para o histórico.",
       });
 
       // Tentar avanço automático do pedido
@@ -373,8 +375,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       // Depois por prioridade (maior primeiro)
       return (b.prioridade || 0) - (a.prioridade || 0);
     });
-  
-  const ordensConcluidas = ordens.filter(o => o.status === 'concluido');
 
   // Enviar ordem para histórico
   const enviarParaHistorico = useMutation({
@@ -417,7 +417,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
   return {
     ordens,
     ordensAFazer,
-    ordensConcluidas,
     isLoading,
     capturarOrdem,
     marcarLinhaConcluida,
