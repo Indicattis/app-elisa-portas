@@ -13,7 +13,15 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
-import { Search, Edit, Save, X, Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
+import { Search, Edit, Save, X, Eye, EyeOff, Loader2, KeyRound, Lock } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -39,6 +47,7 @@ export default function Users() {
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
+  const [showPasswordInfoUser, setShowPasswordInfoUser] = useState<AdminUser | null>(null);
   const { toast } = useToast();
 
   // Buscar cargos ativos do sistema
@@ -402,6 +411,14 @@ export default function Users() {
                              <Button
                                variant="outline"
                                size="sm"
+                               onClick={() => setShowPasswordInfoUser(user)}
+                               title="Ver informações de senha"
+                             >
+                               <Lock className="w-4 h-4" />
+                             </Button>
+                             <Button
+                               variant="outline"
+                               size="sm"
                                onClick={() => setResetPasswordUser(user)}
                                title="Redefinir senha"
                              >
@@ -426,6 +443,61 @@ export default function Users() {
         userName={resetPasswordUser?.nome || ""}
         userEmail={resetPasswordUser?.email || ""}
       />
+
+      <Dialog open={!!showPasswordInfoUser} onOpenChange={(open) => !open && setShowPasswordInfoUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Informações de Senha
+            </DialogTitle>
+            <DialogDescription>
+              Usuário: <strong>{showPasswordInfoUser?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <div className="flex gap-3">
+                <Eye className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-amber-900">
+                    Senhas não podem ser visualizadas
+                  </p>
+                  <p className="text-sm text-amber-800">
+                    Por questões de segurança, as senhas dos usuários são criptografadas (hash) no banco de dados e não podem ser recuperadas ou visualizadas em texto plano.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                <strong>Email de login:</strong> {showPasswordInfoUser?.email}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Para permitir que o usuário acesse o sistema novamente, você pode gerar uma nova senha temporária usando o botão "Redefinir Senha".
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPasswordInfoUser(null)}
+            >
+              Fechar
+            </Button>
+            <Button
+              onClick={() => {
+                setResetPasswordUser(showPasswordInfoUser);
+                setShowPasswordInfoUser(null);
+              }}
+            >
+              <KeyRound className="w-4 h-4 mr-2" />
+              Redefinir Senha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
