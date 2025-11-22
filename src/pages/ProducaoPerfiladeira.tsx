@@ -4,8 +4,6 @@ import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
-import { Button } from "@/components/ui/button";
-import { Settings, RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface Ordem {
@@ -67,24 +65,6 @@ export default function ProducaoPerfiladeira() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500/10 rounded-lg">
-            <Settings className="h-6 w-6 text-blue-500" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Perfiladeira</h1>
-            <p className="text-muted-foreground">
-              Gerencie as ordens de perfiladeira em produção
-            </p>
-          </div>
-        </div>
-        <Button onClick={handleRefresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Atualizar
-        </Button>
-      </div>
-
       <ProducaoKanban
         ordensAFazer={ordensAFazer}
         isLoading={isLoading}
@@ -92,6 +72,7 @@ export default function ProducaoPerfiladeira() {
         onCapturarOrdem={handleCapturarOrdem}
         isCapturing={capturarOrdem.isPending}
         tipoOrdem="perfiladeira"
+        onRefresh={handleRefresh}
       />
 
       <OrdemDetalhesSheet
