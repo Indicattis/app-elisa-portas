@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, CheckCircle2, Clock, UserCheck, Timer, AlertTriangle, Archive, FileText, Trash2 } from "lucide-react";
+import { Package, Clock, UserCheck, Timer, AlertTriangle, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
@@ -54,8 +54,6 @@ interface OrdemCardProps {
   onOrdemClick: (ordem: Ordem) => void;
   onCapturarOrdem?: (ordemId: string) => void;
   isCapturing?: boolean;
-  onEnviarParaHistorico?: (ordemId: string) => void;
-  isEnviandoHistorico?: boolean;
 }
 
 function OrdemCard({
@@ -64,8 +62,6 @@ function OrdemCard({
   onOrdemClick,
   onCapturarOrdem,
   isCapturing = false,
-  onEnviarParaHistorico,
-  isEnviandoHistorico = false,
 }: OrdemCardProps) {
   const [backlogModalOpen, setBacklogModalOpen] = useState(false);
   const linhas = ordem.linhas || [];
@@ -270,28 +266,21 @@ function OrdemCard({
 
 interface ProducaoKanbanProps {
   ordensAFazer: Ordem[];
-  ordensConcluidas: Ordem[];
   isLoading: boolean;
   onOrdemClick: (ordem: Ordem) => void;
   onCapturarOrdem?: (ordemId: string) => void;
   isCapturing?: boolean;
   tipoOrdem: TipoOrdem;
-  onEnviarParaHistorico?: (ordemId: string) => void;
-  isEnviandoHistorico?: boolean;
 }
 
 export function ProducaoKanban({
   ordensAFazer,
-  ordensConcluidas,
   isLoading,
   onOrdemClick,
   onCapturarOrdem,
   isCapturing = false,
   tipoOrdem,
-  onEnviarParaHistorico,
-  isEnviandoHistorico = false,
 }: ProducaoKanbanProps) {
-  const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
 
   const renderSkeletons = () => (
     <>
@@ -312,113 +301,41 @@ export function ProducaoKanban({
 
   return (
     <div className="space-y-6">
-      {/* Header com botão toggle */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Clock className="h-5 w-5 text-orange-500" />
-            A Fazer
-          </h2>
-          <Badge variant="secondary">{isLoading ? '...' : ordensAFazer.length}</Badge>
-        </div>
-        <Button
-          variant={mostrarConcluidas ? "default" : "outline"}
-          size="sm"
-          onClick={() => setMostrarConcluidas(!mostrarConcluidas)}
-          className="gap-2"
-        >
-          <CheckCircle2 className="h-4 w-4" />
-          Concluídas ({ordensConcluidas.length})
-        </Button>
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Clock className="h-5 w-5 text-orange-500" />
+          Ordens Pendentes
+        </h2>
+        <Badge variant="secondary">{isLoading ? '...' : ordensAFazer.length}</Badge>
       </div>
 
-      {/* Coluna: A Fazer */}
-      <div className="space-y-4">
-
-        <div className="space-y-3">
-          {isLoading ? (
-            renderSkeletons()
-          ) : ordensAFazer.length > 0 ? (
-            ordensAFazer.map(ordem => (
-              <OrdemCard
-                key={ordem.id}
-                ordem={ordem}
-                isConcluida={false}
-                onOrdemClick={onOrdemClick}
-                onCapturarOrdem={onCapturarOrdem}
-                isCapturing={isCapturing}
-                onEnviarParaHistorico={onEnviarParaHistorico}
-                isEnviandoHistorico={isEnviandoHistorico}
-              />
-            ))
-          ) : (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Package className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma ordem pendente
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+      {/* Lista de Ordens */}
+      <div className="space-y-3">
+        {isLoading ? (
+          renderSkeletons()
+        ) : ordensAFazer.length > 0 ? (
+          ordensAFazer.map(ordem => (
+            <OrdemCard
+              key={ordem.id}
+              ordem={ordem}
+              isConcluida={false}
+              onOrdemClick={onOrdemClick}
+              onCapturarOrdem={onCapturarOrdem}
+              isCapturing={isCapturing}
+            />
+          ))
+        ) : (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Package className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <p className="text-sm text-muted-foreground">
+                Nenhuma ordem pendente
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {/* Coluna: Concluídas (condicional) */}
-      {mostrarConcluidas && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              Concluídas
-            </h2>
-            <Badge variant="secondary">{isLoading ? '...' : ordensConcluidas.length}</Badge>
-          </div>
-
-          <div className="space-y-3">
-            {isLoading ? (
-              renderSkeletons()
-            ) : ordensConcluidas.length > 0 ? (
-              ordensConcluidas.map(ordem => (
-                <div key={ordem.id} className="relative group">
-                  <OrdemCard
-                    ordem={ordem}
-                    isConcluida={true}
-                    onOrdemClick={onOrdemClick}
-                    onCapturarOrdem={onCapturarOrdem}
-                    isCapturing={isCapturing}
-                    onEnviarParaHistorico={onEnviarParaHistorico}
-                    isEnviandoHistorico={isEnviandoHistorico}
-                  />
-                  {onEnviarParaHistorico && (
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEnviarParaHistorico(ordem.id);
-                      }}
-                      disabled={isEnviandoHistorico}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <CheckCircle2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma ordem concluída ainda
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

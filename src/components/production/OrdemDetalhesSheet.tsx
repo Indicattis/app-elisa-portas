@@ -65,8 +65,6 @@ interface OrdemDetalhesSheetProps {
   onFinalizarPintura?: () => void;
   isIniciando?: boolean;
   isFinalizando?: boolean;
-  onEnviarParaHistorico?: (ordemId: string) => void;
-  isEnviandoHistorico?: boolean;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -91,8 +89,6 @@ export function OrdemDetalhesSheet({
   onFinalizarPintura,
   isIniciando = false,
   isFinalizando = false,
-  onEnviarParaHistorico,
-  isEnviandoHistorico = false,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
@@ -543,25 +539,6 @@ export function OrdemDetalhesSheet({
                   Marque todos os itens como concluídos para finalizar a ordem
                 </p>
               )}
-            </>
-          )}
-
-          {/* Botão para enviar ao histórico (apenas ordens concluídas) */}
-          {(ordem.status === 'concluido' || ordem.status === 'pronta') && onEnviarParaHistorico && (
-            <>
-              <Separator />
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => onEnviarParaHistorico(ordem.id)}
-                disabled={isEnviandoHistorico}
-              >
-                <Archive className="h-4 w-4 mr-2" />
-                {isEnviandoHistorico ? "Enviando..." : "Enviar para Histórico"}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Esta ordem será removida da lista de produção
-              </p>
             </>
           )}
         </div>

@@ -124,11 +124,6 @@ export default function ProducaoPintura() {
         isCapturing={capturarOrdem.isPending}
         onFinalizarPintura={() => finalizarPintura.mutate(selectedOrdem?.id || '')}
         isFinalizando={finalizarPintura.isPending}
-        onEnviarParaHistorico={(ordemId) => {
-          enviarParaHistorico.mutate(ordemId);
-          setDetailsOpen(false);
-        }}
-        isEnviandoHistorico={enviarParaHistorico.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
