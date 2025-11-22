@@ -26,37 +26,37 @@ export function MateriaisRanking() {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Ranking de Materiais Produzidos</CardTitle>
+      <CardHeader className="pb-1 px-3 pt-3">
+        <CardTitle className="text-sm">Ranking de Materiais Produzidos</CardTitle>
       </CardHeader>
-      <CardContent className="pb-3">
+      <CardContent className="pb-2 px-3">
         <Tabs defaultValue="quantidade" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-7">
-            <TabsTrigger value="quantidade" className="text-[11px]">Quantidade</TabsTrigger>
-            <TabsTrigger value="metragem" className="text-[11px]">Metragem</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-6">
+            <TabsTrigger value="quantidade" className="text-[10px]">Quantidade</TabsTrigger>
+            <TabsTrigger value="metragem" className="text-[10px]">Metragem</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="quantidade" className="mt-2">
-            <div className="space-y-1.5">
+          <TabsContent value="quantidade" className="mt-1.5">
+            <div className="space-y-1">
               {rankingQuantidade.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground text-center py-2">
+                <p className="text-[10px] text-muted-foreground text-center py-2">
                   Nenhum material produzido hoje
                 </p>
               ) : (
                 rankingQuantidade.map((material, index) => (
                   <div
                     key={material.item}
-                    className="flex items-center justify-between py-1.5 px-2 border rounded hover:bg-accent/50 transition-colors"
+                    className="flex items-center justify-between py-1 px-1.5 border rounded hover:bg-accent/50 transition-colors"
                   >
-                    <div className="flex items-center gap-1.5">
-                      <Badge variant={index < 3 ? "default" : "secondary"} className="text-[10px] px-1 py-0">
+                    <div className="flex items-center gap-1">
+                      <Badge variant={index < 3 ? "default" : "secondary"} className="text-[9px] px-1 py-0">
                         {index + 1}º
                       </Badge>
-                      <span className="text-xs font-medium">{material.item}</span>
+                      <span className="text-[11px] font-medium">{material.item}</span>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-xs">{material.total_quantidade}</p>
-                      <p className="text-[9px] text-muted-foreground">un</p>
+                      <p className="font-semibold text-[11px]">{material.total_quantidade}</p>
+                      <p className="text-[8px] text-muted-foreground">un</p>
                     </div>
                   </div>
                 ))
@@ -64,29 +64,29 @@ export function MateriaisRanking() {
             </div>
           </TabsContent>
           
-          <TabsContent value="metragem" className="mt-2">
-            <div className="space-y-1.5">
+          <TabsContent value="metragem" className="mt-1.5">
+            <div className="space-y-1">
               {rankingMetragem.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground text-center py-2">
+                <p className="text-[10px] text-muted-foreground text-center py-2">
                   Nenhum material com metragem registrada hoje
                 </p>
               ) : (
                 rankingMetragem.map((material, index) => (
                   <div
                     key={material.item}
-                    className="flex items-center justify-between py-1.5 px-2 border rounded hover:bg-accent/50 transition-colors"
+                    className="flex items-center justify-between py-1 px-1.5 border rounded hover:bg-accent/50 transition-colors"
                   >
-                    <div className="flex items-center gap-1.5">
-                      <Badge variant={index < 3 ? "default" : "secondary"} className="text-[10px] px-1 py-0">
+                    <div className="flex items-center gap-1">
+                      <Badge variant={index < 3 ? "default" : "secondary"} className="text-[9px] px-1 py-0">
                         {index + 1}º
                       </Badge>
-                      <span className="text-xs font-medium">{material.item}</span>
+                      <span className="text-[11px] font-medium">{material.item}</span>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-xs">
+                      <p className="font-semibold text-[11px]">
                         {material.metragem_m2?.toFixed(2)}
                       </p>
-                      <p className="text-[9px] text-muted-foreground">m²</p>
+                      <p className="text-[8px] text-muted-foreground">m²</p>
                     </div>
                   </div>
                 ))

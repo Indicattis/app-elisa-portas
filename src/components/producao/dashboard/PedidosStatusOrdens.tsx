@@ -34,13 +34,13 @@ export function PedidosStatusOrdens() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Pedidos em Produção</CardTitle>
+        <CardHeader className="pb-1 px-3 pt-3">
+          <CardTitle className="text-sm">Pedidos em Produção</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        <CardContent className="pb-2 px-3">
+          <div className="space-y-1">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+              <div key={i} className="h-10 bg-muted animate-pulse rounded" />
             ))}
           </div>
         </CardContent>
@@ -79,18 +79,18 @@ export function PedidosStatusOrdens() {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Pedidos com Ordens Pendentes</CardTitle>
+      <CardHeader className="pb-1 px-3 pt-3">
+        <CardTitle className="text-sm">Pedidos com Ordens Pendentes</CardTitle>
       </CardHeader>
-      <CardContent className="pb-3">
+      <CardContent className="pb-2 px-3">
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow className="border-b">
-                <TableHead className="h-7 text-[11px] py-1">Pedido</TableHead>
-                <TableHead className="h-7 text-[11px] py-1">Etapa</TableHead>
+                <TableHead className="h-6 text-[10px] py-0.5 px-2">Pedido</TableHead>
+                <TableHead className="h-6 text-[10px] py-0.5 px-2">Etapa</TableHead>
                 {Object.entries(ordemLabels).map(([key, label]) => (
-                  <TableHead key={key} className="text-center h-7 text-[11px] py-1">
+                  <TableHead key={key} className="text-center h-6 text-[10px] py-0.5 px-1">
                     {label}
                   </TableHead>
                 ))}
@@ -99,39 +99,39 @@ export function PedidosStatusOrdens() {
             <TableBody>
               {pedidos.map((pedido) => (
                 <TableRow key={pedido.numero_pedido} className="border-b last:border-0">
-                  <TableCell className="font-medium text-xs py-1.5">
+                  <TableCell className="font-medium text-[11px] py-1 px-2">
                     {pedido.numero_pedido}
                   </TableCell>
-                  <TableCell className="py-1.5">
-                    <Badge variant="outline" className="text-[9px] px-1 py-0">
+                  <TableCell className="py-1 px-2">
+                    <Badge variant="outline" className="text-[8px] px-1 py-0">
                       {pedido.etapa_atual}
                     </Badge>
                   </TableCell>
                   {Object.entries(ordemIcons).map(([key]) => {
                     const ordem = pedido.ordens[key as keyof typeof pedido.ordens];
                     return (
-                      <TableCell key={key} className="text-center py-1.5">
+                      <TableCell key={key} className="text-center py-1 px-1">
                         {ordem.existe ? (
-                          <div className="flex flex-col items-center gap-0.5">
+                          <div className="flex flex-col items-center">
                             {ordem.capturada && ordem.capturada_por_foto ? (
-                              <Avatar className={`h-6 w-6 border-2 ${getStatusColor(ordem.status)}`}>
+                              <Avatar className={`h-5 w-5 border-2 ${getStatusColor(ordem.status)}`}>
                                 <AvatarImage src={ordem.capturada_por_foto} />
                                 <AvatarFallback className="text-[8px]">
-                                  <User className="h-3 w-3" />
+                                  <User className="h-2.5 w-2.5" />
                                 </AvatarFallback>
                               </Avatar>
                             ) : ordem.capturada ? (
-                              <div className={`h-6 w-6 rounded-full border-2 ${getStatusColor(ordem.status)} bg-secondary flex items-center justify-center`}>
-                                <User className="h-3 w-3" />
+                              <div className={`h-5 w-5 rounded-full border-2 ${getStatusColor(ordem.status)} bg-secondary flex items-center justify-center`}>
+                                <User className="h-2.5 w-2.5" />
                               </div>
                             ) : (
-                              <div className="h-6 w-6 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                              <div className="h-5 w-5 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                                <AlertCircle className="h-3.5 w-3.5 text-yellow-600" />
                               </div>
                             )}
                           </div>
                         ) : (
-                          <span className="text-gray-300 text-[11px]">—</span>
+                          <span className="text-gray-300 text-[10px]">—</span>
                         )}
                       </TableCell>
                     );

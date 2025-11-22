@@ -47,24 +47,24 @@ export function IndicadoresProducao() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {indicadores.map((indicador) => {
         const Icon = indicador.icon;
         return (
           <Card key={indicador.titulo} className="border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-lg ${indicador.bgColor}`}>
-                  <Icon className={`h-5 w-5 ${indicador.color}`} />
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2">
+                <div className={`p-2 rounded-lg ${indicador.bgColor}`}>
+                  <Icon className={`h-4 w-4 ${indicador.color}`} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-medium">
+                  <p className="text-[10px] text-muted-foreground font-medium">
                     {indicador.titulo}
                   </p>
                   {indicador.loading ? (
-                    <div className="h-7 w-16 bg-muted animate-pulse rounded mt-1" />
+                    <div className="h-6 w-14 bg-muted animate-pulse rounded mt-0.5" />
                   ) : (
-                    <p className="text-2xl font-bold mt-0.5">{indicador.valor}</p>
+                    <p className="text-xl font-bold mt-0.5">{indicador.valor}</p>
                   )}
                 </div>
               </div>

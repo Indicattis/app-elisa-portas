@@ -8,14 +8,14 @@ export function PortasEnrolarCounter() {
   if (isLoading) {
     return (
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-        <CardContent className="flex items-center justify-between p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-primary/10">
-              <Package className="h-8 w-8 text-primary" />
+        <CardContent className="flex items-center justify-between p-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Package className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Portas de Enrolar Produzidas Hoje</p>
-              <div className="h-10 w-24 bg-muted animate-pulse rounded mt-1" />
+              <p className="text-xs text-muted-foreground">Portas de Enrolar Produzidas Hoje</p>
+              <div className="h-8 w-20 bg-muted animate-pulse rounded mt-0.5" />
             </div>
           </div>
         </CardContent>
@@ -25,14 +25,14 @@ export function PortasEnrolarCounter() {
 
   return (
     <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-      <CardContent className="flex items-center justify-between p-6">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-lg bg-primary/10">
-            <Package className="h-8 w-8 text-primary" />
+      <CardContent className="flex items-center justify-between p-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Package className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Portas de Enrolar Produzidas Hoje</p>
-            <p className="text-4xl font-bold text-primary mt-1">{Number(totalPortas)}</p>
+            <p className="text-xs text-muted-foreground">Portas de Enrolar Produzidas Hoje</p>
+            <p className="text-3xl font-bold text-primary mt-0.5">{Number(totalPortas)}</p>
           </div>
         </div>
       </CardContent>
