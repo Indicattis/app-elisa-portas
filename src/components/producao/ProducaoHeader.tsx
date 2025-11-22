@@ -1,12 +1,18 @@
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut } from "lucide-react";
+import { LogOut, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export function ProducaoHeader() {
   const { user, signOut } = useProducaoAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Verifica se está na home de produção
+  const isProducaoHome = location.pathname === '/producao' || location.pathname === '/producao/';
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -45,13 +51,27 @@ export function ProducaoHeader() {
 
   return (
     <header className="h-16 bg-card border-b border-border px-6 flex items-center justify-between">
-      <div className="flex flex-col">
-        <span className="text-2xl font-bold text-foreground tabular-nums">
-          {formatTime(currentTime)}
-        </span>
-        <span className="text-sm text-muted-foreground capitalize">
-          {formatDate(currentTime)}
-        </span>
+      <div className="flex items-center gap-4">
+        {!isProducaoHome && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/producao')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Voltar</span>
+          </Button>
+        )}
+        
+        <div className="flex flex-col">
+          <span className="text-2xl font-bold text-foreground tabular-nums">
+            {formatTime(currentTime)}
+          </span>
+          <span className="text-sm text-muted-foreground capitalize">
+            {formatDate(currentTime)}
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
