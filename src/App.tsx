@@ -112,6 +112,7 @@ import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import ProducaoHome from "./pages/ProducaoHome";
+import ProducaoControle from "./pages/ProducaoControle";
 import Ordens from "./pages/Ordens";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminPermissions from "./pages/admin/AdminPermissions";
@@ -313,6 +314,16 @@ const App = () => (
                             <ProtectedProducaoRoute>
                               <ProducaoLayout>
                                 <ProducaoCarregamento />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/controle"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoControle />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }

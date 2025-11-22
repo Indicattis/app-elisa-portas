@@ -4,11 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck } from "lucide-react";
+import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3 } from "lucide-react";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
-import { PortasEnrolarCounter } from "@/components/producao/dashboard/PortasEnrolarCounter";
-import { MateriaisRanking } from "@/components/producao/dashboard/MateriaisRanking";
-import { PedidosStatusOrdens } from "@/components/producao/dashboard/PedidosStatusOrdens";
 
 interface ProducaoRoute {
   key: string;
@@ -26,6 +23,7 @@ const iconMap: Record<string, any> = {
   Sparkles,
   CheckSquare,
   Truck,
+  BarChart3,
 };
 
 export default function ProducaoHome() {
@@ -102,22 +100,11 @@ export default function ProducaoHome() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard de Produção</h1>
         <p className="text-muted-foreground">
-          Acompanhe os indicadores e acesse os painéis de produção
+          Acompanhe as ordens de produção e acesse os diferentes painéis
         </p>
       </div>
 
-      {/* KPI de Portas de Enrolar */}
-      <PortasEnrolarCounter />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ranking de Materiais */}
-        <MateriaisRanking />
-
-        {/* Pedidos com Status de Ordens */}
-        <PedidosStatusOrdens />
-      </div>
-
-      {/* Acesso aos Painéis - Redesenhado */}
+      {/* Acesso aos Painéis */}
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Acesso aos Painéis</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
