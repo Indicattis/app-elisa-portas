@@ -9,16 +9,16 @@ export function CoresPintadasHoje() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Palette className="h-4 w-4" />
+        <CardHeader className="pb-1 px-3 pt-3">
+          <CardTitle className="text-sm flex items-center gap-1.5">
+            <Palette className="h-3.5 w-3.5" />
             Cores Pintadas Hoje
           </CardTitle>
         </CardHeader>
-        <CardContent className="pb-3">
-          <div className="space-y-2">
+        <CardContent className="pb-2 px-3">
+          <div className="space-y-1">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+              <div key={i} className="h-8 bg-muted animate-pulse rounded" />
             ))}
           </div>
         </CardContent>
@@ -28,29 +28,29 @@ export function CoresPintadasHoje() {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Palette className="h-4 w-4" />
+      <CardHeader className="pb-1 px-3 pt-3">
+        <CardTitle className="text-sm flex items-center gap-1.5">
+          <Palette className="h-3.5 w-3.5" />
           Cores Pintadas Hoje
         </CardTitle>
       </CardHeader>
-      <CardContent className="pb-3">
+      <CardContent className="pb-2 px-3">
         {cores.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">
+          <p className="text-[10px] text-muted-foreground text-center py-2">
             Nenhuma peça pintada hoje
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {cores.map((cor) => (
               <div
                 key={cor.cor_nome}
-                className="flex items-center justify-between py-2 px-3 border rounded hover:bg-accent/50 transition-colors"
+                className="flex items-center justify-between py-1 px-1.5 border rounded hover:bg-accent/50 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary to-primary/60" />
-                  <span className="text-sm font-medium">{cor.cor_nome}</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-primary to-primary/60" />
+                  <span className="text-[11px] font-medium">{cor.cor_nome}</span>
                 </div>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[9px] py-0 px-1">
                   {cor.quantidade_pecas} {cor.quantidade_pecas === 1 ? 'peça' : 'peças'}
                 </Badge>
               </div>

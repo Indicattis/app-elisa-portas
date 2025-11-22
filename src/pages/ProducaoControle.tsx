@@ -6,10 +6,10 @@ import { CoresPintadasHoje } from "@/components/producao/dashboard/CoresPintadas
 
 export default function ProducaoControle() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div>
-        <h1 className="text-3xl font-bold">Controle de Produção</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-2xl font-bold">Controle de Produção</h1>
+        <p className="text-muted-foreground text-sm mt-1">
           Acompanhe os indicadores e status de pedidos em tempo real
         </p>
       </div>
@@ -20,17 +20,17 @@ export default function ProducaoControle() {
       {/* KPI: Portas de Enrolar Produzidas Hoje */}
       <PortasEnrolarCounter />
 
-      {/* Grid de Métricas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Grid de Métricas - Rankings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Ranking de Materiais */}
         <MateriaisRanking />
-
-        {/* Pedidos com Ordens Pendentes */}
-        <PedidosStatusOrdens />
 
         {/* Cores Pintadas Hoje */}
         <CoresPintadasHoje />
       </div>
+
+      {/* Pedidos com Ordens Pendentes - Linha separada */}
+      <PedidosStatusOrdens />
     </div>
   );
 }
