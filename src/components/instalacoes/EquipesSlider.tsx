@@ -78,42 +78,14 @@ export function EquipesSlider({ equipeSelecionadaId, onEquipeChange }: EquipesSl
                 </Avatar>
 
                 {/* Informações da Equipe */}
-                <div className="flex flex-col items-start gap-1">
-                  <div className="flex items-center gap-2">
-                    {equipe.cor && (
-                      <span
-                        className="h-2 w-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: equipe.cor }}
-                      />
-                    )}
-                    <span className="font-semibold text-sm">{equipe.nome}</span>
-                  </div>
-                  
-                  {/* Nome do Líder */}
-                  {equipe.responsavel_nome && (
-                    <span className="text-[10px] opacity-90 font-medium">
-                      Líder: {equipe.responsavel_nome}
-                    </span>
+                <div className="flex items-center gap-2">
+                  {equipe.cor && (
+                    <span
+                      className="h-2 w-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: equipe.cor }}
+                    />
                   )}
-                  
-                  {/* Membros da Equipe */}
-                  {equipe.membros && equipe.membros.length > 0 && (
-                    <div className="flex flex-col gap-0.5 mt-1">
-                      {equipe.membros.map((membro) => (
-                        <div key={membro.id} className="flex items-center gap-1.5">
-                          <Avatar className="h-4 w-4 border border-background">
-                            <AvatarImage src={membro.foto_perfil_url} alt={membro.nome} />
-                            <AvatarFallback className="text-[8px]">
-                              {membro.nome.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-[9px] opacity-75">
-                            {membro.nome}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <span className="font-semibold text-sm">{equipe.nome}</span>
                 </div>
               </div>
             </Button>
