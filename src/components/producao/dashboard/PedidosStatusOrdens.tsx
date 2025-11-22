@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePedidosComOrdens } from "@/hooks/usePedidosComOrdens";
-import { Hammer, Package, Boxes, Sparkles, CheckSquare } from "lucide-react";
+import { Hammer, Package, Boxes, Sparkles, CheckSquare, User } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -115,7 +116,15 @@ export function PedidosStatusOrdens() {
                             <Icon
                               className={`h-3.5 w-3.5 ${getStatusColor(ordem.status)}`}
                             />
-                            {ordem.capturada && (
+                            {ordem.capturada && ordem.capturada_por_foto && (
+                              <Avatar className="h-5 w-5 border">
+                                <AvatarImage src={ordem.capturada_por_foto} />
+                                <AvatarFallback className="text-[8px]">
+                                  <User className="h-3 w-3" />
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+                            {ordem.capturada && !ordem.capturada_por_foto && (
                               <Badge variant="secondary" className="text-[8px] px-0.5 py-0 leading-none">
                                 Cap
                               </Badge>
