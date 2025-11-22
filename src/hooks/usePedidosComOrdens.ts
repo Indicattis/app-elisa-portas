@@ -5,6 +5,7 @@ interface OrdemStatus {
   existe: boolean;
   status: string | null;
   capturada: boolean;
+  capturada_por_foto?: string | null;
 }
 
 interface PedidoComOrdens {
