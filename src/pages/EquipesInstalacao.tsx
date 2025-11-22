@@ -158,18 +158,18 @@ export default function EquipesInstalacao() {
     await removerMembro(membroId);
   };
 
-  const handleDefinirLider = async (userId: string) => {
+  const handleDefinirLider = async (adminUserId: string) => {
     if (!equipeParaMembros) return;
 
     const sucesso = await updateEquipe(equipeParaMembros.id, {
-      responsavel_id: userId,
+      responsavel_id: adminUserId,
     });
 
     if (sucesso) {
       // Atualizar o estado local da equipe
       setEquipeParaMembros({
         ...equipeParaMembros,
-        responsavel_id: userId,
+        responsavel_id: adminUserId,
       });
     }
   };
@@ -460,7 +460,7 @@ export default function EquipesInstalacao() {
                   </p>
                 ) : (
                   membrosEquipe.map((membro) => {
-                    const isLider = membro.user_id === equipeParaMembros?.responsavel_id;
+                    const isLider = membro.user?.id === equipeParaMembros?.responsavel_id;
                     return (
                       <div key={membro.id} className="flex items-center gap-3 p-3">
                         <Avatar className="h-10 w-10">
@@ -482,12 +482,12 @@ export default function EquipesInstalacao() {
                           <p className="text-xs text-muted-foreground truncate">{membro.user?.email}</p>
                         </div>
                         <div className="flex items-center gap-1">
-                          {!isLider && (
+                          {!isLider && membro.user?.id && (
                             <>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDefinirLider(membro.user_id)}
+                                onClick={() => handleDefinirLider(membro.user.id)}
                                 className="h-8 px-2 gap-1 text-amber-600 hover:text-amber-600 hover:bg-amber-50"
                                 title="Tornar líder"
                               >
