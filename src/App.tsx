@@ -85,6 +85,7 @@ import VendasCatalogo from "./pages/VendasCatalogo";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
+import EquipesInstalacao from "./pages/EquipesInstalacao";
 
 import DiarioBordo from "./pages/DiarioBordo";
 import Frota from "./pages/Frota";
@@ -643,6 +644,14 @@ const App = () => (
                   element={
                     <ProtectedRoute routeKey="instalacoes_nova">
                       <InstalacoesNovas />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instalacoes/equipes"
+                  element={
+                    <ProtectedRoute routeKey="instalacoes_equipes">
+                      <EquipesInstalacao />
                     </ProtectedRoute>
                   }
                 />

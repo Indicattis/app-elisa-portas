@@ -1,8 +1,7 @@
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { Button } from "@/components/ui/button";
 import { Settings, User } from "lucide-react";
-import { useState } from "react";
-import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
+import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -13,7 +12,7 @@ interface EquipesSliderProps {
 
 export function EquipesSlider({ equipeSelecionadaId, onEquipeChange }: EquipesSliderProps) {
   const { equipes, loading } = useEquipesInstalacao();
-  const [showGerenciarEquipes, setShowGerenciarEquipes] = useState(false);
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -33,7 +32,7 @@ export function EquipesSlider({ equipeSelecionadaId, onEquipeChange }: EquipesSl
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setShowGerenciarEquipes(true)}
+          onClick={() => navigate('/instalacoes/equipes')}
           className="h-7 gap-1 text-xs"
         >
           <Settings className="h-3 w-3" />
@@ -122,11 +121,6 @@ export function EquipesSlider({ equipeSelecionadaId, onEquipeChange }: EquipesSl
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-
-      <GerenciarEquipes
-        open={showGerenciarEquipes}
-        onOpenChange={setShowGerenciarEquipes}
-      />
     </div>
   );
 }
