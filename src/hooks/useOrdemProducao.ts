@@ -115,15 +115,29 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       }
       
       // Mapear linhas para suas ordens
-      return ordensData.map((ordem: any) => ({
-        ...ordem,
-        linhas: (linhasData || []).filter((linha: any) => linha.ordem_id === ordem.id),
-        pedido: ordem.pedido ? {
-          ...ordem.pedido,
-          vendas: ordem.pedido.vendas?.[0] || null,
-        } : null,
-        admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
-      })) as Ordem[];
+      return ordensData.map((ordem: any) => {
+        // Processar pedido e vendas
+        let pedidoProcessado = null;
+        if (ordem.pedido) {
+          const vendasArray = Array.isArray(ordem.pedido.vendas) ? ordem.pedido.vendas : [ordem.pedido.vendas];
+          const primeiraVenda = vendasArray.length > 0 ? vendasArray[0] : null;
+          
+          pedidoProcessado = {
+            id: ordem.pedido.id,
+            numero_pedido: ordem.pedido.numero_pedido,
+            cliente_nome: ordem.pedido.cliente_nome,
+            venda_id: ordem.pedido.venda_id,
+            vendas: primeiraVenda,
+          };
+        }
+
+        return {
+          ...ordem,
+          linhas: (linhasData || []).filter((linha: any) => linha.ordem_id === ordem.id),
+          pedido: pedidoProcessado,
+          admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
+        };
+      }) as Ordem[];
     },
   });
 
