@@ -78,18 +78,18 @@ export function PedidosStatusOrdens() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Pedidos em Produção</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">Pedidos com Ordens Pendentes</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-4">
         <div className="rounded-md border">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Pedido</TableHead>
-                <TableHead>Etapa</TableHead>
+              <TableRow className="border-b">
+                <TableHead className="h-9 text-xs">Pedido</TableHead>
+                <TableHead className="h-9 text-xs">Etapa</TableHead>
                 {Object.entries(ordemLabels).map(([key, label]) => (
-                  <TableHead key={key} className="text-center">
+                  <TableHead key={key} className="text-center h-9 text-xs">
                     {label}
                   </TableHead>
                 ))}
@@ -97,32 +97,32 @@ export function PedidosStatusOrdens() {
             </TableHeader>
             <TableBody>
               {pedidos.map((pedido) => (
-                <TableRow key={pedido.numero_pedido}>
-                  <TableCell className="font-medium">
+                <TableRow key={pedido.numero_pedido} className="border-b last:border-0">
+                  <TableCell className="font-medium text-sm py-2">
                     {pedido.numero_pedido}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">
+                  <TableCell className="py-2">
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                       {pedido.etapa_atual}
                     </Badge>
                   </TableCell>
                   {Object.entries(ordemIcons).map(([key, Icon]) => {
                     const ordem = pedido.ordens[key as keyof typeof pedido.ordens];
                     return (
-                      <TableCell key={key} className="text-center">
+                      <TableCell key={key} className="text-center py-2">
                         {ordem.existe ? (
-                          <div className="flex flex-col items-center gap-1">
+                          <div className="flex flex-col items-center gap-0.5">
                             <Icon
-                              className={`h-5 w-5 ${getStatusColor(ordem.status)}`}
+                              className={`h-4 w-4 ${getStatusColor(ordem.status)}`}
                             />
                             {ordem.capturada && (
-                              <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                                Capturada
+                              <Badge variant="secondary" className="text-[9px] px-1 py-0 leading-none">
+                                Cap
                               </Badge>
                             )}
                           </div>
                         ) : (
-                          <span className="text-gray-300">—</span>
+                          <span className="text-gray-300 text-xs">—</span>
                         )}
                       </TableCell>
                     );
