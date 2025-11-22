@@ -158,6 +158,22 @@ export default function EquipesInstalacao() {
     await removerMembro(membroId);
   };
 
+  const handleDefinirLider = async (userId: string) => {
+    if (!equipeParaMembros) return;
+
+    const sucesso = await updateEquipe(equipeParaMembros.id, {
+      responsavel_id: userId,
+    });
+
+    if (sucesso) {
+      // Atualizar o estado local da equipe
+      setEquipeParaMembros({
+        ...equipeParaMembros,
+        responsavel_id: userId,
+      });
+    }
+  };
+
   const confirmarExclusao = (equipeId: string) => {
     setEquipeParaExcluir(equipeId);
     setDeleteDialogOpen(true);
@@ -456,20 +472,40 @@ export default function EquipesInstalacao() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-medium truncate">{membro.user?.nome}</p>
-                            {isLider && <Crown className="h-4 w-4 text-amber-500" />}
+                            {isLider && (
+                              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600">
+                                <Crown className="h-3 w-3" />
+                                <span className="text-[10px] font-medium">Líder</span>
+                              </div>
+                            )}
                           </div>
                           <p className="text-xs text-muted-foreground truncate">{membro.user?.email}</p>
                         </div>
-                        {!isLider && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoverMembro(membro.id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {!isLider && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDefinirLider(membro.user_id)}
+                                className="h-8 px-2 gap-1 text-amber-600 hover:text-amber-600 hover:bg-amber-50"
+                                title="Tornar líder"
+                              >
+                                <Crown className="h-4 w-4" />
+                                <span className="text-xs hidden sm:inline">Líder</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoverMembro(membro.id)}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                title="Remover membro"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     );
                   })
