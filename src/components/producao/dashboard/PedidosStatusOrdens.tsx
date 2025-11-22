@@ -63,17 +63,17 @@ export function PedidosStatusOrdens() {
     );
   }
 
-  const getStatusColor = (status: string | null) => {
+  const getStatusBorder = (status: string | null) => {
     switch (status) {
       case "concluido":
       case "pronta":
-        return "border-green-500";
+        return "border border-green-500";
       case "em_andamento":
-        return "border-yellow-500";
+        return "border-2 border-yellow-500";
       case "pendente":
-        return "border-gray-400";
+        return "border-2 border-gray-400";
       default:
-        return "border-gray-300";
+        return "border-2 border-gray-300";
     }
   };
 
@@ -126,14 +126,14 @@ export function PedidosStatusOrdens() {
                         {ordem.existe ? (
                           <div className="flex flex-col items-center">
                             {ordem.capturada && ordem.capturada_por_foto ? (
-                              <Avatar className={`h-5 w-5 border-2 ${getStatusColor(ordem.status)}`}>
+                              <Avatar className={`h-5 w-5 ${getStatusBorder(ordem.status)}`}>
                                 <AvatarImage src={ordem.capturada_por_foto} />
                                 <AvatarFallback className="text-[8px]">
                                   <User className="h-2.5 w-2.5" />
                                 </AvatarFallback>
                               </Avatar>
                             ) : ordem.capturada ? (
-                              <div className={`h-5 w-5 rounded-full border-2 ${getStatusColor(ordem.status)} bg-secondary flex items-center justify-center`}>
+                              <div className={`h-5 w-5 rounded-full ${getStatusBorder(ordem.status)} bg-secondary flex items-center justify-center`}>
                                 <User className="h-2.5 w-2.5" />
                               </div>
                             ) : (
