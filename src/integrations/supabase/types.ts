@@ -4461,6 +4461,30 @@ export type Database = {
         Args: { tipo_documento: string }
         Returns: number
       }
+      get_materiais_ranking_metragem: {
+        Args: never
+        Returns: {
+          item: string
+          metragem_m2: number
+        }[]
+      }
+      get_materiais_ranking_quantidade: {
+        Args: never
+        Returns: {
+          item: string
+          ocorrencias: number
+          total_quantidade: number
+        }[]
+      }
+      get_pedidos_com_status_ordens: {
+        Args: never
+        Returns: {
+          etapa_atual: string
+          numero_pedido: string
+          ordens: Json
+        }[]
+      }
+      get_portas_enrolar_produzidas_hoje: { Args: never; Returns: number }
       has_role:
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
         | {

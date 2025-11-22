@@ -2,8 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck } from "lucide-react";
+import { useOrdensCount } from "@/hooks/useOrdensCount";
+import { PortasEnrolarCounter } from "@/components/producao/dashboard/PortasEnrolarCounter";
+import { MateriaisRanking } from "@/components/producao/dashboard/MateriaisRanking";
+import { PedidosStatusOrdens } from "@/components/producao/dashboard/PedidosStatusOrdens";
 
 interface ProducaoRoute {
   key: string;
@@ -26,6 +31,7 @@ const iconMap: Record<string, any> = {
 export default function ProducaoHome() {
   const navigate = useNavigate();
   const { user } = useProducaoAuth();
+  const { data: ordensCount } = useOrdensCount();
 
   // Buscar rotas da interface producao que o usuário tem acesso
   const { data: routes = [], isLoading } = useQuery({
@@ -73,55 +79,87 @@ export default function ProducaoHome() {
     );
   }
 
+  const getRouteCount = (routeKey: string) => {
+    if (!ordensCount) return 0;
+    switch (routeKey) {
+      case "producao_soldagem":
+        return ordensCount.soldagem;
+      case "producao_perfiladeira":
+        return ordensCount.perfiladeira;
+      case "producao_separacao":
+        return ordensCount.separacao;
+      case "producao_qualidade":
+        return ordensCount.qualidade;
+      case "producao_pintura":
+        return ordensCount.pintura;
+      default:
+        return 0;
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Produção</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard de Produção</h1>
         <p className="text-muted-foreground">
-          Selecione uma das áreas disponíveis para acessar
+          Acompanhe os indicadores e acesse os painéis de produção
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {routes.map((route) => {
-          const Icon = getIcon(route.icon);
-          
-          return (
-            <Card
-              key={route.key}
-              className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 hover:border-primary"
-              onClick={() => navigate(route.path)}
-            >
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Icon className="h-6 w-6 text-primary" />
+      {/* KPI de Portas de Enrolar */}
+      <PortasEnrolarCounter />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Ranking de Materiais */}
+        <MateriaisRanking />
+
+        {/* Pedidos com Status de Ordens */}
+        <PedidosStatusOrdens />
+      </div>
+
+      {/* Acesso aos Painéis - Redesenhado */}
+      <div className="space-y-3">
+        <h2 className="text-xl font-semibold">Acesso aos Painéis</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {routes.map((route) => {
+            const Icon = getIcon(route.icon);
+            const count = getRouteCount(route.key);
+            
+            return (
+              <Card
+                key={route.key}
+                className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50 group"
+                onClick={() => navigate(route.path)}
+              >
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="p-2 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="font-medium text-sm">{route.label}</span>
                   </div>
-                  <div>
-                    <CardTitle className="text-xl">{route.label}</CardTitle>
-                  </div>
+                  {count > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {count}
+                    </Badge>
+                  )}
                 </div>
-              </CardHeader>
-              {route.description && (
-                <CardContent>
-                  <CardDescription>{route.description}</CardDescription>
-                </CardContent>
-              )}
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       {routes.length === 0 && !isLoading && (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-muted-foreground mb-2">
               Você não tem acesso a nenhuma área de produção.
             </p>
             <p className="text-sm text-muted-foreground">
               Entre em contato com o administrador para solicitar permissões.
             </p>
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>
