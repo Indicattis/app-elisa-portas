@@ -4461,6 +4461,13 @@ export type Database = {
         Args: { tipo_documento: string }
         Returns: number
       }
+      get_cores_pintadas_hoje: {
+        Args: never
+        Returns: {
+          cor_nome: string
+          quantidade_pecas: number
+        }[]
+      }
       get_materiais_ranking_metragem: {
         Args: never
         Returns: {
@@ -4476,6 +4483,8 @@ export type Database = {
           total_quantidade: number
         }[]
       }
+      get_meta_producao_mes: { Args: never; Returns: number }
+      get_ordens_paradas: { Args: never; Returns: number }
       get_pedidos_com_status_ordens: {
         Args: never
         Returns: {
@@ -4484,7 +4493,9 @@ export type Database = {
           ordens: Json
         }[]
       }
+      get_pedidos_na_fila: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_hoje: { Args: never; Returns: number }
+      get_portas_enrolar_produzidas_mes: { Args: never; Returns: number }
       has_role:
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
         | {
