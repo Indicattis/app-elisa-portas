@@ -67,13 +67,13 @@ export function PedidosStatusOrdens() {
     switch (status) {
       case "concluido":
       case "pronta":
-        return "text-green-500";
+        return "border-green-500";
       case "em_andamento":
-        return "text-yellow-500";
+        return "border-yellow-500";
       case "pendente":
-        return "text-gray-400";
+        return "border-gray-400";
       default:
-        return "text-gray-300";
+        return "border-gray-300";
     }
   };
 
@@ -107,27 +107,25 @@ export function PedidosStatusOrdens() {
                       {pedido.etapa_atual}
                     </Badge>
                   </TableCell>
-                  {Object.entries(ordemIcons).map(([key, Icon]) => {
+                  {Object.entries(ordemIcons).map(([key]) => {
                     const ordem = pedido.ordens[key as keyof typeof pedido.ordens];
                     return (
                       <TableCell key={key} className="text-center py-1.5">
                         {ordem.existe ? (
                           <div className="flex flex-col items-center gap-0.5">
-                            <Icon
-                              className={`h-3.5 w-3.5 ${getStatusColor(ordem.status)}`}
-                            />
-                            {ordem.capturada && ordem.capturada_por_foto && (
-                              <Avatar className="h-5 w-5 border">
+                            {ordem.capturada && ordem.capturada_por_foto ? (
+                              <Avatar className={`h-6 w-6 border-2 ${getStatusColor(ordem.status)}`}>
                                 <AvatarImage src={ordem.capturada_por_foto} />
                                 <AvatarFallback className="text-[8px]">
                                   <User className="h-3 w-3" />
                                 </AvatarFallback>
                               </Avatar>
-                            )}
-                            {ordem.capturada && !ordem.capturada_por_foto && (
-                              <Badge variant="secondary" className="text-[8px] px-0.5 py-0 leading-none">
-                                Cap
-                              </Badge>
+                            ) : ordem.capturada ? (
+                              <div className={`h-6 w-6 rounded-full border-2 ${getStatusColor(ordem.status)} bg-secondary flex items-center justify-center`}>
+                                <User className="h-3 w-3" />
+                              </div>
+                            ) : (
+                              <div className="h-6 w-6 rounded-full border-2 border-dashed border-gray-300" />
                             )}
                           </div>
                         ) : (
