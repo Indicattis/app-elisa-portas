@@ -4,18 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 interface MaterialRanking {
   item: string;
   total_quantidade: number;
-  ocorrencias?: number;
-  metragem_m2?: number;
+  metragem_m2: number;
+  ocorrencias: number;
 }
 
 export function useMateriaisProducaoRanking() {
-  const { data: rankingQuantidade = [], isLoading: isLoadingQuantidade } = useQuery({
-    queryKey: ["materiais-ranking-quantidade"],
+  const { data: rankingCompleto = [], isLoading } = useQuery({
+    queryKey: ["materiais-ranking-completo"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_materiais_ranking_quantidade");
+      const { data, error } = await supabase.rpc("get_materiais_ranking_completo");
       
       if (error) {
-        console.error("Erro ao buscar ranking por quantidade:", error);
+        console.error("Erro ao buscar ranking completo:", error);
         return [];
       }
       
@@ -24,24 +24,8 @@ export function useMateriaisProducaoRanking() {
     refetchInterval: 60000, // Atualizar a cada 60 segundos
   });
 
-  const { data: rankingMetragem = [], isLoading: isLoadingMetragem } = useQuery({
-    queryKey: ["materiais-ranking-metragem"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_materiais_ranking_metragem");
-      
-      if (error) {
-        console.error("Erro ao buscar ranking por metragem:", error);
-        return [];
-      }
-      
-      return (data || []) as MaterialRanking[];
-    },
-    refetchInterval: 60000,
-  });
-
   return {
-    rankingQuantidade,
-    rankingMetragem,
-    isLoading: isLoadingQuantidade || isLoadingMetragem,
+    rankingCompleto,
+    isLoading,
   };
 }
