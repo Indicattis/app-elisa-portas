@@ -2,13 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Instalacao, InstalacaoFormData } from "@/types/instalacao";
-import { startOfWeek, endOfWeek } from "date-fns";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
-export const useInstalacoes = (startDate?: Date) => {
+export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'week') => {
   const queryClient = useQueryClient();
 
   const { data: instalacoes = [], isLoading } = useQuery({
-    queryKey: ["instalacoes", startDate?.toISOString()],
+    queryKey: ["instalacoes", startDate?.toISOString(), viewMode],
     queryFn: async () => {
       let query = supabase
         .from("instalacoes")
@@ -35,8 +35,22 @@ export const useInstalacoes = (startDate?: Date) => {
         .order("hora", { ascending: true });
 
       if (startDate) {
-        const start = startOfWeek(startDate, { weekStartsOn: 0 });
-        const end = endOfWeek(startDate, { weekStartsOn: 0 });
+        let start: Date;
+        let end: Date;
+        
+        if (viewMode === 'month') {
+          // Para modo mensal, buscar desde o início do mês até o final
+          const monthStart = startOfMonth(startDate);
+          const monthEnd = endOfMonth(startDate);
+          // Expandir para incluir semanas completas no calendário
+          start = startOfWeek(monthStart, { weekStartsOn: 0 });
+          end = endOfWeek(monthEnd, { weekStartsOn: 0 });
+        } else {
+          // Para modo semanal, buscar apenas a semana
+          start = startOfWeek(startDate, { weekStartsOn: 0 });
+          end = endOfWeek(startDate, { weekStartsOn: 0 });
+        }
+        
         query = query
           .gte("data", start.toISOString().split("T")[0])
           .lte("data", end.toISOString().split("T")[0]);

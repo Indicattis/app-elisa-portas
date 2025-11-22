@@ -41,7 +41,10 @@ export default function InstalacoesMobile() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [equipeSelecionadaId, setEquipeSelecionadaId] = useState<string | null>(null);
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
-  const { instalacoes, isLoading, deleteInstalacao, updateInstalacao, isUpdating } = useInstalacoes(currentDate);
+  const { instalacoes, isLoading, deleteInstalacao, updateInstalacao, isUpdating } = useInstalacoes(
+    currentDate, 
+    tipoVisualizacao === 'mensal' ? 'month' : 'week'
+  );
   const { prepararDadosPDF } = useInstalacoesPDFData();
   
   const [instalacaoToDelete, setInstalacaoToDelete] = useState<string | null>(null);
