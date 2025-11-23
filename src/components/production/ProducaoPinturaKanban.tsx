@@ -53,6 +53,10 @@ function OrdemCard({
   const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
   const todasConcluidas = linhas.length > 0 && linhas.every((l: any) => l.concluida);
+  
+  // Extrair cores únicas do pedido
+  const coresUnicas = [...new Set(linhas.map((l: any) => l.cor_nome).filter(Boolean))].sort();
+  
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
     capturada_em: ordem.capturada_em,
@@ -156,6 +160,19 @@ function OrdemCard({
                   {ordem.status === 'pintando' && 'Pintando'}
                   {ordem.status === 'pronta' && 'Pronta'}
                 </Badge>
+              </div>
+            )}
+
+            {coresUnicas.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Cores</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {coresUnicas.map((cor, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {cor}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
 
