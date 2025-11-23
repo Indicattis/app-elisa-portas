@@ -19,12 +19,12 @@ export function AdminHeader() {
   };
 
   return (
-    <header className="h-16 bg-card border-b border-border px-6 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold text-foreground">Administração</h1>
+    <header className="h-12 bg-card border-b border-border px-2 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <h1 className="text-lg font-bold text-foreground">Administração</h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -35,16 +35,16 @@ export function AdminHeader() {
           <span className="hidden sm:inline">Dashboard</span>
         </Button>
 
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
-            <AvatarFallback className="text-sm font-medium">
+            <AvatarFallback className="text-xs font-medium">
               {getUserInitials(userRole.nome)}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:flex flex-col">
-            <span className="font-medium text-foreground leading-none">{userRole.nome}</span>
-            <span className="text-sm text-muted-foreground capitalize leading-none mt-1">
+            <span className="text-sm font-medium text-foreground leading-none">{userRole.nome}</span>
+            <span className="text-xs text-muted-foreground capitalize leading-none mt-0.5">
               {userRole.role?.replace("_", " ")}
             </span>
           </div>

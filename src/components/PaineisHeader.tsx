@@ -27,7 +27,7 @@ export function PaineisHeader({ sidebarVisible, onToggleSidebar }: PaineisHeader
 
   return (
     <header className="border-b bg-card sticky top-0 z-10">
-      <div className="flex items-center justify-between px-4 h-14">
+      <div className="flex items-center justify-between px-2 h-12">
         <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 

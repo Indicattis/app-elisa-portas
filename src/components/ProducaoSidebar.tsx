@@ -81,14 +81,14 @@ export function ProducaoSidebar() {
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-6 border-b border-sidebar-border">
-        <img src={logoLight} alt="Logo" className="h-12 w-auto mx-auto" />
-        <p className="text-center text-sm text-sidebar-foreground/60 mt-2 font-medium">
+      <div className="p-3 border-b border-sidebar-border">
+        <img src={logoLight} alt="Logo" className="h-10 w-auto mx-auto" />
+        <p className="text-center text-xs text-sidebar-foreground/60 mt-1.5 font-medium">
           Interface de Produção
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-2 space-y-0.5">
         {routes.map((route) => {
           const Icon = getIcon(route.icon);
           const count = getCount(route.key);
@@ -99,7 +99,7 @@ export function ProducaoSidebar() {
               to={route.path}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                  "flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium",
                   "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   isActive
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"

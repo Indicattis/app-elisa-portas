@@ -87,14 +87,14 @@ export function AdminSidebar() {
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-6 border-b border-sidebar-border">
-        <img src={logoLight} alt="Logo" className="h-12 w-auto mx-auto" />
-        <p className="text-center text-sm text-sidebar-foreground/60 mt-2 font-medium">
+      <div className="p-3 border-b border-sidebar-border">
+        <img src={logoLight} alt="Logo" className="h-10 w-auto mx-auto" />
+        <p className="text-center text-xs text-sidebar-foreground/60 mt-1.5 font-medium">
           Interface Administrativa
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-auto">
+      <nav className="flex-1 p-2 space-y-0.5 overflow-auto">
         {parentRoutes.map((route) => {
           const Icon = getIcon(route.icon);
           const hasChildren = childRoutesByParent[route.key]?.length > 0;
@@ -107,7 +107,7 @@ export function AdminSidebar() {
                   <button
                     onClick={() => toggleGroup(route.key)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                      "w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground"
                     )}
                   >
@@ -122,7 +122,7 @@ export function AdminSidebar() {
                   </button>
                   
                   {isExpanded && (
-                    <div className="ml-4 mt-1 space-y-1">
+                    <div className="ml-3 mt-0.5 space-y-0.5">
                       {childRoutesByParent[route.key].map((childRoute) => {
                         const ChildIcon = getIcon(childRoute.icon);
                         return (
@@ -131,7 +131,7 @@ export function AdminSidebar() {
                             to={childRoute.path}
                             className={({ isActive }) =>
                               cn(
-                                "flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm font-medium",
+                                "flex items-center gap-2 px-3 py-1 rounded-lg transition-colors text-sm font-medium",
                                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                                 isActive
                                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
@@ -152,7 +152,7 @@ export function AdminSidebar() {
                   to={route.path}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       isActive
                         ? "bg-sidebar-primary text-sidebar-primary-foreground"
