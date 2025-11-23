@@ -227,63 +227,68 @@ export default function Users() {
           <div className="rounded-md border">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Foto</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Setor</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                <TableRow className="h-7">
+                  <TableHead className="text-[10px] py-1 px-2">Foto</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Nome</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Email</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Função</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Setor</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Código</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Status</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Data</TableHead>
+                  <TableHead className="text-right text-[10px] py-1 px-2">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <AvatarUpload
-                        userId={user.user_id}
-                        currentAvatarUrl={user.foto_perfil_url}
-                        userName={user.nome}
-                        onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
-                      />
+                  <TableRow key={user.id} className="h-[30px] max-h-[30px]">
+                    <TableCell className="py-0 px-2">
+                      <div className="w-6 h-6">
+                        <AvatarUpload
+                          userId={user.user_id}
+                          currentAvatarUrl={user.foto_perfil_url}
+                          userName={user.nome}
+                          onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
+                          compact
+                        />
+                      </div>
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="py-0 px-2 text-[11px] font-medium">
                       {editingUser === user.id ? (
                         <Input
                           value={editForm.nome || ""}
                           onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                          className="max-w-xs"
+                          className="h-6 text-[10px] px-1"
                         />
                       ) : (
-                        user.nome
+                        <span className="truncate block max-w-[120px]">{user.nome}</span>
                       )}
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
+                    <TableCell className="py-0 px-2 text-[10px]">
+                      <span className="truncate block max-w-[140px]">{user.email}</span>
+                    </TableCell>
+                    <TableCell className="py-0 px-2">
                       {editingUser === user.id ? (
                         <Select
                           value={editForm.role}
                           onValueChange={(value) => setEditForm({ ...editForm, role: value })}
                           disabled={loadingRoles}
                         >
-                          <SelectTrigger className="max-w-xs">
+                          <SelectTrigger className="h-6 text-[10px] px-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {loadingRoles ? (
-                              <div className="flex items-center justify-center py-4">
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                              <div className="flex items-center justify-center py-2">
+                                <Loader2 className="h-3 w-3 animate-spin" />
                               </div>
                             ) : systemRoles.length === 0 ? (
-                              <div className="text-sm text-muted-foreground text-center py-4">
+                              <div className="text-[10px] text-muted-foreground text-center py-2">
                                 Nenhum cargo ativo disponível
                               </div>
                             ) : (
                               systemRoles.map((role) => (
-                                <SelectItem key={role.key} value={role.key}>
+                                <SelectItem key={role.key} value={role.key} className="text-[10px]">
                                   {role.label}
                                 </SelectItem>
                               ))
@@ -291,53 +296,53 @@ export default function Users() {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge variant={user.role === "administrador" ? "default" : "secondary"}>
-                          {roleLabelsMap[user.role] || user.role}
+                        <Badge variant={user.role === "administrador" ? "default" : "secondary"} className="text-[9px] px-1 py-0 h-4">
+                          <span className="truncate block max-w-[80px]">{roleLabelsMap[user.role] || user.role}</span>
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-0 px-2">
                       {editingUser === user.id ? (
                         <Select
                           value={editForm.setor || ""}
                           onValueChange={(value) => setEditForm({ ...editForm, setor: value as AdminUser['setor'] })}
                         >
-                          <SelectTrigger className="max-w-xs">
-                            <SelectValue placeholder="Selecione o setor" />
+                          <SelectTrigger className="h-6 text-[10px] px-1">
+                            <SelectValue placeholder="Setor" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="vendas">Vendas</SelectItem>
-                            <SelectItem value="marketing">Marketing</SelectItem>
-                            <SelectItem value="instalacoes">Instalações</SelectItem>
-                            <SelectItem value="fabrica">Fábrica</SelectItem>
-                            <SelectItem value="administrativo">Administrativo</SelectItem>
+                            <SelectItem value="vendas" className="text-[10px]">Vendas</SelectItem>
+                            <SelectItem value="marketing" className="text-[10px]">Marketing</SelectItem>
+                            <SelectItem value="instalacoes" className="text-[10px]">Instalações</SelectItem>
+                            <SelectItem value="fabrica" className="text-[10px]">Fábrica</SelectItem>
+                            <SelectItem value="administrativo" className="text-[10px]">Administrativo</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
                           {user.setor === "vendas" ? "Vendas" :
                            user.setor === "marketing" ? "Marketing" :
                            user.setor === "instalacoes" ? "Instalações" :
                            user.setor === "fabrica" ? "Fábrica" :
-                           user.setor === "administrativo" ? "Administrativo" : "Não definido"}
+                           user.setor === "administrativo" ? "Admin" : "—"}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-0 px-2">
                       {editingUser === user.id ? (
                         <Input
                           value={editForm.codigo_usuario || ""}
                           onChange={(e) => setEditForm({ ...editForm, codigo_usuario: e.target.value })}
-                          placeholder="Digite o código"
-                          className="max-w-xs"
+                          placeholder="Código"
+                          className="h-6 text-[10px] px-1"
                         />
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-mono">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-mono">
                             {user.codigo_usuario ? (
                               visibleCodes.has(user.id) ? user.codigo_usuario : "••••••"
                             ) : (
-                              <span className="text-muted-foreground">Não definido</span>
+                              <span className="text-muted-foreground">—</span>
                             )}
                           </span>
                           {user.codigo_usuario && (
@@ -345,58 +350,60 @@ export default function Users() {
                               variant="ghost"
                               size="sm"
                               onClick={() => toggleCodeVisibility(user.id)}
-                              className="h-6 w-6 p-0"
+                              className="h-4 w-4 p-0"
                             >
                               {visibleCodes.has(user.id) ? (
-                                <EyeOff className="h-4 w-4" />
+                                <EyeOff className="h-2.5 w-2.5" />
                               ) : (
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-2.5 w-2.5" />
                               )}
                             </Button>
                           )}
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-0 px-2">
                       {editingUser === user.id ? (
                         <Select
                           value={editForm.ativo ? "true" : "false"}
                           onValueChange={(value) => setEditForm({ ...editForm, ativo: value === "true" })}
                         >
-                          <SelectTrigger className="max-w-xs">
+                          <SelectTrigger className="h-6 text-[10px] px-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="true">Ativo</SelectItem>
-                            <SelectItem value="false">Inativo</SelectItem>
+                            <SelectItem value="true" className="text-[10px]">Ativo</SelectItem>
+                            <SelectItem value="false" className="text-[10px]">Inativo</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge variant={user.ativo ? "default" : "destructive"}>
+                        <Badge variant={user.ativo ? "default" : "destructive"} className="text-[9px] px-1 py-0 h-4">
                           {user.ativo ? "Ativo" : "Inativo"}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {format(new Date(user.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                    <TableCell className="py-0 px-2 text-[10px]">
+                      {format(new Date(user.created_at), "dd/MM/yy", { locale: ptBR })}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell className="text-right py-0 px-2">
+                      <div className="flex justify-end gap-0.5">
                         {editingUser === user.id ? (
                           <>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleSave(user.id)}
+                              className="h-5 w-5 p-0"
                             >
-                              <Save className="w-4 h-4" />
+                              <Save className="w-3 h-3" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={handleCancel}
+                              className="h-5 w-5 p-0"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-3 h-3" />
                             </Button>
                           </>
                          ) : (
@@ -405,24 +412,27 @@ export default function Users() {
                                variant="outline"
                                size="sm"
                                onClick={() => handleEdit(user)}
+                               className="h-5 w-5 p-0"
                              >
-                               <Edit className="w-4 h-4" />
+                               <Edit className="w-3 h-3" />
                              </Button>
                              <Button
                                variant="outline"
                                size="sm"
                                onClick={() => setShowPasswordInfoUser(user)}
                                title="Ver informações de senha"
+                               className="h-5 w-5 p-0"
                              >
-                               <Lock className="w-4 h-4" />
+                               <Lock className="w-3 h-3" />
                              </Button>
                              <Button
                                variant="outline"
                                size="sm"
                                onClick={() => setResetPasswordUser(user)}
                                title="Redefinir senha"
+                               className="h-5 w-5 p-0"
                              >
-                               <KeyRound className="w-4 h-4" />
+                               <KeyRound className="w-3 h-3" />
                              </Button>
                            </>
                          )}
