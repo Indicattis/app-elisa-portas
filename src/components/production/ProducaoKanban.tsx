@@ -18,6 +18,7 @@ interface LinhaOrdem {
   quantidade: number;
   tamanho?: string;
   concluida: boolean;
+  cor_nome?: string;
 }
 
 interface Ordem {
@@ -68,6 +69,9 @@ function OrdemCard({
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
+
+  // Extrair cores únicas do pedido
+  const coresUnicas = [...new Set(linhas.map(l => l.cor_nome).filter(Boolean))].sort();
 
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
 
@@ -169,6 +173,19 @@ function OrdemCard({
               <div>
                 <p className="text-xs text-muted-foreground">Observações</p>
                 <p className="text-xs line-clamp-2">{ordem.observacoes}</p>
+              </div>
+            )}
+
+            {coresUnicas.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Cores</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {coresUnicas.map((cor, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {cor}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
 
