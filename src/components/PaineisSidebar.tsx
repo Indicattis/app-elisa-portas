@@ -61,14 +61,14 @@ export function PaineisSidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
-      <div className="p-6 border-b border-sidebar-border">
-        <img src={logoLight} alt="Logo" className="h-12 w-auto mx-auto" />
-        <p className="text-center text-sm text-sidebar-foreground/60 mt-2 font-medium">
+      <div className="p-3 border-b border-sidebar-border">
+        <img src={logoLight} alt="Logo" className="h-10 w-auto mx-auto" />
+        <p className="text-center text-xs text-sidebar-foreground/60 mt-1.5 font-medium">
           Painéis e Dashboards
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {routes.map((route) => {
           const Icon = getIcon(route.icon);
 
@@ -78,7 +78,7 @@ export function PaineisSidebar() {
               to={route.path}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base font-medium",
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium",
                   "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   isActive
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"

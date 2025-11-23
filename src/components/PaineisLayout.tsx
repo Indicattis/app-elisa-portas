@@ -17,7 +17,7 @@ export function PaineisLayout({ children }: PaineisLayoutProps) {
           sidebarVisible={sidebarVisible}
           onToggleSidebar={() => setSidebarVisible(!sidebarVisible)}
         />
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-2 md:p-3 overflow-auto">
           {children}
         </main>
       </div>

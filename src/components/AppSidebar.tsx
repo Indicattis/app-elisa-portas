@@ -317,28 +317,28 @@ export function AppSidebar() {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-3">
+      <SidebarFooter className="p-2 space-y-1.5">
         
 
         {/* Botões de acesso rápido a outras interfaces */}
-        <div className="space-y-2">
-          <Link to="/paineis" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
+        <div className="space-y-1">
+          <Link to="/paineis" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
             <Tv className="h-4 w-4" />
             <span>Painéis</span>
           </Link>
           
-          <Link to="/producao" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
-            <Factory className="h-4 w-4" />
+          <Link to="/producao" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
+            <Factory className="h-3.5 w-3.5" />
             <span>Produção</span>
           </Link>
           
-          <Link to="/instalacoes" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
-            <CalendarCheck className="h-4 w-4" />
+          <Link to="/instalacoes" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
+            <CalendarCheck className="h-3.5 w-3.5" />
             <span>Instalações</span>
           </Link>
           
-          <Link to="/todo" className="flex items-center gap-2 px-3 py-2 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-sm font-medium">
-            <ClipboardList className="h-4 w-4" />
+          <Link to="/todo" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
+            <ClipboardList className="h-3.5 w-3.5" />
             <span>Tarefas</span>
           </Link>
         </div>
