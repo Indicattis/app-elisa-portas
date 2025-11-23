@@ -12,9 +12,10 @@ interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
   userName: string;
   onAvatarUpdate: (url: string | null) => void;
+  compact?: boolean;
 }
 
-export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdate }: AvatarUploadProps) {
+export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdate, compact = false }: AvatarUploadProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
@@ -136,6 +137,20 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
       .toUpperCase()
       .slice(0, 2);
   };
+
+  if (compact) {
+    return (
+      <Avatar className="w-6 h-6">
+        <AvatarImage 
+          src={currentAvatarUrl || undefined} 
+          alt={userName} 
+        />
+        <AvatarFallback className="text-[8px]">
+          {getInitials(userName)}
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
 
   return (
     <div className="flex items-center space-x-4">
