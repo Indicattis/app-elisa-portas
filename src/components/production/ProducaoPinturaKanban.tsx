@@ -64,149 +64,206 @@ function OrdemCard({
   return (
     <Card 
       className={cn(
-        "cursor-pointer hover:shadow-md transition-shadow",
+        "hover:shadow-md transition-all overflow-hidden",
         ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
       )}
-      onClick={() => onOrdemClick(ordem)}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              {ordem.em_backlog && (
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 animate-pulse" />
-              )}
-              <CardTitle className="text-base font-semibold truncate">
-                {ordem.numero_ordem}
-              </CardTitle>
-              {ordemProgress && ordemProgress.total > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {ordemProgress.concluidas}/{ordemProgress.total}
-                </Badge>
-              )}
-              {ordem.em_backlog && (
-                <Badge className="bg-red-500 text-white text-xs">
-                  BACKLOG
-                </Badge>
-              )}
-              {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "gap-1 flex-shrink-0",
-                    deveAnimar && "animate-pulse"
-                  )}
-                >
-                  <Timer className="h-3 w-3" />
-                  {tempoDecorrido}
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground truncate mt-1">
+      {/* HEADER */}
+      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center justify-center">
+        <div className="flex items-center justify-between w-full gap-4 h-full">
+          <div className="flex items-center gap-3 text-xs">
+            {ordem.em_backlog && (
+              <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-red-500 animate-pulse" />
+            )}
+            <span className="font-bold">
+              {ordem.numero_ordem}
+            </span>
+            <span className="text-muted-foreground">
               {ordem.pedido?.cliente_nome}
-            </p>
+            </span>
+            {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "gap-1 flex-shrink-0 h-5",
+                  deveAnimar && "animate-pulse"
+                )}
+              >
+                <Timer className="h-3 w-3" />
+                {tempoDecorrido}
+              </Badge>
+            )}
           </div>
-          <Badge variant={ordem.status === 'pronta' ? 'default' : 'secondary'}>
-            {ordem.status === 'pendente' && 'Para Pintar'}
-            {ordem.status === 'pintando' && 'Pintando'}
-            {ordem.status === 'pronta' && 'Pronta'}
-          </Badge>
+          {ordem.em_backlog && (
+            <Badge className="bg-red-500 text-white text-xs h-5">
+              BACKLOG
+            </Badge>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {ordem.admin_users && (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-              <AvatarImage src={ordem.admin_users.foto_perfil_url} alt={ordem.admin_users.nome} />
-              <AvatarFallback className="text-base font-semibold">
-                {ordem.admin_users.nome?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-muted-foreground truncate">
-              {ordem.admin_users.nome}
-            </span>
-          </div>
-        )}
-
-        {linhas.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Progresso</span>
-              <span className="font-medium">{linhasConcluidas}/{linhas.length}</span>
-            </div>
-            <div className="w-full bg-secondary rounded-full h-2">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  todasConcluidas ? "bg-green-600" : "bg-primary"
-                )}
-                style={{ width: `${progresso}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {!ordem.responsavel_id && (
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full"
-            disabled={isCapturing}
-            onClick={(e) => {
-              e.stopPropagation();
-              onCapturarOrdem(ordem.id);
-            }}
+      
+      {/* BODY */}
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          {/* LATERAL ESQUERDA - Foto do responsável */}
+          <div 
+            className="flex-shrink-0 cursor-pointer"
+            onClick={() => onOrdemClick(ordem)}
           >
-            {isCapturing ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Capturando...
-              </>
+            {ordem.responsavel_id ? (
+              <Avatar className="h-[100px] w-[100px] ring-2 ring-primary/20">
+                <AvatarImage 
+                  src={ordem.admin_users?.foto_perfil_url} 
+                  alt={ordem.admin_users?.nome}
+                />
+                <AvatarFallback className="text-3xl font-bold">
+                  {ordem.admin_users?.nome?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
             ) : (
-              <>
-                <UserCheck className="h-5 w-5 mr-2" />
-                Capturar
-              </>
+              <div className="h-[100px] w-[100px] rounded-full bg-muted/50 flex items-center justify-center">
+                <UserCheck className="h-10 w-10 text-muted-foreground/50" />
+              </div>
             )}
-          </Button>
-        )}
+          </div>
 
-        {showFinalizarButton && ordem.responsavel_id && todasConcluidas && (
-          <Button
-            variant="default"
-            size="sm"
-            className="w-full"
-            onClick={(e) => {
-              e.stopPropagation();
-              onFinalizarPintura(ordem.id);
-            }}
+          {/* CENTRO - Informações */}
+          <div 
+            className="flex-1 space-y-3 cursor-pointer min-w-0"
+            onClick={() => onOrdemClick(ordem)}
           >
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Finalizar Pintura
-          </Button>
-        )}
+            {ordem.responsavel_id && ordem.admin_users?.nome && (
+              <div>
+                <p className="text-xs text-muted-foreground">Responsável</p>
+                <p className="text-sm font-semibold truncate">{ordem.admin_users.nome}</p>
+              </div>
+            )}
 
-        {showFinalizarButton && ordem.responsavel_id && !todasConcluidas && (
-          <p className="text-xs text-center text-muted-foreground">
-            Marque todos os itens para finalizar
-          </p>
-        )}
+            {ordemProgress && ordemProgress.total > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Progresso Geral</p>
+                <Badge variant="outline" className="text-xs mt-1">
+                  {ordemProgress.concluidas}/{ordemProgress.total} ordens
+                </Badge>
+              </div>
+            )}
 
-        {ordem.em_backlog && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full border-red-500/50 text-red-600 hover:bg-red-500/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              onBacklogClick(ordem);
-            }}
-          >
-            <FileText className="h-3 w-3 mr-2" />
-            Ver Justificativa
-          </Button>
-        )}
+            {ordem.status && (
+              <div>
+                <p className="text-xs text-muted-foreground">Status</p>
+                <Badge variant={ordem.status === 'pronta' ? 'default' : 'secondary'} className="mt-1">
+                  {ordem.status === 'pendente' && 'Para Pintar'}
+                  {ordem.status === 'pintando' && 'Pintando'}
+                  {ordem.status === 'pronta' && 'Pronta'}
+                </Badge>
+              </div>
+            )}
+
+          </div>
+
+          {/* LATERAL DIREITA - Botão Capturar ou Status */}
+          <div className="flex-shrink-0">
+            {!ordem.responsavel_id ? (
+              <Button
+                size="lg"
+                variant="default"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCapturarOrdem(ordem.id);
+                }}
+                disabled={isCapturing}
+                className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2"
+              >
+                {isCapturing ? (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <span className="text-xs font-semibold">...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="h-8 w-8" />
+                    <span className="text-xs font-semibold">Capturar</span>
+                  </>
+                )}
+              </Button>
+            ) : showFinalizarButton && todasConcluidas ? (
+              <Button
+                size="lg"
+                variant="default"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFinalizarPintura(ordem.id);
+                }}
+                className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2 bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle2 className="h-8 w-8" />
+                <span className="text-xs font-semibold">Finalizar</span>
+              </Button>
+            ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' ? (
+              <div 
+                className="h-[100px] w-[100px] rounded-full bg-primary/10 flex flex-col items-center justify-center gap-1 border-2 border-primary cursor-pointer hover:bg-primary/20 transition-colors relative overflow-hidden"
+                onClick={() => onOrdemClick(ordem)}
+              >
+                {deveAnimar && (
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
+                )}
+                <Timer className="h-5 w-5 text-primary relative z-10" />
+                <span className="text-sm font-mono font-bold text-primary relative z-10">{tempoDecorrido}</span>
+              </div>
+            ) : (
+              <div 
+                className="h-[100px] w-[100px] rounded-lg bg-muted/30 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onOrdemClick(ordem)}
+              >
+                <Paintbrush className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+            )}
+          </div>
+        </div>
       </CardContent>
+
+      {/* FOOTER - Barra de Progresso e Ações */}
+      {linhas.length > 0 && (
+        <div className="border-t bg-muted/20 px-4 py-2">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold">{linhasConcluidas}/{linhas.length} itens</span>
+                {showFinalizarButton && ordem.responsavel_id && !todasConcluidas && (
+                  <span className="text-muted-foreground">Marque todos para finalizar</span>
+                )}
+              </div>
+              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-300",
+                    todasConcluidas ? "bg-green-600" : "bg-primary"
+                  )}
+                  style={{ width: `${progresso}%` }}
+                />
+              </div>
+            </div>
+            
+            {/* Ações */}
+            <div className="flex items-center gap-2">
+              {ordem.em_backlog && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500/50 text-red-600 hover:bg-red-500/10 h-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBacklogClick(ordem);
+                  }}
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  Ver Justificativa
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
@@ -255,17 +312,20 @@ export function ProducaoPinturaKanban({
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Paintbrush className="h-5 w-5 text-orange-600" />
-            <h2 className="text-lg font-semibold">Para Pintar</h2>
-            <Badge variant="secondary">
-              {ordensParaPintar.length}
-            </Badge>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Paintbrush className="h-5 w-5 text-orange-600" />
+              Ordens de Pintura
+            </h2>
+            <Badge variant="secondary">{isLoading ? '...' : ordensParaPintar.length}</Badge>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+
+        {/* Lista de Ordens */}
+        <div className="space-y-3">
           {ordensParaPintar.map((ordem) => (
             <OrdemCard
               key={ordem.id}
@@ -279,9 +339,12 @@ export function ProducaoPinturaKanban({
             />
           ))}
           {ordensParaPintar.length === 0 && (
-            <Card className="border-dashed col-span-full">
-              <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
-                Nenhuma ordem pendente
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Paintbrush className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma ordem pendente
+                </p>
               </CardContent>
             </Card>
           )}
