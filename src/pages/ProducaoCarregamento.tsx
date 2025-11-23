@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PackageCheck, Truck, Calendar, MapPin, Phone, User, RefreshCw } from "lucide-react";
+import { PackageCheck, Truck, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useEntregas } from "@/hooks/useEntregas";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { ConfirmarCarregamentoSheet } from "@/components/entregas/ConfirmarCarregamentoSheet";
@@ -96,58 +97,85 @@ export default function ProducaoCarregamento() {
               ) : (
                 <div className="space-y-3">
                   {entregasPendentes.map((entrega) => (
-                    <Card key={entrega.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="pt-4 space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="space-y-1 flex-1">
-                            <h3 className="font-semibold text-lg">{entrega.nome_cliente}</h3>
+                    <Card 
+                      key={entrega.id} 
+                      className={cn(
+                        "hover:shadow-md transition-all overflow-hidden",
+                        entrega.status !== 'pronta_fabrica' && "opacity-60"
+                      )}
+                    >
+                      {/* HEADER */}
+                      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center justify-center">
+                        <div className="flex items-center justify-between w-full gap-4 h-full">
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="font-bold">
+                              {entrega.nome_cliente}
+                            </span>
                             {entrega.pedido?.numero_pedido && (
-                              <Badge variant="outline" className="text-xs">
+                              <span className="text-muted-foreground">
                                 Pedido #{entrega.pedido.numero_pedido}
-                              </Badge>
+                              </span>
+                            )}
+                            {entrega.data_entrega && (
+                              <span className="text-muted-foreground">
+                                {format(new Date(entrega.data_entrega), "dd/MM/yyyy", { locale: ptBR })}
+                              </span>
                             )}
                           </div>
+                          <Badge variant={entrega.status === 'pronta_fabrica' ? 'default' : 'secondary'}>
+                            {entrega.status === 'pronta_fabrica' ? 'Pronta' : 'Aguardando'}
+                          </Badge>
                         </div>
-
-                        <div className="space-y-2 text-sm">
-                          {entrega.data_entrega && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                              <span>
-                                {format(new Date(entrega.data_entrega), "dd 'de' MMMM", { locale: ptBR })}
-                              </span>
+                      </CardHeader>
+                      
+                      {/* BODY */}
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          {/* LATERAL ESQUERDA - Ícone */}
+                          <div className="flex-shrink-0">
+                            <div className="h-[100px] w-[100px] rounded-full bg-muted/50 flex items-center justify-center">
+                              <PackageCheck className="h-10 w-10 text-muted-foreground/50" />
                             </div>
-                          )}
-                          
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                            <span>{entrega.cidade} - {entrega.estado}</span>
                           </div>
 
-                          {entrega.telefone_cliente && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Phone className="h-4 w-4" />
-                              <span>{entrega.telefone_cliente}</span>
-                            </div>
-                          )}
+                          {/* CENTRO - Informações */}
+                          <div className="flex-1 space-y-3 min-w-0">
+                            {entrega.responsavel_entrega_nome && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Responsável</p>
+                                <p className="text-sm font-semibold truncate">{entrega.responsavel_entrega_nome}</p>
+                              </div>
+                            )}
 
-                          {entrega.responsavel_entrega_nome && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <User className="h-4 w-4" />
-                              <span>{entrega.responsavel_entrega_nome}</span>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Localização</p>
+                              <p className="text-sm truncate">{entrega.cidade} - {entrega.estado}</p>
                             </div>
-                          )}
+
+                            {entrega.telefone_cliente && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Telefone</p>
+                                <p className="text-sm">{entrega.telefone_cliente}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* LATERAL DIREITA - Botão */}
+                          <div className="flex-shrink-0">
+                            <Button
+                              size="lg"
+                              variant="default"
+                              onClick={() => handleIniciarColeta(entrega, "entrega")}
+                              disabled={entrega.status !== 'pronta_fabrica'}
+                              className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2"
+                            >
+                              <PackageCheck className="h-8 w-8" />
+                              <span className="text-xs font-semibold">
+                                {entrega.status === 'pronta_fabrica' ? 'Coletar' : 'Aguardar'}
+                              </span>
+                            </Button>
+                          </div>
                         </div>
-
-                        <Button
-                          onClick={() => handleIniciarColeta(entrega, "entrega")}
-                          className="w-full"
-                          size="lg"
-                          disabled={entrega.status !== 'pronta_fabrica'}
-                        >
-                          <PackageCheck className="h-5 w-5 mr-2" />
-                          {entrega.status === 'pronta_fabrica' ? 'Iniciar Coleta' : 'Aguardando Produção'}
-                        </Button>
                       </CardContent>
                     </Card>
                   ))}
@@ -182,58 +210,85 @@ export default function ProducaoCarregamento() {
               ) : (
                 <div className="space-y-3">
                   {instalacoesPendentes.map((instalacao) => (
-                    <Card key={instalacao.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="pt-4 space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="space-y-1 flex-1">
-                            <h3 className="font-semibold text-lg">{instalacao.nome_cliente}</h3>
+                    <Card 
+                      key={instalacao.id} 
+                      className={cn(
+                        "hover:shadow-md transition-all overflow-hidden",
+                        instalacao.status !== 'pronta_fabrica' && "opacity-60"
+                      )}
+                    >
+                      {/* HEADER */}
+                      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center justify-center">
+                        <div className="flex items-center justify-between w-full gap-4 h-full">
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="font-bold">
+                              {instalacao.nome_cliente}
+                            </span>
                             {instalacao.pedido?.numero_pedido && (
-                              <Badge variant="outline" className="text-xs">
+                              <span className="text-muted-foreground">
                                 Pedido #{instalacao.pedido.numero_pedido}
-                              </Badge>
+                              </span>
+                            )}
+                            {instalacao.data_instalacao && (
+                              <span className="text-muted-foreground">
+                                {format(new Date(instalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}
+                              </span>
                             )}
                           </div>
+                          <Badge variant={instalacao.status === 'pronta_fabrica' ? 'default' : 'secondary'}>
+                            {instalacao.status === 'pronta_fabrica' ? 'Pronta' : 'Aguardando'}
+                          </Badge>
                         </div>
-
-                        <div className="space-y-2 text-sm">
-                          {instalacao.data_instalacao && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                              <span>
-                                {format(new Date(instalacao.data_instalacao), "dd 'de' MMMM", { locale: ptBR })}
-                              </span>
+                      </CardHeader>
+                      
+                      {/* BODY */}
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          {/* LATERAL ESQUERDA - Ícone */}
+                          <div className="flex-shrink-0">
+                            <div className="h-[100px] w-[100px] rounded-full bg-muted/50 flex items-center justify-center">
+                              <Truck className="h-10 w-10 text-muted-foreground/50" />
                             </div>
-                          )}
-                          
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                            <span>{instalacao.cidade} - {instalacao.estado}</span>
                           </div>
 
-                          {instalacao.telefone_cliente && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Phone className="h-4 w-4" />
-                              <span>{instalacao.telefone_cliente}</span>
-                            </div>
-                          )}
+                          {/* CENTRO - Informações */}
+                          <div className="flex-1 space-y-3 min-w-0">
+                            {instalacao.responsavel_instalacao_nome && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Responsável</p>
+                                <p className="text-sm font-semibold truncate">{instalacao.responsavel_instalacao_nome}</p>
+                              </div>
+                            )}
 
-                          {instalacao.responsavel_instalacao_nome && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <User className="h-4 w-4" />
-                              <span>{instalacao.responsavel_instalacao_nome}</span>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Localização</p>
+                              <p className="text-sm truncate">{instalacao.cidade} - {instalacao.estado}</p>
                             </div>
-                          )}
+
+                            {instalacao.telefone_cliente && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Telefone</p>
+                                <p className="text-sm">{instalacao.telefone_cliente}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* LATERAL DIREITA - Botão */}
+                          <div className="flex-shrink-0">
+                            <Button
+                              size="lg"
+                              variant="default"
+                              onClick={() => handleIniciarColeta(instalacao, "instalacao")}
+                              disabled={instalacao.status !== 'pronta_fabrica'}
+                              className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2"
+                            >
+                              <PackageCheck className="h-8 w-8" />
+                              <span className="text-xs font-semibold">
+                                {instalacao.status === 'pronta_fabrica' ? 'Coletar' : 'Aguardar'}
+                              </span>
+                            </Button>
+                          </div>
                         </div>
-
-                        <Button
-                          onClick={() => handleIniciarColeta(instalacao, "instalacao")}
-                          className="w-full"
-                          size="lg"
-                          disabled={instalacao.status !== 'pronta_fabrica'}
-                        >
-                          <PackageCheck className="h-5 w-5 mr-2" />
-                          {instalacao.status === 'pronta_fabrica' ? 'Iniciar Coleta' : 'Aguardando Produção'}
-                        </Button>
                       </CardContent>
                     </Card>
                   ))}
