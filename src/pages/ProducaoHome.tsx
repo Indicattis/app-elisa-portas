@@ -123,7 +123,9 @@ export default function ProducaoHome() {
                     <div className="p-2 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
                       <Icon className="h-5 w-5 text-primary" />
                     </div>
-                    <span className="font-medium text-sm">{route.label}</span>
+                    <span className="font-medium text-sm">
+                      {route.label.replace(/^Produção\s*-\s*/i, '')}
+                    </span>
                   </div>
                   {count > 0 && (
                     <Badge variant="secondary" className="ml-2">
