@@ -165,7 +165,7 @@ export function PedidosDraggableList({
       >
         <div className={
           viewMode === 'list' 
-            ? "space-y-2" 
+            ? "space-y-1" 
             : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         }>
           {pedidos.map((pedido, index) => (
