@@ -311,7 +311,7 @@ export default function FaturamentoEdit() {
                     title: "Pedido criado com sucesso!",
                     description: "O pedido está pronto para ser preenchido.",
                   });
-                  navigate(`/dashboard/pedido/${pedidoId}/preparacao`);
+                  navigate(`/dashboard/pedido/${pedidoId}/view`);
                 } else {
                   navigate('/dashboard/faturamento');
                 }
@@ -338,7 +338,7 @@ export default function FaturamentoEdit() {
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               if (pedidoExistenteId) {
-                navigate(`/dashboard/pedido/${pedidoExistenteId}/preparacao`);
+                navigate(`/dashboard/pedido/${pedidoExistenteId}/view`);
               }
             }}>
               Acessar Pedido
