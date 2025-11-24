@@ -64,7 +64,8 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
             pedido:pedidos_producao!pedido_id(
               id,
               numero_pedido,
-              cliente_nome
+              cliente_nome,
+              arquivado
             )
           `)
           .eq('historico', true)
@@ -90,10 +91,13 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
         if (error) throw error;
         
         // Mapear dados adicionando o tipo de ordem
-        return (data || []).map((ordem: any) => ({
-          ...ordem,
-          tipo_ordem: tipo,
-        }));
+        // Filtrar apenas ordens cujos pedidos estão arquivados
+        return (data || [])
+          .filter((ordem: any) => ordem.pedido?.arquivado === true)
+          .map((ordem: any) => ({
+            ...ordem,
+            tipo_ordem: tipo,
+          }));
       });
       
       const results = await Promise.all(promises);
