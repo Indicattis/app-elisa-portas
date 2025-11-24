@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
@@ -341,125 +341,124 @@ export default function PedidoView() {
   const temPendentesSalvamento = linhasEditadas.size > 0;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />Voltar
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Pedido #{pedido.numero_pedido}</h1>
-            <p className="text-sm text-muted-foreground">
-              Cadastrado em {format(new Date(pedido.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            <h1 className="text-2xl font-bold">Pedido #{pedido.numero_pedido}</h1>
+            <p className="text-xs text-muted-foreground">
+              Cadastrado em {format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => fetchPedidoDetails()}
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
+            <RefreshCw className="w-4 h-4" />
           </Button>
-          {isAberto && (
-            <Button
-              variant={modoEdicao ? "default" : "outline"}
-              size="sm"
-              onClick={() => setModoEdicao(!modoEdicao)}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              {modoEdicao ? "Modo Edição Ativo" : "Ativar Edição"}
-            </Button>
-          )}
+          <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa_atual)} text-xs px-2 py-0.5`}>
+            {getEtapaLabel(pedido.etapa_atual)}
+          </Badge>
         </div>
       </div>
 
-      {/* Status e Etapa do Pedido */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Status do Pedido</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${
-                pedido.etapa_atual === 'finalizado' ? 'bg-green-500' :
-                pedido.etapa_atual === 'em_producao' ? 'bg-blue-500' :
-                pedido.etapa_atual === 'aberto' ? 'bg-yellow-500' : 'bg-gray-500'
-              }`} />
-              <div>
-                <p className="text-sm text-muted-foreground">Etapa Atual</p>
-                <p className="font-semibold text-lg">{getEtapaLabel(pedido.etapa_atual)}</p>
-              </div>
-            </div>
-            <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa_atual)} text-base px-4 py-2`}>
-              {getEtapaLabel(pedido.etapa_atual)}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Informações Compactas da Venda e Pedido */}
-      {pedido.venda && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Informações do Cliente e Pedido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Cliente</p>
-                <p className="font-medium">{pedido.venda.cliente_nome}</p>
-              </div>
-              {pedido.venda.cidade && pedido.venda.estado && (
+      {/* Grid: Informações do Cliente e Ações Rápidas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Informações do Cliente */}
+        {pedido.venda && (
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Informações do Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                 <div>
-                  <p className="text-sm text-muted-foreground">Localização</p>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span>{pedido.venda.cidade}, {pedido.venda.estado}</span>
+                  <p className="text-xs text-muted-foreground">Cliente</p>
+                  <p className="font-medium">{pedido.venda.cliente_nome}</p>
+                </div>
+                {pedido.venda.cidade && pedido.venda.estado && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Localização</p>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs">{pedido.venda.cidade}, {pedido.venda.estado}</span>
+                    </div>
                   </div>
-                </div>
-              )}
-              {pedido.venda.valor_venda && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Valor da Venda</p>
-                  <p className="font-medium">R$ {Number(pedido.venda.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                </div>
-              )}
-              {pedido.venda.forma_pagamento && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Forma de Pagamento</p>
-                  <p className="font-medium">{pedido.venda.forma_pagamento}</p>
-                </div>
-              )}
-              {pedido.venda.tipo_entrega && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Tipo de Entrega</p>
-                  <p className="font-medium capitalize">{pedido.venda.tipo_entrega}</p>
-                </div>
-              )}
-              {pedido.venda.data_prevista_entrega && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Data Prevista de Entrega</p>
-                  <p className="font-medium">{format(new Date(pedido.venda.data_prevista_entrega), "dd/MM/yyyy")}</p>
-                </div>
-              )}
-            </div>
+                )}
+                {pedido.venda.valor_venda && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Valor da Venda</p>
+                    <p className="font-medium">R$ {Number(pedido.venda.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                )}
+                {pedido.venda.forma_pagamento && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Forma de Pagamento</p>
+                    <p className="font-medium capitalize">{pedido.venda.forma_pagamento}</p>
+                  </div>
+                )}
+                {pedido.venda.tipo_entrega && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tipo de Entrega</p>
+                    <p className="font-medium capitalize">{pedido.venda.tipo_entrega}</p>
+                  </div>
+                )}
+                {pedido.venda.data_prevista_entrega && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Data Prevista</p>
+                    <p className="font-medium">{format(new Date(pedido.venda.data_prevista_entrega), "dd/MM/yyyy")}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Ações Rápidas */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Ações Rápidas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {pedido.venda_id && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-sm h-9" 
+                onClick={() => navigate(`/dashboard/vendas/${pedido.venda_id}/view`)}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Ver Venda
+              </Button>
+            )}
+            {isAberto && (
+              <Button
+                variant={modoEdicao ? "default" : "outline"}
+                className="w-full justify-start text-sm h-9"
+                onClick={() => setModoEdicao(!modoEdicao)}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                {modoEdicao ? "Desativar Edição" : "Ativar Edição"}
+              </Button>
+            )}
           </CardContent>
         </Card>
-      )}
+      </div>
 
-      {/* Tabela de Produtos da Venda */}
+      {/* Produtos da Venda */}
       {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
               <Package className="w-4 h-4" />
               Produtos da Venda
             </CardTitle>
@@ -468,14 +467,14 @@ export default function PedidoView() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2 text-sm font-medium">Tipo</th>
-                    <th className="text-left p-2 text-sm font-medium">Descrição</th>
-                    <th className="text-left p-2 text-sm font-medium">Tamanho</th>
-                    <th className="text-left p-2 text-sm font-medium">Cor</th>
-                    <th className="text-right p-2 text-sm font-medium">Peso (kg)</th>
-                    <th className="text-right p-2 text-sm font-medium">Meia-canas</th>
-                    <th className="text-center p-2 text-sm font-medium">Qtd</th>
+                  <tr className="border-b text-xs">
+                    <th className="text-left p-2 font-medium text-muted-foreground">Tipo</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Descrição</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Tamanho</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Cor</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">Peso (kg)</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">M. Canas</th>
+                    <th className="text-center p-2 font-medium text-muted-foreground">Qtd</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -483,15 +482,15 @@ export default function PedidoView() {
                     const peso = calcularPeso(produto);
                     const meiaCanas = calcularMeiaCanas(produto);
                     return (
-                      <tr key={produto.id} className="border-b">
-                        <td className="p-2 text-sm">{produto.tipo_produto || '-'}</td>
-                        <td className="p-2 text-sm">{produto.descricao || '-'}</td>
-                        <td className="p-2 text-sm">{produto.tamanho || '-'}</td>
-                        <td className="p-2 text-sm">{produto.cor || '-'}</td>
-                        <td className="p-2 text-sm text-right">{peso || '-'}</td>
-                        <td className="p-2 text-sm text-right">{meiaCanas || '-'}</td>
-                        <td className="p-2 text-sm text-center">
-                          <Badge variant="outline">{produto.quantidade}x</Badge>
+                      <tr key={produto.id} className="border-b hover:bg-muted/30 transition-colors">
+                        <td className="p-2 text-xs">{produto.tipo_produto || '-'}</td>
+                        <td className="p-2 text-xs">{produto.descricao || '-'}</td>
+                        <td className="p-2 text-xs">{produto.tamanho || '-'}</td>
+                        <td className="p-2 text-xs">{produto.cor || '-'}</td>
+                        <td className="p-2 text-xs text-right">{peso || '-'}</td>
+                        <td className="p-2 text-xs text-right">{meiaCanas || '-'}</td>
+                        <td className="p-2 text-center">
+                          <Badge variant="secondary" className="text-xs">{produto.quantidade}x</Badge>
                         </td>
                       </tr>
                     );
@@ -505,32 +504,32 @@ export default function PedidoView() {
 
       {/* Seção de Preparação do Pedido (somente quando aberto e em modo edição) */}
       {isAberto && modoEdicao && portasEnrolar.length > 0 && (
-        <Card className="border-2 border-primary/20">
-          <CardHeader className="bg-primary/5">
+        <Card className="border-primary/20">
+          <CardHeader className="bg-primary/5 pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Edit className="w-5 h-5" />
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Edit className="w-4 h-4" />
                 Preparação do Pedido
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge variant={validacao.todasCompletas ? "default" : "secondary"}>
-                  {validacao.portasCompletas} de {validacao.totalPortas} portas completas
+                <Badge variant={validacao.todasCompletas ? "default" : "secondary"} className="text-xs">
+                  {validacao.portasCompletas}/{validacao.totalPortas} completas
                 </Badge>
                 {temPendentesSalvamento && (
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/50">
-                    Alterações pendentes
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/50 text-xs">
+                    Pendentes
                   </Badge>
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="space-y-4 pt-4">
             {/* Separação */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">Separação</h3>
-                <Badge variant="outline">
-                  {validacao.statusPorPorta.filter(s => s.separacao).length} de {portasEnrolar.length}
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold">Separação</h3>
+                <Badge variant="outline" className="text-xs">
+                  {validacao.statusPorPorta.filter(s => s.separacao).length}/{portasEnrolar.length}
                 </Badge>
               </div>
               <LinhasAgrupadasPorPorta
@@ -549,10 +548,10 @@ export default function PedidoView() {
 
             {/* Solda */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">Solda</h3>
-                <Badge variant="outline">
-                  {validacao.statusPorPorta.filter(s => s.solda).length} de {portasEnrolar.length}
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold">Solda</h3>
+                <Badge variant="outline" className="text-xs">
+                  {validacao.statusPorPorta.filter(s => s.solda).length}/{portasEnrolar.length}
                 </Badge>
               </div>
               <LinhasAgrupadasPorPorta
@@ -571,10 +570,10 @@ export default function PedidoView() {
 
             {/* Perfiladeira */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">Perfiladeira</h3>
-                <Badge variant="outline">
-                  {validacao.statusPorPorta.filter(s => s.perfiladeira).length} de {portasEnrolar.length}
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold">Perfiladeira</h3>
+                <Badge variant="outline" className="text-xs">
+                  {validacao.statusPorPorta.filter(s => s.perfiladeira).length}/{portasEnrolar.length}
                 </Badge>
               </div>
               <LinhasAgrupadasPorPorta
@@ -593,8 +592,8 @@ export default function PedidoView() {
 
             {/* Observações */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">Observações das Portas</h3>
-              <div className="space-y-4">
+              <h3 className="text-sm font-semibold mb-2">Observações das Portas</h3>
+              <div className="space-y-3">
                 {portasEnrolar.map((porta: any, index: number) => (
                   <ObservacoesPortaForm
                     key={porta.id}
@@ -610,9 +609,9 @@ export default function PedidoView() {
             </div>
 
             {/* Botão de Salvar (sticky) */}
-            <div className="sticky bottom-0 bg-background pt-4 border-t">
+            <div className="sticky bottom-0 bg-background pt-3 border-t">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {temPendentesSalvamento ? (
                     <span className="text-amber-600 font-medium">
                       {linhasEditadas.size} alteraç{linhasEditadas.size === 1 ? 'ão' : 'ões'} pendente{linhasEditadas.size === 1 ? '' : 's'}
@@ -624,16 +623,16 @@ export default function PedidoView() {
                 <Button
                   onClick={handleSalvarAlteracoes}
                   disabled={!temPendentesSalvamento || salvando}
-                  size="lg"
+                  size="sm"
                 >
                   {salvando ? (
                     <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
                       Salvando...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
+                      <Save className="w-3 h-3 mr-2" />
                       Salvar Alterações
                     </>
                   )}
@@ -644,48 +643,78 @@ export default function PedidoView() {
         </Card>
       )}
 
-      {/* Fluxograma do Pedido */}
-      <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
+      {/* Fluxograma e Histórico */}
+      <div className="grid grid-cols-1 gap-4">
+        {/* Fluxograma do Pedido */}
+        <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
 
-      {/* Histórico de Movimentações */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Histórico de Movimentações
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
-        </CardContent>
-      </Card>
-
-      {/* Linhas do Pedido - Visualização */}
-      {pedido.linhas.length > 0 && (
+        {/* Histórico de Movimentações */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              Itens do Pedido Cadastrados ({pedido.linhas.length})
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Histórico de Movimentações
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {pedido.linhas.map((linha) => (
-                <div key={linha.id} className="p-3 bg-muted/30 rounded-lg">
-                  <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="font-medium">{linha.descricao_produto}</p>
-                    {linha.observacoes && (
-                        <p className="text-sm text-muted-foreground mt-1">Obs: {linha.observacoes}</p>
-                      )}
-                    </div>
-                    <Badge variant="outline">
-                      {linha.quantidade}x
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+            <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Itens do Pedido Cadastrados */}
+      {pedido.linhas.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Itens do Pedido ({pedido.linhas.length})
+              </CardTitle>
+              {isAberto && (
+                <Button
+                  variant={modoEdicao ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setModoEdicao(!modoEdicao)}
+                >
+                  <Edit className="w-3 h-3 mr-2" />
+                  {modoEdicao ? "Desativar" : "Editar"}
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-xs">
+                    <th className="text-left p-2 font-medium text-muted-foreground">Item</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Categoria</th>
+                    <th className="text-center p-2 font-medium text-muted-foreground">Qtd</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Observações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedido.linhas.map((linha: any) => (
+                    <tr key={linha.id} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="p-2 text-sm font-medium">{linha.descricao_produto || linha.nome_produto}</td>
+                      <td className="p-2 text-xs text-muted-foreground">
+                        <Badge variant="outline" className="text-xs">
+                          {linha.categoria_linha || linha.tipo_ordem || '-'}
+                        </Badge>
+                      </td>
+                      <td className="p-2 text-center">
+                        <Badge variant="secondary" className="text-xs">
+                          {linha.quantidade}x
+                        </Badge>
+                      </td>
+                      <td className="p-2 text-xs text-muted-foreground">
+                        {linha.observacoes || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>
@@ -694,58 +723,55 @@ export default function PedidoView() {
       {/* Ordens de Produção */}
       {pedido.ordens.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Hammer className="w-4 h-4" />
               Ordens de Produção ({pedido.ordens.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-2">
-              {pedido.ordens.map((ordem) => (
-                <div key={ordem.id} className="p-4 border rounded-lg hover:border-primary/50 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      {ordem.status !== "N/A" && getStatusIcon(ordem.status)}
-                      <p className="font-semibold text-base">{ordem.tipo}</p>
-                    </div>
-                    {ordem.status !== "N/A" && (
-                      <Badge variant="outline" className={`${getStatusBadgeColor(ordem.status)} font-medium`}>
-                        {ordem.status === "aberto" && "Aberto"}
-                        {ordem.status === "em_andamento" && "Em Andamento"}
-                        {ordem.status === "concluido" && "Concluído"}
-                        {ordem.status === "cancelado" && "Cancelado"}
-                      </Badge>
-                    )}
-                  </div>
-                  {ordem.numero_ordem !== "N/A" && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <FileText className="w-3 h-3" />
-                      <span>Ordem #{ordem.numero_ordem}</span>
-                    </div>
-                  )}
-                  {ordem.status === "N/A" && (
-                    <p className="text-sm text-muted-foreground">Ordem de instalação</p>
-                  )}
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-xs">
+                    <th className="text-left p-2 font-medium text-muted-foreground">Tipo</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Número</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedido.ordens.map((ordem) => (
+                    <tr key={ordem.id} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="p-2">
+                        <div className="flex items-center gap-2">
+                          {ordem.tipo === 'Perfiladeira' && <Hammer className="w-3 h-3 text-muted-foreground" />}
+                          {ordem.tipo === 'Separação' && <Package className="w-3 h-3 text-muted-foreground" />}
+                          {ordem.tipo === 'Soldagem' && <Hammer className="w-3 h-3 text-muted-foreground" />}
+                          {ordem.tipo === 'Pintura' && <Paintbrush className="w-3 h-3 text-muted-foreground" />}
+                          {ordem.tipo === 'Instalação' && <Truck className="w-3 h-3 text-muted-foreground" />}
+                          <span className="text-sm font-medium">{ordem.tipo}</span>
+                        </div>
+                      </td>
+                      <td className="p-2 text-sm text-muted-foreground">
+                        {ordem.numero_ordem !== "N/A" ? `#${ordem.numero_ordem}` : '-'}
+                      </td>
+                      <td className="p-2">
+                        {ordem.status !== "N/A" ? (
+                          <Badge variant="outline" className={`${getStatusBadgeColor(ordem.status)} text-xs`}>
+                            {ordem.status === "aberto" && "Aberto"}
+                            {ordem.status === "em_andamento" && "Em Andamento"}
+                            {ordem.status === "concluido" && "Concluído"}
+                            {ordem.status === "cancelado" && "Cancelado"}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Separator />
-
-      {/* Ações Rápidas */}
-      {pedido.venda_id && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" onClick={() => navigate(`/dashboard/vendas/${pedido.venda_id}/view`)}>
-              Ver Venda Relacionada
-            </Button>
           </CardContent>
         </Card>
       )}
