@@ -68,6 +68,8 @@ export default function EstoqueEdit() {
   const { data: produto, isLoading } = useQuery({
     queryKey: ["produto", id],
     queryFn: async () => {
+      if (!id) throw new Error("ID não fornecido");
+      
       const { data, error } = await supabase
         .from("estoque")
         .select(`
@@ -76,9 +78,10 @@ export default function EstoqueEdit() {
           fornecedor:fornecedores(id, nome)
         `)
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error("Produto não encontrado");
       return data;
     },
     enabled: !!id,
@@ -148,7 +151,7 @@ export default function EstoqueEdit() {
   };
 
   const { data: movimentacoes = [], isLoading: loadingMovimentacoes } = 
-    buscarMovimentacoes(id);
+    buscarMovimentacoes(id || undefined);
 
   const subcategoriasFiltradas = subcategorias.filter(
     (sub) => sub.categoria_id === formData.categoria
