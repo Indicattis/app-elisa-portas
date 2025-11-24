@@ -38,7 +38,18 @@ export interface OrdemCarregamento {
     bairro: string | null;
     data_prevista_entrega: string | null;
     cliente_email?: string | null;
+    produtos?: Array<{
+      cor?: {
+        nome: string;
+        codigo_hex: string;
+      } | null;
+    }>;
   };
+}
+
+export interface ProdutoCor {
+  nome: string;
+  codigo_hex: string;
 }
 
 export interface AgendarCarregamentoData {

@@ -158,6 +158,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
                 onEdit={onEdit}
                 onRemoverDoCalendario={onRemoverDoCalendario}
                 onOrdemDropped={onOrdemDropped}
+                onUpdateOrdem={onUpdateOrdem}
               />
             ))}
           </div>
