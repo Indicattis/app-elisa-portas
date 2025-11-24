@@ -74,46 +74,44 @@ function DraggablePedidoCard({ pedido }: { pedido: PedidoDisponivel }) {
       style={style}
       {...attributes}
       {...listeners}
-      className={`transition-colors ${
+      className={`transition-colors h-[35px] ${
         isExpedicaoInstalacao 
           ? 'hover:border-primary cursor-grab active:cursor-grabbing' 
           : 'opacity-60 cursor-not-allowed'
       }`}
     >
-      <CardContent className="p-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Package className="h-4 w-4 text-muted-foreground" />
-            <span className="font-semibold">{pedido.numero_pedido}</span>
-            <Badge variant="outline" className={`text-xs ${getEtapaColor(pedido.etapa_atual)}`}>
-              {getEtapaLabel(pedido.etapa_atual)}
-            </Badge>
-            {isExpedicaoInstalacao && (
-              <Badge variant="secondary" className="text-xs ml-auto">
-                Pode agendar
-              </Badge>
-            )}
+      <CardContent className="p-0 h-full">
+        <div className="h-full grid grid-cols-[100px_1fr_200px_150px_140px] gap-2 items-center px-3 text-xs">
+          <div className="flex items-center gap-1.5 font-semibold">
+            <Package className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="truncate">{pedido.numero_pedido}</span>
           </div>
 
-          <div className="text-sm">
-            <strong>Cliente:</strong> {pedido.venda.cliente_nome}
+          <div className="truncate">
+            {pedido.venda.cliente_nome}
           </div>
 
-          {(pedido.venda.cidade || pedido.venda.estado) && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              {pedido.venda.cidade && <span>{pedido.venda.cidade}</span>}
-              {pedido.venda.cidade && pedido.venda.estado && <span>-</span>}
-              {pedido.venda.estado && <span>{pedido.venda.estado}</span>}
-            </div>
-          )}
+          <div className="flex items-center gap-1 text-muted-foreground truncate">
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">
+              {pedido.venda.cidade && pedido.venda.estado 
+                ? `${pedido.venda.cidade} - ${pedido.venda.estado}`
+                : pedido.venda.cidade || pedido.venda.estado || '-'}
+            </span>
+          </div>
 
-          {pedido.venda.data_prevista_entrega && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              <span>Entrega prevista: {format(new Date(pedido.venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Calendar className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">
+              {pedido.venda.data_prevista_entrega 
+                ? format(new Date(pedido.venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
+                : '-'}
+            </span>
+          </div>
+
+          <Badge variant="outline" className={`text-[10px] h-5 px-1.5 ${getEtapaColor(pedido.etapa_atual)}`}>
+            {getEtapaLabel(pedido.etapa_atual)}
+          </Badge>
         </div>
       </CardContent>
     </Card>
