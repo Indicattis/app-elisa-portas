@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,10 +39,12 @@ export function CarregamentoDownbar({
   const { concluirInstalacao } = useInstalacoesCadastradas();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const hasUncheckedRef = useRef(false);
 
-  // Desmarcar todos os itens ao abrir
+  // Desmarcar todos os itens APENAS ao abrir pela primeira vez
   useEffect(() => {
-    if (open && item?.pedido_id && linhas && linhas.length > 0) {
+    if (open && item?.pedido_id && linhas && linhas.length > 0 && !hasUncheckedRef.current) {
+      hasUncheckedRef.current = true;
       const desmarcarTodos = async () => {
         try {
           for (const linha of linhas) {
@@ -61,6 +63,11 @@ export function CarregamentoDownbar({
         }
       };
       desmarcarTodos();
+    }
+    
+    // Resetar a flag quando fechar a downbar
+    if (!open) {
+      hasUncheckedRef.current = false;
     }
   }, [open, item?.pedido_id, linhas, atualizarCheckbox, queryClient]);
 
