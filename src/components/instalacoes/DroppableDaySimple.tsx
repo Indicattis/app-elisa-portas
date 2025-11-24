@@ -13,6 +13,7 @@ interface DroppableDaySimpleProps {
   onDayClick: (date: Date) => void;
   onEdit: (instalacao: Instalacao) => void;
   onDelete: (id: string) => void;
+  onPedidoDropped?: () => void;
 }
 
 export const DroppableDaySimple = ({
@@ -21,11 +22,13 @@ export const DroppableDaySimple = ({
   onDayClick,
   onEdit,
   onDelete,
+  onPedidoDropped,
 }: DroppableDaySimpleProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: format(date, "yyyy-MM-dd"),
     data: {
       date,
+      type: 'day',
     },
   });
 

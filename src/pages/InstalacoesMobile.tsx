@@ -34,6 +34,7 @@ import {
 import { InstalacaoForm } from "@/components/instalacoes/InstalacaoForm";
 import { useInstalacoesPDFData } from "@/hooks/useInstalacoesPDFData";
 import { baixarCronogramaInstalacoesPDF } from "@/utils/instalacoesCronogramaPDF";
+import { PedidosDisponiveis } from "@/components/instalacoes/PedidosDisponiveis";
 
 export default function InstalacoesMobile() {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ export default function InstalacoesMobile() {
   const [instalacaoToDelete, setInstalacaoToDelete] = useState<string | null>(null);
   const [instalacaoToEdit, setInstalacaoToEdit] = useState<Instalacao | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [refreshPedidos, setRefreshPedidos] = useState(0);
 
   // Filtrar instalações por equipe
   const instalacoesFiltradas = equipeSelecionadaId
@@ -107,6 +109,10 @@ export default function InstalacoesMobile() {
 
   const handleDelete = (id: string) => {
     setInstalacaoToDelete(id);
+  };
+
+  const handlePedidoDropped = () => {
+    setRefreshPedidos(prev => prev + 1);
   };
 
   const confirmDelete = async () => {
@@ -232,6 +238,7 @@ export default function InstalacoesMobile() {
                     onUpdateInstalacao={handleUpdateInstalacao}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onPedidoDropped={handlePedidoDropped}
                   />
                 ) : (
                   <CalendarioMensalDesktop
@@ -241,9 +248,15 @@ export default function InstalacoesMobile() {
                     onUpdateInstalacao={handleUpdateInstalacao}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onPedidoDropped={handlePedidoDropped}
                   />
                 )}
               </>
+            )}
+
+            {/* Listagem de pedidos disponíveis (apenas desktop) */}
+            {!isMobile && (
+              <PedidosDisponiveis key={refreshPedidos} />
             )}
           </>
         )}
