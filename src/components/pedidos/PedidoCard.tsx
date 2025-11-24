@@ -1,6 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -62,6 +63,84 @@ export function PedidoCard({
   } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Helper component for buttons with tooltips
+  const ButtonWithTooltip = ({ 
+    children, 
+    tooltip, 
+    disabled, 
+    ...props 
+  }: { 
+    children: React.ReactNode; 
+    tooltip?: string; 
+    disabled?: boolean;
+    [key: string]: any;
+  }) => {
+    if (disabled && tooltip) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-full">
+              {children}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="max-w-[200px]">{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+    return <>{children}</>;
+  };
+
+  // Função de validação centralizada por etapa
+  const getValidacaoAvancoEtapa = (etapa: string) => {
+    switch (etapa) {
+      case 'aberto':
+        return {
+          podeAvancar: temLinhas,
+          mensagem: temLinhas 
+            ? undefined 
+            : "Preencha as linhas do pedido (Separação, Solda e Perfiladeira) para iniciar a produção"
+        };
+        
+      case 'em_producao':
+        return {
+          podeAvancar: todasOrdensConcluidasEmProducao,
+          mensagem: todasOrdensConcluidasEmProducao 
+            ? undefined 
+            : "Conclua todas as ordens de produção antes de avançar para inspeção de qualidade"
+        };
+        
+      case 'inspecao_qualidade':
+        return {
+          podeAvancar: ordemQualidadeConcluida,
+          mensagem: ordemQualidadeConcluida 
+            ? undefined 
+            : "Conclua a inspeção de qualidade antes de avançar"
+        };
+        
+      case 'aguardando_pintura':
+        return {
+          podeAvancar: ordemPinturaConcluida,
+          mensagem: ordemPinturaConcluida 
+            ? undefined 
+            : "Conclua a ordem de pintura antes de avançar para expedição"
+        };
+        
+      case 'aguardando_coleta':
+      case 'aguardando_instalacao':
+        return {
+          podeAvancar: temDataCarregamento,
+          mensagem: temDataCarregamento 
+            ? undefined 
+            : "Defina a data de carregamento antes de finalizar o pedido"
+        };
+        
+      default:
+        return { podeAvancar: true, mensagem: undefined };
+    }
+  };
 
   // Buscar quantidade de linhas do pedido
   const {
@@ -542,70 +621,93 @@ export function PedidoCard({
               </span>
               
               {/* Botões de ação */}
-              <div className="flex items-center gap-1">
-                {(() => {
-                  const actionButtons = [];
+              <TooltipProvider>
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const actionButtons = [];
 
-                  // Build action buttons array
-                  // Botão de preparar pedido removido - funcionalidade movida para PedidoView
-                  if (isAberto && temLinhas && onMoverEtapa) {
-                    actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção" className="h-6 w-6">
+                    // Build action buttons array
+                    // Botão de preparar pedido removido - funcionalidade movida para PedidoView
+                    if (isAberto && onMoverEtapa) {
+                      const validacao = getValidacaoAvancoEtapa('aberto');
+                      actionButtons.push(
+                        <ButtonWithTooltip key="iniciar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="h-6 w-6">
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </ButtonWithTooltip>
+                      );
+                    } else if (etapaAtual === 'em_producao') {
+                      const validacao = getValidacaoAvancoEtapa('em_producao');
+                      actionButtons.push(
+                        <ButtonWithTooltip key="avançar-qualidade" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!validacao.podeAvancar} className="h-6 w-6">
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </ButtonWithTooltip>
+                      );
+                    } else if (etapaAtual === 'inspecao_qualidade') {
+                      const validacao = getValidacaoAvancoEtapa('inspecao_qualidade');
+                      actionButtons.push(
+                        <ButtonWithTooltip key="avançar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                          <Button size="icon" onClick={async (e) => {
+                            e.stopPropagation();
+                            const processosNecessarios = await determinarProcessos(pedido.id);
+                            setProcessos(processosNecessarios);
+                            setShowProgresso(true);
+                            if (onMoverEtapa) {
+                              await onMoverEtapa(pedido.id, true, (processoId, status) => {
+                                setProcessos(prev => prev.map(p => p.id === processoId ? {
+                                  ...p,
+                                  status
+                                } : p));
+                              });
+                              await new Promise(resolve => setTimeout(resolve, 1000));
+                              setShowProgresso(false);
+                            }
+                          }} disabled={!validacao.podeAvancar} className="h-6 w-6">
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </ButtonWithTooltip>
+                      );
+                    } else if (etapaAtual === 'aguardando_pintura') {
+                      const validacao = getValidacaoAvancoEtapa('aguardando_pintura');
+                      actionButtons.push(
+                        <ButtonWithTooltip key="avançar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="h-6 w-6">
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </ButtonWithTooltip>
+                      );
+                    } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                      actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento" className="h-6 w-6">
+                          <Package className="h-3 w-3" />
+                        </Button>);
+                    } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+                      actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="h-6 w-6">
                           <ArrowRight className="h-3 w-3" />
                         </Button>);
-                  } else if (etapaAtual === 'em_producao') {
-                    actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"} className="h-6 w-6">
-                        <ArrowRight className="h-3 w-3" />
-                      </Button>);
-                  } else if (etapaAtual === 'inspecao_qualidade') {
-                    actionButtons.push(<Button key="avançar" size="icon" onClick={async (e) => {
-                        e.stopPropagation();
-                        const processosNecessarios = await determinarProcessos(pedido.id);
-                        setProcessos(processosNecessarios);
-                        setShowProgresso(true);
-                        if (onMoverEtapa) {
-                          await onMoverEtapa(pedido.id, true, (processoId, status) => {
-                            setProcessos(prev => prev.map(p => p.id === processoId ? {
-                              ...p,
-                              status
-                            } : p));
-                          });
-                          await new Promise(resolve => setTimeout(resolve, 1000));
-                          setShowProgresso(false);
-                        }
-                      }} disabled={!ordemQualidadeConcluida} title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"} className="h-6 w-6">
-                        <ArrowRight className="h-3 w-3" />
-                      </Button>);
-                  } else if (etapaAtual === 'aguardando_pintura') {
-                    actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"} className="h-6 w-6">
-                        <ArrowRight className="h-3 w-3" />
-                      </Button>);
-                  } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-                    actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento" className="h-6 w-6">
-                        <Package className="h-3 w-3" />
-                      </Button>);
-                  } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-                    actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="h-6 w-6">
-                        <ArrowRight className="h-3 w-3" />
-                      </Button>);
-                  }
+                    }
 
-                  // Add backlog button if applicable
-                  if (emBacklog && motivoBacklog) {
-                    actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="h-6 w-6 bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
-                        <FileText className="h-3 w-3" />
-                      </Button>);
-                  }
+                    // Add backlog button if applicable
+                    if (emBacklog && motivoBacklog) {
+                      actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="h-6 w-6 bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
+                          <FileText className="h-3 w-3" />
+                        </Button>);
+                    }
 
-                  // Add retroceder button if available
-                  if (isAdmin && etapaAnterior && onRetrocederEtapa) {
-                    actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="h-6 w-6 bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
-                        <ArrowLeft className="h-3 w-3" />
-                      </Button>);
-                  }
-                  
-                  return actionButtons;
-                })()}
-              </div>
+                    // Add retroceder button (para todos a partir de em_producao)
+                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
+                    if (podeRetroceder) {
+                      actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="h-6 w-6 bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+                          <ArrowLeft className="h-3 w-3" />
+                        </Button>);
+                    }
+                    
+                    return actionButtons;
+                  })()}
+                </div>
+              </TooltipProvider>
             </div>
           </CardContent>
         </Card>
@@ -781,77 +883,99 @@ export function PedidoCard({
         </CardContent>
 
         <CardFooter className="pt-2 pb-2 bg-muted/20 border-t" onClick={(e) => e.stopPropagation()}>
-          {(() => {
-          const actionButtons = [];
+          <TooltipProvider>
+            {(() => {
+              const actionButtons = [];
 
-          // Build action buttons array
-          // Botão de preparar pedido removido - funcionalidade movida para PedidoView
-          if (isAberto && temLinhas && onMoverEtapa) {
-            actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção">
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-          } else if (etapaAtual === 'em_producao') {
-            actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-          } else if (etapaAtual === 'inspecao_qualidade') {
-            actionButtons.push(<Button key="avançar" size="icon" onClick={async (e) => {
-              e.stopPropagation();
-              const processosNecessarios = await determinarProcessos(pedido.id);
-              setProcessos(processosNecessarios);
-              setShowProgresso(true);
-              if (onMoverEtapa) {
-                await onMoverEtapa(pedido.id, true, (processoId, status) => {
-                  setProcessos(prev => prev.map(p => p.id === processoId ? {
-                    ...p,
-                    status
-                  } : p));
-                });
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                setShowProgresso(false);
+              // Build action buttons array
+              // Botão de preparar pedido removido - funcionalidade movida para PedidoView
+              if (isAberto && onMoverEtapa) {
+                const validacao = getValidacaoAvancoEtapa('aberto');
+                actionButtons.push(
+                  <ButtonWithTooltip key="iniciar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                    <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar}>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </ButtonWithTooltip>
+                );
+              } else if (etapaAtual === 'em_producao') {
+                const validacao = getValidacaoAvancoEtapa('em_producao');
+                actionButtons.push(
+                  <ButtonWithTooltip key="avançar-qualidade" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                    <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!validacao.podeAvancar}>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </ButtonWithTooltip>
+                );
+              } else if (etapaAtual === 'inspecao_qualidade') {
+                const validacao = getValidacaoAvancoEtapa('inspecao_qualidade');
+                actionButtons.push(
+                  <ButtonWithTooltip key="avançar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                    <Button size="icon" onClick={async (e) => {
+                      e.stopPropagation();
+                      const processosNecessarios = await determinarProcessos(pedido.id);
+                      setProcessos(processosNecessarios);
+                      setShowProgresso(true);
+                      if (onMoverEtapa) {
+                        await onMoverEtapa(pedido.id, true, (processoId, status) => {
+                          setProcessos(prev => prev.map(p => p.id === processoId ? {
+                            ...p,
+                            status
+                          } : p));
+                        });
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        setShowProgresso(false);
+                      }
+                    }} disabled={!validacao.podeAvancar}>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </ButtonWithTooltip>
+                );
+              } else if (etapaAtual === 'aguardando_pintura') {
+                const validacao = getValidacaoAvancoEtapa('aguardando_pintura');
+                actionButtons.push(
+                  <ButtonWithTooltip key="avançar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                    <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar}>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </ButtonWithTooltip>
+                );
+              } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento">
+                      <Package className="h-3.5 w-3.5" />
+                    </Button>);
+              } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+                actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>);
               }
-            }} disabled={!ordemQualidadeConcluida} title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-          } else if (etapaAtual === 'aguardando_pintura') {
-            actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-          } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-            actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento">
-                  <Package className="h-3.5 w-3.5" />
-                </Button>);
-          } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-            actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-          }
 
+              // Add backlog button if applicable
+              if (emBacklog && motivoBacklog) {
+                actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
+                      <FileText className="h-3.5 w-3.5" />
+                    </Button>);
+              }
 
-          // Add backlog button if applicable
-          if (emBacklog && motivoBacklog) {
-            actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
-                  <FileText className="h-3.5 w-3.5" />
-                </Button>);
-          }
-
-          // Add retroceder button if available
-          if (isAdmin && etapaAnterior && onRetrocederEtapa) {
-            actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                </Button>);
-          }
-          return <div className="w-full">
-                {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
-                    {actionButtons.map(button => React.cloneElement(button, {
-                className: `${button.props.className || ''} h-7 w-full`.trim()
-              }))}
-                  </div>}
-                {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && <span className="text-xs text-warning text-center block">
-                    Defina data de carregamento
-                  </span>}
-              </div>;
-        })()}
+              // Add retroceder button (para todos a partir de em_producao)
+              const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
+              if (podeRetroceder) {
+                actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                    </Button>);
+              }
+              return <div className="w-full">
+                    {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
+                        {actionButtons.map(button => React.cloneElement(button, {
+                    className: `${button.props.className || ''} h-7 w-full`.trim()
+                  }))}
+                      </div>}
+                    {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && <span className="text-xs text-warning text-center block">
+                        Defina data de carregamento
+                      </span>}
+                  </div>;
+            })()}
+          </TooltipProvider>
         </CardFooter>
       </Card>
 
