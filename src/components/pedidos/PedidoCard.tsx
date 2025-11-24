@@ -407,7 +407,7 @@ export function PedidoCard({
     return <>
         <Card className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-l-4 border-l-red-500")} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[auto_auto_80px_1fr_auto_100px_auto] items-center gap-4 h-full px-4">
+            <div className="grid grid-cols-[auto_auto_70px_1fr_auto_auto_90px_90px_80px_auto] items-center gap-3 h-full px-4">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
@@ -426,26 +426,64 @@ export function PedidoCard({
               {/* Nome do cliente */}
               <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
               
-              {/* Badges */}
-              <div className="flex items-center gap-2 justify-end">
-                {temPintura && <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
-                    <Paintbrush className="h-2.5 w-2.5 mr-1" />
-                    Pintura
+              {/* Tags/Badges */}
+              <div className="flex items-center gap-1">
+                {temPintura && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                    <Paintbrush className="h-2.5 w-2.5" />
                   </Badge>}
                 
-                {isInstalacao && <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
-                    <Hammer className="h-2.5 w-2.5 mr-1" />
-                    Instalação
+                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                    <Hammer className="h-2.5 w-2.5" />
                   </Badge>}
                 
-                {isEntrega && <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
-                    <Truck className="h-2.5 w-2.5 mr-1" />
-                    Entrega
+                {isEntrega && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                    <Truck className="h-2.5 w-2.5" />
                   </Badge>}
               </div>
               
-              {/* Tempo relativo */}
-              <span className="text-[10px] text-muted-foreground text-right">
+              {/* Cores */}
+              <div className="flex items-center gap-1">
+                {coresUnicas.length > 0 && (
+                  <>
+                    {coresUnicas.slice(0, 3).map((corNome, idx) => (
+                      <div 
+                        key={idx} 
+                        className="w-3.5 h-3.5 rounded-full border border-border" 
+                        style={{ backgroundColor: coresMap[corNome] || '#ccc' }} 
+                        title={corNome} 
+                      />
+                    ))}
+                    {coresUnicas.length > 3 && (
+                      <span className="text-[9px] text-muted-foreground">+{coresUnicas.length - 3}</span>
+                    )}
+                  </>
+                )}
+              </div>
+              
+              {/* Data de Entrega */}
+              <div className="text-[10px] text-muted-foreground text-center">
+                {venda?.data_prevista_entrega ? (
+                  <span title="Data prevista de entrega">
+                    {format(new Date(venda.data_prevista_entrega), "dd/MM/yyyy")}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground/50">-</span>
+                )}
+              </div>
+              
+              {/* Data de Carregamento */}
+              <div className="text-[10px] text-muted-foreground text-center">
+                {pedido.data_carregamento ? (
+                  <span title="Data de carregamento">
+                    {format(new Date(pedido.data_carregamento), "dd/MM/yyyy")}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground/50">-</span>
+                )}
+              </div>
+              
+              {/* Tempo */}
+              <span className="text-[10px] text-muted-foreground text-center" title="Tempo desde criação">
                 {formatDistanceToNow(new Date(venda?.created_at || Date.now()), {
                   addSuffix: true,
                   locale: ptBR
