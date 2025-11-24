@@ -65,10 +65,11 @@ export function GerarOrdemCarregamentoModal({
         nome_cliente: venda?.cliente_nome || "",
         data_carregamento: format(dataCarregamento, "yyyy-MM-dd"),
         hora_carregamento: horaCarregamento,
+        hora: horaCarregamento, // Manter compatibilidade
         tipo_carregamento: tipoCarregamento,
         responsavel_carregamento_id: responsavelId,
         responsavel_carregamento_nome: responsavelNome,
-        status: "pronta_fabrica",
+        status: 'pronta_fabrica',
       });
 
       if (error) throw error;
