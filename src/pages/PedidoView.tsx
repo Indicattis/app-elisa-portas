@@ -6,11 +6,19 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
 import { PedidoHistoricoMovimentacoes } from "@/components/pedidos/PedidoHistoricoMovimentacoes";
+import { usePedidoLinhas, type PedidoLinhaUpdate } from "@/hooks/usePedidoLinhas";
+import { useValidacaoLinhasPorPorta } from "@/hooks/useValidacaoLinhasPorPorta";
+import { usePedidoPortaObservacoes } from "@/hooks/usePedidoPortaObservacoes";
+import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
+import { LinhasAgrupadasPorPorta } from "@/components/pedidos/LinhasAgrupadasPorPorta";
+import { ObservacoesPortaForm } from "@/components/pedidos/ObservacoesPortaForm";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
 
 interface PedidoLinha {
   id: string;
@@ -48,12 +56,73 @@ interface Pedido {
   };
 }
 
+// Funções auxiliares para cálculos
+const calcularPeso = (produto: any) => {
+  if (produto.largura && produto.altura) {
+    return (((produto.largura * produto.altura * 12) * 2) * 0.3).toFixed(1);
+  }
+  if (produto.tamanho) {
+    const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+    if (match) {
+      const largura = parseFloat(match[1]);
+      const altura = parseFloat(match[2]);
+      return (((largura * altura * 12) * 2) * 0.3).toFixed(1);
+    }
+  }
+  return null;
+};
+
+const calcularMeiaCanas = (produto: any) => {
+  if (produto.altura) {
+    return (produto.altura / 0.076).toFixed(2);
+  }
+  if (produto.tamanho) {
+    const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+    if (match) {
+      const altura = parseFloat(match[2]);
+      return (altura / 0.076).toFixed(2);
+    }
+  }
+  return null;
+};
+
 export default function PedidoView() {
   const { id } = useParams<{ id: string }>();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
+  const [modoEdicao, setModoEdicao] = useState(false);
+  const [linhasEditadas, setLinhasEditadas] = useState<Map<string, PedidoLinhaUpdate>>(new Map());
+  const [salvando, setSalvando] = useState(false);
+  const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Hooks para edição (apenas se pedido estiver aberto)
+  const { linhas, adicionarLinha, removerLinha, atualizarLinhasEmLote } = usePedidoLinhas(id || "");
+  const { moverParaProximaEtapa } = usePedidosEtapas();
+  const { salvarObservacao, getObservacoesPorPorta } = usePedidoPortaObservacoes(id || "");
+
+  // Buscar usuários ativos para select de observações
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['admin-users-active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('id, nome')
+        .eq('ativo', true)
+        .order('nome');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Filtrar portas do tipo "porta_enrolar"
+  const portasEnrolar = pedido?.venda?.produtos?.filter(
+    (p: any) => p.tipo_produto === 'porta_enrolar'
+  ) || [];
+
+  // Validação de linhas por porta
+  const validacao = useValidacaoLinhasPorPorta(portasEnrolar, linhas);
 
   useEffect(() => {
     if (id) fetchPedidoDetails();
@@ -177,6 +246,45 @@ export default function PedidoView() {
     }
   };
 
+  const handleSalvarAlteracoes = async () => {
+    if (linhasEditadas.size === 0) {
+      toast({
+        title: "Nenhuma alteração",
+        description: "Não há alterações para salvar.",
+      });
+      return;
+    }
+
+    setSalvando(true);
+    try {
+      const updates = Array.from(linhasEditadas.values());
+      await atualizarLinhasEmLote(updates);
+      setLinhasEditadas(new Map());
+      setMostrarModalAvancar(true);
+      fetchPedidoDetails();
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleAvancarEtapa = async () => {
+    if (!pedido) return;
+    
+    try {
+      await moverParaProximaEtapa.mutateAsync({
+        pedidoId: pedido.id,
+        skipCheckboxValidation: pedido.etapa_atual === 'aberto',
+      });
+      setMostrarModalAvancar(false);
+      navigate('/dashboard/fabrica/pedidos');
+    } catch (error) {
+      console.error("Erro ao avançar etapa:", error);
+      setMostrarModalAvancar(false);
+    }
+  };
+
   const getEtapaLabel = (etapa: string) => {
     const etapas: Record<string, string> = {
       aberto: "Aberto",
@@ -229,6 +337,9 @@ export default function PedidoView() {
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
   if (!pedido) return <div className="text-center py-8"><p>Pedido não encontrado</p></div>;
 
+  const isAberto = pedido.etapa_atual === 'aberto';
+  const temPendentesSalvamento = linhasEditadas.size > 0;
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -243,6 +354,26 @@ export default function PedidoView() {
               Cadastrado em {format(new Date(pedido.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchPedidoDetails()}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+          {isAberto && (
+            <Button
+              variant={modoEdicao ? "default" : "outline"}
+              size="sm"
+              onClick={() => setModoEdicao(!modoEdicao)}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              {modoEdicao ? "Modo Edição Ativo" : "Ativar Edição"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -271,33 +402,17 @@ export default function PedidoView() {
         </CardContent>
       </Card>
 
-      {/* Fluxograma do Pedido */}
-      <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
-
-      {/* Histórico de Movimentações */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Histórico de Movimentações
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
-        </CardContent>
-      </Card>
-
-      {/* Informações da Venda */}
+      {/* Informações Compactas da Venda e Pedido */}
       {pedido.venda && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              Informações da Venda
+              Informações do Cliente e Pedido
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Cliente</p>
                 <p className="font-medium">{pedido.venda.cliente_nome}</p>
@@ -336,69 +451,222 @@ export default function PedidoView() {
                 </div>
               )}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/dashboard/vendas/${pedido.venda_id}/view`)}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Ver Venda Completa
-            </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Produtos da Venda */}
+      {/* Tabela de Produtos da Venda */}
       {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Produtos da Venda ({pedido.venda.produtos.length})
+              Produtos da Venda
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {pedido.venda.produtos.map((produto: any) => (
-                <div key={produto.id} className="p-4 bg-muted/30 rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">{produto.descricao || 'Produto'}</p>
-                      {produto.tipo_produto && (
-                        <p className="text-sm text-muted-foreground mt-1">Tipo: {produto.tipo_produto}</p>
-                      )}
-                      {produto.tamanho && (
-                        <p className="text-sm text-muted-foreground">Tamanho: {produto.tamanho}</p>
-                      )}
-                      {produto.cor && (
-                        <p className="text-sm text-muted-foreground">Cor: {produto.cor}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="mb-2">
-                        {produto.quantidade}x
-                      </Badge>
-                      {produto.valor_total && (
-                        <p className="text-sm font-medium">
-                          R$ {Number(produto.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2 text-sm font-medium">Tipo</th>
+                    <th className="text-left p-2 text-sm font-medium">Descrição</th>
+                    <th className="text-left p-2 text-sm font-medium">Tamanho</th>
+                    <th className="text-left p-2 text-sm font-medium">Cor</th>
+                    <th className="text-right p-2 text-sm font-medium">Peso (kg)</th>
+                    <th className="text-right p-2 text-sm font-medium">Meia-canas</th>
+                    <th className="text-center p-2 text-sm font-medium">Qtd</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedido.venda.produtos.map((produto: any) => {
+                    const peso = calcularPeso(produto);
+                    const meiaCanas = calcularMeiaCanas(produto);
+                    return (
+                      <tr key={produto.id} className="border-b">
+                        <td className="p-2 text-sm">{produto.tipo_produto || '-'}</td>
+                        <td className="p-2 text-sm">{produto.descricao || '-'}</td>
+                        <td className="p-2 text-sm">{produto.tamanho || '-'}</td>
+                        <td className="p-2 text-sm">{produto.cor || '-'}</td>
+                        <td className="p-2 text-sm text-right">{peso || '-'}</td>
+                        <td className="p-2 text-sm text-right">{meiaCanas || '-'}</td>
+                        <td className="p-2 text-sm text-center">
+                          <Badge variant="outline">{produto.quantidade}x</Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Linhas do Pedido */}
+      {/* Seção de Preparação do Pedido (somente quando aberto e em modo edição) */}
+      {isAberto && modoEdicao && portasEnrolar.length > 0 && (
+        <Card className="border-2 border-primary/20">
+          <CardHeader className="bg-primary/5">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Edit className="w-5 h-5" />
+                Preparação do Pedido
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Badge variant={validacao.todasCompletas ? "default" : "secondary"}>
+                  {validacao.portasCompletas} de {validacao.totalPortas} portas completas
+                </Badge>
+                {temPendentesSalvamento && (
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/50">
+                    Alterações pendentes
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            {/* Separação */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">Separação</h3>
+                <Badge variant="outline">
+                  {validacao.statusPorPorta.filter(s => s.separacao).length} de {portasEnrolar.length}
+                </Badge>
+              </div>
+              <LinhasAgrupadasPorPorta
+                categoria="separacao"
+                portas={portasEnrolar}
+                linhas={linhas}
+                isReadOnly={false}
+                onAdicionarLinha={adicionarLinha}
+                onRemoverLinha={removerLinha}
+                onChange={setLinhasEditadas}
+                linhasEditadas={linhasEditadas}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Solda */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">Solda</h3>
+                <Badge variant="outline">
+                  {validacao.statusPorPorta.filter(s => s.solda).length} de {portasEnrolar.length}
+                </Badge>
+              </div>
+              <LinhasAgrupadasPorPorta
+                categoria="solda"
+                portas={portasEnrolar}
+                linhas={linhas}
+                isReadOnly={false}
+                onAdicionarLinha={adicionarLinha}
+                onRemoverLinha={removerLinha}
+                onChange={setLinhasEditadas}
+                linhasEditadas={linhasEditadas}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Perfiladeira */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">Perfiladeira</h3>
+                <Badge variant="outline">
+                  {validacao.statusPorPorta.filter(s => s.perfiladeira).length} de {portasEnrolar.length}
+                </Badge>
+              </div>
+              <LinhasAgrupadasPorPorta
+                categoria="perfiladeira"
+                portas={portasEnrolar}
+                linhas={linhas}
+                isReadOnly={false}
+                onAdicionarLinha={adicionarLinha}
+                onRemoverLinha={removerLinha}
+                onChange={setLinhasEditadas}
+                linhasEditadas={linhasEditadas}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Observações */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Observações das Portas</h3>
+              <div className="space-y-4">
+                {portasEnrolar.map((porta: any, index: number) => (
+                  <ObservacoesPortaForm
+                    key={porta.id}
+                    porta={porta}
+                    portaIndex={index}
+                    usuarios={usuarios}
+                    valoresIniciais={getObservacoesPorPorta(porta.id)}
+                    onSalvar={salvarObservacao}
+                    pedidoId={pedido.id}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Botão de Salvar (sticky) */}
+            <div className="sticky bottom-0 bg-background pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {temPendentesSalvamento ? (
+                    <span className="text-amber-600 font-medium">
+                      {linhasEditadas.size} alteraç{linhasEditadas.size === 1 ? 'ão' : 'ões'} pendente{linhasEditadas.size === 1 ? '' : 's'}
+                    </span>
+                  ) : (
+                    'Nenhuma alteração pendente'
+                  )}
+                </p>
+                <Button
+                  onClick={handleSalvarAlteracoes}
+                  disabled={!temPendentesSalvamento || salvando}
+                  size="lg"
+                >
+                  {salvando ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar Alterações
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Fluxograma do Pedido */}
+      <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
+
+      {/* Histórico de Movimentações */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Histórico de Movimentações
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
+        </CardContent>
+      </Card>
+
+      {/* Linhas do Pedido - Visualização */}
       {pedido.linhas.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Itens do Pedido ({pedido.linhas.length})
+              Itens do Pedido Cadastrados ({pedido.linhas.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -481,6 +749,32 @@ export default function PedidoView() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Confirmação para Avançar Etapa */}
+      <Dialog open={mostrarModalAvancar} onOpenChange={setMostrarModalAvancar}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterações Salvas!</DialogTitle>
+            <DialogDescription>
+              As alterações foram salvas com sucesso. Deseja avançar o pedido para a etapa de produção?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMostrarModalAvancar(false);
+                setModoEdicao(false);
+              }}
+            >
+              Não, continuar editando
+            </Button>
+            <Button onClick={handleAvancarEtapa}>
+              Sim, avançar para produção
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

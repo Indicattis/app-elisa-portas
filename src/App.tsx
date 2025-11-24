@@ -923,15 +923,10 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                {/* Redirect antiga rota de preparação para view unificada */}
                 <Route
                   path="/dashboard/pedidos/:id/preparacao"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <PedidoPreparacao />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
+                  element={<Navigate to="/dashboard/pedido/:id/view" replace />}
                 />
                 <Route
                   path="/dashboard/ordens/solda/:ordemId"

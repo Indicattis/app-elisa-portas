@@ -802,7 +802,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
-      queryClient.invalidateQueries({ queryKey: ['pedido-preparacao'] });
+      queryClient.invalidateQueries({ queryKey: ['pedido-view'] });
       toast({
         title: "Pedido Retornado",
         description: `O pedido foi marcado como BACKLOG e retornou para: ${ETAPAS_CONFIG[data.etapaDestino].label}`

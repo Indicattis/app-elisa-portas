@@ -547,15 +547,11 @@ export function PedidoCard({
                   const actionButtons = [];
 
                   // Build action buttons array
-                  if (isAberto) {
-                    actionButtons.push(<Button key="preparar" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/pedidos/${pedido.id}/preparacao`); }} title="Preparar Pedido" className={cn("h-6 w-6", linhasCount > 0 ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : "bg-warning/10 text-warning hover:bg-warning/20 border-warning/50")} variant="outline">
-                        <span className="text-[10px] font-semibold">{linhasCount || 0}</span>
-                      </Button>);
-                    if (temLinhas && onMoverEtapa) {
-                      actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção" className="h-6 w-6">
+                  // Botão de preparar pedido removido - funcionalidade movida para PedidoView
+                  if (isAberto && temLinhas && onMoverEtapa) {
+                    actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção" className="h-6 w-6">
                           <ArrowRight className="h-3 w-3" />
                         </Button>);
-                    }
                   } else if (etapaAtual === 'em_producao') {
                     actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"} className="h-6 w-6">
                         <ArrowRight className="h-3 w-3" />
@@ -789,15 +785,11 @@ export function PedidoCard({
           const actionButtons = [];
 
           // Build action buttons array
-          if (isAberto) {
-            actionButtons.push(<Button key="preparar" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/pedidos/${pedido.id}/preparacao`); }} title="Preparar Pedido" className={linhasCount > 0 ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : "bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"} variant="outline">
-                  <span className="text-xs font-semibold">{linhasCount || 0}</span>
+          // Botão de preparar pedido removido - funcionalidade movida para PedidoView
+          if (isAberto && temLinhas && onMoverEtapa) {
+            actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção">
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Button>);
-            if (temLinhas && onMoverEtapa) {
-              actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>);
-            }
           } else if (etapaAtual === 'em_producao') {
             actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}>
                   <ArrowRight className="h-3.5 w-3.5" />
