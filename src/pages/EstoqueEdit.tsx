@@ -67,6 +67,8 @@ export default function EstoqueEdit() {
     requer_pintura: false,
   });
 
+  const [dadosCarregados, setDadosCarregados] = useState(false);
+
   const { data: produto, isLoading } = useQuery({
     queryKey: ["produto", id],
     queryFn: async () => {
@@ -117,6 +119,7 @@ export default function EstoqueEdit() {
       console.log('[EstoqueEdit] formData.setor_responsavel_producao:', newFormData.setor_responsavel_producao);
       console.log('[EstoqueEdit] formData.requer_pintura:', newFormData.requer_pintura);
       setFormData(newFormData);
+      setDadosCarregados(true);
     }
   }, [produto]);
 
@@ -191,10 +194,11 @@ export default function EstoqueEdit() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !dadosCarregados) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Carregando dados do produto...</p>
       </div>
     );
   }
