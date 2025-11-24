@@ -26,6 +26,14 @@ interface Ordem {
   tipo: string;
   numero_ordem: string;
   status: string;
+  capturado_por?: {
+    nome: string;
+    foto_perfil_url?: string;
+  } | null;
+  concluido_por?: {
+    nome: string;
+    foto_perfil_url?: string;
+  } | null;
 }
 
 interface Pedido {
@@ -192,27 +200,59 @@ export default function PedidoView() {
         .eq("pedido_id", id)
         .order("created_at");
 
-      // Buscar ordens de produção
+      // Buscar ordens de produção com dados dos usuários
       const ordens: Ordem[] = [];
       
       const { data: ordensPerfiladeira } = await supabase
         .from("ordens_perfiladeira")
-        .select("id, numero_ordem, status")
+        .select(`
+          id, 
+          numero_ordem, 
+          status,
+          created_by,
+          responsavel_id,
+          capturado_por:admin_users!ordens_perfiladeira_created_by_fkey(nome, foto_perfil_url),
+          concluido_por:admin_users!ordens_perfiladeira_responsavel_id_fkey(nome, foto_perfil_url)
+        `)
         .eq("pedido_id", id);
       
       const { data: ordensSeparacao } = await supabase
         .from("ordens_separacao")
-        .select("id, numero_ordem, status")
+        .select(`
+          id, 
+          numero_ordem, 
+          status,
+          created_by,
+          responsavel_id,
+          capturado_por:admin_users!ordens_separacao_created_by_fkey(nome, foto_perfil_url),
+          concluido_por:admin_users!ordens_separacao_responsavel_id_fkey(nome, foto_perfil_url)
+        `)
         .eq("pedido_id", id);
       
       const { data: ordensSoldagem } = await supabase
         .from("ordens_soldagem")
-        .select("id, numero_ordem, status")
+        .select(`
+          id, 
+          numero_ordem, 
+          status,
+          created_by,
+          responsavel_id,
+          capturado_por:admin_users!ordens_soldagem_created_by_fkey(nome, foto_perfil_url),
+          concluido_por:admin_users!ordens_soldagem_responsavel_id_fkey(nome, foto_perfil_url)
+        `)
         .eq("pedido_id", id);
       
       const { data: ordensPintura } = await supabase
         .from("ordens_pintura")
-        .select("id, numero_ordem, status")
+        .select(`
+          id, 
+          numero_ordem, 
+          status,
+          created_by,
+          responsavel_id,
+          capturado_por:admin_users!ordens_pintura_created_by_fkey(nome, foto_perfil_url),
+          concluido_por:admin_users!ordens_pintura_responsavel_id_fkey(nome, foto_perfil_url)
+        `)
         .eq("pedido_id", id);
       
       const { data: ordensInstalacao } = await supabase
@@ -221,19 +261,54 @@ export default function PedidoView() {
         .eq("pedido_id", id);
 
       if (ordensPerfiladeira) {
-        ordensPerfiladeira.forEach(o => ordens.push({ ...o, tipo: "Perfiladeira" }));
+        ordensPerfiladeira.forEach((o: any) => ordens.push({ 
+          id: o.id,
+          numero_ordem: o.numero_ordem,
+          status: o.status,
+          tipo: "Perfiladeira",
+          capturado_por: o.capturado_por,
+          concluido_por: o.concluido_por
+        }));
       }
       if (ordensSeparacao) {
-        ordensSeparacao.forEach(o => ordens.push({ ...o, tipo: "Separação" }));
+        ordensSeparacao.forEach((o: any) => ordens.push({ 
+          id: o.id,
+          numero_ordem: o.numero_ordem,
+          status: o.status,
+          tipo: "Separação",
+          capturado_por: o.capturado_por,
+          concluido_por: o.concluido_por
+        }));
       }
       if (ordensSoldagem) {
-        ordensSoldagem.forEach(o => ordens.push({ ...o, tipo: "Soldagem" }));
+        ordensSoldagem.forEach((o: any) => ordens.push({ 
+          id: o.id,
+          numero_ordem: o.numero_ordem,
+          status: o.status,
+          tipo: "Soldagem",
+          capturado_por: o.capturado_por,
+          concluido_por: o.concluido_por
+        }));
       }
       if (ordensPintura) {
-        ordensPintura.forEach(o => ordens.push({ ...o, tipo: "Pintura" }));
+        ordensPintura.forEach((o: any) => ordens.push({ 
+          id: o.id,
+          numero_ordem: o.numero_ordem,
+          status: o.status,
+          tipo: "Pintura",
+          capturado_por: o.capturado_por,
+          concluido_por: o.concluido_por
+        }));
       }
       if (ordensInstalacao) {
-        ordensInstalacao.forEach(o => ordens.push({ ...o, tipo: "Instalação", numero_ordem: "N/A", status: "N/A" }));
+        ordensInstalacao.forEach((o: any) => ordens.push({ 
+          id: o.id,
+          tipo: "Instalação", 
+          numero_ordem: "N/A", 
+          status: "N/A",
+          capturado_por: null,
+          concluido_por: null
+        }));
       }
 
       setPedido({
@@ -603,6 +678,8 @@ export default function PedidoView() {
                     <th className="text-left p-2 font-medium text-muted-foreground">Tipo</th>
                     <th className="text-left p-2 font-medium text-muted-foreground">Número</th>
                     <th className="text-left p-2 font-medium text-muted-foreground">Status</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Capturado por</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Concluído por</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -629,6 +706,46 @@ export default function PedidoView() {
                             {ordem.status === "concluido" && "Concluído"}
                             {ordem.status === "cancelado" && "Cancelado"}
                           </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        {ordem.capturado_por ? (
+                          <div className="flex items-center gap-2">
+                            {ordem.capturado_por.foto_perfil_url ? (
+                              <img 
+                                src={ordem.capturado_por.foto_perfil_url} 
+                                alt={ordem.capturado_por.nome}
+                                className="w-6 h-6 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                                <User className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            )}
+                            <span className="text-xs">{ordem.capturado_por.nome}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        {ordem.concluido_por ? (
+                          <div className="flex items-center gap-2">
+                            {ordem.concluido_por.foto_perfil_url ? (
+                              <img 
+                                src={ordem.concluido_por.foto_perfil_url} 
+                                alt={ordem.concluido_por.nome}
+                                className="w-6 h-6 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                                <User className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            )}
+                            <span className="text-xs">{ordem.concluido_por.nome}</span>
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
