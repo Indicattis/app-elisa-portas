@@ -63,6 +63,12 @@ export interface InstalacaoFormData {
   data: string;
   hora: string;
   equipe_id: string;
+  produto?: string;
+  estado?: string;
+  cidade?: string;
+  endereco?: string;
+  cep?: string;
+  descricao?: string;
 }
 
 export type ResponsavelInstalacaoTipo = 'equipe_interna' | 'autorizado';
