@@ -5,7 +5,8 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { AgendarCarregamentoModal } from "./AgendarCarregamentoModal";
+import { SelecionarOrdemModal } from "./SelecionarOrdemModal";
+import { toast } from "sonner";
 
 interface DroppableDayExpedicaoProps {
   date: Date;
@@ -15,6 +16,7 @@ interface DroppableDayExpedicaoProps {
   onEdit: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario: (id: string) => void;
   onOrdemDropped?: () => void;
+  onUpdateOrdem: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
 }
 
 export const DroppableDayExpedicao = ({
@@ -25,6 +27,7 @@ export const DroppableDayExpedicao = ({
   onEdit,
   onRemoverDoCalendario,
   onOrdemDropped,
+  onUpdateOrdem,
 }: DroppableDayExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
@@ -40,6 +43,33 @@ export const DroppableDayExpedicao = ({
     if (!ordem.data_carregamento) return false;
     return isSameDay(new Date(ordem.data_carregamento), date);
   });
+
+  const handleConfirmModal = async (
+    ordemId: string,
+    hora: string,
+    responsavelTipo: 'elisa' | 'autorizados',
+    responsavelId: string,
+    responsavelNome: string
+  ) => {
+    try {
+      await onUpdateOrdem({
+        id: ordemId,
+        data: {
+          data_carregamento: format(date, 'yyyy-MM-dd'),
+          hora: hora,
+          responsavel_tipo: responsavelTipo,
+          responsavel_carregamento_id: responsavelId,
+          responsavel_carregamento_nome: responsavelNome,
+          status: 'agendada',
+        }
+      });
+      toast.success("Ordem adicionada ao calendário!");
+      onOrdemDropped?.();
+    } catch (error) {
+      console.error("Erro ao adicionar ordem:", error);
+      toast.error("Erro ao adicionar ordem ao calendário");
+    }
+  };
 
   return (
     <>
@@ -93,14 +123,11 @@ export const DroppableDayExpedicao = ({
         </div>
       </div>
 
-      <AgendarCarregamentoModal
+      <SelecionarOrdemModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        ordem={null}
-        onConfirm={async () => {
-          setModalOpen(false);
-          onOrdemDropped?.();
-        }}
+        dataSelecionada={date}
+        onConfirm={handleConfirmModal}
       />
     </>
   );
