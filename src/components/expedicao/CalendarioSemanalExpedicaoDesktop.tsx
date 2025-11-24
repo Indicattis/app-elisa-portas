@@ -67,21 +67,20 @@ export const CalendarioSemanalExpedicaoDesktop = ({
     
     setActiveOrdem(null);
 
-    if (!over) return;
+    if (!over || !over.data.current?.date) return;
 
-    const novaData = over.data.current?.date as Date;
-    if (!novaData) return;
+    const novaData = over.data.current.date as Date;
+    const ordemId = active.id as string;
+    const ordem = ordens.find((o) => o.id === ordemId);
+    if (!ordem) return;
+
+    // Verificar se a data realmente mudou
+    if (ordem.data_carregamento) {
+      const dataAtual = new Date(ordem.data_carregamento);
+      if (isSameDay(dataAtual, novaData)) return;
+    }
 
     try {
-      const ordemId = active.id as string;
-      const ordem = ordens.find((o) => o.id === ordemId);
-      if (!ordem) return;
-
-      if (ordem.data_carregamento) {
-        const dataAtual = new Date(ordem.data_carregamento);
-        if (isSameDay(dataAtual, novaData)) return;
-      }
-
       const dataFormatada = format(novaData, "yyyy-MM-dd");
 
       await onUpdateOrdem({
@@ -91,7 +90,9 @@ export const CalendarioSemanalExpedicaoDesktop = ({
           status: 'agendada',
         },
       });
+      
       toast.success("Data de carregamento atualizada");
+      onOrdemDropped?.();
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao atualizar data");
