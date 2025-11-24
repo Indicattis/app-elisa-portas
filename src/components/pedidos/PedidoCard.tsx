@@ -60,7 +60,6 @@ export function PedidoCard({
   const [showVisualizarBacklog, setShowVisualizarBacklog] = useState(false);
   const [showArquivar, setShowArquivar] = useState(false);
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
-  const [showGerarOrdem, setShowGerarOrdem] = useState(false);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
     isAdmin

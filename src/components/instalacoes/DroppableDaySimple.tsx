@@ -1,0 +1,88 @@
+import { useDroppable } from "@dnd-kit/core";
+import { format, isToday } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Plus } from "lucide-react";
+import { Instalacao } from "@/types/instalacao";
+import { DraggableInstalacao } from "./DraggableInstalacao";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface DroppableDaySimpleProps {
+  date: Date;
+  instalacoes: Instalacao[];
+  onDayClick: (date: Date) => void;
+  onEdit: (instalacao: Instalacao) => void;
+  onRemoverDoCalendario: (id: string) => void;
+  onPedidoDropped?: () => void;
+}
+
+export const DroppableDaySimple = ({
+  date,
+  instalacoes,
+  onDayClick,
+  onEdit,
+  onRemoverDoCalendario,
+  onPedidoDropped,
+}: DroppableDaySimpleProps) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: format(date, "yyyy-MM-dd"),
+    data: {
+      date,
+      type: 'day',
+    },
+  });
+
+  const isCurrentDay = isToday(date);
+  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+  // Filtrar instalações deste dia
+  const dayInstalacoes = instalacoes.filter(
+    (inst) => inst.data === format(date, "yyyy-MM-dd")
+  );
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "min-h-[120px] border border-border bg-background p-2 space-y-1 transition-colors group rounded-lg",
+        isOver && "bg-primary/10 border-primary ring-2 ring-primary/20",
+        isWeekend && "bg-muted/20",
+        isCurrentDay && "ring-2 ring-primary"
+      )}
+    >
+      {/* Header do dia */}
+      <div className="flex items-center justify-between mb-1">
+        <span
+          className={cn(
+            "text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full",
+            isCurrentDay && "bg-primary text-primary-foreground",
+            !isCurrentDay && "text-foreground"
+          )}
+        >
+          {format(date, "d", { locale: ptBR })}
+        </span>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:bg-primary/10"
+          onClick={() => onDayClick(date)}
+        >
+          <Plus className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {/* Lista de instalações */}
+      <div className="space-y-1">
+        {dayInstalacoes.map((instalacao) => (
+          <DraggableInstalacao
+            key={instalacao.id}
+            instalacao={instalacao}
+            onEdit={onEdit}
+            onRemoverDoCalendario={onRemoverDoCalendario}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};

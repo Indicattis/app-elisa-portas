@@ -4,39 +4,39 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ExpedicaoForm } from "@/components/expedicao/ExpedicaoForm";
-import { ExpedicaoTabela } from "@/components/expedicao/ExpedicaoTabela";
-import { ExpedicaoIndicadores } from "@/components/expedicao/ExpedicaoIndicadores";
-import { ExpedicaoFiltros } from "@/components/expedicao/ExpedicaoFiltros";
-import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
+import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
+import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
+import { InstalacaoIndicadores } from "@/components/cadastro-instalacao/InstalacaoIndicadores";
+import { InstalacoesFiltros } from "@/components/cadastro-instalacao/InstalacoesFiltros";
+import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { useInstalacoesFilters } from "@/hooks/useInstalacoesFilters";
 
-export default function Expedicao() {
+export default function InstalacoesAdmin() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
   
   const isMobile = useIsMobile();
   const { isAdmin } = useAuth();
 
   const { 
-    ordens, 
-    loading,
-    createOrdem, 
-    concluirOrdem,
-  } = useOrdensCarregamento();
+    instalacoes, 
+    createInstalacao, 
+    deleteInstalacao, 
+    updateInstalacao,
+    updateStatus,
+    concluirInstalacao,
+    geocodeInstalacao
+  } = useInstalacoesCadastradas();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("todos");
-
-  const filteredOrdens = ordens.filter((ordem) => {
-    const matchesSearch = ordem.nome_cliente
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "todos" ||
-      (filterStatus === "concluido" && ordem.carregamento_concluido) ||
-      (filterStatus === "pendente" && !ordem.carregamento_concluido);
-    return matchesSearch && matchesStatus;
-  });
+  const {
+    searchTerm,
+    setSearchTerm,
+    filterStatus,
+    setFilterStatus,
+    filterEstado,
+    setFilterEstado,
+    filteredInstalacoes,
+    estados,
+  } = useInstalacoesFilters(instalacoes);
 
   return (
     <>
@@ -44,9 +44,9 @@ export default function Expedicao() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold">Expedição</h1>
+            <h1 className="text-2xl font-bold">Instalações</h1>
             <p className="text-sm text-muted-foreground">
-              Visualize e gerencie todas as ordens de carregamento
+              Visualize e gerencie todas as instalações cadastradas
             </p>
           </div>
           
@@ -58,40 +58,46 @@ export default function Expedicao() {
                 className="gap-2"
               >
                 <MapPin className="h-4 w-4" />
-                {!isMobile && "Nova Ordem"}
+                {!isMobile && "Nova Instalação"}
               </Button>
             )}
           </div>
         </div>
 
-        <ExpedicaoIndicadores ordens={ordens} />
+        <InstalacaoIndicadores instalacoes={instalacoes} />
 
-        <ExpedicaoFiltros
+        <InstalacoesFiltros
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           filterStatus={filterStatus}
           onFilterStatusChange={setFilterStatus}
+          filterEstado={filterEstado}
+          onFilterEstadoChange={setFilterEstado}
+          estados={estados}
         />
 
-        <ExpedicaoTabela 
-          ordens={filteredOrdens} 
-          onConcluir={async (id) => {
-            await concluirOrdem(id);
-          }} 
+        <InstalacoesTabelaView
+          instalacoes={filteredInstalacoes}
+          onDelete={deleteInstalacao}
+          onUpdate={updateInstalacao}
+          onUpdateStatus={updateStatus}
+          onConcluirInstalacao={concluirInstalacao}
+          onGeocode={geocodeInstalacao}
+          isAdmin={isAdmin}
         />
       </div>
 
       <Dialog open={showCadastroModal} onOpenChange={setShowCadastroModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Cadastrar Nova Ordem de Carregamento</DialogTitle>
+            <DialogTitle>Cadastrar Nova Instalação</DialogTitle>
             <DialogDescription>
-              Preencha os dados para cadastrar uma nova ordem de carregamento
+              Preencha os dados para cadastrar uma nova instalação
             </DialogDescription>
           </DialogHeader>
-          <ExpedicaoForm 
+          <CadastroInstalacaoForm 
             onSubmit={async (data) => {
-              await createOrdem(data);
+              await createInstalacao(data);
               setShowCadastroModal(false);
             }}
           />

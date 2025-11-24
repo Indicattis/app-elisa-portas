@@ -9,9 +9,9 @@ export interface InstalacoesFilters {
 }
 
 export const isAtrasado = (instalacao: InstalacaoCadastrada) => {
-  if (!instalacao.data_carregamento || instalacao.status === 'finalizada') return false;
-  return isPast(startOfDay(new Date(instalacao.data_carregamento))) && 
-         startOfDay(new Date(instalacao.data_carregamento)) < startOfDay(new Date());
+  if (!instalacao.data_instalacao || instalacao.status === 'finalizada') return false;
+  return isPast(startOfDay(new Date(instalacao.data_instalacao))) && 
+         startOfDay(new Date(instalacao.data_instalacao)) < startOfDay(new Date());
 };
 
 export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) {
@@ -51,15 +51,15 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
   const sortedInstalacoes = useMemo(() => {
     return [...filteredInstalacoes].sort((a, b) => {
       // Priorizar atrasadas
-      const aAtrasada = a.data_carregamento && new Date(a.data_carregamento) < new Date() && a.status !== "finalizada";
-      const bAtrasada = b.data_carregamento && new Date(b.data_carregamento) < new Date() && b.status !== "finalizada";
+      const aAtrasada = a.data_instalacao && new Date(a.data_instalacao) < new Date() && a.status !== "finalizada";
+      const bAtrasada = b.data_instalacao && new Date(b.data_instalacao) < new Date() && b.status !== "finalizada";
       
       if (aAtrasada && !bAtrasada) return -1;
       if (!aAtrasada && bAtrasada) return 1;
 
-      // Depois por data de carregamento
-      if (a.data_carregamento && b.data_carregamento) {
-        return new Date(a.data_carregamento).getTime() - new Date(b.data_carregamento).getTime();
+      // Depois por data de instalação
+      if (a.data_instalacao && b.data_instalacao) {
+        return new Date(a.data_instalacao).getTime() - new Date(b.data_instalacao).getTime();
       }
       
       return 0;
@@ -67,11 +67,7 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
   }, [filteredInstalacoes]);
 
   const estados = useMemo(() => {
-    const uniqueEstados = new Set(
-      instalacoes
-        .map((i) => i.estado)
-        .filter((estado): estado is string => estado !== null && estado !== undefined)
-    );
+    const uniqueEstados = new Set(instalacoes.map((i) => i.estado));
     return Array.from(uniqueEstados).sort();
   }, [instalacoes]);
 

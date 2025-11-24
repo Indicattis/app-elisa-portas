@@ -1475,6 +1475,110 @@ export type Database = {
         }
         Relationships: []
       }
+      instalacoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_instalacao: string | null
+          geocode_precision: string | null
+          hora: string
+          id: string
+          instalacao_concluida: boolean | null
+          instalacao_concluida_em: string | null
+          instalacao_concluida_por: string | null
+          last_geocoded_at: string | null
+          latitude: number | null
+          longitude: number | null
+          nome_cliente: string
+          pedido_id: string | null
+          responsavel_instalacao_id: string | null
+          responsavel_instalacao_nome: string | null
+          status: string | null
+          tipo_instalacao:
+            | Database["public"]["Enums"]["tipo_instalacao_enum"]
+            | null
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_instalacao?: string | null
+          geocode_precision?: string | null
+          hora: string
+          id?: string
+          instalacao_concluida?: boolean | null
+          instalacao_concluida_em?: string | null
+          instalacao_concluida_por?: string | null
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente: string
+          pedido_id?: string | null
+          responsavel_instalacao_id?: string | null
+          responsavel_instalacao_nome?: string | null
+          status?: string | null
+          tipo_instalacao?:
+            | Database["public"]["Enums"]["tipo_instalacao_enum"]
+            | null
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_instalacao?: string | null
+          geocode_precision?: string | null
+          hora?: string
+          id?: string
+          instalacao_concluida?: boolean | null
+          instalacao_concluida_em?: string | null
+          instalacao_concluida_por?: string | null
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente?: string
+          pedido_id?: string | null
+          responsavel_instalacao_id?: string | null
+          responsavel_instalacao_nome?: string | null
+          status?: string | null
+          tipo_instalacao?:
+            | Database["public"]["Enums"]["tipo_instalacao_enum"]
+            | null
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instalacoes_equipe_id_fkey"
+            columns: ["responsavel_instalacao_id"]
+            isOneToOne: false
+            referencedRelation: "equipes_instalacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instalacoes_id_venda_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instalacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "instalacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_anexos: {
         Row: {
           created_at: string
@@ -2029,113 +2133,6 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "elisaportas_leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ordens_carregamento: {
-        Row: {
-          carregamento_concluido: boolean | null
-          carregamento_concluido_em: string | null
-          carregamento_concluido_por: string | null
-          created_at: string
-          created_by: string | null
-          data_carregamento: string | null
-          geocode_precision: string | null
-          hora: string
-          hora_carregamento: string | null
-          id: string
-          last_geocoded_at: string | null
-          latitude: number | null
-          longitude: number | null
-          nome_cliente: string
-          pedido_id: string | null
-          responsavel_carregamento_id: string | null
-          responsavel_carregamento_nome: string | null
-          status: string | null
-          tipo_carregamento:
-            | Database["public"]["Enums"]["tipo_carregamento"]
-            | null
-          updated_at: string
-          venda_id: string | null
-        }
-        Insert: {
-          carregamento_concluido?: boolean | null
-          carregamento_concluido_em?: string | null
-          carregamento_concluido_por?: string | null
-          created_at?: string
-          created_by?: string | null
-          data_carregamento?: string | null
-          geocode_precision?: string | null
-          hora: string
-          hora_carregamento?: string | null
-          id?: string
-          last_geocoded_at?: string | null
-          latitude?: number | null
-          longitude?: number | null
-          nome_cliente: string
-          pedido_id?: string | null
-          responsavel_carregamento_id?: string | null
-          responsavel_carregamento_nome?: string | null
-          status?: string | null
-          tipo_carregamento?:
-            | Database["public"]["Enums"]["tipo_carregamento"]
-            | null
-          updated_at?: string
-          venda_id?: string | null
-        }
-        Update: {
-          carregamento_concluido?: boolean | null
-          carregamento_concluido_em?: string | null
-          carregamento_concluido_por?: string | null
-          created_at?: string
-          created_by?: string | null
-          data_carregamento?: string | null
-          geocode_precision?: string | null
-          hora?: string
-          hora_carregamento?: string | null
-          id?: string
-          last_geocoded_at?: string | null
-          latitude?: number | null
-          longitude?: number | null
-          nome_cliente?: string
-          pedido_id?: string | null
-          responsavel_carregamento_id?: string | null
-          responsavel_carregamento_nome?: string | null
-          status?: string | null
-          tipo_carregamento?:
-            | Database["public"]["Enums"]["tipo_carregamento"]
-            | null
-          updated_at?: string
-          venda_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "instalacoes_equipe_id_fkey"
-            columns: ["responsavel_carregamento_id"]
-            isOneToOne: false
-            referencedRelation: "equipes_instalacao"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "instalacoes_id_venda_fkey"
-            columns: ["venda_id"]
-            isOneToOne: false
-            referencedRelation: "vendas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "instalacoes_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_backlog_ativo"
-            referencedColumns: ["pedido_id"]
-          },
-          {
-            foreignKeyName: "instalacoes_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
         ]
@@ -4513,10 +4510,6 @@ export type Database = {
         Args: { p_instalacao_id: string }
         Returns: Json
       }
-      concluir_ordem_carregamento: {
-        Args: { p_ordem_id: string }
-        Returns: undefined
-      }
       count_base64_images: {
         Args: never
         Returns: {
@@ -4701,7 +4694,6 @@ export type Database = {
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
       tipo_autorizacao_desconto: "responsavel_setor" | "master"
-      tipo_carregamento: "elisa" | "autorizados"
       tipo_instalacao_enum: "elisa" | "autorizados"
       tipo_parceiro: "autorizado" | "representante" | "franqueado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
@@ -4906,7 +4898,6 @@ export const Constants = {
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],
       tipo_autorizacao_desconto: ["responsavel_setor", "master"],
-      tipo_carregamento: ["elisa", "autorizados"],
       tipo_instalacao_enum: ["elisa", "autorizados"],
       tipo_parceiro: ["autorizado", "representante", "franqueado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],

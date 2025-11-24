@@ -11,7 +11,7 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
     queryKey: ["instalacoes", startDate?.toISOString(), viewMode],
     queryFn: async () => {
       let query = supabase
-        .from("ordens_carregamento")
+        .from("instalacoes")
         .select(`
           *,
           venda:vendas(
@@ -23,6 +23,7 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
             cidade,
             cep,
             bairro,
+            endereco_completo,
             data_venda
           ),
           pedido:pedidos_producao(
@@ -31,51 +32,55 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
             etapa_atual
           )
         `)
-        .order("data_carregamento", { ascending: true });
+        .order("data_instalacao", { ascending: true });
 
       if (startDate) {
         let start: Date;
         let end: Date;
         
         if (viewMode === 'month') {
+          // Para modo mensal, buscar desde o início do mês até o final
           const monthStart = startOfMonth(startDate);
           const monthEnd = endOfMonth(startDate);
+          // Expandir para incluir semanas completas no calendário
           start = startOfWeek(monthStart, { weekStartsOn: 0 });
           end = endOfWeek(monthEnd, { weekStartsOn: 0 });
         } else {
+          // Para modo semanal, buscar apenas a semana
           start = startOfWeek(startDate, { weekStartsOn: 0 });
           end = endOfWeek(startDate, { weekStartsOn: 0 });
         }
         
         query = query
-          .gte("data_carregamento", start.toISOString().split("T")[0])
-          .lte("data_carregamento", end.toISOString().split("T")[0]);
+          .gte("data_instalacao", start.toISOString().split("T")[0])
+          .lte("data_instalacao", end.toISOString().split("T")[0]);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
       
-      return (data || []).map(ordem => ({
-        id: ordem.id,
-        id_venda: ordem.venda_id,
-        data: ordem.data_carregamento,
-        hora: ordem.hora_carregamento || ordem.hora || '08:00',
-        nome_cliente: ordem.nome_cliente,
-        equipe_id: ordem.responsavel_carregamento_id,
-        tipo_instalacao: ordem.tipo_carregamento,
-        responsavel_instalacao_id: ordem.responsavel_carregamento_id,
-        responsavel_instalacao_nome: ordem.responsavel_carregamento_nome,
-        venda: ordem.venda,
-        pedido: ordem.pedido,
-        created_at: ordem.created_at,
-        updated_at: ordem.updated_at,
-        venda_id: ordem.venda_id,
-        pedido_id: ordem.pedido_id,
-        status: ordem.status,
-        instalacao_concluida: ordem.carregamento_concluido,
-        latitude: ordem.latitude,
-        longitude: ordem.longitude
+      // Mapear para o formato Instalacao compatível
+      return (data || []).map(inst => ({
+        id: inst.id,
+        id_venda: inst.venda_id,
+        data: inst.data_instalacao,
+        hora: inst.hora || '08:00',
+        nome_cliente: inst.nome_cliente,
+        equipe_id: inst.responsavel_instalacao_id,
+        tipo_instalacao: inst.tipo_instalacao,
+        responsavel_instalacao_id: inst.responsavel_instalacao_id,
+        responsavel_instalacao_nome: inst.responsavel_instalacao_nome,
+        venda: inst.venda,
+        pedido: inst.pedido,
+        created_at: inst.created_at,
+        updated_at: inst.updated_at,
+        venda_id: inst.venda_id,
+        pedido_id: inst.pedido_id,
+        status: inst.status,
+        instalacao_concluida: inst.instalacao_concluida,
+        latitude: inst.latitude,
+        longitude: inst.longitude
       })) as Instalacao[];
     },
   });
@@ -83,14 +88,13 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
   const createMutation = useMutation({
     mutationFn: async (instalacao: InstalacaoFormData) => {
       const { data, error } = await supabase
-        .from("ordens_carregamento")
+        .from("instalacoes")
         .insert([{
           nome_cliente: instalacao.nome_cliente,
           venda_id: instalacao.id_venda,
-          data_carregamento: instalacao.data,
-          hora_carregamento: instalacao.hora,
+          data_instalacao: instalacao.data,
           hora: instalacao.hora,
-          responsavel_carregamento_id: instalacao.equipe_id,
+          responsavel_instalacao_id: instalacao.equipe_id,
           status: 'pronta_fabrica',
           created_by: (await supabase.auth.getUser()).data.user?.id,
         }])
@@ -102,11 +106,11 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
-      toast.success("Ordem de carregamento cadastrada com sucesso!");
+      toast.success("Instalação cadastrada com sucesso!");
     },
     onError: (error) => {
-      console.error("Erro ao criar ordem:", error);
-      toast.error("Erro ao cadastrar ordem de carregamento");
+      console.error("Erro ao criar instalação:", error);
+      toast.error("Erro ao cadastrar instalação");
     },
   });
 
@@ -115,18 +119,15 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
       const updateData: any = {};
       
       if (data.nome_cliente) updateData.nome_cliente = data.nome_cliente;
-      if (data.data !== undefined) updateData.data_carregamento = data.data;
-      if (data.hora) {
-        updateData.hora_carregamento = data.hora;
-        updateData.hora = data.hora;
-      }
-      if (data.equipe_id !== undefined) updateData.responsavel_carregamento_id = data.equipe_id;
-      if (data.tipo_instalacao !== undefined) updateData.tipo_carregamento = data.tipo_instalacao;
-      if (data.responsavel_instalacao_nome !== undefined) updateData.responsavel_carregamento_nome = data.responsavel_instalacao_nome;
-      if (data.responsavel_instalacao_id !== undefined) updateData.responsavel_carregamento_id = data.responsavel_instalacao_id;
+      if (data.data !== undefined) updateData.data_instalacao = data.data;
+      if (data.hora) updateData.hora = data.hora;
+      if (data.equipe_id !== undefined) updateData.responsavel_instalacao_id = data.equipe_id;
+      if (data.tipo_instalacao !== undefined) updateData.tipo_instalacao = data.tipo_instalacao;
+      if (data.responsavel_instalacao_nome !== undefined) updateData.responsavel_instalacao_nome = data.responsavel_instalacao_nome;
+      if (data.responsavel_instalacao_id !== undefined) updateData.responsavel_instalacao_id = data.responsavel_instalacao_id;
 
       const { data: updated, error } = await supabase
-        .from("ordens_carregamento")
+        .from("instalacoes")
         .update(updateData)
         .eq("id", id)
         .select()
@@ -137,18 +138,18 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
-      toast.success("Ordem de carregamento atualizada com sucesso!");
+      toast.success("Instalação atualizada com sucesso!");
     },
     onError: (error) => {
-      console.error("Erro ao atualizar ordem:", error);
-      toast.error("Erro ao atualizar ordem de carregamento");
+      console.error("Erro ao atualizar instalação:", error);
+      toast.error("Erro ao atualizar instalação");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("ordens_carregamento")
+        .from("instalacoes")
         .delete()
         .eq("id", id);
 
@@ -156,11 +157,11 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
-      toast.success("Ordem de carregamento removida com sucesso!");
+      toast.success("Instalação removida com sucesso!");
     },
     onError: (error) => {
-      console.error("Erro ao deletar ordem:", error);
-      toast.error("Erro ao remover ordem de carregamento");
+      console.error("Erro ao deletar instalação:", error);
+      toast.error("Erro ao remover instalação");
     },
   });
 

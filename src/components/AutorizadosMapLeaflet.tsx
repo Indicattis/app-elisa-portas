@@ -721,7 +721,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                 <Marker 
                   key={`instalacao-${instalacao.id}`} 
                   position={[instalacao.latitude!, instalacao.longitude!]} 
-                  icon={createInstalacaoIcon('instalacao', (instalacao.status || 'pendente_producao') as 'pendente_producao' | 'pronta_fabrica' | 'finalizada', isSelected)}
+                  icon={createInstalacaoIcon('instalacao', instalacao.status, isSelected)}
                   ref={(ref) => {
                     if (ref) {
                       instalacaoMarkerRefs.current[instalacao.id] = ref;
@@ -743,11 +743,11 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                         </h3>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                           <MapPin className="h-3 w-3" />
-                          <span>{instalacao.venda?.cidade}, {instalacao.venda?.estado}</span>
+                          <span>{instalacao.cidade}, {instalacao.estado}</span>
                         </div>
-                        {instalacao.venda?.cliente_telefone && (
+                        {instalacao.telefone_cliente && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                            📞 {instalacao.venda.cliente_telefone}
+                            📞 {instalacao.telefone_cliente}
                           </div>
                         )}
                       </div>
