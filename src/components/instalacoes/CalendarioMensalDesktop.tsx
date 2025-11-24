@@ -8,15 +8,16 @@ import { Instalacao } from "@/types/instalacao";
 import { DroppableDay } from "./DroppableDay";
 import { InstalacaoCard } from "./InstalacaoCard";
 import { toast } from "sonner";
+import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
 
 interface CalendarioMensalDesktopProps {
   currentMonth: Date;
   instalacoes: Instalacao[];
   onMonthChange: (date: Date) => void;
   onUpdateInstalacao: (params: { id: string; data: Partial<Instalacao> }) => Promise<void>;
-  onDayClick: (date: Date) => void;
   onEdit: (instalacao: Instalacao) => void;
   onDelete: (id: string) => void;
+  onInstalacaoCriada?: () => void;
 }
 
 export const CalendarioMensalDesktop = ({
@@ -24,11 +25,13 @@ export const CalendarioMensalDesktop = ({
   instalacoes,
   onMonthChange,
   onUpdateInstalacao,
-  onDayClick,
   onEdit,
   onDelete,
+  onInstalacaoCriada,
 }: CalendarioMensalDesktopProps) => {
   const [activeInstalacao, setActiveInstalacao] = useState<Instalacao | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -85,7 +88,13 @@ export const CalendarioMensalDesktop = ({
 
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date);
+    setModalOpen(true);
+  };
+
   return (
+    <>
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
@@ -147,7 +156,7 @@ export const CalendarioMensalDesktop = ({
                 date={day}
                 currentMonth={currentMonth}
                 instalacoes={instalacoes}
-                onDayClick={onDayClick}
+                onDayClick={handleDayClick}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
@@ -169,5 +178,16 @@ export const CalendarioMensalDesktop = ({
         )}
       </DragOverlay>
     </DndContext>
+
+    {/* Modal de seleção de pedido */}
+    {selectedDate && (
+      <SelecionarPedidoInstalacaoModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        dataSelecionada={selectedDate}
+        onPedidoSelecionado={onInstalacaoCriada}
+      />
+    )}
+    </>
   );
 };

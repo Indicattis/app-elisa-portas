@@ -7,6 +7,7 @@ import { Instalacao } from "@/types/instalacao";
 import { Button } from "@/components/ui/button";
 import { DroppableDaySimple } from "./DroppableDaySimple";
 import { DraggableInstalacao } from "./DraggableInstalacao";
+import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
 
 interface CalendarioSemanalDesktopProps {
   startDate: Date;
@@ -15,9 +16,9 @@ interface CalendarioSemanalDesktopProps {
   onNextWeek: () => void;
   onToday: () => void;
   onUpdateInstalacao: (params: { id: string; data: Partial<Instalacao> }) => Promise<void>;
-  onDayClick: (date: Date) => void;
   onEdit: (instalacao: Instalacao) => void;
   onDelete: (id: string) => void;
+  onInstalacaoCriada?: () => void;
 }
 
 export const CalendarioSemanalDesktop = ({
@@ -27,11 +28,13 @@ export const CalendarioSemanalDesktop = ({
   onNextWeek,
   onToday,
   onUpdateInstalacao,
-  onDayClick,
   onEdit,
   onDelete,
+  onInstalacaoCriada,
 }: CalendarioSemanalDesktopProps) => {
   const [activeInstalacao, setActiveInstalacao] = useState<Instalacao | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -68,7 +71,13 @@ export const CalendarioSemanalDesktop = ({
     });
   };
 
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date);
+    setModalOpen(true);
+  };
+
   return (
+    <>
     <DndContext
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
@@ -114,7 +123,7 @@ export const CalendarioSemanalDesktop = ({
               key={day.toISOString()}
               date={day}
               instalacoes={instalacoes}
-              onDayClick={onDayClick}
+              onDayClick={handleDayClick}
               onEdit={onEdit}
               onDelete={onDelete}
             />
@@ -135,5 +144,16 @@ export const CalendarioSemanalDesktop = ({
         </DragOverlay>
       </div>
     </DndContext>
+
+    {/* Modal de seleção de pedido */}
+    {selectedDate && (
+      <SelecionarPedidoInstalacaoModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        dataSelecionada={selectedDate}
+        onPedidoSelecionado={onInstalacaoCriada}
+      />
+    )}
+    </>
   );
 };
