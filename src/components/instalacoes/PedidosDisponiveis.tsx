@@ -18,8 +18,8 @@ interface PedidoDisponivel {
     id: string;
     cliente_nome: string;
     cliente_telefone: string | null;
-    cliente_cidade: string | null;
-    cliente_estado: string | null;
+    cidade: string | null;
+    estado: string | null;
     data_prevista_entrega: string | null;
   };
 }
@@ -64,12 +64,12 @@ function DraggablePedidoCard({ pedido }: { pedido: PedidoDisponivel }) {
             <strong>Cliente:</strong> {pedido.venda.cliente_nome}
           </div>
 
-          {(pedido.venda.cliente_cidade || pedido.venda.cliente_estado) && (
+          {(pedido.venda.cidade || pedido.venda.estado) && (
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3 w-3" />
-              {pedido.venda.cliente_cidade && <span>{pedido.venda.cliente_cidade}</span>}
-              {pedido.venda.cliente_cidade && pedido.venda.cliente_estado && <span>-</span>}
-              {pedido.venda.cliente_estado && <span>{pedido.venda.cliente_estado}</span>}
+              {pedido.venda.cidade && <span>{pedido.venda.cidade}</span>}
+              {pedido.venda.cidade && pedido.venda.estado && <span>-</span>}
+              {pedido.venda.estado && <span>{pedido.venda.estado}</span>}
             </div>
           )}
 
@@ -108,8 +108,8 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
             id,
             cliente_nome,
             cliente_telefone,
-            cliente_cidade,
-            cliente_estado,
+            cidade,
+            estado,
             data_prevista_entrega
           )
         `)
@@ -150,8 +150,8 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
     return (
       pedido.numero_pedido.toLowerCase().includes(searchLower) ||
       pedido.venda.cliente_nome.toLowerCase().includes(searchLower) ||
-      pedido.venda.cliente_cidade?.toLowerCase().includes(searchLower) ||
-      pedido.venda.cliente_estado?.toLowerCase().includes(searchLower)
+      pedido.venda.cidade?.toLowerCase().includes(searchLower) ||
+      pedido.venda.estado?.toLowerCase().includes(searchLower)
     );
   });
 
