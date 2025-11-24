@@ -30,52 +30,21 @@ export const OrdemCarregamentoCard = ({
     }
   };
 
-  const getStatusLabel = (status: string | null) => {
-    switch (status) {
-      case 'pendente': return 'Pendente';
-      case 'agendada': return 'Agendada';
-      case 'em_carregamento': return 'Em Carregamento';
-      case 'concluida': return 'Concluída';
-      default: return 'Desconhecido';
-    }
-  };
-
   return (
-    <Card className={`p-3 border transition-colors hover:border-primary/50 ${getStatusColor(ordem.status)}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-sm truncate">{ordem.nome_cliente}</h4>
-            <Badge variant="outline" className="text-[10px] px-1 py-0">
-              {ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Autorizado'}
-            </Badge>
-          </div>
-          
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Package className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{ordem.pedido?.numero_pedido || 'N/A'}</span>
-          </div>
-
-          {ordem.venda && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
-              <span className="truncate">
-                {ordem.venda.cidade}/{ordem.venda.estado}
-              </span>
-            </div>
-          )}
-
-          {ordem.hora && (
-            <div className="text-xs text-muted-foreground">
-              {ordem.hora}
-            </div>
-          )}
+    <Card className={`group relative h-[35px] hover:h-auto p-2 border transition-all duration-300 hover:border-primary/50 hover:shadow-md overflow-hidden hover:overflow-visible ${getStatusColor(ordem.status)}`}>
+      {/* Header - Sempre visível */}
+      <div className="flex items-center justify-between gap-2 h-[19px]">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h4 className="font-semibold text-xs truncate">{ordem.nome_cliente}</h4>
+          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
+            {ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Entrega'}
+          </Badge>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1 hover:bg-accent rounded-md transition-colors">
-              <MoreVertical className="h-4 w-4" />
+            <button className="p-0.5 hover:bg-accent rounded-md transition-colors shrink-0">
+              <MoreVertical className="h-3.5 w-3.5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -92,6 +61,53 @@ export const OrdemCarregamentoCard = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+
+      {/* Conteúdo expandido - Visível apenas no hover */}
+      <div className="opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-[500px] transition-all duration-300 mt-0 group-hover:mt-2 space-y-1.5">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Package className="h-3 w-3 flex-shrink-0" />
+          <span className="truncate">Pedido: {ordem.pedido?.numero_pedido || 'N/A'}</span>
+        </div>
+
+        {ordem.venda && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">
+              {ordem.venda.cidade}/{ordem.venda.estado}
+            </span>
+          </div>
+        )}
+
+        {ordem.hora && (
+          <div className="text-xs text-muted-foreground">
+            Horário: {ordem.hora}
+          </div>
+        )}
+
+        {ordem.venda?.produtos && ordem.venda.produtos.length > 0 && (
+          <div className="pt-1 border-t border-border/50">
+            <p className="text-[10px] font-medium text-muted-foreground mb-1">Produtos:</p>
+            <div className="space-y-1">
+              {ordem.venda.produtos.slice(0, 3).map((produto, idx) => (
+                produto.cor && (
+                  <div key={idx} className="flex items-center gap-1.5 text-[10px]">
+                    <div 
+                      className="h-2 w-2 rounded-full border border-border/30 shrink-0" 
+                      style={{ backgroundColor: produto.cor.codigo_hex }}
+                    />
+                    <span className="text-muted-foreground truncate">{produto.cor.nome}</span>
+                  </div>
+                )
+              ))}
+              {ordem.venda.produtos.length > 3 && (
+                <p className="text-[10px] text-muted-foreground/70">
+                  +{ordem.venda.produtos.length - 3} mais
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );
