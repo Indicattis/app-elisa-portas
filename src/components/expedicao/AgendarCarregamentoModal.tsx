@@ -101,12 +101,8 @@ export function AgendarCarregamentoModal({
         return;
       }
 
-      // Ajustar data para o meio-dia local para evitar problemas de timezone
-      const dataSelecionada = new Date(dataCarregamento + 'T12:00:00');
-      const dataAjustada = format(dataSelecionada, 'yyyy-MM-dd');
-
       await onConfirm({
-        data_carregamento: dataAjustada,
+        data_carregamento: dataCarregamento,
         hora: hora,
         responsavel_tipo: responsavelTipo,
         responsavel_carregamento_id: responsavelId,
