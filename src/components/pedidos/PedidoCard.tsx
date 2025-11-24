@@ -407,7 +407,7 @@ export function PedidoCard({
     return <>
         <Card className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-l-4 border-l-red-500")} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[auto_auto_70px_1fr_auto_auto_90px_90px_80px_auto] items-center gap-3 h-full px-4">
+            <div className="grid grid-cols-[24px_16px_70px_minmax(150px,1fr)_80px_60px_90px_90px_100px_auto] items-center gap-3 h-full px-4">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
