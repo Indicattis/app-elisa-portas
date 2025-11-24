@@ -255,6 +255,19 @@ export default function PedidoView() {
         `)
         .eq("pedido_id", id);
       
+      const { data: ordensQualidade } = await supabase
+        .from("ordens_qualidade")
+        .select(`
+          id, 
+          numero_ordem, 
+          status,
+          created_by,
+          responsavel_id,
+          capturado_por:admin_users!ordens_qualidade_created_by_fkey(nome, foto_perfil_url),
+          concluido_por:admin_users!ordens_qualidade_responsavel_id_fkey(nome, foto_perfil_url)
+        `)
+        .eq("pedido_id", id);
+      
       const { data: ordensInstalacao } = await supabase
         .from("ordens_instalacao")
         .select("id")
@@ -296,6 +309,16 @@ export default function PedidoView() {
           numero_ordem: o.numero_ordem,
           status: o.status,
           tipo: "Pintura",
+          capturado_por: o.capturado_por,
+          concluido_por: o.concluido_por
+        }));
+      }
+      if (ordensQualidade) {
+        ordensQualidade.forEach((o: any) => ordens.push({ 
+          id: o.id,
+          numero_ordem: o.numero_ordem,
+          status: o.status,
+          tipo: "Qualidade",
           capturado_por: o.capturado_por,
           concluido_por: o.concluido_por
         }));
@@ -428,7 +451,7 @@ export default function PedidoView() {
             <ArrowLeft className="w-4 h-4 mr-2" />Voltar
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Pedido #{pedido.numero_pedido}</h1>
+            <h1 className="text-xl font-bold">Pedido #{pedido.numero_pedido}</h1>
             <p className="text-xs text-muted-foreground">
               Cadastrado em {format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}
             </p>
@@ -691,6 +714,7 @@ export default function PedidoView() {
                           {ordem.tipo === 'Separação' && <Package className="w-3 h-3 text-muted-foreground" />}
                           {ordem.tipo === 'Soldagem' && <Hammer className="w-3 h-3 text-muted-foreground" />}
                           {ordem.tipo === 'Pintura' && <Paintbrush className="w-3 h-3 text-muted-foreground" />}
+                          {ordem.tipo === 'Qualidade' && <CheckCircle2 className="w-3 h-3 text-muted-foreground" />}
                           {ordem.tipo === 'Instalação' && <Truck className="w-3 h-3 text-muted-foreground" />}
                           <span className="text-sm font-medium">{ordem.tipo}</span>
                         </div>
