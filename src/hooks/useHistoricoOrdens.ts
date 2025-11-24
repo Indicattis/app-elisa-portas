@@ -33,7 +33,7 @@ interface HistoricoFilters {
   responsavelId?: string;
 }
 
-const TABELA_MAP: Record<TipoOrdem, string> = {
+const TABELA_MAP: Record<Exclude<TipoOrdem, 'arquivado'>, string> = {
   soldagem: 'ordens_soldagem',
   perfiladeira: 'ordens_perfiladeira',
   separacao: 'ordens_separacao',
