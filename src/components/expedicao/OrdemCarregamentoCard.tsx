@@ -62,7 +62,7 @@ export const OrdemCarregamentoCard = ({
                 <TooltipContent side="top" className="max-w-sm">
                   <div className="space-y-2">
                     <div className="font-semibold text-xs border-b border-border pb-1">
-                      Pedido: {ordem.pedido?.numero_pedido || 'N/A'}
+                      {ordem.venda?.cliente_nome || ordem.nome_cliente}
                     </div>
                     
                     {ordem.venda.cidade && (
