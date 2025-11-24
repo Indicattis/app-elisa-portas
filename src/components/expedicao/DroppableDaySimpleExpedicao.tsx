@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import { format, isSameDay, isWeekend } from "date-fns";
+import { format, isSameDay, isWeekend, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
@@ -43,7 +43,7 @@ export const DroppableDaySimpleExpedicao = ({
 
   const ordensNoDia = ordens.filter((ordem) => {
     if (!ordem.data_carregamento) return false;
-    return isSameDay(new Date(ordem.data_carregamento), date);
+    return isSameDay(parseISO(ordem.data_carregamento), date);
   });
 
   const handleConfirmModal = async (
