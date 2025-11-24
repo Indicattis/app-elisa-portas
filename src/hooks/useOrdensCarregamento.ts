@@ -28,7 +28,6 @@ export const useOrdensCarregamento = () => {
             estado,
             cidade,
             cep,
-            endereco_completo,
             bairro,
             data_venda
           )

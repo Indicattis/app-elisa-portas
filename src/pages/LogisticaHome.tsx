@@ -1,13 +1,10 @@
 import { Truck, CheckCircle, Clock, Package } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useInstalacoesDashboard } from "@/hooks/useInstalacoesDashboard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function LogisticaHome() {
-  const { data: instalacaoMetrics, isLoading: loadingInstalacoes } = useInstalacoesDashboard();
-
   const { data: entregasMetrics, isLoading: loadingEntregas } = useQuery({
     queryKey: ['entregas-dashboard'],
     queryFn: async () => {
@@ -30,149 +27,113 @@ export default function LogisticaHome() {
     }
   });
 
-  const isLoading = loadingInstalacoes || loadingEntregas;
+  const { data: ordensMetrics, isLoading: loadingOrdens } = useQuery({
+    queryKey: ['ordens-carregamento-dashboard'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ordens_carregamento')
+        .select('*');
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
-  }
+      if (error) throw error;
 
-  const combinedData = [
-    {
-      name: 'Instalações',
-      Pendentes: instalacaoMetrics?.instalacoesPendentes || 0,
-      'Em Produção': 0,
-      Finalizadas: instalacaoMetrics?.instalacoesConcluidasMes || 0
-    },
+      const pendentes = (data || []).filter((o: any) => !o.carregamento_concluido).length;
+      const concluidas = (data || []).filter((o: any) => o.carregamento_concluido).length;
+
+      return {
+        ordensPendentes: pendentes,
+        ordensConcluidas: concluidas,
+        totalOrdens: (data || []).length
+      };
+    }
+  });
+
+  const chartData = [
     {
       name: 'Entregas',
       Pendentes: entregasMetrics?.entregasPendentes || 0,
       'Em Produção': entregasMetrics?.entregasEmProducao || 0,
-      Finalizadas: entregasMetrics?.entregasFinalizadas || 0
+      Finalizadas: entregasMetrics?.entregasFinalizadas || 0,
+    },
+    {
+      name: 'Carregamentos',
+      Pendentes: ordensMetrics?.ordensPendentes || 0,
+      Concluídas: ordensMetrics?.ordensConcluidas || 0,
     }
   ];
 
   return (
-    <div className="space-y-3 sm:space-y-4 md:space-y-6 w-full p-3 sm:p-4 md:p-6">
-      {/* Header */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
-          <Truck className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground truncate">
-            Dashboard de Logística
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Visão geral de instalações e entregas
-          </p>
-        </div>
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Logística</h1>
+        <p className="text-muted-foreground">Visão geral de entregas e carregamentos</p>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Instalações Pendentes</CardTitle>
-            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Entregas Pendentes</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {instalacaoMetrics?.instalacoesPendentes || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">aguardando</p>
+          <CardContent>
+            <div className="text-2xl font-bold">{entregasMetrics?.entregasPendentes || 0}</div>
+            <p className="text-xs text-muted-foreground">Aguardando produção</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Entregas Pendentes</CardTitle>
-            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Entregas Finalizadas</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {entregasMetrics?.entregasPendentes || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">aguardando</p>
+          <CardContent>
+            <div className="text-2xl font-bold">{entregasMetrics?.entregasFinalizadas || 0}</div>
+            <p className="text-xs text-muted-foreground">Concluídas</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Instalações Concluídas</CardTitle>
-            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Carregamentos Pendentes</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {instalacaoMetrics?.instalacoesConcluidasMes || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">este mês</p>
+          <CardContent>
+            <div className="text-2xl font-bold">{ordensMetrics?.ordensPendentes || 0}</div>
+            <p className="text-xs text-muted-foreground">A serem realizados</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
-            <CardTitle className="text-xs sm:text-sm font-medium">Entregas Concluídas</CardTitle>
-            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Veículos</CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="p-3 sm:p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">
-              {entregasMetrics?.entregasFinalizadas || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">total</p>
+          <CardContent>
+            <div className="text-2xl font-bold">-</div>
+            <p className="text-xs text-muted-foreground">Frota ativa</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Comparação Instalações vs Entregas */}
       <Card>
-        <CardHeader className="p-3 sm:p-4 md:p-6">
-          <CardTitle className="text-sm sm:text-base md:text-lg">Instalações vs Entregas</CardTitle>
+        <CardHeader>
+          <CardTitle>Visão Geral de Operações</CardTitle>
         </CardHeader>
-        <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
-          <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={combinedData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 10 }}
-                />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="Pendentes" fill="hsl(var(--destructive))" />
-                <Bar dataKey="Em Produção" fill="hsl(var(--warning))" />
-                <Bar dataKey="Finalizadas" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="Pendentes" fill="hsl(var(--warning))" />
+              <Bar dataKey="Em Produção" fill="hsl(var(--info))" />
+              <Bar dataKey="Finalizadas" fill="hsl(var(--success))" />
+              <Bar dataKey="Concluídas" fill="hsl(var(--success))" />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
-
-      {/* Distribuição Geográfica */}
-      {instalacaoMetrics?.distribuicaoEstados && (
-        <Card>
-          <CardHeader className="p-3 sm:p-4 md:p-6">
-            <CardTitle className="text-sm sm:text-base md:text-lg">Top 5 Estados (Instalações)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
-            <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={instalacaoMetrics.distribuicaoEstados}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="estado" 
-                    tick={{ fontSize: 10 }}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Bar dataKey="total" fill="hsl(var(--primary))" name="Instalações" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

@@ -417,20 +417,9 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           etapaDestino === 'aguardando_instalacao' ? 'pronta_fabrica' :
           etapaDestino === 'finalizado' ? 'finalizada' :
           'pendente_producao';
+        // Comentado - tabela instalacoes removida
+        // console.log('[moverParaProximaEtapa] Sincronizando instalação:', { etapaDestino, statusInstalacao });
         
-        console.log('[moverParaProximaEtapa] Sincronizando instalação:', { etapaDestino, statusInstalacao });
-        const { data: instalacaoData, error: instalacaoError } = await supabase
-          .from('instalacoes')
-          .update({ status: statusInstalacao })
-          .eq('pedido_id', pedidoId)
-          .select('id, status');
-
-        if (instalacaoError) {
-          console.error('[moverParaProximaEtapa] Erro ao atualizar status da instalação:', instalacaoError);
-        } else if (instalacaoData && instalacaoData.length > 0) {
-          console.log('[moverParaProximaEtapa] Status da instalação atualizado:', instalacaoData);
-        }
-
         // Sincronizar status da entrega com a etapa do pedido (se existir)
         // Mapeamento de etapas para status válidos de entrega
         const statusEntrega = 
@@ -525,28 +514,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
                 .single();
               
               if (vendaCompleta) {
-                const { error: instalacaoError } = await supabase
-                  .from('instalacoes')
-                  .insert({
-                    pedido_id: pedidoId,
-                    venda_id: pedidoData.venda_id,
-                    nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
-                    telefone_cliente: vendaCompleta.cliente_telefone || '',
-                    cidade: vendaCompleta.cidade || '',
-                    estado: vendaCompleta.estado || '',
-                    data_instalacao: null,
-                    hora: '08:00',
-                    produto: '',
-                    status: 'em_producao',
-                    tipo_instalacao: 'elisa',
-                    created_by: user.id
-                  });
-                
-                if (instalacaoError) {
-                  console.error('[moverParaProximaEtapa] Erro ao criar instalação:', instalacaoError);
-                } else {
-                  console.log('[moverParaProximaEtapa] ✓ Instalação criada com sucesso');
-                }
+                // Comentado - tabela instalacoes removida
+                console.log('[moverParaProximaEtapa] Instalação não criada (funcionalidade desativada)');
               }
             });
             onProgress('criar_instalacao', 'completed');
@@ -639,64 +608,21 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         await executarComDelay(async () => {
           console.log('[moverParaProximaEtapa] Preparando instalação para pedido:', pedidoId);
           
-          // Verificar se já existe instalação
-          const { data: instalacaoExistente } = await supabase
-            .from('instalacoes')
-            .select('id, status')
-            .eq('pedido_id', pedidoId)
-            .maybeSingle();
+          // Comentado - tabela instalacoes removida
+          // const { data: instalacaoExistente } = await supabase
+          //   .from('ordens_carregamento')
+          //   .select('id, status')
+          //   .eq('pedido_id', pedidoId)
+          //   .maybeSingle();
           
-          if (instalacaoExistente) {
-            // Atualizar status da instalação existente
-            console.log('[moverParaProximaEtapa] Instalação já existe, atualizando status para pronta_fabrica');
-            await supabase
-              .from('instalacoes')
-              .update({ status: 'pronta_fabrica' })
-              .eq('id', instalacaoExistente.id);
-          } else {
-            // Criar instalação se não existir
-            console.log('[moverParaProximaEtapa] ⚠️ Instalação não existe, criando agora...');
-            
-            const { data: pedidoData } = await supabase
-              .from('pedidos_producao')
-              .select('venda_id')
-              .eq('id', pedidoId)
-              .single();
-            
-            if (pedidoData?.venda_id) {
-              const { data: vendaCompleta } = await supabase
-                .from('vendas')
-                .select('cliente_nome, cliente_telefone, cidade, estado')
-                .eq('id', pedidoData.venda_id)
-                .single();
-              
-              if (vendaCompleta) {
-                const { error: instalacaoError } = await supabase
-                  .from('instalacoes')
-                  .insert({
-                    pedido_id: pedidoId,
-                    venda_id: pedidoData.venda_id,
-                    nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
-                    telefone_cliente: vendaCompleta.cliente_telefone || '',
-                    cidade: vendaCompleta.cidade || '',
-                    estado: vendaCompleta.estado || '',
-                    data_instalacao: null,
-                    hora: '08:00',
-                    produto: '',
-                    status: 'pronta_fabrica',
-                    tipo_instalacao: 'elisa',
-                    created_by: user.id
-                  });
-                
-                if (instalacaoError) {
-                  console.error('[moverParaProximaEtapa] Erro ao criar instalação faltante:', instalacaoError);
-                  throw new Error('Não foi possível criar a instalação');
-                } else {
-                  console.log('[moverParaProximaEtapa] ✓ Instalação criada com sucesso (criação tardia)');
-                }
-              }
-            }
-          }
+          // if (instalacaoExistente) {
+          //   console.log('[moverParaProximaEtapa] Instalação já existe, atualizando status para pronta_fabrica');
+          //   await supabase
+          //     .from('ordens_carregamento')
+          //     .update({ status: 'pronta_fabrica' })
+          //     .eq('id', instalacaoExistente.id);
+          // Comentado - criar instalação removido
+          console.log('[moverParaProximaEtapa] Preparar instalação (funcionalidade desativada)');
         });
         if (onProgress) onProgress('preparar_instalacao', 'completed');
       }
