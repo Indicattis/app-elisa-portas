@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Download, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
@@ -25,6 +26,16 @@ export default function Expedicao() {
   const [refreshOrdensDisponiveis, setRefreshOrdensDisponiveis] = useState(0);
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  // Configurar sensores para mobile e desktop
+  const mouseSensor = useSensor(MouseSensor);
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 250,
+      tolerance: 5,
+    },
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
