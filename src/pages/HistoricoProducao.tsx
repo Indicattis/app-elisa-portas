@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { formatDuration } from "@/utils/timeFormat";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, ChevronDown, ChevronRight, FolderOpen } from "lucide-react";
+import { History, ChevronDown, ChevronRight, FolderOpen, Archive } from "lucide-react";
 
 const TIPO_ORDEM_COLORS: Record<string, string> = {
   soldagem: "bg-orange-500/10 text-orange-700 border-orange-500/20",
@@ -169,9 +169,16 @@ export default function HistoricoProducao() {
                                 <TableRow key={`${ordem.tipo_ordem}-${ordem.id}`}>
                                   <TableCell className="font-medium">{ordem.numero_ordem}</TableCell>
                                   <TableCell>
-                                    <Badge variant="outline" className={TIPO_ORDEM_COLORS[ordem.tipo_ordem]}>
-                                      {TIPO_ORDEM_LABELS[ordem.tipo_ordem]}
-                                    </Badge>
+                                    {ordem.tipo_ordem === 'arquivado' ? (
+                                      <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800">
+                                        <Archive className="h-3 w-3" />
+                                        Pedido Arquivado
+                                      </span>
+                                    ) : (
+                                      <Badge variant="outline" className={TIPO_ORDEM_COLORS[ordem.tipo_ordem]}>
+                                        {TIPO_ORDEM_LABELS[ordem.tipo_ordem]}
+                                      </Badge>
+                                    )}
                                   </TableCell>
                                   <TableCell>
                                     {ordem.admin_users ? (

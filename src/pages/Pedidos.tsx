@@ -47,7 +47,8 @@ export default function Pedidos() {
     moverParaProximaEtapa,
     retrocederEtapa,
     atualizarPrioridade,
-    reorganizarPedidos
+    reorganizarPedidos,
+    arquivarPedido
   } = usePedidosEtapas(etapaAtiva);
   const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
     await moverParaProximaEtapa.mutateAsync({
@@ -166,6 +167,10 @@ export default function Pedidos() {
       title: "Atualizado",
       description: "Lista de pedidos atualizada com sucesso"
     });
+  };
+
+  const handleArquivar = async (pedidoId: string) => {
+    await arquivarPedido.mutateAsync(pedidoId);
   };
   return <div className="container mx-auto py-2 px-[5px] sm:py-6 sm:px-4 space-y-3 sm:space-y-6">
       {/* Header */}
@@ -297,7 +302,8 @@ export default function Pedidos() {
                         onMoverEtapa={handleMoverEtapa} 
                         onRetrocederEtapa={handleRetrocederEtapa} 
                         onReorganizar={handleReorganizar} 
-                        onMoverPrioridade={handleMoverPrioridade} 
+                        onMoverPrioridade={handleMoverPrioridade}
+                        onArquivar={handleArquivar}
                       />
                       
                       {totalPaginas > 1 && (

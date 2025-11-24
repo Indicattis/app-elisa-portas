@@ -3147,6 +3147,8 @@ export type Database = {
       }
       pedidos_producao: {
         Row: {
+          arquivado: boolean
+          arquivado_por: string | null
           cliente_bairro: string | null
           cliente_cpf: string | null
           cliente_email: string | null
@@ -3154,6 +3156,7 @@ export type Database = {
           cliente_telefone: string | null
           created_at: string
           created_by: string | null
+          data_arquivamento: string | null
           data_carregamento: string | null
           data_entrega: string | null
           em_backlog: boolean | null
@@ -3191,6 +3194,8 @@ export type Database = {
           venda_id: string | null
         }
         Insert: {
+          arquivado?: boolean
+          arquivado_por?: string | null
           cliente_bairro?: string | null
           cliente_cpf?: string | null
           cliente_email?: string | null
@@ -3198,6 +3203,7 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           created_by?: string | null
+          data_arquivamento?: string | null
           data_carregamento?: string | null
           data_entrega?: string | null
           em_backlog?: boolean | null
@@ -3235,6 +3241,8 @@ export type Database = {
           venda_id?: string | null
         }
         Update: {
+          arquivado?: boolean
+          arquivado_por?: string | null
           cliente_bairro?: string | null
           cliente_cpf?: string | null
           cliente_email?: string | null
@@ -3242,6 +3250,7 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           created_by?: string | null
+          data_arquivamento?: string | null
           data_carregamento?: string | null
           data_entrega?: string | null
           em_backlog?: boolean | null

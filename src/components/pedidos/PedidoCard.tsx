@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
@@ -16,6 +16,8 @@ import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
 import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
 import { DefinirDataCarregamentoModal } from "./DefinirDataCarregamentoModal";
 import { VisualizarBacklogModal } from "./VisualizarBacklogModal";
+import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
+import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +35,7 @@ interface PedidoCardProps {
   posicao?: number;
   total?: number;
   viewMode?: 'grid' | 'list';
+  onArquivar?: (pedidoId: string) => Promise<void>;
 }
 export function PedidoCard({
   pedido,
@@ -44,7 +47,8 @@ export function PedidoCard({
   dragHandleProps,
   posicao,
   total,
-  viewMode = 'grid'
+  viewMode = 'grid',
+  onArquivar
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -54,6 +58,8 @@ export function PedidoCard({
   const [showProgresso, setShowProgresso] = useState(false);
   const [showDefinirData, setShowDefinirData] = useState(false);
   const [showVisualizarBacklog, setShowVisualizarBacklog] = useState(false);
+  const [showArquivar, setShowArquivar] = useState(false);
+  const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
     isAdmin
@@ -487,6 +493,23 @@ export function PedidoCard({
       });
     }
     return lista;
+  };
+
+  const handleConfirmarArquivamento = async () => {
+    setShowArquivar(false);
+    setShowArquivamentoLoading(true);
+    
+    try {
+      if (onArquivar) {
+        await onArquivar(pedido.id);
+      }
+    } catch (error) {
+      console.error('Erro ao arquivar:', error);
+    } finally {
+      setTimeout(() => {
+        setShowArquivamentoLoading(false);
+      }, 1000);
+    }
   };
 
   // Handler para confirmar avanço (após modal de confirmação)
@@ -943,6 +966,22 @@ export function PedidoCard({
                 actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`} className="flex w-full h-[35px]">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>);
+              } else if (etapaAtual === 'finalizado' && onArquivar) {
+                actionButtons.push(
+                  <Button 
+                    key="arquivar" 
+                    size="icon" 
+                    variant="outline"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setShowArquivar(true); 
+                    }} 
+                    title="Arquivar Pedido" 
+                    className="flex w-full h-[35px] bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-500/50"
+                  >
+                    <Archive className="h-3.5 w-3.5" />
+                  </Button>
+                );
               }
 
               // Backlog button removed - users should view order details page
@@ -974,6 +1013,15 @@ export function PedidoCard({
       <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
 
       <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
+
+      <ArquivarPedidoModal
+        open={showArquivar}
+        onOpenChange={setShowArquivar}
+        onConfirmar={handleConfirmarArquivamento}
+        pedido={pedido}
+      />
+      
+      <ArquivamentoLoadingModal open={showArquivamentoLoading} />
 
       <AvancarQualidadeModal open={showAvancarQualidade} onOpenChange={setShowAvancarQualidade} onConfirmar={async () => {
       setShowAvancarQualidade(false);
