@@ -234,15 +234,14 @@ export function useVendas() {
         updateData.categoria = vendaData.tipo_entrega.toLowerCase();
       }
       
-      // Comentado - tabela instalacoes removida
-      // const { error: instalacaoError } = await supabase
-      //   .from('ordens_carregamento')
-      //   .update(updateData)
-      //   .eq('venda_id', venda.id);
+      const { error: instalacaoError } = await supabase
+        .from('instalacoes')
+        .update(updateData)
+        .eq('venda_id', venda.id);
 
-      // if (instalacaoError) {
-      //   console.error('Erro ao atualizar instalação:', instalacaoError);
-      // }
+      if (instalacaoError) {
+        console.error('Erro ao atualizar instalação:', instalacaoError);
+      }
 
       // 8. Salvar autorização de desconto, se houver
       if (autorizacaoDesconto) {
@@ -264,26 +263,28 @@ export function useVendas() {
         }
       }
 
-      // 9. Comentado - geocodificação removida (tabela instalacoes não existe mais)
-      // const { data: instalacao } = await supabase
-      //   .from('ordens_carregamento')
-      //   .select('id, cidade, estado')
-      //   .eq('venda_id', venda.id)
-      //   .single();
+      // 9. Buscar a instalação para geocodificar
+      const { data: instalacao } = await supabase
+        .from('instalacoes')
+        .select('id, cidade, estado')
+        .eq('venda_id', venda.id)
+        .single();
 
-      // if (instalacao) {
-      //   try {
-      //     await supabase.functions.invoke('geocode-instalacao', {
-      //       body: {
-      //         id: instalacao.id,
-      //         cidade: instalacao.cidade,
-      //         estado: instalacao.estado
-      //       }
-      //     });
-      //   } catch (geoError) {
-      //     console.error('Erro na geocodificação:', geoError);
-      //   }
-      // }
+      // 10. Chamar geocodificação
+      if (instalacao) {
+        try {
+          await supabase.functions.invoke('geocode-instalacao', {
+            body: {
+              id: instalacao.id,
+              cidade: instalacao.cidade,
+              estado: instalacao.estado
+            }
+          });
+        } catch (geoError) {
+          console.error('Erro na geocodificação:', geoError);
+          // Não bloquear a criação da venda por erro de geocodificação
+        }
+      }
 
       return venda;
     },

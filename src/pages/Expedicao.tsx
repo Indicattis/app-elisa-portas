@@ -1,49 +1,105 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Truck } from "lucide-react";
+import { useState } from "react";
+import { MapPin } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
+import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
+import { InstalacaoIndicadores } from "@/components/cadastro-instalacao/InstalacaoIndicadores";
+import { InstalacoesFiltros } from "@/components/cadastro-instalacao/InstalacoesFiltros";
+import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
+import { useInstalacoesFilters } from "@/hooks/useInstalacoesFilters";
 
 export default function Expedicao() {
-  const navigate = useNavigate();
+  const [showCadastroModal, setShowCadastroModal] = useState(false);
+  
+  const isMobile = useIsMobile();
+  const { isAdmin } = useAuth();
+
+  const { 
+    ordens, 
+    loading,
+    createOrdem, 
+    concluirOrdem,
+  } = useOrdensCarregamento();
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    filterStatus,
+    setFilterStatus,
+    filterEstado,
+    setFilterEstado,
+    filteredInstalacoes,
+    estados,
+  } = useInstalacoesFilters(ordens);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background border-b">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard/logistica")}
-            className="h-9 w-9"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+    <>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Expedição</h1>
-            <p className="text-sm text-muted-foreground">Gerenciar ordens de carregamento</p>
+            <h1 className="text-2xl font-bold">Expedição</h1>
+            <p className="text-sm text-muted-foreground">
+              Visualize e gerencie todas as ordens de carregamento
+            </p>
+          </div>
+          
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Button 
+                onClick={() => setShowCadastroModal(true)}
+                size={isMobile ? "sm" : "default"}
+                className="gap-2"
+              >
+                <MapPin className="h-4 w-4" />
+                {!isMobile && "Nova Ordem"}
+              </Button>
+            )}
           </div>
         </div>
-      </header>
 
-      {/* Conteúdo */}
-      <main className="p-4 pb-8 max-w-7xl mx-auto">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Truck className="h-16 w-16 text-muted-foreground mb-4" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Módulo de Expedição
-          </h2>
-          <p className="text-muted-foreground max-w-md">
-            As ordens de carregamento são geradas diretamente nos pedidos quando estão nas etapas
-            "Aguardando Coleta" ou "Aguardando Instalação".
-          </p>
-          <Button 
-            onClick={() => navigate("/pedidos")}
-            className="mt-6"
-          >
-            Ir para Pedidos
-          </Button>
-        </div>
-      </main>
-    </div>
+        <InstalacaoIndicadores instalacoes={ordens} />
+
+        <InstalacoesFiltros
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterStatus={filterStatus}
+          onFilterStatusChange={setFilterStatus}
+          filterEstado={filterEstado}
+          onFilterEstadoChange={setFilterEstado}
+          estados={estados}
+        />
+
+        <InstalacoesTabelaView
+          instalacoes={filteredInstalacoes}
+          onDelete={async () => {}}
+          onUpdate={async () => {}}
+          onUpdateStatus={async () => {}}
+          onConcluirInstalacao={concluirOrdem}
+          onGeocode={async () => {}}
+          isAdmin={isAdmin}
+        />
+      </div>
+
+      <Dialog open={showCadastroModal} onOpenChange={setShowCadastroModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Cadastrar Nova Ordem de Carregamento</DialogTitle>
+            <DialogDescription>
+              Preencha os dados para cadastrar uma nova ordem de carregamento
+            </DialogDescription>
+          </DialogHeader>
+          <CadastroInstalacaoForm 
+            onSubmit={async (data) => {
+              await createOrdem(data as any);
+              setShowCadastroModal(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

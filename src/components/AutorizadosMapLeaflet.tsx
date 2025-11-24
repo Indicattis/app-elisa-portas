@@ -721,7 +721,7 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                 <Marker 
                   key={`instalacao-${instalacao.id}`} 
                   position={[instalacao.latitude!, instalacao.longitude!]} 
-                  icon={createInstalacaoIcon('instalacao', (instalacao.status || 'pendente') as 'finalizada' | 'pendente_producao' | 'pronta_fabrica', isSelected)}
+                  icon={createInstalacaoIcon('instalacao', instalacao.status, isSelected)}
                   ref={(ref) => {
                     if (ref) {
                       instalacaoMarkerRefs.current[instalacao.id] = ref;
