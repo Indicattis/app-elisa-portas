@@ -145,7 +145,13 @@ export const InstalacoesTabelaView = ({
   };
 
   const handleGeocode = async (instalacao: InstalacaoCadastrada) => {
-    await onGeocode(instalacao.id, instalacao.cidade, instalacao.estado);
+    const cidade = instalacao.venda?.cidade || '';
+    const estado = instalacao.venda?.estado || '';
+    if (cidade && estado) {
+      await onGeocode(instalacao.id, cidade, estado);
+    } else {
+      toast.error('Dados de localização não disponíveis');
+    }
   };
 
   const getGeocodeStatus = (instalacao: InstalacaoCadastrada) => {
@@ -194,23 +200,14 @@ export const InstalacoesTabelaView = ({
 
   const handleSaveDataProducao = async (instalacaoId: string, dataProducao: string) => {
     try {
-      const { error } = await supabase
-        .from('instalacoes')
-        .update({ data_producao: dataProducao })
-        .eq('id', instalacaoId);
-
-      if (error) throw error;
-
-      toast.success('Data de produção atualizada com sucesso!');
+      // Data de produção não existe mais na tabela instalacoes
+      toast.info('Data de produção é gerenciada pelo pedido');
       
-      // Atualizar a lista de instalações
+      // Recarregar lista
       const updatedInstalacao = instalacoes.find(i => i.id === instalacaoId);
       if (updatedInstalacao) {
         await onUpdate(instalacaoId, {
           nome_cliente: updatedInstalacao.nome_cliente,
-          telefone_cliente: updatedInstalacao.telefone_cliente || '',
-          estado: updatedInstalacao.estado,
-          cidade: updatedInstalacao.cidade,
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
@@ -253,9 +250,6 @@ export const InstalacoesTabelaView = ({
       if (updatedInstalacao) {
         await onUpdate(instalacaoId, {
           nome_cliente: updatedInstalacao.nome_cliente,
-          telefone_cliente: updatedInstalacao.telefone_cliente || '',
-          estado: updatedInstalacao.estado,
-          cidade: updatedInstalacao.cidade,
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
@@ -349,7 +343,7 @@ export const InstalacoesTabelaView = ({
                       <div>
                         <p className="text-[10px] text-muted-foreground">Cliente</p>
                         <p className="text-xs font-semibold truncate">{instalacao.nome_cliente}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{instalacao.telefone_cliente || '-'}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{instalacao.venda?.cliente_telefone || '-'}</p>
                       </div>
 
                       {/* Localização */}
@@ -357,7 +351,7 @@ export const InstalacoesTabelaView = ({
                         <p className="text-[10px] text-muted-foreground mb-1">Localização</p>
                         <div className="flex items-center gap-2">
                           <p className="text-[10px] truncate">
-                            {instalacao.cidade}, {instalacao.estado}
+                            {instalacao.venda?.cidade || 'N/A'}, {instalacao.venda?.estado || 'N/A'}
                           </p>
                           {instalacao.latitude && instalacao.longitude ? (
                             <Button
@@ -528,7 +522,7 @@ export const InstalacoesTabelaView = ({
                         <TableCell className="py-2">
                           <div className="space-y-0.5">
                             <p className="font-medium text-xs truncate max-w-[200px]">{instalacao.nome_cliente}</p>
-                            <p className="text-[10px] text-muted-foreground">{instalacao.telefone_cliente || '-'}</p>
+                            <p className="text-[10px] text-muted-foreground">{instalacao.venda?.cliente_telefone || '-'}</p>
                           </div>
                         </TableCell>
                         <TableCell className="py-2">
@@ -550,7 +544,7 @@ export const InstalacoesTabelaView = ({
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] truncate max-w-[150px]">
-                                {instalacao.cidade}, {instalacao.estado}
+                                {instalacao.venda?.cidade || 'N/A'}, {instalacao.venda?.estado || 'N/A'}
                               </span>
                               {instalacao.latitude && instalacao.longitude ? (
                                 <Button
@@ -738,7 +732,7 @@ export const InstalacoesTabelaView = ({
         open={!!dataProducaoInstalacao}
         onOpenChange={(open) => !open && setDataProducaoInstalacao(null)}
         instalacaoId={dataProducaoInstalacao?.id || ''}
-        dataAtual={dataProducaoInstalacao?.data_producao}
+        dataAtual={dataProducaoInstalacao?.pedido?.data_producao}
         onSave={handleSaveDataProducao}
       />
 

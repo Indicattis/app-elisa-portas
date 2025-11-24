@@ -743,11 +743,11 @@ const AutorizadosMapLeaflet: React.FC<AutorizadosMapLeafletProps> = ({
                         </h3>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                           <MapPin className="h-3 w-3" />
-                          <span>{instalacao.cidade}, {instalacao.estado}</span>
+                          <span>{instalacao.venda?.cidade || 'N/A'}, {instalacao.venda?.estado || 'N/A'}</span>
                         </div>
-                        {instalacao.telefone_cliente && (
+                        {instalacao.venda?.cliente_telefone && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                            📞 {instalacao.telefone_cliente}
+                            📞 {instalacao.venda.cliente_telefone}
                           </div>
                         )}
                       </div>
