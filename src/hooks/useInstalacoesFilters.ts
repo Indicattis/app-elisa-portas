@@ -29,7 +29,7 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
       const matchesSearch = instalacao.nome_cliente
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-        instalacao.telefone_cliente
+        instalacao.venda?.cliente_telefone
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase());
       if (!matchesSearch) return false;
@@ -40,7 +40,7 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
       }
 
       // Filtro por estado
-      if (filterEstado !== "all" && instalacao.estado !== filterEstado) {
+      if (filterEstado !== "all" && instalacao.venda?.estado !== filterEstado) {
         return false;
       }
 
@@ -67,7 +67,7 @@ export function useInstalacoesFilters(instalacoes: InstalacaoCadastrada[] = []) 
   }, [filteredInstalacoes]);
 
   const estados = useMemo(() => {
-    const uniqueEstados = new Set(instalacoes.map((i) => i.estado));
+    const uniqueEstados = new Set(instalacoes.map((i) => i.venda?.estado).filter(Boolean));
     return Array.from(uniqueEstados).sort();
   }, [instalacoes]);
 

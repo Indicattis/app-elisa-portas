@@ -1475,6 +1475,100 @@ export type Database = {
         }
         Relationships: []
       }
+      instalacoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_instalacao: string | null
+          geocode_precision: string | null
+          hora: string
+          id: string
+          instalacao_concluida: boolean
+          instalacao_concluida_em: string | null
+          instalacao_concluida_por: string | null
+          last_geocoded_at: string | null
+          latitude: number | null
+          longitude: number | null
+          nome_cliente: string
+          observacoes: string | null
+          pedido_id: string | null
+          responsavel_instalacao_id: string | null
+          responsavel_instalacao_nome: string | null
+          status: string
+          tipo_instalacao: string | null
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_instalacao?: string | null
+          geocode_precision?: string | null
+          hora?: string
+          id?: string
+          instalacao_concluida?: boolean
+          instalacao_concluida_em?: string | null
+          instalacao_concluida_por?: string | null
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          responsavel_instalacao_id?: string | null
+          responsavel_instalacao_nome?: string | null
+          status?: string
+          tipo_instalacao?: string | null
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_instalacao?: string | null
+          geocode_precision?: string | null
+          hora?: string
+          id?: string
+          instalacao_concluida?: boolean
+          instalacao_concluida_em?: string | null
+          instalacao_concluida_por?: string | null
+          last_geocoded_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome_cliente?: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          responsavel_instalacao_id?: string | null
+          responsavel_instalacao_nome?: string | null
+          status?: string
+          tipo_instalacao?: string | null
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instalacoes_pedido_id_fkey1"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "instalacoes_pedido_id_fkey1"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instalacoes_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_anexos: {
         Row: {
           created_at: string

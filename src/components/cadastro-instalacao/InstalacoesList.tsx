@@ -195,36 +195,13 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
                   })}
                 </p>
               )}
-              {instalacao.data_producao ? (
+              {instalacao.pedido && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">Data de Produção:</span>
-                  <span>
-                    {format(new Date(instalacao.data_producao), "dd 'de' MMMM 'de' yyyy", {
-                      locale: ptBR,
-                    })}
+                  <span className="font-medium">Pedido:</span>
+                  <span>{instalacao.pedido.numero_pedido}</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({instalacao.pedido.etapa_atual})
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDataProducaoInstalacao(instalacao)}
-                    title="Editar Data de Produção"
-                    className="h-6 w-6 p-0"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Data de Produção:</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDataProducaoInstalacao(instalacao)}
-                    className="gap-1 h-7"
-                  >
-                    <Plus className="h-3 w-3" />
-                    Inserir
-                  </Button>
                 </div>
               )}
               {instalacao.responsavel_instalacao_nome ? (
@@ -335,13 +312,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
         </DialogContent>
       </Dialog>
 
-      <DataProducaoModal
-        open={!!dataProducaoInstalacao}
-        onOpenChange={(open) => !open && setDataProducaoInstalacao(null)}
-        instalacaoId={dataProducaoInstalacao?.id || ''}
-        dataAtual={dataProducaoInstalacao?.pedido?.data_producao}
-        onSave={handleSaveDataProducao}
-      />
 
       <ResponsavelInstalacaoModal
         open={!!responsavelInstalacao}

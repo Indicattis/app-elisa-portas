@@ -34,13 +34,18 @@ export const useInstalacoesDashboard = () => {
         .gte('updated_at', inicioMes)
         .lte('updated_at', fimMes);
 
-      // Distribuição por estados
-      const { data: estados } = await supabase
+      // Distribuição por estados através das vendas
+      const { data: instalacoes } = await supabase
         .from('instalacoes')
-        .select('estado');
+        .select(`
+          venda:vendas!venda_id(estado)
+        `);
 
-      const distribuicaoEstados = estados?.reduce((acc: { [key: string]: number }, item) => {
-        acc[item.estado] = (acc[item.estado] || 0) + 1;
+      const distribuicaoEstados = instalacoes?.reduce((acc: { [key: string]: number }, item: any) => {
+        const estado = item.venda?.estado;
+        if (estado) {
+          acc[estado] = (acc[estado] || 0) + 1;
+        }
         return acc;
       }, {});
 
