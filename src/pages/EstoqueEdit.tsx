@@ -92,6 +92,8 @@ export default function EstoqueEdit() {
   useEffect(() => {
     if (produto) {
       console.log('[EstoqueEdit] Carregando produto:', produto);
+      console.log('[EstoqueEdit] setor_responsavel_producao:', produto.setor_responsavel_producao);
+      console.log('[EstoqueEdit] requer_pintura:', produto.requer_pintura);
       
       // Normalizar categoria: converter espaços para underscore
       const categoriaNormalizada = produto.categoria?.replace(/ /g, '_') || "geral";
@@ -108,10 +110,12 @@ export default function EstoqueEdit() {
         peso_porta: Number(produto.peso_porta) || 0,
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
         fornecedor_id: produto.fornecedor_id || "",
-        requer_pintura: produto.requer_pintura || false,
+        requer_pintura: produto.requer_pintura === true,
       };
       
       console.log('[EstoqueEdit] Novo formData:', newFormData);
+      console.log('[EstoqueEdit] formData.setor_responsavel_producao:', newFormData.setor_responsavel_producao);
+      console.log('[EstoqueEdit] formData.requer_pintura:', newFormData.requer_pintura);
       setFormData(newFormData);
     }
   }, [produto]);
@@ -358,7 +362,7 @@ export default function EstoqueEdit() {
               <div className="space-y-2">
                 <Label htmlFor="setor_responsavel_producao">Setor de Produção</Label>
                 <Select
-                  value={formData.setor_responsavel_producao || undefined}
+                  value={formData.setor_responsavel_producao || ""}
                   onValueChange={(value) =>
                     setFormData({ ...formData, setor_responsavel_producao: value })
                   }
@@ -367,6 +371,7 @@ export default function EstoqueEdit() {
                     <SelectValue placeholder="Selecione um setor" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
                     <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
                     <SelectItem value="soldagem">Soldagem</SelectItem>
                     <SelectItem value="separacao">Separação</SelectItem>
