@@ -491,14 +491,14 @@ export default function PedidoView() {
 
       {/* Seção de Preparação do Pedido - REMOVIDA, edição agora é inline na tabela */}
 
-      {/* Itens do Pedido Cadastrados */}
-      {pedido.linhas.length > 0 && (
+      {/* Itens do Pedido */}
+      {isAberto && (
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Package className="w-4 h-4" />
-                Itens do Pedido ({pedido.linhas.length})
+                Itens do Pedido {pedido.linhas.length > 0 && `(${pedido.linhas.length})`}
               </CardTitle>
               {isAberto && (
                 <div className="flex items-center gap-2">
