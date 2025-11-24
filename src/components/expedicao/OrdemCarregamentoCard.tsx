@@ -113,6 +113,8 @@ export const OrdemCarregamentoCard = ({
               <button 
                 className="p-0.5 hover:bg-accent rounded-md transition-colors"
                 onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </button>
