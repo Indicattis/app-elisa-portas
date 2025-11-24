@@ -47,7 +47,8 @@ export default function Pedidos() {
     moverParaProximaEtapa,
     retrocederEtapa,
     atualizarPrioridade,
-    reorganizarPedidos
+    reorganizarPedidos,
+    arquivarPedido
   } = usePedidosEtapas(etapaAtiva);
   const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
     await moverParaProximaEtapa.mutateAsync({
@@ -92,6 +93,10 @@ export default function Pedidos() {
       pedidoId,
       novaPrioridade
     });
+  };
+
+  const handleArquivar = async (pedidoId: string) => {
+    await arquivarPedido.mutateAsync(pedidoId);
   };
 
   // Filtrar pedidos baseado na pesquisa e filtros
@@ -297,7 +302,8 @@ export default function Pedidos() {
                         onMoverEtapa={handleMoverEtapa} 
                         onRetrocederEtapa={handleRetrocederEtapa} 
                         onReorganizar={handleReorganizar} 
-                        onMoverPrioridade={handleMoverPrioridade} 
+                        onMoverPrioridade={handleMoverPrioridade}
+                        onArquivar={handleArquivar}
                       />
                       
                       {totalPaginas > 1 && (

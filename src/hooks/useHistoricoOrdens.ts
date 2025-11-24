@@ -47,6 +47,46 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
     queryFn: async () => {
       const allOrdens: OrdemHistorico[] = [];
       
+      // Buscar pedidos arquivados
+      const { data: pedidosArquivados } = await supabase
+        .from('pedidos_producao')
+        .select(`
+          *,
+          vendas:venda_id (
+            id,
+            cliente_nome,
+            numero_pedido:id
+          ),
+          admin_users:arquivado_por (
+            nome,
+            foto_perfil_url
+          )
+        `)
+        .eq('arquivado', true)
+        .order('data_arquivamento', { ascending: false });
+      
+      // Adicionar pedidos arquivados à lista
+      if (pedidosArquivados) {
+        pedidosArquivados.forEach((pedido: any) => {
+          allOrdens.push({
+            id: pedido.id,
+            numero_ordem: pedido.numero_pedido,
+            tipo_ordem: 'separacao' as TipoOrdem, // Usar tipo genérico para pedidos
+            pedido_id: pedido.id,
+            status: 'arquivado',
+            created_at: pedido.created_at,
+            data_conclusao: pedido.data_arquivamento,
+            responsavel_id: pedido.arquivado_por,
+            pedido: {
+              id: pedido.id,
+              numero_pedido: pedido.numero_pedido,
+              cliente_nome: pedido.vendas?.cliente_nome || 'Cliente não informado'
+            },
+            admin_users: pedido.admin_users
+          });
+        });
+      }
+      
       // Determinar quais tabelas buscar
       const tiposParaBuscar: TipoOrdem[] = 
         filters.tipoOrdem && filters.tipoOrdem !== 'todos' 
