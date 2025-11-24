@@ -3112,6 +3112,7 @@ export type Database = {
           data_arquivamento: string | null
           data_carregamento: string | null
           data_entrega: string | null
+          data_producao: string | null
           em_backlog: boolean | null
           endereco_bairro: string | null
           endereco_cep: string | null
@@ -3159,6 +3160,7 @@ export type Database = {
           data_arquivamento?: string | null
           data_carregamento?: string | null
           data_entrega?: string | null
+          data_producao?: string | null
           em_backlog?: boolean | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
@@ -3206,6 +3208,7 @@ export type Database = {
           data_arquivamento?: string | null
           data_carregamento?: string | null
           data_entrega?: string | null
+          data_producao?: string | null
           em_backlog?: boolean | null
           endereco_bairro?: string | null
           endereco_cep?: string | null

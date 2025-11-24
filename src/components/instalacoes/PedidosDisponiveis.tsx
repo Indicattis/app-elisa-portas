@@ -3,17 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, Package, MapPin, Calendar, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { toast } from 'sonner';
 
 interface PedidoDisponivel {
   id: string;
   numero_pedido: string;
   etapa_atual: string;
+  data_producao: string | null;
   venda: {
     id: string;
     cliente_nome: string;
@@ -28,7 +33,7 @@ interface PedidosDisponiveisProps {
   onRefresh?: () => void;
 }
 
-function DraggablePedidoCard({ pedido }: { pedido: PedidoDisponivel }) {
+function DraggablePedidoCard({ pedido, onDefinirData }: { pedido: PedidoDisponivel; onDefinirData: (pedido: PedidoDisponivel) => void }) {
   const isExpedicaoInstalacao = pedido.etapa_atual === 'expedicao_instalacao';
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -81,7 +86,7 @@ function DraggablePedidoCard({ pedido }: { pedido: PedidoDisponivel }) {
       }`}
     >
       <CardContent className="p-0 h-full">
-        <div className="h-full grid grid-cols-[100px_1fr_200px_150px_140px] gap-2 items-center px-3 text-xs">
+        <div className="h-full grid grid-cols-[100px_1fr_200px_150px_140px_110px_80px] gap-2 items-center px-3 text-xs">
           <div className="flex items-center gap-1.5 font-semibold">
             <Package className="h-3 w-3 text-muted-foreground flex-shrink-0" />
             <span className="truncate">{pedido.numero_pedido}</span>
@@ -112,6 +117,28 @@ function DraggablePedidoCard({ pedido }: { pedido: PedidoDisponivel }) {
           <Badge variant="outline" className={`text-[10px] h-5 px-1.5 ${getEtapaColor(pedido.etapa_atual)}`}>
             {getEtapaLabel(pedido.etapa_atual)}
           </Badge>
+
+          <div className="text-muted-foreground truncate">
+            {pedido.data_producao 
+              ? format(new Date(pedido.data_producao), 'dd/MM/yyyy', { locale: ptBR })
+              : '-'}
+          </div>
+
+          <div>
+            {isExpedicaoInstalacao && !pedido.data_producao && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDefinirData(pedido);
+                }}
+              >
+                Definir
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -122,6 +149,8 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
   const [pedidos, setPedidos] = useState<PedidoDisponivel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPedido, setSelectedPedido] = useState<PedidoDisponivel | null>(null);
+  const [dataCarregamento, setDataCarregamento] = useState<string>('');
 
   useEffect(() => {
     fetchPedidosDisponiveis();
@@ -137,6 +166,7 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
           id,
           numero_pedido,
           etapa_atual,
+          data_producao,
           vendas!inner (
             id,
             cliente_nome,
@@ -167,6 +197,7 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
           id: p.id,
           numero_pedido: p.numero_pedido,
           etapa_atual: p.etapa_atual,
+          data_producao: p.data_producao,
           venda: Array.isArray(p.vendas) ? p.vendas[0] : p.vendas
         }));
 
@@ -175,6 +206,27 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
       console.error('Erro ao buscar pedidos disponíveis:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDefinirDataCarregamento = async () => {
+    if (!selectedPedido || !dataCarregamento) return;
+
+    try {
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ data_producao: dataCarregamento })
+        .eq('id', selectedPedido.id);
+
+      if (error) throw error;
+
+      toast.success('Data de carregamento definida com sucesso');
+      setSelectedPedido(null);
+      setDataCarregamento('');
+      fetchPedidosDisponiveis();
+    } catch (error) {
+      console.error('Erro ao definir data:', error);
+      toast.error('Erro ao definir data de carregamento');
     }
   };
 
@@ -231,7 +283,11 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-3">
                   {pedidosFiltrados.map((pedido) => (
-                    <DraggablePedidoCard key={pedido.id} pedido={pedido} />
+                    <DraggablePedidoCard 
+                      key={pedido.id} 
+                      pedido={pedido}
+                      onDefinirData={setSelectedPedido}
+                    />
                   ))}
                 </div>
               </ScrollArea>
@@ -239,6 +295,40 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
           </>
         )}
       </CardContent>
+
+      {/* Dialog para definir data de carregamento */}
+      <Dialog open={!!selectedPedido} onOpenChange={(open) => !open && setSelectedPedido(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Definir Data de Carregamento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {selectedPedido && (
+              <div className="space-y-2 text-sm">
+                <p><strong>Pedido:</strong> {selectedPedido.numero_pedido}</p>
+                <p><strong>Cliente:</strong> {selectedPedido.venda.cliente_nome}</p>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="data-carregamento">Data de Carregamento</Label>
+              <Input
+                id="data-carregamento"
+                type="date"
+                value={dataCarregamento}
+                onChange={(e) => setDataCarregamento(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedPedido(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleDefinirDataCarregamento} disabled={!dataCarregamento}>
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
