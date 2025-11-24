@@ -422,9 +422,9 @@ export default function Vendas() {
                     const canEdit = isAdmin || venda.atendente_id === userRole?.user_id;
                     
                     return (
-                      <TableRow key={venda.id}>
+                      <TableRow key={venda.id} className="h-[30px] max-h-[30px]">
                         {/* Mobile: Coluna 1 - Cliente + Info */}
-                        <TableCell className="py-2 px-2 sm:py-4 sm:px-4 md:hidden">
+                        <TableCell className="py-1 px-2 md:hidden">
                           <div className="space-y-1">
                             <div className="font-medium text-xs truncate max-w-[150px]">{venda.cliente_nome}</div>
                             <div className="text-[10px] text-muted-foreground">
@@ -448,7 +448,7 @@ export default function Vendas() {
                         </TableCell>
 
                          {/* Mobile: Coluna 2 - Valor + Ações */}
-                        <TableCell className="py-2 px-2 sm:py-4 sm:px-4 md:hidden text-right">
+                        <TableCell className="py-1 px-2 md:hidden text-right">
                           <div className="space-y-1">
                             <div className="font-bold text-xs">{formatCurrency(venda.valor_venda || 0)}</div>
                             <div className="flex justify-end gap-1">
@@ -486,47 +486,47 @@ export default function Vendas() {
                         </TableCell>
 
                         {/* Desktop: Todas as colunas */}
-                        <TableCell className="hidden md:table-cell text-sm">
+                        <TableCell className="hidden md:table-cell text-xs py-1">
                           {format(new Date(venda.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-sm font-medium">{venda.cliente_nome}</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm">{venda.cpf_cliente || '-'}</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm">{venda.cliente_telefone}</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm">{venda.cidade}/{venda.estado}</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm">
+                        <TableCell className="hidden md:table-cell text-xs font-medium py-1">{venda.cliente_nome}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs py-1">{venda.cpf_cliente || '-'}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs py-1">{venda.cliente_telefone}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs py-1">{venda.cidade}/{venda.estado}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs py-1">
                           {venda.data_prevista_entrega 
                             ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
                             : '-'
                           }
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell className="hidden md:table-cell py-1">
                           <ProductIconsSummary venda={venda} />
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-center">
+                        <TableCell className="hidden md:table-cell text-center py-1">
                           {venda.venda_presencial ? (
                             <Badge variant="default" className="text-xs">Sim</Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">Não</Badge>
                           )}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-sm font-semibold text-right">
+                        <TableCell className="hidden md:table-cell text-xs font-semibold text-right py-1">
                           {formatCurrency((venda.valor_venda || 0) - (venda.valor_frete || 0))}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-sm font-bold text-right">
+                        <TableCell className="hidden md:table-cell text-xs font-bold text-right py-1">
                           {formatCurrency(venda.valor_venda || 0)}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell className="hidden md:table-cell py-1">
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
+                            <Avatar className="h-5 w-5">
                               <AvatarImage src={venda.atendente?.foto_perfil_url || ''} alt={venda.atendente?.nome || 'Atendente'} />
-                              <AvatarFallback className="text-xs">
+                              <AvatarFallback className="text-[10px]">
                                 {venda.atendente?.nome?.charAt(0) || '?'}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm">{venda.atendente?.nome || 'N/A'}</span>
+                            <span className="text-xs">{venda.atendente?.nome || 'N/A'}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-right">
+                        <TableCell className="hidden md:table-cell text-right py-1">
                           <div className="flex justify-end gap-1">
                             <Button
                               variant="ghost"
