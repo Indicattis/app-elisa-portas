@@ -167,8 +167,6 @@ export const CalendarioSemanalExpedicaoDesktop = ({
             <div className="opacity-80">
               <DraggableOrdemCarregamento
                 ordem={activeOrdem}
-                onEdit={onEdit}
-                onRemoverDoCalendario={onRemoverDoCalendario}
               />
             </div>
           ) : null}

@@ -190,8 +190,6 @@ export const CalendarioMensalExpedicaoDesktop = ({
           <div className="opacity-80">
             <OrdemCarregamentoCard
               ordem={activeOrdem}
-              onEdit={() => {}}
-              onRemoverDoCalendario={() => {}}
             />
           </div>
         )}

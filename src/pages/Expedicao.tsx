@@ -12,7 +12,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import logoExpedicao from "@/assets/logo-instalacoes.png";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
-import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
+import { OrdemCarregamentoActions } from "@/components/expedicao/OrdemCarregamentoActions";
 import { AlterarResponsavelModal } from "@/components/expedicao/AlterarResponsavelModal";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,7 +27,7 @@ export default function Expedicao() {
   
   const [refreshOrdensDisponiveis, setRefreshOrdensDisponiveis] = useState(0);
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [alterarResponsavelOpen, setAlterarResponsavelOpen] = useState(false);
   const [ordemParaAlterar, setOrdemParaAlterar] = useState<OrdemCarregamento | null>(null);
 
@@ -125,7 +125,7 @@ export default function Expedicao() {
 
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
     setSelectedOrdem(ordem);
-    setDetailsOpen(true);
+    setActionsOpen(true);
   };
 
   const handleAlterarResponsavel = (ordem: OrdemCarregamento) => {
@@ -197,8 +197,7 @@ export default function Expedicao() {
                 onNextWeek={handleNextWeek}
                 onToday={handleToday}
                 onDayClick={handleDayClick}
-                onEdit={handleEdit}
-                onRemoverDoCalendario={handleRemoverDoCalendario}
+                onOrdemClick={handleOrdemClick}
               />
             ) : (
               tipoVisualizacao === 'semanal' ? (
@@ -238,11 +237,14 @@ export default function Expedicao() {
         )}
       </main>
 
-      {/* Sidebar de Detalhes */}
-      <OrdemCarregamentoDetails
+      {/* Sidebar de Ações */}
+      <OrdemCarregamentoActions
         ordem={selectedOrdem}
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
+        open={actionsOpen}
+        onOpenChange={setActionsOpen}
+        onEdit={handleEdit}
+        onRemoverDoCalendario={handleRemoverDoCalendario}
+        onAlterarResponsavel={handleAlterarResponsavel}
       />
 
       {/* Modal Alterar Responsável */}
