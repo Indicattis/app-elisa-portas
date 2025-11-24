@@ -11,7 +11,7 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
     queryKey: ["instalacoes", startDate?.toISOString(), viewMode],
     queryFn: async () => {
       let query = supabase
-        .from("instalacoes")
+        .from("instalacoes_cadastradas")
         .select(`
           *,
           venda:vendas(
@@ -24,15 +24,13 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
             cep,
             data_venda
           ),
-          equipe:equipes_instalacao(
+          pedido:pedidos_producao(
             id,
-            nome,
-            cor,
-            ativa
+            numero_pedido,
+            etapa_atual
           )
         `)
-        .order("data", { ascending: true })
-        .order("hora", { ascending: true });
+        .order("data_instalacao", { ascending: true });
 
       if (startDate) {
         let start: Date;
@@ -52,23 +50,45 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
         }
         
         query = query
-          .gte("data", start.toISOString().split("T")[0])
-          .lte("data", end.toISOString().split("T")[0]);
+          .gte("data_instalacao", start.toISOString().split("T")[0])
+          .lte("data_instalacao", end.toISOString().split("T")[0]);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as Instalacao[];
+      
+      // Mapear para o formato Instalacao compatível
+      return (data || []).map(inst => ({
+        id: inst.id,
+        id_venda: inst.venda_id,
+        data: inst.data_instalacao || '',
+        hora: '08:00', // Valor padrão já que instalacoes_cadastradas não tem hora
+        nome_cliente: inst.nome_cliente,
+        cidade: inst.cidade,
+        estado: inst.estado,
+        produto: '', // Não disponível em instalacoes_cadastradas
+        equipe_id: inst.responsavel_instalacao_id,
+        venda: inst.venda,
+        pedido: inst.pedido,
+        created_at: inst.created_at,
+        updated_at: inst.updated_at
+      })) as Instalacao[];
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (instalacao: InstalacaoFormData) => {
       const { data, error } = await supabase
-        .from("instalacoes")
+        .from("instalacoes_cadastradas")
         .insert([{
-          ...instalacao,
+          nome_cliente: instalacao.nome_cliente,
+          telefone_cliente: instalacao.telefone_cliente,
+          cidade: instalacao.cidade,
+          estado: instalacao.estado,
+          data_instalacao: instalacao.data,
+          responsavel_instalacao_id: instalacao.equipe_id,
+          status: 'pronta_fabrica',
           created_by: (await supabase.auth.getUser()).data.user?.id,
         }])
         .select()
@@ -89,9 +109,18 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InstalacaoFormData> }) => {
+      const updateData: any = {};
+      
+      if (data.nome_cliente) updateData.nome_cliente = data.nome_cliente;
+      if (data.telefone_cliente !== undefined) updateData.telefone_cliente = data.telefone_cliente;
+      if (data.cidade) updateData.cidade = data.cidade;
+      if (data.estado) updateData.estado = data.estado;
+      if (data.data) updateData.data_instalacao = data.data;
+      if (data.equipe_id !== undefined) updateData.responsavel_instalacao_id = data.equipe_id;
+
       const { data: updated, error } = await supabase
-        .from("instalacoes")
-        .update(data)
+        .from("instalacoes_cadastradas")
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -112,7 +141,7 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("instalacoes")
+        .from("instalacoes_cadastradas")
         .delete()
         .eq("id", id);
 
