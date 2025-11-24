@@ -54,23 +54,14 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
 
   const handleSaveDataProducao = async (instalacaoId: string, dataProducao: string) => {
     try {
-      const { error } = await supabase
-        .from('instalacoes')
-        .update({ data_producao: dataProducao })
-        .eq('id', instalacaoId);
-
-      if (error) throw error;
-
-      toast.success('Data de produção atualizada com sucesso!');
+      // Data de produção não existe mais na tabela instalacoes
+      toast.info('Data de produção é gerenciada pelo pedido');
       
-      // Atualizar a lista de instalações
+      // Recarregar lista
       const updatedInstalacao = instalacoes.find(i => i.id === instalacaoId);
       if (updatedInstalacao) {
         await onUpdate(instalacaoId, {
           nome_cliente: updatedInstalacao.nome_cliente,
-          telefone_cliente: updatedInstalacao.telefone_cliente || '',
-          estado: updatedInstalacao.estado,
-          cidade: updatedInstalacao.cidade,
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: updatedInstalacao.tipo_instalacao || undefined,
@@ -113,9 +104,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
       if (updatedInstalacao) {
         await onUpdate(instalacaoId, {
           nome_cliente: updatedInstalacao.nome_cliente,
-          telefone_cliente: updatedInstalacao.telefone_cliente || '',
-          estado: updatedInstalacao.estado,
-          cidade: updatedInstalacao.cidade,
           data_instalacao: updatedInstalacao.data_instalacao || '',
           status: updatedInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
           tipo_instalacao: tipoFormatado as 'elisa' | 'autorizados',
@@ -160,9 +148,9 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
               <div className="space-y-1">
                 <CardTitle className="text-lg">{instalacao.nome_cliente}</CardTitle>
                 <CardDescription>
-                  {instalacao.cidade}, {instalacao.estado}
-                  {instalacao.telefone_cliente && (
-                    <span className="block text-xs mt-1">📞 {instalacao.telefone_cliente}</span>
+                  {instalacao.venda?.cidade || 'N/A'}, {instalacao.venda?.estado || 'N/A'}
+                  {instalacao.venda?.cliente_telefone && (
+                    <span className="block text-xs mt-1">📞 {instalacao.venda.cliente_telefone}</span>
                   )}
                 </CardDescription>
               </div>
@@ -335,9 +323,6 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
               onSubmit={handleUpdate}
               initialData={{
                 nome_cliente: editingInstalacao.nome_cliente,
-                telefone_cliente: editingInstalacao.telefone_cliente || '',
-                estado: editingInstalacao.estado,
-                cidade: editingInstalacao.cidade,
                 data_instalacao: editingInstalacao.data_instalacao || '',
                 status: editingInstalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
                 tipo_instalacao: editingInstalacao.tipo_instalacao || undefined,
@@ -354,7 +339,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
         open={!!dataProducaoInstalacao}
         onOpenChange={(open) => !open && setDataProducaoInstalacao(null)}
         instalacaoId={dataProducaoInstalacao?.id || ''}
-        dataAtual={dataProducaoInstalacao?.data_producao}
+        dataAtual={dataProducaoInstalacao?.pedido?.data_producao}
         onSave={handleSaveDataProducao}
       />
 
