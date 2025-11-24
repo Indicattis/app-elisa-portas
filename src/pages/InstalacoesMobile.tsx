@@ -230,7 +230,6 @@ export default function InstalacoesMobile() {
                     onNextWeek={handleNextWeek}
                     onToday={handleToday}
                     onUpdateInstalacao={handleUpdateInstalacao}
-                    onDayClick={handleDayClick}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                   />
@@ -240,7 +239,6 @@ export default function InstalacoesMobile() {
                     instalacoes={instalacoesFiltradas}
                     onMonthChange={setCurrentDate}
                     onUpdateInstalacao={handleUpdateInstalacao}
-                    onDayClick={handleDayClick}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                   />

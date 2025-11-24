@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Package, MapPin, Calendar, Loader2 } from 'lucide-react';
+import { Package, MapPin, Calendar, Loader2, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -39,10 +40,12 @@ export function SelecionarPedidoInstalacaoModal({
   const [pedidos, setPedidos] = useState<PedidoDisponivel[]>([]);
   const [loading, setLoading] = useState(true);
   const [criandoInstalacao, setCriandoInstalacao] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (open) {
       fetchPedidosDisponiveis();
+      setSearchTerm('');
     }
   }, [open]);
 
@@ -134,6 +137,17 @@ export function SelecionarPedidoInstalacaoModal({
     }
   };
 
+  // Filtrar pedidos por busca
+  const pedidosFiltrados = pedidos.filter(pedido => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      pedido.numero_pedido.toLowerCase().includes(searchLower) ||
+      pedido.venda.cliente_nome.toLowerCase().includes(searchLower) ||
+      pedido.venda.cliente_cidade?.toLowerCase().includes(searchLower) ||
+      pedido.venda.cliente_estado?.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -144,6 +158,19 @@ export function SelecionarPedidoInstalacaoModal({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Barra de pesquisa */}
+        {!loading && pedidos.length > 0 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por pedido, cliente ou localização..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -152,10 +179,14 @@ export function SelecionarPedidoInstalacaoModal({
           <div className="text-center py-8 text-muted-foreground">
             Nenhum pedido disponível para instalação
           </div>
+        ) : pedidosFiltrados.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum pedido encontrado com "{searchTerm}"
+          </div>
         ) : (
           <ScrollArea className="max-h-[500px] pr-4">
             <div className="space-y-3">
-              {pedidos.map((pedido) => (
+              {pedidosFiltrados.map((pedido) => (
                 <Card key={pedido.id} className="hover:border-primary transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
