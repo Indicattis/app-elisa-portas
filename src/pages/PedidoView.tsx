@@ -11,7 +11,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
 import { PedidoHistoricoMovimentacoes } from "@/components/pedidos/PedidoHistoricoMovimentacoes";
-import { usePedidoLinhas, type PedidoLinhaUpdate } from "@/hooks/usePedidoLinhas";
+import { PedidoLinhasEditor } from "@/components/pedidos/PedidoLinhasEditor";
+import { usePedidoLinhas, type PedidoLinhaUpdate, type PedidoLinha } from "@/hooks/usePedidoLinhas";
 import { useValidacaoLinhasPorPorta } from "@/hooks/useValidacaoLinhasPorPorta";
 import { usePedidoPortaObservacoes } from "@/hooks/usePedidoPortaObservacoes";
 import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
@@ -19,13 +20,6 @@ import { LinhasAgrupadasPorPorta } from "@/components/pedidos/LinhasAgrupadasPor
 import { ObservacoesPortaForm } from "@/components/pedidos/ObservacoesPortaForm";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
-
-interface PedidoLinha {
-  id: string;
-  descricao_produto: string;
-  quantidade: number;
-  observacoes?: string;
-}
 
 interface Ordem {
   id: string;
@@ -98,7 +92,7 @@ export default function PedidoView() {
   const navigate = useNavigate();
 
   // Hooks para edição (apenas se pedido estiver aberto)
-  const { linhas, adicionarLinha, removerLinha, atualizarLinhasEmLote } = usePedidoLinhas(id || "");
+  const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote } = usePedidoLinhas(id || "");
   const { moverParaProximaEtapa } = usePedidosEtapas();
   const { salvarObservacao, getObservacoesPorPorta } = usePedidoPortaObservacoes(id || "");
 
@@ -123,6 +117,9 @@ export default function PedidoView() {
 
   // Validação de linhas por porta
   const validacao = useValidacaoLinhasPorPorta(portasEnrolar, linhas);
+
+  // Verificar se todas as ordens foram concluídas
+  const todasOrdensConcluidas = pedido?.ordens && pedido.ordens.length > 0 && pedido.ordens.every((o) => o.status === "concluido");
 
   useEffect(() => {
     if (id) fetchPedidoDetails();
@@ -551,38 +548,16 @@ export default function PedidoView() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b text-xs">
-                    <th className="text-left p-2 font-medium text-muted-foreground">Item</th>
-                    <th className="text-left p-2 font-medium text-muted-foreground">Categoria</th>
-                    <th className="text-center p-2 font-medium text-muted-foreground">Qtd</th>
-                    <th className="text-left p-2 font-medium text-muted-foreground">Observações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pedido.linhas.map((linha: any) => (
-                    <tr key={linha.id} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="p-2 text-sm font-medium">{linha.descricao_produto || linha.nome_produto}</td>
-                      <td className="p-2 text-xs text-muted-foreground">
-                        <Badge variant="outline" className="text-xs">
-                          {linha.categoria_linha || linha.tipo_ordem || '-'}
-                        </Badge>
-                      </td>
-                      <td className="p-2 text-center">
-                        <Badge variant="secondary" className="text-xs">
-                          {linha.quantidade}x
-                        </Badge>
-                      </td>
-                      <td className="p-2 text-xs text-muted-foreground">
-                        {linha.observacoes || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <PedidoLinhasEditor
+              linhas={pedido.linhas}
+              isReadOnly={!modoEdicao}
+              todasOrdensConcluidas={todasOrdensConcluidas}
+              onAdicionarLinha={adicionarLinha}
+              onRemoverLinha={removerLinha}
+              onAtualizarCheckbox={async (linhaId: string, campo: string, valor: boolean) => {
+                await atualizarCheckbox({ linhaId, campo, valor });
+              }}
+            />
           </CardContent>
         </Card>
       )}

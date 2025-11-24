@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Plus, Package } from "lucide-react";
-import { PedidoLinha, PedidoLinhaNova } from "@/hooks/useVendasPedidos";
+import { Badge } from "@/components/ui/badge";
+import { PedidoLinha, PedidoLinhaNova } from "@/hooks/usePedidoLinhas";
 import { EstoqueSelector } from "./EstoqueSelector";
 import {
   Dialog,
@@ -48,96 +49,103 @@ export const PedidoLinhasEditor = ({
   return (
     <div className="space-y-3">
       {linhas.length > 0 ? (
-        <div className="space-y-2">
-          {linhas.map((linha, index) => (
-            <Card key={linha.id} className="p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
-                      {index + 1}
-                    </span>
-                    <span className="font-medium">{linha.nome_produto}</span>
-                    <span className="text-sm text-muted-foreground">
-                      Qtd: {linha.quantidade}
-                    </span>
-                  </div>
-                  
-                  {linha.descricao_produto && (
-                    <p className="text-sm text-muted-foreground pl-8">
-                      {linha.descricao_produto}
-                    </p>
-                  )}
-
-                  {linha.tamanho && (
-                    <p className="text-sm text-muted-foreground pl-8">
-                      <span className="font-medium">Tamanho:</span> {linha.tamanho}
-                    </p>
-                  )}
-
-                  {todasOrdensConcluidas && onAtualizarCheckbox && (
-                    <div className="flex gap-4 pl-8 pt-2 border-t mt-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`sep-${linha.id}`}
-                          checked={linha.check_separacao}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange(linha.id, "check_separacao", checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`sep-${linha.id}`} className="text-sm cursor-pointer">
-                          Separação
-                        </Label>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`qua-${linha.id}`}
-                          checked={linha.check_qualidade}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange(linha.id, "check_qualidade", checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`qua-${linha.id}`} className="text-sm cursor-pointer">
-                          Qualidade
-                        </Label>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`col-${linha.id}`}
-                          checked={linha.check_coleta}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange(linha.id, "check_coleta", checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`col-${linha.id}`} className="text-sm cursor-pointer">
-                          Coleta
-                        </Label>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {!isReadOnly && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRemoverLinha(linha.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b text-xs">
+                <th className="text-left p-2 font-medium text-muted-foreground">Item</th>
+                <th className="text-left p-2 font-medium text-muted-foreground">Categoria</th>
+                <th className="text-center p-2 font-medium text-muted-foreground">Qtd</th>
+                <th className="text-left p-2 font-medium text-muted-foreground">Observações</th>
+                {todasOrdensConcluidas && onAtualizarCheckbox && (
+                  <th className="text-center p-2 font-medium text-muted-foreground">Checkboxes</th>
                 )}
-              </div>
-            </Card>
-          ))}
+                {!isReadOnly && (
+                  <th className="text-center p-2 font-medium text-muted-foreground w-20">Ações</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {linhas.map((linha) => (
+                <tr key={linha.id} className="border-b hover:bg-muted/30 transition-colors">
+                  <td className="p-2 text-sm font-medium">{linha.descricao_produto || linha.nome_produto}</td>
+                  <td className="p-2 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="text-xs">
+                      {linha.categoria_linha || '-'}
+                    </Badge>
+                  </td>
+                  <td className="p-2 text-center">
+                    <Badge variant="secondary" className="text-xs">
+                      {linha.quantidade}x
+                    </Badge>
+                  </td>
+                  <td className="p-2 text-xs text-muted-foreground">
+                    {linha.tamanho ? `Tamanho: ${linha.tamanho}` : '-'}
+                  </td>
+                  {todasOrdensConcluidas && onAtualizarCheckbox && (
+                    <td className="p-2">
+                      <div className="flex gap-3 items-center justify-center">
+                        <div className="flex items-center gap-1">
+                          <Checkbox
+                            id={`sep-${linha.id}`}
+                            checked={linha.check_separacao}
+                            onCheckedChange={(checked) => 
+                              handleCheckboxChange(linha.id, "check_separacao", checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`sep-${linha.id}`} className="text-xs cursor-pointer">
+                            Sep
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Checkbox
+                            id={`qua-${linha.id}`}
+                            checked={linha.check_qualidade}
+                            onCheckedChange={(checked) => 
+                              handleCheckboxChange(linha.id, "check_qualidade", checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`qua-${linha.id}`} className="text-xs cursor-pointer">
+                            Qual
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Checkbox
+                            id={`col-${linha.id}`}
+                            checked={linha.check_coleta}
+                            onCheckedChange={(checked) => 
+                              handleCheckboxChange(linha.id, "check_coleta", checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`col-${linha.id}`} className="text-xs cursor-pointer">
+                            Col
+                          </Label>
+                        </div>
+                      </div>
+                    </td>
+                  )}
+                  {!isReadOnly && (
+                    <td className="p-2 text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemoverLinha(linha.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         <Card className="p-6 text-center text-muted-foreground">
           <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
           <p>Nenhum produto adicionado ao pedido</p>
-          <p className="text-sm mt-1">Clique no botão abaixo para adicionar produtos</p>
+          {!isReadOnly && <p className="text-sm mt-1">Clique no botão abaixo para adicionar produtos</p>}
         </Card>
       )}
 
