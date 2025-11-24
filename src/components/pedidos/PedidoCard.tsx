@@ -632,7 +632,7 @@ export function PedidoCard({
                       const validacao = getValidacaoAvancoEtapa('aberto');
                       actionButtons.push(
                         <ButtonWithTooltip key="iniciar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
-                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex w-full h-[35px]">
+                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
                           </Button>
                         </ButtonWithTooltip>
@@ -641,7 +641,7 @@ export function PedidoCard({
                       const validacao = getValidacaoAvancoEtapa('em_producao');
                       actionButtons.push(
                         <ButtonWithTooltip key="avançar-qualidade" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
-                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!validacao.podeAvancar} className="flex w-full h-[35px]">
+                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
                           </Button>
                         </ButtonWithTooltip>
@@ -665,7 +665,7 @@ export function PedidoCard({
                               await new Promise(resolve => setTimeout(resolve, 1000));
                               setShowProgresso(false);
                             }
-                          }} disabled={!validacao.podeAvancar} className="flex w-full h-[35px]">
+                          }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
                           </Button>
                         </ButtonWithTooltip>
@@ -674,17 +674,17 @@ export function PedidoCard({
                       const validacao = getValidacaoAvancoEtapa('aguardando_pintura');
                       actionButtons.push(
                         <ButtonWithTooltip key="avançar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
-                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex w-full h-[35px]">
+                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
                           </Button>
                         </ButtonWithTooltip>
                       );
                     } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-                      actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento" className="flex w-full h-[35px]">
+                      actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento" className="flex h-[20px] w-[20px] rounded-[3px]">
                           <Package className="h-3 w-3" />
                         </Button>);
                     } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-                      actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex w-full h-[35px]">
+                      actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex h-[20px] w-[20px] rounded-[3px]">
                           <ArrowRight className="h-3 w-3" />
                         </Button>);
                     }
@@ -694,7 +694,7 @@ export function PedidoCard({
                     // Add retroceder button (para todos a partir de em_producao)
                     const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
                     if (podeRetroceder) {
-                      actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex w-full h-[35px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+                      actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
                           <ArrowLeft className="h-3 w-3" />
                         </Button>);
                     }
