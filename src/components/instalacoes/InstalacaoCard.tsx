@@ -10,10 +10,10 @@ import { ptBR } from "date-fns/locale";
 interface InstalacaoCardProps {
   instalacao: Instalacao;
   onEdit: (instalacao: Instalacao) => void;
-  onDelete: (id: string) => void;
+  onRemoverDoCalendario: (id: string) => void;
 }
 
-export const InstalacaoCard = ({ instalacao, onEdit, onDelete }: InstalacaoCardProps) => {
+export const InstalacaoCard = ({ instalacao, onEdit, onRemoverDoCalendario }: InstalacaoCardProps) => {
   const backgroundColor = instalacao.equipe?.cor 
     ? `${instalacao.equipe.cor}15` 
     : 'transparent';
@@ -63,11 +63,10 @@ export const InstalacaoCard = ({ instalacao, onEdit, onDelete }: InstalacaoCardP
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => onDelete(instalacao.id)}
-                className="text-destructive"
+                onClick={() => onRemoverDoCalendario(instalacao.id)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
+                Remover do Calendário
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

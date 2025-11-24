@@ -13,10 +13,10 @@ interface DiaCardProps {
   instalacoes: Instalacao[];
   onDayClick: (date: Date) => void;
   onEdit: (instalacao: Instalacao) => void;
-  onDelete: (id: string) => void;
+  onRemoverDoCalendario: (id: string) => void;
 }
 
-export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onDelete }: DiaCardProps) => {
+export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onRemoverDoCalendario }: DiaCardProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   
   const diaInstalacoes = instalacoes.filter((inst) =>
@@ -60,7 +60,7 @@ export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onDelete }: Dia
               key={instalacao.id}
               instalacao={instalacao}
               onEdit={onEdit}
-              onDelete={onDelete}
+              onRemoverDoCalendario={onRemoverDoCalendario}
             />
           ))
         ) : (

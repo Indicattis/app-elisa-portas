@@ -6,13 +6,13 @@ import { InstalacaoCard } from "./InstalacaoCard";
 interface DraggableInstalacaoProps {
   instalacao: Instalacao;
   onEdit: (instalacao: Instalacao) => void;
-  onDelete: (id: string) => void;
+  onRemoverDoCalendario: (id: string) => void;
 }
 
 export const DraggableInstalacao = ({
   instalacao,
   onEdit,
-  onDelete,
+  onRemoverDoCalendario,
 }: DraggableInstalacaoProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: instalacao.id,
@@ -32,7 +32,7 @@ export const DraggableInstalacao = ({
       <InstalacaoCard
         instalacao={instalacao}
         onEdit={onEdit}
-        onDelete={onDelete}
+        onRemoverDoCalendario={onRemoverDoCalendario}
       />
     </div>
   );

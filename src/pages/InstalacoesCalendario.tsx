@@ -7,50 +7,31 @@ import { CalendarioSemanalMobile } from "@/components/instalacoes/CalendarioSema
 import { CalendarioMensalDesktop } from "@/components/instalacoes/CalendarioMensalDesktop";
 import { CalendarioSemanalDesktop } from "@/components/instalacoes/CalendarioSemanalDesktop";
 import { EquipesSlider } from "@/components/instalacoes/EquipesSlider";
+import { EditarInstalacaoDrawer } from "@/components/instalacoes/EditarInstalacaoDrawer";
 import { useInstalacoes } from "@/hooks/useInstalacoes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Instalacao } from "@/types/instalacao";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import { format } from "date-fns";
 import logoInstalacoes from "@/assets/logo-instalacoes.png";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { InstalacaoForm } from "@/components/instalacoes/InstalacaoForm";
 import { useInstalacoesPDFData } from "@/hooks/useInstalacoesPDFData";
 import { baixarCronogramaInstalacoesPDF } from "@/utils/instalacoesCronogramaPDF";
 import { PedidosDisponiveis } from "@/components/instalacoes/PedidosDisponiveis";
 
-export default function InstalacoesMobile() {
+export default function InstalacoesCalendario() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [equipeSelecionadaId, setEquipeSelecionadaId] = useState<string | null>(null);
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
-  const { instalacoes, isLoading, deleteInstalacao, updateInstalacao, isUpdating } = useInstalacoes(
+  const { instalacoes, isLoading, updateInstalacao } = useInstalacoes(
     currentDate, 
     tipoVisualizacao === 'mensal' ? 'month' : 'week'
   );
   const { prepararDadosPDF } = useInstalacoesPDFData();
   
-  const [instalacaoToDelete, setInstalacaoToDelete] = useState<string | null>(null);
   const [instalacaoToEdit, setInstalacaoToEdit] = useState<Instalacao | null>(null);
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [refreshPedidos, setRefreshPedidos] = useState(0);
 
   // Filtrar instalações por equipe
@@ -89,26 +70,29 @@ export default function InstalacoesMobile() {
 
   const handleEdit = (instalacao: Instalacao) => {
     setInstalacaoToEdit(instalacao);
-    setEditSheetOpen(true);
+    setEditDrawerOpen(true);
   };
 
-  const handleEditSubmit = async (data: any) => {
+  const handleEditSave = async (data: {
+    data_instalacao: string;
+    tipo_instalacao: 'elisa' | 'autorizados';
+    responsavel_instalacao_id: string;
+    responsavel_instalacao_nome: string;
+  }) => {
     if (!instalacaoToEdit) return;
     
     try {
       await updateInstalacao({
         id: instalacaoToEdit.id,
-        data,
+        data: {
+          data: data.data_instalacao,
+        } as any,
       });
-      setEditSheetOpen(false);
-      setInstalacaoToEdit(null);
+      toast.success("Instalação atualizada com sucesso");
     } catch (error) {
       console.error("Erro ao atualizar:", error);
+      toast.error("Erro ao atualizar instalação");
     }
-  };
-
-  const handlePedidoDropped = () => {
-    setRefreshPedidos(prev => prev + 1);
   };
 
   const handleRemoverDoCalendario = async (id: string) => {
@@ -124,15 +108,8 @@ export default function InstalacoesMobile() {
     }
   };
 
-  const confirmDelete = async () => {
-    if (!instalacaoToDelete) return;
-    
-    try {
-      await deleteInstalacao(instalacaoToDelete);
-      setInstalacaoToDelete(null);
-    } catch (error) {
-      console.error("Erro ao deletar:", error);
-    }
+  const handlePedidoDropped = () => {
+    setRefreshPedidos(prev => prev + 1);
   };
 
   const handleBaixarPDF = () => {
@@ -164,8 +141,8 @@ export default function InstalacoesMobile() {
               className="h-9 w-9 object-contain"
             />
             <div>
-              <h1 className="text-lg font-semibold text-foreground">Instalações</h1>
-              <p className="text-xs text-muted-foreground">Gerenciar instalações</p>
+              <h1 className="text-lg font-semibold text-foreground">Cronograma de Instalações</h1>
+              <p className="text-xs text-muted-foreground">Arraste pedidos para agendar</p>
             </div>
           </div>
           
@@ -198,14 +175,6 @@ export default function InstalacoesMobile() {
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">PDF</span>
-            </Button>
-            <Button
-              onClick={() => navigate("/instalacoes/nova")}
-              size="sm"
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova</span>
             </Button>
           </div>
         </div>
@@ -271,56 +240,13 @@ export default function InstalacoesMobile() {
         )}
       </main>
 
-      {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={!!instalacaoToDelete} onOpenChange={() => setInstalacaoToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir esta instalação? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Sheet de Edição */}
-      <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Editar Instalação</SheetTitle>
-            <SheetDescription>
-              Atualize as informações da instalação
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
-            {instalacaoToEdit && (
-              <InstalacaoForm
-                onSubmit={handleEditSubmit}
-                initialData={{
-                  id_venda: instalacaoToEdit.id_venda,
-                  nome_cliente: instalacaoToEdit.nome_cliente,
-                  data: instalacaoToEdit.data,
-                  hora: instalacaoToEdit.hora,
-                  produto: instalacaoToEdit.produto,
-                  estado: instalacaoToEdit.estado,
-                  cidade: instalacaoToEdit.cidade,
-                  endereco: instalacaoToEdit.endereco || "",
-                  cep: instalacaoToEdit.cep || "",
-                  descricao: instalacaoToEdit.descricao || "",
-                  equipe_id: instalacaoToEdit.equipe_id || "",
-                }}
-                isLoading={isUpdating}
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Drawer de Edição */}
+      <EditarInstalacaoDrawer
+        instalacao={instalacaoToEdit}
+        open={editDrawerOpen}
+        onOpenChange={setEditDrawerOpen}
+        onSave={handleEditSave}
+      />
     </div>
   );
 }

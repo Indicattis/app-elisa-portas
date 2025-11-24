@@ -17,7 +17,7 @@ interface CalendarioMensalDesktopProps {
   onMonthChange: (date: Date) => void;
   onUpdateInstalacao: (params: { id: string; data: Partial<Instalacao> }) => Promise<void>;
   onEdit: (instalacao: Instalacao) => void;
-  onDelete: (id: string) => void;
+  onRemoverDoCalendario: (id: string) => void;
   onInstalacaoCriada?: () => void;
   onPedidoDropped?: () => void;
 }
@@ -28,7 +28,7 @@ export const CalendarioMensalDesktop = ({
   onMonthChange,
   onUpdateInstalacao,
   onEdit,
-  onDelete,
+  onRemoverDoCalendario,
   onInstalacaoCriada,
   onPedidoDropped,
 }: CalendarioMensalDesktopProps) => {
@@ -205,7 +205,7 @@ export const CalendarioMensalDesktop = ({
                 instalacoes={instalacoes}
                 onDayClick={handleDayClick}
                 onEdit={onEdit}
-                onDelete={onDelete}
+                onRemoverDoCalendario={onRemoverDoCalendario}
                 onPedidoDropped={onPedidoDropped}
               />
             ))}
@@ -220,7 +220,7 @@ export const CalendarioMensalDesktop = ({
             <InstalacaoCard
               instalacao={activeInstalacao}
               onEdit={() => {}}
-              onDelete={() => {}}
+              onRemoverDoCalendario={() => {}}
             />
           </div>
         )}
