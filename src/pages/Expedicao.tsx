@@ -13,6 +13,7 @@ import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import logoExpedicao from "@/assets/logo-instalacoes.png";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
+import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 
 export default function Expedicao() {
   const isMobile = useIsMobile();
@@ -26,6 +27,8 @@ export default function Expedicao() {
   const [refreshOrdensDisponiveis, setRefreshOrdensDisponiveis] = useState(0);
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editOrdem, setEditOrdem] = useState<OrdemCarregamento | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   // Configurar sensores para mobile e desktop
   const mouseSensor = useSensor(MouseSensor);
@@ -66,8 +69,31 @@ export default function Expedicao() {
   };
 
   const handleEdit = (ordem: OrdemCarregamento) => {
-    // Implementar edição de ordem
-    toast.info("Funcionalidade de edição em desenvolvimento");
+    setEditOrdem(ordem);
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async (data: {
+    data_carregamento: string;
+    hora_carregamento: string;
+    tipo_carregamento: 'elisa' | 'autorizados';
+    responsavel_carregamento_id: string;
+    responsavel_carregamento_nome: string;
+  }) => {
+    if (!editOrdem) return;
+
+    await updateOrdem({
+      id: editOrdem.id,
+      data: {
+        data_carregamento: data.data_carregamento,
+        hora: data.hora_carregamento,
+        hora_carregamento: data.hora_carregamento,
+        tipo_carregamento: data.tipo_carregamento,
+        responsavel_carregamento_id: data.responsavel_carregamento_id,
+        responsavel_carregamento_nome: data.responsavel_carregamento_nome,
+        status: 'agendada',
+      },
+    });
   };
 
   const handleOrdemDropped = () => {
@@ -200,6 +226,14 @@ export default function Expedicao() {
         ordem={selectedOrdem}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
+      />
+
+      {/* Drawer de Edição */}
+      <EditarOrdemCarregamentoDrawer
+        ordem={editOrdem}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSave={handleSaveEdit}
       />
     </div>
   );
