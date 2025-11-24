@@ -34,7 +34,8 @@ const mapearSetorParaCategoria = (setor: string | null): CategoriaLinha => {
   
   const mapeamento: Record<string, CategoriaLinha> = {
     'perfiladeira': 'perfiladeira',
-    'soldagem': 'separacao',
+    'soldagem': 'solda',
+    'separacao': 'separacao',
     'pintura': 'separacao',
   };
   
