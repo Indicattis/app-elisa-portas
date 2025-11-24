@@ -30,6 +30,11 @@ export const useOrdensCarregamento = (filters?: {
             bairro,
             data_prevista_entrega,
             produtos:produtos_vendas(
+              tipo_produto,
+              tamanho,
+              largura,
+              altura,
+              quantidade,
               cor:catalogo_cores(
                 nome,
                 codigo_hex

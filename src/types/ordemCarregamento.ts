@@ -39,6 +39,11 @@ export interface OrdemCarregamento {
     data_prevista_entrega: string | null;
     cliente_email?: string | null;
     produtos?: Array<{
+      tipo_produto?: string | null;
+      tamanho?: string | null;
+      largura?: number | null;
+      altura?: number | null;
+      quantidade?: number | null;
       cor?: {
         nome: string;
         codigo_hex: string;
