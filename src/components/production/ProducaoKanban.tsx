@@ -9,6 +9,7 @@ import { useOrdemProgress } from "@/hooks/useOrdemProgress";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
+import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
@@ -41,6 +42,7 @@ interface Ordem {
     vendas?: {
       data_prevista_entrega?: string;
     };
+    produtos?: any[];
   };
   admin_users?: {
     nome: string;
@@ -115,11 +117,16 @@ function OrdemCard({
               Entrega: {formatarData(ordem.pedido?.vendas?.data_prevista_entrega)}
             </span>
           </div>
-          {ordem.em_backlog && (
-            <Badge className="bg-red-500 text-white text-xs h-5">
-              BACKLOG
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {ordem.pedido?.produtos && ordem.pedido.produtos.length > 0 && (
+              <ProdutosIcons produtos={ordem.pedido.produtos} />
+            )}
+            {ordem.em_backlog && (
+              <Badge className="bg-red-500 text-white text-xs h-5">
+                BACKLOG
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       

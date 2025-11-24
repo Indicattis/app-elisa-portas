@@ -9,6 +9,7 @@ import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
 import { useState } from "react";
 import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
+import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
 
 interface Ordem {
   id: string;
@@ -22,6 +23,7 @@ interface Ordem {
   prioridade?: number;
   pedido?: {
     cliente_nome: string;
+    produtos?: any[];
   };
   admin_users?: {
     nome: string;
@@ -98,11 +100,16 @@ function OrdemCard({
               </Badge>
             )}
           </div>
-          {ordem.em_backlog && (
-            <Badge className="bg-red-500 text-white text-xs h-5">
-              BACKLOG
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {ordem.pedido?.produtos && ordem.pedido.produtos.length > 0 && (
+              <ProdutosIcons produtos={ordem.pedido.produtos} />
+            )}
+            {ordem.em_backlog && (
+              <Badge className="bg-red-500 text-white text-xs h-5">
+                BACKLOG
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       
