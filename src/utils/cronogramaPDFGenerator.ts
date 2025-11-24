@@ -134,7 +134,8 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
         row.push('-');
       } else {
         const instalacoesTexto = instalacoesNoDia.map(instalacao => {
-          let texto = `${instalacao.nome_cliente}\n${instalacao.cidade}`;
+          const cidade = instalacao.venda?.cidade || 'Sem cidade';
+          let texto = `${instalacao.nome_cliente}\n${cidade}`;
           texto += ` - ${getStatusLabel(instalacao.status)}`;
           return texto;
         }).join('\n\n');

@@ -162,13 +162,19 @@ export default function ProducaoCarregamento() {
 
                   <div>
                     <p className="text-xs text-muted-foreground">Localização</p>
-                    <p className="text-sm truncate">{item.cidade} - {item.estado}</p>
+                    <p className="text-sm truncate">
+                      {item.tipo === 'entrega' 
+                        ? `${item.cidade} - ${item.estado}`
+                        : item.venda 
+                          ? `${item.venda.cidade} - ${item.venda.estado}`
+                          : 'Sem localização'}
+                    </p>
                   </div>
 
-                  {item.telefone_cliente && (
+                  {(item.tipo === 'entrega' ? item.telefone_cliente : item.venda?.cliente_telefone) && (
                     <div>
                       <p className="text-xs text-muted-foreground">Telefone</p>
-                      <p className="text-sm">{item.telefone_cliente}</p>
+                      <p className="text-sm">{item.tipo === 'entrega' ? item.telefone_cliente : item.venda?.cliente_telefone}</p>
                     </div>
                   )}
 

@@ -131,22 +131,9 @@ export const gerarCronogramaInstalacoesPDF = (data: CronogramaInstalacoesPDFData
 
         // Cidade/Estado
         yPosition += 5;
-        doc.text(`Local: ${inst.cidade} - ${inst.estado}`, 22, yPosition);
-
-        // Produto
-        yPosition += 5;
-        doc.text(`Produto: ${inst.produto}`, 22, yPosition);
-
-        // Descrição (se houver)
-        if (inst.descricao) {
-          yPosition += 5;
-          doc.setFontSize(8);
-          doc.setTextColor(100, 100, 100);
-          const descricaoLinhas = doc.splitTextToSize(inst.descricao, pageWidth - 45);
-          doc.text(descricaoLinhas, 22, yPosition);
-          yPosition += descricaoLinhas.length * 3;
-          doc.setFontSize(9);
-        }
+        const cidade = inst.venda?.cidade || 'Sem cidade';
+        const estado = inst.venda?.estado || '';
+        doc.text(`Local: ${cidade}${estado ? ' - ' + estado : ''}`, 22, yPosition);
 
         // Linha separadora entre instalações
         yPosition += 4;

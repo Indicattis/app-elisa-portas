@@ -18,12 +18,6 @@ const instalacaoSchema = z.object({
   nome_cliente: z.string().min(1, "Nome do cliente é obrigatório"),
   data: z.string().min(1, "Data é obrigatória"),
   hora: z.string().min(1, "Hora é obrigatória"),
-  produto: z.string().min(1, "Produto é obrigatório"),
-  estado: z.string().min(1, "Estado é obrigatório"),
-  cidade: z.string().min(1, "Cidade é obrigatória"),
-  endereco: z.string().optional(),
-  cep: z.string().optional(),
-  descricao: z.string().optional(),
   equipe_id: z.string().min(1, "Selecione uma equipe"),
 });
 
@@ -104,26 +98,6 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
 
       // Preencher dados do cliente
       setValue("nome_cliente", vendaCompleta.cliente_nome || "");
-      setValue("estado", vendaCompleta.estado || "");
-      setValue("cidade", vendaCompleta.cidade || "");
-      setValue("cep", vendaCompleta.cep || "");
-      setValue("endereco", `${vendaCompleta.bairro || ""}, ${vendaCompleta.cidade || ""}`.trim());
-
-      // Formatar produtos
-      if (vendaCompleta.produtos && vendaCompleta.produtos.length > 0) {
-        const produtosTexto = vendaCompleta.produtos
-          .map((p: any) => {
-            const partes = [
-              p.tipo_produto,
-              p.tamanho ? `${p.tamanho}` : null,
-              p.cor_nome ? `${p.cor_nome}` : null,
-              p.quantidade > 1 ? `(${p.quantidade}x)` : null,
-            ].filter(Boolean);
-            return partes.join(" - ");
-          })
-          .join(", ");
-        setValue("produto", produtosTexto);
-      }
 
       toast.success("Dados da venda carregados");
     } catch (error) {
@@ -226,20 +200,6 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
         </div>
       </div>
 
-      {/* Produto */}
-      <div className="space-y-2">
-        <Label htmlFor="produto">Produto *</Label>
-        <Input
-          id="produto"
-          {...register("produto")}
-          placeholder="Descrição do produto"
-          className="text-base"
-        />
-        {errors.produto && (
-          <p className="text-sm text-destructive">{errors.produto.message}</p>
-        )}
-      </div>
-
       {/* Equipe */}
       <div className="space-y-2">
         <Label htmlFor="equipe_id">Equipe de Instalação *</Label>
@@ -269,69 +229,6 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
         {errors.equipe_id && (
           <p className="text-sm text-destructive">{errors.equipe_id.message}</p>
         )}
-      </div>
-
-      {/* Estado e Cidade */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="estado">Estado *</Label>
-          <Input
-            id="estado"
-            {...register("estado")}
-            placeholder="UF"
-            maxLength={2}
-            className="text-base uppercase"
-          />
-          {errors.estado && (
-            <p className="text-sm text-destructive">{errors.estado.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="cidade">Cidade *</Label>
-          <Input
-            id="cidade"
-            {...register("cidade")}
-            placeholder="Nome da cidade"
-            className="text-base"
-          />
-          {errors.cidade && (
-            <p className="text-sm text-destructive">{errors.cidade.message}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Endereço e CEP */}
-      <div className="space-y-2">
-        <Label htmlFor="endereco">Endereço</Label>
-        <Input
-          id="endereco"
-          {...register("endereco")}
-          placeholder="Rua, número, bairro"
-          className="text-base"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="cep">CEP</Label>
-        <Input
-          id="cep"
-          {...register("cep")}
-          placeholder="00000-000"
-          className="text-base"
-        />
-      </div>
-
-      {/* Descrição */}
-      <div className="space-y-2">
-        <Label htmlFor="descricao">Observações</Label>
-        <Textarea
-          id="descricao"
-          {...register("descricao")}
-          placeholder="Informações adicionais sobre a instalação"
-          rows={3}
-          className="text-base resize-none"
-        />
       </div>
 
       <Button

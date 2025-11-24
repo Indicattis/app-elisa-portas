@@ -732,7 +732,7 @@ export const InstalacoesTabelaView = ({
         open={!!dataProducaoInstalacao}
         onOpenChange={(open) => !open && setDataProducaoInstalacao(null)}
         instalacaoId={dataProducaoInstalacao?.id || ''}
-        dataAtual={dataProducaoInstalacao?.pedido?.data_producao}
+        dataAtual={dataProducaoInstalacao?.data_instalacao || undefined}
         onSave={handleSaveDataProducao}
       />
 

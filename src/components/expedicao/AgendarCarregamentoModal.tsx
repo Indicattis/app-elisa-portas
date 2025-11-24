@@ -25,7 +25,7 @@ export function AgendarCarregamentoModal({
 }: AgendarCarregamentoModalProps) {
   const [dataCarregamento, setDataCarregamento] = useState("");
   const [hora, setHora] = useState("08:00");
-  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizado">("elisa");
+  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados">("elisa");
   const [responsavelId, setResponsavelId] = useState("");
   const [equipes, setEquipes] = useState<any[]>([]);
   const [autorizados, setAutorizados] = useState<any[]>([]);
@@ -133,7 +133,9 @@ export function AgendarCarregamentoModal({
             <div className="p-3 bg-muted rounded-lg">
               <p className="font-medium">{ordem.nome_cliente}</p>
               <p className="text-sm text-muted-foreground">
-                {ordem.tipo_carregamento === 'entrega' ? 'Entrega' : 'Instalação'}
+                      <Badge variant="secondary">
+                        {ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado'}
+                      </Badge>
               </p>
             </div>
           )}
@@ -166,7 +168,7 @@ export function AgendarCarregamentoModal({
             <RadioGroup
               value={responsavelTipo}
               onValueChange={(value) => {
-                setResponsavelTipo(value as "elisa" | "autorizado");
+                setResponsavelTipo(value as "elisa" | "autorizados");
                 setResponsavelId(""); // Reset selection
               }}
             >
@@ -177,8 +179,8 @@ export function AgendarCarregamentoModal({
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="autorizado" id="autorizado" />
-                <Label htmlFor="autorizado" className="font-normal cursor-pointer">
+                <RadioGroupItem value="autorizados" id="autorizados" />
+                <Label htmlFor="autorizados" className="font-normal cursor-pointer">
                   Autorizado
                 </Label>
               </div>
