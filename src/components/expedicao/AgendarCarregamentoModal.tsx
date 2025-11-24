@@ -10,6 +10,7 @@ import { OrdemCarregamento, AgendarCarregamentoData } from "@/types/ordemCarrega
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface AgendarCarregamentoModalProps {
   open: boolean;
@@ -100,8 +101,12 @@ export function AgendarCarregamentoModal({
         return;
       }
 
+      // Ajustar data para o meio-dia local para evitar problemas de timezone
+      const dataSelecionada = new Date(dataCarregamento + 'T12:00:00');
+      const dataAjustada = format(dataSelecionada, 'yyyy-MM-dd');
+
       await onConfirm({
-        data_carregamento: dataCarregamento,
+        data_carregamento: dataAjustada,
         hora: hora,
         responsavel_tipo: responsavelTipo,
         responsavel_carregamento_id: responsavelId,
