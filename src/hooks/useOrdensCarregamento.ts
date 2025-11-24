@@ -28,7 +28,13 @@ export const useOrdensCarregamento = (filters?: {
             cidade,
             cep,
             bairro,
-            data_prevista_entrega
+            data_prevista_entrega,
+            produtos:produtos_vendas(
+              cor:catalogo_cores(
+                nome,
+                codigo_hex
+              )
+            )
           ),
           pedido:pedidos_producao(
             id,
