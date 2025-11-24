@@ -31,15 +31,17 @@ export function useInstalacoesDisponiveis() {
         .select(`
           id,
           nome_cliente,
-          telefone_cliente,
-          cidade,
-          estado,
           data_instalacao,
           pedido_id,
           venda_id,
-          pedido:pedidos_producao(
+          pedido:pedidos_producao!pedido_id(
             id,
             numero_pedido
+          ),
+          venda:vendas!venda_id(
+            cliente_telefone,
+            cidade,
+            estado
           )
         `)
         .not('pedido_id', 'is', null)
