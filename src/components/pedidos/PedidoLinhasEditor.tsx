@@ -41,6 +41,19 @@ const mapearSetorParaCategoria = (setor: string | null): CategoriaLinha => {
   return mapeamento[setor] || 'separacao';
 };
 
+// Função para obter classes de cor baseadas na categoria
+const getCategoriaBadgeClasses = (categoria: string | null): string => {
+  if (!categoria) return '';
+  
+  const cores: Record<string, string> = {
+    'separacao': 'bg-blue-500/10 text-blue-700 border-blue-500/20',
+    'perfiladeira': 'bg-purple-500/10 text-purple-700 border-purple-500/20',
+    'solda': 'bg-orange-500/10 text-orange-700 border-orange-500/20',
+  };
+  
+  return cores[categoria] || '';
+};
+
 export const PedidoLinhasEditor = ({
   linhas,
   isReadOnly,
@@ -179,7 +192,7 @@ export const PedidoLinhasEditor = ({
                     )}
                     <td className="p-2 text-sm font-medium">{linha.descricao_produto || linha.nome_produto}</td>
                     <td className="p-2">
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className={`text-xs ${getCategoriaBadgeClasses(linha.categoria_linha)}`}>
                         {linha.categoria_linha || '-'}
                       </Badge>
                     </td>
@@ -293,7 +306,7 @@ export const PedidoLinhasEditor = ({
                     </Select>
                   </td>
                   <td className="p-2">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className={`text-xs ${getCategoriaBadgeClasses(categoriaAutomatica)}`}>
                       {categoriaAutomatica || '-'}
                     </Badge>
                   </td>
