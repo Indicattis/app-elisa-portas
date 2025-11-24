@@ -6,6 +6,9 @@ import { InstalacaoCadastrada } from "./useInstalacoesCadastradas";
 
 export interface InstalacaoCronograma extends InstalacaoCadastrada {
   dia_semana: number;
+  equipe?: { id: string; nome: string; cor: string | null } | null;
+  autorizado?: { id: string; nome: string; cidade: string | null; estado: string | null } | null;
+  pedido?: { id: string; numero_pedido: string; etapa_atual: string } | null;
 }
 
 export function useInstalacoesCronograma(semanaInicio: Date) {
@@ -24,39 +27,41 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
       const fimRange = dia === 1 ? endOfMonth(semanaInicio) : endOfWeek(semanaInicio, { weekStartsOn: 1 });
       const fimFormatado = format(fimRange, 'yyyy-MM-dd');
       
-      // Buscar instalações da semana que têm data_instalacao definida e são do tipo 'elisa'
+      // Buscar instalações com joins para equipes e autorizados
       const { data, error } = await supabase
         .from('instalacoes_cadastradas')
-        .select('*')
+        .select(`
+          *,
+          pedido:pedidos_producao(id, numero_pedido, etapa_atual),
+          venda:vendas(id, cliente_nome, cliente_telefone, cliente_email),
+          equipe:equipes_instalacao(id, nome, cor),
+          autorizado:autorizados(id, nome, cidade, estado)
+        `)
         .not('data_instalacao', 'is', null)
-        .eq('tipo_instalacao', 'elisa')
         .gte('data_instalacao', inicioFormatado)
         .lte('data_instalacao', fimFormatado)
         .order('data_instalacao');
 
       if (error) throw error;
 
-      // Adicionar dia_semana para cada instalação
+      // Adicionar dia_semana e responsável unificado para cada instalação
       const instalacoesComDia: InstalacaoCronograma[] = (data || [])
-        .map(instalacao => {
+        .map((instalacao: any) => {
           // Criar data no timezone local para evitar problemas de conversão
           const [ano, mes, dia] = instalacao.data_instalacao!.split('-').map(Number);
           const dataInstalacao = new Date(ano, mes - 1, dia);
           const diaSemana = getDay(dataInstalacao); // 0 = Domingo, 1 = Segunda, etc.
           
-          console.log('Instalação carregada:', {
-            id: instalacao.id,
-            data_instalacao: instalacao.data_instalacao,
-            dataCalculada: dataInstalacao,
-            diaSemana
-          });
-          
           return {
             ...instalacao,
             status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
-            tipo_instalacao: instalacao.tipo_instalacao as 'elisa' | 'autorizados',
-            dia_semana: diaSemana
-          };
+            tipo_instalacao: instalacao.tipo_instalacao as 'elisa' | 'autorizados' | null,
+            dia_semana: diaSemana,
+            equipe: Array.isArray(instalacao.equipe) ? instalacao.equipe[0] : instalacao.equipe,
+            autorizado: Array.isArray(instalacao.autorizado) ? instalacao.autorizado[0] : instalacao.autorizado,
+            pedido: Array.isArray(instalacao.pedido) ? instalacao.pedido[0] : instalacao.pedido,
+            venda: Array.isArray(instalacao.venda) ? instalacao.venda[0] : instalacao.venda
+          } as InstalacaoCronograma;
         });
 
       setInstalacoes(instalacoesComDia);
@@ -79,22 +84,6 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
       const mes = String(novaData.getMonth() + 1).padStart(2, '0');
       const dia = String(novaData.getDate()).padStart(2, '0');
       const dataFormatada = `${ano}-${mes}-${dia}`;
-      
-      console.log('Atualizando instalação:', {
-        id,
-        dataOriginal: novaData,
-        dataFormatada,
-        diaSemana: getDay(novaData)
-      });
-
-      // Buscar a instalação para pegar o pedido_id
-      const { data: instalacaoData, error: instalacaoError } = await supabase
-        .from('instalacoes_cadastradas')
-        .select('pedido_id')
-        .eq('id', id)
-        .single();
-
-      if (instalacaoError) throw instalacaoError;
 
       // Buscar o nome da equipe
       const { data: equipeData } = await supabase
@@ -115,29 +104,6 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
         .eq('id', id);
 
       if (error) throw error;
-
-      // Se houver pedido associado, verificar se já tem data_entrega definida
-      if (instalacaoData?.pedido_id) {
-        const { data: pedidoData, error: pedidoCheckError } = await supabase
-          .from('pedidos_producao')
-          .select('data_entrega')
-          .eq('id', instalacaoData.pedido_id)
-          .single();
-
-        if (pedidoCheckError) {
-          console.error('Erro ao verificar data_entrega do pedido:', pedidoCheckError);
-        } else if (!pedidoData?.data_entrega) {
-          // Se não tiver data_entrega, definir automaticamente
-          const { error: pedidoUpdateError } = await supabase
-            .from('pedidos_producao')
-            .update({ data_entrega: dataFormatada })
-            .eq('id', instalacaoData.pedido_id);
-
-          if (pedidoUpdateError) {
-            console.error('Erro ao atualizar data_entrega do pedido:', pedidoUpdateError);
-          }
-        }
-      }
 
       toast.success('Data da instalação atualizada');
       await fetchInstalacoes();

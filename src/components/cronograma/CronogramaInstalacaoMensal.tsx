@@ -96,14 +96,16 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
                       {instalacoesNoDia.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-auto">
                           {instalacoesNoDia.slice(0, 3).map((instalacao) => {
-                            const equipe = equipes.find(e => e.id === instalacao.responsavel_instalacao_id);
+                            // Pegar cor da equipe (se for equipe interna) ou usar cor padrão
+                            const cor = instalacao.equipe?.cor || '#888';
+                            
                             return (
                               <Badge
                                 key={instalacao.id}
                                 variant="secondary"
                                 className="w-2 h-2 p-0 rounded-full"
                                 style={{ 
-                                  backgroundColor: equipe?.cor || '#888'
+                                  backgroundColor: cor
                                 }}
                               />
                             );

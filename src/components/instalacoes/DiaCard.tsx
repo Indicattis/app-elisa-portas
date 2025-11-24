@@ -5,6 +5,8 @@ import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
 
 interface DiaCardProps {
   date: Date;
@@ -15,13 +17,20 @@ interface DiaCardProps {
 }
 
 export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onDelete }: DiaCardProps) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  
   const diaInstalacoes = instalacoes.filter((inst) =>
     isSameDay(new Date(inst.data), date)
   );
 
   const isToday = isSameDay(date, new Date());
 
+  const handleAddClick = () => {
+    setModalOpen(true);
+  };
+
   return (
+    <>
     <Card className={`w-full ${isToday ? 'border-primary' : ''}`}>
       <CardHeader className="p-3 pb-2 border-b">
         <div className="flex items-center justify-between">
@@ -37,7 +46,7 @@ export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onDelete }: Dia
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => onDayClick(date)}
+            onClick={handleAddClick}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -60,6 +69,13 @@ export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onDelete }: Dia
           </div>
         )}
       </CardContent>
+
+      <SelecionarPedidoInstalacaoModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        dataSelecionada={date}
+      />
     </Card>
+    </>
   );
 };
