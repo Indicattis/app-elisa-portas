@@ -155,11 +155,12 @@ export default function VendaView() {
         if (pintura) ordensData.push({ ...pintura, tipo: "Pintura" });
       }
 
-      const { data: instalacaoData } = await supabase
-        .from("instalacoes")
-        .select("id, nome_cliente, data_instalacao")
-        .eq("venda_id", id)
-        .maybeSingle();
+      // Comentado - tabela instalacoes removida
+      // const { data: instalacaoData } = await supabase
+      //   .from("ordens_carregamento")
+      //   .select("id, nome_cliente, data_carregamento")
+      //   .eq("venda_id", id)
+      //   .maybeSingle();
 
       const { data: canalData } = await supabase
         .from("canais_aquisicao")
@@ -177,7 +178,6 @@ export default function VendaView() {
         ...vendaData,
         parcelas: parcelasData || [],
         pedido: pedidoData ? { ...pedidoData, etapa: pedidoData.etapa_atual, ordens: ordensData } : undefined,
-        instalacao: instalacaoData || undefined,
         canal_aquisicao: canalData || undefined,
         atendente: atendenteData || undefined,
       } as any);

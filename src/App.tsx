@@ -43,16 +43,12 @@ import ProducaoPerfiladeira from "./pages/ProducaoPerfiladeira";
 import ProducaoSeparacao from "./pages/ProducaoSeparacao";
 import ProducaoQualidade from "./pages/ProducaoQualidade";
 import ProducaoPintura from "./pages/ProducaoPintura";
-import InstalacoesAdmin from "./pages/InstalacoesAdmin";
-import InstalacoesMobile from "./pages/InstalacoesMobile";
-import InstalacoesNovas from "./pages/InstalacoesNovas";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
 import CanaisAquisicao from "./pages/CanaisAquisicao";
 import VendasHome from "./pages/VendasHome";
 import FabricaHome from "./pages/FabricaHome";
-import InstalacoesHome from "./pages/InstalacoesHome";
 import AdministrativoHome from "./pages/AdministrativoHome";
 import Investimentos from "./pages/Investimentos";
 import Calendario from "./pages/Calendario";
@@ -85,7 +81,6 @@ import EstoqueGerenciamento from "./pages/EstoqueGerenciamento";
 import VendasCatalogo from "./pages/VendasCatalogo";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
-import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
 import EquipesInstalacao from "./pages/EquipesInstalacao";
 
 import DiarioBordo from "./pages/DiarioBordo";
@@ -624,56 +619,10 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_home">
-                      <DashboardLayout>
-                        <InstalacoesHome />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/instalacoes/listagem"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_listagem">
-                      <DashboardLayout>
-                        <InstalacoesAdmin />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_calendario">
-                      <InstalacoesMobile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instalacoes/nova"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_nova">
-                      <InstalacoesNovas />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/instalacoes/equipes"
                   element={
                     <ProtectedRoute routeKey="instalacoes_equipes">
                       <EquipesInstalacao />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/instalacoes/cronograma-instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="cronograma_instalacoes">
-                      <DashboardLayout>
-                        <CronogramaInstalacoes />
-                      </DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
