@@ -123,11 +123,14 @@ export default function EstoqueEdit() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('[EstoqueEdit] handleSubmit - formData antes de salvar:', formData);
+    console.log('[EstoqueEdit] handleSubmit - requer_pintura:', formData.requer_pintura);
+    
     try {
       // Converter categoria de volta para formato do banco (underscore -> espaço)
       const categoriaBanco = formData.categoria.replace(/_/g, ' ');
       
-      await editarProduto({
+      const dadosParaSalvar = {
         id: id!,
         nome_produto: formData.nome_produto,
         descricao_produto: formData.descricao_produto || undefined,
@@ -141,7 +144,11 @@ export default function EstoqueEdit() {
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
-      });
+      };
+      
+      console.log('[EstoqueEdit] handleSubmit - dados que serão salvos:', dadosParaSalvar);
+      
+      await editarProduto(dadosParaSalvar);
 
       toast({
         title: "Produto atualizado",
