@@ -409,43 +409,8 @@ export function PedidoCard({
   // Layout compacto para visualização em lista
   if (viewMode === 'list') {
     return <>
-        <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onMouseEnter={() => onSelecionarPedido?.(pedido)} onMouseLeave={() => onSelecionarPedido?.(null)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
-          {/* Header com número do pedido e tempo */}
-          <CardHeader className="py-2 px-4 bg-muted/30 border-b">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>}
-                
-                {emBacklog && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 animate-pulse" />}
-                
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {pedido.numero_pedido || 'Sem número'}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(venda?.created_at || Date.now()), {
-                  addSuffix: true,
-                  locale: ptBR
-                })}
-                </span>
-                
-                {onMoverPrioridade && posicao && total && <>
-                    <Button size="icon" variant="ghost" disabled={posicao === 1} onClick={() => onMoverPrioridade(pedido.id, 'frente')} title="Aumentar prioridade" className="h-6 w-6">
-                      <ChevronUp className="h-3 w-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" disabled={posicao === total} onClick={() => onMoverPrioridade(pedido.id, 'tras')} title="Diminuir prioridade" className="h-6 w-6">
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </>}
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="py-3">
+        <Card className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary", emBacklog && "border-l-4 border-l-red-500")} onMouseEnter={() => onSelecionarPedido?.(pedido)} onMouseLeave={() => onSelecionarPedido?.(null)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
+          <CardContent className="p-0 h-full">
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 justify-between">
@@ -577,36 +542,38 @@ export function PedidoCard({
               </div>;
           })()}
           </CardFooter>
-    </Card>
+        </Card>
 
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
-      <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
+        <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
 
         <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
 
         <AvancarQualidadeModal open={showAvancarQualidade} onOpenChange={setShowAvancarQualidade} onConfirmar={async () => {
-        setShowAvancarQualidade(false);
-        const listaProcessos = await determinarProcessos(pedido.id);
-        setProcessos(listaProcessos);
-        setShowProgresso(true);
-        if (onMoverEtapa) {
-          await onMoverEtapa(pedido.id, false, (processoId, status) => {
-            setProcessos(prev => prev.map(p => p.id === processoId ? {
-              ...p,
-              status
-            } : p));
-          });
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          setShowProgresso(false);
-        }
-      }} />
+          setShowAvancarQualidade(false);
+          const listaProcessos = await determinarProcessos(pedido.id);
+          setProcessos(listaProcessos);
+          setShowProgresso(true);
+          if (onMoverEtapa) {
+            await onMoverEtapa(pedido.id, false, (processoId, status) => {
+              setProcessos(prev => prev.map(p => p.id === processoId ? {
+                ...p,
+                status
+              } : p));
+            });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setShowProgresso(false);
+          }
+        }} />
 
         <ConfirmarAvancoModal open={showConfirmarAvanco} onOpenChange={setShowConfirmarAvanco} onConfirmar={handleConfirmarAvanco} pedido={pedido} etapaAtual={config?.label || ''} proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''} />
 
         <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
+        
+        <DefinirDataCarregamentoModal open={showDefinirData} onOpenChange={setShowDefinirData} pedido={pedido} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] })} />
       </>;
   }
 
