@@ -53,8 +53,6 @@ export function SelecionarPedidoInstalacaoModal({
     try {
       setLoading(true);
 
-      // Buscar pedidos nas etapas aguardando_instalacao e aguardando_coleta
-      // que ainda não têm instalação cadastrada
       const { data, error } = await supabase
         .from('pedidos_producao')
         .select(`
@@ -71,17 +69,28 @@ export function SelecionarPedidoInstalacaoModal({
           )
         `)
         .in('etapa_atual', ['aguardando_instalacao', 'aguardando_coleta'])
-        .is('instalacoes_cadastradas.id', null)
         .order('numero_pedido', { ascending: false });
 
       if (error) throw error;
 
-      const pedidosFormatados: PedidoDisponivel[] = (data || []).map(p => ({
-        id: p.id,
-        numero_pedido: p.numero_pedido,
-        etapa_atual: p.etapa_atual,
-        venda: Array.isArray(p.vendas) ? p.vendas[0] : p.vendas
-      }));
+      // Buscar instalações existentes para filtrar pedidos que já têm instalação
+      const { data: instalacoesExistentes } = await supabase
+        .from('instalacoes_cadastradas')
+        .select('pedido_id')
+        .not('pedido_id', 'is', null);
+
+      const pedidosComInstalacao = new Set(
+        instalacoesExistentes?.map(i => i.pedido_id) || []
+      );
+
+      const pedidosFormatados: PedidoDisponivel[] = (data || [])
+        .filter(p => !pedidosComInstalacao.has(p.id))
+        .map(p => ({
+          id: p.id,
+          numero_pedido: p.numero_pedido,
+          etapa_atual: p.etapa_atual,
+          venda: Array.isArray(p.vendas) ? p.vendas[0] : p.vendas
+        }));
 
       setPedidos(pedidosFormatados);
     } catch (error) {
