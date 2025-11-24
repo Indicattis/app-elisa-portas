@@ -619,7 +619,15 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/instalacoes/nova"
+                  path="/expedicao"
+                  element={
+                    <ProtectedRoute routeKey="expedicao">
+                      <Expedicao />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instalacoes"
                   element={
                     <ProtectedRoute routeKey="instalacoes_nova">
                       <Expedicao />
