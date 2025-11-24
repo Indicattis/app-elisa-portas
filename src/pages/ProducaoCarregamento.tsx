@@ -5,176 +5,151 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PackageCheck, Truck, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEntregas } from "@/hooks/useEntregas";
-import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
+import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
 import { CarregamentoDownbar } from "@/components/carregamento/CarregamentoDownbar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
 
-type FiltroTipo = "todos" | "entrega" | "instalacao";
+type FiltroTipo = "todos" | "elisa" | "autorizados";
 
 export default function ProducaoCarregamento() {
-  const { entregas, loading: loadingEntregas, fetchEntregas } = useEntregas();
-  const { instalacoes, loading: loadingInstalacoes, fetchInstalacoes } = useInstalacoesCadastradas();
+  const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamento({
+    status: 'agendada' // Apenas ordens agendadas
+  });
 
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("todos");
-  const [itemSelecionado, setItemSelecionado] = useState<any>(null);
+  const [itemSelecionado, setItemSelecionado] = useState<OrdemCarregamento | null>(null);
   const [downbarOpen, setDownbarOpen] = useState(false);
 
-  // Filtrar apenas entregas e instalações que precisam de carregamento
-  const entregasPendentes = entregas
-    ?.filter((e) => !e.entrega_concluida && e.pedido_id)
-    .sort((a, b) => {
-      const dateA = a.data_entrega ? new Date(a.data_entrega).getTime() : 0;
-      const dateB = b.data_entrega ? new Date(b.data_entrega).getTime() : 0;
-      return dateA - dateB;
-    }) || [];
+  // Filtrar apenas ordens agendadas (com data_carregamento definida) e não concluídas
+  const ordensAgendadas = ordens.filter(ordem => 
+    ordem.data_carregamento != null && 
+    !ordem.carregamento_concluido
+  );
 
-  const instalacoesPendentes = instalacoes
-    ?.filter((i) => !i.instalacao_concluida && i.pedido_id)
-    .sort((a, b) => {
-      const dateA = a.data_instalacao ? new Date(a.data_instalacao).getTime() : 0;
-      const dateB = b.data_instalacao ? new Date(b.data_instalacao).getTime() : 0;
-      return dateA - dateB;
-    }) || [];
+  // Aplicar filtro por tipo de carregamento
+  const ordensFiltradas = ordensAgendadas.filter(ordem => {
+    if (filtroTipo === "todos") return true;
+    return ordem.tipo_carregamento === filtroTipo;
+  });
 
-  // Combinar entregas e instalações em uma única lista
-  const carregamentosCombinados = [
-    ...entregasPendentes.map(e => ({ ...e, tipo: 'entrega' as const })),
-    ...instalacoesPendentes.map(i => ({ ...i, tipo: 'instalacao' as const }))
-  ].sort((a, b) => {
-    const dateA = a.tipo === 'entrega' 
-      ? (a.data_entrega ? new Date(a.data_entrega).getTime() : 0)
-      : (a.data_instalacao ? new Date(a.data_instalacao).getTime() : 0);
-    const dateB = b.tipo === 'entrega'
-      ? (b.data_entrega ? new Date(b.data_entrega).getTime() : 0)
-      : (b.data_instalacao ? new Date(b.data_instalacao).getTime() : 0);
+  // Ordenar por data de carregamento
+  const ordensOrdenadas = ordensFiltradas.sort((a, b) => {
+    const dateA = a.data_carregamento ? new Date(a.data_carregamento).getTime() : 0;
+    const dateB = b.data_carregamento ? new Date(b.data_carregamento).getTime() : 0;
     return dateA - dateB;
   });
 
-  // Aplicar filtro
-  const carregamentosFiltrados = carregamentosCombinados.filter(item => {
-    if (filtroTipo === "todos") return true;
-    return item.tipo === filtroTipo;
-  });
+  const podeIniciarColeta = (ordem: OrdemCarregamento) => {
+    return ordem.data_carregamento != null && 
+           ordem.status === 'agendada' &&
+           !ordem.carregamento_concluido;
+  };
 
-  const handleIniciarColeta = (item: any) => {
-    setItemSelecionado(item);
+  const handleIniciarColeta = (ordem: OrdemCarregamento) => {
+    if (!podeIniciarColeta(ordem)) return;
+    setItemSelecionado(ordem);
     setDownbarOpen(true);
   };
 
-  const handleRefresh = () => {
-    fetchEntregas();
-    fetchInstalacoes();
-  };
-
-  const loading = loadingEntregas || loadingInstalacoes;
-
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-end gap-2">
-        <Button onClick={handleRefresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Atualizar
-        </Button>
-      </div>
-
-      {/* Filtro Slim */}
+      {/* Filtro por tipo de carregamento */}
       <Tabs value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as FiltroTipo)} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="todos">
-            Todos ({carregamentosCombinados.length})
+            Todos ({ordensOrdenadas.length})
           </TabsTrigger>
-          <TabsTrigger value="entrega">
-            <PackageCheck className="h-4 w-4 mr-2" />
-            Entregas ({entregasPendentes.length})
-          </TabsTrigger>
-          <TabsTrigger value="instalacao">
+          <TabsTrigger value="elisa">
             <Truck className="h-4 w-4 mr-2" />
-            Instalações ({instalacoesPendentes.length})
+            Elisa ({ordensOrdenadas.filter(o => o.tipo_carregamento === 'elisa').length})
+          </TabsTrigger>
+          <TabsTrigger value="autorizados">
+            <PackageCheck className="h-4 w-4 mr-2" />
+            Autorizados ({ordensOrdenadas.filter(o => o.tipo_carregamento === 'autorizados').length})
           </TabsTrigger>
         </TabsList>
       </Tabs>
 
       {/* Grid de Cards */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : carregamentosFiltrados.length === 0 ? (
+      ) : ordensOrdenadas.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <Truck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p>Nenhum carregamento pendente</p>
+          <p>Nenhum carregamento agendado</p>
+          <p className="text-sm mt-2">Agende carregamentos em Expedição primeiro</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {carregamentosFiltrados.map((item) => {
-                  const Icon = item.tipo === 'entrega' ? PackageCheck : Truck;
-                  const data = item.tipo === 'entrega' ? item.data_entrega : item.data_instalacao;
-                  const responsavel = item.tipo === 'entrega' 
-                    ? item.responsavel_entrega_nome 
-                    : item.responsavel_instalacao_nome;
+          {ordensOrdenadas.map((ordem) => {
+            const podeCarregar = podeIniciarColeta(ordem);
+            const Icon = ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
 
             return (
               <Card 
-                key={item.id} 
+                key={ordem.id} 
                 className={cn(
                   "hover:shadow-md transition-all cursor-pointer",
-                  item.status !== 'pronta_fabrica' && "opacity-60"
+                  !podeCarregar && "opacity-60"
                 )}
-                onClick={() => item.status === 'pronta_fabrica' && handleIniciarColeta(item)}
+                onClick={() => podeCarregar && handleIniciarColeta(ordem)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant={item.tipo === 'entrega' ? 'default' : 'outline'} className="flex items-center gap-1">
+                        <Badge variant={ordem.tipo_carregamento === 'elisa' ? 'default' : 'outline'} className="flex items-center gap-1">
                           <Icon className="h-3 w-3" />
-                          {item.tipo === 'entrega' ? 'Entrega' : 'Instalação'}
+                          {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado'}
                         </Badge>
-                        <Badge variant={item.status === 'pronta_fabrica' ? 'default' : 'secondary'}>
-                          {item.status === 'pronta_fabrica' ? 'Pronta' : 'Aguardando'}
+                        <Badge variant={podeCarregar ? 'default' : 'secondary'}>
+                          {ordem.status === 'agendada' ? 'Agendada' : ordem.status}
                         </Badge>
                       </div>
-                      <p className="font-bold text-base truncate">{item.nome_cliente}</p>
-                      {item.pedido?.numero_pedido && (
+                      <p className="font-bold text-base truncate">{ordem.nome_cliente}</p>
+                      {ordem.pedido?.numero_pedido && (
                         <p className="text-sm text-muted-foreground">
-                          Pedido #{item.pedido.numero_pedido}
+                          Pedido #{ordem.pedido.numero_pedido}
                         </p>
                       )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {data && (
+                  {ordem.data_carregamento && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Data</p>
-                      <p className="text-sm">{format(new Date(data), "dd/MM/yyyy", { locale: ptBR })}</p>
+                      <p className="text-xs text-muted-foreground">Data Agendada</p>
+                      <p className="text-sm font-medium">
+                        {format(new Date(ordem.data_carregamento), "dd/MM/yyyy", { locale: ptBR })}
+                        {ordem.hora && ` às ${ordem.hora}`}
+                      </p>
                     </div>
                   )}
                   
-                  {responsavel && (
+                  {ordem.responsavel_carregamento_nome && (
                     <div>
                       <p className="text-xs text-muted-foreground">Responsável</p>
-                      <p className="text-sm truncate">{responsavel}</p>
+                      <p className="text-sm truncate">{ordem.responsavel_carregamento_nome}</p>
                     </div>
                   )}
 
-                  <div>
-                    <p className="text-xs text-muted-foreground">Localização</p>
-                    <p className="text-sm truncate">
-                      {item.tipo === 'entrega' 
-                        ? `${item.cidade} - ${item.estado}`
-                        : item.venda 
-                          ? `${item.venda.cidade} - ${item.venda.estado}`
-                          : 'Sem localização'}
-                    </p>
-                  </div>
+                  {ordem.venda && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Localização</p>
+                      <p className="text-sm truncate">
+                        {ordem.venda.cidade} - {ordem.venda.estado}
+                      </p>
+                    </div>
+                  )}
 
-                  {(item.tipo === 'entrega' ? item.telefone_cliente : item.venda?.cliente_telefone) && (
+                  {ordem.venda?.cliente_telefone && (
                     <div>
                       <p className="text-xs text-muted-foreground">Telefone</p>
-                      <p className="text-sm">{item.tipo === 'entrega' ? item.telefone_cliente : item.venda?.cliente_telefone}</p>
+                      <p className="text-sm">{ordem.venda.cliente_telefone}</p>
                     </div>
                   )}
 
@@ -183,13 +158,13 @@ export default function ProducaoCarregamento() {
                     variant="default"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleIniciarColeta(item);
+                      handleIniciarColeta(ordem);
                     }}
-                    disabled={item.status !== 'pronta_fabrica'}
+                    disabled={!podeCarregar}
                     className="w-full"
                   >
                     <PackageCheck className="h-4 w-4 mr-2" />
-                    {item.status === 'pronta_fabrica' ? 'Coletar' : 'Aguardar'}
+                    {podeCarregar ? 'Iniciar Coleta' : 'Aguardando'}
                   </Button>
                 </CardContent>
               </Card>
@@ -199,15 +174,18 @@ export default function ProducaoCarregamento() {
       )}
 
       {/* Downbar para confirmar carregamento */}
-      <CarregamentoDownbar
-        item={itemSelecionado}
-        open={downbarOpen}
-        onOpenChange={setDownbarOpen}
-        onSuccess={() => {
-          setDownbarOpen(false);
-          window.location.reload();
-        }}
-      />
+      {itemSelecionado && (
+        <CarregamentoDownbar
+          ordem={itemSelecionado}
+          open={downbarOpen}
+          onOpenChange={setDownbarOpen}
+          onConcluir={concluirCarregamento}
+          onSuccess={() => {
+            setDownbarOpen(false);
+            setItemSelecionado(null);
+          }}
+        />
+      )}
     </div>
   );
 }
