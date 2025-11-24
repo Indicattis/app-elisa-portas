@@ -34,6 +34,9 @@ interface Ordem {
     nome: string;
     foto_perfil_url?: string;
   } | null;
+  capturada_em?: string | null;
+  data_conclusao?: string | null;
+  tempo_conclusao_segundos?: number | null;
 }
 
 interface Pedido {
@@ -211,6 +214,9 @@ export default function PedidoView() {
           status,
           created_by,
           responsavel_id,
+          capturada_em,
+          data_conclusao,
+          tempo_conclusao_segundos,
           capturado_por:admin_users!ordens_perfiladeira_created_by_fkey(nome, foto_perfil_url),
           concluido_por:admin_users!ordens_perfiladeira_responsavel_id_fkey(nome, foto_perfil_url)
         `)
@@ -224,6 +230,9 @@ export default function PedidoView() {
           status,
           created_by,
           responsavel_id,
+          capturada_em,
+          data_conclusao,
+          tempo_conclusao_segundos,
           capturado_por:admin_users!ordens_separacao_created_by_fkey(nome, foto_perfil_url),
           concluido_por:admin_users!ordens_separacao_responsavel_id_fkey(nome, foto_perfil_url)
         `)
@@ -237,6 +246,9 @@ export default function PedidoView() {
           status,
           created_by,
           responsavel_id,
+          capturada_em,
+          data_conclusao,
+          tempo_conclusao_segundos,
           capturado_por:admin_users!ordens_soldagem_created_by_fkey(nome, foto_perfil_url),
           concluido_por:admin_users!ordens_soldagem_responsavel_id_fkey(nome, foto_perfil_url)
         `)
@@ -250,6 +262,9 @@ export default function PedidoView() {
           status,
           created_by,
           responsavel_id,
+          capturada_em,
+          data_conclusao,
+          tempo_conclusao_segundos,
           capturado_por:admin_users!ordens_pintura_created_by_fkey(nome, foto_perfil_url),
           concluido_por:admin_users!ordens_pintura_responsavel_id_fkey(nome, foto_perfil_url)
         `)
@@ -263,6 +278,9 @@ export default function PedidoView() {
           status,
           created_by,
           responsavel_id,
+          capturada_em,
+          data_conclusao,
+          tempo_conclusao_segundos,
           capturado_por:admin_users!ordens_qualidade_created_by_fkey(nome, foto_perfil_url),
           concluido_por:admin_users!ordens_qualidade_responsavel_id_fkey(nome, foto_perfil_url)
         `)
@@ -280,7 +298,10 @@ export default function PedidoView() {
           status: o.status,
           tipo: "Perfiladeira",
           capturado_por: o.capturado_por,
-          concluido_por: o.concluido_por
+          concluido_por: o.concluido_por,
+          capturada_em: o.capturada_em,
+          data_conclusao: o.data_conclusao,
+          tempo_conclusao_segundos: o.tempo_conclusao_segundos
         }));
       }
       if (ordensSeparacao) {
@@ -290,7 +311,10 @@ export default function PedidoView() {
           status: o.status,
           tipo: "Separação",
           capturado_por: o.capturado_por,
-          concluido_por: o.concluido_por
+          concluido_por: o.concluido_por,
+          capturada_em: o.capturada_em,
+          data_conclusao: o.data_conclusao,
+          tempo_conclusao_segundos: o.tempo_conclusao_segundos
         }));
       }
       if (ordensSoldagem) {
@@ -300,7 +324,10 @@ export default function PedidoView() {
           status: o.status,
           tipo: "Soldagem",
           capturado_por: o.capturado_por,
-          concluido_por: o.concluido_por
+          concluido_por: o.concluido_por,
+          capturada_em: o.capturada_em,
+          data_conclusao: o.data_conclusao,
+          tempo_conclusao_segundos: o.tempo_conclusao_segundos
         }));
       }
       if (ordensPintura) {
@@ -310,7 +337,10 @@ export default function PedidoView() {
           status: o.status,
           tipo: "Pintura",
           capturado_por: o.capturado_por,
-          concluido_por: o.concluido_por
+          concluido_por: o.concluido_por,
+          capturada_em: o.capturada_em,
+          data_conclusao: o.data_conclusao,
+          tempo_conclusao_segundos: o.tempo_conclusao_segundos
         }));
       }
       if (ordensQualidade) {
@@ -320,7 +350,10 @@ export default function PedidoView() {
           status: o.status,
           tipo: "Qualidade",
           capturado_por: o.capturado_por,
-          concluido_por: o.concluido_por
+          concluido_por: o.concluido_por,
+          capturada_em: o.capturada_em,
+          data_conclusao: o.data_conclusao,
+          tempo_conclusao_segundos: o.tempo_conclusao_segundos
         }));
       }
       if (ordensInstalacao) {
@@ -330,7 +363,10 @@ export default function PedidoView() {
           numero_ordem: "N/A", 
           status: "N/A",
           capturado_por: null,
-          concluido_por: null
+          concluido_por: null,
+          capturada_em: null,
+          data_conclusao: null,
+          tempo_conclusao_segundos: null
         }));
       }
 
@@ -703,6 +739,8 @@ export default function PedidoView() {
                     <th className="text-left p-2 font-medium text-muted-foreground">Status</th>
                     <th className="text-left p-2 font-medium text-muted-foreground">Capturado por</th>
                     <th className="text-left p-2 font-medium text-muted-foreground">Concluído por</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Data Conclusão</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">Tempo Produção</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -770,6 +808,24 @@ export default function PedidoView() {
                             )}
                             <span className="text-xs">{ordem.concluido_por.nome}</span>
                           </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        {ordem.data_conclusao ? (
+                          <span className="text-xs">
+                            {format(new Date(ordem.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="p-2 text-right">
+                        {ordem.tempo_conclusao_segundos ? (
+                          <span className="text-xs font-medium">
+                            {Math.floor(ordem.tempo_conclusao_segundos / 3600)}h {Math.floor((ordem.tempo_conclusao_segundos % 3600) / 60)}min
+                          </span>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
