@@ -18,6 +18,7 @@ interface DroppableDayExpedicaoProps {
   onOrdemDropped?: () => void;
   onUpdateOrdem: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  onAlterarResponsavel?: (ordem: OrdemCarregamento) => void;
 }
 
 export const DroppableDayExpedicao = ({
@@ -30,6 +31,7 @@ export const DroppableDayExpedicao = ({
   onOrdemDropped,
   onUpdateOrdem,
   onOrdemClick,
+  onAlterarResponsavel,
 }: DroppableDayExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
@@ -126,6 +128,7 @@ export const DroppableDayExpedicao = ({
               onEdit={onEdit}
               onRemoverDoCalendario={onRemoverDoCalendario}
               onClick={onOrdemClick}
+              onAlterarResponsavel={onAlterarResponsavel}
             />
           ))}
         </div>
