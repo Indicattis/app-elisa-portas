@@ -2211,13 +2211,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "instalacoes_equipe_id_fkey"
-            columns: ["responsavel_carregamento_id"]
-            isOneToOne: false
-            referencedRelation: "equipes_instalacao"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "instalacoes_id_venda_fkey"
             columns: ["venda_id"]
             isOneToOne: false
