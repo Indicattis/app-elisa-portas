@@ -1258,6 +1258,7 @@ const App = () => (
                 <Route path="/dashboard/compras/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
                 <Route path="/dashboard/compras/estoque/editar/:id" element={<Navigate to="/dashboard/administrativo/compras/estoque/editar/:id" replace />} />
                 <Route path="/dashboard/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
+                <Route path="/dashboard/estoque/editar/:id" element={<Navigate to="/dashboard/administrativo/compras/estoque/editar/:id" replace />} />
                 <Route path="/dashboard/fornecedores" element={<Navigate to="/dashboard/administrativo/compras/fornecedores" replace />} />
                 
                 {/* Redirects Administrativo - Financeiro */}
@@ -1318,6 +1319,7 @@ const App = () => (
                 <Route path="/dashboard/compras/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
                 <Route path="/dashboard/compras/estoque/editar/:id" element={<Navigate to="/dashboard/administrativo/compras/estoque/editar/:id" replace />} />
                 <Route path="/dashboard/estoque" element={<Navigate to="/dashboard/administrativo/compras/estoque" replace />} />
+                <Route path="/dashboard/estoque/editar/:id" element={<Navigate to="/dashboard/administrativo/compras/estoque/editar/:id" replace />} />
                 <Route path="/dashboard/fornecedores" element={<Navigate to="/dashboard/administrativo/compras/fornecedores" replace />} />
                 
                 {/* Redirects Administrativo - Financeiro */}
