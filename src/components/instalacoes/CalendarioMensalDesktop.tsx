@@ -9,6 +9,7 @@ import { DroppableDay } from "./DroppableDay";
 import { InstalacaoCard } from "./InstalacaoCard";
 import { toast } from "sonner";
 import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CalendarioMensalDesktopProps {
   currentMonth: Date;
@@ -18,6 +19,7 @@ interface CalendarioMensalDesktopProps {
   onEdit: (instalacao: Instalacao) => void;
   onDelete: (id: string) => void;
   onInstalacaoCriada?: () => void;
+  onPedidoDropped?: () => void;
 }
 
 export const CalendarioMensalDesktop = ({
@@ -28,8 +30,10 @@ export const CalendarioMensalDesktop = ({
   onEdit,
   onDelete,
   onInstalacaoCriada,
+  onPedidoDropped,
 }: CalendarioMensalDesktopProps) => {
   const [activeInstalacao, setActiveInstalacao] = useState<Instalacao | null>(null);
+  const [activePedido, setActivePedido] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -42,34 +46,75 @@ export const CalendarioMensalDesktop = ({
   );
 
   const handleDragStart = (event: DragStartEvent) => {
-    const instalacao = event.active.data.current?.instalacao;
-    if (instalacao) {
-      setActiveInstalacao(instalacao);
+    const data = event.active.data.current;
+    if (data?.type === 'pedido') {
+      setActivePedido(data.pedido);
+    } else if (data?.instalacao) {
+      setActiveInstalacao(data.instalacao);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    const activeData = active.data.current;
+    
     setActiveInstalacao(null);
+    setActivePedido(null);
 
     if (!over || active.id === over.id) return;
 
-    const instalacaoId = active.id as string;
     const novaData = over.data.current?.date as Date;
-
     if (!novaData) return;
 
     try {
-      await onUpdateInstalacao({
-        id: instalacaoId,
-        data: {
-          data: format(novaData, "yyyy-MM-dd"),
-        },
-      });
-      toast.success("Data da instalação atualizada");
+      // Se estamos arrastando um pedido
+      if (activeData?.type === 'pedido') {
+        const pedido = activeData.pedido;
+        const dataFormatada = format(novaData, 'yyyy-MM-dd');
+
+        // Criar instalação vinculada ao pedido
+        const { error: insertError } = await supabase
+          .from('instalacoes_cadastradas')
+          .insert({
+            pedido_id: pedido.id,
+            venda_id: pedido.venda.id,
+            nome_cliente: pedido.venda.cliente_nome,
+            telefone_cliente: pedido.venda.cliente_telefone,
+            cidade: pedido.venda.cliente_cidade || '',
+            estado: pedido.venda.cliente_estado || '',
+            data_instalacao: dataFormatada,
+            status: 'pronta_fabrica',
+            tipo_instalacao: null,
+            responsavel_instalacao_id: null,
+            responsavel_instalacao_nome: null
+          });
+
+        if (insertError) throw insertError;
+
+        // Atualizar data_carregamento do pedido
+        const { error: updateError } = await supabase
+          .from('pedidos_producao')
+          .update({ data_carregamento: dataFormatada })
+          .eq('id', pedido.id);
+
+        if (updateError) throw updateError;
+
+        toast.success('Instalação criada com sucesso!');
+        onPedidoDropped?.();
+      } else {
+        // Se estamos arrastando uma instalação existente
+        const instalacaoId = active.id as string;
+        await onUpdateInstalacao({
+          id: instalacaoId,
+          data: {
+            data: format(novaData, "yyyy-MM-dd"),
+          },
+        });
+        toast.success("Data da instalação atualizada");
+      }
     } catch (error) {
-      console.error("Erro ao atualizar data:", error);
-      toast.error("Erro ao atualizar data da instalação");
+      console.error("Erro:", error);
+      toast.error("Erro ao processar operação");
     }
   };
 
@@ -159,6 +204,7 @@ export const CalendarioMensalDesktop = ({
                 onDayClick={handleDayClick}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onPedidoDropped={onPedidoDropped}
               />
             ))}
           </div>

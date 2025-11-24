@@ -6,6 +6,8 @@ import { Instalacao } from "@/types/instalacao";
 import { DraggableInstalacao } from "./DraggableInstalacao";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface DroppableDayProps {
   date: Date;
@@ -14,6 +16,7 @@ interface DroppableDayProps {
   onDayClick: (date: Date) => void;
   onEdit: (instalacao: Instalacao) => void;
   onDelete: (id: string) => void;
+  onPedidoDropped?: () => void;
 }
 
 export const DroppableDay = ({
@@ -23,11 +26,13 @@ export const DroppableDay = ({
   onDayClick,
   onEdit,
   onDelete,
+  onPedidoDropped,
 }: DroppableDayProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: format(date, "yyyy-MM-dd"),
     data: {
       date,
+      type: 'day',
     },
   });
 
