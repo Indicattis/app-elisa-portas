@@ -71,11 +71,11 @@ export function DetalhesInstalacaoDialog({
             <div>
               <p className="text-xs text-muted-foreground mb-1">Cliente</p>
               <p className="font-semibold">{instalacao.nome_cliente}</p>
-              <p className="text-xs text-muted-foreground">{instalacao.telefone_cliente || 'Sem telefone'}</p>
+              <p className="text-xs text-muted-foreground">{instalacao.venda?.cliente_telefone || 'Sem telefone'}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Localização</p>
-              <p className="font-medium">{instalacao.cidade}, {instalacao.estado}</p>
+              <p className="font-medium">{instalacao.venda?.cidade}, {instalacao.venda?.estado}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Status</p>
@@ -103,17 +103,11 @@ export function DetalhesInstalacaoDialog({
           )}
 
           {/* Datas e Responsável */}
-          <div className="grid grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-3 gap-4 text-sm">
             {instalacao.data_instalacao && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Data Instalação</p>
                 <p className="font-medium">{format(new Date(instalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}</p>
-              </div>
-            )}
-            {instalacao.data_producao && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Data Produção</p>
-                <p className="font-medium">{format(new Date(instalacao.data_producao), "dd/MM/yyyy", { locale: ptBR })}</p>
               </div>
             )}
             {instalacao.responsavel_instalacao_nome && (
@@ -285,25 +279,6 @@ export function DetalhesInstalacaoDialog({
             </div>
           )}
 
-          {/* Informações de Correção */}
-          {instalacao.justificativa_correcao && (
-            <div className="bg-orange-500/5 p-4 rounded-lg border border-orange-500/20">
-              <div className="flex items-start gap-2 mb-2">
-                <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-1">
-                    Correção Necessária
-                  </p>
-                  <p className="text-sm">{instalacao.justificativa_correcao}</p>
-                  {instalacao.alterado_para_correcao_em && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Alterado em: {format(new Date(instalacao.alterado_para_correcao_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Rodapé com info de criação */}
           {instalacao.criador && (
