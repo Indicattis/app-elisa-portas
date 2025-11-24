@@ -307,12 +307,6 @@ export default function InstalacoesMobile() {
                   nome_cliente: instalacaoToEdit.nome_cliente,
                   data: instalacaoToEdit.data,
                   hora: instalacaoToEdit.hora,
-                  produto: instalacaoToEdit.produto,
-                  estado: instalacaoToEdit.estado,
-                  cidade: instalacaoToEdit.cidade,
-                  endereco: instalacaoToEdit.endereco || "",
-                  cep: instalacaoToEdit.cep || "",
-                  descricao: instalacaoToEdit.descricao || "",
                   equipe_id: instalacaoToEdit.equipe_id || "",
                 }}
                 isLoading={isUpdating}

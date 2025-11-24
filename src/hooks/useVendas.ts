@@ -263,21 +263,21 @@ export function useVendas() {
         }
       }
 
-      // 9. Buscar a instalação para geocodificar
+      // 9. Buscar a instalação para geocodificar (apenas o ID)
       const { data: instalacao } = await supabase
         .from('instalacoes')
-        .select('id, cidade, estado')
+        .select('id')
         .eq('venda_id', venda.id)
         .single();
 
       // 10. Chamar geocodificação
-      if (instalacao) {
+      if (instalacao && venda.cidade && venda.estado) {
         try {
           await supabase.functions.invoke('geocode-instalacao', {
             body: {
               id: instalacao.id,
-              cidade: instalacao.cidade,
-              estado: instalacao.estado
+              cidade: venda.cidade,
+              estado: venda.estado
             }
           });
         } catch (geoError) {

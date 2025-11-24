@@ -3,10 +3,11 @@ export interface OrdemCarregamento {
   pedido_id: string | null;
   venda_id: string | null;
   nome_cliente: string;
-  tipo_carregamento: 'entrega' | 'instalacao' | null;
+  tipo_carregamento: 'elisa' | 'autorizados' | null;
   data_carregamento: string | null;
   hora: string | null;
-  responsavel_tipo: 'elisa' | 'autorizado' | null;
+  hora_carregamento?: string | null;
+  responsavel_tipo: string | null;
   responsavel_carregamento_id: string | null;
   responsavel_carregamento_nome: string | null;
   status: string | null;
@@ -34,16 +35,16 @@ export interface OrdemCarregamento {
     cidade: string | null;
     estado: string | null;
     cep: string | null;
-    endereco_completo: string | null;
     bairro: string | null;
     data_prevista_entrega: string | null;
+    cliente_email?: string | null;
   };
 }
 
 export interface AgendarCarregamentoData {
   data_carregamento: string;
   hora: string;
-  responsavel_tipo: 'elisa' | 'autorizado';
+  responsavel_tipo: 'elisa' | 'autorizados';
   responsavel_carregamento_id: string;
   responsavel_carregamento_nome: string;
 }

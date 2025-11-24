@@ -52,8 +52,7 @@ export default function Expedicao() {
     <div className="min-h-screen bg-background">
       <PageHeader
         title="Expedição"
-        subtitle="Gerenciar ordens de carregamento para entregas e instalações"
-        icon={Truck}
+        description="Gerenciar ordens de carregamento para entregas e instalações"
       />
 
       <div className="container mx-auto p-6 space-y-6">
@@ -138,7 +137,9 @@ export default function Expedicao() {
                       <h3 className="font-semibold text-lg">{ordem.nome_cliente}</h3>
                       {getStatusBadge(ordem.status)}
                       <Badge variant="secondary">
-                        {ordem.tipo_carregamento === 'entrega' ? 'Entrega' : 'Instalação'}
+                      <Badge variant="secondary">
+                        {ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado'}
+                      </Badge>
                       </Badge>
                     </div>
 

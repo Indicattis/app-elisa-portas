@@ -28,7 +28,6 @@ export const useOrdensCarregamento = (filters?: {
             cidade,
             cep,
             bairro,
-            endereco_completo,
             data_prevista_entrega
           ),
           pedido:pedidos_producao(
@@ -45,11 +44,11 @@ export const useOrdensCarregamento = (filters?: {
       }
       
       if (filters?.tipo_carregamento) {
-        query = query.eq("tipo_carregamento", filters.tipo_carregamento);
+        query = query.eq("tipo_carregamento", filters.tipo_carregamento as any);
       }
       
       if (filters?.responsavel_tipo) {
-        query = query.eq("responsavel_tipo", filters.responsavel_tipo);
+        query = query.eq("responsavel_tipo", filters.responsavel_tipo as any);
       }
 
       if (filters?.data_inicio) {
