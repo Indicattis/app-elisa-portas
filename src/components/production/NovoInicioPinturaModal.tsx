@@ -1,5 +1,6 @@
-import { useState } from "react";
 import { Flame } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 interface NovoInicioPinturaModalProps {
   open: boolean;
@@ -25,11 +24,12 @@ export function NovoInicioPinturaModal({
   onConfirm,
   isLoading,
 }: NovoInicioPinturaModalProps) {
-  const [observacoes, setObservacoes] = useState("");
+  const now = new Date();
+  const dataFormatada = format(now, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const horaFormatada = format(now, "HH:mm", { locale: ptBR });
 
   const handleConfirm = () => {
-    onConfirm(observacoes.trim() || undefined);
-    setObservacoes("");
+    onConfirm();
     onOpenChange(false);
   };
 
@@ -41,23 +41,21 @@ export function NovoInicioPinturaModal({
             <div className="p-2 rounded-lg bg-orange-500/10">
               <Flame className="h-5 w-5 text-orange-600" />
             </div>
-            <DialogTitle>Registrar Início de Pintura</DialogTitle>
+            <DialogTitle>Confirmar Início de Fornada</DialogTitle>
           </div>
           <DialogDescription>
-            Registre o início do forno de pintura
+            Confirme o registro do início do forno de pintura
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="observacoes">Observações (opcional)</Label>
-            <Textarea
-              id="observacoes"
-              placeholder="Ex: Temperatura inicial 180°C, lote #123..."
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              rows={3}
-            />
+        <div className="space-y-4 py-6">
+          <div className="text-center space-y-2">
+            <p className="text-sm text-muted-foreground">Data</p>
+            <p className="text-lg font-semibold">{dataFormatada}</p>
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-sm text-muted-foreground">Horário</p>
+            <p className="text-lg font-semibold">{horaFormatada}</p>
           </div>
         </div>
 
@@ -70,7 +68,7 @@ export function NovoInicioPinturaModal({
             Cancelar
           </Button>
           <Button onClick={handleConfirm} disabled={isLoading}>
-            {isLoading ? "Registrando..." : "Registrar Início"}
+            {isLoading ? "Registrando..." : "Confirmar"}
           </Button>
         </DialogFooter>
       </DialogContent>
