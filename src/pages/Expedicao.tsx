@@ -11,6 +11,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import logoExpedicao from "@/assets/logo-instalacoes.png";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
+import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 
 export default function Expedicao() {
   const isMobile = useIsMobile();
@@ -22,6 +23,8 @@ export default function Expedicao() {
   );
   
   const [refreshOrdensDisponiveis, setRefreshOrdensDisponiveis] = useState(0);
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -75,6 +78,11 @@ export default function Expedicao() {
 
   const handleBaixarPDF = () => {
     toast.info("Funcionalidade de PDF em desenvolvimento");
+  };
+
+  const handleOrdemClick = (ordem: OrdemCarregamento) => {
+    setSelectedOrdem(ordem);
+    setDetailsOpen(true);
   };
 
   return (
@@ -152,6 +160,7 @@ export default function Expedicao() {
                   onEdit={handleEdit}
                   onRemoverDoCalendario={handleRemoverDoCalendario}
                   onOrdemDropped={handleOrdemDropped}
+                  onOrdemClick={handleOrdemClick}
                 />
               ) : (
                 <CalendarioMensalExpedicaoDesktop
@@ -162,6 +171,7 @@ export default function Expedicao() {
                   onEdit={handleEdit}
                   onRemoverDoCalendario={handleRemoverDoCalendario}
                   onOrdemDropped={handleOrdemDropped}
+                  onOrdemClick={handleOrdemClick}
                 />
               )
             )}
@@ -173,6 +183,13 @@ export default function Expedicao() {
           </>
         )}
       </main>
+
+      {/* Sidebar de Detalhes */}
+      <OrdemCarregamentoDetails
+        ordem={selectedOrdem}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+      />
     </div>
   );
 }

@@ -7,12 +7,14 @@ interface DraggableOrdemCarregamentoProps {
   ordem: OrdemCarregamento;
   onEdit: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario: (id: string) => void;
+  onClick?: (ordem: OrdemCarregamento) => void;
 }
 
 export const DraggableOrdemCarregamento = ({
   ordem,
   onEdit,
   onRemoverDoCalendario,
+  onClick,
 }: DraggableOrdemCarregamentoProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ordem.id,
@@ -33,6 +35,7 @@ export const DraggableOrdemCarregamento = ({
         ordem={ordem}
         onEdit={onEdit}
         onRemoverDoCalendario={onRemoverDoCalendario}
+        onClick={onClick}
       />
     </div>
   );
