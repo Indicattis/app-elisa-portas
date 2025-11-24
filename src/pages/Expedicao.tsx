@@ -107,6 +107,7 @@ export default function Expedicao() {
         data: { data_carregamento: null, status: 'pendente' },
       });
       toast.success("Ordem removida do calendário");
+      setRefreshOrdensDisponiveis(prev => prev + 1);
     } catch (error) {
       console.error("Erro ao remover:", error);
       toast.error("Erro ao remover ordem do calendário");
