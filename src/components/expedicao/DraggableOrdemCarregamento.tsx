@@ -30,12 +30,13 @@ export const DraggableOrdemCarregamento = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div ref={setNodeRef} style={style} {...attributes}>
       <OrdemCarregamentoCard
         ordem={ordem}
         onEdit={onEdit}
         onRemoverDoCalendario={onRemoverDoCalendario}
         onClick={onClick}
+        dragListeners={listeners}
       />
     </div>
   );

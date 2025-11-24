@@ -10,6 +10,7 @@ interface OrdemCarregamentoCardProps {
   onEdit: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario: (id: string) => void;
   onClick?: (ordem: OrdemCarregamento) => void;
+  dragListeners?: any;
 }
 
 export const OrdemCarregamentoCard = ({
@@ -17,6 +18,7 @@ export const OrdemCarregamentoCard = ({
   onEdit,
   onRemoverDoCalendario,
   onClick,
+  dragListeners,
 }: OrdemCarregamentoCardProps) => {
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -40,7 +42,7 @@ export const OrdemCarregamentoCard = ({
     >
       {/* Header - Sempre visível */}
       <div className="flex items-center justify-between gap-2 h-[19px]">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
           <h4 className="font-semibold text-xs truncate">{ordem.nome_cliente}</h4>
           <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
             {ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Entrega'}
@@ -127,13 +129,24 @@ export const OrdemCarregamentoCard = ({
                 <MoreVertical className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(ordem)}>
+            <DropdownMenuContent 
+              align="end"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(ordem);
+                }}
+              >
                 <Pencil className="h-4 w-4 mr-2" />
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => onRemoverDoCalendario(ordem.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoverDoCalendario(ordem.id);
+                }}
                 className="text-destructive"
               >
                 <XCircle className="h-4 w-4 mr-2" />
