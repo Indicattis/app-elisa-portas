@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { OrdemCarregamento, AgendarCarregamentoData } from "@/types/ordemCarregamento";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -44,7 +45,7 @@ export function AgendarCarregamentoModal({
         setHora(ordem.hora);
       }
       if (ordem?.responsavel_tipo) {
-        setResponsavelTipo(ordem.responsavel_tipo);
+        setResponsavelTipo(ordem.responsavel_tipo as "elisa" | "autorizados");
       }
       if (ordem?.responsavel_carregamento_id) {
         setResponsavelId(ordem.responsavel_carregamento_id);
