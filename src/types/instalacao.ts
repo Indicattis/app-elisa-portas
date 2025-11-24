@@ -4,12 +4,6 @@ export interface Instalacao {
   nome_cliente: string;
   data?: string | null;
   hora: string;
-  produto: string;
-  estado: string;
-  cidade: string;
-  endereco?: string | null;
-  cep?: string | null;
-  descricao?: string | null;
   equipe_id?: string | null;
   created_by?: string | null;
   created_at: string;
@@ -21,15 +15,13 @@ export interface Instalacao {
     numero_pedido: string;
     etapa_atual: string;
   };
-  // Campos adicionais da tabela unificada
+  // Campos específicos da instalação
   venda_id?: string | null;
-  telefone_cliente?: string | null;
   pedido_id?: string | null;
   responsavel_instalacao_id?: string | null;
   responsavel_instalacao_nome?: string | null;
   status?: string;
   tipo_instalacao?: 'elisa' | 'autorizados' | null;
-  data_producao?: string | null;
   instalacao_concluida?: boolean;
   instalacao_concluida_em?: string | null;
   instalacao_concluida_por?: string | null;
@@ -37,9 +29,6 @@ export interface Instalacao {
   longitude?: number | null;
   last_geocoded_at?: string | null;
   geocode_precision?: string | null;
-  justificativa_correcao?: string | null;
-  alterado_para_correcao_em?: string | null;
-  alterado_para_correcao_por?: string | null;
 }
 
 export interface EquipeInstalacao {
@@ -57,21 +46,22 @@ export interface VendaSimplificada {
   estado?: string | null;
   cidade?: string | null;
   cep?: string | null;
+  endereco_completo?: string | null;
+  bairro?: string | null;
   data_venda: string;
+  produtos?: Array<{
+    tipo_produto: string;
+    descricao: string;
+    quantidade: number;
+    tamanho?: string;
+  }>;
 }
 
 export interface InstalacaoFormData {
   id_venda: string | null;
   nome_cliente: string;
-  telefone_cliente?: string | null;
   data: string;
   hora: string;
-  produto: string;
-  estado: string;
-  cidade: string;
-  endereco?: string;
-  cep?: string;
-  descricao?: string;
   equipe_id: string;
 }
 

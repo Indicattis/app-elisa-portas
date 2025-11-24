@@ -77,7 +77,7 @@ export const InstalacaoCardMelhorado = ({
 
             {/* Cidade */}
             <span className="text-[10px] text-muted-foreground truncate">
-              {instalacao.cidade}
+              {instalacao.venda?.cidade || '-'}
             </span>
           </div>
 

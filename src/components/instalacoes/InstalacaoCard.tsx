@@ -40,13 +40,13 @@ export const InstalacaoCard = ({ instalacao, onEdit, onRemoverDoCalendario }: In
             <div className="flex items-center gap-1">
               <Package className="h-2.5 w-2.5 flex-shrink-0 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground truncate">
-                {instalacao.produto}
+                {instalacao.venda?.produtos?.[0]?.tipo_produto || 'Sem produto'}
               </span>
             </div>
 
             {/* Cidade */}
             <span className="text-[10px] text-muted-foreground truncate">
-              {instalacao.cidade}
+              {instalacao.venda?.cidade || '-'}
             </span>
           </div>
 
