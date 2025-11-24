@@ -18,6 +18,7 @@ interface CalendarioMensalExpedicaoDesktopProps {
   onRemoverDoCalendario: (id: string) => void;
   onOrdemCriada?: () => void;
   onOrdemDropped?: () => void;
+  onOrdemClick?: (ordem: OrdemCarregamento) => void;
 }
 
 export const CalendarioMensalExpedicaoDesktop = ({
@@ -29,6 +30,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
   onRemoverDoCalendario,
   onOrdemCriada,
   onOrdemDropped,
+  onOrdemClick,
 }: CalendarioMensalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
 
@@ -161,6 +163,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
                 onRemoverDoCalendario={onRemoverDoCalendario}
                 onOrdemDropped={onOrdemDropped}
                 onUpdateOrdem={onUpdateOrdem}
+                onOrdemClick={onOrdemClick}
               />
             ))}
           </div>

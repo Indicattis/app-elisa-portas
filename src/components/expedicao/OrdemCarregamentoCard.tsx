@@ -9,12 +9,14 @@ interface OrdemCarregamentoCardProps {
   ordem: OrdemCarregamento;
   onEdit: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario: (id: string) => void;
+  onClick?: (ordem: OrdemCarregamento) => void;
 }
 
 export const OrdemCarregamentoCard = ({
   ordem,
   onEdit,
   onRemoverDoCalendario,
+  onClick,
 }: OrdemCarregamentoCardProps) => {
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -32,7 +34,10 @@ export const OrdemCarregamentoCard = ({
   };
 
   return (
-    <Card className={`group relative h-[35px] hover:h-auto p-2 border transition-all duration-300 hover:border-primary/50 hover:shadow-md overflow-hidden hover:overflow-visible ${getStatusColor(ordem.status)}`}>
+    <Card 
+      className={`group relative h-[35px] hover:h-auto p-2 border transition-all duration-300 hover:border-primary/50 hover:shadow-md overflow-hidden hover:overflow-visible cursor-pointer ${getStatusColor(ordem.status)}`}
+      onClick={() => onClick?.(ordem)}
+    >
       {/* Header - Sempre visível */}
       <div className="flex items-center justify-between gap-2 h-[19px]">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -47,7 +52,10 @@ export const OrdemCarregamentoCard = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button className="p-0.5 hover:bg-accent rounded-md transition-colors">
+                  <button 
+                    className="p-0.5 hover:bg-accent rounded-md transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
                   </button>
                 </TooltipTrigger>
@@ -96,7 +104,10 @@ export const OrdemCarregamentoCard = ({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-0.5 hover:bg-accent rounded-md transition-colors">
+              <button 
+                className="p-0.5 hover:bg-accent rounded-md transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreVertical className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
