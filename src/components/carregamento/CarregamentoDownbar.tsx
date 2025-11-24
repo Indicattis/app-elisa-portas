@@ -4,46 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PackageCheck, Loader2, Truck } from "lucide-react";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
-import { useEntregas } from "@/hooks/useEntregas";
-import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from "@tanstack/react-query";
-
-interface CarregamentoItem {
-  id: string;
-  nome_cliente: string;
-  pedido_id?: string;
-  pedido?: {
-    numero_pedido: string;
-  };
-  tipo: 'entrega' | 'instalacao';
-}
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
 
 interface CarregamentoDownbarProps {
-  item: CarregamentoItem | null;
+  ordem: OrdemCarregamento | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConcluir: (params: { id: string; observacoes?: string }) => Promise<any>;
   onSuccess: () => void;
 }
 
 export function CarregamentoDownbar({
-  item,
+  ordem,
   open,
   onOpenChange,
+  onConcluir,
   onSuccess,
 }: CarregamentoDownbarProps) {
-  const { linhas, isLoading, atualizarCheckbox } = usePedidoLinhas(item?.pedido_id || "");
-  const { concluirEntrega } = useEntregas();
-  const { concluirInstalacao } = useInstalacoesCadastradas();
+  const { linhas, isLoading, atualizarCheckbox } = usePedidoLinhas(ordem?.pedido_id || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const hasUncheckedRef = useRef(false);
 
   // Desmarcar todos os itens APENAS ao abrir pela primeira vez
   useEffect(() => {
-    if (open && item?.pedido_id && linhas && linhas.length > 0 && !hasUncheckedRef.current) {
+    if (open && ordem?.pedido_id && linhas && linhas.length > 0 && !hasUncheckedRef.current) {
       hasUncheckedRef.current = true;
       const desmarcarTodos = async () => {
         try {
@@ -57,7 +46,7 @@ export function CarregamentoDownbar({
             }
           }
           // Recarregar as linhas após desmarcar
-          queryClient.invalidateQueries({ queryKey: ["pedido-linhas", item.pedido_id] });
+          queryClient.invalidateQueries({ queryKey: ["pedido-linhas", ordem.pedido_id] });
         } catch (error) {
           console.error("Erro ao desmarcar itens:", error);
         }
@@ -69,7 +58,7 @@ export function CarregamentoDownbar({
     if (!open) {
       hasUncheckedRef.current = false;
     }
-  }, [open, item?.pedido_id, linhas, atualizarCheckbox, queryClient]);
+  }, [open, ordem?.pedido_id, linhas, atualizarCheckbox, queryClient]);
 
   const todasMarcadas = linhas?.every((linha) => linha.check_coleta) || false;
   const totalLinhas = linhas?.length || 0;
@@ -96,41 +85,31 @@ export function CarregamentoDownbar({
       return;
     }
 
-    if (!item?.id) return;
+    if (!ordem?.id) return;
 
     setIsSubmitting(true);
 
     try {
-      if (item.tipo === 'entrega') {
-        console.log('[Carregamento] Concluindo entrega...');
-        const success = await concluirEntrega(item.id);
-        
-        if (!success) {
-          throw new Error('Falha ao concluir entrega');
-        }
-      } else {
-        console.log('[Carregamento] Concluindo instalação...');
-        const success = await concluirInstalacao(item.id);
-        
-        if (!success) {
-          throw new Error('Falha ao concluir instalação');
-        }
-      }
+      console.log('[Carregamento] Concluindo ordem de carregamento...');
+      await onConcluir({
+        id: ordem.id,
+        observacoes: "Carregamento concluído via interface de produção"
+      });
 
       console.log('[Carregamento] Sucesso! Fechando modal...');
-      toast.success("Carregamento confirmado e pedido finalizado");
+      toast.success("Carregamento concluído com sucesso!");
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       console.error('[Carregamento] Erro:', error);
-      toast.error(error.message || "Erro ao confirmar carregamento");
+      toast.error(error.message || "Erro ao concluir carregamento");
       setIsSubmitting(false);
     }
   };
 
-  if (!item) return null;
+  if (!ordem) return null;
 
-  const Icon = item.tipo === 'entrega' ? PackageCheck : Truck;
+  const Icon = ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -150,7 +129,7 @@ export function CarregamentoDownbar({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Icon className="h-5 w-5" />
-            Confirmar Carregamento - {item.tipo === 'entrega' ? 'Entrega' : 'Instalação'}
+            Confirmar Carregamento - {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado'}
           </SheetTitle>
         </SheetHeader>
 
@@ -158,11 +137,11 @@ export function CarregamentoDownbar({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Cliente:</span>
-              <span className="font-medium">{item.nome_cliente}</span>
+              <span className="font-medium">{ordem.nome_cliente}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Pedido:</span>
-              <span className="font-medium">{item.pedido?.numero_pedido || "N/A"}</span>
+              <span className="font-medium">{ordem.pedido?.numero_pedido || "N/A"}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progresso:</span>
