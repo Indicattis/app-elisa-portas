@@ -259,6 +259,7 @@ export function PedidoCard({
   const emBacklog = pedido.backlog && pedido.backlog.length > 0;
   const motivoBacklog = pedido.backlog?.[0]?.motivo_backlog;
   const dataBacklog = pedido.backlog?.[0]?.data_backlog;
+  const temHistoricoBacklog = pedido.tem_historico_backlog || false;
 
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
@@ -547,7 +548,7 @@ export function PedidoCard({
   if (viewMode === 'list') {
     return <>
         <Card 
-          className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-l-4 border-l-red-500")} 
+          className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", (emBacklog || temHistoricoBacklog) && "border-l-4 border-l-red-500")} 
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
@@ -559,7 +560,16 @@ export function PedidoCard({
               
               {/* Backlog indicator */}
               <div className="w-4">
-                {emBacklog && <AlertTriangle className="h-3.5 w-3.5 text-red-500" />}
+                {(emBacklog || temHistoricoBacklog) && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{emBacklog ? 'Pedido está em backlog' : 'Pedido teve registro de backlog no histórico'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
               
               {/* Número do pedido */}
@@ -766,7 +776,7 @@ export function PedidoCard({
   // Layout em grid (padrão)
   return <>
       <Card 
-        className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} 
+        className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", (emBacklog || temHistoricoBacklog) && "border-2 border-red-500 shadow-lg shadow-red-500/20")} 
         onClick={() => setShowDetalhes(true)}
       >
         {/* Header com número do pedido e tempo */}
@@ -787,7 +797,16 @@ export function PedidoCard({
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
                 </div>}
               
-              {emBacklog && <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0 animate-pulse" />}
+              {(emBacklog || temHistoricoBacklog) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0 animate-pulse" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{emBacklog ? 'Pedido está em backlog' : 'Pedido teve registro de backlog no histórico'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               
               <span className="text-[10px] font-semibold text-muted-foreground">
                 {pedido.numero_pedido || 'Sem número'}
@@ -856,7 +875,7 @@ export function PedidoCard({
             
             {/* Flags abaixo */}
             {(config || temPintura || isInstalacao || isEntrega) && <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                {config && <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5", emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50")}>
+                {config && <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5", (emBacklog || temHistoricoBacklog) ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50")}>
                     {config.label}
                   </Badge>}
                 

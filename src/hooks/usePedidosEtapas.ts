@@ -108,10 +108,20 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .select('*')
             .eq('pedido_id', pedido.id)
             .maybeSingle();
-          
+
+          // Verificar se há histórico de backlog nas movimentações
+          const { data: historicoBacklog } = await supabase
+            .from('pedidos_movimentacoes')
+            .select('id')
+            .eq('pedido_id', pedido.id)
+            .eq('teor', 'backlog')
+            .limit(1)
+            .maybeSingle();
+
           return {
             ...pedido,
-            backlog: backlogData ? [backlogData] : []
+            backlog: backlogData ? [backlogData] : [],
+            tem_historico_backlog: !!historicoBacklog
           };
         })
       );
