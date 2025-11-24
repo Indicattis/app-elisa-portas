@@ -32,8 +32,6 @@ interface PedidoCardProps {
   posicao?: number;
   total?: number;
   viewMode?: 'grid' | 'list';
-  isSelecionado?: boolean;
-  onSelecionarPedido?: (pedido: any) => void;
 }
 export function PedidoCard({
   pedido,
@@ -45,9 +43,7 @@ export function PedidoCard({
   dragHandleProps,
   posicao,
   total,
-  viewMode = 'grid',
-  isSelecionado = false,
-  onSelecionarPedido
+  viewMode = 'grid'
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -409,7 +405,7 @@ export function PedidoCard({
   // Layout compacto para visualização em lista
   if (viewMode === 'list') {
     return <>
-        <Card className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary", emBacklog && "border-l-4 border-l-red-500")} onMouseEnter={() => onSelecionarPedido?.(pedido)} onMouseLeave={() => onSelecionarPedido?.(null)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
+        <Card className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-l-4 border-l-red-500")} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
           <CardContent className="p-0 h-full">
             <div className="grid grid-cols-[auto_auto_80px_1fr_auto_100px_auto] items-center gap-4 h-full px-4">
               {/* Drag Handle */}
@@ -569,7 +565,7 @@ export function PedidoCard({
 
   // Layout em grid (padrão)
   return <>
-      <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary shadow-lg", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onMouseEnter={() => onSelecionarPedido?.(pedido)} onMouseLeave={() => onSelecionarPedido?.(null)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
+      <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
         {/* Header com número do pedido e tempo */}
         <CardHeader className="py-2 px-3 bg-muted/30 border-b">
           <div className="flex items-center justify-between gap-2">

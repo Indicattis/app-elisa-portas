@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
 
 interface PedidoLinha {
   id: string;
@@ -268,6 +269,9 @@ export default function PedidoView() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Fluxograma do Pedido */}
+      <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
 
       {/* Informações da Venda */}
       {pedido.venda && (
