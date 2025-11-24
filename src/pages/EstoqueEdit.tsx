@@ -362,7 +362,7 @@ export default function EstoqueEdit() {
               <div className="space-y-2">
                 <Label htmlFor="setor_responsavel_producao">Setor de Produção</Label>
                 <Select
-                  value={formData.setor_responsavel_producao || ""}
+                  value={formData.setor_responsavel_producao || undefined}
                   onValueChange={(value) =>
                     setFormData({ ...formData, setor_responsavel_producao: value })
                   }
@@ -371,7 +371,6 @@ export default function EstoqueEdit() {
                     <SelectValue placeholder="Selecione um setor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
                     <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
                     <SelectItem value="soldagem">Soldagem</SelectItem>
                     <SelectItem value="separacao">Separação</SelectItem>
