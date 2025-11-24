@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Package, Calendar, User, Phone, FileText, Plus, CheckCircle2 } from "lucide-react";
 import { Pedido } from "@/hooks/useVendasPedidos";
 import { PedidoLinhasEditor } from "./PedidoLinhasEditor";
+import { type PedidoLinha as PedidoLinhaCompleta } from "@/hooks/usePedidoLinhas";
 import { GerarOrdemButton } from "./GerarOrdemButton";
 import { OrdemCard } from "./OrdemCard";
 
@@ -94,7 +95,7 @@ export const PedidoDetails = ({
             </h3>
             
             <PedidoLinhasEditor
-              linhas={pedido.pedido_linhas || []}
+              linhas={pedido.pedido_linhas as unknown as PedidoLinhaCompleta[] || []}
               isReadOnly={isPreenchido}
               todasOrdensConcluidas={todasOrdensConcluidas}
               onAdicionarLinha={onAdicionarLinha}
