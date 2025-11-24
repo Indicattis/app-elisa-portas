@@ -134,7 +134,7 @@ export function CarregamentoDownbar({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl max-w-[700px] mx-auto">
         {isSubmitting && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-t-2xl">
             <div className="text-center space-y-3">
