@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { Button } from "@/components/ui/button";
 import { DroppableDaySimpleExpedicao } from "./DroppableDaySimpleExpedicao";
@@ -37,6 +37,16 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   onOrdemClick,
 }: CalendarioSemanalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
+
+  // Configurar sensores para mobile e desktop
+  const mouseSensor = useSensor(MouseSensor);
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 250,
+      tolerance: 5,
+    },
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -92,6 +102,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
 
   return (
     <DndContext
+      sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
