@@ -39,6 +39,7 @@ export interface VendaSimplificada {
 export interface InstalacaoFormData {
   id_venda: string | null;
   nome_cliente: string;
+  telefone_cliente?: string | null;
   data: string;
   hora: string;
   produto: string;
