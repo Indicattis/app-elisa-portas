@@ -49,14 +49,27 @@ export const FLUXOGRAMA_ETAPAS: Record<EtapaPedido, FluxogramaEtapa> = {
  * baseado em suas características (pintura e tipo de entrega)
  */
 export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
-  // Extrair dados da venda
-  const vendaData = Array.isArray(pedido.vendas) 
-    ? pedido.vendas[0] 
-    : pedido.vendas;
+  // Extrair dados da venda - aceita múltiplos formatos
+  let vendaData = null;
+  let produtos = [];
+  let tipoEntrega = null;
   
-  const produtos = vendaData?.produtos_vendas || [];
+  // Formato 1: pedido.venda (usado em PedidoView)
+  if (pedido.venda) {
+    vendaData = pedido.venda;
+    produtos = pedido.venda.produtos || [];
+    tipoEntrega = pedido.venda.tipo_entrega;
+  }
+  // Formato 2: pedido.vendas (usado em outros lugares)
+  else if (pedido.vendas) {
+    vendaData = Array.isArray(pedido.vendas) 
+      ? pedido.vendas[0] 
+      : pedido.vendas;
+    produtos = vendaData?.produtos_vendas || [];
+    tipoEntrega = vendaData?.tipo_entrega;
+  }
+  
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
-  const tipoEntrega = vendaData?.tipo_entrega;
   
   // Etapas base que todos os pedidos passam
   const baseFlow: FluxogramaEtapa[] = [
