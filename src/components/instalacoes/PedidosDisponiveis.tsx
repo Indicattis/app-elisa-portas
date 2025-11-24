@@ -150,11 +150,12 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
 
       if (error) throw error;
 
-      // Buscar instalações existentes para filtrar pedidos que já têm instalação
+      // Buscar instalações existentes COM DATA para filtrar apenas pedidos já agendados
       const { data: instalacoesExistentes } = await supabase
         .from('instalacoes')
         .select('pedido_id')
-        .not('pedido_id', 'is', null);
+        .not('pedido_id', 'is', null)
+        .not('data_instalacao', 'is', null);
 
       const pedidosComInstalacao = new Set(
         instalacoesExistentes?.map(i => i.pedido_id) || []
