@@ -440,16 +440,6 @@ export default function PedidoView() {
                 Ver Venda
               </Button>
             )}
-            {isAberto && (
-              <Button
-                variant={modoEdicao ? "default" : "outline"}
-                className="w-full justify-start text-sm h-9"
-                onClick={() => setModoEdicao(!modoEdicao)}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                {modoEdicao ? "Desativar Edição" : "Ativar Edição"}
-              </Button>
-            )}
           </CardContent>
         </Card>
       </div>
@@ -643,25 +633,6 @@ export default function PedidoView() {
         </Card>
       )}
 
-      {/* Fluxograma e Histórico */}
-      <div className="grid grid-cols-1 gap-4">
-        {/* Fluxograma do Pedido */}
-        <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
-
-        {/* Histórico de Movimentações */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Histórico de Movimentações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Itens do Pedido Cadastrados */}
       {pedido.linhas.length > 0 && (
         <Card>
@@ -672,14 +643,49 @@ export default function PedidoView() {
                 Itens do Pedido ({pedido.linhas.length})
               </CardTitle>
               {isAberto && (
-                <Button
-                  variant={modoEdicao ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setModoEdicao(!modoEdicao)}
-                >
-                  <Edit className="w-3 h-3 mr-2" />
-                  {modoEdicao ? "Desativar" : "Editar"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {!modoEdicao ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setModoEdicao(true)}
+                    >
+                      <Edit className="w-3 h-3 mr-2" />
+                      Editar
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setModoEdicao(false);
+                          setLinhasEditadas(new Map());
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleSalvarAlteracoes}
+                        disabled={!temPendentesSalvamento || salvando}
+                      >
+                        {salvando ? (
+                          <>
+                            <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-3 h-3 mr-2" />
+                            Salvar
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </CardHeader>
@@ -719,6 +725,22 @@ export default function PedidoView() {
           </CardContent>
         </Card>
       )}
+
+      {/* Histórico de Movimentações */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Histórico de Movimentações
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
+        </CardContent>
+      </Card>
+
+      {/* Fluxograma */}
+      <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
 
       {/* Ordens de Produção */}
       {pedido.ordens.length > 0 && (
