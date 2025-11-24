@@ -83,15 +83,31 @@ export const OrdemCarregamentoCard = ({
                         <p className="text-[10px] font-medium mb-1.5">Produtos:</p>
                         <div className="space-y-1">
                           {ordem.venda.produtos.map((produto, idx) => (
-                            produto.cor && (
-                              <div key={idx} className="flex items-center gap-1.5 text-[10px]">
+                            <div key={idx} className="flex items-start gap-1.5 text-[10px]">
+                              {produto.cor && (
                                 <div 
-                                  className="h-2.5 w-2.5 rounded-full border border-border/30 shrink-0" 
+                                  className="h-2.5 w-2.5 rounded-full border border-border/30 shrink-0 mt-0.5" 
                                   style={{ backgroundColor: produto.cor.codigo_hex }}
                                 />
-                                <span>{produto.cor.nome}</span>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                {produto.tipo_produto && (
+                                  <span className="font-medium">{produto.tipo_produto}</span>
+                                )}
+                                {(produto.tamanho || (produto.largura && produto.altura)) && (
+                                  <span className="text-muted-foreground">
+                                    {' • '}
+                                    {produto.tamanho || `${produto.largura}x${produto.altura}`}
+                                  </span>
+                                )}
+                                {produto.cor && (
+                                  <span className="text-muted-foreground">
+                                    {' • '}
+                                    {produto.cor.nome}
+                                  </span>
+                                )}
                               </div>
-                            )
+                            </div>
                           ))}
                         </div>
                       </div>
