@@ -1167,6 +1167,7 @@ export type Database = {
           peso_porta: number | null
           quantidade: number
           quantidade_ideal: number | null
+          requer_pintura: boolean | null
           setor_responsavel_producao:
             | Database["public"]["Enums"]["setor_producao"]
             | null
@@ -1187,6 +1188,7 @@ export type Database = {
           peso_porta?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
+          requer_pintura?: boolean | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
             | null
@@ -1207,6 +1209,7 @@ export type Database = {
           peso_porta?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
+          requer_pintura?: boolean | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
             | null

@@ -38,6 +38,7 @@ export default function Estoque() {
     unidade: "UN",
     setor_responsavel_producao: "",
     fornecedor_id: "",
+    requer_pintura: false,
   });
 
   const getCategoriaColor = (categoriaId: string) => {
@@ -65,6 +66,7 @@ export default function Estoque() {
         subcategoria_id: formData.subcategoria_id || null,
         setor_responsavel_producao: formData.setor_responsavel_producao as any,
         fornecedor_id: formData.fornecedor_id || null,
+        requer_pintura: formData.requer_pintura,
       });
       
       setFormData({
@@ -78,6 +80,7 @@ export default function Estoque() {
         unidade: "UN",
         setor_responsavel_producao: "",
         fornecedor_id: "",
+        requer_pintura: false,
       });
       setNovoModal(false);
       toast.success("Produto adicionado com sucesso");
@@ -261,42 +264,56 @@ export default function Estoque() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="setor_responsavel_producao">Setor Responsável</Label>
-                  <Select
-                    value={formData.setor_responsavel_producao}
-                    onValueChange={(value) => setFormData({ ...formData, setor_responsavel_producao: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="corte">Corte</SelectItem>
-                      <SelectItem value="dobra">Dobra</SelectItem>
-                      <SelectItem value="solda">Solda</SelectItem>
-                      <SelectItem value="pintura">Pintura</SelectItem>
-                      <SelectItem value="montagem">Montagem</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="setor_responsavel_producao">Setor Responsável</Label>
+                    <Select
+                      value={formData.setor_responsavel_producao}
+                      onValueChange={(value) => setFormData({ ...formData, setor_responsavel_producao: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
+                        <SelectItem value="soldagem">Soldagem</SelectItem>
+                        <SelectItem value="separacao">Separação</SelectItem>
+                        <SelectItem value="pintura">Pintura</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="fornecedor_id">Fornecedor</Label>
+                    <Select
+                      value={formData.fornecedor_id}
+                      onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um fornecedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fornecedores.map((forn) => (
+                          <SelectItem key={forn.id} value={forn.id}>
+                            {forn.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="fornecedor_id">Fornecedor</Label>
-                  <Select
-                    value={formData.fornecedor_id}
-                    onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um fornecedor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fornecedores.map((forn) => (
-                        <SelectItem key={forn.id} value={forn.id}>
-                          {forn.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="requer_pintura"
+                    checked={formData.requer_pintura}
+                    onChange={(e) => setFormData({ ...formData, requer_pintura: e.target.checked })}
+                    className="h-4 w-4 rounded border-input"
+                  />
+                  <Label htmlFor="requer_pintura" className="cursor-pointer">
+                    Este item requer pintura
+                  </Label>
                 </div>
 
                 <DialogFooter>
@@ -330,6 +347,8 @@ export default function Estoque() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="text-xs font-medium">Produto</TableHead>
                   <TableHead className="text-xs font-medium">Categoria</TableHead>
+                  <TableHead className="text-xs font-medium">Setor</TableHead>
+                  <TableHead className="text-center text-xs font-medium">Pintura</TableHead>
                   <TableHead className="text-right text-xs font-medium">Estoque</TableHead>
                   <TableHead className="text-right text-xs font-medium">Custo</TableHead>
                   <TableHead className="text-right text-xs font-medium">Ações</TableHead>
@@ -338,7 +357,7 @@ export default function Estoque() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-sm text-muted-foreground">
                       Carregando...
                     </TableCell>
                   </TableRow>
@@ -348,7 +367,7 @@ export default function Estoque() {
                     p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-sm text-muted-foreground">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
@@ -385,6 +404,28 @@ export default function Estoque() {
                         >
                           {getCategoriaLabel(produto.categoria)}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="px-3 py-2">
+                        {produto.setor_responsavel_producao ? (
+                          <Badge variant="outline" className="text-xs">
+                            {produto.setor_responsavel_producao === 'perfiladeira' ? 'Perfiladeira' :
+                             produto.setor_responsavel_producao === 'soldagem' ? 'Soldagem' :
+                             produto.setor_responsavel_producao === 'separacao' ? 'Separação' :
+                             produto.setor_responsavel_producao === 'pintura' ? 'Pintura' :
+                             produto.setor_responsavel_producao}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center px-3 py-2">
+                        {produto.requer_pintura ? (
+                          <Badge variant="secondary" className="text-xs">
+                            Sim
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Não</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right px-3 py-2">
                         <div>
