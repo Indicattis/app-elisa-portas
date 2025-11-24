@@ -689,12 +689,7 @@ export function PedidoCard({
                         </Button>);
                     }
 
-                    // Add backlog button if applicable
-                    if (emBacklog && motivoBacklog) {
-                      actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="flex w-full h-[35px] bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
-                          <FileText className="h-3 w-3" />
-                        </Button>);
-                    }
+                    // Backlog button removed - users should view order details page
 
                     // Add retroceder button (para todos a partir de em_producao)
                     const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
@@ -950,12 +945,7 @@ export function PedidoCard({
                     </Button>);
               }
 
-              // Add backlog button if applicable
-              if (emBacklog && motivoBacklog) {
-                actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="flex w-full h-[35px] bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
-                      <FileText className="h-3.5 w-3.5" />
-                    </Button>);
-              }
+              // Backlog button removed - users should view order details page
 
               // Add retroceder button (para todos a partir de em_producao)
               const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;

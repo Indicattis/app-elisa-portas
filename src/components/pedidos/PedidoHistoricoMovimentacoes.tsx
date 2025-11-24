@@ -50,25 +50,47 @@ const TEOR_CONFIG = {
 };
 
 export function PedidoHistoricoMovimentacoes({ pedidoId }: PedidoHistoricoMovimentacoesProps) {
-  const { data: movimentacoes, isLoading } = useQuery({
+  const { data: movimentacoes, isLoading, error: queryError } = useQuery({
     queryKey: ['pedido-movimentacoes', pedidoId],
     queryFn: async () => {
+      console.log('Buscando movimentações para pedido:', pedidoId);
+      
       const { data, error } = await supabase
         .from('pedidos_movimentacoes')
         .select('*')
         .eq('pedido_id', pedidoId)
         .order('data_hora', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar movimentações:', error);
+        throw error;
+      }
+      
+      console.log('Movimentações encontradas:', data);
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
       
       // Buscar informações dos usuários manualmente
       const movimentacoesComUsuarios = await Promise.all(
-        (data || []).map(async (mov) => {
-          const { data: userData } = await supabase
+        data.map(async (mov) => {
+          if (!mov.user_id) {
+            return {
+              ...mov,
+              admin_users: undefined
+            };
+          }
+          
+          const { data: userData, error: userError } = await supabase
             .from('admin_users')
             .select('nome')
             .eq('user_id', mov.user_id)
-            .single();
+            .maybeSingle();
+          
+          if (userError) {
+            console.error('Erro ao buscar usuário:', userError);
+          }
           
           return {
             ...mov,
@@ -77,10 +99,17 @@ export function PedidoHistoricoMovimentacoes({ pedidoId }: PedidoHistoricoMovime
         })
       );
       
+      console.log('Movimentações com usuários:', movimentacoesComUsuarios);
+      
       return movimentacoesComUsuarios as Movimentacao[];
     },
     enabled: !!pedidoId
   });
+
+  // Log error if any
+  if (queryError) {
+    console.error('Query error:', queryError);
+  }
 
   if (isLoading) {
     return (
