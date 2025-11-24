@@ -337,11 +337,6 @@ export function AppSidebar() {
             <span>Instalações</span>
           </Link>
           
-          <Link to="/expedicao" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
-            <Truck className="h-3.5 w-3.5" />
-            <span>Expedição</span>
-          </Link>
-          
           <Link to="/todo" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
             <ClipboardList className="h-3.5 w-3.5" />
             <span>Tarefas</span>
