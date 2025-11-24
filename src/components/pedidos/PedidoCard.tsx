@@ -211,6 +211,44 @@ export function PedidoCard({
     'Rosa': '#FFC0CB'
   };
 
+  // Função para verificar se é aço galvanizado
+  const isAcoGalvanizado = (corNome: string) => {
+    const normalized = corNome.toLowerCase().trim();
+    return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
+  };
+
+  // Componente para renderizar círculo de cor
+  const CorCirculo = ({ corNome, size = 'sm' }: { corNome: string; size?: 'sm' | 'md' }) => {
+    const isAco = isAcoGalvanizado(corNome);
+    const sizeClass = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5';
+    
+    if (isAco) {
+      return (
+        <div 
+          className={`${sizeClass} rounded-full border-2 border-border relative bg-transparent`}
+          title={corNome}
+        >
+          <div 
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              transform: 'rotate(-45deg)'
+            }}
+          >
+            <div className="w-full h-[2px] bg-red-500" />
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div 
+        className={`${sizeClass} rounded-full border border-border`}
+        style={{ backgroundColor: coresMap[corNome] || '#999999' }} 
+        title={corNome} 
+      />
+    );
+  };
+
   // Função para determinar processos que serão executados
   const determinarProcessos = async (pedidoId: string) => {
     const lista: Processo[] = [];
@@ -464,12 +502,7 @@ export function PedidoCard({
                 {coresUnicas.length > 0 && (
                   <>
                     {coresUnicas.slice(0, 3).map((corNome, idx) => (
-                      <div 
-                        key={idx} 
-                        className="w-3.5 h-3.5 rounded-full border border-border" 
-                        style={{ backgroundColor: coresMap[corNome] || '#ccc' }} 
-                        title={corNome} 
-                      />
+                      <CorCirculo key={idx} corNome={corNome} size="md" />
                     ))}
                     {coresUnicas.length > 3 && (
                       <span className="text-[9px] text-muted-foreground">+{coresUnicas.length - 3}</span>
@@ -696,9 +729,9 @@ export function PedidoCard({
               
               {/* Círculos de cores à direita */}
               {coresUnicas.length > 0 && <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {coresUnicas.slice(0, 3).map((cor, idx) => <div key={idx} className="w-3 h-3 rounded-full border border-border" style={{
-                backgroundColor: coresMap[cor] || '#999999'
-              }} title={cor} />)}
+                  {coresUnicas.slice(0, 3).map((cor, idx) => (
+                    <CorCirculo key={idx} corNome={cor} size="sm" />
+                  ))}
                   {coresUnicas.length > 3 && <span className="text-[10px] text-muted-foreground ml-0.5">
                       +{coresUnicas.length - 3}
                     </span>}
