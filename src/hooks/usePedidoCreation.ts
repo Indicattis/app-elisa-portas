@@ -70,6 +70,15 @@ export const usePedidoCreation = () => {
 
       if (etapaError) throw etapaError;
 
+      // Registrar movimentação de criação no histórico
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedido.id,
+        user_id: user.id,
+        etapa_destino: 'aberto',
+        teor: 'criacao',
+        descricao: `Pedido criado a partir da venda ${venda.cliente_nome}`
+      });
+
       toast.success(`Pedido ${numeroPedido} criado com sucesso!`);
       return pedido.id;
     } catch (error) {

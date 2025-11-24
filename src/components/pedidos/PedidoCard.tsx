@@ -170,9 +170,10 @@ export function PedidoCard({
   const carregamentoConcluido = carregamentoCompleto?.concluido || false;
   const temDataCarregamento = carregamentoCompleto?.temData || false;
 
-  // Verificar se está em backlog
-  const emBacklog = pedido.em_backlog === true;
-  const motivoBacklog = pedido.motivo_backlog;
+  // Verificar se está em backlog usando a view
+  const emBacklog = pedido.backlog && pedido.backlog.length > 0;
+  const motivoBacklog = pedido.backlog?.[0]?.motivo_backlog;
+  const dataBacklog = pedido.backlog?.[0]?.data_backlog;
 
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;

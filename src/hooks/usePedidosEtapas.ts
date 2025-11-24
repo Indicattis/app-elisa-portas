@@ -70,63 +70,51 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ['pedidos-etapas', etapa],
     queryFn: async () => {
-      if (etapa === 'aberto') {
-        // Buscar pedidos na etapa aberto
-        const { data, error } = await supabase
-          .from('pedidos_producao')
-          .select(`
-            *,
-            vendas:venda_id (
+      // Buscar pedidos
+      const { data: pedidosData, error: pedidosError } = await supabase
+        .from('pedidos_producao')
+        .select(`
+          *,
+          vendas:venda_id (
+            id,
+            cliente_nome,
+            cliente_telefone,
+            valor_venda,
+            created_at,
+            tipo_entrega,
+            produtos_vendas (
               id,
-              cliente_nome,
-              cliente_telefone,
-              valor_venda,
-              created_at,
-              tipo_entrega,
-              produtos_vendas (
-                id,
-                tipo_produto,
-                valor_pintura,
-                cor:catalogo_cores (nome)
-              )
-            ),
-            pedidos_etapas (*)
-          `)
-          .eq('etapa_atual', 'aberto')
-          .order('prioridade_etapa', { ascending: false })
-          .order('created_at', { ascending: false });
+              tipo_produto,
+              valor_pintura,
+              cor:catalogo_cores (nome)
+            )
+          ),
+          pedidos_etapas (*)
+        `)
+        .eq('etapa_atual', etapa)
+        .order('prioridade_etapa', { ascending: false })
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        return data || [];
-      } else {
-        // Buscar pedidos por etapa, ordenados por prioridade
-        const { data, error } = await supabase
-          .from('pedidos_producao')
-          .select(`
-            *,
-            vendas:venda_id (
-              id,
-              cliente_nome,
-              cliente_telefone,
-              valor_venda,
-              created_at,
-              tipo_entrega,
-              produtos_vendas (
-                id,
-                tipo_produto,
-                valor_pintura,
-                cor:catalogo_cores (nome)
-              )
-            ),
-            pedidos_etapas (*)
-          `)
-          .eq('etapa_atual', etapa)
-          .order('prioridade_etapa', { ascending: false })
-          .order('created_at', { ascending: false });
+      if (pedidosError) throw pedidosError;
+      if (!pedidosData) return [];
 
-        if (error) throw error;
-        return data || [];
-      }
+      // Buscar informações de backlog para cada pedido
+      const pedidosComBacklog = await Promise.all(
+        pedidosData.map(async (pedido) => {
+          const { data: backlogData } = await supabase
+            .from('pedidos_backlog_ativo')
+            .select('*')
+            .eq('pedido_id', pedido.id)
+            .maybeSingle();
+          
+          return {
+            ...pedido,
+            backlog: backlogData ? [backlogData] : []
+          };
+        })
+      );
+
+      return pedidosComBacklog;
     },
   });
 
@@ -382,6 +370,16 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         if (etapaError) throw etapaError;
       });
       if (onProgress) onProgress('criar_nova_etapa', 'completed');
+
+      // Registrar movimentação no histórico
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: etapaAtualNome,
+        etapa_destino: etapaDestino,
+        teor: 'avanco',
+        descricao: `Pedido avançou de ${ETAPAS_CONFIG[etapaAtualNome].label} para ${ETAPAS_CONFIG[etapaDestino].label}`
+      });
 
       // Atualizar pedido e resetar prioridade
       if (onProgress) onProgress('atualizar_pedido', 'in_progress');

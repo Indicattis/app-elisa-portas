@@ -10,6 +10,7 @@ import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clo
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
+import { PedidoHistoricoMovimentacoes } from "@/components/pedidos/PedidoHistoricoMovimentacoes";
 
 interface PedidoLinha {
   id: string;
@@ -272,6 +273,19 @@ export default function PedidoView() {
 
       {/* Fluxograma do Pedido */}
       <PedidoFluxogramaMap pedidoSelecionado={pedido} onClose={() => {}} />
+
+      {/* Histórico de Movimentações */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Histórico de Movimentações
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
+        </CardContent>
+      </Card>
 
       {/* Informações da Venda */}
       {pedido.venda && (
