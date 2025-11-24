@@ -2,14 +2,12 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PackageCheck, Truck, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEntregas } from "@/hooks/useEntregas";
 import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
-import { ConfirmarCarregamentoSheet } from "@/components/entregas/ConfirmarCarregamentoSheet";
-import { ConfirmarCarregamentoInstalacaoSheet } from "@/components/cadastro-instalacao/ConfirmarCarregamentoInstalacaoSheet";
+import { CarregamentoDownbar } from "@/components/carregamento/CarregamentoDownbar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -20,10 +18,8 @@ export default function ProducaoCarregamento() {
   const { instalacoes, loading: loadingInstalacoes, fetchInstalacoes } = useInstalacoesCadastradas();
 
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("todos");
-  const [entregaSelecionada, setEntregaSelecionada] = useState<any>(null);
-  const [instalacaoSelecionada, setInstalacaoSelecionada] = useState<any>(null);
-  const [sheetEntregaOpen, setSheetEntregaOpen] = useState(false);
-  const [sheetInstalacaoOpen, setSheetInstalacaoOpen] = useState(false);
+  const [itemSelecionado, setItemSelecionado] = useState<any>(null);
+  const [downbarOpen, setDownbarOpen] = useState(false);
 
   // Filtrar apenas entregas e instalações que precisam de carregamento
   const entregasPendentes = entregas
@@ -63,13 +59,8 @@ export default function ProducaoCarregamento() {
   });
 
   const handleIniciarColeta = (item: any) => {
-    if (item.tipo === "entrega") {
-      setEntregaSelecionada(item);
-      setSheetEntregaOpen(true);
-    } else {
-      setInstalacaoSelecionada(item);
-      setSheetInstalacaoOpen(true);
-    }
+    setItemSelecionado(item);
+    setDownbarOpen(true);
   };
 
   const handleRefresh = () => {
@@ -80,17 +71,8 @@ export default function ProducaoCarregamento() {
   const loading = loadingEntregas || loadingInstalacoes;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Truck className="h-8 w-8" />
-            Carregamento
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Marque as coletas de entregas e instalações
-          </p>
-        </div>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-end gap-2">
         <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Atualizar
@@ -114,139 +96,109 @@ export default function ProducaoCarregamento() {
         </TabsList>
       </Tabs>
 
-      {/* Lista Unificada */}
-      <Card>
-        <CardContent className="p-6">
-          <ScrollArea className="h-[calc(100vh-320px)]">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : carregamentosFiltrados.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Truck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Nenhum carregamento pendente</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {carregamentosFiltrados.map((item) => {
+      {/* Grid de Cards */}
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : carregamentosFiltrados.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <Truck className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <p>Nenhum carregamento pendente</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {carregamentosFiltrados.map((item) => {
                   const Icon = item.tipo === 'entrega' ? PackageCheck : Truck;
                   const data = item.tipo === 'entrega' ? item.data_entrega : item.data_instalacao;
                   const responsavel = item.tipo === 'entrega' 
                     ? item.responsavel_entrega_nome 
                     : item.responsavel_instalacao_nome;
 
-                  return (
-                    <Card 
-                      key={item.id} 
-                      className={cn(
-                        "hover:shadow-md transition-all overflow-hidden",
-                        item.status !== 'pronta_fabrica' && "opacity-60"
+            return (
+              <Card 
+                key={item.id} 
+                className={cn(
+                  "hover:shadow-md transition-all cursor-pointer",
+                  item.status !== 'pronta_fabrica' && "opacity-60"
+                )}
+                onClick={() => item.status === 'pronta_fabrica' && handleIniciarColeta(item)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant={item.tipo === 'entrega' ? 'default' : 'outline'} className="flex items-center gap-1">
+                          <Icon className="h-3 w-3" />
+                          {item.tipo === 'entrega' ? 'Entrega' : 'Instalação'}
+                        </Badge>
+                        <Badge variant={item.status === 'pronta_fabrica' ? 'default' : 'secondary'}>
+                          {item.status === 'pronta_fabrica' ? 'Pronta' : 'Aguardando'}
+                        </Badge>
+                      </div>
+                      <p className="font-bold text-base truncate">{item.nome_cliente}</p>
+                      {item.pedido?.numero_pedido && (
+                        <p className="text-sm text-muted-foreground">
+                          Pedido #{item.pedido.numero_pedido}
+                        </p>
                       )}
-                    >
-                      {/* HEADER */}
-                      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center justify-center">
-                        <div className="flex items-center justify-between w-full gap-4 h-full">
-                          <div className="flex items-center gap-3 text-xs">
-                            <Badge variant={item.tipo === 'entrega' ? 'default' : 'outline'} className="flex items-center gap-1">
-                              <Icon className="h-3 w-3" />
-                              {item.tipo === 'entrega' ? 'Entrega' : 'Instalação'}
-                            </Badge>
-                            <span className="font-bold">
-                              {item.nome_cliente}
-                            </span>
-                            {item.pedido?.numero_pedido && (
-                              <span className="text-muted-foreground">
-                                Pedido #{item.pedido.numero_pedido}
-                              </span>
-                            )}
-                            {data && (
-                              <span className="text-muted-foreground">
-                                {format(new Date(data), "dd/MM/yyyy", { locale: ptBR })}
-                              </span>
-                            )}
-                          </div>
-                          <Badge variant={item.status === 'pronta_fabrica' ? 'default' : 'secondary'}>
-                            {item.status === 'pronta_fabrica' ? 'Pronta' : 'Aguardando'}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      
-                      {/* BODY */}
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          {/* LATERAL ESQUERDA - Ícone */}
-                          <div className="flex-shrink-0">
-                            <div className="h-[100px] w-[100px] rounded-full bg-muted/50 flex items-center justify-center">
-                              <Icon className="h-10 w-10 text-muted-foreground/50" />
-                            </div>
-                          </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {data && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Data</p>
+                      <p className="text-sm">{format(new Date(data), "dd/MM/yyyy", { locale: ptBR })}</p>
+                    </div>
+                  )}
+                  
+                  {responsavel && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Responsável</p>
+                      <p className="text-sm truncate">{responsavel}</p>
+                    </div>
+                  )}
 
-                          {/* CENTRO - Informações */}
-                          <div className="flex-1 space-y-3 min-w-0">
-                            {responsavel && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Responsável</p>
-                                <p className="text-sm font-semibold truncate">{responsavel}</p>
-                              </div>
-                            )}
+                  <div>
+                    <p className="text-xs text-muted-foreground">Localização</p>
+                    <p className="text-sm truncate">{item.cidade} - {item.estado}</p>
+                  </div>
 
-                            <div>
-                              <p className="text-xs text-muted-foreground">Localização</p>
-                              <p className="text-sm truncate">{item.cidade} - {item.estado}</p>
-                            </div>
+                  {item.telefone_cliente && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Telefone</p>
+                      <p className="text-sm">{item.telefone_cliente}</p>
+                    </div>
+                  )}
 
-                            {item.telefone_cliente && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Telefone</p>
-                                <p className="text-sm">{item.telefone_cliente}</p>
-                              </div>
-                            )}
-                          </div>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleIniciarColeta(item);
+                    }}
+                    disabled={item.status !== 'pronta_fabrica'}
+                    className="w-full"
+                  >
+                    <PackageCheck className="h-4 w-4 mr-2" />
+                    {item.status === 'pronta_fabrica' ? 'Coletar' : 'Aguardar'}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-                          {/* LATERAL DIREITA - Botão */}
-                          <div className="flex-shrink-0">
-                            <Button
-                              size="lg"
-                              variant="default"
-                              onClick={() => handleIniciarColeta(item)}
-                              disabled={item.status !== 'pronta_fabrica'}
-                              className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2"
-                            >
-                              <PackageCheck className="h-8 w-8" />
-                              <span className="text-xs font-semibold">
-                                {item.status === 'pronta_fabrica' ? 'Coletar' : 'Aguardar'}
-                              </span>
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      {/* Sheets para confirmar carregamento */}
-      <ConfirmarCarregamentoSheet
-        entrega={entregaSelecionada}
-        open={sheetEntregaOpen}
-        onOpenChange={setSheetEntregaOpen}
+      {/* Downbar para confirmar carregamento */}
+      <CarregamentoDownbar
+        item={itemSelecionado}
+        open={downbarOpen}
+        onOpenChange={setDownbarOpen}
         onSuccess={() => {
-          setSheetEntregaOpen(false);
-          window.location.reload();
-        }}
-      />
-
-      <ConfirmarCarregamentoInstalacaoSheet
-        instalacao={instalacaoSelecionada}
-        open={sheetInstalacaoOpen}
-        onOpenChange={setSheetInstalacaoOpen}
-        onSuccess={() => {
-          setSheetInstalacaoOpen(false);
+          setDownbarOpen(false);
           window.location.reload();
         }}
       />
