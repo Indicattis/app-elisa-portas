@@ -1477,34 +1477,23 @@ export type Database = {
       }
       instalacoes: {
         Row: {
-          alterado_para_correcao_em: string | null
-          alterado_para_correcao_por: string | null
-          cep: string | null
-          cidade: string
           created_at: string
           created_by: string | null
           data_instalacao: string | null
-          data_producao: string | null
-          descricao: string | null
-          endereco: string | null
-          estado: string
           geocode_precision: string | null
           hora: string
           id: string
           instalacao_concluida: boolean | null
           instalacao_concluida_em: string | null
           instalacao_concluida_por: string | null
-          justificativa_correcao: string | null
           last_geocoded_at: string | null
           latitude: number | null
           longitude: number | null
           nome_cliente: string
           pedido_id: string | null
-          produto: string
           responsavel_instalacao_id: string | null
           responsavel_instalacao_nome: string | null
           status: string | null
-          telefone_cliente: string | null
           tipo_instalacao:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
@@ -1512,34 +1501,23 @@ export type Database = {
           venda_id: string | null
         }
         Insert: {
-          alterado_para_correcao_em?: string | null
-          alterado_para_correcao_por?: string | null
-          cep?: string | null
-          cidade: string
           created_at?: string
           created_by?: string | null
           data_instalacao?: string | null
-          data_producao?: string | null
-          descricao?: string | null
-          endereco?: string | null
-          estado: string
           geocode_precision?: string | null
           hora: string
           id?: string
           instalacao_concluida?: boolean | null
           instalacao_concluida_em?: string | null
           instalacao_concluida_por?: string | null
-          justificativa_correcao?: string | null
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
           nome_cliente: string
           pedido_id?: string | null
-          produto: string
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string | null
-          telefone_cliente?: string | null
           tipo_instalacao?:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
@@ -1547,34 +1525,23 @@ export type Database = {
           venda_id?: string | null
         }
         Update: {
-          alterado_para_correcao_em?: string | null
-          alterado_para_correcao_por?: string | null
-          cep?: string | null
-          cidade?: string
           created_at?: string
           created_by?: string | null
           data_instalacao?: string | null
-          data_producao?: string | null
-          descricao?: string | null
-          endereco?: string | null
-          estado?: string
           geocode_precision?: string | null
           hora?: string
           id?: string
           instalacao_concluida?: boolean | null
           instalacao_concluida_em?: string | null
           instalacao_concluida_por?: string | null
-          justificativa_correcao?: string | null
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
           nome_cliente?: string
           pedido_id?: string | null
-          produto?: string
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string | null
-          telefone_cliente?: string | null
           tipo_instalacao?:
             | Database["public"]["Enums"]["tipo_instalacao_enum"]
             | null
@@ -1582,13 +1549,6 @@ export type Database = {
           venda_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "instalacoes_alterado_para_correcao_por_fkey"
-            columns: ["alterado_para_correcao_por"]
-            isOneToOne: false
-            referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "instalacoes_equipe_id_fkey"
             columns: ["responsavel_instalacao_id"]

@@ -29,9 +29,6 @@ export interface ParcelaInstalacao {
 export interface InstalacaoCadastrada {
   id: string;
   nome_cliente: string;
-  telefone_cliente: string | null;
-  estado: string;
-  cidade: string;
   latitude: number | null;
   longitude: number | null;
   last_geocoded_at: string | null;
@@ -41,10 +38,6 @@ export interface InstalacaoCadastrada {
   tipo_instalacao: 'elisa' | 'autorizados' | null;
   responsavel_instalacao_id: string | null;
   responsavel_instalacao_nome: string | null;
-  data_producao: string | null;
-  justificativa_correcao: string | null;
-  alterado_para_correcao_em: string | null;
-  alterado_para_correcao_por: string | null;
   instalacao_concluida: boolean;
   instalacao_concluida_em: string | null;
   instalacao_concluida_por: string | null;
@@ -53,10 +46,17 @@ export interface InstalacaoCadastrada {
   created_by: string | null;
   venda_id: string | null;
   pedido_id: string | null;
+  hora: string;
   produtos?: ProdutoInstalacao[];
   parcelas?: ParcelaInstalacao[];
   venda?: {
     id: string;
+    cliente_nome: string;
+    cliente_telefone: string | null;
+    estado: string;
+    cidade: string;
+    cep: string | null;
+    endereco_completo: string | null;
     valor_a_receber: number;
     pagamento_na_entrega: boolean;
     forma_pagamento: string;
@@ -75,15 +75,11 @@ export interface InstalacaoCadastrada {
 
 export interface CreateInstalacaoData {
   nome_cliente: string;
-  telefone_cliente?: string;
-  estado: string;
-  cidade: string;
   data_instalacao?: string;
   status?: 'pendente_producao' | 'pronta_fabrica' | 'finalizada';
   tipo_instalacao?: 'elisa' | 'autorizados';
   responsavel_instalacao_id?: string;
   responsavel_instalacao_nome?: string;
-  data_producao?: string;
   pedido_id?: string;
   venda_id?: string;
 }
@@ -106,6 +102,12 @@ export const useInstalacoesCadastradas = () => {
           ),
           venda:vendas!venda_id(
             id,
+            cliente_nome,
+            cliente_telefone,
+            estado,
+            cidade,
+            cep,
+            endereco_completo,
             valor_a_receber,
             pagamento_na_entrega,
             forma_pagamento,
@@ -218,16 +220,13 @@ export const useInstalacoesCadastradas = () => {
         .from('instalacoes')
         .insert([{
           nome_cliente: data.nome_cliente,
-          telefone_cliente: data.telefone_cliente || null,
-          cidade: data.cidade,
-          estado: data.estado,
           data_instalacao: data.data_instalacao && data.data_instalacao.trim() !== '' ? data.data_instalacao : null,
           hora: '08:00',
-          produto: '',
           venda_id: data.venda_id || null,
           pedido_id: data.pedido_id || null,
           tipo_instalacao: data.tipo_instalacao && data.tipo_instalacao.trim() !== '' ? data.tipo_instalacao : null,
           responsavel_instalacao_id: data.responsavel_instalacao_id && data.responsavel_instalacao_id !== '' ? data.responsavel_instalacao_id : null,
+          responsavel_instalacao_nome: data.responsavel_instalacao_nome || null,
           status: 'pendente_producao',
           created_by: user.id,
         }])
@@ -237,11 +236,6 @@ export const useInstalacoesCadastradas = () => {
       if (error) throw error;
 
       toast.success('Instalação cadastrada com sucesso');
-
-      // Trigger geocoding
-      if (instalacao?.id) {
-        geocodeInstalacao(instalacao.id, data.cidade, data.estado);
-      }
 
       await fetchInstalacoes();
       return instalacao?.id || null;
@@ -282,18 +276,6 @@ export const useInstalacoesCadastradas = () => {
       if (error) throw error;
 
       toast.success('Instalação atualizada com sucesso');
-
-      // If cidade or estado changed, trigger geocoding
-      if (data.cidade || data.estado) {
-        const instalacao = instalacoes.find(i => i.id === id);
-        if (instalacao) {
-          geocodeInstalacao(
-            id,
-            data.cidade || instalacao.cidade,
-            data.estado || instalacao.estado
-          );
-        }
-      }
 
       await fetchInstalacoes();
       return true;

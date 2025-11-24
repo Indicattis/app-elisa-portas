@@ -22,6 +22,8 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
             estado,
             cidade,
             cep,
+            bairro,
+            endereco_completo,
             data_venda
           ),
           pedido:pedidos_producao(
@@ -65,9 +67,6 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
         data: inst.data_instalacao,
         hora: inst.hora || '08:00',
         nome_cliente: inst.nome_cliente,
-        cidade: inst.cidade,
-        estado: inst.estado,
-        produto: inst.produto || '',
         equipe_id: inst.responsavel_instalacao_id,
         tipo_instalacao: inst.tipo_instalacao,
         responsavel_instalacao_id: inst.responsavel_instalacao_id,
@@ -75,7 +74,13 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
         venda: inst.venda,
         pedido: inst.pedido,
         created_at: inst.created_at,
-        updated_at: inst.updated_at
+        updated_at: inst.updated_at,
+        venda_id: inst.venda_id,
+        pedido_id: inst.pedido_id,
+        status: inst.status,
+        instalacao_concluida: inst.instalacao_concluida,
+        latitude: inst.latitude,
+        longitude: inst.longitude
       })) as Instalacao[];
     },
   });
@@ -86,12 +91,9 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
         .from("instalacoes")
         .insert([{
           nome_cliente: instalacao.nome_cliente,
-          telefone_cliente: instalacao.telefone_cliente,
-          cidade: instalacao.cidade,
-          estado: instalacao.estado,
+          venda_id: instalacao.id_venda,
           data_instalacao: instalacao.data,
           hora: instalacao.hora,
-          produto: instalacao.produto,
           responsavel_instalacao_id: instalacao.equipe_id,
           status: 'pronta_fabrica',
           created_by: (await supabase.auth.getUser()).data.user?.id,
@@ -117,12 +119,8 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
       const updateData: any = {};
       
       if (data.nome_cliente) updateData.nome_cliente = data.nome_cliente;
-      if (data.telefone_cliente !== undefined) updateData.telefone_cliente = data.telefone_cliente;
-      if (data.cidade) updateData.cidade = data.cidade;
-      if (data.estado) updateData.estado = data.estado;
       if (data.data !== undefined) updateData.data_instalacao = data.data;
       if (data.hora) updateData.hora = data.hora;
-      if (data.produto) updateData.produto = data.produto;
       if (data.equipe_id !== undefined) updateData.responsavel_instalacao_id = data.equipe_id;
       if (data.tipo_instalacao !== undefined) updateData.tipo_instalacao = data.tipo_instalacao;
       if (data.responsavel_instalacao_nome !== undefined) updateData.responsavel_instalacao_nome = data.responsavel_instalacao_nome;
