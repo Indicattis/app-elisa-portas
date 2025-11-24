@@ -74,7 +74,15 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             numero_pedido,
             cliente_nome,
             venda_id,
-            vendas(data_prevista_entrega)
+            vendas(
+              data_prevista_entrega,
+              produtos:produtos_vendas(
+                id,
+                tipo_produto,
+                cor_id,
+                catalogo_cores(nome, codigo_hex)
+              )
+            )
           )
         `)
         .eq('historico', false)
@@ -128,6 +136,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             cliente_nome: ordem.pedido.cliente_nome,
             venda_id: ordem.pedido.venda_id,
             vendas: primeiraVenda,
+            produtos: primeiraVenda?.produtos || [],
           };
         }
 

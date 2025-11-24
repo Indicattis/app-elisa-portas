@@ -32,10 +32,24 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
       // Buscar dados relacionados para cada ordem
       const ordensComDados = await Promise.all(
         ordensData.map(async (ordem) => {
-          // Buscar pedido
+          // Buscar pedido com produtos
           const { data: pedido } = await supabase
             .from('pedidos_producao')
-            .select('id, numero_pedido, cliente_nome')
+            .select(`
+              id, 
+              numero_pedido, 
+              cliente_nome,
+              venda_id,
+              vendas(
+                id,
+                produtos:produtos_vendas(
+                  id,
+                  tipo_produto,
+                  cor_id,
+                  catalogo_cores(nome, codigo_hex)
+                )
+              )
+            `)
             .eq('id', ordem.pedido_id)
             .maybeSingle();
 
@@ -57,9 +71,17 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             .eq('ordem_id', ordem.id)
             .eq('tipo_ordem', 'pintura');
 
+          // Processar produtos da venda
+          const vendasArray = Array.isArray(pedido?.vendas) ? pedido.vendas : [pedido?.vendas];
+          const primeiraVenda = vendasArray.length > 0 ? vendasArray[0] : null;
+          const produtos = primeiraVenda?.produtos || [];
+
           return {
             ...ordem,
-            pedido: pedido || { id: '', numero_pedido: '', cliente_nome: 'Cliente não encontrado', venda_id: undefined },
+            pedido: pedido ? {
+              ...pedido,
+              produtos,
+            } : { id: '', numero_pedido: '', cliente_nome: 'Cliente não encontrado', venda_id: undefined, produtos: [] },
             admin_users: responsavel,
             linhas: linhas || [],
           };
