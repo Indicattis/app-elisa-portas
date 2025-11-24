@@ -93,6 +93,7 @@ import TabelaPrecos from "./pages/TabelaPrecos";
 import Todo from "./pages/Todo";
 import LogisticaHome from "./pages/LogisticaHome";
 import Entregas from "./pages/Entregas";
+import Expedicao from "./pages/Expedicao";
 import VendaView from "./pages/VendaView";
 import PedidoView from "./pages/PedidoView";
 import DRE from "./pages/DRE";
@@ -564,6 +565,16 @@ const App = () => (
                     <ProtectedRoute routeKey="entregas">
                       <DashboardLayout>
                         <Entregas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/expedicao"
+                  element={
+                    <ProtectedRoute routeKey="expedicao">
+                      <DashboardLayout>
+                        <Expedicao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
