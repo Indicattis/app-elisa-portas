@@ -68,10 +68,14 @@ export const CalendarioSemanalExpedicaoDesktop = ({
         if (isSameDay(dataAtual, novaData)) return;
       }
 
+      // Ajustar data para o meio-dia local para evitar problemas de timezone
+      const dataAjustada = new Date(novaData);
+      dataAjustada.setHours(12, 0, 0, 0);
+
       await onUpdateOrdem({
         id: ordemId,
         data: {
-          data_carregamento: format(novaData, "yyyy-MM-dd"),
+          data_carregamento: format(dataAjustada, "yyyy-MM-dd"),
           status: 'agendada',
         },
       });

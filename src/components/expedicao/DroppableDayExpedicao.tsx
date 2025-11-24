@@ -52,10 +52,14 @@ export const DroppableDayExpedicao = ({
     responsavelNome: string
   ) => {
     try {
+      // Ajustar data para o meio-dia local para evitar problemas de timezone
+      const dataAjustada = new Date(date);
+      dataAjustada.setHours(12, 0, 0, 0);
+      
       await onUpdateOrdem({
         id: ordemId,
         data: {
-          data_carregamento: format(date, 'yyyy-MM-dd'),
+          data_carregamento: format(dataAjustada, 'yyyy-MM-dd'),
           hora: hora,
           responsavel_tipo: responsavelTipo,
           responsavel_carregamento_id: responsavelId,
