@@ -1483,7 +1483,7 @@ export type Database = {
           cidade: string
           created_at: string
           created_by: string | null
-          data_instalacao: string
+          data_instalacao: string | null
           data_producao: string | null
           descricao: string | null
           endereco: string | null
@@ -1518,7 +1518,7 @@ export type Database = {
           cidade: string
           created_at?: string
           created_by?: string | null
-          data_instalacao: string
+          data_instalacao?: string | null
           data_producao?: string | null
           descricao?: string | null
           endereco?: string | null
@@ -1553,7 +1553,7 @@ export type Database = {
           cidade?: string
           created_at?: string
           created_by?: string | null
-          data_instalacao?: string
+          data_instalacao?: string | null
           data_producao?: string | null
           descricao?: string | null
           endereco?: string | null

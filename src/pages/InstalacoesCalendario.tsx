@@ -86,9 +86,13 @@ export default function InstalacoesCalendario() {
         id: instalacaoToEdit.id,
         data: {
           data: data.data_instalacao,
-        } as any,
+          tipo_instalacao: data.tipo_instalacao,
+          responsavel_instalacao_id: data.responsavel_instalacao_id,
+          responsavel_instalacao_nome: data.responsavel_instalacao_nome,
+        },
       });
       toast.success("Instalação atualizada com sucesso");
+      setEditDrawerOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar:", error);
       toast.error("Erro ao atualizar instalação");

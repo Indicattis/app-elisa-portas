@@ -62,13 +62,16 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
       return (data || []).map(inst => ({
         id: inst.id,
         id_venda: inst.venda_id,
-        data: inst.data_instalacao || '',
+        data: inst.data_instalacao,
         hora: inst.hora || '08:00',
         nome_cliente: inst.nome_cliente,
         cidade: inst.cidade,
         estado: inst.estado,
         produto: inst.produto || '',
         equipe_id: inst.responsavel_instalacao_id,
+        tipo_instalacao: inst.tipo_instalacao,
+        responsavel_instalacao_id: inst.responsavel_instalacao_id,
+        responsavel_instalacao_nome: inst.responsavel_instalacao_nome,
         venda: inst.venda,
         pedido: inst.pedido,
         created_at: inst.created_at,
@@ -110,24 +113,27 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<InstalacaoFormData> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InstalacaoFormData> & { tipo_instalacao?: 'elisa' | 'autorizados'; responsavel_instalacao_nome?: string; responsavel_instalacao_id?: string } }) => {
       const updateData: any = {};
       
       if (data.nome_cliente) updateData.nome_cliente = data.nome_cliente;
       if (data.telefone_cliente !== undefined) updateData.telefone_cliente = data.telefone_cliente;
       if (data.cidade) updateData.cidade = data.cidade;
       if (data.estado) updateData.estado = data.estado;
-      if (data.data) updateData.data_instalacao = data.data;
+      if (data.data !== undefined) updateData.data_instalacao = data.data;
       if (data.hora) updateData.hora = data.hora;
       if (data.produto) updateData.produto = data.produto;
       if (data.equipe_id !== undefined) updateData.responsavel_instalacao_id = data.equipe_id;
+      if (data.tipo_instalacao !== undefined) updateData.tipo_instalacao = data.tipo_instalacao;
+      if (data.responsavel_instalacao_nome !== undefined) updateData.responsavel_instalacao_nome = data.responsavel_instalacao_nome;
+      if (data.responsavel_instalacao_id !== undefined) updateData.responsavel_instalacao_id = data.responsavel_instalacao_id;
 
       const { data: updated, error } = await supabase
         .from("instalacoes")
         .update(updateData)
         .eq("id", id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return updated;

@@ -99,7 +99,7 @@ export const EditarInstalacaoDrawer = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="sm:max-w-[700px] mx-auto">
+      <SheetContent side="bottom" className="w-full max-w-[700px] mx-auto">
         <SheetHeader>
           <SheetTitle>Editar Instalação</SheetTitle>
           <SheetDescription>
