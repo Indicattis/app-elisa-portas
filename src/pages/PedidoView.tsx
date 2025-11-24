@@ -96,6 +96,13 @@ export default function PedidoView() {
   const { moverParaProximaEtapa } = usePedidosEtapas();
   const { salvarObservacao, getObservacoesPorPorta } = usePedidoPortaObservacoes(id || "");
 
+  // Sincronizar linhas do hook com o estado local do pedido
+  useEffect(() => {
+    if (pedido && linhas) {
+      setPedido(prev => prev ? { ...prev, linhas } : null);
+    }
+  }, [linhas]);
+
   // Buscar usuários ativos para select de observações
   const { data: usuarios = [] } = useQuery({
     queryKey: ['admin-users-active'],
