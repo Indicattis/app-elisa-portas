@@ -51,6 +51,7 @@ export default function EstoqueEdit() {
     peso_porta: number;
     setor_responsavel_producao: string;
     fornecedor_id: string;
+    requer_pintura: boolean;
   }>({
     nome_produto: "",
     descricao_produto: "",
@@ -63,6 +64,7 @@ export default function EstoqueEdit() {
     peso_porta: 0,
     setor_responsavel_producao: "",
     fornecedor_id: "",
+    requer_pintura: false,
   });
 
   const { data: produto, isLoading } = useQuery({
@@ -106,6 +108,7 @@ export default function EstoqueEdit() {
         peso_porta: Number(produto.peso_porta) || 0,
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
         fornecedor_id: produto.fornecedor_id || "",
+        requer_pintura: produto.requer_pintura || false,
       };
       
       console.log('[EstoqueEdit] Novo formData:', newFormData);
@@ -133,6 +136,7 @@ export default function EstoqueEdit() {
         peso_porta: formData.peso_porta || null,
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
         fornecedor_id: formData.fornecedor_id || null,
+        requer_pintura: formData.requer_pintura,
       });
 
       toast({
@@ -370,6 +374,19 @@ export default function EstoqueEdit() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/50">
+              <input
+                type="checkbox"
+                id="requer_pintura"
+                checked={formData.requer_pintura}
+                onChange={(e) => setFormData({ ...formData, requer_pintura: e.target.checked })}
+                className="h-4 w-4 rounded border-input"
+              />
+              <Label htmlFor="requer_pintura" className="cursor-pointer font-medium">
+                Este item requer pintura na produção
+              </Label>
             </div>
 
             <div className="space-y-2">
