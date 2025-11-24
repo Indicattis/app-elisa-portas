@@ -411,137 +411,127 @@ export function PedidoCard({
     return <>
         <Card className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", isSelecionado && "ring-2 ring-primary", emBacklog && "border-l-4 border-l-red-500")} onMouseEnter={() => onSelecionarPedido?.(pedido)} onMouseLeave={() => onSelecionarPedido?.(null)} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
           <CardContent className="p-0 h-full">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
-                    {!isAberto && pedido.numero_pedido && <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {pedido.numero_pedido}
-                      </span>}
-                  </div>
+            <div className="grid grid-cols-[auto_auto_80px_1fr_auto_100px_auto] items-center gap-4 h-full px-4">
+              {/* Drag Handle */}
+              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>}
+              
+              {/* Backlog indicator */}
+              <div className="w-4">
+                {emBacklog && <AlertTriangle className="h-3.5 w-3.5 text-red-500" />}
+              </div>
+              
+              {/* Número do pedido */}
+              <span className="text-xs font-semibold text-muted-foreground">
+                {pedido.numero_pedido || 'S/N'}
+              </span>
+              
+              {/* Nome do cliente */}
+              <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
+              
+              {/* Badges */}
+              <div className="flex items-center gap-2 justify-end">
+                {temPintura && <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                    <Paintbrush className="h-2.5 w-2.5 mr-1" />
+                    Pintura
+                  </Badge>}
+                
+                {isInstalacao && <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                    <Hammer className="h-2.5 w-2.5 mr-1" />
+                    Instalação
+                  </Badge>}
+                
+                {isEntrega && <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                    <Truck className="h-2.5 w-2.5 mr-1" />
+                    Entrega
+                  </Badge>}
+              </div>
+              
+              {/* Tempo relativo */}
+              <span className="text-[10px] text-muted-foreground text-right">
+                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), {
+                  addSuffix: true,
+                  locale: ptBR
+                })}
+              </span>
+              
+              {/* Botões de ação */}
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const actionButtons = [];
+
+                  // Build action buttons array
+                  if (isAberto) {
+                    actionButtons.push(<Button key="preparar" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/pedidos/${pedido.id}/preparacao`); }} title="Preparar Pedido" className={cn("h-6 w-6", linhasCount > 0 ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : "bg-warning/10 text-warning hover:bg-warning/20 border-warning/50")} variant="outline">
+                        <span className="text-[10px] font-semibold">{linhasCount || 0}</span>
+                      </Button>);
+                    if (temLinhas && onMoverEtapa) {
+                      actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção" className="h-6 w-6">
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>);
+                    }
+                  } else if (etapaAtual === 'em_producao') {
+                    actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"} className="h-6 w-6">
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>);
+                  } else if (etapaAtual === 'inspecao_qualidade') {
+                    actionButtons.push(<Button key="avançar" size="icon" onClick={async (e) => {
+                        e.stopPropagation();
+                        const processosNecessarios = await determinarProcessos(pedido.id);
+                        setProcessos(processosNecessarios);
+                        setShowProgresso(true);
+                        if (onMoverEtapa) {
+                          await onMoverEtapa(pedido.id, true, (processoId, status) => {
+                            setProcessos(prev => prev.map(p => p.id === processoId ? {
+                              ...p,
+                              status
+                            } : p));
+                          });
+                          await new Promise(resolve => setTimeout(resolve, 1000));
+                          setShowProgresso(false);
+                        }
+                      }} disabled={!ordemQualidadeConcluida} title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"} className="h-6 w-6">
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>);
+                  } else if (etapaAtual === 'aguardando_pintura') {
+                    actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"} className="h-6 w-6">
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>);
+                  } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                    actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento" className="h-6 w-6">
+                        <Package className="h-3 w-3" />
+                      </Button>);
+                  } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+                    actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="h-6 w-6">
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>);
+                  }
+
+                  // Add eye button
+                  actionButtons.push(<Button key="detalhes" size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setShowDetalhes(true); }} title="Ver detalhes" className="h-6 w-6">
+                      <Eye className="h-3 w-3" />
+                    </Button>);
+
+                  // Add backlog button if applicable
+                  if (emBacklog && motivoBacklog) {
+                    actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="h-6 w-6 bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
+                        <FileText className="h-3 w-3" />
+                      </Button>);
+                  }
+
+                  // Add retroceder button if available
+                  if (isAdmin && etapaAnterior && onRetrocederEtapa) {
+                    actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="h-6 w-6 bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+                        <ArrowLeft className="h-3 w-3" />
+                      </Button>);
+                  }
                   
-                  {/* Círculos de cores à direita */}
-                  {coresUnicas.length > 0 && <div className="flex items-center gap-0.5 flex-shrink-0">
-                      {coresUnicas.slice(0, 5).map((cor, idx) => <div key={idx} className="w-3 h-3 rounded-full border border-border" style={{
-                    backgroundColor: coresMap[cor] || '#999999'
-                  }} title={cor} />)}
-                      {coresUnicas.length > 5 && <span className="text-xs text-muted-foreground ml-1">
-                          +{coresUnicas.length - 5}
-                        </span>}
-                    </div>}
-                </div>
-                
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>{venda?.cliente_telefone}</span>
-                  <span>•</span>
-                  <span className="font-semibold text-primary">
-                    {formatCurrency(venda?.valor_venda || 0)}
-                  </span>
-                  <span>•</span>
-                  <span>{format(new Date(venda?.created_at || Date.now()), "dd/MM/yyyy")}</span>
-                </div>
-                
-                {/* Flags abaixo das informações */}
-                {(config || temPintura || isInstalacao || isEntrega) && <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                    {config && <Badge variant="outline" className={cn("text-xs px-1.5 py-0", emBacklog ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/50" : "bg-muted/50")}>
-                        {config.label}
-                      </Badge>}
-                    
-                    {temPintura && <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
-                        <Paintbrush className="h-3 w-3 mr-1" />
-                        Pintura
-                      </Badge>}
-                    
-                    {isInstalacao && <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
-                        <Hammer className="h-3 w-3 mr-1" />
-                        Instalação
-                      </Badge>}
-                    
-                    {isEntrega && <Badge variant="outline" className="text-xs px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
-                        <Truck className="h-3 w-3 mr-1" />
-                        Entrega
-                      </Badge>}
-                  </div>}
+                  return actionButtons;
+                })()}
               </div>
             </div>
           </CardContent>
-
-          <CardFooter className="pt-0 pb-2 bg-muted/20 border-t">
-            {(() => {
-            const actionButtons = [];
-
-            // Build action buttons array
-            if (isAberto) {
-              actionButtons.push(<Button key="preparar" size="icon" onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)} title="Preparar Pedido" className={linhasCount > 0 ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : "bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"} variant="outline">
-                  <span className="text-xs font-semibold">{linhasCount || 0}</span>
-                </Button>);
-              if (temLinhas && onMoverEtapa) {
-                actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>);
-              }
-            } else if (etapaAtual === 'em_producao') {
-              actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={() => setShowAvancarQualidade(true)} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-            } else if (etapaAtual === 'inspecao_qualidade') {
-              actionButtons.push(<Button key="avançar" size="icon" onClick={async () => {
-                const processosNecessarios = await determinarProcessos(pedido.id);
-                setProcessos(processosNecessarios);
-                setShowProgresso(true);
-                if (onMoverEtapa) {
-                  await onMoverEtapa(pedido.id, true, (processoId, status) => {
-                    setProcessos(prev => prev.map(p => p.id === processoId ? {
-                      ...p,
-                      status
-                    } : p));
-                  });
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                  setShowProgresso(false);
-                }
-              }} disabled={!ordemQualidadeConcluida} title={!ordemQualidadeConcluida ? "Conclua todas as inspeções de qualidade primeiro" : "Avançar"}>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-            } else if (etapaAtual === 'aguardando_pintura') {
-              actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowConfirmarAvanco(true)} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-            } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-              actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={() => setShowDefinirData(true)} title="Definir Data de Carregamento">
-                  <Package className="h-3.5 w-3.5" />
-                </Button>);
-            } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-              actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowAcaoEtapa(true)} title="Avançar">
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>);
-            }
-
-            // Add eye button to action buttons
-            actionButtons.push(<Button key="detalhes" size="icon" variant="ghost" onClick={() => setShowDetalhes(true)} title="Ver detalhes">
-                <Eye className="h-3.5 w-3.5" />
-              </Button>);
-
-            // Add backlog button if applicable
-            if (emBacklog && motivoBacklog) {
-              actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={() => setShowVisualizarBacklog(true)} title="Ver justificativa do backlog" className="bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
-                  <FileText className="h-3.5 w-3.5" />
-                </Button>);
-            }
-
-            // Add retroceder button if available
-            if (isAdmin && etapaAnterior && onRetrocederEtapa) {
-              actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={() => setShowRetrocederEtapa(true)} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                </Button>);
-            }
-            return <div className="flex items-center gap-1 justify-center">
-                {actionButtons.map(button => React.cloneElement(button, {
-                className: `${button.props.className || ''} h-7 w-7`.trim()
-              }))}
-              </div>;
-          })()}
-          </CardFooter>
         </Card>
 
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
