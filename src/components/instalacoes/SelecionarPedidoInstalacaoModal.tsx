@@ -68,16 +68,17 @@ export function SelecionarPedidoInstalacaoModal({
             data_prevista_entrega
           )
         `)
-        .in('etapa_atual', ['aguardando_instalacao', 'aguardando_coleta'])
+        .eq('etapa_atual', 'expedicao_instalacao')
         .order('numero_pedido', { ascending: false });
 
       if (error) throw error;
 
-      // Buscar instalações existentes para filtrar pedidos que já têm instalação
+      // Buscar instalações existentes COM DATA para filtrar apenas pedidos já agendados
       const { data: instalacoesExistentes } = await supabase
         .from('instalacoes')
         .select('pedido_id')
-        .not('pedido_id', 'is', null);
+        .not('pedido_id', 'is', null)
+        .not('data_instalacao', 'is', null);
 
       const pedidosComInstalacao = new Set(
         instalacoesExistentes?.map(i => i.pedido_id) || []
@@ -129,10 +130,10 @@ export function SelecionarPedidoInstalacaoModal({
 
       if (insertError) throw insertError;
 
-      // Atualizar data_carregamento do pedido
+      // Atualizar data_producao do pedido (data de carregamento)
       const { error: updateError } = await supabase
         .from('pedidos_producao')
-        .update({ data_carregamento: dataFormatada })
+        .update({ data_producao: dataFormatada })
         .eq('id', pedido.id);
 
       if (updateError) throw updateError;
@@ -206,7 +207,7 @@ export function SelecionarPedidoInstalacaoModal({
                           <Package className="h-4 w-4 text-muted-foreground" />
                           <span className="font-semibold">{pedido.numero_pedido}</span>
                           <span className="text-xs text-muted-foreground">
-                            ({pedido.etapa_atual === 'aguardando_instalacao' ? 'Aguardando Instalação' : 'Aguardando Coleta'})
+                            (Expedição Instalação)
                           </span>
                         </div>
                         
