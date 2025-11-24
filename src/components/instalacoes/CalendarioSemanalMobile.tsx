@@ -13,7 +13,7 @@ interface CalendarioSemanalMobileProps {
   onToday: () => void;
   onDayClick: (date: Date) => void;
   onEdit: (instalacao: Instalacao) => void;
-  onDelete: (id: string) => void;
+  onRemoverDoCalendario: (id: string) => void;
 }
 
 export const CalendarioSemanalMobile = ({
@@ -24,7 +24,7 @@ export const CalendarioSemanalMobile = ({
   onToday,
   onDayClick,
   onEdit,
-  onDelete,
+  onRemoverDoCalendario,
 }: CalendarioSemanalMobileProps) => {
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -61,7 +61,7 @@ export const CalendarioSemanalMobile = ({
             instalacoes={instalacoes}
             onDayClick={onDayClick}
             onEdit={onEdit}
-            onDelete={onDelete}
+            onRemoverDoCalendario={onRemoverDoCalendario}
           />
         ))}
       </div>

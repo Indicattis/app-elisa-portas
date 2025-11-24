@@ -15,7 +15,7 @@ interface DroppableDayProps {
   instalacoes: Instalacao[];
   onDayClick: (date: Date) => void;
   onEdit: (instalacao: Instalacao) => void;
-  onDelete: (id: string) => void;
+  onRemoverDoCalendario: (id: string) => void;
   onPedidoDropped?: () => void;
 }
 
@@ -25,7 +25,7 @@ export const DroppableDay = ({
   instalacoes,
   onDayClick,
   onEdit,
-  onDelete,
+  onRemoverDoCalendario,
   onPedidoDropped,
 }: DroppableDayProps) => {
   const { setNodeRef, isOver } = useDroppable({
@@ -86,7 +86,7 @@ export const DroppableDay = ({
             key={instalacao.id}
             instalacao={instalacao}
             onEdit={onEdit}
-            onDelete={onDelete}
+            onRemoverDoCalendario={onRemoverDoCalendario}
           />
         ))}
       </div>

@@ -19,7 +19,7 @@ interface CalendarioSemanalDesktopProps {
   onToday: () => void;
   onUpdateInstalacao: (params: { id: string; data: Partial<Instalacao> }) => Promise<void>;
   onEdit: (instalacao: Instalacao) => void;
-  onDelete: (id: string) => void;
+  onRemoverDoCalendario: (id: string) => void;
   onInstalacaoCriada?: () => void;
   onPedidoDropped?: () => void;
 }
@@ -32,7 +32,7 @@ export const CalendarioSemanalDesktop = ({
   onToday,
   onUpdateInstalacao,
   onEdit,
-  onDelete,
+  onRemoverDoCalendario,
   onInstalacaoCriada,
   onPedidoDropped,
 }: CalendarioSemanalDesktopProps) => {
@@ -180,7 +180,7 @@ export const CalendarioSemanalDesktop = ({
               instalacoes={instalacoes}
               onDayClick={handleDayClick}
               onEdit={onEdit}
-              onDelete={onDelete}
+              onRemoverDoCalendario={onRemoverDoCalendario}
               onPedidoDropped={onPedidoDropped}
             />
           ))}
@@ -193,7 +193,7 @@ export const CalendarioSemanalDesktop = ({
               <DraggableInstalacao
                 instalacao={activeInstalacao}
                 onEdit={onEdit}
-                onDelete={onDelete}
+                onRemoverDoCalendario={onRemoverDoCalendario}
               />
             </div>
           ) : null}
