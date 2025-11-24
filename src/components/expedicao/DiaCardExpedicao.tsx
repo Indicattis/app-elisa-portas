@@ -12,16 +12,14 @@ interface DiaCardExpedicaoProps {
   date: Date;
   ordens: OrdemCarregamento[];
   onDayClick: (date: Date) => void;
-  onEdit: (ordem: OrdemCarregamento) => void;
-  onRemoverDoCalendario: (id: string) => void;
+  onOrdemClick?: (ordem: OrdemCarregamento) => void;
 }
 
 export const DiaCardExpedicao = ({
   date,
   ordens,
   onDayClick,
-  onEdit,
-  onRemoverDoCalendario,
+  onOrdemClick,
 }: DiaCardExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const hoje = new Date();
@@ -76,8 +74,7 @@ export const DiaCardExpedicao = ({
               <OrdemCarregamentoCard
                 key={ordem.id}
                 ordem={ordem}
-                onEdit={onEdit}
-                onRemoverDoCalendario={onRemoverDoCalendario}
+                onClick={onOrdemClick}
               />
             ))
           )}
