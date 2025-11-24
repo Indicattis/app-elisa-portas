@@ -120,7 +120,7 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
 
       // Buscar instalações existentes para filtrar pedidos que já têm instalação
       const { data: instalacoesExistentes } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select('pedido_id')
         .not('pedido_id', 'is', null);
 

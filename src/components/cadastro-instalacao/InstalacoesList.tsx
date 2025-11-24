@@ -55,7 +55,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
   const handleSaveDataProducao = async (instalacaoId: string, dataProducao: string) => {
     try {
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update({ data_producao: dataProducao })
         .eq('id', instalacaoId);
 
@@ -96,7 +96,7 @@ export const InstalacoesList = ({ instalacoes, onDelete, onUpdate }: InstalacaoL
       const tipoFormatado = tipoInstalacao === 'autorizado' ? 'autorizados' : 'elisa';
       
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update({
           tipo_instalacao: tipoFormatado,
           responsavel_instalacao_id: responsavelId,

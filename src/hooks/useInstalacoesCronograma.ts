@@ -29,7 +29,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
       
       // Buscar instalações com joins para equipes e autorizados
       const { data, error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select(`
           *,
           pedido:pedidos_producao(id, numero_pedido, etapa_atual),
@@ -94,7 +94,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
 
       // Atualizar a instalação
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update({
           data_instalacao: dataFormatada,
           responsavel_instalacao_id: novaEquipeId,
@@ -126,7 +126,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
         {
           event: '*',
           schema: 'public',
-          table: 'instalacoes_cadastradas'
+          table: 'instalacoes'
         },
         () => {
           fetchInstalacoes();

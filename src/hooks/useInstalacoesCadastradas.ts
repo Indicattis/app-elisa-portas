@@ -96,7 +96,7 @@ export const useInstalacoesCadastradas = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select(`
           *,
           pedido:pedidos_producao!pedido_id(
@@ -214,23 +214,23 @@ export const useInstalacoesCadastradas = () => {
         return null;
       }
 
-      const { data_instalacao, tipo_instalacao, responsavel_instalacao_id, ...restData } = data;
-      
       const { data: instalacao, error } = await supabase
-        .from('instalacoes_cadastradas')
-        .insert({
-          ...restData,
-          data_instalacao: data_instalacao && data_instalacao.trim() !== '' 
-            ? data_instalacao 
-            : null,
-          tipo_instalacao: tipo_instalacao && tipo_instalacao.trim() !== ''
-            ? tipo_instalacao
-            : null,
-          responsavel_instalacao_id: responsavel_instalacao_id && responsavel_instalacao_id !== '' && responsavel_instalacao_id.trim() !== ''
-            ? responsavel_instalacao_id
-            : null,
+        .from('instalacoes')
+        .insert([{
+          nome_cliente: data.nome_cliente,
+          telefone_cliente: data.telefone_cliente || null,
+          cidade: data.cidade,
+          estado: data.estado,
+          data_instalacao: data.data_instalacao && data.data_instalacao.trim() !== '' ? data.data_instalacao : null,
+          hora: '08:00',
+          produto: '',
+          venda_id: data.venda_id || null,
+          pedido_id: data.pedido_id || null,
+          tipo_instalacao: data.tipo_instalacao && data.tipo_instalacao.trim() !== '' ? data.tipo_instalacao : null,
+          responsavel_instalacao_id: data.responsavel_instalacao_id && data.responsavel_instalacao_id !== '' ? data.responsavel_instalacao_id : null,
+          status: 'pendente_producao',
           created_by: user.id,
-        })
+        }])
         .select()
         .single();
 
@@ -275,7 +275,7 @@ export const useInstalacoesCadastradas = () => {
       };
       
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update(sanitizedData)
         .eq('id', id);
 
@@ -307,7 +307,7 @@ export const useInstalacoesCadastradas = () => {
   const deleteInstalacao = async (id: string): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .delete()
         .eq('id', id);
 
@@ -352,13 +352,13 @@ export const useInstalacoesCadastradas = () => {
 
     // Subscribe to changes
     const subscription = supabase
-      .channel('instalacoes_cadastradas_changes')
+      .channel('instalacoes_changes')
       .on('postgres_changes', 
         { 
           event: '*', 
           schema: 'public', 
-          table: 'instalacoes_cadastradas' 
-        }, 
+          table: 'instalacoes' 
+        },
         () => {
           fetchInstalacoes();
         }
@@ -373,7 +373,7 @@ export const useInstalacoesCadastradas = () => {
   const updateStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update({ status })
         .eq('id', id);
 

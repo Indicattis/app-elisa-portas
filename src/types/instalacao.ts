@@ -16,6 +16,30 @@ export interface Instalacao {
   updated_at: string;
   venda?: VendaSimplificada;
   equipe?: EquipeInstalacao;
+  pedido?: {
+    id: string;
+    numero_pedido: string;
+    etapa_atual: string;
+  };
+  // Campos adicionais da tabela unificada
+  venda_id?: string | null;
+  telefone_cliente?: string | null;
+  pedido_id?: string | null;
+  responsavel_instalacao_id?: string | null;
+  responsavel_instalacao_nome?: string | null;
+  status?: string;
+  tipo_instalacao?: 'elisa' | 'autorizados' | null;
+  data_producao?: string | null;
+  instalacao_concluida?: boolean;
+  instalacao_concluida_em?: string | null;
+  instalacao_concluida_por?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  last_geocoded_at?: string | null;
+  geocode_precision?: string | null;
+  justificativa_correcao?: string | null;
+  alterado_para_correcao_em?: string | null;
+  alterado_para_correcao_por?: string | null;
 }
 
 export interface EquipeInstalacao {

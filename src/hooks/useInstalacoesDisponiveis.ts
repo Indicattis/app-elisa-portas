@@ -27,7 +27,7 @@ export function useInstalacoesDisponiveis() {
     try {
       // Buscar instalações com pedidos
       const { data: instalacoes, error: instError } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select(`
           id,
           nome_cliente,
@@ -37,7 +37,7 @@ export function useInstalacoesDisponiveis() {
           data_instalacao,
           pedido_id,
           venda_id,
-          pedido:pedidos_producao!instalacoes_cadastradas_pedido_id_fkey(
+          pedido:pedidos_producao(
             id,
             numero_pedido
           )

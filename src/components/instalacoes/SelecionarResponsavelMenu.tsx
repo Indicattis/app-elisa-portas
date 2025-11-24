@@ -46,7 +46,7 @@ export function SelecionarResponsavelMenu({
       };
 
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update(updateData)
         .eq('id', instalacaoId);
 

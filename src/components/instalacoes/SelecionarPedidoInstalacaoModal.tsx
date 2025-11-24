@@ -75,7 +75,7 @@ export function SelecionarPedidoInstalacaoModal({
 
       // Buscar instalações existentes para filtrar pedidos que já têm instalação
       const { data: instalacoesExistentes } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select('pedido_id')
         .not('pedido_id', 'is', null);
 
@@ -110,7 +110,7 @@ export function SelecionarPedidoInstalacaoModal({
 
       // Criar instalação vinculada ao pedido
       const { error: insertError } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .insert({
           pedido_id: pedido.id,
           venda_id: pedido.venda.id,
@@ -119,8 +119,10 @@ export function SelecionarPedidoInstalacaoModal({
           cidade: pedido.venda.cidade || '',
           estado: pedido.venda.estado || '',
           data_instalacao: dataFormatada,
+          hora: '08:00',
+          produto: '',
           status: 'pronta_fabrica',
-          tipo_instalacao: null, // Sem responsável inicialmente
+          tipo_instalacao: null,
           responsavel_instalacao_id: null,
           responsavel_instalacao_nome: null
         });
