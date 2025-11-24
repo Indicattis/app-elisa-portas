@@ -28,6 +28,28 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
     fetchOrdensDisponiveis();
   }, []);
 
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('ordens-disponiveis-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ordens_carregamento'
+        },
+        () => {
+          fetchOrdensDisponiveis();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const fetchOrdensDisponiveis = async () => {
     setLoading(true);
     try {

@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MoreVertical, Pencil, XCircle, Package, MapPin, Info } from "lucide-react";
+import { MoreVertical, Pencil, XCircle, Package, MapPin, Info, UserCog } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 
 interface OrdemCarregamentoCardProps {
@@ -10,6 +10,7 @@ interface OrdemCarregamentoCardProps {
   onEdit: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario: (id: string) => void;
   onClick?: (ordem: OrdemCarregamento) => void;
+  onAlterarResponsavel?: (ordem: OrdemCarregamento) => void;
 }
 
 export const OrdemCarregamentoCard = ({
@@ -17,15 +18,20 @@ export const OrdemCarregamentoCard = ({
   onEdit,
   onRemoverDoCalendario,
   onClick,
+  onAlterarResponsavel,
 }: OrdemCarregamentoCardProps) => {
-  const getStatusColor = (status: string | null) => {
+  const getStatusColor = (status: string | null, tipoCarregamento: string | null) => {
+    // Cores baseadas no tipo de carregamento
+    if (tipoCarregamento === 'elisa') {
+      return 'bg-blue-500/10 border-blue-500/30';
+    } else if (tipoCarregamento === 'autorizados') {
+      return 'bg-purple-500/10 border-purple-500/30';
+    }
+    
+    // Fallback para cores de status
     switch (status) {
       case 'pendente':
         return 'bg-yellow-500/10 border-yellow-500/30';
-      case 'agendada':
-        return 'bg-blue-500/10 border-blue-500/30';
-      case 'em_carregamento':
-        return 'bg-purple-500/10 border-purple-500/30';
       case 'concluida':
         return 'bg-green-500/10 border-green-500/30';
       default:
@@ -35,7 +41,7 @@ export const OrdemCarregamentoCard = ({
 
   return (
     <Card 
-      className={`relative h-[35px] p-2 border transition-all duration-200 cursor-pointer ${getStatusColor(ordem.status)}`}
+      className={`relative h-[35px] p-2 border transition-all duration-200 cursor-pointer ${getStatusColor(ordem.status, ordem.tipo_carregamento)}`}
       onClick={() => onClick?.(ordem)}
     >
       {/* Header - Sempre visível */}
@@ -112,6 +118,10 @@ export const OrdemCarregamentoCard = ({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onAlterarResponsavel?.(ordem)}>
+                <UserCog className="h-4 w-4 mr-2" />
+                Alterar Responsável
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(ordem)}>
                 <Pencil className="h-4 w-4 mr-2" />
                 Editar
