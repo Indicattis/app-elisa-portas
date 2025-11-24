@@ -212,39 +212,44 @@ export function OrdemDetalhesSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto flex flex-col">
-        {/* Header fixo de 50px */}
-        <div className="h-[50px] flex-shrink-0 flex items-center justify-between gap-4 pb-4 border-b">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-semibold truncate">{ordem.numero_ordem}</span>
-            <span className="text-sm text-muted-foreground truncate">{ordem.pedido?.cliente_nome}</span>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs text-muted-foreground">Ped. {ordem.pedido?.numero_pedido}</span>
-            {ordem.capturada_em && (
-              <div className="flex items-center gap-1">
-                <Clock className={`h-3.5 w-3.5 text-orange-500 ${deveAnimar ? 'animate-pulse' : ''}`} />
-                <span className="text-xs font-mono text-orange-600 dark:text-orange-400">
-                  {tempoDecorrido}
-                </span>
-              </div>
-            )}
-            <Badge variant={
-              ordem.status === 'concluido' || ordem.status === 'pronta' ? 'default' : 'secondary'
-            } className="text-xs">
-              {tipoOrdem === 'pintura' ? (
-                ordem.status === 'pendente' ? 'Para Pintar' :
-                ordem.status === 'pintando' ? 'Pintando' :
-                ordem.status === 'pronta' ? 'Pronta' : ordem.status
-              ) : (
-                ordem.status === 'concluido' ? 'Concluído' : 'Pendente'
+      <SheetContent 
+        side="bottom" 
+        className="h-[80vh] max-w-[700px] mx-auto rounded-t-xl overflow-y-auto flex flex-col p-0"
+      >
+        {/* Header fixo */}
+        <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-semibold truncate">{ordem.numero_ordem}</span>
+              <span className="text-sm text-muted-foreground truncate">{ordem.pedido?.cliente_nome}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs text-muted-foreground">Ped. {ordem.pedido?.numero_pedido}</span>
+              {ordem.capturada_em && (
+                <div className="flex items-center gap-1">
+                  <Clock className={`h-3.5 w-3.5 text-orange-500 ${deveAnimar ? 'animate-pulse' : ''}`} />
+                  <span className="text-xs font-mono text-orange-600 dark:text-orange-400">
+                    {tempoDecorrido}
+                  </span>
+                </div>
               )}
-            </Badge>
+              <Badge variant={
+                ordem.status === 'concluido' || ordem.status === 'pronta' ? 'default' : 'secondary'
+              } className="text-xs">
+                {tipoOrdem === 'pintura' ? (
+                  ordem.status === 'pendente' ? 'Para Pintar' :
+                  ordem.status === 'pintando' ? 'Pintando' :
+                  ordem.status === 'pronta' ? 'Pronta' : ordem.status
+                ) : (
+                  ordem.status === 'concluido' ? 'Concluído' : 'Pendente'
+                )}
+              </Badge>
+            </div>
           </div>
         </div>
 
         {/* Conteúdo scrollável */}
-        <div className="flex-1 overflow-y-auto mt-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Informações da ordem */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
