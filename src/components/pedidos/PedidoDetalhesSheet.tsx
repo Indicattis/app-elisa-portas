@@ -125,27 +125,32 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
-          <div className="flex items-center justify-between">
-            <SheetTitle>Detalhes do Pedido</SheetTitle>
-            {venda.id && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onOpenChange(false);
-                  navigate(`/dashboard/vendas/${venda.id}/view`);
-                }}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Ver Venda
-              </Button>
-            )}
-          </div>
-        </SheetHeader>
+      <SheetContent 
+        side="bottom" 
+        className="h-[80vh] max-w-[700px] mx-auto rounded-t-xl overflow-y-auto flex flex-col p-0"
+      >
+        <div className="sticky top-0 bg-background z-10 border-b px-6 py-4">
+          <SheetHeader>
+            <div className="flex items-center justify-between">
+              <SheetTitle>Detalhes do Pedido</SheetTitle>
+              {venda.id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/dashboard/vendas/${venda.id}/view`);
+                  }}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Ver Venda
+                </Button>
+              )}
+            </div>
+          </SheetHeader>
+        </div>
 
-        <div className="mt-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Informações do Pedido */}
           {pedido.numero_pedido && (
             <div>
