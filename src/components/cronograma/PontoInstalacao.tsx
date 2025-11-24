@@ -21,7 +21,7 @@ export function PontoInstalacao({
     onDragStart({
       id: instalacao.id,
       equipId: instalacao.responsavel_instalacao_id || '',
-      cidade: instalacao.cidade
+      cidade: instalacao.venda?.cidade || ''
     });
   };
 
@@ -65,7 +65,7 @@ export function PontoInstalacao({
         
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3" />
-          <span className="truncate">{instalacao.cidade}</span>
+          <span className="truncate">{instalacao.venda?.cidade || 'N/A'}</span>
         </div>
 
         <div className="flex flex-wrap gap-1">
