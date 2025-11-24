@@ -19,7 +19,6 @@ interface CalendarioMensalExpedicaoDesktopProps {
   onOrdemCriada?: () => void;
   onOrdemDropped?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
-  onAlterarResponsavel?: (ordem: OrdemCarregamento) => void;
 }
 
 export const CalendarioMensalExpedicaoDesktop = ({
@@ -32,7 +31,6 @@ export const CalendarioMensalExpedicaoDesktop = ({
   onOrdemCriada,
   onOrdemDropped,
   onOrdemClick,
-  onAlterarResponsavel,
 }: CalendarioMensalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
 
@@ -58,20 +56,13 @@ export const CalendarioMensalExpedicaoDesktop = ({
     
     setActiveOrdem(null);
 
-    if (!over || !over.data.current?.date) return;
+    if (!over || active.id === over.id) return;
 
-    const novaData = over.data.current.date as Date;
-    const ordemId = active.id as string;
-    const ordem = ordens.find((o) => o.id === ordemId);
-    
-    // Verificar se a data realmente mudou
-    if (ordem?.data_carregamento) {
-      const dataAtual = format(new Date(ordem.data_carregamento), "yyyy-MM-dd");
-      const novaDataFormatada = format(novaData, "yyyy-MM-dd");
-      if (dataAtual === novaDataFormatada) return;
-    }
+    const novaData = over.data.current?.date as Date;
+    if (!novaData) return;
 
     try {
+      const ordemId = active.id as string;
       const dataFormatada = format(novaData, "yyyy-MM-dd");
       
       await onUpdateOrdem({
@@ -81,9 +72,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
           status: 'agendada',
         },
       });
-      
       toast.success("Data de carregamento atualizada");
-      onOrdemDropped?.();
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao atualizar data");
@@ -177,7 +166,6 @@ export const CalendarioMensalExpedicaoDesktop = ({
                 onOrdemDropped={onOrdemDropped}
                 onUpdateOrdem={onUpdateOrdem}
                 onOrdemClick={onOrdemClick}
-                onAlterarResponsavel={onAlterarResponsavel}
               />
             ))}
           </div>
@@ -190,6 +178,8 @@ export const CalendarioMensalExpedicaoDesktop = ({
           <div className="opacity-80">
             <OrdemCarregamentoCard
               ordem={activeOrdem}
+              onEdit={() => {}}
+              onRemoverDoCalendario={() => {}}
             />
           </div>
         )}

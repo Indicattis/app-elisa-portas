@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus, Download, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,9 +12,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import logoExpedicao from "@/assets/logo-instalacoes.png";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
-import { OrdemCarregamentoActions } from "@/components/expedicao/OrdemCarregamentoActions";
-import { AlterarResponsavelModal } from "@/components/expedicao/AlterarResponsavelModal";
-import { supabase } from "@/integrations/supabase/client";
+import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 
 export default function Expedicao() {
   const isMobile = useIsMobile();
@@ -27,9 +25,7 @@ export default function Expedicao() {
   
   const [refreshOrdensDisponiveis, setRefreshOrdensDisponiveis] = useState(0);
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
-  const [actionsOpen, setActionsOpen] = useState(false);
-  const [alterarResponsavelOpen, setAlterarResponsavelOpen] = useState(false);
-  const [ordemParaAlterar, setOrdemParaAlterar] = useState<OrdemCarregamento | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Configurar sensores para mobile e desktop
   const mouseSensor = useSensor(MouseSensor);
@@ -40,29 +36,6 @@ export default function Expedicao() {
     },
   });
   const sensors = useSensors(mouseSensor, touchSensor);
-
-  // Realtime subscription para atualizar ordens
-  useEffect(() => {
-    const channel = supabase
-      .channel('ordens-carregamento-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'ordens_carregamento'
-        },
-        () => {
-          // Refresh ordens quando houver mudanças
-          setRefreshOrdensDisponiveis(prev => prev + 1);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -105,14 +78,9 @@ export default function Expedicao() {
     try {
       await updateOrdem({
         id,
-        data: { 
-          data_carregamento: null, 
-          hora: null,
-          status: 'pendente' 
-        },
+        data: { data_carregamento: null, status: 'pendente' },
       });
       toast.success("Ordem removida do calendário");
-      setRefreshOrdensDisponiveis(prev => prev + 1);
     } catch (error) {
       console.error("Erro ao remover:", error);
       toast.error("Erro ao remover ordem do calendário");
@@ -125,16 +93,7 @@ export default function Expedicao() {
 
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
     setSelectedOrdem(ordem);
-    setActionsOpen(true);
-  };
-
-  const handleAlterarResponsavel = (ordem: OrdemCarregamento) => {
-    setOrdemParaAlterar(ordem);
-    setAlterarResponsavelOpen(true);
-  };
-
-  const handleResponsavelAlterado = () => {
-    setRefreshOrdensDisponiveis(prev => prev + 1);
+    setDetailsOpen(true);
   };
 
   return (
@@ -197,7 +156,8 @@ export default function Expedicao() {
                 onNextWeek={handleNextWeek}
                 onToday={handleToday}
                 onDayClick={handleDayClick}
-                onOrdemClick={handleOrdemClick}
+                onEdit={handleEdit}
+                onRemoverDoCalendario={handleRemoverDoCalendario}
               />
             ) : (
               tipoVisualizacao === 'semanal' ? (
@@ -212,7 +172,6 @@ export default function Expedicao() {
                   onRemoverDoCalendario={handleRemoverDoCalendario}
                   onOrdemDropped={handleOrdemDropped}
                   onOrdemClick={handleOrdemClick}
-                  onAlterarResponsavel={handleAlterarResponsavel}
                 />
               ) : (
                 <CalendarioMensalExpedicaoDesktop
@@ -224,7 +183,6 @@ export default function Expedicao() {
                   onRemoverDoCalendario={handleRemoverDoCalendario}
                   onOrdemDropped={handleOrdemDropped}
                   onOrdemClick={handleOrdemClick}
-                  onAlterarResponsavel={handleAlterarResponsavel}
                 />
               )
             )}
@@ -237,23 +195,12 @@ export default function Expedicao() {
         )}
       </main>
 
-      {/* Sidebar de Ações */}
-      <OrdemCarregamentoActions
+      {/* Sidebar de Detalhes */}
+      <OrdemCarregamentoDetails
         ordem={selectedOrdem}
-        open={actionsOpen}
-        onOpenChange={setActionsOpen}
-        onEdit={handleEdit}
-        onRemoverDoCalendario={handleRemoverDoCalendario}
-        onAlterarResponsavel={handleAlterarResponsavel}
-      />
-
-      {/* Modal Alterar Responsável */}
-      <AlterarResponsavelModal
-        ordem={ordemParaAlterar}
-        open={alterarResponsavelOpen}
-        onOpenChange={setAlterarResponsavelOpen}
-        onSuccess={handleResponsavelAlterado}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
       />
     </div>
   );
-};
+}
