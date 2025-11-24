@@ -27,14 +27,12 @@ import { useAutorizadosAptos } from '@/hooks/useAutorizadosAptos';
 
 const formSchema = z.object({
   nome_cliente: z.string().min(3, 'Nome do cliente deve ter no mínimo 3 caracteres'),
-  telefone_cliente: z.string().optional(),
-  estado: z.string().min(2, 'Selecione um estado'),
-  cidade: z.string().min(2, 'Selecione uma cidade'),
   data_instalacao: z.string().optional(),
-  data_producao: z.string().optional(),
   status: z.enum(['pendente_producao', 'pronta_fabrica', 'finalizada']).optional(),
   tipo_instalacao: z.string().optional(),
   responsavel_instalacao_id: z.string().optional(),
+  venda_id: z.string().optional(),
+  pedido_id: z.string().optional(),
 });
 
 interface CadastroInstalacaoFormProps {
@@ -49,10 +47,6 @@ export const CadastroInstalacaoForm = ({
   isEditing = false 
 }: CadastroInstalacaoFormProps) => {
   const [submitting, setSubmitting] = useState(false);
-  const [selectedEstado, setSelectedEstado] = useState(initialData?.estado || '');
-  const [cidades, setCidades] = useState<string[]>(
-    initialData?.estado ? getCidadesPorEstado(initialData.estado) : []
-  );
   const [selectedTipoInstalacao, setSelectedTipoInstalacao] = useState<string>(initialData?.tipo_instalacao || '');
   
   const { equipes, loading: loadingEquipes } = useEquipesInstalacao();
@@ -62,23 +56,12 @@ export const CadastroInstalacaoForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       nome_cliente: '',
-      telefone_cliente: '',
-      estado: '',
-      cidade: '',
       data_instalacao: undefined,
-      data_producao: undefined,
       status: 'pendente_producao',
       tipo_instalacao: undefined,
       responsavel_instalacao_id: undefined,
     },
   });
-
-  const handleEstadoChange = (estado: string) => {
-    setSelectedEstado(estado);
-    const cidadesDoEstado = getCidadesPorEstado(estado);
-    setCidades(cidadesDoEstado);
-    form.setValue('cidade', '');
-  };
 
   const handleSubmit = async (values: CreateInstalacaoData) => {
     setSubmitting(true);
@@ -114,8 +97,6 @@ export const CadastroInstalacaoForm = ({
       
       if (!isEditing) {
         form.reset();
-        setSelectedEstado('');
-        setCidades([]);
         setSelectedTipoInstalacao('');
       }
     } finally {
@@ -148,109 +129,17 @@ export const CadastroInstalacaoForm = ({
 
         <FormField
           control={form.control}
-          name="telefone_cliente"
+          name="data_instalacao"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Telefone do Cliente (Opcional)</FormLabel>
+              <FormLabel>Data da Instalação (Opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="(00) 00000-0000" {...field} />
+                <Input type="date" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="estado"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    handleEstadoChange(value);
-                  }}
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o estado" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {ESTADOS_BRASIL.map((estado) => (
-                      <SelectItem key={estado.sigla} value={estado.sigla}>
-                        {estado.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="cidade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cidade</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={!selectedEstado}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a cidade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {cidades.map((cidade) => (
-                      <SelectItem key={cidade} value={cidade}>
-                        {cidade}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="data_instalacao"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data da Instalação (Opcional)</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="data_producao"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data Produção (Opcional)</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         <FormField
           control={form.control}
