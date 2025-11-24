@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'arquivado';
 
 interface OrdemHistorico {
   id: string;
@@ -98,6 +98,55 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
       
       const results = await Promise.all(promises);
       results.forEach(ordens => allOrdens.push(...ordens));
+
+      // Buscar pedidos arquivados
+      let queryPedidos = supabase
+        .from('pedidos_producao')
+        .select(`
+          *,
+          vendas:venda_id (
+            id,
+            cliente_nome,
+            cliente_telefone,
+            valor_venda,
+            created_at
+          )
+        `)
+        .eq('arquivado', true);
+
+      // Aplicar filtros de data nos pedidos arquivados
+      if (filters.dataInicio) {
+        queryPedidos = queryPedidos.gte('data_arquivamento', filters.dataInicio.toISOString());
+      }
+      if (filters.dataFim) {
+        const dataFimFinal = new Date(filters.dataFim);
+        dataFimFinal.setHours(23, 59, 59, 999);
+        queryPedidos = queryPedidos.lte('data_arquivamento', dataFimFinal.toISOString());
+      }
+
+      const { data: pedidosArquivados } = await queryPedidos.order('data_arquivamento', { ascending: false });
+
+      // Converter pedidos arquivados para o formato de ordem
+      if (pedidosArquivados) {
+        for (const pedido of pedidosArquivados) {
+          allOrdens.push({
+            id: pedido.id,
+            numero_ordem: pedido.numero_pedido,
+            pedido_id: pedido.id,
+            tipo_ordem: 'arquivado' as any,
+            status: 'arquivado',
+            responsavel_id: pedido.arquivado_por,
+            data_conclusao: pedido.data_arquivamento,
+            created_at: pedido.created_at,
+            pedido: {
+              id: pedido.id,
+              numero_pedido: pedido.numero_pedido,
+              cliente_nome: (pedido.vendas as any)?.cliente_nome || '',
+            },
+            admin_users: null
+          } as any);
+        }
+      }
       
       // Buscar dados dos responsáveis
       const responsavelIds = allOrdens

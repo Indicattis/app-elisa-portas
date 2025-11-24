@@ -33,7 +33,8 @@ export function usePedidosContadores() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('etapa_atual');
+        .select('etapa_atual')
+        .eq('arquivado', false);
 
       if (error) throw error;
 
@@ -92,6 +93,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           pedidos_etapas (*)
         `)
         .eq('etapa_atual', etapa)
+        .eq('arquivado', false)
         .order('prioridade_etapa', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -818,6 +820,42 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     }
   });
 
+  const arquivarPedido = useMutation({
+    mutationFn: async (pedidoId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+      
+      // Atualizar pedido para arquivado
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ 
+          arquivado: true,
+          data_arquivamento: new Date().toISOString(),
+          arquivado_por: user.id
+        })
+        .eq('id', pedidoId)
+        .eq('etapa_atual', 'finalizado');
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      toast({ 
+        title: "Pedido arquivado", 
+        description: "O pedido foi arquivado com sucesso" 
+      });
+    },
+    onError: (error) => {
+      console.error('[arquivarPedido] Erro:', error);
+      toast({ 
+        title: "Erro ao arquivar", 
+        description: "Não foi possível arquivar o pedido", 
+        variant: "destructive" 
+      });
+    }
+  });
+
   return {
     pedidos,
     isLoading,
@@ -827,5 +865,6 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     getEtapaAtual,
     atualizarPrioridade,
     reorganizarPedidos,
+    arquivarPedido,
   };
 }
