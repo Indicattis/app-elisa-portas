@@ -156,7 +156,7 @@ export default function VendaView() {
       }
 
       const { data: instalacaoData } = await supabase
-        .from("instalacoes_cadastradas")
+        .from("instalacoes")
         .select("id, nome_cliente, data_instalacao")
         .eq("venda_id", id)
         .maybeSingle();

@@ -420,7 +420,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         
         console.log('[moverParaProximaEtapa] Sincronizando instalação:', { etapaDestino, statusInstalacao });
         const { data: instalacaoData, error: instalacaoError } = await supabase
-          .from('instalacoes_cadastradas')
+          .from('instalacoes')
           .update({ status: statusInstalacao })
           .eq('pedido_id', pedidoId)
           .select('id, status');
@@ -526,7 +526,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               
               if (vendaCompleta) {
                 const { error: instalacaoError } = await supabase
-                  .from('instalacoes_cadastradas')
+                  .from('instalacoes')
                   .insert({
                     pedido_id: pedidoId,
                     venda_id: pedidoData.venda_id,
@@ -534,6 +534,9 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
                     telefone_cliente: vendaCompleta.cliente_telefone || '',
                     cidade: vendaCompleta.cidade || '',
                     estado: vendaCompleta.estado || '',
+                    data_instalacao: null,
+                    hora: '08:00',
+                    produto: '',
                     status: 'em_producao',
                     tipo_instalacao: 'elisa',
                     created_by: user.id
@@ -638,7 +641,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           
           // Verificar se já existe instalação
           const { data: instalacaoExistente } = await supabase
-            .from('instalacoes_cadastradas')
+            .from('instalacoes')
             .select('id, status')
             .eq('pedido_id', pedidoId)
             .maybeSingle();
@@ -647,7 +650,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             // Atualizar status da instalação existente
             console.log('[moverParaProximaEtapa] Instalação já existe, atualizando status para pronta_fabrica');
             await supabase
-              .from('instalacoes_cadastradas')
+              .from('instalacoes')
               .update({ status: 'pronta_fabrica' })
               .eq('id', instalacaoExistente.id);
           } else {
@@ -669,7 +672,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               
               if (vendaCompleta) {
                 const { error: instalacaoError } = await supabase
-                  .from('instalacoes_cadastradas')
+                  .from('instalacoes')
                   .insert({
                     pedido_id: pedidoId,
                     venda_id: pedidoData.venda_id,
@@ -677,6 +680,9 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
                     telefone_cliente: vendaCompleta.cliente_telefone || '',
                     cidade: vendaCompleta.cidade || '',
                     estado: vendaCompleta.estado || '',
+                    data_instalacao: null,
+                    hora: '08:00',
+                    produto: '',
                     status: 'pronta_fabrica',
                     tipo_instalacao: 'elisa',
                     created_by: user.id

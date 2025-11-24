@@ -22,13 +22,13 @@ export const useInstalacoesDashboard = () => {
 
       // Instalações pendentes
       const { data: pendentes } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select('id', { count: 'exact' })
         .in('status', ['pendente_producao', 'pronta_fabrica']);
 
       // Instalações concluídas no mês
       const { data: concluidas } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select('id', { count: 'exact' })
         .eq('status', 'finalizada')
         .gte('updated_at', inicioMes)
@@ -36,7 +36,7 @@ export const useInstalacoesDashboard = () => {
 
       // Distribuição por estados
       const { data: estados } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select('estado');
 
       const distribuicaoEstados = estados?.reduce((acc: { [key: string]: number }, item) => {

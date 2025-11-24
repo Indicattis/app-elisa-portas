@@ -130,7 +130,7 @@ export const InstalacoesTabelaView = ({
 
     try {
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update({ status: novoStatus })
         .eq('id', instalacaoParaAlterarStatus.id);
 
@@ -195,7 +195,7 @@ export const InstalacoesTabelaView = ({
   const handleSaveDataProducao = async (instalacaoId: string, dataProducao: string) => {
     try {
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update({ data_producao: dataProducao })
         .eq('id', instalacaoId);
 
@@ -236,7 +236,7 @@ export const InstalacoesTabelaView = ({
       const tipoFormatado = tipoInstalacao === 'autorizado' ? 'autorizados' : 'elisa';
       
       const { error } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update({
           tipo_instalacao: tipoFormatado,
           responsavel_instalacao_id: responsavelId,

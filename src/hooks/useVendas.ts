@@ -235,7 +235,7 @@ export function useVendas() {
       }
       
       const { error: instalacaoError } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .update(updateData)
         .eq('venda_id', venda.id);
 
@@ -265,7 +265,7 @@ export function useVendas() {
 
       // 9. Buscar a instalação para geocodificar
       const { data: instalacao } = await supabase
-        .from('instalacoes_cadastradas')
+        .from('instalacoes')
         .select('id, cidade, estado')
         .eq('venda_id', venda.id)
         .single();

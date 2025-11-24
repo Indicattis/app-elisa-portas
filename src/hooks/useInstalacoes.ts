@@ -11,7 +11,7 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
     queryKey: ["instalacoes", startDate?.toISOString(), viewMode],
     queryFn: async () => {
       let query = supabase
-        .from("instalacoes_cadastradas")
+        .from("instalacoes")
         .select(`
           *,
           venda:vendas(
@@ -63,11 +63,11 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
         id: inst.id,
         id_venda: inst.venda_id,
         data: inst.data_instalacao || '',
-        hora: '08:00', // Valor padrão já que instalacoes_cadastradas não tem hora
+        hora: inst.hora || '08:00',
         nome_cliente: inst.nome_cliente,
         cidade: inst.cidade,
         estado: inst.estado,
-        produto: '', // Não disponível em instalacoes_cadastradas
+        produto: inst.produto || '',
         equipe_id: inst.responsavel_instalacao_id,
         venda: inst.venda,
         pedido: inst.pedido,
@@ -80,13 +80,15 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
   const createMutation = useMutation({
     mutationFn: async (instalacao: InstalacaoFormData) => {
       const { data, error } = await supabase
-        .from("instalacoes_cadastradas")
+        .from("instalacoes")
         .insert([{
           nome_cliente: instalacao.nome_cliente,
           telefone_cliente: instalacao.telefone_cliente,
           cidade: instalacao.cidade,
           estado: instalacao.estado,
           data_instalacao: instalacao.data,
+          hora: instalacao.hora,
+          produto: instalacao.produto,
           responsavel_instalacao_id: instalacao.equipe_id,
           status: 'pronta_fabrica',
           created_by: (await supabase.auth.getUser()).data.user?.id,
@@ -116,10 +118,12 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
       if (data.cidade) updateData.cidade = data.cidade;
       if (data.estado) updateData.estado = data.estado;
       if (data.data) updateData.data_instalacao = data.data;
+      if (data.hora) updateData.hora = data.hora;
+      if (data.produto) updateData.produto = data.produto;
       if (data.equipe_id !== undefined) updateData.responsavel_instalacao_id = data.equipe_id;
 
       const { data: updated, error } = await supabase
-        .from("instalacoes_cadastradas")
+        .from("instalacoes")
         .update(updateData)
         .eq("id", id)
         .select()
@@ -141,7 +145,7 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("instalacoes_cadastradas")
+        .from("instalacoes")
         .delete()
         .eq("id", id);
 

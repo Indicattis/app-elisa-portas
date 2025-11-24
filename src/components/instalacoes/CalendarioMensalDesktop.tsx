@@ -74,7 +74,7 @@ export const CalendarioMensalDesktop = ({
 
         // Criar instalação vinculada ao pedido
         const { error: insertError } = await supabase
-          .from('instalacoes_cadastradas')
+          .from('instalacoes')
           .insert({
             pedido_id: pedido.id,
             venda_id: pedido.venda.id,
@@ -83,6 +83,8 @@ export const CalendarioMensalDesktop = ({
             cidade: pedido.venda.cidade || '',
             estado: pedido.venda.estado || '',
             data_instalacao: dataFormatada,
+            hora: '08:00',
+            produto: '',
             status: 'pronta_fabrica',
             tipo_instalacao: null,
             responsavel_instalacao_id: null,
