@@ -29,17 +29,43 @@ interface PedidosDisponiveisProps {
 }
 
 function DraggablePedidoCard({ pedido }: { pedido: PedidoDisponivel }) {
+  const isExpedicaoInstalacao = pedido.etapa_atual === 'expedicao_instalacao';
+  
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `pedido-${pedido.id}`,
     data: {
       type: 'pedido',
       pedido,
     },
+    disabled: !isExpedicaoInstalacao,
   });
 
   const style = {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const getEtapaLabel = (etapa: string) => {
+    const etapas: Record<string, string> = {
+      aguardando_corte: 'Aguardando Corte',
+      em_corte: 'Em Corte',
+      aguardando_montagem: 'Aguardando Montagem',
+      em_montagem: 'Em Montagem',
+      aguardando_pintura: 'Aguardando Pintura',
+      em_pintura: 'Em Pintura',
+      aguardando_expedicao: 'Aguardando Expedição',
+      expedicao_instalacao: 'Expedição Instalação',
+      aguardando_instalacao: 'Aguardando Instalação',
+      aguardando_coleta: 'Aguardando Coleta',
+      concluido: 'Concluído',
+    };
+    return etapas[etapa] || etapa;
+  };
+
+  const getEtapaColor = (etapa: string) => {
+    if (etapa === 'expedicao_instalacao') return 'bg-green-500/10 text-green-700 border-green-500/20';
+    if (etapa === 'aguardando_instalacao' || etapa === 'aguardando_coleta') return 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20';
+    return 'bg-muted text-muted-foreground border-border';
   };
 
   return (
@@ -48,16 +74,25 @@ function DraggablePedidoCard({ pedido }: { pedido: PedidoDisponivel }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="hover:border-primary transition-colors cursor-grab active:cursor-grabbing"
+      className={`transition-colors ${
+        isExpedicaoInstalacao 
+          ? 'hover:border-primary cursor-grab active:cursor-grabbing' 
+          : 'opacity-60 cursor-not-allowed'
+      }`}
     >
       <CardContent className="p-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Package className="h-4 w-4 text-muted-foreground" />
             <span className="font-semibold">{pedido.numero_pedido}</span>
-            <Badge variant="outline" className="text-xs">
-              {pedido.etapa_atual === 'aguardando_instalacao' ? 'Aguardando Instalação' : 'Aguardando Coleta'}
+            <Badge variant="outline" className={`text-xs ${getEtapaColor(pedido.etapa_atual)}`}>
+              {getEtapaLabel(pedido.etapa_atual)}
             </Badge>
+            {isExpedicaoInstalacao && (
+              <Badge variant="secondary" className="text-xs ml-auto">
+                Pode agendar
+              </Badge>
+            )}
           </div>
 
           <div className="text-sm">
@@ -113,7 +148,6 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
             data_prevista_entrega
           )
         `)
-        .in('etapa_atual', ['aguardando_instalacao', 'aguardando_coleta'])
         .order('numero_pedido', { ascending: false });
 
       if (error) throw error;
@@ -166,7 +200,7 @@ export function PedidosDisponiveis({ onRefresh }: PedidosDisponiveisProps) {
           </Badge>
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Arraste os pedidos para o calendário para criar instalações
+          Apenas pedidos em "Expedição Instalação" podem ser agendados no calendário
         </p>
       </CardHeader>
       <CardContent>
