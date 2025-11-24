@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
-import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
@@ -39,7 +38,6 @@ export default function Pedidos() {
   const [tipoEntrega, setTipoEntrega] = useState('todos');
   const [corPintura, setCorPintura] = useState('todas');
   const [mostrarProntos, setMostrarProntos] = useState(false);
-  const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const ITENS_POR_PAGINA = 25;
   const contadores = usePedidosContadores();
@@ -212,11 +210,7 @@ export default function Pedidos() {
       </div>
 
 
-      {/* Mapa de Fluxograma - sempre exibido */}
-      <PedidoFluxogramaMap pedidoSelecionado={pedidoSelecionado} onClose={() => setPedidoSelecionado(null)} />
-
       {/* Tabs de Etapas */}
-      {/* Tabs de Etapas - Desktop */}
       <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
         {/* Seletor mobile - apenas em telas pequenas */}
         <div className="md:hidden mb-4">
@@ -300,8 +294,6 @@ export default function Pedidos() {
                         etapa={etapa} 
                         isAberto={etapa === 'aberto'} 
                         viewMode={viewMode} 
-                        pedidoSelecionado={pedidoSelecionado} 
-                        onSelecionarPedido={setPedidoSelecionado} 
                         onMoverEtapa={handleMoverEtapa} 
                         onRetrocederEtapa={handleRetrocederEtapa} 
                         onReorganizar={handleReorganizar} 

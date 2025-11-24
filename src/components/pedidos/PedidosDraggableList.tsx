@@ -23,8 +23,6 @@ interface PedidosDraggableListProps {
   etapa: EtapaPedido;
   isAberto: boolean;
   viewMode?: 'grid' | 'list';
-  pedidoSelecionado?: any | null;
-  onSelecionarPedido?: (pedido: any) => void;
   onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
@@ -38,8 +36,6 @@ interface SortableItemProps {
   total: number;
   isAberto: boolean;
   viewMode?: 'grid' | 'list';
-  isSelecionado?: boolean;
-  onSelecionarPedido?: (pedido: any) => void;
   onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
@@ -52,8 +48,6 @@ function SortableItem({
   total,
   isAberto,
   viewMode = 'grid',
-  isSelecionado = false,
-  onSelecionarPedido,
   onMoverEtapa,
   onRetrocederEtapa,
   onMoverPrioridade,
@@ -79,8 +73,6 @@ function SortableItem({
         pedido={pedido}
         isAberto={isAberto}
         viewMode={viewMode}
-        isSelecionado={isSelecionado}
-        onSelecionarPedido={onSelecionarPedido}
         onMoverEtapa={onMoverEtapa}
         onRetrocederEtapa={onRetrocederEtapa}
         onMoverPrioridade={onMoverPrioridade}
@@ -98,8 +90,6 @@ export function PedidosDraggableList({
   etapa,
   isAberto,
   viewMode = 'grid',
-  pedidoSelecionado,
-  onSelecionarPedido,
   onMoverEtapa,
   onRetrocederEtapa,
   onReorganizar,
@@ -177,8 +167,6 @@ export function PedidosDraggableList({
               total={pedidos.length}
               isAberto={isAberto}
               viewMode={viewMode}
-              isSelecionado={pedidoSelecionado?.id === pedido.id}
-              onSelecionarPedido={onSelecionarPedido}
               onMoverEtapa={onMoverEtapa}
               onRetrocederEtapa={onRetrocederEtapa}
               onMoverPrioridade={onMoverPrioridade}
