@@ -81,6 +81,7 @@ import Fornecedores from "./pages/Fornecedores";
 import RequisicoesCompra from "./pages/RequisicoesCompra";
 import Estoque from "./pages/Estoque";
 import EstoqueEdit from "./pages/EstoqueEdit";
+import EstoqueGerenciamento from "./pages/EstoqueGerenciamento";
 import VendasCatalogo from "./pages/VendasCatalogo";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
@@ -1039,9 +1040,19 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/dashboard/administrativo/compras/estoque/gerenciamento"
+                  element={
+                    <ProtectedRoute routeKey="estoque_gerenciamento">
+                      <DashboardLayout>
+                        <EstoqueGerenciamento />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/administrativo/compras/estoque/editar/:id"
                   element={
-                    <ProtectedRoute routeKey="estoque">
+                    <ProtectedRoute routeKey="estoque_editar">
                       <DashboardLayout>
                         <EstoqueEdit />
                       </DashboardLayout>
