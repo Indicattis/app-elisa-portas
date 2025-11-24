@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, Plus, Filter, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { Calendar, Download, Plus, Filter, ChevronLeft, ChevronRight, CalendarDays, Menu, Settings } from "lucide-react";
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { CronogramaInstalacaoMensal } from "@/components/cronograma/CronogramaInstalacaoMensal";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
@@ -11,15 +11,18 @@ import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns"
 import { ptBR } from "date-fns/locale";
 import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 export default function CronogramaInstalacoes() {
   const [equipesModalOpen, setEquipesModalOpen] = useState(false);
@@ -27,6 +30,7 @@ export default function CronogramaInstalacoes() {
   const [equipesSelecionadas, setEquipesSelecionadas] = useState<string[]>([]);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { instalacoes, loading } = useInstalacoesCronograma(weekStartDate);
   const { equipes, loading: equipesLoading } = useEquipesInstalacao();
@@ -116,84 +120,127 @@ export default function CronogramaInstalacoes() {
         </div>
 
         <div className="flex gap-2 flex-wrap items-center">
-          <Button 
-            variant={viewMode === 'week' ? 'default' : 'outline'} 
-            onClick={() => {
-              setViewMode('week');
-              setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
-            }}
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Semana
-          </Button>
-          <Button 
-            variant={viewMode === 'month' ? 'default' : 'outline'} 
-            onClick={() => {
-              setViewMode('month');
-              setWeekStartDate(startOfMonth(new Date()));
-            }}
-          >
-            <CalendarDays className="h-4 w-4 mr-2" />
-            Mês
-          </Button>
-          
+          {/* Menu Hamburguer */}
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <SheetHeader>
+                <SheetTitle>Menu de Opções</SheetTitle>
+                <SheetDescription>
+                  Filtros e configurações do cronograma
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-6 mt-6">
+                {/* Visualização */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Visualização</Label>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant={viewMode === 'week' ? 'default' : 'outline'} 
+                      className="flex-1"
+                      onClick={() => {
+                        setViewMode('week');
+                        setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
+                      }}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Semana
+                    </Button>
+                    <Button 
+                      variant={viewMode === 'month' ? 'default' : 'outline'} 
+                      className="flex-1"
+                      onClick={() => {
+                        setViewMode('month');
+                        setWeekStartDate(startOfMonth(new Date()));
+                      }}
+                    >
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      Mês
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Filtrar Equipes */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold">Filtrar por Equipes</Label>
+                    {equipesSelecionadas.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={limparFiltros}
+                        className="h-auto p-1 text-xs"
+                      >
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {equipes.map((equipe) => (
+                      <div key={equipe.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={equipe.id}
+                          checked={equipesSelecionadas.includes(equipe.id)}
+                          onCheckedChange={() => toggleEquipe(equipe.id)}
+                        />
+                        <Label
+                          htmlFor={equipe.id}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: equipe.cor || '#888' }}
+                          />
+                          {equipe.nome}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Ações */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Ações</Label>
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start" 
+                      onClick={() => {
+                        setEquipesModalOpen(true);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Gerenciar Equipes
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        handleDownloadPDF();
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <Button variant="outline" onClick={handleToday}>
             Hoje
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                Equipes
-                {equipesSelecionadas.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {equipesSelecionadas.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Filtrar por Equipes</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {equipes.map((equipe) => (
-                <DropdownMenuCheckboxItem
-                  key={equipe.id}
-                  checked={equipesSelecionadas.includes(equipe.id)}
-                  onCheckedChange={() => toggleEquipe(equipe.id)}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: equipe.cor }}
-                    />
-                    {equipe.nome}
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
-              {equipesSelecionadas.length > 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full"
-                    onClick={limparFiltros}
-                  >
-                    Limpar Filtros
-                  </Button>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button onClick={() => setEquipesModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Gerenciar Equipes
-          </Button>
-          <Button variant="secondary" onClick={handleDownloadPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
           </Button>
         </div>
       </div>
