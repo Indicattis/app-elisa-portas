@@ -8,7 +8,7 @@ import { useEquipesMembros } from "@/hooks/useEquipesMembros";
 import { PontoInstalacao } from "./PontoInstalacao";
 import { CelulaDia } from "./CelulaDia";
 import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
-import { SelecionarInstalacaoModal } from "./SelecionarInstalacaoModal";
+import { SelecionarPedidoInstalacaoModal } from "@/components/instalacoes/SelecionarPedidoInstalacaoModal";
 import { EquipeMembrosList } from "./EquipeMembrosList";
 import { useToast } from "@/hooks/use-toast";
 
@@ -67,16 +67,6 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
   };
 
   const handleCellDoubleClick = (equipId: string, diaSemana: number, data: Date) => {
-    console.log('Double click na célula:', {
-      equipId,
-      diaSemana,
-      data,
-      dataFormatada: format(data, "dd/MM/yyyy - EEEE", { locale: ptBR }),
-      dia: data.getDate(),
-      mes: data.getMonth() + 1,
-      ano: data.getFullYear()
-    });
-    
     const equipe = equipesParaExibir.find(e => e.id === equipId);
     if (equipe) {
       setSelectedCell({
@@ -89,33 +79,9 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
     }
   };
 
-  const handleSelectInstalacao = async (
-    instalacaoId: string,
-    equipId: string,
-    data: Date
-  ) => {
-    try {
-      console.log('Agendando instalação:', {
-        instalacaoId,
-        equipId,
-        data: format(data, "dd/MM/yyyy - EEEE", { locale: ptBR }),
-        dataISO: data.toISOString()
-      });
-      
-      await updateInstalacaoData(instalacaoId, equipId, data);
-      toast({
-        title: "Instalação agendada",
-        description: `A instalação foi agendada para ${format(data, "dd/MM/yyyy - EEEE", { locale: ptBR })}`
-      });
-    } catch (error) {
-      console.error('Erro ao agendar instalação:', error);
-      toast({
-        title: "Erro ao agendar",
-        description: "Não foi possível agendar a instalação",
-        variant: "destructive"
-      });
-      throw error;
-    }
+  const handleSelectPedido = async () => {
+    // Recarregar instalações após criar uma nova
+    setModalOpen(false);
   };
 
   return (
@@ -208,13 +174,11 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
       )}
 
       {selectedCell && (
-        <SelecionarInstalacaoModal
+        <SelecionarPedidoInstalacaoModal
           open={modalOpen}
           onOpenChange={setModalOpen}
-          equipId={selectedCell.equipId}
-          equipNome={selectedCell.equipNome}
-          data={selectedCell.data}
-          onSelectInstalacao={handleSelectInstalacao}
+          dataSelecionada={selectedCell.data}
+          onPedidoSelecionado={handleSelectPedido}
         />
       )}
     </div>

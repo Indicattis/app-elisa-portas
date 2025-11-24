@@ -49,3 +49,14 @@ export interface InstalacaoFormData {
   descricao?: string;
   equipe_id: string;
 }
+
+export type ResponsavelInstalacaoTipo = 'equipe_interna' | 'autorizado';
+
+export interface ResponsavelInstalacao {
+  tipo: ResponsavelInstalacaoTipo;
+  id: string;
+  nome: string;
+  cor?: string; // Para equipes internas
+  cidade?: string; // Para autorizados
+  estado?: string; // Para autorizados
+}
