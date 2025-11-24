@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Eye, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
@@ -406,11 +406,14 @@ export function PedidoCard({
   // Layout compacto para visualização em lista
   if (viewMode === 'list') {
     return <>
-        <Card className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-l-4 border-l-red-500")} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
+        <Card 
+          className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-l-4 border-l-red-500")} 
+          onClick={() => setShowDetalhes(true)}
+        >
           <CardContent className="p-0 h-full">
             <div className="grid grid-cols-[24px_16px_70px_minmax(150px,1fr)_80px_60px_90px_90px_100px_auto] items-center gap-3 h-full px-4">
               {/* Drag Handle */}
-              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>}
               
@@ -420,12 +423,26 @@ export function PedidoCard({
               </div>
               
               {/* Número do pedido */}
-              <span className="text-xs font-semibold text-muted-foreground">
+              <span 
+                className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/dashboard/pedido/${pedido.id}/view`);
+                }}
+              >
                 {pedido.numero_pedido || 'S/N'}
               </span>
               
               {/* Nome do cliente */}
-              <h3 className="font-semibold text-sm truncate">{venda?.cliente_nome}</h3>
+              <h3 
+                className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/dashboard/pedido/${pedido.id}/view`);
+                }}
+              >
+                {venda?.cliente_nome}
+              </h3>
               
               {/* Tags/Badges */}
               <div className="flex items-center gap-1">
@@ -543,11 +560,6 @@ export function PedidoCard({
                       </Button>);
                   }
 
-                  // Add eye button
-                  actionButtons.push(<Button key="detalhes" size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setShowDetalhes(true); }} title="Ver detalhes" className="h-6 w-6">
-                      <Eye className="h-3 w-3" />
-                    </Button>);
-
                   // Add backlog button if applicable
                   if (emBacklog && motivoBacklog) {
                     actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="h-6 w-6 bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
@@ -604,12 +616,25 @@ export function PedidoCard({
 
   // Layout em grid (padrão)
   return <>
-      <Card className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} onDoubleClick={() => navigate(`/dashboard/pedido/${pedido.id}/view`)}>
+      <Card 
+        className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", emBacklog && "border-2 border-red-500 shadow-lg shadow-red-500/20")} 
+        onClick={() => setShowDetalhes(true)}
+      >
         {/* Header com número do pedido e tempo */}
-        <CardHeader className="py-2 px-3 bg-muted/30 border-b">
+        <CardHeader 
+          className="py-2 px-3 bg-muted/30 border-b cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/dashboard/pedido/${pedido.id}/view`);
+          }}
+        >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
-              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+              {dragHandleProps && <div 
+                {...dragHandleProps} 
+                className="cursor-grab active:cursor-grabbing"
+                onClick={(e) => e.stopPropagation()}
+              >
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
                 </div>}
               
@@ -629,10 +654,30 @@ export function PedidoCard({
               </span>
               
               {onMoverPrioridade && posicao && total && <>
-                  <Button size="icon" variant="ghost" disabled={posicao === 1} onClick={() => onMoverPrioridade(pedido.id, 'frente')} title="Aumentar prioridade" className="h-5 w-5">
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    disabled={posicao === 1} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoverPrioridade(pedido.id, 'frente');
+                    }} 
+                    title="Aumentar prioridade" 
+                    className="h-5 w-5"
+                  >
                     <ChevronUp className="h-2.5 w-2.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" disabled={posicao === total} onClick={() => onMoverPrioridade(pedido.id, 'tras')} title="Diminuir prioridade" className="h-5 w-5">
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    disabled={posicao === total} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoverPrioridade(pedido.id, 'tras');
+                    }} 
+                    title="Diminuir prioridade" 
+                    className="h-5 w-5"
+                  >
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </>}
@@ -706,26 +751,27 @@ export function PedidoCard({
           {!isAberto && pedido.numero_pedido}
         </CardContent>
 
-        <CardFooter className="pt-2 pb-2 bg-muted/20 border-t">
+        <CardFooter className="pt-2 pb-2 bg-muted/20 border-t" onClick={(e) => e.stopPropagation()}>
           {(() => {
           const actionButtons = [];
 
           // Build action buttons array
           if (isAberto) {
-            actionButtons.push(<Button key="preparar" size="icon" onClick={() => navigate(`/dashboard/pedidos/${pedido.id}/preparacao`)} title="Preparar Pedido" className={linhasCount > 0 ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : "bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"} variant="outline">
+            actionButtons.push(<Button key="preparar" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/pedidos/${pedido.id}/preparacao`); }} title="Preparar Pedido" className={linhasCount > 0 ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50" : "bg-warning/10 text-warning hover:bg-warning/20 border-warning/50"} variant="outline">
                   <span className="text-xs font-semibold">{linhasCount || 0}</span>
                 </Button>);
             if (temLinhas && onMoverEtapa) {
-              actionButtons.push(<Button key="iniciar" size="icon" onClick={() => setShowConfirmarAvanco(true)} title="Iniciar Produção">
+              actionButtons.push(<Button key="iniciar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} title="Iniciar Produção">
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>);
             }
           } else if (etapaAtual === 'em_producao') {
-            actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={() => setShowAvancarQualidade(true)} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}>
+            actionButtons.push(<Button key="avançar-qualidade" size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!todasOrdensConcluidasEmProducao} title={!todasOrdensConcluidasEmProducao ? "Conclua todas as ordens de produção primeiro" : "Avançar para Qualidade"}>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>);
           } else if (etapaAtual === 'inspecao_qualidade') {
-            actionButtons.push(<Button key="avançar" size="icon" onClick={async () => {
+            actionButtons.push(<Button key="avançar" size="icon" onClick={async (e) => {
+              e.stopPropagation();
               const processosNecessarios = await determinarProcessos(pedido.id);
               setProcessos(processosNecessarios);
               setShowProgresso(true);
@@ -743,34 +789,30 @@ export function PedidoCard({
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>);
           } else if (etapaAtual === 'aguardando_pintura') {
-            actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowConfirmarAvanco(true)} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}>
+            actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!ordemPinturaConcluida} title={!ordemPinturaConcluida ? "Conclua a ordem de pintura primeiro" : "Avançar"}>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>);
           } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-            actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={() => setShowDefinirData(true)} title="Definir Data de Carregamento">
+            actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento">
                   <Package className="h-3.5 w-3.5" />
                 </Button>);
           } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-            actionButtons.push(<Button key="avançar" size="icon" onClick={() => setShowAcaoEtapa(true)} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}>
+            actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`}>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>);
           }
 
-          // Add eye button to action buttons
-          actionButtons.push(<Button key="detalhes" size="icon" variant="ghost" onClick={() => setShowDetalhes(true)} title="Ver detalhes">
-                <Eye className="h-3.5 w-3.5" />
-              </Button>);
 
           // Add backlog button if applicable
           if (emBacklog && motivoBacklog) {
-            actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={() => setShowVisualizarBacklog(true)} title="Ver justificativa do backlog" className="bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
+            actionButtons.push(<Button key="backlog" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowVisualizarBacklog(true); }} title="Ver justificativa do backlog" className="bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-500/50">
                   <FileText className="h-3.5 w-3.5" />
                 </Button>);
           }
 
           // Add retroceder button if available
           if (isAdmin && etapaAnterior && onRetrocederEtapa) {
-            actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={() => setShowRetrocederEtapa(true)} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+            actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </Button>);
           }
