@@ -2,7 +2,7 @@ export interface Instalacao {
   id: string;
   id_venda: string | null;
   nome_cliente: string;
-  data: string;
+  data?: string | null;
   hora: string;
   produto: string;
   estado: string;
