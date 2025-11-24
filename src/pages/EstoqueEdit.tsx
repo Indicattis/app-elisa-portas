@@ -7,19 +7,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2, History } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { useEstoque } from "@/hooks/useEstoque";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function EstoqueEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { editarProduto } = useEstoque();
+  const { editarProduto, excluirProduto, buscarMovimentacoes } = useEstoque();
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
@@ -132,9 +147,31 @@ export default function EstoqueEdit() {
     }
   };
 
+  const { data: movimentacoes = [], isLoading: loadingMovimentacoes } = 
+    buscarMovimentacoes(id);
+
   const subcategoriasFiltradas = subcategorias.filter(
     (sub) => sub.categoria_id === formData.categoria
   );
+
+  const handleExcluir = async () => {
+    if (!id) return;
+    
+    try {
+      await excluirProduto(id);
+      toast({
+        title: "Produto excluído",
+        description: "O produto foi excluído com sucesso.",
+      });
+      navigate("/dashboard/estoque");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir produto",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -345,6 +382,31 @@ export default function EstoqueEdit() {
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Produto
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleExcluir}>
+                      Confirmar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button
                 type="button"
                 variant="outline"
@@ -357,6 +419,62 @@ export default function EstoqueEdit() {
           </CardContent>
         </Card>
       </form>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Histórico de Movimentações
+          </CardTitle>
+          <CardDescription>
+            Todas as movimentações deste produto no estoque
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingMovimentacoes ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : movimentacoes.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              Nenhuma movimentação registrada
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Quantidade</TableHead>
+                  <TableHead>Estoque Anterior</TableHead>
+                  <TableHead>Estoque Novo</TableHead>
+                  <TableHead>Observações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {movimentacoes.map((mov: any) => (
+                  <TableRow key={mov.id}>
+                    <TableCell>
+                      {format(new Date(mov.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={mov.tipo_movimentacao === "entrada" ? "default" : "destructive"}>
+                        {mov.tipo_movimentacao === "entrada" ? "Entrada" : "Saída"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{mov.quantidade}</TableCell>
+                    <TableCell>{mov.quantidade_anterior}</TableCell>
+                    <TableCell>{mov.quantidade_nova}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {mov.observacoes || "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

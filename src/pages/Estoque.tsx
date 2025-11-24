@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Plus, ArrowUpDown, History, Settings, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Package, Plus, ArrowUpDown, Settings, Pencil, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,24 +14,18 @@ import { useFornecedores } from "@/hooks/useFornecedores";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
-import { HistoricoModal } from "@/components/estoque/HistoricoModal";
-import { AlterarCategoriaModal } from "@/components/estoque/AlterarCategoriaModal";
 import { GerenciarCategoriasModal } from "@/components/estoque/GerenciarCategoriasModal";
 import { GerenciarSubcategoriasModal } from "@/components/estoque/GerenciarSubcategoriasModal";
-import { EditarProdutoModal } from "@/components/estoque/EditarProdutoModal";
 
 export default function Estoque() {
   const navigate = useNavigate();
-  const { produtos, loading, adicionarProduto, editarProduto, excluirProduto, movimentarEstoque, alterarCategoria, buscarMovimentacoes } = useEstoque();
+  const { produtos, loading, adicionarProduto, movimentarEstoque, buscarMovimentacoes } = useEstoque();
   const { categorias } = useCategorias();
   const { fornecedores } = useFornecedores();
   const [modalAberto, setModalAberto] = useState(false);
-  const [editarModal, setEditarModal] = useState(false);
   const [categoriasModal, setCategoriasModal] = useState(false);
   const [subcategoriasModal, setSubcategoriasModal] = useState(false);
   const [movimentacaoModal, setMovimentacaoModal] = useState(false);
-  const [historicoModal, setHistoricoModal] = useState(false);
-  const [categoriaModal, setCategoriaModal] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoEstoque | null>(null);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
   const { subcategorias } = useSubcategorias(categoriaSelecionada || undefined);
@@ -78,12 +72,6 @@ export default function Estoque() {
     setModalAberto(false);
   };
 
-  const handleExcluir = async (produto: ProdutoEstoque) => {
-    if (confirm(`Deseja realmente excluir o produto "${produto.nome_produto}"?`)) {
-      await excluirProduto(produto.id);
-    }
-  };
-
   const handleMovimentar = async (tipo: 'entrada' | 'saida', quantidade: number, observacoes?: string) => {
     if (!produtoSelecionado) return;
     await movimentarEstoque({
@@ -97,33 +85,6 @@ export default function Estoque() {
   const handleOpenMovimentacao = (produto: ProdutoEstoque) => {
     setProdutoSelecionado(produto);
     setMovimentacaoModal(true);
-  };
-
-  const handleOpenHistorico = (produto: ProdutoEstoque) => {
-    setProdutoSelecionado(produto);
-    setHistoricoModal(true);
-  };
-
-  const handleOpenCategoria = (produto: ProdutoEstoque) => {
-    setProdutoSelecionado(produto);
-    setCategoriaModal(true);
-  };
-
-  const handleAlterarCategoria = async (novaCategoria: string) => {
-    if (!produtoSelecionado) return;
-    await alterarCategoria({
-      produtoId: produtoSelecionado.id,
-      novaCategoria,
-    });
-  };
-
-  const handleEditarProduto = async (id: string, data: any) => {
-    await editarProduto({ id, ...data });
-  };
-
-  const handleOpenEditar = (produto: ProdutoEstoque) => {
-    setProdutoSelecionado(produto);
-    setEditarModal(true);
   };
 
   const { data: movimentacoes = [], isLoading: loadingMovimentacoes } = 
@@ -341,8 +302,7 @@ export default function Estoque() {
                   </TableCell>
                   <TableCell>
                     <Badge 
-                      className={`${getCategoriaColor(produto.categoria)} cursor-pointer hover:opacity-80 transition-opacity`}
-                      onClick={() => handleOpenCategoria(produto)}
+                      className={`${getCategoriaColor(produto.categoria)}`}
                     >
                       {getCategoriaLabel(produto.categoria)}
                     </Badge>
@@ -435,20 +395,6 @@ export default function Estoque() {
                       >
                         <ArrowUpDown className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleOpenHistorico(produto)}
-                      >
-                        <History className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleExcluir(produto)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -472,14 +418,6 @@ export default function Estoque() {
         onMovimentar={handleMovimentar}
       />
 
-      <HistoricoModal
-        produto={produtoSelecionado}
-        open={historicoModal}
-        onOpenChange={setHistoricoModal}
-        movimentacoes={movimentacoes}
-        loading={loadingMovimentacoes}
-      />
-
       <GerenciarCategoriasModal
         open={categoriasModal}
         onOpenChange={setCategoriasModal}
@@ -488,20 +426,6 @@ export default function Estoque() {
       <GerenciarSubcategoriasModal
         open={subcategoriasModal}
         onOpenChange={setSubcategoriasModal}
-      />
-
-      <AlterarCategoriaModal
-        produto={produtoSelecionado}
-        open={categoriaModal}
-        onOpenChange={setCategoriaModal}
-        onAlterarCategoria={handleAlterarCategoria}
-      />
-
-      <EditarProdutoModal
-        produto={produtoSelecionado}
-        open={editarModal}
-        onOpenChange={setEditarModal}
-        onEditar={handleEditarProduto}
       />
     </div>
   );
