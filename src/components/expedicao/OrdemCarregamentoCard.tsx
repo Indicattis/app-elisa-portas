@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, XCircle, Package, MapPin } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MoreVertical, Pencil, XCircle, Package, MapPin, Info } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 
 interface OrdemCarregamentoCardProps {
@@ -41,26 +42,79 @@ export const OrdemCarregamentoCard = ({
           </Badge>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-0.5 hover:bg-accent rounded-md transition-colors shrink-0">
-              <MoreVertical className="h-3.5 w-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(ordem)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => onRemoverDoCalendario(ordem.id)}
-              className="text-destructive"
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Remover do Calendário
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-1 shrink-0">
+          {ordem.venda && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="p-0.5 hover:bg-accent rounded-md transition-colors">
+                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-sm">
+                  <div className="space-y-2">
+                    <div className="font-semibold text-xs border-b border-border pb-1">
+                      Pedido: {ordem.pedido?.numero_pedido || 'N/A'}
+                    </div>
+                    
+                    {ordem.venda.cidade && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span>{ordem.venda.cidade}/{ordem.venda.estado}</span>
+                      </div>
+                    )}
+
+                    {ordem.venda.data_prevista_entrega && (
+                      <div className="text-xs text-muted-foreground">
+                        Entrega prevista: {new Date(ordem.venda.data_prevista_entrega).toLocaleDateString('pt-BR')}
+                      </div>
+                    )}
+
+                    {ordem.venda.produtos && ordem.venda.produtos.length > 0 && (
+                      <div className="pt-1 border-t border-border/50">
+                        <p className="text-[10px] font-medium mb-1.5">Produtos:</p>
+                        <div className="space-y-1">
+                          {ordem.venda.produtos.map((produto, idx) => (
+                            produto.cor && (
+                              <div key={idx} className="flex items-center gap-1.5 text-[10px]">
+                                <div 
+                                  className="h-2.5 w-2.5 rounded-full border border-border/30 shrink-0" 
+                                  style={{ backgroundColor: produto.cor.codigo_hex }}
+                                />
+                                <span>{produto.cor.nome}</span>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-0.5 hover:bg-accent rounded-md transition-colors">
+                <MoreVertical className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(ordem)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onRemoverDoCalendario(ordem.id)}
+                className="text-destructive"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Remover do Calendário
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Conteúdo expandido - Visível apenas no hover */}
