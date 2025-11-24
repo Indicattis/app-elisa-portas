@@ -669,15 +669,17 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/expedicao"
+                  path="/dashboard/instalacoes/expedicao"
                   element={
-                    <ProtectedRoute routeKey="expedicao">
+                    <ProtectedRoute routeKey="instalacoes_expedicao">
                       <DashboardLayout>
                         <Expedicao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
+                {/* Redirect old route to new location */}
+                <Route path="/expedicao" element={<Navigate to="/dashboard/instalacoes/expedicao" replace />} />
                 <Route
                   path="/dashboard/instalacoes/cronograma-instalacoes"
                   element={
