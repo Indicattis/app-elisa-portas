@@ -23,7 +23,6 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
             cidade,
             cep,
             bairro,
-            endereco_completo,
             data_venda
           ),
           pedido:pedidos_producao(

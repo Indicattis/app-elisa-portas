@@ -418,15 +418,15 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           etapaDestino === 'finalizado' ? 'finalizada' :
           'pendente_producao';
         
-        console.log('[moverParaProximaEtapa] Sincronizando instalação:', { etapaDestino, statusInstalacao });
+        console.log('[moverParaProximaEtapa] Sincronizando ordem de carregamento:', { etapaDestino, statusInstalacao });
         const { data: instalacaoData, error: instalacaoError } = await supabase
-          .from('instalacoes')
+          .from('ordens_carregamento')
           .update({ status: statusInstalacao })
           .eq('pedido_id', pedidoId)
           .select('id, status');
 
         if (instalacaoError) {
-          console.error('[moverParaProximaEtapa] Erro ao atualizar status da instalação:', instalacaoError);
+          console.error('[moverParaProximaEtapa] Erro ao atualizar status da ordem:', instalacaoError);
         } else if (instalacaoData && instalacaoData.length > 0) {
           console.log('[moverParaProximaEtapa] Status da instalação atualizado:', instalacaoData);
         }
@@ -526,19 +526,14 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               
               if (vendaCompleta) {
                 const { error: instalacaoError } = await supabase
-                  .from('instalacoes')
+                  .from('ordens_carregamento')
                   .insert({
                     pedido_id: pedidoId,
                     venda_id: pedidoData.venda_id,
                     nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
-                    telefone_cliente: vendaCompleta.cliente_telefone || '',
-                    cidade: vendaCompleta.cidade || '',
-                    estado: vendaCompleta.estado || '',
-                    data_instalacao: null,
                     hora: '08:00',
-                    produto: '',
+                    data_carregamento: new Date().toISOString().split('T')[0],
                     status: 'em_producao',
-                    tipo_instalacao: 'elisa',
                     created_by: user.id
                   });
                 
@@ -639,18 +634,18 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         await executarComDelay(async () => {
           console.log('[moverParaProximaEtapa] Preparando instalação para pedido:', pedidoId);
           
-          // Verificar se já existe instalação
+          // Verificar se já existe ordem de carregamento
           const { data: instalacaoExistente } = await supabase
-            .from('instalacoes')
+            .from('ordens_carregamento')
             .select('id, status')
             .eq('pedido_id', pedidoId)
             .maybeSingle();
           
           if (instalacaoExistente) {
-            // Atualizar status da instalação existente
-            console.log('[moverParaProximaEtapa] Instalação já existe, atualizando status para pronta_fabrica');
+            // Atualizar status da ordem existente
+            console.log('[moverParaProximaEtapa] Ordem já existe, atualizando status para pronta_fabrica');
             await supabase
-              .from('instalacoes')
+              .from('ordens_carregamento')
               .update({ status: 'pronta_fabrica' })
               .eq('id', instalacaoExistente.id);
           } else {
@@ -672,19 +667,14 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               
               if (vendaCompleta) {
                 const { error: instalacaoError } = await supabase
-                  .from('instalacoes')
+                  .from('ordens_carregamento')
                   .insert({
                     pedido_id: pedidoId,
                     venda_id: pedidoData.venda_id,
                     nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
-                    telefone_cliente: vendaCompleta.cliente_telefone || '',
-                    cidade: vendaCompleta.cidade || '',
-                    estado: vendaCompleta.estado || '',
-                    data_instalacao: null,
                     hora: '08:00',
-                    produto: '',
+                    data_carregamento: new Date().toISOString().split('T')[0],
                     status: 'pronta_fabrica',
-                    tipo_instalacao: 'elisa',
                     created_by: user.id
                   });
                 

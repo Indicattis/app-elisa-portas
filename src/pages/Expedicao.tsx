@@ -4,10 +4,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
-import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
-import { InstalacaoIndicadores } from "@/components/cadastro-instalacao/InstalacaoIndicadores";
-import { InstalacoesFiltros } from "@/components/cadastro-instalacao/InstalacoesFiltros";
+import { ExpedicaoForm } from "@/components/expedicao/ExpedicaoForm";
+import { ExpedicaoTabela } from "@/components/expedicao/ExpedicaoTabela";
+import { ExpedicaoIndicadores } from "@/components/expedicao/ExpedicaoIndicadores";
+import { ExpedicaoFiltros } from "@/components/expedicao/ExpedicaoFiltros";
 import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
 import { useInstalacoesFilters } from "@/hooks/useInstalacoesFilters";
 
@@ -24,16 +24,19 @@ export default function Expedicao() {
     concluirOrdem,
   } = useOrdensCarregamento();
 
-  const {
-    searchTerm,
-    setSearchTerm,
-    filterStatus,
-    setFilterStatus,
-    filterEstado,
-    setFilterEstado,
-    filteredInstalacoes,
-    estados,
-  } = useInstalacoesFilters(ordens);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todos");
+
+  const filteredOrdens = ordens.filter((ordem) => {
+    const matchesSearch = ordem.nome_cliente
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      filterStatus === "todos" ||
+      (filterStatus === "concluido" && ordem.carregamento_concluido) ||
+      (filterStatus === "pendente" && !ordem.carregamento_concluido);
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
@@ -61,26 +64,20 @@ export default function Expedicao() {
           </div>
         </div>
 
-        <InstalacaoIndicadores instalacoes={ordens} />
+        <ExpedicaoIndicadores ordens={ordens} />
 
-        <InstalacoesFiltros
+        <ExpedicaoFiltros
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           filterStatus={filterStatus}
           onFilterStatusChange={setFilterStatus}
-          filterEstado={filterEstado}
-          onFilterEstadoChange={setFilterEstado}
-          estados={estados}
         />
 
-        <InstalacoesTabelaView
-          instalacoes={filteredInstalacoes}
-          onDelete={async () => {}}
-          onUpdate={async () => {}}
-          onUpdateStatus={async () => {}}
-          onConcluirInstalacao={concluirOrdem}
-          onGeocode={async () => {}}
-          isAdmin={isAdmin}
+        <ExpedicaoTabela 
+          ordens={filteredOrdens} 
+          onConcluir={async (id) => {
+            await concluirOrdem(id);
+          }} 
         />
       </div>
 
@@ -92,9 +89,9 @@ export default function Expedicao() {
               Preencha os dados para cadastrar uma nova ordem de carregamento
             </DialogDescription>
           </DialogHeader>
-          <CadastroInstalacaoForm 
+          <ExpedicaoForm 
             onSubmit={async (data) => {
-              await createOrdem(data as any);
+              await createOrdem(data);
               setShowCadastroModal(false);
             }}
           />

@@ -234,15 +234,6 @@ export function useVendas() {
         updateData.categoria = vendaData.tipo_entrega.toLowerCase();
       }
       
-      const { error: instalacaoError } = await supabase
-        .from('instalacoes')
-        .update(updateData)
-        .eq('venda_id', venda.id);
-
-      if (instalacaoError) {
-        console.error('Erro ao atualizar instalação:', instalacaoError);
-      }
-
       // 8. Salvar autorização de desconto, se houver
       if (autorizacaoDesconto) {
         const { error: autorizacaoError } = await supabase
@@ -260,29 +251,6 @@ export function useVendas() {
         if (autorizacaoError) {
           console.error('Erro ao salvar autorização:', autorizacaoError);
           // Não bloquear a criação da venda por erro ao salvar autorização
-        }
-      }
-
-      // 9. Buscar a instalação para geocodificar
-      const { data: instalacao } = await supabase
-        .from('instalacoes')
-        .select('id, cidade, estado')
-        .eq('venda_id', venda.id)
-        .single();
-
-      // 10. Chamar geocodificação
-      if (instalacao) {
-        try {
-          await supabase.functions.invoke('geocode-instalacao', {
-            body: {
-              id: instalacao.id,
-              cidade: instalacao.cidade,
-              estado: instalacao.estado
-            }
-          });
-        } catch (geoError) {
-          console.error('Erro na geocodificação:', geoError);
-          // Não bloquear a criação da venda por erro de geocodificação
         }
       }
 
