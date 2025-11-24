@@ -31,8 +31,11 @@ export const DroppableDayExpedicao = ({
 }: DroppableDayExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
-    id: `droppable-${date.toISOString()}`,
-    data: { date },
+    id: format(date, "yyyy-MM-dd"),
+    data: {
+      date,
+      type: 'day',
+    },
   });
 
   const isCurrentMonth = isSameMonth(date, currentMonth);
@@ -52,14 +55,12 @@ export const DroppableDayExpedicao = ({
     responsavelNome: string
   ) => {
     try {
-      // Ajustar data para o meio-dia local para evitar problemas de timezone
-      const dataAjustada = new Date(date);
-      dataAjustada.setHours(12, 0, 0, 0);
+      const dataFormatada = format(date, 'yyyy-MM-dd');
       
       await onUpdateOrdem({
         id: ordemId,
         data: {
-          data_carregamento: format(dataAjustada, 'yyyy-MM-dd'),
+          data_carregamento: dataFormatada,
           hora: hora,
           responsavel_tipo: responsavelTipo,
           responsavel_carregamento_id: responsavelId,
