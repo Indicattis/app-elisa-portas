@@ -1064,6 +1064,13 @@ export type Database = {
             foreignKeyName: "entregas_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "entregas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
@@ -1637,6 +1644,13 @@ export type Database = {
             foreignKeyName: "instalacoes_cadastradas_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "instalacoes_cadastradas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
@@ -1866,6 +1880,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "linhas_ordens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
           },
           {
             foreignKeyName: "linhas_ordens_pedido_id_fkey"
@@ -2257,6 +2278,13 @@ export type Database = {
             foreignKeyName: "ordens_instalacao_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "ordens_instalacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
@@ -2324,6 +2352,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ordens_perfiladeira_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
           {
             foreignKeyName: "ordens_perfiladeira_pedido_id_fkey"
             columns: ["pedido_id"]
@@ -2402,6 +2437,13 @@ export type Database = {
             foreignKeyName: "ordens_pintura_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "ordens_pintura_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
@@ -2460,6 +2502,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ordens_producao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
           {
             foreignKeyName: "ordens_producao_pedido_id_fkey"
             columns: ["pedido_id"]
@@ -2531,6 +2580,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ordens_qualidade_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
           },
           {
             foreignKeyName: "ordens_qualidade_pedido_id_fkey"
@@ -2614,6 +2670,13 @@ export type Database = {
             foreignKeyName: "ordens_separacao_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "ordens_separacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
@@ -2678,6 +2741,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ordens_soldagem_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
           {
             foreignKeyName: "ordens_soldagem_pedido_id_fkey"
             columns: ["pedido_id"]
@@ -2877,6 +2947,13 @@ export type Database = {
             foreignKeyName: "pedido_linhas_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pedido_linhas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
@@ -2940,6 +3017,13 @@ export type Database = {
             foreignKeyName: "pedido_porta_observacoes_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pedido_porta_observacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
@@ -2993,6 +3077,64 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pedidos_etapas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pedidos_etapas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_movimentacoes: {
+        Row: {
+          created_at: string
+          data_hora: string
+          descricao: string | null
+          etapa_destino: string
+          etapa_origem: string | null
+          id: string
+          pedido_id: string
+          teor: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_hora?: string
+          descricao?: string | null
+          etapa_destino: string
+          etapa_origem?: string | null
+          id?: string
+          pedido_id: string
+          teor: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_hora?: string
+          descricao?: string | null
+          etapa_destino?: string
+          etapa_origem?: string | null
+          id?: string
+          pedido_id?: string
+          teor?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_movimentacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pedidos_movimentacoes_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
@@ -4383,7 +4525,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      pedidos_backlog_ativo: {
+        Row: {
+          data_backlog: string | null
+          etapa_atual: string | null
+          etapa_origem_backlog: string | null
+          motivo_backlog: string | null
+          numero_pedido: string | null
+          pedido_id: string | null
+          usuario_backlog: string | null
+          usuario_nome: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       analyze_database_storage: {
