@@ -138,27 +138,6 @@ function OrdemCard({
         </div>
       </CardHeader>
 
-      {/* CORES DO PEDIDO - Círculos Preenchidos */}
-      {coresComHex.length > 0 && (
-        <div className="px-4 py-3 bg-muted/20 border-b">
-          <div className="flex flex-wrap gap-3 items-center">
-            {coresComHex.map((cor, idx) => (
-              <div 
-                key={idx}
-                className="flex items-center gap-2"
-                title={cor.nome}
-              >
-                <div 
-                  className="w-10 h-10 rounded-full border-2 border-border shadow-md"
-                  style={{ backgroundColor: cor.hex }}
-                />
-                <span className="text-sm font-medium text-muted-foreground">{cor.nome}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
       {/* BODY */}
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
@@ -202,6 +181,27 @@ function OrdemCard({
                 <Badge variant="outline" className="text-xs mt-1">
                   {ordemProgress.concluidas}/{ordemProgress.total} ordens
                 </Badge>
+              </div>
+            )}
+
+            {coresComHex.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Cores</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {coresComHex.map((cor, idx) => (
+                    <div 
+                      key={idx}
+                      className="flex items-center gap-1.5"
+                      title={cor.nome}
+                    >
+                      <div 
+                        className="w-6 h-6 rounded-full border-2 border-border shadow-sm"
+                        style={{ backgroundColor: cor.hex }}
+                      />
+                      <span className="text-xs text-muted-foreground">{cor.nome}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
