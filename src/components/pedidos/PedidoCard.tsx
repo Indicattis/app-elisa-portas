@@ -135,10 +135,10 @@ export function PedidoCard({
       case 'aguardando_coleta':
       case 'aguardando_instalacao':
         return {
-          podeAvancar: temDataCarregamento,
-          mensagem: temDataCarregamento 
+          podeAvancar: carregamentoConcluido,
+          mensagem: carregamentoConcluido 
             ? undefined 
-            : "Defina a data de carregamento antes de finalizar o pedido"
+            : "Complete a ordem de carregamento em Expedição antes de finalizar o pedido"
         };
         
       default:
@@ -710,7 +710,24 @@ export function PedidoCard({
                           </Button>
                       </ButtonWithTooltip>
                     );
-                  } else if (proximaEtapa && etapaAtual !== 'finalizado' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'aguardando_instalacao') {
+                  } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                    const validacao = getValidacaoAvancoEtapa(etapaAtual);
+                    actionButtons.push(
+                      <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                        <Button 
+                          size="icon" 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setShowAcaoEtapa(true); 
+                          }} 
+                          disabled={!validacao.podeAvancar} 
+                          className="flex h-[20px] w-[20px] rounded-[3px]"
+                        >
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </ButtonWithTooltip>
+                    );
+                  } else if (proximaEtapa && etapaAtual !== 'finalizado') {
                       actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex h-[20px] w-[20px] rounded-[3px]">
                           <ArrowRight className="h-3 w-3" />
                         </Button>);
@@ -976,7 +993,24 @@ export function PedidoCard({
                     </Button>
                   </ButtonWithTooltip>
                 );
-              } else if (proximaEtapa && etapaAtual !== 'finalizado' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'aguardando_instalacao') {
+              } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                const validacao = getValidacaoAvancoEtapa(etapaAtual);
+                actionButtons.push(
+                  <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                    <Button 
+                      size="icon" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setShowAcaoEtapa(true); 
+                      }} 
+                      disabled={!validacao.podeAvancar} 
+                      className="flex w-full h-[35px]"
+                    >
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </ButtonWithTooltip>
+                );
+              } else if (proximaEtapa && etapaAtual !== 'finalizado') {
                 actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`} className="flex w-full h-[35px]">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>);
