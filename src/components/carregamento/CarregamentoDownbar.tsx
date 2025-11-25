@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetasProducaoMultiplas, gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
+import { CarregamentoLoadingModal } from "./CarregamentoLoadingModal";
 
 interface CarregamentoDownbarProps {
   ordem: OrdemCarregamento | null;
@@ -29,6 +30,8 @@ export function CarregamentoDownbar({
 }: CarregamentoDownbarProps) {
   const { linhas, isLoading, atualizarCheckbox } = usePedidoLinhas(ordem?.pedido_id || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [loadingSuccess, setLoadingSuccess] = useState(false);
   const queryClient = useQueryClient();
   const hasUncheckedRef = useRef(false);
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
@@ -186,6 +189,8 @@ export function CarregamentoDownbar({
     if (!ordem?.id) return;
 
     setIsSubmitting(true);
+    setShowLoadingModal(true);
+    setLoadingSuccess(false);
 
     try {
       console.log('[Carregamento] Concluindo ordem de carregamento...');
@@ -194,13 +199,20 @@ export function CarregamentoDownbar({
         observacoes: "Carregamento concluído via interface de produção"
       });
 
-      console.log('[Carregamento] Sucesso! Fechando modal...');
+      console.log('[Carregamento] Sucesso! Mostrando modal de sucesso...');
+      setLoadingSuccess(true);
+      
+      // Aguardar um momento para mostrar o feedback de sucesso
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       toast.success("Carregamento concluído com sucesso!");
+      setShowLoadingModal(false);
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       console.error('[Carregamento] Erro:', error);
       toast.error(error.message || "Erro ao concluir carregamento");
+      setShowLoadingModal(false);
       setIsSubmitting(false);
     }
   };
@@ -212,17 +224,6 @@ export function CarregamentoDownbar({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl max-w-[700px] mx-auto">
-        {isSubmitting && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-t-2xl">
-            <div className="text-center space-y-3">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-              <p className="font-medium">Concluindo carregamento...</p>
-              <p className="text-sm text-muted-foreground">
-                Finalizando pedido e registrando conclusão
-              </p>
-            </div>
-          </div>
-        )}
         
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
@@ -350,6 +351,8 @@ export function CarregamentoDownbar({
           </div>
         </div>
       </SheetContent>
+
+      <CarregamentoLoadingModal open={showLoadingModal} success={loadingSuccess} />
     </Sheet>
   );
 }
