@@ -30,7 +30,7 @@ export const DraggableOrdemCarregamento = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style} {...attributes} className="animate-scale-in">
       <OrdemCarregamentoCard
         ordem={ordem}
         onEdit={onEdit}
