@@ -3,7 +3,7 @@ export interface EtiquetaCalculo {
   nomeProduto: string;
   quantidade: number;
   etiquetasNecessarias: number;
-  tipoCalculo: 'normal' | 'meia_cana_pequena' | 'meia_cana_grande';
+  tipoCalculo: 'normal' | 'meia_cana_pequena' | 'meia_cana_grande' | 'regra_simples' | 'regra_condicional';
   explicacao: string;
   largura?: number;
   altura?: number;
@@ -27,6 +27,7 @@ export interface LinhaResumo {
   largura: number | null;
   altura: number | null;
   tamanho: string | null;
+  estoque_id?: string | null;
 }
 
 export interface TagIndividual {

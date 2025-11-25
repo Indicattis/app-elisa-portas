@@ -3564,6 +3564,56 @@ export type Database = {
           },
         ]
       }
+      regras_etiquetas: {
+        Row: {
+          ativo: boolean | null
+          campo_condicao: string | null
+          condicao_tipo: string | null
+          condicao_valor: number | null
+          created_at: string | null
+          divisor: number
+          estoque_id: string | null
+          id: string
+          nome_regra: string
+          prioridade: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          campo_condicao?: string | null
+          condicao_tipo?: string | null
+          condicao_valor?: number | null
+          created_at?: string | null
+          divisor?: number
+          estoque_id?: string | null
+          id?: string
+          nome_regra: string
+          prioridade?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          campo_condicao?: string | null
+          condicao_tipo?: string | null
+          condicao_valor?: number | null
+          created_at?: string | null
+          divisor?: number
+          estoque_id?: string | null
+          id?: string
+          nome_regra?: string
+          prioridade?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regras_etiquetas_estoque_id_fkey"
+            columns: ["estoque_id"]
+            isOneToOne: false
+            referencedRelation: "estoque"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requisicoes_compra: {
         Row: {
           aprovado_por: string | null

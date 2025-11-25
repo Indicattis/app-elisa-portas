@@ -82,6 +82,7 @@ import RequisicoesCompra from "./pages/RequisicoesCompra";
 import Estoque from "./pages/Estoque";
 import EstoqueEdit from "./pages/EstoqueEdit";
 import EstoqueGerenciamento from "./pages/EstoqueGerenciamento";
+import RegrasEtiquetasPage from "./pages/RegrasEtiquetasPage";
 import VendasCatalogo from "./pages/VendasCatalogo";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
@@ -1058,6 +1059,16 @@ const App = () => (
                     <ProtectedRoute routeKey="estoque_gerenciamento">
                       <DashboardLayout>
                         <EstoqueGerenciamento />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/compras/estoque/regras-etiquetas"
+                  element={
+                    <ProtectedRoute routeKey="estoque">
+                      <DashboardLayout>
+                        <RegrasEtiquetasPage />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
