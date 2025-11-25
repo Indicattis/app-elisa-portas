@@ -157,7 +157,7 @@ export const PedidoLinhasEditor = ({
 
   return (
     <div className="space-y-3">
-      {linhas.length > 0 ? (
+      {(linhas.length > 0 || novaLinha) ? (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
