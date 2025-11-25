@@ -7,6 +7,11 @@ export default function Entregas() {
   // Buscar todas as ordens de carregamento
   const { ordens, isLoading } = useOrdensCarregamento();
 
+  // Filtrar apenas ordens SEM instalação (valor_instalacao = 0 ou null)
+  const ordensEntrega = ordens.filter(ordem => 
+    ordem.venda?.valor_instalacao == null || ordem.venda.valor_instalacao === 0
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -28,13 +33,13 @@ export default function Entregas() {
         
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Package className="h-4 w-4" />
-          <span>{ordens.length} {ordens.length === 1 ? 'ordem' : 'ordens'}</span>
+          <span>{ordensEntrega.length} {ordensEntrega.length === 1 ? 'ordem' : 'ordens'}</span>
         </div>
       </div>
 
       {/* Tabela Slim */}
       <Card className="p-0">
-        <OrdensCarregamentoSlimTable ordens={ordens} />
+        <OrdensCarregamentoSlimTable ordens={ordensEntrega} />
       </Card>
     </div>
   );

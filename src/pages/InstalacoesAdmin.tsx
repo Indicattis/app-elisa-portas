@@ -8,6 +8,11 @@ export default function InstalacoesAdmin() {
   // Buscar todas as ordens de carregamento
   const { ordens, isLoading } = useOrdensCarregamento();
 
+  // Filtrar apenas ordens com instalação (valor_instalacao > 0)
+  const ordensInstalacao = ordens.filter(ordem => 
+    ordem.venda?.valor_instalacao != null && ordem.venda.valor_instalacao > 0
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -29,13 +34,13 @@ export default function InstalacoesAdmin() {
         
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Package className="h-4 w-4" />
-          <span>{ordens.length} {ordens.length === 1 ? 'ordem' : 'ordens'}</span>
+          <span>{ordensInstalacao.length} {ordensInstalacao.length === 1 ? 'ordem' : 'ordens'}</span>
         </div>
       </div>
 
       {/* Tabela Slim */}
       <Card className="p-0">
-        <OrdensCarregamentoSlimTable ordens={ordens} />
+        <OrdensCarregamentoSlimTable ordens={ordensInstalacao} />
       </Card>
     </div>
   );
