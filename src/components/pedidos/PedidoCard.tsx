@@ -17,6 +17,7 @@ import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
 import { VisualizarBacklogModal } from "./VisualizarBacklogModal";
 import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
 import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
+import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,6 +59,7 @@ export function PedidoCard({
   const [showVisualizarBacklog, setShowVisualizarBacklog] = useState(false);
   const [showArquivar, setShowArquivar] = useState(false);
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
+  const [showConfirmarExpedicao, setShowConfirmarExpedicao] = useState(false);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
     isAdmin
@@ -474,8 +476,13 @@ export function PedidoCard({
       }
     }
 
-    // Se está na etapa aguardando_coleta, finalizando pedido
+    // Se está na etapa aguardando_coleta, verificar carregamento e finalizar
     if (etapaAtual === 'aguardando_coleta') {
+      lista.push({
+        id: 'verificar_carregamento',
+        label: 'Verificando ordem de carregamento',
+        status: 'pending'
+      });
       lista.push({
         id: 'finalizando_pedido',
         label: 'Finalizando Pedido',
@@ -483,8 +490,13 @@ export function PedidoCard({
       });
     }
 
-    // Se está na etapa aguardando_instalacao, finalizando pedido
+    // Se está na etapa aguardando_instalacao, verificar carregamento e finalizar
     if (etapaAtual === 'aguardando_instalacao') {
+      lista.push({
+        id: 'verificar_carregamento',
+        label: 'Verificando ordem de carregamento',
+        status: 'pending'
+      });
       lista.push({
         id: 'finalizando_pedido',
         label: 'Finalizando Pedido',
@@ -530,6 +542,54 @@ export function PedidoCard({
         await new Promise(resolve => setTimeout(resolve, 1000));
         setShowProgresso(false);
       }
+    }
+  };
+
+  // Handler para confirmar expedição (após modal de confirmação)
+  const handleConfirmarExpedicao = async () => {
+    setShowConfirmarExpedicao(false);
+    const processosNecessarios = await determinarProcessos(pedido.id);
+    setProcessos(processosNecessarios);
+    setShowProgresso(true);
+    
+    if (onMoverEtapa) {
+      // Verificar se o carregamento está concluído
+      setProcessos(prev => prev.map(p => 
+        p.id === 'verificar_carregamento' ? { ...p, status: 'in_progress' as const } : p
+      ));
+      
+      const { data: ordemCarregamento } = await supabase
+        .from('ordens_carregamento')
+        .select('carregamento_concluido')
+        .eq('pedido_id', pedido.id)
+        .maybeSingle();
+      
+      if (!ordemCarregamento?.carregamento_concluido) {
+        setProcessos(prev => prev.map(p => 
+          p.id === 'verificar_carregamento' ? { ...p, status: 'error' as const } : p
+        ));
+        toast({
+          title: "Erro",
+          description: "A ordem de carregamento ainda não foi concluída em Expedição",
+          variant: "destructive"
+        });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setShowProgresso(false);
+        return;
+      }
+      
+      setProcessos(prev => prev.map(p => 
+        p.id === 'verificar_carregamento' ? { ...p, status: 'completed' as const } : p
+      ));
+      
+      await onMoverEtapa(pedido.id, true, (processoId, status) => {
+        setProcessos(prev => prev.map(p => p.id === processoId ? {
+          ...p,
+          status
+        } : p));
+      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setShowProgresso(false);
     }
   };
 
@@ -718,7 +778,7 @@ export function PedidoCard({
                           size="icon" 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            setShowAcaoEtapa(true); 
+                            setShowConfirmarExpedicao(true); 
                           }} 
                           disabled={!validacao.podeAvancar} 
                           className="flex h-[20px] w-[20px] rounded-[3px]"
@@ -779,6 +839,14 @@ export function PedidoCard({
         <ConfirmarAvancoModal open={showConfirmarAvanco} onOpenChange={setShowConfirmarAvanco} onConfirmar={handleConfirmarAvanco} pedido={pedido} etapaAtual={config?.label || ''} proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''} />
 
         <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
+        
+        <ConfirmarExpedicaoModal 
+          open={showConfirmarExpedicao} 
+          onOpenChange={setShowConfirmarExpedicao} 
+          onConfirmar={handleConfirmarExpedicao} 
+          pedido={pedido} 
+          etapaAtual={config?.label || ''} 
+        />
       </>;
   }
 
@@ -1001,7 +1069,7 @@ export function PedidoCard({
                       size="icon" 
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        setShowAcaoEtapa(true); 
+                        setShowConfirmarExpedicao(true); 
                       }} 
                       disabled={!validacao.podeAvancar} 
                       className="flex w-full h-[35px]"
@@ -1091,5 +1159,13 @@ export function PedidoCard({
       <ConfirmarAvancoModal open={showConfirmarAvanco} onOpenChange={setShowConfirmarAvanco} onConfirmar={handleConfirmarAvanco} pedido={pedido} etapaAtual={config?.label || ''} proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''} />
 
       <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
+      
+      <ConfirmarExpedicaoModal 
+        open={showConfirmarExpedicao} 
+        onOpenChange={setShowConfirmarExpedicao} 
+        onConfirmar={handleConfirmarExpedicao} 
+        pedido={pedido} 
+        etapaAtual={config?.label || ''} 
+      />
     </>;
 }
