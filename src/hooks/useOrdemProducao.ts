@@ -13,6 +13,9 @@ interface LinhaOrdem {
   concluida: boolean;
   concluida_em?: string;
   concluida_por?: string;
+  estoque_id?: string;
+  largura?: number;
+  altura?: number;
 }
 
 interface Ordem {
