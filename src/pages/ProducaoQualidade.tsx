@@ -70,6 +70,12 @@ export default function ProducaoQualidade() {
     queryClient.invalidateQueries({ queryKey: ['ordens-producao', 'qualidade'] });
   };
 
+  const handleRetornarProducao = () => {
+    setOrdemSelecionadaId(null);
+    queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+    queryClient.invalidateQueries({ queryKey: ['pedidos-producao'] });
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <ProducaoKanban
@@ -92,6 +98,7 @@ export default function ProducaoQualidade() {
         onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
+        onRetornarProducao={handleRetornarProducao}
       />
 
       <ProcessoAvancoAutomaticoModal

@@ -4812,6 +4812,16 @@ export type Database = {
         Args: { p_pedido_id: string }
         Returns: undefined
       }
+      retornar_pedido_para_producao: {
+        Args: {
+          p_motivo: string
+          p_ordem_qualidade_id: string
+          p_ordens_reativar: string[]
+          p_pedido_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       retroceder_pedido_para_etapa: {
         Args: {
           p_etapa_destino: string

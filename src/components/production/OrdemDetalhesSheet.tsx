@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
 import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
@@ -14,6 +14,7 @@ import { OrigemBadges } from "@/components/shared/OrigemBadges";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetaProducao, gerarPDFEtiquetasProducaoMultiplas } from "@/utils/etiquetasPDFGenerator";
+import { RetornarProducaoModal } from "./RetornarProducaoModal";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -66,6 +67,7 @@ interface OrdemDetalhesSheetProps {
   onFinalizarPintura?: () => void;
   isIniciando?: boolean;
   isFinalizando?: boolean;
+  onRetornarProducao?: () => void;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -98,9 +100,11 @@ export function OrdemDetalhesSheet({
   onFinalizarPintura,
   isIniciando = false,
   isFinalizando = false,
+  onRetornarProducao,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const [retornarModalOpen, setRetornarModalOpen] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
   
@@ -639,6 +643,19 @@ export function OrdemDetalhesSheet({
           {tipoOrdem !== 'pintura' && ordem.status !== 'concluido' && (
             <>
               <Separator />
+              
+              {/* Botão Retornar para Produção - apenas para qualidade */}
+              {tipoOrdem === 'qualidade' && podeMarcarLinhas && (
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive border-destructive/50 hover:bg-destructive/10"
+                  onClick={() => setRetornarModalOpen(true)}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Retornar para Produção
+                </Button>
+              )}
+
               <Button
                 className="w-full"
                 disabled={!todasConcluidas || isUpdating || !podeMarcarLinhas}
@@ -659,6 +676,22 @@ export function OrdemDetalhesSheet({
             </>
           )}
         </div>
+
+        {/* Modal de Retornar para Produção */}
+        {tipoOrdem === 'qualidade' && ordem && (
+          <RetornarProducaoModal
+            open={retornarModalOpen}
+            onOpenChange={setRetornarModalOpen}
+            pedidoId={ordem.pedido_id}
+            ordemQualidadeId={ordem.id}
+            clienteNome={ordem.pedido?.cliente_nome}
+            numeroPedido={ordem.pedido?.numero_pedido}
+            onSuccess={() => {
+              onOpenChange(false);
+              onRetornarProducao?.();
+            }}
+          />
+        )}
       </SheetContent>
     </Sheet>
   );
