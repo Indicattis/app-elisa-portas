@@ -75,10 +75,11 @@ export const EditarOrdemCarregamentoDrawer = ({
     setLoading(true);
     try {
       if (responsavelTipo === "elisa") {
+        // Carregar equipes de instalação ao invés de colaboradores individuais
         const { data, error } = await supabase
-          .from("admin_users")
+          .from("equipes_instalacao")
           .select("id, nome")
-          .eq("ativo", true)
+          .eq("ativa", true)
           .order("nome");
 
         if (error) throw error;
