@@ -2,13 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PackageCheck, Loader2, Truck } from "lucide-react";
+import { PackageCheck, Loader2, Truck, Tags } from "lucide-react";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from "@tanstack/react-query";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
+import { gerarPDFEtiquetasProducaoMultiplas, gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 
 interface CarregamentoDownbarProps {
   ordem: OrdemCarregamento | null;
@@ -29,6 +31,102 @@ export function CarregamentoDownbar({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const hasUncheckedRef = useRef(false);
+  const { calcularEtiquetasLinha } = useEtiquetasProducao();
+
+  const handleImprimirEtiquetas = () => {
+    try {
+      if (!linhas || linhas.length === 0) {
+        toast.error("Nenhum item para imprimir");
+        return;
+      }
+
+      // Criar todas as tags de todas as linhas
+      const todasTags: any[] = [];
+      
+      linhas.forEach((linha) => {
+        const linhaParaCalculo = {
+          id: linha.id,
+          item: linha.nome_produto || linha.descricao_produto || 'Item',
+          quantidade: linha.quantidade || 1,
+          tamanho: linha.tamanho,
+          largura: linha.largura,
+          altura: linha.altura,
+        };
+        
+        const calculo = calcularEtiquetasLinha(linhaParaCalculo);
+        
+        for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
+          todasTags.push({
+            tagNumero: i,
+            totalTags: calculo.etiquetasNecessarias,
+            nomeProduto: calculo.nomeProduto,
+            numeroPedido: ordem?.pedido?.numero_pedido || '',
+            quantidade: calculo.quantidade,
+            largura: calculo.largura,
+            altura: calculo.altura,
+            clienteNome: ordem?.nome_cliente,
+            tamanho: linha.tamanho,
+            origemOrdem: 'Carregamento',
+          });
+        }
+      });
+
+      if (todasTags.length === 0) {
+        toast.error("Nenhuma etiqueta para gerar");
+        return;
+      }
+
+      // Gerar PDF com todas as etiquetas
+      const doc = todasTags.length > 1 
+        ? gerarPDFEtiquetasProducaoMultiplas(todasTags)
+        : gerarPDFEtiquetaProducao(todasTags[0]);
+      
+      // Criar iframe oculto para impressão
+      const blobUrl = String(doc.output('bloburl'));
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      iframe.style.border = 'none';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.print();
+            window.addEventListener('focus', () => {
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+              }, 100);
+            }, { once: true });
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 10000);
+          } catch (error) {
+            console.error('Erro ao imprimir:', error);
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }
+        }, 500);
+      };
+      
+      iframe.src = blobUrl;
+      
+      toast.success(`${todasTags.length} etiqueta(s) pronta(s) para impressão`);
+    } catch (error) {
+      console.error('Erro ao gerar etiquetas:', error);
+      toast.error('Erro ao gerar etiquetas');
+    }
+  };
 
   // Desmarcar todos os itens APENAS ao abrir pela primeira vez
   useEffect(() => {
@@ -154,9 +252,23 @@ export function CarregamentoDownbar({
           <Separator />
 
           <div className="space-y-2 flex-1">
-            <h3 className="text-sm font-medium">
-              Marque os itens conforme forem carregados:
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium">
+                Marque os itens conforme forem carregados:
+              </h3>
+              {linhas && linhas.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={handleImprimirEtiquetas}
+                  title="Imprimir todas as etiquetas"
+                >
+                  <Tags className="h-3 w-3" />
+                  Imprimir Etiquetas
+                </Button>
+              )}
+            </div>
 
             {isLoading ? (
               <div className="flex justify-center py-8">

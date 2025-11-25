@@ -44,4 +44,5 @@ export interface TagProducao extends TagIndividual {
   tamanho?: string;
   corNome?: string;
   tipoPintura?: string;
+  origemOrdem?: string;
 }

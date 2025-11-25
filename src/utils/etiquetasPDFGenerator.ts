@@ -292,6 +292,15 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   doc.text(`PEDIDO: ${tag.numeroPedido}`, pageWidth / 2, currentY, { align: 'center' });
+  currentY += lineSpacing;
+
+  // Origem da ordem (se disponível)
+  if (tag.origemOrdem) {
+    doc.setFontSize(48);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Impresso em: ${tag.origemOrdem}`, pageWidth / 2, currentY, { align: 'center' });
+  }
 }
 
 export function gerarPDFEtiquetaProducao(tag: TagProducao): jsPDF {
