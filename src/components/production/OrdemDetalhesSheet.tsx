@@ -28,6 +28,7 @@ interface LinhaOrdem {
   tipo_pintura?: string;
   largura?: number;
   altura?: number;
+  estoque_id?: string;
 }
 
 interface Ordem {

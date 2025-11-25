@@ -1732,6 +1732,7 @@ export type Database = {
           concluida_por: string | null
           cor_nome: string | null
           created_at: string
+          estoque_id: string | null
           id: string
           item: string
           largura: number | null
@@ -1751,6 +1752,7 @@ export type Database = {
           concluida_por?: string | null
           cor_nome?: string | null
           created_at?: string
+          estoque_id?: string | null
           id?: string
           item: string
           largura?: number | null
@@ -1770,6 +1772,7 @@ export type Database = {
           concluida_por?: string | null
           cor_nome?: string | null
           created_at?: string
+          estoque_id?: string | null
           id?: string
           item?: string
           largura?: number | null
@@ -1789,6 +1792,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "linhas_ordens_estoque_id_fkey"
+            columns: ["estoque_id"]
+            isOneToOne: false
+            referencedRelation: "estoque"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "linhas_ordens_pedido_id_fkey"

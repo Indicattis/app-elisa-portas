@@ -54,6 +54,7 @@ export function CarregamentoDownbar({
           tamanho: linha.tamanho,
           largura: linha.largura,
           altura: linha.altura,
+          estoque_id: linha.estoque_id || undefined,
         };
         
         const calculo = calcularEtiquetasLinha(linhaParaCalculo);
