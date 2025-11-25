@@ -292,12 +292,13 @@ export default function VendasNova() {
       return;
     }
 
-    // Validar CPF
-    if (formData.cpf_cliente && formData.cpf_cliente.replace(/\D/g, '').length !== 11) {
+    // Validar CPF/CNPJ
+    const documentoDigitos = formData.cpf_cliente?.replace(/\D/g, '') || '';
+    if (documentoDigitos && documentoDigitos.length !== 11 && documentoDigitos.length !== 14) {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'CPF inválido. Digite um CPF válido com 11 dígitos.'
+        description: 'Documento inválido. Digite um CPF (11 dígitos) ou CNPJ (14 dígitos).'
       });
       return;
     }
@@ -420,21 +421,28 @@ export default function VendasNova() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="cpf_cliente" className="text-sm">CPF *</Label>
+              <Label htmlFor="cpf_cliente" className="text-sm">CPF/CNPJ *</Label>
               <Input
                 id="cpf_cliente"
                 value={formData.cpf_cliente}
                 onChange={(e) => {
                   let value = e.target.value.replace(/\D/g, '');
                   if (value.length <= 11) {
+                    // Máscara CPF: 000.000.000-00
                     value = value.replace(/(\d{3})(\d)/, '$1.$2');
                     value = value.replace(/(\d{3})(\d)/, '$1.$2');
                     value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                  } else {
+                    // Máscara CNPJ: 00.000.000/0000-00
+                    value = value.replace(/(\d{2})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d)/, '$1/$2');
+                    value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
                   }
                   setFormData(prev => ({ ...prev, cpf_cliente: value }));
                 }}
-                placeholder="000.000.000-00"
-                maxLength={14}
+                placeholder="CPF ou CNPJ"
+                maxLength={18}
                 required
               />
             </div>
