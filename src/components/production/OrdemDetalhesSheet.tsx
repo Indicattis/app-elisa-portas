@@ -108,7 +108,7 @@ export function OrdemDetalhesSheet({
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
-  const { encontrarRegraAplicavel } = useRegrasEtiquetas();
+  const { encontrarRegraAplicavel, encontrarRegraPorNome } = useRegrasEtiquetas();
   
   const linhas = ordem?.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
@@ -203,10 +203,18 @@ export function OrdemDetalhesSheet({
 
   // Função auxiliar para obter recomendação de etiquetas (só retorna valor se existir regra)
   const getEtiquetasRecomendadas = (linha: LinhaOrdem): number | null => {
-    if (!linha.estoque_id) return null;
+    const dimensoes = { tamanho: linha.largura || 0 };
     
-    // Verifica se existe regra cadastrada para este item
-    const regra = encontrarRegraAplicavel(linha.estoque_id, { tamanho: linha.largura || 0 });
+    // Primeiro tenta encontrar regra pelo estoque_id
+    let regra = linha.estoque_id 
+      ? encontrarRegraAplicavel(linha.estoque_id, dimensoes) 
+      : null;
+    
+    // Se não encontrou por estoque_id, tenta pelo nome do produto
+    if (!regra && linha.item) {
+      regra = encontrarRegraPorNome(linha.item, dimensoes);
+    }
+    
     if (!regra) return null;
     
     try {
