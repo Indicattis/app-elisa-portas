@@ -150,49 +150,22 @@ export function OrdemDetalhesSheet({
       
       const doc = gerarPDFEtiquetaProducao(tag);
       
-      // Criar iframe oculto para impressão na aba atual
+      // Abrir em nova janela para impressão (evita problemas de cross-origin)
       const blobUrl = String(doc.output('bloburl'));
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '1px';
-      iframe.style.height = '1px';
-      iframe.style.border = 'none';
-      iframe.style.opacity = '0';
-      iframe.style.pointerEvents = 'none';
-      document.body.appendChild(iframe);
+      const printWindow = window.open(blobUrl as string, '_blank');
       
-      iframe.onload = () => {
-        setTimeout(() => {
-          try {
-            iframe.contentWindow?.print();
-            
-            window.addEventListener('focus', () => {
-              setTimeout(() => {
-                if (document.body.contains(iframe)) {
-                  document.body.removeChild(iframe);
-                }
-              }, 100);
-            }, { once: true });
-            
-            setTimeout(() => {
-              if (document.body.contains(iframe)) {
-                document.body.removeChild(iframe);
-              }
-            }, 10000);
-          } catch (error) {
-            console.error('Erro ao imprimir:', error);
-            if (document.body.contains(iframe)) {
-              document.body.removeChild(iframe);
-            }
-          }
-        }, 500);
-      };
-      
-      iframe.src = blobUrl;
-      
-      toast.success('1 etiqueta pronta para impressão');
+      if (printWindow) {
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 300);
+        };
+        toast.success('1 etiqueta pronta para impressão');
+      } else {
+        // Fallback: download do PDF se popup bloqueado
+        doc.save(`etiqueta-${linha.item}.pdf`);
+        toast.info('Popup bloqueado. PDF baixado automaticamente.');
+      }
     } catch (error) {
       console.error('Erro ao gerar etiqueta:', error);
       toast.error('Erro ao gerar etiqueta');
