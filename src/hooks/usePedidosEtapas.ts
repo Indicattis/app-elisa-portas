@@ -454,6 +454,66 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         } else if (entregaData && entregaData.length > 0) {
           console.log('[moverParaProximaEtapa] Status da entrega atualizado:', entregaData);
         }
+
+        // Criar ordem de carregamento se avançar para aguardando_coleta ou aguardando_instalacao
+        if (etapaDestino === 'aguardando_coleta' || etapaDestino === 'aguardando_instalacao') {
+          if (onProgress) onProgress('criar_ordem_carregamento', 'in_progress');
+          await executarComDelay(async () => {
+            console.log('[moverParaProximaEtapa] Verificando necessidade de criar ordem de carregamento');
+            
+            // Verificar se já existe uma ordem de carregamento para este pedido
+            const { data: ordemExistente } = await supabase
+              .from('ordens_carregamento')
+              .select('id')
+              .eq('pedido_id', pedidoId)
+              .maybeSingle();
+
+            if (!ordemExistente) {
+              // Buscar dados da venda para criar a ordem de carregamento
+              const { data: pedidoData } = await supabase
+                .from('pedidos_producao')
+                .select('venda_id')
+                .eq('id', pedidoId)
+                .single();
+
+              if (pedidoData?.venda_id) {
+                const { data: venda } = await supabase
+                  .from('vendas')
+                  .select('cliente_nome, tipo_entrega')
+                  .eq('id', pedidoData.venda_id)
+                  .single();
+
+                if (venda) {
+                  const { error: ordemError } = await supabase
+                    .from('ordens_carregamento')
+                    .insert({
+                      pedido_id: pedidoId,
+                      venda_id: pedidoData.venda_id,
+                      nome_cliente: venda.cliente_nome,
+                      hora: '08:00',
+                      status: 'pronta_fabrica',
+                      tipo_carregamento: venda.tipo_entrega === 'instalacao' ? 'elisa' : 'autorizados',
+                      created_by: user.id
+                    });
+
+                  if (ordemError) {
+                    console.error('[moverParaProximaEtapa] Erro ao criar ordem de carregamento:', ordemError);
+                  } else {
+                    console.log('[moverParaProximaEtapa] ✓ Ordem de carregamento criada com sucesso');
+                  }
+                }
+              }
+            } else {
+              console.log('[moverParaProximaEtapa] Ordem de carregamento já existe, sincronizando status');
+              // Atualizar status da ordem existente
+              await supabase
+                .from('ordens_carregamento')
+                .update({ status: 'pronta_fabrica' })
+                .eq('pedido_id', pedidoId);
+            }
+          });
+          if (onProgress) onProgress('criar_ordem_carregamento', 'completed');
+        }
       });
       if (onProgress) onProgress('atualizar_pedido', 'completed');
 
@@ -531,12 +591,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
                     pedido_id: pedidoId,
                     venda_id: pedidoData.venda_id,
                     nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
-                    telefone_cliente: vendaCompleta.cliente_telefone || '',
-                    cidade: vendaCompleta.cidade || '',
-                    estado: vendaCompleta.estado || '',
-                    data_instalacao: null,
                     hora: '08:00',
-                    produto: '',
                     status: 'em_producao',
                     tipo_instalacao: 'elisa',
                     created_by: user.id
@@ -677,12 +732,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
                     pedido_id: pedidoId,
                     venda_id: pedidoData.venda_id,
                     nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
-                    telefone_cliente: vendaCompleta.cliente_telefone || '',
-                    cidade: vendaCompleta.cidade || '',
-                    estado: vendaCompleta.estado || '',
-                    data_instalacao: null,
                     hora: '08:00',
-                    produto: '',
                     status: 'pronta_fabrica',
                     tipo_instalacao: 'elisa',
                     created_by: user.id

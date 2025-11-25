@@ -421,6 +421,13 @@ export function PedidoCard({
         status: 'pending'
       });
     }
+    if (proximaEtapa === 'aguardando_coleta' || proximaEtapa === 'aguardando_instalacao') {
+      lista.unshift({
+        id: 'criar_ordem_carregamento',
+        label: 'Criando ordem de carregamento',
+        status: 'pending'
+      });
+    }
 
     // Se está na etapa de inspeção de qualidade, determinar destino
     if (etapaAtual === 'inspecao_qualidade') {
@@ -442,11 +449,21 @@ export function PedidoCard({
         } = await supabase.from('vendas').select('tipo_entrega').eq('id', pedido.venda_id).single();
         if (venda?.tipo_entrega === 'entrega') {
           lista.push({
+            id: 'criar_ordem_carregamento',
+            label: 'Criando ordem de carregamento',
+            status: 'pending'
+          });
+          lista.push({
             id: 'preparar_coleta',
             label: 'Enviando para Coleta',
             status: 'pending'
           });
         } else {
+          lista.push({
+            id: 'criar_ordem_carregamento',
+            label: 'Criando ordem de carregamento',
+            status: 'pending'
+          });
           lista.push({
             id: 'preparar_instalacao',
             label: 'Enviando para Instalação',
@@ -463,11 +480,21 @@ export function PedidoCard({
       } = await supabase.from('vendas').select('tipo_entrega').eq('id', pedido.venda_id).single();
       if (venda?.tipo_entrega === 'entrega') {
         lista.push({
+          id: 'criar_ordem_carregamento',
+          label: 'Criando ordem de carregamento',
+          status: 'pending'
+        });
+        lista.push({
           id: 'preparar_coleta',
           label: 'Enviando para Coleta',
           status: 'pending'
         });
       } else {
+        lista.push({
+          id: 'criar_ordem_carregamento',
+          label: 'Criando ordem de carregamento',
+          status: 'pending'
+        });
         lista.push({
           id: 'preparar_instalacao',
           label: 'Enviando para Instalação',
