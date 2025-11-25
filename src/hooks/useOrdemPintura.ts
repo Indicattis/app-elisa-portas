@@ -180,23 +180,34 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
   // Finalizar pintura (pintando -> pronta)
   const finalizarPintura = useMutation({
     mutationFn: async (ordemId: string) => {
-      // Verificar se todas as linhas estão concluídas
+      // Verificar se todas as linhas estão concluídas (se existirem)
       const { data: linhas } = await supabase
         .from("linhas_ordens")
         .select("concluida")
         .eq("ordem_id", ordemId)
         .eq("tipo_ordem", "pintura");
 
-      if (linhas && linhas.some((l: any) => !l.concluida)) {
+      // Só verificar linhas se existirem
+      if (linhas && linhas.length > 0 && linhas.some((l: any) => !l.concluida)) {
         throw new Error("Todas as linhas devem estar marcadas como concluídas");
       }
 
       // Buscar ordem completa para pegar pedido_id e capturada_em
-      const { data: ordem } = await supabase
+      const { data: ordem, error: ordemError } = await supabase
         .from("ordens_pintura")
         .select("capturada_em, pedido_id")
         .eq("id", ordemId)
         .single();
+
+      if (ordemError) {
+        console.error("[finalizarPintura] Erro ao buscar ordem:", ordemError);
+        throw ordemError;
+      }
+
+      if (!ordem?.pedido_id) {
+        console.error("[finalizarPintura] pedido_id não encontrado na ordem");
+        throw new Error("Pedido não encontrado para esta ordem");
+      }
 
       let tempo_conclusao_segundos = null;
       if (ordem?.capturada_em) {
@@ -216,7 +227,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
 
       if (error) throw error;
       
-      return ordem?.pedido_id;
+      console.log("[finalizarPintura] Ordem finalizada, pedido_id:", ordem.pedido_id);
+      return ordem.pedido_id;
     },
     onSuccess: (pedidoId) => {
       queryClient.invalidateQueries({ queryKey: ["ordens-pintura"] });
@@ -227,7 +239,9 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
       });
 
       // Tentar avanço automático do pedido
+      console.log("[finalizarPintura] onSuccess - pedidoId:", pedidoId, "onOrdemConcluida:", !!onOrdemConcluida);
       if (pedidoId && onOrdemConcluida) {
+        console.log("[finalizarPintura] Chamando onOrdemConcluida...");
         onOrdemConcluida(pedidoId, 'pintura');
       }
     },

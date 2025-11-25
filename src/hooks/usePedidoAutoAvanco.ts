@@ -109,7 +109,7 @@ export function usePedidoAutoAvanco() {
 
   const tentarAvancoAutomatico = useCallback(async (pedidoId: string, tipoOrdemConcluida: TipoOrdem) => {
     try {
-      console.log(`[Auto-Avanço] Verificando avanço para pedido ${pedidoId} após conclusão de ${tipoOrdemConcluida}`);
+      console.log(`[Auto-Avanço] Iniciando verificação para pedido ${pedidoId} após conclusão de ${tipoOrdemConcluida}`);
 
       // Buscar etapa atual do pedido
       const etapaAtual = await buscarEtapaAtual(pedidoId);
@@ -141,7 +141,11 @@ export function usePedidoAutoAvanco() {
           deveAvancar = await verificarOrdemPinturaConcluida(pedidoId);
           console.log(`[Auto-Avanço] Ordem de pintura concluída: ${deveAvancar}`);
         }
+      } else {
+        console.log(`[Auto-Avanço] Etapa ${etapaAtual} não é tratada para tipo ${tipoOrdemConcluida}`);
       }
+
+      console.log(`[Auto-Avanço] deveAvancar: ${deveAvancar}`);
 
       if (deveAvancar) {
         console.log('[Auto-Avanço] Iniciando avanço automático...');
