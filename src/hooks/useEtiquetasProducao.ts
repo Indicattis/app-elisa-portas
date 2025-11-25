@@ -1,4 +1,5 @@
 import { EtiquetaCalculo } from '@/types/etiqueta';
+import { useRegrasEtiquetas } from './useRegrasEtiquetas';
 
 interface LinhaOrdem {
   id: string;
@@ -7,12 +8,41 @@ interface LinhaOrdem {
   tamanho?: string;
   largura?: number;
   altura?: number;
+  estoque_id?: string;
 }
 
 export const useEtiquetasProducao = () => {
+  const { regras, calcularEtiquetasComRegra } = useRegrasEtiquetas();
+
   // Função de cálculo de etiquetas adaptada para LinhaOrdem
   const calcularEtiquetasLinha = (linha: LinhaOrdem): EtiquetaCalculo => {
     const nomeProduto = linha.item || 'Item';
+    const largura = linha.largura || 0;
+    const altura = linha.altura || 0;
+
+    // Tentar encontrar regra dinâmica primeiro
+    if (linha.estoque_id && regras.length > 0) {
+      const { etiquetas, regra } = calcularEtiquetasComRegra(
+        linha.estoque_id,
+        linha.quantidade,
+        { largura, altura }
+      );
+
+      if (regra) {
+        return {
+          linhaId: linha.id,
+          nomeProduto,
+          quantidade: linha.quantidade,
+          etiquetasNecessarias: etiquetas,
+          tipoCalculo: regra.campo_condicao ? 'regra_condicional' : 'regra_simples',
+          explicacao: `Regra "${regra.nome_regra}": ${linha.quantidade} ÷ ${regra.divisor} = ${etiquetas} etiqueta(s).`,
+          largura: largura || undefined,
+          altura: altura || undefined,
+        };
+      }
+    }
+
+    // Fallback: Lógica legada para meia canas
     const isMeiaCana = nomeProduto.toLowerCase().includes('meia cana');
     
     if (!isMeiaCana) {
@@ -23,14 +53,12 @@ export const useEtiquetasProducao = () => {
         etiquetasNecessarias: linha.quantidade,
         tipoCalculo: 'normal',
         explicacao: `Cada unidade recebe 1 etiqueta. Total: ${linha.quantidade} etiqueta(s).`,
-        largura: linha.largura || undefined,
-        altura: linha.altura || undefined,
+        largura: largura || undefined,
+        altura: altura || undefined,
       };
     }
 
-    // Para meia canas, verificar dimensões
-    const largura = linha.largura || 0;
-    const altura = linha.altura || 0;
+    // Para meia canas, verificar dimensões (regra legada)
     const temDimensaoGrande = largura > 6.5 || altura > 6.5;
     
     if (temDimensaoGrande) {

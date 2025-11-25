@@ -127,6 +127,13 @@ export default function Estoque() {
         <div className="flex gap-2">
           <Button 
             variant="outline"
+            onClick={() => navigate("/dashboard/administrativo/compras/estoque/regras-etiquetas")}
+          >
+            <Tags className="mr-2 h-4 w-4" />
+            Regras Etiquetas
+          </Button>
+          <Button 
+            variant="outline"
             onClick={() => navigate("/dashboard/administrativo/compras/estoque/gerenciamento")}
           >
             <Tags className="mr-2 h-4 w-4" />
