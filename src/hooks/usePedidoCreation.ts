@@ -47,8 +47,6 @@ export const usePedidoCreation = () => {
           cliente_nome: venda.cliente_nome,
           cliente_telefone: venda.cliente_telefone,
           cliente_email: venda.cliente_email,
-          cidade: venda.cidade,
-          estado: venda.estado,
           etapa_atual: 'aberto',
           status: 'pendente',
           created_by: user.id,
