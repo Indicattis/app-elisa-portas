@@ -38,6 +38,7 @@ export interface OrdemCarregamento {
     bairro: string | null;
     data_prevista_entrega: string | null;
     cliente_email?: string | null;
+    valor_instalacao?: number | null;
     produtos?: Array<{
       tipo_produto?: string | null;
       tamanho?: string | null;
