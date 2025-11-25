@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
 import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
@@ -75,6 +75,14 @@ const TIPO_LABELS: Record<TipoOrdem, string> = {
   pintura: 'Pintura',
 };
 
+const TIPO_ORDEM_ETIQUETA: Record<TipoOrdem, string> = {
+  soldagem: 'Ordem de Soldagem',
+  perfiladeira: 'Ordem de Perfiladeira',
+  separacao: 'Ordem de Separação',
+  qualidade: 'Ordem de Qualidade',
+  pintura: 'Ordem de Pintura',
+};
+
 export function OrdemDetalhesSheet({
   ordem,
   open,
@@ -113,6 +121,8 @@ export function OrdemDetalhesSheet({
   const temResponsavel = !!ordem.responsavel_id;
   const podeMarcarLinhas = temResponsavel && isResponsavel;
 
+  const origemOrdemLabel = TIPO_ORDEM_ETIQUETA[tipoOrdem];
+
   const handleImprimirEtiqueta = (linha: LinhaOrdem) => {
     try {
       const calculo = calcularEtiquetasLinha(linha);
@@ -132,6 +142,7 @@ export function OrdemDetalhesSheet({
           tamanho: linha.tamanho,
           corNome: linha.cor_nome,
           tipoPintura: linha.tipo_pintura,
+          origemOrdem: origemOrdemLabel,
         });
       }
       
@@ -207,6 +218,92 @@ export function OrdemDetalhesSheet({
       toast.error("Erro ao gerar PDF da ordem");
     } finally {
       setIsDownloadingPDF(false);
+    }
+  };
+
+  const handleImprimirTodasEtiquetas = () => {
+    try {
+      if (linhas.length === 0) {
+        toast.error("Nenhum item para imprimir");
+        return;
+      }
+
+      // Criar todas as tags de todas as linhas
+      const todasTags: any[] = [];
+      
+      linhas.forEach((linha) => {
+        const calculo = calcularEtiquetasLinha(linha);
+        
+        for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
+          todasTags.push({
+            tagNumero: i,
+            totalTags: calculo.etiquetasNecessarias,
+            nomeProduto: calculo.nomeProduto,
+            numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
+            quantidade: calculo.quantidade,
+            largura: calculo.largura,
+            altura: calculo.altura,
+            clienteNome: ordem?.pedido?.cliente_nome,
+            tamanho: linha.tamanho,
+            corNome: linha.cor_nome,
+            tipoPintura: linha.tipo_pintura,
+            origemOrdem: origemOrdemLabel,
+          });
+        }
+      });
+
+      if (todasTags.length === 0) {
+        toast.error("Nenhuma etiqueta para gerar");
+        return;
+      }
+
+      // Gerar PDF com todas as etiquetas
+      const doc = gerarPDFEtiquetasProducaoMultiplas(todasTags);
+      
+      // Criar iframe oculto para impressão
+      const blobUrl = String(doc.output('bloburl'));
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      iframe.style.border = 'none';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.print();
+            window.addEventListener('focus', () => {
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+              }, 100);
+            }, { once: true });
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 10000);
+          } catch (error) {
+            console.error('Erro ao imprimir:', error);
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }
+        }, 500);
+      };
+      
+      iframe.src = blobUrl;
+      
+      toast.success(`${todasTags.length} etiqueta(s) pronta(s) para impressão`);
+    } catch (error) {
+      console.error('Erro ao gerar etiquetas:', error);
+      toast.error('Erro ao gerar etiquetas');
     }
   };
 
@@ -327,7 +424,21 @@ export function OrdemDetalhesSheet({
           {/* Lista de linhas */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Itens de Produção</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Itens de Produção</span>
+                {linhas.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={handleImprimirTodasEtiquetas}
+                    title="Imprimir todas as etiquetas"
+                  >
+                    <Tags className="h-3 w-3" />
+                    Imprimir Todas
+                  </Button>
+                )}
+              </div>
               {todasConcluidas && (
                 <Badge variant="default" className="gap-1">
                   <CheckCircle2 className="h-3 w-3" />
