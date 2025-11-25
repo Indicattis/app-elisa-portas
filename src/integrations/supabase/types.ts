@@ -1550,14 +1550,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "instalacoes_pedido_id_fkey1"
+            foreignKeyName: "instalacoes_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_backlog_ativo"
             referencedColumns: ["pedido_id"]
           },
           {
-            foreignKeyName: "instalacoes_pedido_id_fkey1"
+            foreignKeyName: "instalacoes_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
@@ -2229,6 +2229,20 @@ export type Database = {
           },
           {
             foreignKeyName: "instalacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_carregamento_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "ordens_carregamento_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"

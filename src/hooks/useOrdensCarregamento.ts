@@ -43,7 +43,7 @@ export const useOrdensCarregamento = (filters?: {
               )
             )
           ),
-          pedido:pedidos_producao(
+          pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
             id,
             numero_pedido,
             etapa_atual,
