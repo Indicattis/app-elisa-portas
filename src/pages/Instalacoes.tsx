@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Filter } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
 import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
@@ -13,6 +14,7 @@ import { useInstalacoesFilters } from "@/hooks/useInstalacoesFilters";
 
 export default function Instalacoes() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
+  const [mostrarConcluidos, setMostrarConcluidos] = useState(false);
   
   const isMobile = useIsMobile();
   const { isAdmin } = useAuth();
@@ -34,9 +36,15 @@ export default function Instalacoes() {
     setFilterStatus,
     filterEstado,
     setFilterEstado,
-    filteredInstalacoes,
+    filteredInstalacoes: baseFilteredInstalacoes,
     estados,
   } = useInstalacoesFilters(instalacoes);
+
+  // Aplicar filtro adicional para ocultar concluídos por padrão
+  const filteredInstalacoes = baseFilteredInstalacoes.filter(instalacao => {
+    if (mostrarConcluidos) return true;
+    return !instalacao.instalacao_concluida;
+  });
 
   return (
     <>
@@ -51,6 +59,17 @@ export default function Instalacoes() {
           </div>
           
           <div className="flex gap-2">
+            <Button
+              variant={mostrarConcluidos ? "outline" : "default"}
+              size={isMobile ? "sm" : "default"}
+              onClick={() => setMostrarConcluidos(!mostrarConcluidos)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {!isMobile && (mostrarConcluidos ? "Mostrar Apenas Pendentes" : "Mostrar Todos")}
+              {isMobile && <Badge variant="secondary" className="text-xs">{filteredInstalacoes.length}</Badge>}
+            </Button>
+            
             {isAdmin && (
               <Button 
                 onClick={() => setShowCadastroModal(true)}

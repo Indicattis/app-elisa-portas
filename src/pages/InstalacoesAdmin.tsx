@@ -1,17 +1,24 @@
-import { useMemo } from "react";
-import { Package } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Package, Filter } from "lucide-react";
 import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
 import { OrdensCarregamentoSlimTable } from "@/components/carregamento/OrdensCarregamentoSlimTable";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function InstalacoesAdmin() {
+  const [mostrarConcluidos, setMostrarConcluidos] = useState(false);
+  
   // Buscar todas as ordens de carregamento
   const { ordens, isLoading } = useOrdensCarregamento();
 
   // Filtrar apenas ordens com instalação (valor_instalacao > 0)
-  const ordensInstalacao = ordens.filter(ordem => 
-    ordem.venda?.valor_instalacao != null && ordem.venda.valor_instalacao > 0
-  );
+  // E filtrar por status de conclusão baseado no filtro
+  const ordensInstalacao = ordens.filter(ordem => {
+    const comInstalacao = ordem.venda?.valor_instalacao != null && ordem.venda.valor_instalacao > 0;
+    const filtroStatus = mostrarConcluidos || !ordem.carregamento_concluido;
+    return comInstalacao && filtroStatus;
+  });
 
   if (isLoading) {
     return (
@@ -32,9 +39,26 @@ export default function InstalacoesAdmin() {
           </p>
         </div>
         
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Package className="h-4 w-4" />
-          <span>{ordensInstalacao.length} {ordensInstalacao.length === 1 ? 'ordem' : 'ordens'}</span>
+        <div className="flex items-center gap-3">
+          <Button
+            variant={mostrarConcluidos ? "outline" : "default"}
+            size="sm"
+            onClick={() => setMostrarConcluidos(!mostrarConcluidos)}
+            className="gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            {mostrarConcluidos ? "Mostrar Apenas Pendentes" : "Mostrar Todos"}
+          </Button>
+          
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Package className="h-4 w-4" />
+            <span>{ordensInstalacao.length} {ordensInstalacao.length === 1 ? 'ordem' : 'ordens'}</span>
+            {!mostrarConcluidos && (
+              <Badge variant="secondary" className="text-xs">
+                Pendentes
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 

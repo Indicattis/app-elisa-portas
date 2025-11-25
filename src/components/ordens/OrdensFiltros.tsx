@@ -83,6 +83,7 @@ export function OrdensFiltros({
               <SelectItem value="pintura">Pintura</SelectItem>
               <SelectItem value="qualidade">Qualidade</SelectItem>
               <SelectItem value="instalacao">Instalação</SelectItem>
+              <SelectItem value="carregamento">Carregamento</SelectItem>
             </SelectContent>
           </Select>
         </div>
