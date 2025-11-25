@@ -20,24 +20,28 @@ export const OrdemCarregamentoCard = ({
   onClick,
   dragListeners,
 }: OrdemCarregamentoCardProps) => {
-  const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case 'pendente':
-        return 'bg-yellow-500/10 border-yellow-500/30';
-      case 'agendada':
-        return 'bg-blue-500/10 border-blue-500/30';
-      case 'em_carregamento':
-        return 'bg-purple-500/10 border-purple-500/30';
-      case 'concluida':
-        return 'bg-green-500/10 border-green-500/30';
+  // Cor baseada no tipo de serviço: Entrega (azul) ou Instalação (vermelho)
+  const getTipoServicoColor = (tipoCarregamento: string | null) => {
+    switch (tipoCarregamento) {
+      case 'autorizados':
+        // Entrega - Tom azulado
+        return 'bg-blue-500/10 border-blue-500/40 hover:bg-blue-500/20';
+      case 'elisa':
+        // Instalação - Tom vermelho
+        return 'bg-red-500/10 border-red-500/40 hover:bg-red-500/20';
       default:
         return 'bg-muted border-border';
     }
   };
 
+  // Pegar a instalação através do pedido
+  const instalacaoData = ordem.pedido?.instalacao;
+  const instalacao = Array.isArray(instalacaoData) ? instalacaoData[0] : instalacaoData;
+  const equipeNome = instalacao?.responsavel_instalacao_nome;
+
   return (
     <Card 
-      className={`relative h-[35px] p-2 border transition-all duration-200 cursor-pointer ${getStatusColor(ordem.status)}`}
+      className={`relative h-[35px] p-2 border transition-all duration-200 cursor-pointer ${getTipoServicoColor(ordem.tipo_carregamento)}`}
       onClick={() => onClick?.(ordem)}
     >
       {/* Header - Sempre visível */}
@@ -47,6 +51,15 @@ export const OrdemCarregamentoCard = ({
           <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
             {ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Entrega'}
           </Badge>
+          {/* Tag de equipe - apenas para instalação */}
+          {ordem.tipo_carregamento === 'elisa' && equipeNome && (
+            <Badge 
+              variant="secondary" 
+              className="text-[9px] px-1 py-0 h-4 shrink-0 bg-red-500/20 border-red-500/40"
+            >
+              {equipeNome}
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
