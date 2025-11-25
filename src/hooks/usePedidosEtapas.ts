@@ -493,7 +493,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
                       hora: '08:00',
                       status: 'pronta_fabrica',
                       tipo_carregamento: venda.tipo_entrega === 'instalacao' ? 'elisa' : 'autorizados',
-                      created_by: user.id
+                      created_by: user.id,
+                      data_carregamento: null // Explicitamente sem data - deve ser agendada manualmente
                     });
 
                   if (ordemError) {
