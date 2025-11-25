@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
@@ -51,6 +52,7 @@ interface Ordem {
   };
   admin_users?: {
     nome: string;
+    foto_perfil_url?: string;
   };
 }
 
@@ -336,9 +338,19 @@ export function OrdemDetalhesSheet({
         {/* Header fixo */}
         <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold truncate">{ordem.numero_ordem}</span>
-              <span className="text-sm text-muted-foreground truncate">{ordem.pedido?.cliente_nome}</span>
+            <div className="flex items-center gap-3 min-w-0">
+              {temResponsavel && (
+                <Avatar className="h-9 w-9 border-2 border-primary/20">
+                  <AvatarImage src={ordem.admin_users?.foto_perfil_url} alt={ordem.admin_users?.nome} />
+                  <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
+                    {ordem.admin_users?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold truncate">{ordem.numero_ordem}</span>
+                <span className="text-xs text-muted-foreground truncate">{ordem.pedido?.cliente_nome}</span>
+              </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-xs text-muted-foreground">Ped. {ordem.pedido?.numero_pedido}</span>
@@ -366,37 +378,14 @@ export function OrdemDetalhesSheet({
         </div>
 
         {/* Conteúdo scrollável */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          {/* Informações da ordem */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Progresso</span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
-                  {linhasConcluidas}/{linhas.length}
-                </span>
-                <Badge variant="outline">{progresso}%</Badge>
-              </div>
-            </div>
-
-            {/* Responsável */}
-            <div className="flex items-center justify-between">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {/* Responsável */}
+          {!temResponsavel && (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
               <span className="text-sm text-muted-foreground">Responsável</span>
-              {temResponsavel ? (
-                <div className="flex items-center gap-2">
-                  <UserCheck className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">
-                    {ordem.admin_users?.nome || 'Atribuído'}
-                  </span>
-                  {isResponsavel && (
-                    <Badge variant="default" className="text-xs">Você</Badge>
-                  )}
-                </div>
-              ) : (
-                <Badge variant="secondary">Não atribuído</Badge>
-              )}
+              <Badge variant="secondary">Não atribuído</Badge>
             </div>
-          </div>
+          )}
 
           {/* Botão de capturar ordem */}
           {!temResponsavel && ordem.status !== 'concluido' && ordem.status !== 'pronta' && onCapturarOrdem && (
@@ -521,7 +510,7 @@ export function OrdemDetalhesSheet({
                             <Label
                               key={linha.id}
                               htmlFor={`checkbox-${linha.id}`}
-                              className="flex items-start gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
+                              className="flex items-start gap-3 p-3 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
                             >
                               <Checkbox
                                 id={`checkbox-${linha.id}`}
@@ -534,21 +523,21 @@ export function OrdemDetalhesSheet({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   {linha.concluida ? (
-                                    <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
+                                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                                   ) : (
-                                    <Circle className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                    <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                   )}
-                                  <span className={`text-sm ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
+                                  <span className={`text-base font-medium ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
                                     {linha.item}
                                   </span>
                                 </div>
                                 
-                                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                                <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
                                   <span>Qtd: {linha.quantidade}</span>
                                   {linha.tamanho && <span>{linha.tamanho}</span>}
                                   {getEtiquetasRecomendadas(linha) !== null && (
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
-                                      <Tags className="h-2.5 w-2.5 mr-0.5" />
+                                    <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
+                                      <Tags className="h-3 w-3 mr-1" />
                                       {getEtiquetasRecomendadas(linha)} etiq.
                                     </Badge>
                                   )}
@@ -558,14 +547,14 @@ export function OrdemDetalhesSheet({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 flex-shrink-0"
+                                className="h-10 w-10 p-0 flex-shrink-0"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleImprimirEtiqueta(linha);
                                 }}
                                 title="Imprimir etiqueta"
                               >
-                                <Printer className="h-4 w-4" />
+                                <Printer className="h-5 w-5" />
                               </Button>
                             </Label>
                           ))}
@@ -580,7 +569,7 @@ export function OrdemDetalhesSheet({
                   <Label
                     key={linha.id}
                     htmlFor={`checkbox-${linha.id}`}
-                    className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                    className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                   >
                     <Checkbox
                       id={`checkbox-${linha.id}`}
@@ -593,21 +582,21 @@ export function OrdemDetalhesSheet({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         {linha.concluida ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
                         ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                         )}
-                        <span className={`text-sm font-medium ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
+                        <span className={`text-base font-medium ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
                           {linha.item}
                         </span>
                       </div>
                       
-                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                         <span>Qtd: {linha.quantidade}</span>
                         {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
                         {getEtiquetasRecomendadas(linha) !== null && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
-                            <Tags className="h-2.5 w-2.5 mr-0.5" />
+                          <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
+                            <Tags className="h-3 w-3 mr-1" />
                             {getEtiquetasRecomendadas(linha)} etiq.
                           </Badge>
                         )}
@@ -617,14 +606,14 @@ export function OrdemDetalhesSheet({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 flex-shrink-0"
+                      className="h-11 w-11 p-0 flex-shrink-0"
                       onClick={(e) => {
                         e.preventDefault();
                         handleImprimirEtiqueta(linha);
                       }}
                       title="Imprimir etiqueta"
                     >
-                      <Printer className="h-4 w-4" />
+                      <Printer className="h-5 w-5" />
                     </Button>
                   </Label>
                 ))
