@@ -4598,6 +4598,10 @@ export type Database = {
         Args: { orcamento_uuid: string }
         Returns: number
       }
+      concluir_carregamento_e_avancar_pedido: {
+        Args: { p_ordem_carregamento_id: string }
+        Returns: Json
+      }
       concluir_entrega_e_avancar_pedido: {
         Args: { p_entrega_id: string }
         Returns: Json

@@ -110,24 +110,21 @@ export const useOrdensCarregamento = (filters?: {
 
   const concluirMutation = useMutation({
     mutationFn: async ({ id, observacoes }: { id: string; observacoes?: string }) => {
-      const user = await supabase.auth.getUser();
-      
-      const { data: updated, error } = await supabase
-        .from("ordens_carregamento")
-        .update({
-          carregamento_concluido: true,
-          carregamento_concluido_em: new Date().toISOString(),
-          carregamento_concluido_por: user.data.user?.id,
-          status: 'concluida',
-          observacoes: observacoes,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id)
-        .select()
-        .single();
+      // Atualizar observações se fornecidas
+      if (observacoes) {
+        await supabase
+          .from("ordens_carregamento")
+          .update({ observacoes })
+          .eq("id", id);
+      }
+
+      // Chamar função RPC para concluir carregamento e avançar pedido
+      const { data, error } = await supabase.rpc('concluir_carregamento_e_avancar_pedido', {
+        p_ordem_carregamento_id: id
+      });
 
       if (error) throw error;
-      return updated;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
