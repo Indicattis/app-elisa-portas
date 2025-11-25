@@ -14,22 +14,19 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 type FiltroTipo = "todos" | "elisa" | "autorizados";
 
 export default function ProducaoCarregamento() {
-  const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamento({
-    status: 'agendada' // Apenas ordens agendadas
-  });
+  const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamento();
 
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("todos");
   const [itemSelecionado, setItemSelecionado] = useState<OrdemCarregamento | null>(null);
   const [downbarOpen, setDownbarOpen] = useState(false);
 
-  // Filtrar apenas ordens agendadas (com data_carregamento definida) e não concluídas
-  const ordensAgendadas = ordens.filter(ordem => 
-    ordem.data_carregamento != null && 
+  // Filtrar apenas ordens não concluídas
+  const ordensDisponiveis = ordens.filter(ordem => 
     !ordem.carregamento_concluido
   );
 
   // Aplicar filtro por tipo de carregamento
-  const ordensFiltradas = ordensAgendadas.filter(ordem => {
+  const ordensFiltradas = ordensDisponiveis.filter(ordem => {
     if (filtroTipo === "todos") return true;
     return ordem.tipo_carregamento === filtroTipo;
   });
@@ -42,9 +39,7 @@ export default function ProducaoCarregamento() {
   });
 
   const podeIniciarColeta = (ordem: OrdemCarregamento) => {
-    return ordem.data_carregamento != null && 
-           ordem.status === 'agendada' &&
-           !ordem.carregamento_concluido;
+    return !ordem.carregamento_concluido;
   };
 
   const handleIniciarColeta = (ordem: OrdemCarregamento) => {
@@ -80,8 +75,7 @@ export default function ProducaoCarregamento() {
       ) : ordensOrdenadas.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <Truck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p>Nenhum carregamento agendado</p>
-          <p className="text-sm mt-2">Agende carregamentos em Expedição primeiro</p>
+          <p>Nenhuma ordem de carregamento pendente</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
