@@ -60,7 +60,12 @@ export const useOrdensCarregamentoCalendario = (
           pedido:pedidos_producao(
             id,
             numero_pedido,
-            etapa_atual
+            etapa_atual,
+            instalacao:instalacoes(
+              id,
+              responsavel_instalacao_id,
+              responsavel_instalacao_nome
+            )
           )
         `)
         .gte("data_carregamento", inicio)

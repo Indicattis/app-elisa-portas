@@ -26,7 +26,12 @@ export interface OrdemCarregamento {
     id: string;
     numero_pedido: string;
     etapa_atual: string;
-    data_producao: string | null;
+    data_producao?: string | null;
+    instalacao?: Array<{
+      id: string;
+      responsavel_instalacao_id: string | null;
+      responsavel_instalacao_nome: string | null;
+    }> | null;
   };
   venda?: {
     id: string;
