@@ -1171,6 +1171,7 @@ export type Database = {
           setor_responsavel_producao:
             | Database["public"]["Enums"]["setor_producao"]
             | null
+          sku: string | null
           subcategoria_id: string | null
           unidade: string | null
           updated_at: string | null
@@ -1192,6 +1193,7 @@ export type Database = {
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
             | null
+          sku?: string | null
           subcategoria_id?: string | null
           unidade?: string | null
           updated_at?: string | null
@@ -1213,6 +1215,7 @@ export type Database = {
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
             | null
+          sku?: string | null
           subcategoria_id?: string | null
           unidade?: string | null
           updated_at?: string | null
