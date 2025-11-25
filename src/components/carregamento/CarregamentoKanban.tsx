@@ -75,7 +75,7 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
             className="flex-1 space-y-3 cursor-pointer min-w-0"
             onClick={() => podeIniciar && onIniciarColeta(ordem)}
           >
-            {ordem.data_carregamento && (
+            {ordem.data_carregamento ? (
               <div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
@@ -84,6 +84,16 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                 <p className="text-sm font-semibold">
                   {format(new Date(ordem.data_carregamento), "dd/MM/yyyy", { locale: ptBR })}
                   {ordem.hora && ` às ${ordem.hora}`}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Data de Carregamento
+                </p>
+                <p className="text-sm font-semibold text-orange-500">
+                  Aguardando agendamento
                 </p>
               </div>
             )}
@@ -138,8 +148,8 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
               className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2"
             >
               <PackageCheck className="h-8 w-8" />
-              <span className="text-xs font-semibold">
-                {podeIniciar ? 'Iniciar Coleta' : 'Aguardando'}
+              <span className="text-xs font-semibold text-center">
+                {podeIniciar ? 'Iniciar Coleta' : 'Sem Data'}
               </span>
             </Button>
           </div>
@@ -163,7 +173,8 @@ export function CarregamentoKanban({
   onRefresh,
 }: CarregamentoKanbanProps) {
   const podeIniciarColeta = (ordem: OrdemCarregamento) => {
-    return !ordem.carregamento_concluido && ordem.status === 'agendada';
+    // Só pode iniciar se tiver data de carregamento agendada
+    return !ordem.carregamento_concluido && !!ordem.data_carregamento;
   };
 
   const renderSkeletons = () => (

@@ -17,11 +17,8 @@ export default function ProducaoCarregamento() {
   const [itemSelecionado, setItemSelecionado] = useState<OrdemCarregamento | null>(null);
   const [downbarOpen, setDownbarOpen] = useState(false);
 
-  // Filtrar ordens pendentes ou agendadas (não concluídas)
-  const ordensDisponiveis = ordens.filter(ordem => 
-    !ordem.carregamento_concluido && 
-    (ordem.status === 'pendente' || ordem.status === 'agendada')
-  );
+  // Filtrar todas as ordens não concluídas
+  const ordensDisponiveis = ordens.filter(ordem => !ordem.carregamento_concluido);
 
   // Aplicar filtro por tipo de carregamento
   const ordensFiltradas = ordensDisponiveis.filter(ordem => {
