@@ -97,7 +97,7 @@ export function OrdemDetalhesSheet({
   
   const linhas = ordem?.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
-  const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
+  const todasConcluidas = linhas.length === 0 || linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
   
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
