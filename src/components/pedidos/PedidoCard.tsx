@@ -14,7 +14,6 @@ import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
 import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
 import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
 import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
-import { DefinirDataCarregamentoModal } from "./DefinirDataCarregamentoModal";
 import { VisualizarBacklogModal } from "./VisualizarBacklogModal";
 import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
 import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
@@ -56,7 +55,6 @@ export function PedidoCard({
   const [showAvancarQualidade, setShowAvancarQualidade] = useState(false);
   const [showConfirmarAvanco, setShowConfirmarAvanco] = useState(false);
   const [showProgresso, setShowProgresso] = useState(false);
-  const [showDefinirData, setShowDefinirData] = useState(false);
   const [showVisualizarBacklog, setShowVisualizarBacklog] = useState(false);
   const [showArquivar, setShowArquivar] = useState(false);
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
@@ -217,7 +215,7 @@ export function PedidoCard({
     enabled: pedido.etapa_atual === 'aguardando_pintura'
   });
 
-  // Verificar se todos os itens do carregamento foram marcados e se tem data
+  // Verificar se a ordem de carregamento está concluída e buscar data
   const {
     data: carregamentoCompleto
   } = useQuery({
@@ -226,34 +224,34 @@ export function PedidoCard({
       if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'aguardando_instalacao') {
         return {
           concluido: false,
-          temData: true
+          temData: true,
+          dataCarregamento: null
         };
       }
 
-      // Verificar se tem data_carregamento
+      // Buscar a ordem de carregamento associada ao pedido
       const {
-        data: pedidoData
-      } = await supabase.from('pedidos_producao').select('data_carregamento').eq('id', pedido.id).single();
-      const temData = !!pedidoData?.data_carregamento;
+        data: ordemCarregamento
+      } = await supabase
+        .from('ordens_carregamento')
+        .select('data_carregamento, carregamento_concluido')
+        .eq('pedido_id', pedido.id)
+        .maybeSingle();
 
-      // Verificar se todos os itens estão marcados
-      const {
-        data: linhas
-      } = await supabase.from('pedido_linhas').select('check_coleta').eq('pedido_id', pedido.id);
-      if (!linhas || linhas.length === 0) return {
-        concluido: false,
-        temData
-      };
-      const todosMarcados = linhas.every(l => l.check_coleta === true);
+      const temData = !!ordemCarregamento?.data_carregamento;
+      const concluido = ordemCarregamento?.carregamento_concluido || false;
+
       return {
-        concluido: todosMarcados && temData,
-        temData
+        concluido,
+        temData,
+        dataCarregamento: ordemCarregamento?.data_carregamento || null
       };
     },
     enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'aguardando_instalacao'
   });
   const carregamentoConcluido = carregamentoCompleto?.concluido || false;
   const temDataCarregamento = carregamentoCompleto?.temData || false;
+  const dataCarregamento = carregamentoCompleto?.dataCarregamento || null;
 
   // Verificar se está em backlog usando a view
   const emBacklog = pedido.backlog && pedido.backlog.length > 0;
@@ -636,9 +634,9 @@ export function PedidoCard({
               
               {/* Data de Carregamento */}
               <div className="text-[10px] text-muted-foreground text-center">
-                {pedido.data_carregamento ? (
+                {dataCarregamento ? (
                   <span title="Data de carregamento">
-                    {format(new Date(pedido.data_carregamento), "dd/MM/yyyy")}
+                    {format(new Date(dataCarregamento), "dd/MM/yyyy")}
                   </span>
                 ) : (
                   <span className="text-muted-foreground/50">-</span>
@@ -710,13 +708,9 @@ export function PedidoCard({
                           <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
                           </Button>
-                        </ButtonWithTooltip>
-                      );
-                    } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-                      actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento" className="flex h-[20px] w-[20px] rounded-[3px]">
-                          <Package className="h-3 w-3" />
-                        </Button>);
-                    } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+                      </ButtonWithTooltip>
+                    );
+                  } else if (proximaEtapa && etapaAtual !== 'finalizado' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'aguardando_instalacao') {
                       actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex h-[20px] w-[20px] rounded-[3px]">
                           <ArrowRight className="h-3 w-3" />
                         </Button>);
@@ -768,8 +762,6 @@ export function PedidoCard({
         <ConfirmarAvancoModal open={showConfirmarAvanco} onOpenChange={setShowConfirmarAvanco} onConfirmar={handleConfirmarAvanco} pedido={pedido} etapaAtual={config?.label || ''} proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''} />
 
         <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
-        
-        <DefinirDataCarregamentoModal open={showDefinirData} onOpenChange={setShowDefinirData} pedido={pedido} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] })} />
       </>;
   }
 
@@ -905,14 +897,21 @@ export function PedidoCard({
                 </Badge>}
             </div>}
 
-          {/* Valor e Data */}
+          {/* Valor e Datas */}
           <div className="flex justify-between items-center text-xs">
             <span className="font-semibold text-primary">
               {formatCurrency(venda?.valor_venda || 0)}
             </span>
-            <span className="text-muted-foreground">
-              {format(new Date(venda?.created_at || Date.now()), "dd/MM/yyyy")}
-            </span>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-muted-foreground" title="Data prevista de entrega">
+                {venda?.data_prevista_entrega ? format(new Date(venda.data_prevista_entrega), "dd/MM/yyyy") : format(new Date(venda?.created_at || Date.now()), "dd/MM/yyyy")}
+              </span>
+              {dataCarregamento && (
+                <span className="text-[10px] text-muted-foreground" title="Data de carregamento">
+                  Carreg: {format(new Date(dataCarregamento), "dd/MM/yyyy")}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Número do pedido */}
@@ -977,11 +976,7 @@ export function PedidoCard({
                     </Button>
                   </ButtonWithTooltip>
                 );
-              } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-                actionButtons.push(<Button key="definir-data" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowDefinirData(true); }} title="Definir Data de Carregamento" className="flex w-full h-[35px]">
-                      <Package className="h-3.5 w-3.5" />
-                    </Button>);
-              } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+              } else if (proximaEtapa && etapaAtual !== 'finalizado' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'aguardando_instalacao') {
                 actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`} className="flex w-full h-[35px]">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>);
@@ -1062,16 +1057,5 @@ export function PedidoCard({
       <ConfirmarAvancoModal open={showConfirmarAvanco} onOpenChange={setShowConfirmarAvanco} onConfirmar={handleConfirmarAvanco} pedido={pedido} etapaAtual={config?.label || ''} proximaEtapa={proximaEtapa ? ETAPAS_CONFIG[proximaEtapa].label : ''} />
 
       <ProcessoAvancoModal open={showProgresso} processos={processos} onClose={() => setShowProgresso(false)} />
-
-      <DefinirDataCarregamentoModal pedido={pedido} open={showDefinirData} onOpenChange={setShowDefinirData} onSuccess={async () => {
-      setShowDefinirData(false);
-      await queryClient.invalidateQueries({
-        queryKey: ['pedido-carregamento', pedido.id]
-      });
-      toast({
-        title: "Data definida",
-        description: "Data de carregamento atualizada com sucesso"
-      });
-    }} />
     </>;
 }
