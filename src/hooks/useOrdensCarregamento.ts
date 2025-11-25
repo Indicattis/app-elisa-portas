@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { OrdemCarregamento, AgendarCarregamentoData } from "@/types/ordemCarregamento";
+import { useEffect } from "react";
 
 export const useOrdensCarregamento = (filters?: {
   status?: string;
@@ -163,6 +164,29 @@ export const useOrdensCarregamento = (filters?: {
       toast.error("Erro ao atualizar status");
     },
   });
+
+  // Subscription em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('ordens-carregamento-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ordens_carregamento'
+        },
+        () => {
+          // Invalidar queries para recarregar dados
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return {
     ordens,
