@@ -163,7 +163,7 @@ export function CarregamentoKanban({
   onRefresh,
 }: CarregamentoKanbanProps) {
   const podeIniciarColeta = (ordem: OrdemCarregamento) => {
-    return !ordem.carregamento_concluido;
+    return !ordem.carregamento_concluido && ordem.status === 'agendada';
   };
 
   const renderSkeletons = () => (
