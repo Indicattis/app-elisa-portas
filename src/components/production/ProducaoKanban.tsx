@@ -72,8 +72,16 @@ function OrdemCard({
   const todasConcluidas = linhas.length > 0 && linhas.every(l => l.concluida);
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
 
-  // Extrair cores únicas do pedido
-  const coresUnicas = [...new Set(linhas.map(l => l.cor_nome).filter(Boolean))].sort();
+  // Extrair cores únicas com hex do pedido (dos produtos)
+  const coresComHex = ordem.pedido?.produtos?.reduce((acc: { nome: string; hex: string }[], produto: any) => {
+    if (produto.cor?.nome && produto.cor?.codigo_hex) {
+      const exists = acc.find(c => c.nome === produto.cor.nome);
+      if (!exists) {
+        acc.push({ nome: produto.cor.nome, hex: produto.cor.codigo_hex });
+      }
+    }
+    return acc;
+  }, []) || [];
 
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
 
@@ -130,17 +138,22 @@ function OrdemCard({
         </div>
       </CardHeader>
 
-      {/* CORES DO PEDIDO - Label Grande */}
-      {coresUnicas.length > 0 && (
-        <div className="px-4 py-3 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-          <div className="flex flex-wrap gap-2">
-            {coresUnicas.map((cor, idx) => (
-              <span 
-                key={idx} 
-                className="px-4 py-2 bg-background rounded-lg text-base font-semibold border-2 border-primary/20 shadow-sm"
+      {/* CORES DO PEDIDO - Círculos Preenchidos */}
+      {coresComHex.length > 0 && (
+        <div className="px-4 py-3 bg-muted/20 border-b">
+          <div className="flex flex-wrap gap-3 items-center">
+            {coresComHex.map((cor, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center gap-2"
+                title={cor.nome}
               >
-                {cor}
-              </span>
+                <div 
+                  className="w-10 h-10 rounded-full border-2 border-border shadow-md"
+                  style={{ backgroundColor: cor.hex }}
+                />
+                <span className="text-sm font-medium text-muted-foreground">{cor.nome}</span>
+              </div>
             ))}
           </div>
         </div>
