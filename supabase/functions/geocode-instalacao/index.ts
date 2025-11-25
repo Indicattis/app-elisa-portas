@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { id, cidade, estado, table = 'instalacoes_cadastradas' } = await req.json() as GeocodeRequest & { table?: string };
+    const { id, cidade, estado, table = 'instalacoes' } = await req.json() as GeocodeRequest & { table?: string };
 
     console.log(`Geocoding instalação: ${cidade}, ${estado}`);
 
