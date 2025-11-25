@@ -32,6 +32,7 @@ interface PedidoLinhasEditorProps {
   onAdicionarLinha: (linha: PedidoLinhaNova) => Promise<any>;
   onRemoverLinha: (linhaId: string) => Promise<void>;
   onAtualizarCheckbox?: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
+  onAtualizarLinha?: (linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => void;
 }
 
 // Mapeamento de setor para categoria
@@ -69,7 +70,32 @@ export const PedidoLinhasEditor = ({
   onAdicionarLinha,
   onRemoverLinha,
   onAtualizarCheckbox,
+  onAtualizarLinha,
 }: PedidoLinhasEditorProps) => {
+  // Estado local para valores editados
+  const [valoresEditados, setValoresEditados] = useState<Record<string, { quantidade?: number; tamanho?: string }>>({});
+
+  const handleLinhaChange = (linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => {
+    setValoresEditados(prev => ({
+      ...prev,
+      [linhaId]: {
+        ...prev[linhaId],
+        [campo]: valor,
+      }
+    }));
+    
+    if (onAtualizarLinha) {
+      onAtualizarLinha(linhaId, campo, valor);
+    }
+  };
+
+  const getValorEditado = (linha: PedidoLinha, campo: 'quantidade' | 'tamanho') => {
+    const editado = valoresEditados[linha.id];
+    if (editado && editado[campo] !== undefined) {
+      return editado[campo];
+    }
+    return campo === 'quantidade' ? linha.quantidade : linha.tamanho;
+  };
   const [novaLinha, setNovaLinha] = useState(false);
   const [buscaSku, setBuscaSku] = useState("");
   const [popoverAberto, setPopoverAberto] = useState(false);
@@ -210,12 +236,32 @@ export const PedidoLinhasEditor = ({
                       </Badge>
                     </td>
                     <td className="p-2 text-center">
-                      <Badge variant="secondary" className="text-xs">
-                        {linha.quantidade}x
-                      </Badge>
+                      {!isReadOnly ? (
+                        <Input
+                          type="number"
+                          min="1"
+                          value={getValorEditado(linha, 'quantidade') as number}
+                          onChange={(e) => handleLinhaChange(linha.id, 'quantidade', parseInt(e.target.value) || 1)}
+                          className="h-7 w-16 text-xs text-center"
+                        />
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          {linha.quantidade}x
+                        </Badge>
+                      )}
                     </td>
-                    <td className="p-2 text-center text-xs text-muted-foreground">
-                      {linha.tamanho || '-'}
+                    <td className="p-2 text-center">
+                      {!isReadOnly ? (
+                        <Input
+                          type="text"
+                          placeholder="Tamanho"
+                          value={getValorEditado(linha, 'tamanho') as string || ''}
+                          onChange={(e) => handleLinhaChange(linha.id, 'tamanho', e.target.value)}
+                          className="h-7 w-20 text-xs text-center"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">{linha.tamanho || '-'}</span>
+                      )}
                     </td>
                   {todasOrdensConcluidas && onAtualizarCheckbox && (
                     <td className="p-2">

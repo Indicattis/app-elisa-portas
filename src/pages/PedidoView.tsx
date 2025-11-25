@@ -699,6 +699,17 @@ export default function PedidoView() {
               onAtualizarCheckbox={async (linhaId: string, campo: string, valor: boolean) => {
                 await atualizarCheckbox({ linhaId, campo, valor });
               }}
+              onAtualizarLinha={(linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => {
+                setLinhasEditadas(prev => {
+                  const novoMapa = new Map(prev);
+                  const linhaExistente = novoMapa.get(linhaId) || { id: linhaId };
+                  novoMapa.set(linhaId, {
+                    ...linhaExistente,
+                    [campo]: valor,
+                  });
+                  return novoMapa;
+                });
+              }}
             />
           </CardContent>
         </Card>
