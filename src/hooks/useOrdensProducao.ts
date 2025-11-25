@@ -8,7 +8,7 @@ export interface OrdemBase {
   status: string;
   created_at: string;
   historico?: boolean;
-  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura' | 'qualidade' | 'instalacao';
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura' | 'qualidade' | 'instalacao' | 'carregamento';
   responsavel_nome?: string;
 }
 
@@ -28,6 +28,7 @@ export interface PedidoComOrdens {
     pintura: number;
     qualidade: number;
     instalacao: number;
+    carregamento: number;
   };
 }
 
@@ -72,14 +73,16 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         { data: ordensSeparacao },
         { data: ordensPintura },
         { data: ordensQualidade },
-        { data: ordensInstalacao }
+        { data: ordensInstalacao },
+        { data: ordensCarregamento }
       ] = await Promise.all([
         supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
         supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
         supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
         supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
         supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_instalacao').select('id, numero_ordem, pedido_id, status, created_at, responsavel_id').in('pedido_id', pedidoIds)
+        supabase.from('ordens_instalacao').select('id, numero_ordem, pedido_id, status, created_at, responsavel_id').in('pedido_id', pedidoIds),
+        supabase.from('ordens_carregamento').select('id, pedido_id, status, created_at, carregamento_concluido, responsavel_carregamento_id').in('pedido_id', pedidoIds).eq('carregamento_concluido', mostrarHistorico)
       ]);
 
       // Buscar nomes dos responsáveis
@@ -88,6 +91,9 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         ordens?.forEach((o: any) => {
           if (o.responsavel_id) responsavelIds.add(o.responsavel_id);
         });
+      });
+      ordensCarregamento?.forEach((o: any) => {
+        if (o.responsavel_carregamento_id) responsavelIds.add(o.responsavel_carregamento_id);
       });
 
       const { data: usuarios } = await supabase
@@ -159,6 +165,16 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             historico: false,
             tipo: 'instalacao' as const,
             responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
+          })) || []),
+          ...(ordensCarregamento?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
+            id: o.id,
+            numero_ordem: `CARG-${o.id.substring(0, 8)}`,
+            pedido_id: o.pedido_id,
+            status: o.status || '',
+            created_at: o.created_at,
+            historico: o.carregamento_concluido,
+            tipo: 'carregamento' as const,
+            responsavel_nome: o.responsavel_carregamento_id ? usuariosMap.get(o.responsavel_carregamento_id) : undefined
           })) || [])
         ];
 
@@ -183,6 +199,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             pintura: todasOrdens.filter(o => o.tipo === 'pintura').length,
             qualidade: todasOrdens.filter(o => o.tipo === 'qualidade').length,
             instalacao: todasOrdens.filter(o => o.tipo === 'instalacao').length,
+            carregamento: todasOrdens.filter(o => o.tipo === 'carregamento').length,
           }
         };
       });

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'arquivado';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'carregamento' | 'arquivado';
 
 interface OrdemHistorico {
   id: string;
@@ -39,6 +39,7 @@ const TABELA_MAP: Record<Exclude<TipoOrdem, 'arquivado'>, string> = {
   separacao: 'ordens_separacao',
   qualidade: 'ordens_qualidade',
   pintura: 'ordens_pintura',
+  carregamento: 'ordens_carregamento',
 };
 
 export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
@@ -51,11 +52,15 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
       const tiposParaBuscar: TipoOrdem[] = 
         filters.tipoOrdem && filters.tipoOrdem !== 'todos' 
           ? [filters.tipoOrdem]
-          : ['soldagem', 'perfiladeira', 'separacao', 'qualidade', 'pintura'];
+          : ['soldagem', 'perfiladeira', 'separacao', 'qualidade', 'pintura', 'carregamento'];
       
       // Buscar de todas as tabelas em paralelo
       const promises = tiposParaBuscar.map(async (tipo) => {
         const tabela = TABELA_MAP[tipo];
+        
+        // Para carregamento, usar campo carregamento_concluido_em ao invés de data_conclusao
+        const campoData = tipo === 'carregamento' ? 'carregamento_concluido_em' : 'data_conclusao';
+        const campoHistorico = tipo === 'carregamento' ? 'carregamento_concluido' : 'historico';
         
         let query = supabase
           .from(tabela as any)
@@ -68,22 +73,23 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
               arquivado
             )
           `)
-          .eq('historico', true)
-          .order('data_conclusao', { ascending: false });
+          .eq(campoHistorico, true)
+          .order(campoData, { ascending: false });
         
         // Aplicar filtros
         if (filters.dataInicio) {
-          query = query.gte('data_conclusao', filters.dataInicio.toISOString());
+          query = query.gte(campoData, filters.dataInicio.toISOString());
         }
         
         if (filters.dataFim) {
           const dataFimFinal = new Date(filters.dataFim);
           dataFimFinal.setHours(23, 59, 59, 999);
-          query = query.lte('data_conclusao', dataFimFinal.toISOString());
+          query = query.lte(campoData, dataFimFinal.toISOString());
         }
         
         if (filters.responsavelId) {
-          query = query.eq('responsavel_id', filters.responsavelId);
+          const campoResponsavel = tipo === 'carregamento' ? 'responsavel_carregamento_id' : 'responsavel_id';
+          query = query.eq(campoResponsavel, filters.responsavelId);
         }
         
         const { data, error } = await query;
@@ -94,10 +100,22 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
         // Filtrar apenas ordens cujos pedidos estão arquivados
         return (data || [])
           .filter((ordem: any) => ordem.pedido?.arquivado === true)
-          .map((ordem: any) => ({
-            ...ordem,
-            tipo_ordem: tipo,
-          }));
+          .map((ordem: any) => {
+            // Para carregamento, mapear campos específicos
+            if (tipo === 'carregamento') {
+              return {
+                ...ordem,
+                tipo_ordem: tipo,
+                data_conclusao: ordem.carregamento_concluido_em,
+                responsavel_id: ordem.responsavel_carregamento_id,
+                numero_ordem: `CARG-${ordem.id.substring(0, 8)}`,
+              };
+            }
+            return {
+              ...ordem,
+              tipo_ordem: tipo,
+            };
+          });
       });
       
       const results = await Promise.all(promises);

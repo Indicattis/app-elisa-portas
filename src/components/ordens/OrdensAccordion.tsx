@@ -9,7 +9,7 @@ import { PedidoComOrdens } from "@/hooks/useOrdensProducao";
 import { OrdemCard } from "./OrdemCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench } from "lucide-react";
+import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck } from "lucide-react";
 
 const ORDEM_ICONS = {
   soldagem: Hammer,
@@ -18,6 +18,7 @@ const ORDEM_ICONS = {
   pintura: Paintbrush,
   qualidade: CheckCircle,
   instalacao: Wrench,
+  carregamento: Truck,
 };
 
 const ORDEM_LABELS = {
@@ -27,6 +28,7 @@ const ORDEM_LABELS = {
   pintura: 'Pint',
   qualidade: 'Qual',
   instalacao: 'Inst',
+  carregamento: 'Carreg',
 };
 
 interface OrdensAccordionProps {

@@ -18,6 +18,7 @@ const TIPO_ORDEM_COLORS: Record<string, string> = {
   separacao: "bg-purple-500/10 text-purple-700 border-purple-500/20",
   qualidade: "bg-green-500/10 text-green-700 border-green-500/20",
   pintura: "bg-pink-500/10 text-pink-700 border-pink-500/20",
+  carregamento: "bg-cyan-500/10 text-cyan-700 border-cyan-500/20",
 };
 
 const TIPO_ORDEM_LABELS: Record<string, string> = {
@@ -26,6 +27,7 @@ const TIPO_ORDEM_LABELS: Record<string, string> = {
   separacao: "Separação",
   qualidade: "Qualidade",
   pintura: "Pintura",
+  carregamento: "Carregamento",
 };
 
 export default function HistoricoProducao() {

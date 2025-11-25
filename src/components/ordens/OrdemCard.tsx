@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench } from "lucide-react";
+import { Eye, Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { OrdemBase } from "@/hooks/useOrdensProducao";
 import { format } from "date-fns";
@@ -14,6 +14,7 @@ const ORDEM_ICONS = {
   pintura: Paintbrush,
   qualidade: CheckCircle,
   instalacao: Wrench,
+  carregamento: Truck,
 };
 
 const ORDEM_LABELS = {
@@ -23,6 +24,7 @@ const ORDEM_LABELS = {
   pintura: 'Pintura',
   qualidade: 'Qualidade',
   instalacao: 'Instalação',
+  carregamento: 'Carregamento',
 };
 
 const STATUS_VARIANTS = {
@@ -46,6 +48,7 @@ const ORDEM_ROUTES = {
   pintura: '/dashboard/ordem-pintura-edit',
   qualidade: '/dashboard/ordem-qualidade-edit',
   instalacao: '/dashboard/ordem-instalacao-edit',
+  carregamento: '/dashboard/instalacoes/expedicao',
 };
 
 interface OrdemCardProps {
@@ -55,12 +58,12 @@ interface OrdemCardProps {
 
 export function OrdemCard({ ordem, pedidoStatus }: OrdemCardProps) {
   const navigate = useNavigate();
-  const Icon = ORDEM_ICONS[ordem.tipo];
+  const Icon = ORDEM_ICONS[ordem.tipo as keyof typeof ORDEM_ICONS] || Package;
 
   const handleVerDetalhes = () => {
-    const route = ORDEM_ROUTES[ordem.tipo];
+    const route = ORDEM_ROUTES[ordem.tipo as keyof typeof ORDEM_ROUTES];
     if (route) {
-      navigate(`${route}/${ordem.id}`);
+      navigate(route);
     }
   };
 
@@ -72,7 +75,7 @@ export function OrdemCard({ ordem, pedidoStatus }: OrdemCardProps) {
             <Icon className="h-5 w-5 text-primary" />
             <div>
               <p className="font-semibold">{ordem.numero_ordem}</p>
-              <p className="text-xs text-muted-foreground">{ORDEM_LABELS[ordem.tipo]}</p>
+              <p className="text-xs text-muted-foreground">{ORDEM_LABELS[ordem.tipo as keyof typeof ORDEM_LABELS]}</p>
             </div>
           </div>
           <Badge variant="outline">
@@ -101,7 +104,7 @@ export function OrdemCard({ ordem, pedidoStatus }: OrdemCardProps) {
             onClick={handleVerDetalhes}
           >
             <Eye className="h-4 w-4 mr-2" />
-            Ver Detalhes
+            {ordem.tipo === 'carregamento' ? 'Ver Expedição' : 'Ver Detalhes'}
           </Button>
         </div>
       </CardContent>

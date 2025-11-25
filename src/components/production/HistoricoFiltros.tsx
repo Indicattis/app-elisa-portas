@@ -44,6 +44,7 @@ export function HistoricoFiltros({
             <SelectItem value="separacao">Separação</SelectItem>
             <SelectItem value="qualidade">Qualidade</SelectItem>
             <SelectItem value="pintura">Pintura</SelectItem>
+            <SelectItem value="carregamento">Carregamento</SelectItem>
           </SelectContent>
         </Select>
       </div>
