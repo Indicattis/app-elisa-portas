@@ -22,7 +22,9 @@ export function usePedidoAutoAvanco() {
         .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao']);
 
       if (error) throw error;
-      if (!linhas || linhas.length === 0) return false;
+      
+      // Se não há linhas, considerar como concluída
+      if (!linhas || linhas.length === 0) return true;
 
       // Verificar se todas as linhas estão concluídas
       return linhas.every(linha => linha.concluida === true);
@@ -41,7 +43,9 @@ export function usePedidoAutoAvanco() {
         .eq('tipo_ordem', 'qualidade');
 
       if (error) throw error;
-      if (!linhas || linhas.length === 0) return false;
+      
+      // Se não há linhas, considerar como concluída
+      if (!linhas || linhas.length === 0) return true;
 
       return linhas.every(linha => linha.concluida === true);
     } catch (error) {
@@ -52,6 +56,22 @@ export function usePedidoAutoAvanco() {
 
   const verificarOrdemPinturaConcluida = async (pedidoId: string): Promise<boolean> => {
     try {
+      // Verificar se a ordem de pintura existe e está com status 'pronta'
+      const { data: ordemPintura, error: ordemError } = await supabase
+        .from('ordens_pintura')
+        .select('id, status')
+        .eq('pedido_id', pedidoId)
+        .maybeSingle();
+
+      if (ordemError) throw ordemError;
+      
+      // Se não existe ordem de pintura, considerar como concluída (não precisa de pintura)
+      if (!ordemPintura) return true;
+      
+      // Verificar se o status da ordem é 'pronta'
+      if (ordemPintura.status === 'pronta') return true;
+      
+      // Verificar linhas
       const { data: linhas, error } = await supabase
         .from('linhas_ordens')
         .select('concluida')
@@ -59,7 +79,9 @@ export function usePedidoAutoAvanco() {
         .eq('tipo_ordem', 'pintura');
 
       if (error) throw error;
-      if (!linhas || linhas.length === 0) return false;
+      
+      // Se não há linhas, considerar como concluída
+      if (!linhas || linhas.length === 0) return true;
 
       return linhas.every(linha => linha.concluida === true);
     } catch (error) {
