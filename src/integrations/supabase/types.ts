@@ -4639,6 +4639,10 @@ export type Database = {
         Args: { orcamento_uuid: string }
         Returns: string
       }
+      excluir_pedido_em_aberto: {
+        Args: { pedido_uuid: string }
+        Returns: boolean
+      }
       gerar_numero_ordem:
         | { Args: { tipo_ordem: string }; Returns: string }
         | {
