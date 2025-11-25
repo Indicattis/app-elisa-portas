@@ -52,9 +52,7 @@ const CONDICAO_TIPOS = [
 ];
 
 const CAMPOS_CONDICAO = [
-  { value: "largura", label: "Largura (m)" },
-  { value: "altura", label: "Altura (m)" },
-  { value: "peso", label: "Peso (kg)" },
+  { value: "tamanho", label: "Tamanho (m)" },
 ];
 
 export default function RegrasEtiquetasPage() {
