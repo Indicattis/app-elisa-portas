@@ -345,6 +345,7 @@ export default function Estoque() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-xs font-medium w-24">SKU</TableHead>
                   <TableHead className="text-xs font-medium">Produto</TableHead>
                   <TableHead className="text-xs font-medium">Categoria</TableHead>
                   <TableHead className="text-xs font-medium">Setor</TableHead>
@@ -357,17 +358,18 @@ export default function Estoque() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : produtos.filter(p => 
                     !searchTerm || 
                     p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase())
+                    p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
@@ -376,7 +378,8 @@ export default function Estoque() {
                     .filter(p => 
                       !searchTerm || 
                       p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase())
+                      p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
                     )
                     .map((produto) => (
                     <TableRow 
@@ -384,6 +387,11 @@ export default function Estoque() {
                       className="cursor-pointer hover:bg-accent/50 transition-colors"
                       onDoubleClick={() => handleDoubleClick(produto.id)}
                     >
+                      <TableCell className="px-3 py-2">
+                        <Badge variant="outline" className="text-xs font-mono">
+                          {produto.sku || '-'}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="px-3 py-2">
                         <div>
                           <div className="font-medium text-sm">{produto.nome_produto}</div>

@@ -19,6 +19,7 @@ export interface MovimentacaoEstoque {
 
 export interface ProdutoEstoque {
   id: string;
+  sku: string | null;
   nome_produto: string;
   descricao_produto: string | null;
   quantidade: number;
@@ -77,7 +78,7 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
 
       if (searchTerm) {
         query = query.or(
-          `nome_produto.ilike.%${searchTerm}%,descricao_produto.ilike.%${searchTerm}%`
+          `nome_produto.ilike.%${searchTerm}%,descricao_produto.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%`
         );
       }
 
