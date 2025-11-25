@@ -53,8 +53,8 @@ function OrdemCard({
 }: OrdemCardProps) {
   const linhas = ordem.linhas || [];
   const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
-  const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
-  const todasConcluidas = linhas.length > 0 && linhas.every((l: any) => l.concluida);
+  const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 100;
+  const todasConcluidas = linhas.length === 0 || linhas.every((l: any) => l.concluida);
   
   // Extrair cores únicas do pedido
   const coresUnicas = [...new Set(linhas.map((l: any) => l.cor_nome).filter(Boolean))].sort();
