@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { OrigemBadges } from "@/components/shared/OrigemBadges";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
+import { useRegrasEtiquetas } from "@/hooks/useRegrasEtiquetas";
 import { gerarPDFEtiquetaProducao, gerarPDFEtiquetasProducaoMultiplas } from "@/utils/etiquetasPDFGenerator";
 import { RetornarProducaoModal } from "./RetornarProducaoModal";
 
@@ -107,6 +108,7 @@ export function OrdemDetalhesSheet({
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
+  const { encontrarRegraAplicavel } = useRegrasEtiquetas();
   
   const linhas = ordem?.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
@@ -199,13 +201,19 @@ export function OrdemDetalhesSheet({
     }
   };
 
-  // Função auxiliar para obter recomendação de etiquetas
-  const getEtiquetasRecomendadas = (linha: LinhaOrdem): number => {
+  // Função auxiliar para obter recomendação de etiquetas (só retorna valor se existir regra)
+  const getEtiquetasRecomendadas = (linha: LinhaOrdem): number | null => {
+    if (!linha.estoque_id) return null;
+    
+    // Verifica se existe regra cadastrada para este item
+    const regra = encontrarRegraAplicavel(linha.estoque_id, { tamanho: linha.largura || 0 });
+    if (!regra) return null;
+    
     try {
       const calculo = calcularEtiquetasLinha(linha);
       return calculo.etiquetasNecessarias;
     } catch {
-      return 1;
+      return null;
     }
   };
 
@@ -530,10 +538,12 @@ export function OrdemDetalhesSheet({
                                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                   <span>Qtd: {linha.quantidade}</span>
                                   {linha.tamanho && <span>{linha.tamanho}</span>}
-                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
-                                    <Tags className="h-2.5 w-2.5 mr-0.5" />
-                                    {getEtiquetasRecomendadas(linha)} etiq.
-                                  </Badge>
+                                  {getEtiquetasRecomendadas(linha) !== null && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                                      <Tags className="h-2.5 w-2.5 mr-0.5" />
+                                      {getEtiquetasRecomendadas(linha)} etiq.
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                               
@@ -587,10 +597,12 @@ export function OrdemDetalhesSheet({
                       <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                         <span>Qtd: {linha.quantidade}</span>
                         {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
-                          <Tags className="h-2.5 w-2.5 mr-0.5" />
-                          {getEtiquetasRecomendadas(linha)} etiq.
-                        </Badge>
+                        {getEtiquetasRecomendadas(linha) !== null && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                            <Tags className="h-2.5 w-2.5 mr-0.5" />
+                            {getEtiquetasRecomendadas(linha)} etiq.
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     
