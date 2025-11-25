@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Plus, Download, Truck } from "lucide-react";
+import { Plus, Download, Truck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useQueryClient } from "@tanstack/react-query";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
@@ -17,6 +18,7 @@ import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrde
 
 export default function Expedicao() {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
   const { ordens, isLoading, deleteOrdem, updateOrdem, isUpdating } = useOrdensCarregamentoCalendario(
@@ -118,6 +120,11 @@ export default function Expedicao() {
     toast.info("Funcionalidade de PDF em desenvolvimento");
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario"] });
+    toast.success("Calendário atualizado");
+  };
+
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
     setSelectedOrdem(ordem);
     setDetailsOpen(true);
@@ -158,6 +165,10 @@ export default function Expedicao() {
                 </Button>
               </div>
             )}
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Atualizar</span>
+            </Button>
             <Button variant="outline" size="sm" onClick={handleBaixarPDF}>
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">PDF</span>
