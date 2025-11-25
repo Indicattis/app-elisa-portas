@@ -129,6 +129,22 @@ function OrdemCard({
           </div>
         </div>
       </CardHeader>
+
+      {/* CORES DO PEDIDO - Label Grande */}
+      {coresUnicas.length > 0 && (
+        <div className="px-4 py-3 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+          <div className="flex flex-wrap gap-2">
+            {coresUnicas.map((cor, idx) => (
+              <span 
+                key={idx} 
+                className="px-4 py-2 bg-background rounded-lg text-base font-semibold border-2 border-primary/20 shadow-sm"
+              >
+                {cor}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* BODY */}
       <CardContent className="p-4">
@@ -183,18 +199,6 @@ function OrdemCard({
               </div>
             )}
 
-            {coresUnicas.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground">Cores</p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {coresUnicas.map((cor, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {cor}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
 
           </div>
 
