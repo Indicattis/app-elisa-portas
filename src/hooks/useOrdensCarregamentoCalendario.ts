@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { useEffect } from "react";
 
 export const useOrdensCarregamentoCalendario = (
   currentDate: Date,
@@ -115,6 +116,29 @@ export const useOrdensCarregamentoCalendario = (
       toast.error("Erro ao excluir ordem de carregamento");
     },
   });
+
+  // Subscription em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('ordens-carregamento-calendar-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ordens_carregamento'
+        },
+        () => {
+          // Invalidar queries para recarregar dados
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [inicio, fim, queryClient]);
 
   return {
     ordens,
