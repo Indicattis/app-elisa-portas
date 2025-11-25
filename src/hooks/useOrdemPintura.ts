@@ -222,6 +222,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
           status: 'pronta',
           data_conclusao: new Date().toISOString(),
           tempo_conclusao_segundos,
+          historico: true, // Enviar para histórico ao finalizar
         })
         .eq("id", ordemId);
 
