@@ -68,7 +68,20 @@ export const useOrdensCarregamentoCalendario = (
         .order("data_carregamento", { ascending: true });
 
       if (error) throw error;
-      return (data || []) as OrdemCarregamento[];
+      
+      // Filtrar ordens cujo pedido está finalizado ou arquivado
+      const filteredData = (data || []).filter((ordem: any) => {
+        const etapaAtual = ordem.pedido?.etapa_atual;
+        const arquivado = ordem.pedido?.arquivado;
+        
+        // Excluir se etapa é finalizado ou se está arquivado
+        if (etapaAtual === 'finalizado' || arquivado === true) {
+          return false;
+        }
+        return true;
+      });
+      
+      return filteredData as OrdemCarregamento[];
     },
   });
 
