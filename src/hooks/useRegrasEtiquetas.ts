@@ -123,7 +123,7 @@ export const useRegrasEtiquetas = () => {
   // Função para encontrar regra aplicável a um item
   const encontrarRegraAplicavel = (
     estoqueId: string | null,
-    dimensoes?: { largura?: number; altura?: number; peso?: number }
+    dimensoes?: { tamanho?: number }
   ): RegraEtiqueta | null => {
     if (!estoqueId) return null;
 
@@ -160,7 +160,7 @@ export const useRegrasEtiquetas = () => {
   const calcularEtiquetasComRegra = (
     estoqueId: string | null,
     quantidade: number,
-    dimensoes?: { largura?: number; altura?: number; peso?: number }
+    dimensoes?: { tamanho?: number }
   ): { etiquetas: number; regra: RegraEtiqueta | null } => {
     const regra = encontrarRegraAplicavel(estoqueId, dimensoes);
 

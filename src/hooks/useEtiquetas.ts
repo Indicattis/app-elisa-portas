@@ -43,7 +43,7 @@ export const useEtiquetas = () => {
       const { etiquetas, regra } = calcularEtiquetasComRegra(
         linha.estoque_id,
         linha.quantidade,
-        { largura, altura }
+        { tamanho: largura }
       );
 
       if (regra) {
