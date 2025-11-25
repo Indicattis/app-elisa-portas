@@ -116,6 +116,7 @@ export function usePedidoLinhas(pedidoId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedidoId] });
+      queryClient.invalidateQueries({ queryKey: ['pedido-linhas-count', pedidoId] });
       queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
       toast({
         title: "Produto adicionado",
@@ -143,6 +144,7 @@ export function usePedidoLinhas(pedidoId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedidoId] });
+      queryClient.invalidateQueries({ queryKey: ['pedido-linhas-count', pedidoId] });
       queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
       toast({
         title: "Produto removido",
