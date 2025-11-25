@@ -245,18 +245,27 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         }
       }
 
-      // Se está em aguardando_coleta ou aguardando_instalacao, validar data_carregamento
+      // Se está em aguardando_coleta ou aguardando_instalacao, validar ordem de carregamento
       if (etapaAtualNome === 'aguardando_coleta' || etapaAtualNome === 'aguardando_instalacao') {
-        const { data: pedidoData, error: pedidoDataError } = await supabase
-          .from('pedidos_producao')
-          .select('data_carregamento')
-          .eq('id', pedidoId)
-          .single();
+        // Verificar se existe ordem de carregamento e se está concluída
+        const { data: ordemCarregamento, error: ordemError } = await supabase
+          .from('ordens_carregamento')
+          .select('id, carregamento_concluido, data_carregamento, status')
+          .eq('pedido_id', pedidoId)
+          .maybeSingle();
         
-        if (pedidoDataError) throw pedidoDataError;
+        if (ordemError) throw ordemError;
         
-        if (!pedidoData?.data_carregamento) {
+        if (!ordemCarregamento) {
+          throw new Error('Ordem de carregamento não encontrada para este pedido');
+        }
+        
+        if (!ordemCarregamento.data_carregamento) {
           throw new Error('Informe a data de carregamento antes de finalizar o pedido');
+        }
+        
+        if (!ordemCarregamento.carregamento_concluido) {
+          throw new Error('O carregamento deve ser concluído antes de finalizar o pedido');
         }
       }
 
