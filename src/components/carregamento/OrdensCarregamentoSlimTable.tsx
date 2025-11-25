@@ -2,7 +2,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Truck, Calendar, User } from "lucide-react";
+import { MapPin, Truck, Calendar, User, CheckCircle2, XCircle } from "lucide-react";
 
 interface OrdensCarregamentoSlimTableProps {
   ordens: OrdemCarregamento[];
@@ -32,7 +32,7 @@ export const OrdensCarregamentoSlimTable = ({ ordens }: OrdensCarregamentoSlimTa
   return (
     <div className="border rounded-lg overflow-hidden bg-card">
       {/* Header */}
-      <div className="grid grid-cols-[2fr,1.5fr,1fr,1.5fr,1.5fr,1fr] gap-4 px-4 py-2 bg-muted/50 border-b text-xs font-medium text-muted-foreground">
+      <div className="grid grid-cols-[2fr,1.5fr,1fr,1.5fr,1.5fr,1fr,1fr] gap-4 px-4 py-2 bg-muted/50 border-b text-xs font-medium text-muted-foreground">
         <div>Cliente</div>
         <div>Localização</div>
         <div>Status</div>
@@ -45,6 +45,7 @@ export const OrdensCarregamentoSlimTable = ({ ordens }: OrdensCarregamentoSlimTa
           Responsável
         </div>
         <div>Tipo</div>
+        <div>Carregamento</div>
       </div>
 
       {/* Rows */}
@@ -52,7 +53,7 @@ export const OrdensCarregamentoSlimTable = ({ ordens }: OrdensCarregamentoSlimTa
         {ordens.map((ordem) => (
           <div
             key={ordem.id}
-            className="grid grid-cols-[2fr,1.5fr,1fr,1.5fr,1.5fr,1fr] gap-4 px-4 py-2 hover:bg-muted/30 transition-colors items-center text-sm h-[35px]"
+            className="grid grid-cols-[2fr,1.5fr,1fr,1.5fr,1.5fr,1fr,1fr] gap-4 px-4 py-2 hover:bg-muted/30 transition-colors items-center text-sm h-[35px]"
           >
             {/* Cliente */}
             <div className="font-medium truncate">
@@ -107,6 +108,21 @@ export const OrdensCarregamentoSlimTable = ({ ordens }: OrdensCarregamentoSlimTa
                 </Badge>
               ) : (
                 <span className="text-muted-foreground text-xs">-</span>
+              )}
+            </div>
+
+            {/* Carregamento Concluído */}
+            <div>
+              {ordem.carregamento_concluido ? (
+                <Badge variant="outline" className="h-5 text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Concluído
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="h-5 text-xs">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Pendente
+                </Badge>
               )}
             </div>
           </div>
