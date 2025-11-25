@@ -132,29 +132,23 @@ export function OrdemDetalhesSheet({
     try {
       const calculo = calcularEtiquetasLinha(linha);
       
-      // Criar array com todas as tags necessárias
-      const tags = [];
-      for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
-        tags.push({
-          tagNumero: i,
-          totalTags: calculo.etiquetasNecessarias,
-          nomeProduto: calculo.nomeProduto,
-          numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
-          quantidade: calculo.quantidade,
-          largura: calculo.largura,
-          altura: calculo.altura,
-          clienteNome: ordem?.pedido?.cliente_nome,
-          tamanho: linha.tamanho,
-          corNome: linha.cor_nome,
-          tipoPintura: linha.tipo_pintura,
-          origemOrdem: origemOrdemLabel,
-        });
-      }
+      // Gerar apenas 1 etiqueta individual
+      const tag = {
+        tagNumero: 1,
+        totalTags: calculo.etiquetasNecessarias,
+        nomeProduto: calculo.nomeProduto,
+        numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
+        quantidade: calculo.quantidade,
+        largura: calculo.largura,
+        altura: calculo.altura,
+        clienteNome: ordem?.pedido?.cliente_nome,
+        tamanho: linha.tamanho,
+        corNome: linha.cor_nome,
+        tipoPintura: linha.tipo_pintura,
+        origemOrdem: origemOrdemLabel,
+      };
       
-      // Gerar PDF único com todas as etiquetas (uma por página)
-      const doc = calculo.etiquetasNecessarias > 1 
-        ? gerarPDFEtiquetasProducaoMultiplas(tags)
-        : gerarPDFEtiquetaProducao(tags[0]);
+      const doc = gerarPDFEtiquetaProducao(tag);
       
       // Criar iframe oculto para impressão na aba atual
       const blobUrl = String(doc.output('bloburl'));
@@ -174,19 +168,14 @@ export function OrdemDetalhesSheet({
           try {
             iframe.contentWindow?.print();
             
-            // Detectar quando o diálogo de impressão for fechado
-            const checkPrintClosed = () => {
+            window.addEventListener('focus', () => {
               setTimeout(() => {
                 if (document.body.contains(iframe)) {
                   document.body.removeChild(iframe);
                 }
               }, 100);
-            };
+            }, { once: true });
             
-            // Remover iframe após um tempo maior para garantir que a impressão seja concluída
-            window.addEventListener('focus', checkPrintClosed, { once: true });
-            
-            // Backup: remover após 10 segundos caso o evento de foco não funcione
             setTimeout(() => {
               if (document.body.contains(iframe)) {
                 document.body.removeChild(iframe);
@@ -203,10 +192,20 @@ export function OrdemDetalhesSheet({
       
       iframe.src = blobUrl;
       
-      toast.success(`${calculo.etiquetasNecessarias} etiqueta(s) pronta(s) para impressão`);
+      toast.success('1 etiqueta pronta para impressão');
     } catch (error) {
-      console.error('Erro ao gerar etiquetas:', error);
-      toast.error('Erro ao gerar etiquetas');
+      console.error('Erro ao gerar etiqueta:', error);
+      toast.error('Erro ao gerar etiqueta');
+    }
+  };
+
+  // Função auxiliar para obter recomendação de etiquetas
+  const getEtiquetasRecomendadas = (linha: LinhaOrdem): number => {
+    try {
+      const calculo = calcularEtiquetasLinha(linha);
+      return calculo.etiquetasNecessarias;
+    } catch {
+      return 1;
     }
   };
 
@@ -531,6 +530,10 @@ export function OrdemDetalhesSheet({
                                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                   <span>Qtd: {linha.quantidade}</span>
                                   {linha.tamanho && <span>{linha.tamanho}</span>}
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                                    <Tags className="h-2.5 w-2.5 mr-0.5" />
+                                    {getEtiquetasRecomendadas(linha)} etiq.
+                                  </Badge>
                                 </div>
                               </div>
                               
@@ -584,6 +587,10 @@ export function OrdemDetalhesSheet({
                       <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                         <span>Qtd: {linha.quantidade}</span>
                         {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                          <Tags className="h-2.5 w-2.5 mr-0.5" />
+                          {getEtiquetasRecomendadas(linha)} etiq.
+                        </Badge>
                       </div>
                     </div>
                     
