@@ -156,6 +156,44 @@ export const useRegrasEtiquetas = () => {
     return null;
   };
 
+  // Função para encontrar regra aplicável pelo nome do produto (fallback)
+  const encontrarRegraPorNome = (
+    nomeProduto: string,
+    dimensoes?: { tamanho?: number }
+  ): RegraEtiqueta | null => {
+    if (!nomeProduto) return null;
+
+    const nomeNormalizado = nomeProduto.toLowerCase().trim();
+
+    // Filtrar regras ativas onde o nome do produto do estoque corresponde
+    const regrasAtivas = regras
+      .filter(r => r.ativo && r.estoque?.nome_produto?.toLowerCase().trim() === nomeNormalizado)
+      .sort((a, b) => b.prioridade - a.prioridade);
+
+    for (const regra of regrasAtivas) {
+      // Se não há condição de dimensão, usar esta regra
+      if (!regra.campo_condicao || !regra.condicao_tipo || regra.condicao_valor === null) {
+        return regra;
+      }
+
+      // Verificar condição de dimensão
+      const valorCampo = dimensoes?.[regra.campo_condicao as keyof typeof dimensoes];
+      if (valorCampo === undefined) continue;
+
+      const condicaoAtendida = verificarCondicao(
+        valorCampo,
+        regra.condicao_tipo,
+        regra.condicao_valor
+      );
+
+      if (condicaoAtendida) {
+        return regra;
+      }
+    }
+
+    return null;
+  };
+
   // Função para calcular etiquetas com base nas regras
   const calcularEtiquetasComRegra = (
     estoqueId: string | null,
@@ -185,6 +223,7 @@ export const useRegrasEtiquetas = () => {
     atualizarRegra,
     excluirRegra,
     encontrarRegraAplicavel,
+    encontrarRegraPorNome,
     calcularEtiquetasComRegra,
   };
 };

@@ -12,7 +12,7 @@ interface LinhaOrdem {
 }
 
 export const useEtiquetasProducao = () => {
-  const { regras, calcularEtiquetasComRegra } = useRegrasEtiquetas();
+  const { regras, calcularEtiquetasComRegra, encontrarRegraPorNome } = useRegrasEtiquetas();
 
   // Função de cálculo de etiquetas adaptada para LinhaOrdem
   const calcularEtiquetasLinha = (linha: LinhaOrdem): EtiquetaCalculo => {
@@ -20,7 +20,7 @@ export const useEtiquetasProducao = () => {
     const largura = linha.largura || 0;
     const altura = linha.altura || 0;
 
-    // Tentar encontrar regra dinâmica primeiro
+    // Tentar encontrar regra dinâmica primeiro (por estoque_id)
     if (linha.estoque_id && regras.length > 0) {
       const { etiquetas, regra } = calcularEtiquetasComRegra(
         linha.estoque_id,
@@ -36,6 +36,24 @@ export const useEtiquetasProducao = () => {
           etiquetasNecessarias: etiquetas,
           tipoCalculo: regra.campo_condicao ? 'regra_condicional' : 'regra_simples',
           explicacao: `Regra "${regra.nome_regra}": ${linha.quantidade} ÷ ${regra.divisor} = ${etiquetas} etiqueta(s).`,
+          largura: largura || undefined,
+          altura: altura || undefined,
+        };
+      }
+    }
+
+    // Tentar encontrar regra pelo nome do produto (fallback)
+    if (regras.length > 0) {
+      const regraPorNome = encontrarRegraPorNome(nomeProduto, { tamanho: largura });
+      if (regraPorNome) {
+        const etiquetas = Math.ceil(linha.quantidade / regraPorNome.divisor);
+        return {
+          linhaId: linha.id,
+          nomeProduto,
+          quantidade: linha.quantidade,
+          etiquetasNecessarias: etiquetas,
+          tipoCalculo: regraPorNome.campo_condicao ? 'regra_condicional' : 'regra_simples',
+          explicacao: `Regra "${regraPorNome.nome_regra}": ${linha.quantidade} ÷ ${regraPorNome.divisor} = ${etiquetas} etiqueta(s).`,
           largura: largura || undefined,
           altura: altura || undefined,
         };
