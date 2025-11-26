@@ -19,13 +19,14 @@ interface TarefaDia {
 
 export function useTarefasCalendario(mesAno?: Date) {
   const mesAtual = mesAno || new Date();
-  const inicio = startOfMonth(mesAtual);
-  const fim = endOfMonth(mesAtual);
+  // Busca dados de 3 meses (mês anterior, atual e próximo) para garantir cobertura de semanas que cruzam meses
+  const inicio = startOfMonth(new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1));
+  const fim = endOfMonth(new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 1));
 
   return useQuery({
-    queryKey: ["tarefas-calendario", format(inicio, 'yyyy-MM')],
+    queryKey: ["tarefas-calendario", format(mesAtual, 'yyyy-MM')],
     queryFn: async () => {
-      // Buscar todas as tarefas do mês
+      // Buscar todas as tarefas do período usando data_referencia
       const { data: tarefas, error } = await supabase
         .from("tarefas")
         .select(`
@@ -33,12 +34,13 @@ export function useTarefasCalendario(mesAno?: Date) {
           descricao,
           status,
           responsavel_id,
-          created_at,
+          data_referencia,
           recorrente
         `)
-        .gte("created_at", inicio.toISOString())
-        .lte("created_at", fim.toISOString())
-        .order("created_at");
+        .not("data_referencia", "is", null)
+        .gte("data_referencia", format(inicio, 'yyyy-MM-dd'))
+        .lte("data_referencia", format(fim, 'yyyy-MM-dd'))
+        .order("data_referencia");
 
       if (error) {
         console.error("Erro ao buscar tarefas:", error);
@@ -73,8 +75,8 @@ export function useTarefasCalendario(mesAno?: Date) {
       });
 
       tarefas?.forEach(tarefa => {
-        const diaStr = format(new Date(tarefa.created_at), 'yyyy-MM-dd');
-        if (tarefasPorDia[diaStr]) {
+        const diaStr = tarefa.data_referencia;
+        if (diaStr && tarefasPorDia[diaStr]) {
           const user = userMap.get(tarefa.responsavel_id);
           tarefasPorDia[diaStr].tarefas.push({
             id: tarefa.id,

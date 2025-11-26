@@ -25,17 +25,13 @@ export const DiaCardTarefa = ({
   const isHoje = isSameDay(date, hoje);
   const isFimDeSemana = isWeekend(date);
 
-  const tarefasDoDia = tarefas.filter((tarefa) => {
-    // Filter will be done by parent component
-    return true;
-  });
-
-  const pendentes = tarefasDoDia.filter(t => t.status === 'em_andamento').length;
-  const concluidas = tarefasDoDia.filter(t => t.status === 'concluida').length;
+  // Usar diretamente tarefas recebidas (já filtradas pelo pai)
+  const pendentes = tarefas.filter(t => t.status === 'em_andamento').length;
+  const concluidas = tarefas.filter(t => t.status === 'concluida').length;
 
   return (
     <Card
-      className={`min-h-[140px] transition-all ${
+      className={`min-h-[100px] transition-all ${
         isHoje
           ? "ring-2 ring-primary bg-primary/5"
           : isFimDeSemana
@@ -91,12 +87,12 @@ export const DiaCardTarefa = ({
       </CardHeader>
 
       <CardContent className="p-3 pt-0 space-y-1.5">
-        {tarefasDoDia.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">
+        {tarefas.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-2">
             Sem tarefas
           </p>
         ) : (
-          tarefasDoDia.map((tarefa) => (
+          tarefas.map((tarefa) => (
             <TarefaCard
               key={tarefa.id}
               tarefa={tarefa}
