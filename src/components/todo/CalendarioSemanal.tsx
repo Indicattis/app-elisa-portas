@@ -23,14 +23,15 @@ export function CalendarioSemanal({ tarefas }: CalendarioSemanalProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 px-4 md:px-6">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Tarefas da Semana</CardTitle>
+          <CardTitle className="text-base md:text-lg">Tarefas da Semana</CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-2">
+      <CardContent className="px-4 md:px-6">
+        {/* Mobile: Horizontal scroll */}
+        <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-7 md:gap-2 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
           {diasSemana.map((dia, index) => {
             const tarefasDoDia = getTarefasDoDia(dia);
             const isHoje = isSameDay(dia, hoje);
@@ -38,7 +39,7 @@ export function CalendarioSemanal({ tarefas }: CalendarioSemanalProps) {
             return (
               <div
                 key={index}
-                className={`p-3 rounded-lg border transition-all ${
+                className={`flex-shrink-0 w-20 md:w-auto snap-center p-3 rounded-lg border transition-all ${
                   isHoje
                     ? "bg-primary/10 border-primary"
                     : "bg-card border-border hover:border-primary/50"
@@ -57,11 +58,11 @@ export function CalendarioSemanal({ tarefas }: CalendarioSemanalProps) {
                     variant={isHoje ? "default" : "secondary"}
                     className="w-full justify-center text-xs"
                   >
-                    {tarefasDoDia.length} {tarefasDoDia.length === 1 ? "tarefa" : "tarefas"}
+                    {tarefasDoDia.length}
                   </Badge>
                 ) : (
                   <div className="text-xs text-center text-muted-foreground">
-                    Nenhuma
+                    -
                   </div>
                 )}
               </div>

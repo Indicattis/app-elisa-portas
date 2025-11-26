@@ -12,12 +12,18 @@ import { TemplatesTabela } from "@/components/todo/TemplatesTabela";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, ArrowLeft, Trash, CalendarPlus } from "lucide-react";
+import { Plus, CalendarDays, ArrowLeft, Trash, CalendarPlus, MoreVertical } from "lucide-react";
 import { format, isSameDay, parseISO, addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function DirecaoChecklist() {
   const navigate = useNavigate();
@@ -58,7 +64,7 @@ export default function DirecaoChecklist() {
     setProcessandoProximaSemana(true);
     try {
       const hoje = new Date();
-      const inicioProximaSemana = startOfWeek(addDays(hoje, 7), { weekStartsOn: 0 }); // Domingo
+      const inicioProximaSemana = startOfWeek(addDays(hoje, 7), { weekStartsOn: 0 });
       const diasSemana = Array.from({ length: 7 }, (_, i) => addDays(inicioProximaSemana, i));
       
       let totalCriadas = 0;
@@ -69,12 +75,10 @@ export default function DirecaoChecklist() {
         for (const dia of diasSemana) {
           const diaSemana = dia.getDay();
           
-          // Verifica se o template deve rodar neste dia
           if (!template.dias_semana.includes(diaSemana)) continue;
           
           const dataReferencia = format(dia, 'yyyy-MM-dd');
           
-          // Verifica se já existe tarefa para este dia
           const { data: tarefaExistente } = await supabase
             .from('tarefas')
             .select('id')
@@ -84,7 +88,6 @@ export default function DirecaoChecklist() {
           
           if (tarefaExistente) continue;
           
-          // Cria a tarefa
           const horaCreated = template.hora_criacao || '00:00:00';
           const dataHoraCreated = `${dataReferencia}T${horaCreated}`;
           
@@ -119,24 +122,19 @@ export default function DirecaoChecklist() {
     }
   };
 
-  // Aplicar filtros às tarefas
   const tarefasFiltradas = useMemo(() => {
     return tarefas.filter(tarefa => {
-      // Filtro de tipo
       if (tipoSelecionado === "unica" && tarefa.recorrente) return false;
       if (tipoSelecionado === "recorrente" && !tarefa.recorrente) return false;
 
-      // Filtro de status
       if (statusSelecionado === "em_andamento" && tarefa.status !== "em_andamento") return false;
       if (statusSelecionado === "concluida" && tarefa.status !== "concluida") return false;
 
-      // Filtro de data
       if (dataSelecionada) {
         const dataTarefa = parseISO(tarefa.created_at);
         if (!isSameDay(dataTarefa, dataSelecionada)) return false;
       }
 
-      // Filtro de lixeira (concluídas)
       if (!mostrarLixeira && tarefa.status === 'concluida') return false;
       if (mostrarLixeira && tarefa.status !== 'concluida') return false;
 
@@ -144,7 +142,6 @@ export default function DirecaoChecklist() {
     });
   }, [tarefas, tipoSelecionado, statusSelecionado, dataSelecionada, mostrarLixeira]);
 
-  // Separar tarefas regulares das concluídas
   const tarefasAtivas = tarefasFiltradas.filter(t => t.status === 'em_andamento');
   const tarefasConcluidas = tarefasFiltradas.filter(t => t.status === 'concluida');
 
@@ -161,50 +158,75 @@ export default function DirecaoChecklist() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => navigate('/dashboard/direcao')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar para Calendário
-            </Button>
+    <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6 pb-24 md:pb-6">
+      {/* Header - Mobile First */}
+      <div className="flex flex-col gap-3">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate('/dashboard/direcao')}
+          className="w-fit -ml-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-3xl font-bold truncate">
+              Checklist de Direção
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1 hidden md:block">
+              Gerencie tarefas de toda a equipe
+            </p>
           </div>
-          <h1 className="text-3xl font-bold">
-            Checklist de Direção
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie tarefas de toda a equipe
-          </p>
-        </div>
 
-        {podeGerenciar && (
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setModalRecorrenteAberto(true)}>
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Nova Recorrente
-            </Button>
-            <Button onClick={() => setModalAberto(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Tarefa
-            </Button>
-          </div>
-        )}
+          {/* Desktop buttons */}
+          {podeGerenciar && (
+            <div className="hidden md:flex gap-2 shrink-0">
+              <Button variant="outline" onClick={() => setModalRecorrenteAberto(true)}>
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Nova Recorrente
+              </Button>
+              <Button onClick={() => setModalAberto(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Tarefa
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile dropdown menu */}
+          {podeGerenciar && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="md:hidden">
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-popover">
+                <DropdownMenuItem onClick={() => setModalRecorrenteAberto(true)}>
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Nova Recorrente
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={criarTarefasProximaSemana} disabled={processandoProximaSemana}>
+                  <CalendarPlus className="h-4 w-4 mr-2" />
+                  {processandoProximaSemana ? 'Processando...' : 'Criar Próxima Semana'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
-      {/* Badges de resumo */}
-      <div className="flex gap-2">
-        <Badge variant="secondary" className="text-sm px-3 py-1">
+      {/* Badges de resumo - scrollable no mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
+        <Badge variant="secondary" className="text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
           {totalTemplates} template(s)
         </Badge>
-        <Badge variant="destructive" className="text-sm px-3 py-1">
+        <Badge variant="destructive" className="text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
           {totalEmAndamento} pendente(s)
         </Badge>
-        <Badge className="bg-success text-success-foreground text-sm px-3 py-1">
+        <Badge className="bg-success text-success-foreground text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
           {totalConcluidas} concluída(s)
         </Badge>
       </div>
@@ -226,15 +248,16 @@ export default function DirecaoChecklist() {
 
       {/* Tabela de Templates Recorrentes */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Templates Recorrentes</CardTitle>
+        <CardHeader className="pb-3 px-4 md:px-6">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base md:text-lg">Templates Recorrentes</CardTitle>
             {podeGerenciar && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={criarTarefasProximaSemana}
                 disabled={processandoProximaSemana}
+                className="hidden md:flex"
               >
                 <CalendarPlus className="h-4 w-4 mr-2" />
                 {processandoProximaSemana ? 'Processando...' : 'Criar Próxima Semana'}
@@ -242,7 +265,7 @@ export default function DirecaoChecklist() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-4 md:px-6">
           <TemplatesTabela
             templates={templates}
             podeGerenciar={podeGerenciar}
@@ -254,22 +277,25 @@ export default function DirecaoChecklist() {
 
       {/* Tabela de Tarefas Normais */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">
-              {mostrarLixeira ? "Tarefas Concluídas (Lixeira)" : "Tarefas Ativas"}
+        <CardHeader className="pb-3 px-4 md:px-6">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base md:text-lg">
+              {mostrarLixeira ? "Lixeira" : "Tarefas Ativas"}
             </CardTitle>
             <Button
               variant={mostrarLixeira ? "default" : "outline"}
               size="sm"
               onClick={() => setMostrarLixeira(!mostrarLixeira)}
             >
-              <Trash className="h-4 w-4 mr-2" />
-              {mostrarLixeira ? "Voltar para Ativas" : `Lixeira (${totalConcluidas})`}
+              <Trash className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">
+                {mostrarLixeira ? "Voltar para Ativas" : `Lixeira (${totalConcluidas})`}
+              </span>
+              <span className="md:hidden ml-1">{totalConcluidas}</span>
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-4 md:px-6">
           <TarefasTabela
             tarefas={mostrarLixeira ? tarefasConcluidas : tarefasAtivas}
             podeGerenciar={podeGerenciar}
@@ -279,6 +305,17 @@ export default function DirecaoChecklist() {
           />
         </CardContent>
       </Card>
+
+      {/* FAB Mobile - Nova Tarefa */}
+      {podeGerenciar && (
+        <Button
+          onClick={() => setModalAberto(true)}
+          size="lg"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden z-50"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      )}
 
       {/* Modal Nova Tarefa */}
       <NovaTarefaModal
@@ -298,7 +335,6 @@ export default function DirecaoChecklist() {
         }}
       />
 
-
       {/* Modal Editar Recorrente */}
       {templateParaEditar && (
         <EditarRecorrenteModal
@@ -314,7 +350,7 @@ export default function DirecaoChecklist() {
 
       {/* Confirmação de Deleção */}
       <AlertDialog open={!!tarefaParaDeletar} onOpenChange={() => setTarefaParaDeletar(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
