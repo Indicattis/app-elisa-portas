@@ -7,6 +7,7 @@ import { Trash2, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tarefa } from "@/hooks/useTarefas";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TarefasTabelaProps {
   tarefas: Tarefa[];
@@ -23,6 +24,8 @@ export function TarefasTabela({
   onReabrir,
   onDeletar,
 }: TarefasTabelaProps) {
+  const isMobile = useIsMobile();
+
   if (tarefas.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -31,6 +34,90 @@ export function TarefasTabela({
     );
   }
 
+  // Mobile: Card layout
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        {tarefas.map((tarefa) => (
+          <div
+            key={tarefa.id}
+            className={`p-3 border rounded-lg space-y-2 ${
+              tarefa.status === 'concluida' ? 'opacity-60 bg-muted/30' : 'bg-card'
+            }`}
+          >
+            {/* Row 1: Checkbox + Description */}
+            <div className="flex items-start gap-3">
+              <Checkbox
+                checked={tarefa.status === 'concluida'}
+                onCheckedChange={() => {
+                  if (tarefa.status === 'concluida') {
+                    onReabrir(tarefa.id);
+                  } else {
+                    onMarcarConcluida(tarefa.id);
+                  }
+                }}
+                disabled={!podeGerenciar}
+                className="mt-0.5"
+              />
+              <p className={`flex-1 text-sm ${
+                tarefa.status === 'concluida' ? 'line-through text-muted-foreground' : 'font-medium'
+              }`}>
+                {tarefa.descricao}
+              </p>
+              {podeGerenciar && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => onDeletar(tarefa.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
+            </div>
+
+            {/* Row 2: Avatar + Name + Date */}
+            <div className="flex items-center justify-between pl-7">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={tarefa.responsavel?.foto_perfil_url} />
+                  <AvatarFallback className="text-[10px]">
+                    {tarefa.responsavel?.nome?.substring(0, 2).toUpperCase() || '??'}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+                  {tarefa.responsavel?.nome}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {format(new Date(tarefa.created_at), "dd/MM", { locale: ptBR })}
+              </span>
+            </div>
+
+            {/* Row 3: Status + Type badges */}
+            <div className="flex items-center gap-2 pl-7">
+              <Badge
+                variant={tarefa.status === 'em_andamento' ? 'destructive' : 'default'}
+                className="text-[10px] h-5 px-1.5"
+              >
+                {tarefa.status === 'em_andamento' ? 'Pendente' : 'Concluída'}
+              </Badge>
+              {tarefa.recorrente ? (
+                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                  <Repeat className="h-2.5 w-2.5 mr-0.5" />
+                  Rec.
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] h-5 px-1.5">Única</Badge>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Desktop: Table layout
   return (
     <div className="border rounded-lg overflow-hidden">
       <Table>
