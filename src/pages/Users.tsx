@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
-import { Search, Edit, Save, X, Eye, EyeOff, Loader2, KeyRound, Lock } from "lucide-react";
+import { Search, Edit, Save, X, Eye, EyeOff, Loader2, KeyRound, Lock, FileDown } from "lucide-react";
+import { baixarUsuariosPDF } from "@/utils/usuariosPDFGenerator";
 import {
   Dialog,
   DialogContent,
@@ -197,6 +198,22 @@ export default function Users() {
     );
   }
 
+  const handleDownloadPDF = () => {
+    baixarUsuariosPDF({
+      usuarios: filteredUsers.map(u => ({
+        id: u.id,
+        nome: u.nome,
+        email: u.email,
+        role: u.role,
+        setor: u.setor,
+        ativo: u.ativo,
+        codigo_usuario: u.codigo_usuario,
+        created_at: u.created_at,
+      })),
+      roleLabelsMap,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -204,7 +221,13 @@ export default function Users() {
           <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
           <p className="text-muted-foreground">Gerencie usuários e permissões do sistema</p>
         </div>
-        <AddUserDialog onUserAdded={fetchUsers} />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownloadPDF}>
+            <FileDown className="w-4 h-4 mr-2" />
+            Exportar PDF
+          </Button>
+          <AddUserDialog onUserAdded={fetchUsers} />
+        </div>
       </div>
 
       <Card>
