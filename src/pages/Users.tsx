@@ -44,6 +44,9 @@ export default function Users() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const [filterSetor, setFilterSetor] = useState<string>("todos");
+  const [filterRole, setFilterRole] = useState<string>("todos");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
@@ -183,12 +186,35 @@ export default function Users() {
       .slice(0, 2);
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
+  const filteredUsers = users.filter((user) => {
+    // Filtro de busca
+    const matchesSearch = 
       user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      user.role.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filtro de status
+    const matchesStatus = filterStatus === "todos" || 
+      (filterStatus === "ativo" && user.ativo) ||
+      (filterStatus === "inativo" && !user.ativo);
+    
+    // Filtro de setor
+    const matchesSetor = filterSetor === "todos" || user.setor === filterSetor;
+    
+    // Filtro de função
+    const matchesRole = filterRole === "todos" || user.role === filterRole;
+    
+    return matchesSearch && matchesStatus && matchesSetor && matchesRole;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterStatus("todos");
+    setFilterSetor("todos");
+    setFilterRole("todos");
+  };
+
+  const hasActiveFilters = searchTerm || filterStatus !== "todos" || filterSetor !== "todos" || filterRole !== "todos";
 
   if (loading) {
     return (
@@ -231,19 +257,72 @@ export default function Users() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Usuários</CardTitle>
-          <CardDescription>
-            {filteredUsers.length} usuários encontrados
-          </CardDescription>
-          <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome, email ou função..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Lista de Usuários</CardTitle>
+              <CardDescription className="text-xs">
+                {filteredUsers.length} de {users.length} usuários
+              </CardDescription>
+            </div>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs">
+                <X className="w-3 h-3 mr-1" />
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+          
+          {/* Filtros */}
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <div className="relative flex-1 min-w-[180px] max-w-[280px]">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+            
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-8 w-[110px] text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos" className="text-xs">Todos</SelectItem>
+                <SelectItem value="ativo" className="text-xs">Ativos</SelectItem>
+                <SelectItem value="inativo" className="text-xs">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={filterSetor} onValueChange={setFilterSetor}>
+              <SelectTrigger className="h-8 w-[130px] text-xs">
+                <SelectValue placeholder="Setor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos" className="text-xs">Todos setores</SelectItem>
+                <SelectItem value="vendas" className="text-xs">Vendas</SelectItem>
+                <SelectItem value="marketing" className="text-xs">Marketing</SelectItem>
+                <SelectItem value="instalacoes" className="text-xs">Instalações</SelectItem>
+                <SelectItem value="fabrica" className="text-xs">Fábrica</SelectItem>
+                <SelectItem value="administrativo" className="text-xs">Administrativo</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger className="h-8 w-[150px] text-xs">
+                <SelectValue placeholder="Função" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos" className="text-xs">Todas funções</SelectItem>
+                {systemRoles.map((role) => (
+                  <SelectItem key={role.key} value={role.key} className="text-xs">
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
