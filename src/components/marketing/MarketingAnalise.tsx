@@ -257,76 +257,84 @@ export default function MarketingAnalise() {
   const fetchMetrics = async () => {
     if (!dateRange?.from || !dateRange?.to) return;
 
-    const startDate = format(dateRange.from, "yyyy-MM-dd");
-    const endDate = format(dateRange.to, "yyyy-MM-dd");
+    try {
+      const startDate = format(dateRange.from, "yyyy-MM-dd");
+      const endDate = format(dateRange.to, "yyyy-MM-dd");
 
-    // Buscar investimentos
-    const { data: investimentosData } = await (supabase
-      .from("marketing_investimentos")
-      .select("*")
-      .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
-      .lte("mes", format(dateRange.to, "yyyy-MM") + "-01") as any);
+      // Buscar investimentos com tratamento de erro
+      const { data: investimentosData, error: investimentosError } = await supabase
+        .from("marketing_investimentos")
+        .select("*")
+        .gte("mes", format(dateRange.from, "yyyy-MM") + "-01")
+        .lte("mes", format(dateRange.to, "yyyy-MM") + "-01");
 
-    // Filtrar por região se necessário
-    const investimentosFiltrados = (selectedRegiao && selectedRegiao !== "all")
-      ? investimentosData?.filter((inv: any) => inv.regiao === selectedRegiao)
-      : investimentosData;
-
-    let totalInvestimento = 0;
-    const canalSelecionadoNome = canais.find(c => c.id === selectedCanalAquisicao)?.nome;
-    if (investimentosFiltrados && investimentosFiltrados.length > 0) {
-      if (selectedCanalAquisicao && canalSelecionadoNome) {
-        const nomeLower = canalSelecionadoNome.toLowerCase();
-        if (nomeLower.includes('google')) {
-          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_google_ads || 0), 0);
-        } else if (nomeLower.includes('meta')) {
-          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_meta_ads || 0), 0);
-        } else if (nomeLower.includes('linkedin')) {
-          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_linkedin_ads || 0), 0);
-        } else {
-          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.outros_investimentos || 0), 0);
-        }
-      } else {
-        totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) =>
-          total + Number(inv.investimento_google_ads || 0) +
-                  Number(inv.investimento_meta_ads || 0) +
-                  Number(inv.investimento_linkedin_ads || 0) +
-                  Number(inv.outros_investimentos || 0), 0);
+      if (investimentosError) {
+        console.error("Erro ao buscar investimentos:", investimentosError);
       }
-    }
 
-    // Buscar vendas FATURADAS usando helper
-    const allVendas = await fetchVendasFaturadas(startDate, endDate);
+      // Filtrar por região se necessário
+      const investimentosFiltrados = (selectedRegiao && selectedRegiao !== "all")
+        ? investimentosData?.filter((inv: any) => inv.regiao === selectedRegiao)
+        : investimentosData;
 
-    // Aplicar filtros manualmente
-    let vendasData = allVendas;
-    
-    if (selectedVendedor && selectedVendedor !== "all") {
-      vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
-    }
-    
-    if (selectedRegiao && selectedRegiao !== "all") {
-      vendasData = vendasData.filter((v: any) => v.estado === selectedRegiao);
-    }
-    
-    if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-      vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
-    }
+      let totalInvestimento = 0;
+      const canalSelecionadoNome = canais.find(c => c.id === selectedCanalAquisicao)?.nome;
+      if (investimentosFiltrados && investimentosFiltrados.length > 0) {
+        if (selectedCanalAquisicao && canalSelecionadoNome) {
+          const nomeLower = canalSelecionadoNome.toLowerCase();
+          if (nomeLower.includes('google')) {
+            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_google_ads || 0), 0);
+          } else if (nomeLower.includes('meta')) {
+            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_meta_ads || 0), 0);
+          } else if (nomeLower.includes('linkedin')) {
+            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_linkedin_ads || 0), 0);
+          } else {
+            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.outros_investimentos || 0), 0);
+          }
+        } else {
+          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) =>
+            total + Number(inv.investimento_google_ads || 0) +
+                    Number(inv.investimento_meta_ads || 0) +
+                    Number(inv.investimento_linkedin_ads || 0) +
+                    Number(inv.outros_investimentos || 0), 0);
+        }
+      }
 
-    const totalVendas = vendasData?.reduce((sum: number, venda: any) => sum + (Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0)), 0) || 0;
-    const vendasConvertidas = vendasData?.length || 0;
-    
-    // ROI e CAC só são calculados quando há investimentos no período
-    const roi = totalInvestimento > 0 ? ((totalVendas - totalInvestimento) / totalInvestimento) * 100 : null;
-    const cac = (totalInvestimento > 0 && vendasConvertidas > 0) ? totalInvestimento / vendasConvertidas : null;
+      // Buscar vendas FATURADAS usando helper
+      const allVendas = await fetchVendasFaturadas(startDate, endDate);
 
-    setMetrics({
-      totalInvestimento,
-      totalVendas,
-      roi,
-      cac,
-      vendasConvertidas
-    });
+      // Aplicar filtros manualmente
+      let vendasData = allVendas;
+      
+      if (selectedVendedor && selectedVendedor !== "all") {
+        vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
+      }
+      
+      if (selectedRegiao && selectedRegiao !== "all") {
+        vendasData = vendasData.filter((v: any) => v.estado === selectedRegiao);
+      }
+      
+      if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
+        vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
+      }
+
+      const totalVendas = vendasData?.reduce((sum: number, venda: any) => sum + (Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0)), 0) || 0;
+      const vendasConvertidas = vendasData?.length || 0;
+      
+      // ROI e CAC só são calculados quando há investimentos no período
+      const roi = totalInvestimento > 0 ? ((totalVendas - totalInvestimento) / totalInvestimento) * 100 : null;
+      const cac = (totalInvestimento > 0 && vendasConvertidas > 0) ? totalInvestimento / vendasConvertidas : null;
+
+      setMetrics({
+        totalInvestimento,
+        totalVendas,
+        roi,
+        cac,
+        vendasConvertidas
+      });
+    } catch (error) {
+      console.error("Erro ao calcular métricas:", error);
+    }
   };
 
   const fetchChartData = async () => {
