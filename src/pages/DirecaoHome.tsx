@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTarefasCalendario } from "@/hooks/useTarefasCalendario";
 import { ClipboardCheck, Calendar as CalendarIcon, CheckCircle2, Clock, RefreshCw } from "lucide-react";
-import { format, addWeeks, subWeeks, addMonths, subMonths, isSameDay, parseISO } from "date-fns";
+import { format, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CalendarioSemanalTarefasMobile } from "@/components/direcao/CalendarioSemanalTarefasMobile";
@@ -23,6 +23,13 @@ export default function DirecaoHome() {
   const [mesAno, setMesAno] = useState(new Date());
   const [weekStart, setWeekStart] = useState(new Date());
   const [tarefaSelecionada, setTarefaSelecionada] = useState<TarefaCalendario | null>(null);
+  
+  // Sincroniza mesAno com weekStart no mobile para garantir que os dados corretos são carregados
+  useEffect(() => {
+    if (isMobile) {
+      setMesAno(weekStart);
+    }
+  }, [weekStart, isMobile]);
   
   const { data, isLoading } = useTarefasCalendario(mesAno);
 
