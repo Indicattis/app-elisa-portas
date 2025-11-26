@@ -4384,6 +4384,7 @@ export type Database = {
           peso: number | null
           preco_venda: number
           quantidade: number
+          sku: string | null
           subcategoria_id: string | null
           tags: string[] | null
           unidade: string | null
@@ -4404,6 +4405,7 @@ export type Database = {
           peso?: number | null
           preco_venda?: number
           quantidade?: number
+          sku?: string | null
           subcategoria_id?: string | null
           tags?: string[] | null
           unidade?: string | null
@@ -4424,6 +4426,7 @@ export type Database = {
           peso?: number | null
           preco_venda?: number
           quantidade?: number
+          sku?: string | null
           subcategoria_id?: string | null
           tags?: string[] | null
           unidade?: string | null

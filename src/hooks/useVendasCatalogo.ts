@@ -18,6 +18,7 @@ export interface ProdutoCatalogo {
   destaque: boolean;
   estoque_minimo: number;
   tags?: string[];
+  sku?: string;
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -37,6 +38,7 @@ export interface ProdutoCatalogoInput {
   destaque?: boolean;
   estoque_minimo?: number;
   tags?: string[];
+  sku?: string;
 }
 
 export function useVendasCatalogo(filtros?: {
@@ -67,7 +69,7 @@ export function useVendasCatalogo(filtros?: {
 
       if (filtros?.busca) {
         query = query.or(
-          `nome_produto.ilike.%${filtros.busca}%,descricao_produto.ilike.%${filtros.busca}%`
+          `nome_produto.ilike.%${filtros.busca}%,descricao_produto.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%`
         );
       }
 

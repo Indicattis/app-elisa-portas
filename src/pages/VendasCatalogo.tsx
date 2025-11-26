@@ -42,6 +42,7 @@ export default function VendasCatalogo() {
     destaque: false,
     estoque_minimo: 0,
     tags: [],
+    sku: "",
   });
 
   const handleSubmit = async () => {
@@ -81,6 +82,7 @@ export default function VendasCatalogo() {
       destaque: produto.destaque,
       estoque_minimo: produto.estoque_minimo,
       tags: produto.tags || [],
+      sku: produto.sku || "",
     });
     const catId = categorias.find(c => c.nome.toLowerCase() === produto.categoria.toLowerCase())?.id;
     setCategoriaSelecionada(catId || null);
@@ -101,6 +103,7 @@ export default function VendasCatalogo() {
       destaque: false,
       estoque_minimo: 0,
       tags: [],
+      sku: "",
     });
     setCategoriaSelecionada(null);
     setProdutoEditando(null);
@@ -108,13 +111,23 @@ export default function VendasCatalogo() {
 
   const FormularioProduto = ({ isEdit = false }: { isEdit?: boolean }) => (
     <div className="space-y-4">
-      <div>
-        <Label>Nome do Produto *</Label>
-        <Input
-          value={formData.nome_produto}
-          onChange={(e) => setFormData({ ...formData, nome_produto: e.target.value })}
-          placeholder="Nome do produto"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Nome do Produto *</Label>
+          <Input
+            value={formData.nome_produto}
+            onChange={(e) => setFormData({ ...formData, nome_produto: e.target.value })}
+            placeholder="Nome do produto"
+          />
+        </div>
+        <div>
+          <Label>SKU</Label>
+          <Input
+            value={formData.sku || ""}
+            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+            placeholder="Código SKU"
+          />
+        </div>
       </div>
       <div>
         <Label>Descrição</Label>
@@ -308,6 +321,7 @@ export default function VendasCatalogo() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>SKU</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead className="text-right">Quantidade</TableHead>
@@ -320,6 +334,9 @@ export default function VendasCatalogo() {
             <TableBody>
               {produtos.map((produto) => (
                 <TableRow key={produto.id}>
+                  <TableCell className="font-mono text-sm text-muted-foreground">
+                    {produto.sku || "-"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {produto.destaque && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
@@ -368,7 +385,7 @@ export default function VendasCatalogo() {
               ))}
               {produtos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p>Nenhum produto no catálogo</p>
                   </TableCell>
