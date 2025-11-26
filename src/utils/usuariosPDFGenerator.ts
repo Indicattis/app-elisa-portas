@@ -109,6 +109,7 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
       usuario.email,
       data.roleLabelsMap[usuario.role] || usuario.role,
       getSetorLabel(usuario.setor),
+      usuario.codigo_usuario || '-',
       usuario.ativo ? 'Ativo' : 'Inativo',
       format(parseISO(usuario.created_at), 'dd/MM/yyyy', { locale: ptBR })
     ];
@@ -116,11 +117,11 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
 
   // Gerar tabela principal
   autoTable(pdf, {
-    head: [['', 'Nome', 'Email', 'Função', 'Setor', 'Status', 'Cadastro']],
+    head: [['', 'Nome', 'Email', 'Função', 'Setor', 'Código', 'Status', 'Cadastro']],
     body: tableData,
     startY: yPosition,
     styles: {
-      fontSize: 8,
+      fontSize: 7,
       cellPadding: 2,
       valign: 'middle',
       lineColor: [200, 200, 200],
@@ -130,17 +131,18 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
       fillColor: primaryColor,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 9,
+      fontSize: 8,
       halign: 'center',
     },
     columnStyles: {
-      0: { cellWidth: 12, halign: 'center' }, // Iniciais
-      1: { cellWidth: 35 }, // Nome
-      2: { cellWidth: 50 }, // Email
-      3: { cellWidth: 30 }, // Função
-      4: { cellWidth: 25 }, // Setor
-      5: { cellWidth: 18, halign: 'center' }, // Status
-      6: { cellWidth: 20, halign: 'center' }, // Data Cadastro
+      0: { cellWidth: 10, halign: 'center' }, // Iniciais
+      1: { cellWidth: 30 }, // Nome
+      2: { cellWidth: 45 }, // Email
+      3: { cellWidth: 28 }, // Função
+      4: { cellWidth: 22 }, // Setor
+      5: { cellWidth: 18, halign: 'center' }, // Código
+      6: { cellWidth: 15, halign: 'center' }, // Status
+      7: { cellWidth: 18, halign: 'center' }, // Data Cadastro
     },
     margin: { left: margin, right: margin },
     theme: 'striped',
@@ -148,8 +150,8 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
       fillColor: [245, 245, 245]
     },
     didParseCell: function(data) {
-      // Colorir status
-      if (data.section === 'body' && data.column.index === 5) {
+      // Colorir status (agora na coluna 6)
+      if (data.section === 'body' && data.column.index === 6) {
         if (data.cell.raw === 'Ativo') {
           data.cell.styles.textColor = [22, 163, 74]; // green
           data.cell.styles.fontStyle = 'bold';
