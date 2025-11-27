@@ -155,7 +155,7 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                     <th className="text-left font-medium p-2 min-w-[100px]">Pedido</th>
                     <th className="text-left font-medium p-2 min-w-[120px]">Localização</th>
                     <th className="text-left font-medium p-2 min-w-[120px]">Cores</th>
-                    <th className="text-left font-medium p-2 min-w-[100px]">Tipo</th>
+                    <th className="text-left font-medium p-2 min-w-[100px]">Serviço</th>
                     <th className="text-right font-medium p-2 min-w-[90px]">Ações</th>
                   </tr>
                 </thead>
@@ -244,13 +244,10 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                           </td>
                           <td className="p-2">
                             <Badge
-                              variant={ordem.tipo_carregamento === 'elisa' ? 'default' : 'outline'}
+                              variant={ordem.venda?.tipo_entrega === 'entrega' ? 'default' : 'secondary'}
                               className="text-xs"
                             >
-                              {ordem.venda?.tipo_entrega === 'entrega' 
-                                ? (ordem.tipo_carregamento === 'elisa' ? 'Veículo Elisa' : 'Terceiro')
-                                : (ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado')
-                              }
+                              {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
                             </Badge>
                           </td>
                           <td className="p-2 text-right">

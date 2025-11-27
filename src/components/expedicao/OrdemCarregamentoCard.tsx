@@ -48,14 +48,22 @@ export const OrdemCarregamentoCard = ({
       <div className="flex items-center justify-between gap-2 h-[19px]">
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
           <h4 className="font-semibold text-xs truncate">{ordem.nome_cliente}</h4>
+          {/* Badge de Serviço */}
           <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
+            {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
+          </Badge>
+          {/* Badge de Responsável */}
+          <Badge 
+            variant="secondary" 
+            className="text-[9px] px-1 py-0 h-4 shrink-0"
+          >
             {ordem.venda?.tipo_entrega === 'entrega' 
-              ? (ordem.tipo_carregamento === 'elisa' || ordem.tipo_carregamento === 'terceiro' ? 'Entrega' : 'Entrega')
-              : (ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Autorizado')
+              ? (ordem.tipo_carregamento === 'elisa' ? 'Entrega Elisa' : ordem.tipo_carregamento === 'terceiro' ? 'Terceiro' : 'Autorizado')
+              : (ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado')
             }
           </Badge>
-          {/* Tag de equipe - apenas para instalação */}
-          {ordem.tipo_carregamento === 'elisa' && equipeNome && (
+          {/* Tag de equipe - apenas para instalação Elisa */}
+          {ordem.venda?.tipo_entrega === 'instalacao' && ordem.tipo_carregamento === 'elisa' && equipeNome && (
             <Badge 
               variant="secondary" 
               className="text-[9px] px-1 py-0 h-4 shrink-0 bg-red-500/20 border-red-500/40"
