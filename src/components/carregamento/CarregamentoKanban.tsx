@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 
 interface OrdemCardProps {
   ordem: OrdemCarregamento;
@@ -126,6 +127,11 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                 <p className="text-sm">{ordem.venda.cliente_telefone}</p>
               </div>
             )}
+
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Cores das Portas</p>
+              <CoresPortasEnrolar produtos={ordem.venda?.produtos} />
+            </div>
 
             {ordem.observacoes && (
               <div>
