@@ -634,29 +634,6 @@ export default function VendasNova() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Tipo de Entrega *</Label>
-              <RadioGroup
-                value={formData.tipo_entrega}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
-                className="flex gap-3 pt-0.5"
-                required
-              >
-                <div className="flex items-center space-x-1.5">
-                  <RadioGroupItem value="instalacao" id="tipo-instalacao" />
-                  <Label htmlFor="tipo-instalacao" className="font-normal cursor-pointer text-xs">
-                    Instalação
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-1.5">
-                  <RadioGroupItem value="entrega" id="tipo-entrega" />
-                  <Label htmlFor="tipo-entrega" className="font-normal cursor-pointer text-xs">
-                    Entrega
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-
             <div className="space-y-1">
               <Label htmlFor="valor_entrada" className="text-xs font-medium">Entrada (R$)</Label>
               <Input
@@ -682,6 +659,43 @@ export default function VendasNova() {
                 placeholder="0,00"
                 className="h-9"
               />
+            </div>
+
+            <div className="space-y-2 md:col-span-3">
+              <Label className="text-xs font-medium">Tipo de Entrega *</Label>
+              <RadioGroup
+                value={formData.tipo_entrega}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
+                className="grid grid-cols-2 gap-3"
+                required
+              >
+                <label
+                  htmlFor="tipo-instalacao"
+                  className={cn(
+                    "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+                    "hover:scale-[1.02] hover:shadow-md",
+                    formData.tipo_entrega === "instalacao"
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-border bg-background hover:border-primary/50"
+                  )}
+                >
+                  <RadioGroupItem value="instalacao" id="tipo-instalacao" className="sr-only" />
+                  <span className="text-sm">🔧 Instalação</span>
+                </label>
+                <label
+                  htmlFor="tipo-entrega"
+                  className={cn(
+                    "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+                    "hover:scale-[1.02] hover:shadow-md",
+                    formData.tipo_entrega === "entrega"
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-border bg-background hover:border-primary/50"
+                  )}
+                >
+                  <RadioGroupItem value="entrega" id="tipo-entrega" className="sr-only" />
+                  <span className="text-sm">🚚 Entrega</span>
+                </label>
+              </RadioGroup>
             </div>
 
             <div className="space-y-1 md:col-span-3">
