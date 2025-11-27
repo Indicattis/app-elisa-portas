@@ -31,13 +31,13 @@ export function CoresPortasEnrolar({ produtos = [] }: CoresPortasEnrolarProps) {
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {coresArray.map((cor) => (
-        <div key={cor.nome} className="flex items-center gap-1.5">
+        <div key={cor.nome} className="flex items-center gap-2">
           <div
-            className="h-4 w-4 rounded-full border-2 border-border shadow-sm"
+            className="h-5 w-5 rounded-full border-2 border-border shadow-sm"
             style={{ backgroundColor: cor.codigo_hex }}
             title={cor.nome}
           />
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-sm font-medium text-foreground">
             {cor.nome}
           </span>
         </div>

@@ -10,6 +10,7 @@ import { useOrdemProgress } from "@/hooks/useOrdemProgress";
 import { useState } from "react";
 import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
 import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
+import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 
 interface Ordem {
   id: string;
@@ -23,7 +24,11 @@ interface Ordem {
   prioridade?: number;
   pedido?: {
     cliente_nome: string;
-    produtos?: any[];
+    produtos?: Array<{
+      tipo_produto?: string;
+      catalogo_cores?: { nome: string; codigo_hex: string } | null;
+      cor?: { nome: string; codigo_hex: string } | null;
+    }>;
   };
   admin_users?: {
     nome: string;
@@ -55,17 +60,6 @@ function OrdemCard({
   const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 100;
   const todasConcluidas = linhas.length === 0 || linhas.every((l: any) => l.concluida);
-  
-  // Extrair cores únicas com hex do pedido (dos produtos)
-  const coresComHex = ordem.pedido?.produtos?.reduce((acc: { nome: string; hex: string }[], produto: any) => {
-    if (produto.cor?.nome && produto.cor?.codigo_hex) {
-      const exists = acc.find(c => c.nome === produto.cor.nome);
-      if (!exists) {
-        acc.push({ nome: produto.cor.nome, hex: produto.cor.codigo_hex });
-      }
-    }
-    return acc;
-  }, []) || [];
   
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
@@ -167,26 +161,10 @@ function OrdemCard({
               </div>
             )}
 
-            {coresComHex.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground">Cores</p>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {coresComHex.map((cor, idx) => (
-                    <div 
-                      key={idx}
-                      className="flex items-center gap-1.5"
-                      title={cor.nome}
-                    >
-                      <div 
-                        className="w-6 h-6 rounded-full border-2 border-border shadow-sm"
-                        style={{ backgroundColor: cor.hex }}
-                      />
-                      <span className="text-xs text-muted-foreground">{cor.nome}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Cores das Portas</p>
+              <CoresPortasEnrolar produtos={ordem.pedido?.produtos} />
+            </div>
 
             {ordem.status && (
               <div>
