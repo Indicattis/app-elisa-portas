@@ -17,6 +17,7 @@ import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { useRegrasEtiquetas } from "@/hooks/useRegrasEtiquetas";
 import { gerarPDFEtiquetaProducao, gerarPDFEtiquetasProducaoMultiplas } from "@/utils/etiquetasPDFGenerator";
 import { RetornarProducaoModal } from "./RetornarProducaoModal";
+import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -49,6 +50,10 @@ interface Ordem {
     numero_pedido: string;
     cliente_nome: string;
     venda_id?: string;
+    produtos?: Array<{
+      tipo_produto?: string;
+      catalogo_cores?: { nome: string; codigo_hex: string } | null;
+    }>;
   };
   admin_users?: {
     nome: string;
@@ -352,6 +357,12 @@ export function OrdemDetalhesSheet({
                 <span className="text-xs text-muted-foreground truncate">{ordem.pedido?.cliente_nome}</span>
               </div>
             </div>
+            
+            {/* Centro: Cores das Portas de Enrolar */}
+            <div className="flex-1 flex justify-center">
+              <CoresPortasEnrolar produtos={ordem.pedido?.produtos} />
+            </div>
+            
             <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-xs text-muted-foreground">Ped. {ordem.pedido?.numero_pedido}</span>
               {ordem.capturada_em && (

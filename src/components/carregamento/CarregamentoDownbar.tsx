@@ -12,6 +12,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetasProducaoMultiplas, gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 import { CarregamentoLoadingModal } from "./CarregamentoLoadingModal";
+import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 
 interface CarregamentoDownbarProps {
   ordem: OrdemCarregamento | null;
@@ -231,6 +232,9 @@ export function CarregamentoDownbar({
             <Icon className="h-5 w-5" />
             Confirmar Carregamento - {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado'}
           </SheetTitle>
+          <div className="flex justify-center pt-2">
+            <CoresPortasEnrolar produtos={ordem.venda?.produtos} />
+          </div>
         </SheetHeader>
 
         <div className="mt-6 space-y-4 h-[calc(100%-80px)]">
