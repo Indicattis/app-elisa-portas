@@ -104,6 +104,7 @@ import VendaView from "./pages/VendaView";
 import PedidoView from "./pages/PedidoView";
 import DRE from "./pages/DRE";
 import Despesas from "./pages/Despesas";
+import NotasFiscais from "./pages/NotasFiscais";
 import Vagas from "./pages/Vagas";
 import Etiquetas from "./pages/Etiquetas";
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
@@ -1129,6 +1130,16 @@ const App = () => (
                     <ProtectedRoute routeKey="dre">
                       <DashboardLayout>
                         <DRE />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/notas-fiscais"
+                  element={
+                    <ProtectedRoute routeKey="notas_fiscais">
+                      <DashboardLayout>
+                        <NotasFiscais />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

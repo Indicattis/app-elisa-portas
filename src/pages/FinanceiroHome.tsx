@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, TrendingUp, CreditCard, Wallet } from "lucide-react";
+import { Receipt, TrendingUp, CreditCard, Wallet, FileText } from "lucide-react";
 
 export default function FinanceiroHome() {
   const navigate = useNavigate();
@@ -12,6 +12,13 @@ export default function FinanceiroHome() {
       icon: Receipt,
       path: "/dashboard/administrativo/financeiro/faturamento",
       color: "text-green-600"
+    },
+    {
+      title: "Notas Fiscais",
+      description: "Gestão de notas fiscais de entrada e saída",
+      icon: FileText,
+      path: "/dashboard/administrativo/financeiro/notas-fiscais",
+      color: "text-orange-600"
     },
     {
       title: "DRE",
