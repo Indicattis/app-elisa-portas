@@ -1858,6 +1858,83 @@ export type Database = {
         }
         Relationships: []
       }
+      notas_fiscais: {
+        Row: {
+          chave_acesso: string | null
+          cnpj_cpf: string
+          created_at: string
+          created_by: string | null
+          data_emissao: string
+          data_vencimento: string | null
+          id: string
+          numero: string
+          observacoes: string | null
+          pdf_nome_arquivo: string | null
+          pdf_url: string | null
+          razao_social: string
+          serie: string
+          status: string
+          tipo: string
+          updated_at: string
+          valor_total: number
+          venda_id: string | null
+          xml_nome_arquivo: string | null
+          xml_url: string | null
+        }
+        Insert: {
+          chave_acesso?: string | null
+          cnpj_cpf: string
+          created_at?: string
+          created_by?: string | null
+          data_emissao: string
+          data_vencimento?: string | null
+          id?: string
+          numero: string
+          observacoes?: string | null
+          pdf_nome_arquivo?: string | null
+          pdf_url?: string | null
+          razao_social: string
+          serie: string
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor_total?: number
+          venda_id?: string | null
+          xml_nome_arquivo?: string | null
+          xml_url?: string | null
+        }
+        Update: {
+          chave_acesso?: string | null
+          cnpj_cpf?: string
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string
+          data_vencimento?: string | null
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          pdf_nome_arquivo?: string | null
+          pdf_url?: string | null
+          razao_social?: string
+          serie?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_total?: number
+          venda_id?: string | null
+          xml_nome_arquivo?: string | null
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       numeracao_controle: {
         Row: {
           created_at: string | null
