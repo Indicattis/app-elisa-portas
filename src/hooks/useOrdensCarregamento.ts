@@ -87,6 +87,7 @@ export const useOrdensCarregamento = (filters?: {
         .update({
           data_carregamento: data.data_carregamento,
           hora: data.hora,
+          tipo_carregamento: data.responsavel_tipo, // Atualizar tipo_carregamento
           responsavel_tipo: data.responsavel_tipo,
           responsavel_carregamento_id: data.responsavel_carregamento_id,
           responsavel_carregamento_nome: data.responsavel_carregamento_nome,
