@@ -23,6 +23,27 @@ export interface NotaFiscal {
   created_at: string;
   created_by?: string;
   updated_at: string;
+  // Campos NFe.io
+  ref_externa?: string;
+  nfeio_id?: string;
+  protocolo_autorizacao?: string;
+  status_sefaz?: string;
+  motivo_rejeicao?: string;
+  data_autorizacao?: string;
+  danfe_url?: string;
+  xml_autorizado_url?: string;
+  email_enviado?: boolean;
+  ambiente?: string;
+  codigo_servico?: string;
+  descricao_servico?: string;
+  aliquota_iss?: number;
+  valor_iss?: number;
+  tomador_endereco?: string;
+  tomador_numero?: string;
+  tomador_bairro?: string;
+  tomador_cidade?: string;
+  tomador_uf?: string;
+  tomador_cep?: string;
 }
 
 export interface NotaFiscalFormData {
@@ -168,6 +189,78 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
     }
   };
 
+  const emitirNfseMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const { data: result, error } = await supabase.functions.invoke('emitir-nfse', {
+        body: data
+      });
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notas-fiscais'] });
+      toast.success('NFS-e enviada para processamento!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao emitir NFS-e: ' + error.message);
+    }
+  });
+
+  const emitirNfeMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const { data: result, error } = await supabase.functions.invoke('emitir-nfe', {
+        body: data
+      });
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notas-fiscais'] });
+      toast.success('NF-e enviada para processamento!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao emitir NF-e: ' + error.message);
+    }
+  });
+
+  const consultarNotaMutation = useMutation({
+    mutationFn: async (notaFiscalId: string) => {
+      const { data: result, error } = await supabase.functions.invoke('consultar-nota', {
+        body: { notaFiscalId }
+      });
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notas-fiscais'] });
+      toast.success('Status da nota atualizado!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao consultar nota: ' + error.message);
+    }
+  });
+
+  const cancelarNotaMutation = useMutation({
+    mutationFn: async ({ notaFiscalId, motivo }: { notaFiscalId: string; motivo: string }) => {
+      const { data: result, error } = await supabase.functions.invoke('cancelar-nota', {
+        body: { notaFiscalId, motivo }
+      });
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notas-fiscais'] });
+      toast.success('Nota fiscal cancelada!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao cancelar nota: ' + error.message);
+    }
+  });
+
   return {
     notasFiscais,
     isLoading,
@@ -175,8 +268,16 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
     updateNotaFiscal: updateMutation.mutate,
     deleteNotaFiscal: deleteMutation.mutate,
     uploadArquivo,
+    emitirNfse: emitirNfseMutation.mutate,
+    emitirNfe: emitirNfeMutation.mutate,
+    consultarNota: consultarNotaMutation.mutate,
+    cancelarNota: cancelarNotaMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending
+    isDeleting: deleteMutation.isPending,
+    isEmitindoNfse: emitirNfseMutation.isPending,
+    isEmitindoNfe: emitirNfeMutation.isPending,
+    isConsultando: consultarNotaMutation.isPending,
+    isCancelando: cancelarNotaMutation.isPending
   };
 };

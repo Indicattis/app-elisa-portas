@@ -46,3 +46,15 @@ verify_jwt = false
 
 [functions.batch-geocode-autorizados]
 verify_jwt = false
+
+[functions.emitir-nfse]
+verify_jwt = true
+
+[functions.emitir-nfe]
+verify_jwt = true
+
+[functions.consultar-nota]
+verify_jwt = true
+
+[functions.cancelar-nota]
+verify_jwt = true
