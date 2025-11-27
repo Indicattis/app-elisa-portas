@@ -371,57 +371,60 @@ export default function VendasNova() {
   const cidades = formData.estado ? getCidadesPorEstado(formData.estado) : [];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate('/dashboard/vendas')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
+      <div className="flex items-center gap-3 pb-2 border-b">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/vendas')}>
+          <ArrowLeft className="w-4 h-4 mr-1.5" />
           Voltar
         </Button>
-        <h1 className="text-3xl font-bold">Nova Venda</h1>
+        <h1 className="text-2xl font-semibold">Nova Venda</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Dados do Cliente */}
         <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Dados do Cliente</CardTitle>
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-base font-semibold">Dados do Cliente</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="cliente_nome" className="text-sm">Nome *</Label>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
+            <div className="space-y-1">
+              <Label htmlFor="cliente_nome" className="text-xs font-medium">Nome *</Label>
               <Input
                 id="cliente_nome"
                 value={formData.cliente_nome}
                 onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
                 placeholder="Nome completo"
+                className="h-9"
                 required
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="cliente_telefone" className="text-sm">Telefone *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="cliente_telefone" className="text-xs font-medium">Telefone *</Label>
               <Input
                 id="cliente_telefone"
                 value={formData.cliente_telefone}
                 onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
                 placeholder="(00) 00000-0000"
+                className="h-9"
                 required
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="cliente_email" className="text-sm">E-mail</Label>
+            <div className="space-y-1">
+              <Label htmlFor="cliente_email" className="text-xs font-medium">E-mail</Label>
               <Input
                 id="cliente_email"
                 type="email"
                 value={formData.cliente_email}
                 onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
                 placeholder="email@exemplo.com"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="cpf_cliente" className="text-sm">CPF/CNPJ *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="cpf_cliente" className="text-xs font-medium">CPF/CNPJ *</Label>
               <Input
                 id="cpf_cliente"
                 value={formData.cpf_cliente}
@@ -442,6 +445,7 @@ export default function VendasNova() {
                   setFormData(prev => ({ ...prev, cpf_cliente: value }));
                 }}
                 placeholder="CPF ou CNPJ"
+                className="h-9"
                 maxLength={18}
                 required
               />
@@ -451,12 +455,12 @@ export default function VendasNova() {
 
         {/* Localização */}
         <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Localização</CardTitle>
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-base font-semibold">Localização</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="estado" className="text-sm">Estado *</Label>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
+            <div className="space-y-1">
+              <Label htmlFor="estado" className="text-xs font-medium">Estado *</Label>
               <Select
                 value={formData.estado}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, estado: value, cidade: '' }))}
@@ -475,8 +479,8 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="cidade" className="text-sm">Cidade *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="cidade" className="text-xs font-medium">Cidade *</Label>
               <Select
                 value={formData.cidade}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, cidade: value }))}
@@ -496,23 +500,25 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="cep" className="text-sm">CEP</Label>
+            <div className="space-y-1">
+              <Label htmlFor="cep" className="text-xs font-medium">CEP</Label>
               <Input
                 id="cep"
                 value={formData.cep}
                 onChange={(e) => setFormData(prev => ({ ...prev, cep: e.target.value }))}
                 placeholder="00000-000"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="bairro" className="text-sm">Bairro</Label>
+            <div className="space-y-1">
+              <Label htmlFor="bairro" className="text-xs font-medium">Bairro</Label>
               <Input
                 id="bairro"
                 value={formData.bairro}
                 onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
                 placeholder="Nome do bairro"
+                className="h-9"
               />
             </div>
           </CardContent>
@@ -520,23 +526,23 @@ export default function VendasNova() {
 
         {/* Dados da Venda */}
         <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Dados da Venda</CardTitle>
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-base font-semibold">Dados da Venda</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="data_venda" className="text-sm">Data</Label>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-4">
+            <div className="space-y-1">
+              <Label htmlFor="data_venda" className="text-xs font-medium">Data</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal h-10",
+                      "w-full justify-start text-left font-normal h-9",
                       !dataVenda && "text-muted-foreground"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                     {dataVenda ? format(dataVenda, "dd/MM/yyyy", { locale: ptBR }) : <span>Hoje</span>}
                   </Button>
                 </PopoverTrigger>
@@ -553,8 +559,8 @@ export default function VendasNova() {
               </Popover>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="publico_alvo" className="text-sm">Público *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="publico_alvo" className="text-xs font-medium">Público *</Label>
               <Select
                 value={formData.publico_alvo}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, publico_alvo: value }))}
@@ -571,8 +577,8 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="canal_aquisicao_id" className="text-sm">Canal *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="canal_aquisicao_id" className="text-xs font-medium">Canal *</Label>
               <Select
                 value={formData.canal_aquisicao_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
@@ -591,16 +597,18 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <FormaPagamentoSelect
-              value={formData.forma_pagamento}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
-              showLabel={true}
-              required={true}
-              className="space-y-1.5"
-            />
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Forma Pagamento *</Label>
+              <FormaPagamentoSelect
+                value={formData.forma_pagamento}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
+                showLabel={false}
+                required={true}
+              />
+            </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="valor_frete" className="text-sm">Frete (R$)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="valor_frete" className="text-xs font-medium">Frete (R$)</Label>
               <Input
                 id="valor_frete"
                 type="number"
@@ -609,46 +617,48 @@ export default function VendasNova() {
                 value={formData.valor_frete}
                 onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
                 placeholder="0,00"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="data_prevista_entrega" className="text-sm">Previsão Entrega *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="data_prevista_entrega" className="text-xs font-medium">Previsão Entrega *</Label>
               <Input
                 id="data_prevista_entrega"
                 type="date"
                 value={formData.data_prevista_entrega}
                 onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
                 min={new Date().toISOString().split('T')[0]}
+                className="h-9"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm">Tipo de Entrega *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Tipo de Entrega *</Label>
               <RadioGroup
                 value={formData.tipo_entrega}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
-                className="flex gap-4"
+                className="flex gap-3 pt-0.5"
                 required
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5">
                   <RadioGroupItem value="instalacao" id="tipo-instalacao" />
-                  <Label htmlFor="tipo-instalacao" className="font-normal cursor-pointer text-sm">
+                  <Label htmlFor="tipo-instalacao" className="font-normal cursor-pointer text-xs">
                     Instalação
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5">
                   <RadioGroupItem value="entrega" id="tipo-entrega" />
-                  <Label htmlFor="tipo-entrega" className="font-normal cursor-pointer text-sm">
+                  <Label htmlFor="tipo-entrega" className="font-normal cursor-pointer text-xs">
                     Entrega
                   </Label>
                 </div>
               </RadioGroup>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="valor_entrada" className="text-sm">Entrada (R$)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="valor_entrada" className="text-xs font-medium">Entrada (R$)</Label>
               <Input
                 id="valor_entrada"
                 type="number"
@@ -670,33 +680,32 @@ export default function VendasNova() {
                   }));
                 }}
                 placeholder="0,00"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-1.5 md:col-span-2">
-              <Label htmlFor="observacoes_venda" className="text-sm">Observações</Label>
+            <div className="space-y-1 md:col-span-3">
+              <Label htmlFor="observacoes_venda" className="text-xs font-medium">Observações</Label>
               <Textarea
                 id="observacoes_venda"
                 value={formData.observacoes_venda}
                 onChange={(e) => setFormData(prev => ({ ...prev, observacoes_venda: e.target.value }))}
                 rows={2}
-                placeholder="Informações adicionais sobre a venda"
+                placeholder="Informações adicionais"
+                className="resize-none"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <div className="flex items-start space-x-3 p-3 border rounded-lg bg-muted/30">
+            <div className="md:col-span-3">
+              <div className="flex items-center space-x-2 p-2.5 border rounded-md bg-muted/20">
                 <Checkbox 
                   id="venda_presencial"
                   checked={formData.venda_presencial}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))}
-                  className="mt-0.5"
                 />
-                <Label htmlFor="venda_presencial" className="cursor-pointer flex-1">
-                  <span className="text-sm font-medium">Venda Presencial</span>
-                  <p className="text-xs text-muted-foreground font-normal mt-0.5">
-                    Adiciona +5% de limite de desconto
-                  </p>
+                <Label htmlFor="venda_presencial" className="cursor-pointer flex-1 text-xs">
+                  <span className="font-medium">Venda Presencial</span>
+                  <span className="text-muted-foreground ml-1.5">(+5% limite de desconto)</span>
                 </Label>
               </div>
             </div>
@@ -705,13 +714,14 @@ export default function VendasNova() {
 
         {/* Produtos */}
         <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Produtos</CardTitle>
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-base font-semibold">Produtos</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 pb-4">
             <div className="flex gap-2 flex-wrap">
               <Button 
-                type="button" 
+                type="button"
+                size="sm"
                 onClick={() => {
                   setProdutoEditando(undefined);
                   setIndexEditando(undefined);
@@ -720,11 +730,12 @@ export default function VendasNova() {
                   setDialogOpen(true);
                 }}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Porta de Enrolar
               </Button>
               <Button 
                 type="button"
+                size="sm"
                 variant="outline"
                 onClick={() => {
                   setProdutoEditando(undefined);
@@ -734,11 +745,12 @@ export default function VendasNova() {
                   setDialogOpen(true);
                 }}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Porta Social
               </Button>
               <Button 
                 type="button"
+                size="sm"
                 variant="outline"
                 onClick={() => {
                   setProdutoEditando(undefined);
@@ -748,11 +760,12 @@ export default function VendasNova() {
                   setDialogOpen(true);
                 }}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Pintura Eletrostática
               </Button>
               <Button 
                 type="button"
+                size="sm"
                 variant="outline"
                 onClick={() => {
                   setProdutoEditando(undefined);
@@ -762,16 +775,17 @@ export default function VendasNova() {
                   setDialogOpen(true);
                 }}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Manutenção
               </Button>
               <Button 
                 type="button"
+                size="sm"
                 variant="outline"
                 onClick={() => setAcessoriosModalOpen(true)}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Acessório/Adicional
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Acessório/Adicional
               </Button>
             </div>
               <ProdutoVendaForm 
@@ -823,15 +837,15 @@ export default function VendasNova() {
               
               if (validacao.dentroDoLimite) {
                 return (
-                  <Card className="border-green-200 bg-green-50">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100">
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <Card className="border-green-200 bg-green-50/50">
+                    <CardContent className="py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
                         </div>
                         <div>
-                          <p className="font-semibold text-green-900">Venda Dentro do Limite</p>
-                          <p className="text-sm text-green-700">
+                          <p className="text-sm font-semibold text-green-900">Venda Dentro do Limite</p>
+                          <p className="text-xs text-green-700">
                             Desconto: {validacao.percentualDesconto.toFixed(1)}% (limite: {validacao.limitePermitido.toFixed(0)}%)
                           </p>
                         </div>
@@ -843,19 +857,19 @@ export default function VendasNova() {
               
               if (tipoAutorizacao === 'responsavel_setor') {
                 return (
-                  <Card className="border-amber-200 bg-amber-50">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100">
-                          <ShieldCheck className="w-5 h-5 text-amber-600" />
+                  <Card className="border-amber-200 bg-amber-50/50">
+                    <CardContent className="py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100">
+                          <ShieldCheck className="w-4 h-4 text-amber-600" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-amber-900">Autorização do Líder de Vendas Necessária</p>
-                          <p className="text-sm text-amber-700">
-                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede em {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
+                          <p className="text-sm font-semibold text-amber-900">Autorização do Líder Necessária</p>
+                          <p className="text-xs text-amber-700">
+                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
                           </p>
                         </div>
-                        <Badge className="bg-amber-500">Responsável</Badge>
+                        <Badge className="bg-amber-500 text-xs h-5">Responsável</Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -864,19 +878,19 @@ export default function VendasNova() {
               
               if (tipoAutorizacao === 'master') {
                 return (
-                  <Card className="border-orange-200 bg-orange-50">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-100">
-                          <ShieldCheck className="w-5 h-5 text-orange-600" />
+                  <Card className="border-orange-200 bg-orange-50/50">
+                    <CardContent className="py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100">
+                          <ShieldCheck className="w-4 h-4 text-orange-600" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-orange-900">Autorização Master Necessária</p>
-                          <p className="text-sm text-orange-700">
-                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede em {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
+                          <p className="text-sm font-semibold text-orange-900">Autorização Master Necessária</p>
+                          <p className="text-xs text-orange-700">
+                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
                           </p>
                         </div>
-                        <Badge className="bg-orange-500">Master</Badge>
+                        <Badge className="bg-orange-500 text-xs h-5">Master</Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -887,16 +901,16 @@ export default function VendasNova() {
             })()}
             
             {formData.valor_entrada > 0 && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-2 gap-4 text-lg">
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Valor de Entrada:</p>
-                      <p className="font-semibold text-green-600">R$ {formData.valor_entrada.toFixed(2)}</p>
+              <Card className="bg-muted/30">
+                <CardContent className="py-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Valor de Entrada:</p>
+                      <p className="text-base font-semibold text-green-600">R$ {formData.valor_entrada.toFixed(2)}</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Valor a Receber (após instalação):</p>
-                      <p className="font-semibold text-orange-600">R$ {formData.valor_a_receber?.toFixed(2)}</p>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Valor a Receber:</p>
+                      <p className="text-base font-semibold text-orange-600">R$ {formData.valor_a_receber?.toFixed(2)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -906,32 +920,34 @@ export default function VendasNova() {
         )}
 
         {/* Ações */}
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/dashboard/vendas')}>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" size="sm" variant="outline" onClick={() => navigate('/dashboard/vendas')}>
             Cancelar
           </Button>
           {portas.length > 0 && !validarCredito(portas).totalCredito && (
             <Button 
-              type="button" 
+              type="button"
+              size="sm"
               variant="outline"
               onClick={() => setDescontoModalOpen(true)}
             >
-              <Percent className="w-4 h-4 mr-2" />
+              <Percent className="w-3.5 h-3.5 mr-1.5" />
               Adicionar Desconto
             </Button>
           )}
           {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).dentroDoLimite && (
             <Button 
-              type="button" 
+              type="button"
+              size="sm"
               variant="outline"
               className="border-blue-500 text-blue-600 hover:bg-blue-50"
               onClick={() => setCreditoModalOpen(true)}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
               Adicionar Crédito
             </Button>
           )}
-          <Button type="submit" disabled={isCreating || portas.length === 0}>
+          <Button type="submit" size="sm" disabled={isCreating || portas.length === 0}>
             {isCreating ? 'Criando...' : 'Criar Venda'}
           </Button>
         </div>
