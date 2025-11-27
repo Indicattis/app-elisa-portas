@@ -4892,7 +4892,7 @@ export type Database = {
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
       tipo_autorizacao_desconto: "responsavel_setor" | "master"
-      tipo_carregamento: "elisa" | "autorizados"
+      tipo_carregamento: "elisa" | "autorizados" | "terceiro"
       tipo_instalacao_enum: "elisa" | "autorizados"
       tipo_parceiro: "autorizado" | "representante" | "franqueado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
@@ -5097,7 +5097,7 @@ export const Constants = {
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],
       tipo_autorizacao_desconto: ["responsavel_setor", "master"],
-      tipo_carregamento: ["elisa", "autorizados"],
+      tipo_carregamento: ["elisa", "autorizados", "terceiro"],
       tipo_instalacao_enum: ["elisa", "autorizados"],
       tipo_parceiro: ["autorizado", "representante", "franqueado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],

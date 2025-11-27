@@ -45,6 +45,7 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
             cep,
             bairro,
             data_prevista_entrega,
+            tipo_entrega,
             produtos:produtos_vendas(
               cor:catalogo_cores(
                 nome,
@@ -246,7 +247,10 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                               variant={ordem.tipo_carregamento === 'elisa' ? 'default' : 'outline'}
                               className="text-xs"
                             >
-                              {ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Autorizado'}
+                              {ordem.venda?.tipo_entrega === 'entrega' 
+                                ? (ordem.tipo_carregamento === 'elisa' ? 'Veículo Elisa' : 'Terceiro')
+                                : (ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado')
+                              }
                             </Badge>
                           </td>
                           <td className="p-2 text-right">
