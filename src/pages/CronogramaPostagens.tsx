@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isWeekend, isSameDay, isSameMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Calendar, TrendingUp, Video, Eye, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +10,9 @@ import { formatCurrency } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
 export default function CronogramaPostagens() {
-  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+  const hoje = new Date();
+  const [anoSelecionado, setAnoSelecionado] = useState(hoje.getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(hoje.getMonth());
   const [modalAberto, setModalAberto] = useState(false);
   const [dataSelecionada, setDataSelecionada] = useState<string | null>(null);
   const [visualizacao, setVisualizacao] = useState<"mes" | "ano">("mes");
@@ -38,99 +42,86 @@ export default function CronogramaPostagens() {
   const handlePrevYear = () => setAnoSelecionado((prev) => prev - 1);
   const handleNextYear = () => setAnoSelecionado((prev) => prev + 1);
 
-  const getEstiloIntervalo = (data: string, numPostagens: number) => {
-    const dataObj = new Date(data + "T00:00:00");
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const diaSemana = dataObj.getDay();
-    const ehPassado = dataObj < hoje;
-    const ehFimDeSemana = diaSemana === 0 || diaSemana === 6;
+  const getEstiloIntervalo = (data: Date, numPostagens: number, inMonth: boolean) => {
+    const hojeLimpo = new Date();
+    hojeLimpo.setHours(0, 0, 0, 0);
+    const ehPassado = data < hojeLimpo && !isSameDay(data, hojeLimpo);
+    const ehFimDeSemana = isWeekend(data);
 
-    // Verde: 1+ postagens
+    if (!inMonth) {
+      return "bg-muted text-muted-foreground opacity-40";
+    }
+
+    // Verde: 1+ postagens (meta atingida)
     if (numPostagens >= 1) {
-      return {
-        bg: "bg-success/20 hover:bg-success/30",
-        text: "text-success-foreground",
-        border: "border-success/40",
-        ring: "ring-success/20",
-      };
+      return "bg-success text-success-foreground";
     }
 
     // Vermelho: Dia passado sem postagem
     if (ehPassado && !ehFimDeSemana) {
-      return {
-        bg: "bg-destructive/20 hover:bg-destructive/30",
-        text: "text-destructive-foreground",
-        border: "border-destructive/40",
-        ring: "ring-destructive/20",
-      };
+      return "bg-destructive text-destructive-foreground";
     }
 
     // Cinza: Fim de semana ou futuro
-    return {
-      bg: "bg-muted hover:bg-muted/80",
-      text: "text-muted-foreground",
-      border: "border-border",
-      ring: "ring-ring/20",
-    };
+    return "bg-muted text-muted-foreground";
   };
 
-  const renderMes = (mes: number) => {
-    const nomeMes = new Date(anoSelecionado, mes - 1).toLocaleDateString("pt-BR", {
-      month: "long",
-    });
-    const primeiroDia = new Date(anoSelecionado, mes - 1, 1);
-    const ultimoDia = new Date(anoSelecionado, mes, 0);
-    const diasNoMes = ultimoDia.getDate();
-    const iniciaSemana = primeiroDia.getDay();
+  const renderMes = (mesIndex: number, large = false) => {
+    const primeiroDia = new Date(anoSelecionado, mesIndex, 1);
+    const mesInicio = startOfMonth(primeiroDia);
+    const mesFim = endOfMonth(primeiroDia);
 
-    const dias = [];
-    for (let i = 0; i < iniciaSemana; i++) {
-      dias.push(<div key={`vazio-${i}`} className="aspect-square" />);
+    const inicioGrade = startOfWeek(mesInicio, { weekStartsOn: 0 });
+    const fimGrade = endOfWeek(mesFim, { weekStartsOn: 0 });
+
+    const dias: Date[] = [];
+    let dia = inicioGrade;
+    while (dia <= fimGrade) {
+      dias.push(dia);
+      dia = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() + 1);
     }
 
-    for (let dia = 1; dia <= diasNoMes; dia++) {
-      const data = `${anoSelecionado}-${String(mes).padStart(2, "0")}-${String(
-        dia
-      ).padStart(2, "0")}`;
-      const numPostagens = postagensPorData[data] || 0;
-      const estilo = getEstiloIntervalo(data, numPostagens);
-
-      dias.push(
-        <button
-          key={dia}
-          onClick={() => abrirModalParaData(data)}
-          className={`
-            aspect-square rounded-full flex flex-col items-center justify-center
-            transition-all duration-200 cursor-pointer
-            border ${estilo.border} ${estilo.bg} ${estilo.text}
-            hover:scale-105 hover:shadow-lg hover:ring-2 ${estilo.ring}
-          `}
-        >
-          <span className="text-xs sm:text-sm font-bold">{dia}</span>
-          {numPostagens > 0 && (
-            <span className="text-[10px] font-medium">{numPostagens} post{numPostagens > 1 ? 's' : ''}</span>
-          )}
-        </button>
-      );
-    }
+    const daySize = large ? 'w-28 h-28 md:w-32 md:h-32' : 'w-20 h-20 md:w-24 md:h-24';
 
     return (
-      <Card key={mes} className="overflow-hidden">
-        <CardHeader className="bg-card/50 p-3">
-          <CardTitle className="text-base sm:text-lg capitalize">{nomeMes}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-4">
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center mb-2">
-            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((dia) => (
-              <div key={dia} className="text-[10px] sm:text-xs font-medium text-muted-foreground">
-                {dia}
+      <div className="space-y-3" key={mesIndex}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold capitalize">
+            {format(primeiroDia, "LLLL", { locale: ptBR })}
+          </h3>
+        </div>
+        <div className="grid grid-cols-7 gap-3">
+          {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
+            <div key={i} className="text-sm font-medium text-muted-foreground text-center">
+              {d}
+            </div>
+          ))}
+          {dias.map((d, idx) => {
+            const inMonth = isSameMonth(d, primeiroDia);
+            const iso = format(d, "yyyy-MM-dd");
+            const numPostagens = postagensPorData[iso] || 0;
+            const estilo = getEstiloIntervalo(d, numPostagens, inMonth);
+            const ehHoje = isSameDay(d, hoje);
+
+            return (
+              <div key={idx} className="flex items-center justify-center">
+                <button
+                  onClick={() => inMonth ? abrirModalParaData(iso) : undefined}
+                  disabled={!inMonth}
+                  className={`relative ${daySize} rounded-full flex flex-col items-center justify-center shadow-sm transition-transform hover:scale-105 border ${estilo} ${ehHoje ? "ring-2 ring-primary" : ""}`}
+                >
+                  <span className="text-sm opacity-90">{format(d, "d")}</span>
+                  <div className="text-center">
+                    <span className="text-sm font-semibold block">
+                      {numPostagens > 0 ? `${numPostagens} post${numPostagens > 1 ? 's' : ''}` : "-"}
+                    </span>
+                  </div>
+                </button>
               </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">{dias}</div>
-        </CardContent>
-      </Card>
+            );
+          })}
+        </div>
+      </div>
     );
   };
 
@@ -158,15 +149,15 @@ export default function CronogramaPostagens() {
       </div>
 
       {/* Navegação e controles */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrevYear}>
+          <Button variant="outline" onClick={handlePrevYear} className="hover-scale">
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-lg font-bold min-w-[100px] text-center">
+          <div className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-lg font-semibold">
             {anoSelecionado}
-          </span>
-          <Button variant="outline" size="sm" onClick={handleNextYear}>
+          </div>
+          <Button variant="outline" onClick={handleNextYear} className="hover-scale">
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
@@ -177,32 +168,32 @@ export default function CronogramaPostagens() {
             size="sm"
             onClick={() => setVisualizacao("mes")}
           >
-            Por Mês
+            Mês
           </Button>
           <Button
             variant={visualizacao === "ano" ? "default" : "outline"}
             size="sm"
             onClick={() => setVisualizacao("ano")}
           >
-            Ano Completo
+            Ano
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* Legenda */}
-      <Card className="sticky top-16 z-40 bg-background/95 backdrop-blur">
+      <Card className="sticky top-16 z-40 bg-background/95 backdrop-blur border-border/50">
         <CardContent className="p-3 sm:p-4">
           <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-success/20 border border-success/40" />
+              <div className="w-4 h-4 rounded-full bg-success" />
               <span className="text-muted-foreground">Meta atingida (1+ posts)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-destructive/20 border border-destructive/40" />
+              <div className="w-4 h-4 rounded-full bg-destructive" />
               <span className="text-muted-foreground">Sem postagem</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-muted border border-border" />
+              <div className="w-4 h-4 rounded-full bg-muted" />
               <span className="text-muted-foreground">Fim de semana / Futuro</span>
             </div>
           </div>
@@ -270,12 +261,16 @@ export default function CronogramaPostagens() {
         </div>
       )}
 
-      {/* Grade de meses */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-        {visualizacao === "mes"
-          ? renderMes(new Date().getMonth() + 1)
-          : Array.from({ length: 12 }, (_, i) => i + 1).map(renderMes)}
-      </div>
+      {/* Grade de calendário */}
+      {visualizacao === "mes" ? (
+        <div className="mt-6">
+          {renderMes(mesSelecionado, true)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+          {Array.from({ length: 12 }, (_, i) => i).map((mes) => renderMes(mes, false))}
+        </div>
+      )}
 
       {/* Modal de detalhes */}
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
