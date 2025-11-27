@@ -159,7 +159,7 @@ function OrdemCard({
 
           {/* CENTRO - Informações */}
           <div 
-            className="flex-1 space-y-3 cursor-pointer min-w-0"
+            className="flex-1 grid grid-cols-2 gap-3 cursor-pointer min-w-0"
             onClick={() => onOrdemClick(ordem)}
           >
             {ordem.responsavel_id && ordem.admin_users?.nome && (
