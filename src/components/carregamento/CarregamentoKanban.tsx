@@ -73,7 +73,7 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
 
           {/* CENTRO - Informações */}
           <div 
-            className="flex-1 space-y-3 cursor-pointer min-w-0"
+            className="flex-1 grid grid-cols-2 gap-3 cursor-pointer min-w-0"
             onClick={() => podeIniciar && onIniciarColeta(ordem)}
           >
             {ordem.data_carregamento ? (
