@@ -8,9 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { OrdemCarregamento, AgendarCarregamentoData } from "@/types/ordemCarregamento";
 import { supabase } from "@/integrations/supabase/client";
+import { useVeiculos } from "@/hooks/useVeiculos";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
 
 interface AgendarCarregamentoModalProps {
   open: boolean;
@@ -27,12 +27,16 @@ export function AgendarCarregamentoModal({
 }: AgendarCarregamentoModalProps) {
   const [dataCarregamento, setDataCarregamento] = useState("");
   const [hora, setHora] = useState("08:00");
-  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados">("elisa");
+  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados" | "terceiro">("elisa");
   const [responsavelId, setResponsavelId] = useState("");
+  const [responsavelNomeTerceiro, setResponsavelNomeTerceiro] = useState("");
   const [equipes, setEquipes] = useState<any[]>([]);
   const [autorizados, setAutorizados] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
+  const isEntrega = ordem?.venda?.tipo_entrega === 'entrega';
 
   useEffect(() => {
     if (open) {
@@ -46,10 +50,14 @@ export function AgendarCarregamentoModal({
         setHora(ordem.hora);
       }
       if (ordem?.responsavel_tipo) {
-        setResponsavelTipo(ordem.responsavel_tipo as "elisa" | "autorizados");
+        setResponsavelTipo(ordem.responsavel_tipo as "elisa" | "autorizados" | "terceiro");
       }
       if (ordem?.responsavel_carregamento_id) {
-        setResponsavelId(ordem.responsavel_carregamento_id);
+        if (ordem.responsavel_tipo === 'terceiro') {
+          setResponsavelNomeTerceiro(ordem.responsavel_carregamento_nome || '');
+        } else {
+          setResponsavelId(ordem.responsavel_carregamento_id);
+        }
       }
     }
   }, [open, ordem]);
@@ -86,27 +94,52 @@ export function AgendarCarregamentoModal({
   };
 
   const handleConfirm = async () => {
-    if (!dataCarregamento || !hora || !responsavelId) {
-      toast.error("Preencha todos os campos obrigatórios");
+    if (!dataCarregamento || !hora) {
+      toast.error("Preencha data e hora");
       return;
+    }
+
+    if (isEntrega) {
+      if (responsavelTipo === 'elisa' && !responsavelId) {
+        toast.error("Selecione um veículo");
+        return;
+      }
+      if (responsavelTipo === 'terceiro' && !responsavelNomeTerceiro.trim()) {
+        toast.error("Informe o nome do responsável");
+        return;
+      }
+    } else {
+      if (!responsavelId) {
+        toast.error("Selecione um responsável");
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
-      const responsaveis = responsavelTipo === "elisa" ? equipes : autorizados;
-      const responsavel = responsaveis.find((r) => r.id === responsavelId);
-
-      if (!responsavel) {
-        toast.error("Responsável não encontrado");
-        return;
+      let responsavelNome = '';
+      let finalResponsavelId = responsavelId;
+      
+      if (isEntrega) {
+        if (responsavelTipo === 'elisa') {
+          const veiculo = veiculos.find(v => v.id === responsavelId);
+          responsavelNome = veiculo?.nome || '';
+        } else {
+          responsavelNome = responsavelNomeTerceiro.trim();
+          finalResponsavelId = 'terceiro';
+        }
+      } else {
+        const responsaveis = responsavelTipo === "elisa" ? equipes : autorizados;
+        const responsavel = responsaveis.find((r) => r.id === responsavelId);
+        responsavelNome = responsavel?.nome || '';
       }
 
       await onConfirm({
         data_carregamento: dataCarregamento,
         hora: hora,
         responsavel_tipo: responsavelTipo,
-        responsavel_carregamento_id: responsavelId,
-        responsavel_carregamento_nome: responsavel.nome
+        responsavel_carregamento_id: finalResponsavelId,
+        responsavel_carregamento_nome: responsavelNome
       });
 
       onOpenChange(false);
@@ -116,6 +149,7 @@ export function AgendarCarregamentoModal({
       setHora("08:00");
       setResponsavelTipo("elisa");
       setResponsavelId("");
+      setResponsavelNomeTerceiro("");
     } catch (error) {
       console.error("Erro ao agendar:", error);
     } finally {
@@ -127,7 +161,7 @@ export function AgendarCarregamentoModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Agendar Carregamento</DialogTitle>
+          <DialogTitle>Agendar {isEntrega ? 'Entrega' : 'Carregamento'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -135,9 +169,9 @@ export function AgendarCarregamentoModal({
             <div className="p-3 bg-muted rounded-lg">
               <p className="font-medium">{ordem.nome_cliente}</p>
               <p className="text-sm text-muted-foreground">
-                      <Badge variant="secondary">
-                        {ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado'}
-                      </Badge>
+                <Badge variant="secondary">
+                  {isEntrega ? 'Entrega' : 'Instalação'}
+                </Badge>
               </p>
             </div>
           )}
@@ -166,66 +200,93 @@ export function AgendarCarregamentoModal({
           </div>
 
           <div className="space-y-2">
-            <Label>Tipo de Responsável *</Label>
+            <Label>{isEntrega ? 'Tipo de Carregamento' : 'Tipo de Responsável'} *</Label>
             <RadioGroup
               value={responsavelTipo}
               onValueChange={(value) => {
-                setResponsavelTipo(value as "elisa" | "autorizados");
-                setResponsavelId(""); // Reset selection
+                setResponsavelTipo(value as "elisa" | "autorizados" | "terceiro");
+                setResponsavelId("");
+                setResponsavelNomeTerceiro("");
               }}
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="elisa" id="elisa" />
                 <Label htmlFor="elisa" className="font-normal cursor-pointer">
-                  Instalação Elisa
+                  {isEntrega ? 'Carregamento Elisa' : 'Instalação Elisa'}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="autorizados" id="autorizados" />
-                <Label htmlFor="autorizados" className="font-normal cursor-pointer">
-                  Autorizado
+                <RadioGroupItem value={isEntrega ? "terceiro" : "autorizados"} id="outros" />
+                <Label htmlFor="outros" className="font-normal cursor-pointer">
+                  {isEntrega ? 'Carregamento Terceiro' : 'Autorizado'}
                 </Label>
               </div>
             </RadioGroup>
           </div>
 
-          <div className="space-y-2">
-            <Label>
-              {responsavelTipo === "elisa" ? "Equipe" : "Autorizado"} *
-            </Label>
-            <Select
-              value={responsavelId}
-              onValueChange={setResponsavelId}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? "Carregando..." : "Selecione..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {responsavelTipo === "elisa" ? (
-                  equipes.map((equipe) => (
-                    <SelectItem key={equipe.id} value={equipe.id}>
-                      <div className="flex items-center gap-2">
-                        {equipe.cor && (
-                          <span
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: equipe.cor }}
-                          />
-                        )}
-                        {equipe.nome}
-                      </div>
-                    </SelectItem>
-                  ))
-                ) : (
-                  autorizados.map((autorizado) => (
-                    <SelectItem key={autorizado.id} value={autorizado.id}>
-                      {autorizado.nome} - {autorizado.cidade}/{autorizado.estado}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+          {isEntrega && responsavelTipo === 'terceiro' ? (
+            <div className="space-y-2">
+              <Label htmlFor="nome-terceiro">Nome do Responsável *</Label>
+              <Input
+                id="nome-terceiro"
+                type="text"
+                placeholder="Digite o nome do responsável"
+                value={responsavelNomeTerceiro}
+                onChange={(e) => setResponsavelNomeTerceiro(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>
+                {isEntrega 
+                  ? 'Veículo *'
+                  : (responsavelTipo === 'elisa' ? 'Equipe *' : 'Autorizado *')
+                }
+              </Label>
+              <Select
+                value={responsavelId}
+                onValueChange={setResponsavelId}
+                disabled={loading || (isEntrega && loadingVeiculos)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    loading || (isEntrega && loadingVeiculos)
+                      ? "Carregando..."
+                      : "Selecione..."
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {isEntrega && responsavelTipo === 'elisa' ? (
+                    veiculos.filter(v => v.ativo).map((veiculo) => (
+                      <SelectItem key={veiculo.id} value={veiculo.id}>
+                        {veiculo.nome}
+                      </SelectItem>
+                    ))
+                  ) : responsavelTipo === "elisa" ? (
+                    equipes.map((equipe) => (
+                      <SelectItem key={equipe.id} value={equipe.id}>
+                        <div className="flex items-center gap-2">
+                          {equipe.cor && (
+                            <span
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: equipe.cor }}
+                            />
+                          )}
+                          {equipe.nome}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    autorizados.map((autorizado) => (
+                      <SelectItem key={autorizado.id} value={autorizado.id}>
+                        {autorizado.nome} - {autorizado.cidade}/{autorizado.estado}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2">

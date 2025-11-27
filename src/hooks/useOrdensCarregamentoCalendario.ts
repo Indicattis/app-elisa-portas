@@ -45,6 +45,7 @@ export const useOrdensCarregamentoCalendario = (
             cep,
             bairro,
             data_prevista_entrega,
+            tipo_entrega,
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,

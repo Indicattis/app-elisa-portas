@@ -49,7 +49,10 @@ export const OrdemCarregamentoCard = ({
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
           <h4 className="font-semibold text-xs truncate">{ordem.nome_cliente}</h4>
           <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
-            {ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Entrega'}
+            {ordem.venda?.tipo_entrega === 'entrega' 
+              ? (ordem.tipo_carregamento === 'elisa' || ordem.tipo_carregamento === 'terceiro' ? 'Entrega' : 'Entrega')
+              : (ordem.tipo_carregamento === 'elisa' ? 'Instalação' : 'Autorizado')
+            }
           </Badge>
           {/* Tag de equipe - apenas para instalação */}
           {ordem.tipo_carregamento === 'elisa' && equipeNome && (

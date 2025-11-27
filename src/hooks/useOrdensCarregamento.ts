@@ -31,6 +31,7 @@ export const useOrdensCarregamento = (filters?: {
             bairro,
             data_prevista_entrega,
             valor_instalacao,
+            tipo_entrega,
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,

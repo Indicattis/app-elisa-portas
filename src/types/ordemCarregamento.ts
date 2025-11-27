@@ -3,7 +3,7 @@ export interface OrdemCarregamento {
   pedido_id: string | null;
   venda_id: string | null;
   nome_cliente: string;
-  tipo_carregamento: 'elisa' | 'autorizados' | null;
+  tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro' | null;
   data_carregamento: string | null;
   hora: string | null;
   hora_carregamento?: string | null;
@@ -44,6 +44,7 @@ export interface OrdemCarregamento {
     data_prevista_entrega: string | null;
     cliente_email?: string | null;
     valor_instalacao?: number | null;
+    tipo_entrega?: 'instalacao' | 'entrega' | null;
     produtos?: Array<{
       tipo_produto?: string | null;
       tamanho?: string | null;
@@ -66,7 +67,7 @@ export interface ProdutoCor {
 export interface AgendarCarregamentoData {
   data_carregamento: string;
   hora: string;
-  responsavel_tipo: 'elisa' | 'autorizados';
+  responsavel_tipo: 'elisa' | 'autorizados' | 'terceiro';
   responsavel_carregamento_id: string;
   responsavel_carregamento_nome: string;
 }

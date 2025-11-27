@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { cn } from "@/lib/utils";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { supabase } from "@/integrations/supabase/client";
+import { useVeiculos } from "@/hooks/useVeiculos";
 import { toast } from "sonner";
 
 interface EditarOrdemCarregamentoDrawerProps {
@@ -20,7 +21,7 @@ interface EditarOrdemCarregamentoDrawerProps {
   onSave: (data: {
     data_carregamento: string;
     hora_carregamento: string;
-    tipo_carregamento: 'elisa' | 'autorizados';
+    tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
     responsavel_carregamento_id: string;
     responsavel_carregamento_nome: string;
   }) => Promise<void>;
@@ -34,11 +35,15 @@ export const EditarOrdemCarregamentoDrawer = ({
 }: EditarOrdemCarregamentoDrawerProps) => {
   const [dataCarregamento, setDataCarregamento] = useState<Date | undefined>();
   const [hora, setHora] = useState("08:00");
-  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados">("elisa");
+  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados" | "terceiro">("elisa");
   const [responsavelId, setResponsavelId] = useState("");
+  const [responsavelNomeTerceiro, setResponsavelNomeTerceiro] = useState("");
   const [responsaveis, setResponsaveis] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
+  const isEntrega = ordem?.venda?.tipo_entrega === 'entrega';
 
   // Reset form quando o drawer abre/fecha ou ordem muda
   useEffect(() => {
@@ -50,10 +55,14 @@ export const EditarOrdemCarregamentoDrawer = ({
         setHora(ordem.hora || ordem.hora_carregamento || "08:00");
       }
       if (ordem.tipo_carregamento) {
-        setResponsavelTipo(ordem.tipo_carregamento as "elisa" | "autorizados");
+        setResponsavelTipo(ordem.tipo_carregamento as "elisa" | "autorizados" | "terceiro");
       }
       if (ordem.responsavel_carregamento_id) {
-        setResponsavelId(ordem.responsavel_carregamento_id);
+        if (ordem.responsavel_tipo === 'terceiro') {
+          setResponsavelNomeTerceiro(ordem.responsavel_carregamento_nome || '');
+        } else {
+          setResponsavelId(ordem.responsavel_carregamento_id);
+        }
       }
     } else {
       // Reset
@@ -61,21 +70,27 @@ export const EditarOrdemCarregamentoDrawer = ({
       setHora("08:00");
       setResponsavelTipo("elisa");
       setResponsavelId("");
+      setResponsavelNomeTerceiro("");
     }
   }, [open, ordem]);
 
   // Carregar responsáveis quando o tipo muda
   useEffect(() => {
-    if (open) {
+    if (open && responsavelTipo !== 'terceiro') {
       loadResponsaveis();
     }
   }, [responsavelTipo, open]);
 
   const loadResponsaveis = async () => {
+    if (responsavelTipo === 'terceiro') {
+      setResponsaveis([]);
+      return;
+    }
+
     setLoading(true);
     try {
       if (responsavelTipo === "elisa") {
-        // Carregar equipes de instalação ao invés de colaboradores individuais
+        // Carregar equipes de instalação
         const { data, error } = await supabase
           .from("equipes_instalacao")
           .select("id, nome")
@@ -113,25 +128,50 @@ export const EditarOrdemCarregamentoDrawer = ({
       return;
     }
 
-    if (!responsavelId) {
-      toast.error("Selecione um responsável");
-      return;
-    }
-
-    const responsavel = responsaveis.find(r => r.id === responsavelId);
-    if (!responsavel) {
-      toast.error("Responsável não encontrado");
-      return;
+    if (isEntrega) {
+      if (responsavelTipo === 'elisa' && !responsavelId) {
+        toast.error("Selecione um veículo");
+        return;
+      }
+      if (responsavelTipo === 'terceiro' && !responsavelNomeTerceiro.trim()) {
+        toast.error("Informe o nome do responsável");
+        return;
+      }
+    } else {
+      if (!responsavelId) {
+        toast.error("Selecione um responsável");
+        return;
+      }
     }
 
     setSaving(true);
     try {
+      let responsavelNome = '';
+      let finalResponsavelId = responsavelId;
+
+      if (isEntrega) {
+        if (responsavelTipo === 'elisa') {
+          const veiculo = veiculos.find(v => v.id === responsavelId);
+          responsavelNome = veiculo?.nome || '';
+        } else {
+          responsavelNome = responsavelNomeTerceiro.trim();
+          finalResponsavelId = 'terceiro';
+        }
+      } else {
+        const responsavel = responsaveis.find(r => r.id === responsavelId);
+        if (!responsavel) {
+          toast.error("Responsável não encontrado");
+          return;
+        }
+        responsavelNome = responsavel.nome;
+      }
+
       await onSave({
         data_carregamento: format(dataCarregamento, "yyyy-MM-dd"),
         hora_carregamento: hora,
         tipo_carregamento: responsavelTipo,
-        responsavel_carregamento_id: responsavelId,
-        responsavel_carregamento_nome: responsavel.nome,
+        responsavel_carregamento_id: finalResponsavelId,
+        responsavel_carregamento_nome: responsavelNome,
       });
 
       toast.success("Ordem atualizada com sucesso!");
@@ -148,9 +188,9 @@ export const EditarOrdemCarregamentoDrawer = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Editar Carregamento</SheetTitle>
+          <SheetTitle>Editar {isEntrega ? 'Entrega' : 'Carregamento'}</SheetTitle>
           <SheetDescription>
-            Altere os dados de agendamento do carregamento
+            Altere os dados de agendamento do {isEntrega ? 'entrega' : 'carregamento'}
           </SheetDescription>
         </SheetHeader>
 
@@ -179,7 +219,7 @@ export const EditarOrdemCarregamentoDrawer = ({
 
           {/* Data */}
           <div className="space-y-2">
-            <Label>Data do Carregamento</Label>
+            <Label>Data do {isEntrega ? 'Entrega' : 'Carregamento'}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -226,51 +266,85 @@ export const EditarOrdemCarregamentoDrawer = ({
 
           {/* Tipo de Responsável */}
           <div className="space-y-2">
-            <Label>Tipo de Carregamento</Label>
+            <Label>{isEntrega ? 'Tipo de Carregamento' : 'Tipo de Responsável'}</Label>
             <Select
               value={responsavelTipo}
-              onValueChange={(value: "elisa" | "autorizados") => {
+              onValueChange={(value: "elisa" | "autorizados" | "terceiro") => {
                 setResponsavelTipo(value);
                 setResponsavelId("");
+                setResponsavelNomeTerceiro("");
               }}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="elisa">Elisa Portas</SelectItem>
-                <SelectItem value="autorizados">Autorizados</SelectItem>
+                <SelectItem value="elisa">
+                  {isEntrega ? 'Carregamento Elisa' : 'Instalação Elisa'}
+                </SelectItem>
+                <SelectItem value={isEntrega ? "terceiro" : "autorizados"}>
+                  {isEntrega ? 'Carregamento Terceiro' : 'Autorizado'}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Responsável */}
-          <div className="space-y-2">
-            <Label>Responsável</Label>
-            <Select
-              value={responsavelId}
-              onValueChange={setResponsavelId}
-              disabled={loading || responsaveis.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? "Carregando..." : "Selecione"}>
-                  {responsavelId && responsaveis.find(r => r.id === responsavelId)?.nome}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {responsaveis.map((resp) => (
-                  <SelectItem key={resp.id} value={resp.id}>
-                    {resp.nome}
-                    {responsavelTipo === "autorizados" && resp.cidade && (
-                      <span className="text-xs text-muted-foreground ml-2">
-                        - {resp.cidade}/{resp.estado}
-                      </span>
+          {isEntrega && responsavelTipo === 'terceiro' ? (
+            <div className="space-y-2">
+              <Label>Nome do Responsável</Label>
+              <Input
+                type="text"
+                placeholder="Digite o nome do responsável"
+                value={responsavelNomeTerceiro}
+                onChange={(e) => setResponsavelNomeTerceiro(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>
+                {isEntrega 
+                  ? 'Veículo'
+                  : (responsavelTipo === 'elisa' ? 'Equipe' : 'Autorizado')
+                }
+              </Label>
+              <Select
+                value={responsavelId}
+                onValueChange={setResponsavelId}
+                disabled={loading || (isEntrega && loadingVeiculos) || responsaveis.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={loading || (isEntrega && loadingVeiculos) ? "Carregando..." : "Selecione"}>
+                    {responsavelId && (
+                      isEntrega && responsavelTipo === 'elisa'
+                        ? veiculos.find(v => v.id === responsavelId)?.nome
+                        : responsaveis.find(r => r.id === responsavelId)?.nome
                     )}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {isEntrega && responsavelTipo === 'elisa' ? (
+                    veiculos.filter(v => v.ativo).map((veiculo) => (
+                      <SelectItem key={veiculo.id} value={veiculo.id}>
+                        {veiculo.nome}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    responsaveis.map((resp) => (
+                      <SelectItem key={resp.id} value={resp.id}>
+                        {resp.nome}
+                        {responsavelTipo === "autorizados" && resp.cidade && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            - {resp.cidade}/{resp.estado}
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <SheetFooter>
