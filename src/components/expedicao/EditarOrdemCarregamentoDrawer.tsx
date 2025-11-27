@@ -147,7 +147,7 @@ export const EditarOrdemCarregamentoDrawer = ({
     setSaving(true);
     try {
       let responsavelNome = '';
-      let finalResponsavelId = responsavelId;
+      let finalResponsavelId: string | null = responsavelId;
 
       if (isEntrega) {
         if (responsavelTipo === 'elisa') {
@@ -155,7 +155,7 @@ export const EditarOrdemCarregamentoDrawer = ({
           responsavelNome = veiculo?.nome || '';
         } else {
           responsavelNome = responsavelNomeTerceiro.trim();
-          finalResponsavelId = 'terceiro';
+          finalResponsavelId = null; // Para terceiros, ID é null
         }
       } else {
         const responsavel = responsaveis.find(r => r.id === responsavelId);
