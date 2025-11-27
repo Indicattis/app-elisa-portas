@@ -68,6 +68,6 @@ export interface AgendarCarregamentoData {
   data_carregamento: string;
   hora: string;
   responsavel_tipo: 'elisa' | 'autorizados' | 'terceiro';
-  responsavel_carregamento_id: string;
+  responsavel_carregamento_id: string | null;
   responsavel_carregamento_nome: string;
 }

@@ -118,7 +118,7 @@ export function AgendarCarregamentoModal({
     setSubmitting(true);
     try {
       let responsavelNome = '';
-      let finalResponsavelId = responsavelId;
+      let finalResponsavelId: string | null = responsavelId;
       
       if (isEntrega) {
         if (responsavelTipo === 'elisa') {
@@ -126,7 +126,7 @@ export function AgendarCarregamentoModal({
           responsavelNome = veiculo?.nome || '';
         } else {
           responsavelNome = responsavelNomeTerceiro.trim();
-          finalResponsavelId = 'terceiro';
+          finalResponsavelId = null; // Para terceiros, ID é null
         }
       } else {
         const responsaveis = responsavelTipo === "elisa" ? equipes : autorizados;
