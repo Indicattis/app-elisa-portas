@@ -94,7 +94,10 @@ export function useHistoricoOrdens(filters: HistoricoFilters = {}) {
         
         const { data, error } = await query;
         
-        if (error) throw error;
+        if (error) {
+          console.error(`Erro ao buscar histórico de ordens (${tipo}):`, error);
+          return [];
+        }
         
         // Mapear dados adicionando o tipo de ordem
         // Filtrar apenas ordens cujos pedidos estão arquivados
