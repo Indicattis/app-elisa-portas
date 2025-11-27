@@ -526,6 +526,60 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_fiscais: {
+        Row: {
+          aliquota_iss_padrao: number | null
+          ambiente: string | null
+          cnae: string | null
+          codigo_municipio_ibge: string | null
+          codigo_servico_padrao: string | null
+          created_at: string | null
+          descricao_servico_padrao: string | null
+          email_copia: string | null
+          id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
+          regime_tributario: string | null
+          serie_nfe: number | null
+          serie_nfse: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          aliquota_iss_padrao?: number | null
+          ambiente?: string | null
+          cnae?: string | null
+          codigo_municipio_ibge?: string | null
+          codigo_servico_padrao?: string | null
+          created_at?: string | null
+          descricao_servico_padrao?: string | null
+          email_copia?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          regime_tributario?: string | null
+          serie_nfe?: number | null
+          serie_nfse?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          aliquota_iss_padrao?: number | null
+          ambiente?: string | null
+          cnae?: string | null
+          codigo_municipio_ibge?: string | null
+          codigo_servico_padrao?: string | null
+          created_at?: string | null
+          descricao_servico_padrao?: string | null
+          email_copia?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          regime_tributario?: string | null
+          serie_nfe?: number | null
+          serie_nfse?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contador_vendas_dias: {
         Row: {
           atendente_id: string
@@ -1860,68 +1914,128 @@ export type Database = {
       }
       notas_fiscais: {
         Row: {
+          aliquota_iss: number | null
+          ambiente: string | null
           chave_acesso: string | null
           cnpj_cpf: string
+          codigo_servico: string | null
           created_at: string
           created_by: string | null
+          danfe_url: string | null
+          data_autorizacao: string | null
           data_emissao: string
           data_vencimento: string | null
+          descricao_servico: string | null
+          email_enviado: boolean | null
           id: string
+          motivo_rejeicao: string | null
+          nfeio_id: string | null
           numero: string
           observacoes: string | null
           pdf_nome_arquivo: string | null
           pdf_url: string | null
+          protocolo_autorizacao: string | null
           razao_social: string
+          ref_externa: string | null
           serie: string
           status: string
+          status_sefaz: string | null
           tipo: string
+          tomador_bairro: string | null
+          tomador_cep: string | null
+          tomador_cidade: string | null
+          tomador_endereco: string | null
+          tomador_numero: string | null
+          tomador_uf: string | null
           updated_at: string
+          valor_iss: number | null
           valor_total: number
           venda_id: string | null
+          xml_autorizado_url: string | null
           xml_nome_arquivo: string | null
           xml_url: string | null
         }
         Insert: {
+          aliquota_iss?: number | null
+          ambiente?: string | null
           chave_acesso?: string | null
           cnpj_cpf: string
+          codigo_servico?: string | null
           created_at?: string
           created_by?: string | null
+          danfe_url?: string | null
+          data_autorizacao?: string | null
           data_emissao: string
           data_vencimento?: string | null
+          descricao_servico?: string | null
+          email_enviado?: boolean | null
           id?: string
+          motivo_rejeicao?: string | null
+          nfeio_id?: string | null
           numero: string
           observacoes?: string | null
           pdf_nome_arquivo?: string | null
           pdf_url?: string | null
+          protocolo_autorizacao?: string | null
           razao_social: string
+          ref_externa?: string | null
           serie: string
           status?: string
+          status_sefaz?: string | null
           tipo: string
+          tomador_bairro?: string | null
+          tomador_cep?: string | null
+          tomador_cidade?: string | null
+          tomador_endereco?: string | null
+          tomador_numero?: string | null
+          tomador_uf?: string | null
           updated_at?: string
+          valor_iss?: number | null
           valor_total?: number
           venda_id?: string | null
+          xml_autorizado_url?: string | null
           xml_nome_arquivo?: string | null
           xml_url?: string | null
         }
         Update: {
+          aliquota_iss?: number | null
+          ambiente?: string | null
           chave_acesso?: string | null
           cnpj_cpf?: string
+          codigo_servico?: string | null
           created_at?: string
           created_by?: string | null
+          danfe_url?: string | null
+          data_autorizacao?: string | null
           data_emissao?: string
           data_vencimento?: string | null
+          descricao_servico?: string | null
+          email_enviado?: boolean | null
           id?: string
+          motivo_rejeicao?: string | null
+          nfeio_id?: string | null
           numero?: string
           observacoes?: string | null
           pdf_nome_arquivo?: string | null
           pdf_url?: string | null
+          protocolo_autorizacao?: string | null
           razao_social?: string
+          ref_externa?: string | null
           serie?: string
           status?: string
+          status_sefaz?: string | null
           tipo?: string
+          tomador_bairro?: string | null
+          tomador_cep?: string | null
+          tomador_cidade?: string | null
+          tomador_endereco?: string | null
+          tomador_numero?: string | null
+          tomador_uf?: string | null
           updated_at?: string
+          valor_iss?: number | null
           valor_total?: number
           venda_id?: string | null
+          xml_autorizado_url?: string | null
           xml_nome_arquivo?: string | null
           xml_url?: string | null
         }
