@@ -90,6 +90,28 @@ export const OrdemCarregamentoCard = ({
                     <div className="font-semibold text-xs border-b border-border pb-1">
                       {ordem.venda?.cliente_nome || ordem.nome_cliente}
                     </div>
+
+                    {/* Tipo de Serviço */}
+                    <div className="flex items-center gap-1 text-xs">
+                      <Package className="h-3 w-3 flex-shrink-0" />
+                      <span className="font-medium">
+                        {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
+                      </span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
+                        {ordem.venda?.tipo_entrega === 'entrega' 
+                          ? (ordem.tipo_carregamento === 'elisa' ? 'Entrega Elisa' : ordem.tipo_carregamento === 'terceiro' ? 'Terceiro' : 'Autorizado')
+                          : (ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado')
+                        }
+                      </span>
+                    </div>
+
+                    {/* Responsável - mostrar equipe para instalação Elisa */}
+                    {ordem.venda?.tipo_entrega === 'instalacao' && ordem.tipo_carregamento === 'elisa' && equipeNome && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span>Equipe: {equipeNome}</span>
+                      </div>
+                    )}
                     
                     {ordem.venda.cidade && (
                       <div className="flex items-center gap-1 text-xs">
