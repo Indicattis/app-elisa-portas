@@ -124,7 +124,10 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
       if (a.em_backlog && !b.em_backlog) return -1;
       if (!a.em_backlog && b.em_backlog) return 1;
       // Depois por prioridade (maior primeiro)
-      return (b.prioridade || 0) - (a.prioridade || 0);
+      const prioDiff = (b.prioridade || 0) - (a.prioridade || 0);
+      if (prioDiff !== 0) return prioDiff;
+      // Desempate por created_at (mais antiga primeiro) para manter ordem estática
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
   
   const ordensProntas = ordens.filter((o: any) => o.status === 'pronta');
