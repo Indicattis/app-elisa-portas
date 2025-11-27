@@ -3615,6 +3615,54 @@ export type Database = {
           },
         ]
       }
+      postagens: {
+        Row: {
+          comentarios: number | null
+          created_at: string | null
+          created_by: string | null
+          curtidas: number | null
+          data_postagem: string
+          descricao: string | null
+          id: string
+          link_post: string | null
+          plataforma: string | null
+          thumbnail_url: string | null
+          titulo: string
+          updated_at: string | null
+          visualizacoes: number | null
+        }
+        Insert: {
+          comentarios?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          curtidas?: number | null
+          data_postagem: string
+          descricao?: string | null
+          id?: string
+          link_post?: string | null
+          plataforma?: string | null
+          thumbnail_url?: string | null
+          titulo: string
+          updated_at?: string | null
+          visualizacoes?: number | null
+        }
+        Update: {
+          comentarios?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          curtidas?: number | null
+          data_postagem?: string
+          descricao?: string | null
+          id?: string
+          link_post?: string | null
+          plataforma?: string | null
+          thumbnail_url?: string | null
+          titulo?: string
+          updated_at?: string | null
+          visualizacoes?: number | null
+        }
+        Relationships: []
+      }
       produtos_vendas: {
         Row: {
           acessorio_id: string | null

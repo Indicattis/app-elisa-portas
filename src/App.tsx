@@ -50,6 +50,8 @@ import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
 import CanaisAquisicao from "./pages/CanaisAquisicao";
+import CronogramaPostagens from "./pages/CronogramaPostagens";
+import Postagens from "./pages/Postagens";
 import VendasHome from "./pages/VendasHome";
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
@@ -382,6 +384,26 @@ const App = () => (
                     <ProtectedRoute routeKey="performance">
                       <DashboardLayout>
                         <Performance />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/marketing/cronograma"
+                  element={
+                    <ProtectedRoute routeKey="cronograma_postagens">
+                      <DashboardLayout>
+                        <CronogramaPostagens />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/marketing/postagens"
+                  element={
+                    <ProtectedRoute routeKey="postagens">
+                      <DashboardLayout>
+                        <Postagens />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
