@@ -7,7 +7,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { CarregamentoKanban } from "@/components/carregamento/CarregamentoKanban";
 import { useQueryClient } from "@tanstack/react-query";
 
-type FiltroTipo = "todos" | "elisa" | "autorizados";
+type FiltroTipo = "todos" | "entrega" | "instalacao";
 
 export default function ProducaoCarregamento() {
   const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamento();
@@ -20,10 +20,10 @@ export default function ProducaoCarregamento() {
   // Filtrar todas as ordens não concluídas
   const ordensDisponiveis = ordens.filter(ordem => !ordem.carregamento_concluido);
 
-  // Aplicar filtro por tipo de carregamento
+  // Aplicar filtro por tipo de serviço (entrega ou instalação)
   const ordensFiltradas = ordensDisponiveis.filter(ordem => {
     if (filtroTipo === "todos") return true;
-    return ordem.tipo_carregamento === filtroTipo;
+    return ordem.venda?.tipo_entrega === filtroTipo;
   });
 
   // Ordenar por data de carregamento
@@ -44,19 +44,19 @@ export default function ProducaoCarregamento() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Filtro por tipo de carregamento */}
+      {/* Filtro por tipo de serviço */}
       <Tabs value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as FiltroTipo)} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="todos">
             Todos ({ordensOrdenadas.length})
           </TabsTrigger>
-          <TabsTrigger value="elisa">
+          <TabsTrigger value="entrega">
             <Truck className="h-4 w-4 mr-2" />
-            Elisa ({ordensOrdenadas.filter(o => o.tipo_carregamento === 'elisa').length})
+            Entrega ({ordensOrdenadas.filter(o => o.venda?.tipo_entrega === 'entrega').length})
           </TabsTrigger>
-          <TabsTrigger value="autorizados">
+          <TabsTrigger value="instalacao">
             <PackageCheck className="h-4 w-4 mr-2" />
-            Autorizados ({ordensOrdenadas.filter(o => o.tipo_carregamento === 'autorizados').length})
+            Instalação ({ordensOrdenadas.filter(o => o.venda?.tipo_entrega === 'instalacao').length})
           </TabsTrigger>
         </TabsList>
       </Tabs>
