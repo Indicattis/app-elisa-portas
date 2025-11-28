@@ -77,7 +77,6 @@ export type Database = {
       admin_users: {
         Row: {
           ativo: boolean
-          codigo_usuario: string | null
           cpf: string | null
           created_at: string
           data_nascimento: string | null
@@ -93,7 +92,6 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
-          codigo_usuario?: string | null
           cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
@@ -109,7 +107,6 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
-          codigo_usuario?: string | null
           cpf?: string | null
           created_at?: string
           data_nascimento?: string | null

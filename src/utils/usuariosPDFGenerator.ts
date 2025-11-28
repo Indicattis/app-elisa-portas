@@ -12,7 +12,6 @@ interface UsuarioPDF {
   role: string;
   setor: string | null;
   ativo: boolean;
-  codigo_usuario: string | null;
   created_at: string;
 }
 
@@ -113,7 +112,6 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
       usuario.data_nascimento ? format(parseISO(usuario.data_nascimento), 'dd/MM/yyyy', { locale: ptBR }) : '-',
       data.roleLabelsMap[usuario.role] || usuario.role,
       getSetorLabel(usuario.setor),
-      usuario.codigo_usuario || '-',
       usuario.ativo ? 'Ativo' : 'Inativo',
       format(parseISO(usuario.created_at), 'dd/MM/yyyy', { locale: ptBR })
     ];
@@ -121,7 +119,7 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
 
   // Gerar tabela principal
   autoTable(pdf, {
-    head: [['', 'Nome', 'Email', 'CPF', 'Aniversário', 'Função', 'Setor', 'Código', 'Status', 'Cadastro']],
+    head: [['', 'Nome', 'Email', 'CPF', 'Aniversário', 'Função', 'Setor', 'Status', 'Cadastro']],
     body: tableData,
     startY: yPosition,
     styles: {
@@ -140,15 +138,14 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
     },
     columnStyles: {
       0: { cellWidth: 7, halign: 'center' }, // Iniciais
-      1: { cellWidth: 24 }, // Nome
-      2: { cellWidth: 32 }, // Email
-      3: { cellWidth: 20, halign: 'center' }, // CPF
-      4: { cellWidth: 18, halign: 'center' }, // Aniversário
-      5: { cellWidth: 20 }, // Função
-      6: { cellWidth: 16 }, // Setor
-      7: { cellWidth: 13, halign: 'center' }, // Código
-      8: { cellWidth: 12, halign: 'center' }, // Status
-      9: { cellWidth: 16, halign: 'center' }, // Data Cadastro
+      1: { cellWidth: 28 }, // Nome
+      2: { cellWidth: 38 }, // Email
+      3: { cellWidth: 22, halign: 'center' }, // CPF
+      4: { cellWidth: 20, halign: 'center' }, // Aniversário
+      5: { cellWidth: 24 }, // Função
+      6: { cellWidth: 18 }, // Setor
+      7: { cellWidth: 14, halign: 'center' }, // Status
+      8: { cellWidth: 18, halign: 'center' }, // Data Cadastro
     },
     margin: { left: margin, right: margin },
     theme: 'striped',
@@ -156,8 +153,8 @@ export const gerarUsuariosPDF = (data: UsuariosPDFData) => {
       fillColor: [245, 245, 245]
     },
     didParseCell: function(data) {
-      // Colorir status (agora na coluna 8)
-      if (data.section === 'body' && data.column.index === 8) {
+      // Colorir status (agora na coluna 7)
+      if (data.section === 'body' && data.column.index === 7) {
         if (data.cell.raw === 'Ativo') {
           data.cell.styles.textColor = [22, 163, 74]; // green
           data.cell.styles.fontStyle = 'bold';
