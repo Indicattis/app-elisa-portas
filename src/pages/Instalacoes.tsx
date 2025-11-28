@@ -1,127 +1,246 @@
 import { useState } from "react";
-import { MapPin, Filter } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/hooks/useAuth";
+import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CadastroInstalacaoForm } from "@/components/cadastro-instalacao/CadastroInstalacaoForm";
-import { InstalacoesTabelaView } from "@/components/cadastro-instalacao/InstalacoesTabelaView";
-import { InstalacaoIndicadores } from "@/components/cadastro-instalacao/InstalacaoIndicadores";
-import { InstalacoesFiltros } from "@/components/cadastro-instalacao/InstalacoesFiltros";
-import { useInstalacoesCadastradas } from "@/hooks/useInstalacoesCadastradas";
-import { useInstalacoesFilters } from "@/hooks/useInstalacoesFilters";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
+import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
+import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
+import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
+import logoInstalacoes from "@/assets/logo-instalacoes.png";
+import { OrdemInstalacaoDetails } from "@/components/instalacoes/OrdemInstalacaoDetails";
+import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 
 export default function Instalacoes() {
-  const [showCadastroModal, setShowCadastroModal] = useState(false);
-  const [mostrarConcluidos, setMostrarConcluidos] = useState(false);
-  
   const isMobile = useIsMobile();
-  const { isAdmin } = useAuth();
-
+  const queryClient = useQueryClient();
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
   const { 
-    instalacoes, 
-    createInstalacao, 
-    deleteInstalacao, 
-    updateInstalacao,
-    updateStatus,
+    ordens, 
+    isLoading, 
+    updateOrdem, 
     concluirInstalacao,
-    geocodeInstalacao
-  } = useInstalacoesCadastradas();
+    isConcluindo 
+  } = useOrdensInstalacaoCalendario(
+    currentDate, 
+    tipoVisualizacao === 'mensal' ? 'month' : 'week'
+  );
+  
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editOrdem, setEditOrdem] = useState<OrdemCarregamento | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
-  const {
-    searchTerm,
-    setSearchTerm,
-    filterStatus,
-    setFilterStatus,
-    filterEstado,
-    setFilterEstado,
-    filteredInstalacoes: baseFilteredInstalacoes,
-    estados,
-  } = useInstalacoesFilters(instalacoes);
+  const handlePreviousWeek = () => {
+    setCurrentDate(subWeeks(currentDate, 1));
+  };
 
-  // Aplicar filtro adicional para ocultar concluídos por padrão
-  const filteredInstalacoes = baseFilteredInstalacoes.filter(instalacao => {
-    if (mostrarConcluidos) return true;
-    return !instalacao.instalacao_concluida;
-  });
+  const handleNextWeek = () => {
+    setCurrentDate(addWeeks(currentDate, 1));
+  };
+
+  const handlePreviousMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
+  };
+
+  const handleToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento> }) => {
+    await updateOrdem(params);
+  };
+
+  const handleDayClick = (date: Date) => {
+    // Implementar navegação para criar nova ordem se necessário
+  };
+
+  const handleEdit = (ordem: OrdemCarregamento) => {
+    setEditOrdem(ordem);
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async (data: {
+    data_carregamento: string;
+    hora_carregamento: string;
+    tipo_carregamento: 'elisa' | 'autorizados';
+    responsavel_carregamento_id: string;
+    responsavel_carregamento_nome: string;
+  }) => {
+    if (!editOrdem) return;
+
+    await updateOrdem({
+      id: editOrdem.id,
+      data: {
+        data_carregamento: data.data_carregamento,
+        hora: data.hora_carregamento,
+        hora_carregamento: data.hora_carregamento,
+        tipo_carregamento: data.tipo_carregamento,
+        responsavel_carregamento_id: data.responsavel_carregamento_id,
+        responsavel_carregamento_nome: data.responsavel_carregamento_nome,
+        status: 'agendada',
+      },
+    });
+  };
+
+  const handleRemoverDoCalendario = async (id: string) => {
+    try {
+      await updateOrdem({
+        id,
+        data: { data_carregamento: null, status: 'pendente' },
+      });
+      toast.success("Ordem removida do calendário");
+    } catch (error) {
+      console.error("Erro ao remover:", error);
+      toast.error("Erro ao remover ordem do calendário");
+    }
+  };
+
+  const handleConcluirInstalacao = async (pedidoId: string) => {
+    try {
+      await concluirInstalacao(pedidoId);
+      setDetailsOpen(false);
+    } catch (error) {
+      console.error("Erro ao concluir instalação:", error);
+    }
+  };
+
+  const handleBaixarPDF = () => {
+    toast.info("Funcionalidade de PDF em desenvolvimento");
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["ordens_instalacao_calendario"] });
+    toast.success("Calendário atualizado");
+  };
+
+  const handleOrdemClick = (ordem: OrdemCarregamento) => {
+    setSelectedOrdem(ordem);
+    setDetailsOpen(true);
+  };
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold">Instalações</h1>
-            <p className="text-sm text-muted-foreground">
-              Visualize e gerencie todas as instalações cadastradas
-            </p>
+    <div className="min-h-screen bg-background">
+      {/* Header Fixo */}
+      <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img src={logoInstalacoes} alt="Logo" className="h-9 w-9 object-contain" />
+            <div>
+              <h1 className="text-lg font-semibold">Instalações</h1>
+              <p className="text-xs text-muted-foreground">Calendário de instalações</p>
+            </div>
           </div>
           
           <div className="flex gap-2">
-            <Button
-              variant={mostrarConcluidos ? "outline" : "default"}
-              size={isMobile ? "sm" : "default"}
-              onClick={() => setMostrarConcluidos(!mostrarConcluidos)}
-              className="gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              {!isMobile && (mostrarConcluidos ? "Mostrar Apenas Pendentes" : "Mostrar Todos")}
-              {isMobile && <Badge variant="secondary" className="text-xs">{filteredInstalacoes.length}</Badge>}
-            </Button>
-            
-            {isAdmin && (
-              <Button 
-                onClick={() => setShowCadastroModal(true)}
-                size={isMobile ? "sm" : "default"}
-                className="gap-2"
-              >
-                <MapPin className="h-4 w-4" />
-                {!isMobile && "Nova Instalação"}
-              </Button>
+            {/* Toggle Semana/Mês (desktop) */}
+            {!isMobile && (
+              <div className="flex gap-1 border rounded-md p-1 mr-2">
+                <Button 
+                  variant={tipoVisualizacao === 'semanal' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setTipoVisualizacao('semanal')}
+                  className="h-8 px-3 text-xs"
+                >
+                  Semana
+                </Button>
+                <Button 
+                  variant={tipoVisualizacao === 'mensal' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setTipoVisualizacao('mensal')}
+                  className="h-8 px-3 text-xs"
+                >
+                  Mês
+                </Button>
+              </div>
             )}
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Atualizar</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleBaixarPDF}>
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">PDF</span>
+            </Button>
           </div>
         </div>
+      </header>
 
-        <InstalacaoIndicadores instalacoes={instalacoes} />
+      {/* Conteúdo */}
+      <main className="p-4 pb-8 space-y-4">
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Carregando calendário...</p>
+          </div>
+        ) : (
+          <>
+            {/* Calendários */}
+            {isMobile ? (
+              <CalendarioSemanalExpedicaoMobile
+                startDate={currentDate}
+                ordens={ordens}
+                onPreviousWeek={handlePreviousWeek}
+                onNextWeek={handleNextWeek}
+                onToday={handleToday}
+                onDayClick={handleDayClick}
+                onEdit={handleEdit}
+                onRemoverDoCalendario={handleRemoverDoCalendario}
+              />
+            ) : (
+              tipoVisualizacao === 'semanal' ? (
+                <CalendarioSemanalExpedicaoDesktop
+                  startDate={currentDate}
+                  ordens={ordens}
+                  onPreviousWeek={handlePreviousWeek}
+                  onNextWeek={handleNextWeek}
+                  onToday={handleToday}
+                  onUpdateOrdem={handleUpdateOrdem}
+                  onEdit={handleEdit}
+                  onRemoverDoCalendario={handleRemoverDoCalendario}
+                  onOrdemDropped={() => {}}
+                  onOrdemClick={handleOrdemClick}
+                />
+              ) : (
+                <CalendarioMensalExpedicaoDesktop
+                  currentMonth={currentDate}
+                  ordens={ordens}
+                  onMonthChange={setCurrentDate}
+                  onUpdateOrdem={handleUpdateOrdem}
+                  onEdit={handleEdit}
+                  onRemoverDoCalendario={handleRemoverDoCalendario}
+                  onOrdemDropped={() => {}}
+                  onOrdemClick={handleOrdemClick}
+                />
+              )
+            )}
+          </>
+        )}
+      </main>
 
-        <InstalacoesFiltros
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          filterStatus={filterStatus}
-          onFilterStatusChange={setFilterStatus}
-          filterEstado={filterEstado}
-          onFilterEstadoChange={setFilterEstado}
-          estados={estados}
-        />
+      {/* Sidebar de Detalhes com botão de Concluir Instalação */}
+      <OrdemInstalacaoDetails
+        ordem={selectedOrdem}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        onConcluirInstalacao={handleConcluirInstalacao}
+        isConcluindo={isConcluindo}
+      />
 
-        <InstalacoesTabelaView
-          instalacoes={filteredInstalacoes}
-          onDelete={deleteInstalacao}
-          onUpdate={updateInstalacao}
-          onUpdateStatus={updateStatus}
-          onConcluirInstalacao={concluirInstalacao}
-          onGeocode={geocodeInstalacao}
-          isAdmin={isAdmin}
-        />
-      </div>
-
-      <Dialog open={showCadastroModal} onOpenChange={setShowCadastroModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Cadastrar Nova Instalação</DialogTitle>
-            <DialogDescription>
-              Preencha os dados para cadastrar uma nova instalação
-            </DialogDescription>
-          </DialogHeader>
-          <CadastroInstalacaoForm 
-            onSubmit={async (data) => {
-              await createInstalacao(data);
-              setShowCadastroModal(false);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-    </>
+      {/* Drawer de Edição */}
+      <EditarOrdemCarregamentoDrawer
+        ordem={editOrdem}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSave={handleSaveEdit}
+      />
+    </div>
   );
 }

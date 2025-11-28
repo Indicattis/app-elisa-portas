@@ -31,6 +31,10 @@ export interface OrdemCarregamento {
       id: string;
       responsavel_instalacao_id: string | null;
       responsavel_instalacao_nome: string | null;
+      tipo_instalacao: string | null;
+      instalacao_concluida: boolean | null;
+      instalacao_concluida_em: string | null;
+      instalacao_concluida_por: string | null;
     }> | null;
   };
   venda?: {
