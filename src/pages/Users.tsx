@@ -130,6 +130,9 @@ export default function Users() {
 
   const handleSave = async (userId: string) => {
     try {
+      // Remove formatação do CPF antes de salvar (apenas números)
+      const cpfNumerico = editForm.cpf ? editForm.cpf.replace(/\D/g, '') : null;
+      
       const { error } = await supabase
         .from("admin_users")
         .update({
@@ -137,7 +140,7 @@ export default function Users() {
           role: editForm.role,
           setor: editForm.setor,
           codigo_usuario: editForm.codigo_usuario,
-          cpf: editForm.cpf,
+          cpf: cpfNumerico,
           ativo: editForm.ativo,
         })
         .eq("id", userId);
@@ -378,12 +381,38 @@ export default function Users() {
                       {editingUser === user.id ? (
                         <Input
                           value={editForm.cpf || ""}
-                          onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
+                          onChange={(e) => {
+                            // Remove tudo que não é número
+                            const numericValue = e.target.value.replace(/\D/g, '');
+                            // Limita a 11 dígitos
+                            const limitedValue = numericValue.slice(0, 11);
+                            // Formata para exibição XXX.XXX.XXX-XX
+                            let formatted = limitedValue;
+                            if (limitedValue.length > 3) {
+                              formatted = limitedValue.slice(0, 3) + '.' + limitedValue.slice(3);
+                            }
+                            if (limitedValue.length > 6) {
+                              formatted = limitedValue.slice(0, 3) + '.' + limitedValue.slice(3, 6) + '.' + limitedValue.slice(6);
+                            }
+                            if (limitedValue.length > 9) {
+                              formatted = limitedValue.slice(0, 3) + '.' + limitedValue.slice(3, 6) + '.' + limitedValue.slice(6, 9) + '-' + limitedValue.slice(9);
+                            }
+                            setEditForm({ ...editForm, cpf: formatted });
+                          }}
                           className="h-6 text-[10px] px-1"
                           placeholder="000.000.000-00"
+                          maxLength={14}
                         />
                       ) : (
-                        <span className="truncate block max-w-[100px]">{user.cpf || "—"}</span>
+                        <span className="truncate block max-w-[100px]">
+                          {user.cpf ? 
+                            // Formatar CPF para exibição se for apenas números
+                            user.cpf.length === 11 && /^\d+$/.test(user.cpf) ?
+                              `${user.cpf.slice(0, 3)}.${user.cpf.slice(3, 6)}.${user.cpf.slice(6, 9)}-${user.cpf.slice(9, 11)}` :
+                              user.cpf
+                            : "—"
+                          }
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="py-0 px-2">
