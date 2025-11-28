@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, Trophy, Medal } from "lucide-react";
+import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, Trophy, Medal, ChevronLeft, ChevronRight } from "lucide-react";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { usePontuacaoRanking } from "@/hooks/usePontuacaoRanking";
 
@@ -30,11 +32,14 @@ const iconMap: Record<string, any> = {
   Medal,
 };
 
+const ITEMS_PER_PAGE = 5;
+
 export default function ProducaoHome() {
   const navigate = useNavigate();
   const { user } = useProducaoAuth();
   const { data: ordensCount } = useOrdensCount();
   const { data: ranking = [], isLoading: loadingRanking } = usePontuacaoRanking();
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Buscar rotas da interface producao que o usuário tem acesso
   const { data: routes = [], isLoading } = useQuery({
@@ -100,6 +105,12 @@ export default function ProducaoHome() {
     }
   };
 
+  // Paginação do ranking
+  const totalPages = Math.ceil(ranking.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = ranking.slice(startIndex, endIndex);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="space-y-2">
@@ -125,34 +136,66 @@ export default function ProducaoHome() {
               Nenhuma pontuação registrada este mês
             </div>
           ) : (
-            <div className="space-y-2">
-              {ranking.map((colaborador, index) => (
-                <div 
-                  key={colaborador.user_id}
-                  className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
-                    index < 3 ? 'bg-accent/50' : 'hover:bg-accent/30'
-                  }`}
-                >
-                  <div className="flex items-center justify-center w-8">
-                    {index === 0 && <Medal className="h-6 w-6 text-yellow-500" />}
-                    {index === 1 && <Medal className="h-6 w-6 text-gray-400" />}
-                    {index === 2 && <Medal className="h-6 w-6 text-amber-700" />}
-                    {index > 2 && <span className="text-sm font-medium text-muted-foreground">{index + 1}º</span>}
-                  </div>
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={colaborador.foto_perfil_url || undefined} />
-                    <AvatarFallback>{colaborador.nome.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{colaborador.nome}</p>
-                    <p className="text-xs text-muted-foreground">{colaborador.total_linhas} linhas concluídas</p>
-                  </div>
-                  <Badge variant="secondary" className="text-sm font-bold">
-                    {colaborador.total_pontos.toFixed(1)} pts
-                  </Badge>
+            <>
+              <div className="space-y-1">
+                {currentItems.map((colaborador, index) => {
+                  const globalIndex = startIndex + index;
+                  return (
+                    <div 
+                      key={colaborador.user_id}
+                      className={`flex items-center gap-2 p-1.5 px-2 rounded-lg transition-colors h-[35px] ${
+                        globalIndex < 3 ? 'bg-accent/50' : 'hover:bg-accent/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-6">
+                        {globalIndex === 0 && <Medal className="h-4 w-4 text-yellow-500" />}
+                        {globalIndex === 1 && <Medal className="h-4 w-4 text-gray-400" />}
+                        {globalIndex === 2 && <Medal className="h-4 w-4 text-amber-700" />}
+                        {globalIndex > 2 && <span className="text-[10px] font-medium text-muted-foreground">{globalIndex + 1}º</span>}
+                      </div>
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={colaborador.foto_perfil_url || undefined} />
+                        <AvatarFallback className="text-[8px]">{colaborador.nome.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[10px] truncate">{colaborador.nome}</p>
+                        <p className="text-[8px] text-muted-foreground">{colaborador.total_linhas} linhas</p>
+                      </div>
+                      <Badge variant="secondary" className="text-[9px] font-bold h-5 px-1.5">
+                        {colaborador.total_pontos.toFixed(1)} pts
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2 border-t mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="h-6 text-[9px] px-2"
+                  >
+                    <ChevronLeft className="h-3 w-3 mr-1" />
+                    Anterior
+                  </Button>
+                  <span className="text-[9px] text-muted-foreground">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="h-6 text-[9px] px-2"
+                  >
+                    Próximo
+                    <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </Card>
       </div>
