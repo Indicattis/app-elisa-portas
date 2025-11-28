@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { codigo_usuario, new_password, action } = body
+    const { cpf_ultimos_4, new_password, action } = body
 
     // Se a ação foi atualizar senha
     if (action === 'update_password') {
@@ -64,10 +64,18 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Fluxo original: validar código de usuário
-    if (!codigo_usuario) {
+    // Fluxo de login: validar últimos 4 dígitos do CPF
+    if (!cpf_ultimos_4) {
       return new Response(
-        JSON.stringify({ error: 'Código de usuário é obrigatório' }),
+        JSON.stringify({ error: 'CPF (últimos 4 dígitos) é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validar formato: exatamente 4 dígitos
+    if (!/^\d{4}$/.test(cpf_ultimos_4)) {
+      return new Response(
+        JSON.stringify({ error: 'CPF deve conter exatamente 4 dígitos' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -84,18 +92,16 @@ Deno.serve(async (req) => {
       }
     )
 
-    // Buscar usuário em admin_users
-    console.log('Buscando usuário com código:', codigo_usuario)
+    // Buscar todos os usuários da fábrica/administrativo ativos
+    console.log('Buscando usuário com CPF terminando em:', cpf_ultimos_4)
     
-    const { data: adminUser, error: adminError } = await supabaseAdmin
+    const { data: adminUsers, error: adminError } = await supabaseAdmin
       .from('admin_users')
       .select('*')
-      .eq('codigo_usuario', codigo_usuario)
       .in('setor', ['fabrica', 'administrativo'])
       .eq('ativo', true)
-      .maybeSingle()
 
-    console.log('Resultado da busca:', { adminUser, adminError })
+    console.log('Usuários encontrados:', adminUsers?.length || 0)
 
     if (adminError) {
       console.error('Erro na query:', adminError)
@@ -105,10 +111,21 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Filtrar usuário pelos últimos 4 dígitos do CPF
+    const adminUser = adminUsers?.find(u => {
+      if (!u.cpf) return false
+      // Remover qualquer formatação e pegar últimos 4 dígitos
+      const cpfLimpo = u.cpf.replace(/\D/g, '')
+      return cpfLimpo.slice(-4) === cpf_ultimos_4
+    })
+
     if (!adminUser) {
-      console.log('Usuário não encontrado com código:', codigo_usuario)
+      console.log('Nenhum usuário encontrado com CPF terminando em:', cpf_ultimos_4)
       return new Response(
-        JSON.stringify({ error: 'Usuário não encontrado', message: 'Código não encontrado ou usuário inativo/não pertence à produção' }),
+        JSON.stringify({ 
+          error: 'Usuário não encontrado', 
+          message: 'CPF não encontrado ou usuário inativo/não pertence à produção' 
+        }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -142,8 +159,8 @@ Deno.serve(async (req) => {
           email_confirm: true,
           user_metadata: {
             nome: adminUser.nome,
-            codigo_usuario: codigo_usuario,
-            setor: 'fabrica'
+            cpf_ultimos_4: cpf_ultimos_4,
+            setor: adminUser.setor || 'fabrica'
           }
         }
       )
@@ -165,8 +182,8 @@ Deno.serve(async (req) => {
         email_confirm: true,
         user_metadata: {
           nome: adminUser.nome,
-          codigo_usuario: codigo_usuario,
-          setor: 'fabrica'
+          cpf_ultimos_4: cpf_ultimos_4,
+          setor: adminUser.setor || 'fabrica'
         }
       })
 
@@ -193,11 +210,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true,
         email: email,
-        message: 'Credenciais configuradas com sucesso',
+        message: 'Autenticação configurada com sucesso',
         user: {
           id: adminUser.id,
           nome: adminUser.nome,
-          codigo: adminUser.codigo_usuario
+          cpf_ultimos_4: cpf_ultimos_4
         }
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

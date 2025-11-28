@@ -9,7 +9,7 @@ import { Lock, Loader2 } from "lucide-react";
 import logoDark from "@/assets/logo-dark.png";
 
 export default function ProducaoLogin() {
-  const [codigo, setCodigo] = useState("");
+  const [cpfDigitos, setCpfDigitos] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -17,10 +17,20 @@ export default function ProducaoLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!codigo.trim()) {
+    if (!cpfDigitos.trim()) {
       toast({
-        title: "Código necessário",
-        description: "Por favor, informe seu código de usuário",
+        title: "CPF necessário",
+        description: "Por favor, informe os últimos 4 dígitos do seu CPF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar que são exatamente 4 dígitos numéricos
+    if (!/^\d{4}$/.test(cpfDigitos.trim())) {
+      toast({
+        title: "CPF inválido",
+        description: "Digite exatamente 4 dígitos numéricos",
         variant: "destructive",
       });
       return;
@@ -29,9 +39,9 @@ export default function ProducaoLogin() {
     setLoading(true);
 
     try {
-      // Validar código via edge function (retorna email real do usuário)
+      // Validar CPF via edge function (retorna email real do usuário)
       const { data: setupData, error: setupError } = await supabase.functions.invoke('manage-producao-auth', {
-        body: { codigo_usuario: codigo.trim() }
+        body: { cpf_ultimos_4: cpfDigitos.trim() }
       });
 
       if (setupError || !setupData?.success) {
@@ -43,7 +53,7 @@ export default function ProducaoLogin() {
         toast({
           title: "Erro de autenticação",
           description: errorMessage === 'Usuário não encontrado' 
-            ? "Código não encontrado ou usuário inativo/não pertence à produção"
+            ? "CPF não encontrado ou usuário inativo/não pertence à produção"
             : "Não foi possível configurar credenciais. Tente novamente.",
           variant: "destructive",
         });
@@ -97,7 +107,7 @@ export default function ProducaoLogin() {
           <div>
             <CardTitle className="text-2xl font-bold">Interface de Produção</CardTitle>
             <CardDescription className="text-base mt-2">
-              Informe seu código de usuário para acessar
+              Informe os últimos 4 dígitos do seu CPF para acessar
             </CardDescription>
           </div>
         </CardHeader>
@@ -108,12 +118,19 @@ export default function ProducaoLogin() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="password"
-                  placeholder="Digite seu código"
-                  value={codigo}
-                  onChange={(e) => setCodigo(e.target.value)}
+                  placeholder="Digite os 4 últimos dígitos do CPF"
+                  value={cpfDigitos}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/\D/g, '');
+                    if (valor.length <= 4) {
+                      setCpfDigitos(valor);
+                    }
+                  }}
                   className="pl-10 h-12 text-lg"
                   disabled={loading}
                   autoFocus
+                  maxLength={4}
+                  inputMode="numeric"
                 />
               </div>
             </div>
