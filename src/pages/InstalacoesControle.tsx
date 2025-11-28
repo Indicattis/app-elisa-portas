@@ -111,7 +111,7 @@ export default function InstalacoesControle() {
                       <div className="flex flex-col">
                         <span className="font-medium">{ordem.venda?.cliente_nome || "-"}</span>
                         <span className="text-xs text-muted-foreground">
-                          Venda #{ordem.venda?.numero_venda}
+                          Pedido #{ordem.pedido?.numero_pedido}
                         </span>
                       </div>
                     </TableCell>

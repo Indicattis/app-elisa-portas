@@ -16,7 +16,6 @@ export const useOrdensInstalacaoListagem = () => {
           *,
           venda:vendas (
             id,
-            numero_venda,
             cliente_nome,
             cliente_telefone,
             cliente_cidade,
