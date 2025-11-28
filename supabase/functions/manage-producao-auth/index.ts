@@ -144,8 +144,11 @@ Deno.serve(async (req) => {
     console.log('Configurando autenticação para email:', email)
 
     // Tentar buscar usuário auth existente pelo email real
-    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-    const existingUser = users.find(u => u.email === email)
+    const { data: existingUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserByEmail(email)
+    if (getUserError) {
+      console.error('Erro ao buscar usuário por email:', getUserError)
+    }
+    const existingUser = existingUserData?.user
 
     let authUser
 
