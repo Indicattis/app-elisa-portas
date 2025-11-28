@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMateriaisProducaoRanking } from "@/hooks/useMateriaisProducaoRanking";
 
-const ITEMS_PER_PAGE = 11;
+const ITEMS_PER_PAGE = 5;
 
 export function MateriaisRanking() {
   const { rankingCompleto, isLoading } = useMateriaisProducaoRanking();
@@ -39,7 +39,7 @@ export function MateriaisRanking() {
         <CardTitle className="text-sm">Ranking de Materiais Produzidos</CardTitle>
       </CardHeader>
       <CardContent className="pb-2 px-3">
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {currentItems.length === 0 ? (
             <p className="text-[10px] text-muted-foreground text-center py-2">
               Nenhum material produzido hoje
@@ -50,24 +50,24 @@ export function MateriaisRanking() {
               return (
                 <div
                   key={material.item}
-                  className="flex items-center justify-between py-1 px-1.5 border rounded hover:bg-accent/50 transition-colors"
+                  className="flex items-center justify-between py-1.5 px-2 border rounded hover:bg-accent/50 transition-colors h-[35px]"
                 >
-                  <div className="flex items-center gap-1 flex-1 min-w-0">
-                    <Badge variant={globalIndex < 3 ? "default" : "secondary"} className="text-[9px] px-1 py-0 shrink-0">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <Badge variant={globalIndex < 3 ? "default" : "secondary"} className="text-[8px] px-1.5 py-0 h-4 shrink-0">
                       {globalIndex + 1}º
                     </Badge>
-                    <span className="text-[11px] font-medium truncate">{material.item}</span>
+                    <span className="text-[10px] font-medium truncate">{material.item}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
-                      <p className="font-semibold text-[11px]">{material.total_quantidade}</p>
-                      <p className="text-[8px] text-muted-foreground">un</p>
+                      <p className="font-semibold text-[10px] leading-tight">{material.total_quantidade}</p>
+                      <p className="text-[7px] text-muted-foreground leading-tight">un</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-[11px]">
+                      <p className="font-semibold text-[10px] leading-tight">
                         {material.metragem_m2 > 0 ? material.metragem_m2.toFixed(2) : "—"}
                       </p>
-                      <p className="text-[8px] text-muted-foreground">m²</p>
+                      <p className="text-[7px] text-muted-foreground leading-tight">m²</p>
                     </div>
                   </div>
                 </div>
@@ -83,12 +83,12 @@ export function MateriaisRanking() {
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="h-7 text-[10px]"
+              className="h-6 text-[9px] px-2"
             >
-              <ChevronLeft className="h-3 w-3 mr-1" />
+              <ChevronLeft className="h-3 w-3 mr-0.5" />
               Anterior
             </Button>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-[9px] text-muted-foreground">
               Página {currentPage} de {totalPages}
             </span>
             <Button
@@ -96,10 +96,10 @@ export function MateriaisRanking() {
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="h-7 text-[10px]"
+              className="h-6 text-[9px] px-2"
             >
               Próximo
-              <ChevronRight className="h-3 w-3 ml-1" />
+              <ChevronRight className="h-3 w-3 ml-0.5" />
             </Button>
           </div>
         )}

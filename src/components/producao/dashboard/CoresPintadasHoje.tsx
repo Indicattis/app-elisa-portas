@@ -1,10 +1,20 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Palette } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Palette, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCoresPintadasHoje } from "@/hooks/useCoresPintadasHoje";
+
+const ITEMS_PER_PAGE = 5;
 
 export function CoresPintadasHoje() {
   const { data: cores = [], isLoading } = useCoresPintadasHoje();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(cores.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = cores.slice(startIndex, endIndex);
 
   if (isLoading) {
     return (
@@ -40,22 +50,52 @@ export function CoresPintadasHoje() {
             Nenhuma peça pintada hoje
           </p>
         ) : (
-          <div className="space-y-1">
-            {cores.map((cor) => (
-              <div
-                key={cor.cor_nome}
-                className="flex items-center justify-between py-1 px-1.5 border rounded hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-primary to-primary/60" />
-                  <span className="text-[11px] font-medium">{cor.cor_nome}</span>
+          <>
+            <div className="space-y-0.5">
+              {currentItems.map((cor) => (
+                <div
+                  key={cor.cor_nome}
+                  className="flex items-center justify-between py-1.5 px-2 border rounded hover:bg-accent/50 transition-colors h-[35px]"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-primary to-primary/60 shrink-0" />
+                    <span className="text-[10px] font-medium truncate">{cor.cor_nome}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[8px] py-0 px-1.5 h-4 shrink-0">
+                    {cor.quantidade_pecas} {cor.quantidade_pecas === 1 ? 'peça' : 'peças'}
+                  </Badge>
                 </div>
-                <Badge variant="secondary" className="text-[9px] py-0 px-1">
-                  {cor.quantidade_pecas} {cor.quantidade_pecas === 1 ? 'peça' : 'peças'}
-                </Badge>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-2 pt-2 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="h-6 text-[9px] px-2"
+                >
+                  <ChevronLeft className="h-3 w-3 mr-0.5" />
+                  Anterior
+                </Button>
+                <span className="text-[9px] text-muted-foreground">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="h-6 text-[9px] px-2"
+                >
+                  Próximo
+                  <ChevronRight className="h-3 w-3 ml-0.5" />
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
