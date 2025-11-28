@@ -15,28 +15,44 @@ export const OrdemCarregamentoCard = ({
   onClick,
   dragListeners,
 }: OrdemCarregamentoCardProps) => {
-  // Cor baseada no tipo de serviço: Entrega (azul) ou Instalação (vermelho)
-  const getTipoServicoColor = (tipoCarregamento: string | null) => {
-    switch (tipoCarregamento) {
+  // Pegar a cor da equipe do campo enriquecido
+  const corEquipe = (ordem as any)._corEquipe;
+
+  // Estilos baseados na cor da equipe
+  const getCardStyles = () => {
+    if (corEquipe) {
+      return {
+        backgroundColor: `${corEquipe}15`,
+        borderColor: corEquipe,
+      };
+    }
+    
+    // Fallback para cor baseada no tipo de serviço
+    switch (ordem.tipo_carregamento) {
       case 'autorizados':
-        // Entrega - Tom azulado
-        return 'bg-blue-500/10 border-blue-500/40 hover:bg-blue-500/20';
+        return {
+          backgroundColor: 'rgb(59 130 246 / 0.1)',
+          borderColor: 'rgb(59 130 246 / 0.4)',
+        };
       case 'elisa':
-        // Instalação - Tom vermelho
-        return 'bg-red-500/10 border-red-500/40 hover:bg-red-500/20';
+        return {
+          backgroundColor: 'rgb(239 68 68 / 0.1)',
+          borderColor: 'rgb(239 68 68 / 0.4)',
+        };
       default:
-        return 'bg-muted border-border';
+        return {};
     }
   };
 
-  // Pegar a instalação através do pedido
+  // Pegar dados da instalação
   const instalacaoData = ordem.pedido?.instalacao;
   const instalacao = Array.isArray(instalacaoData) ? instalacaoData[0] : instalacaoData;
   const equipeNome = instalacao?.responsavel_instalacao_nome;
 
   return (
     <Card 
-      className={`relative h-[35px] p-2 border transition-all duration-200 cursor-pointer ${getTipoServicoColor(ordem.tipo_carregamento)}`}
+      className="relative h-[35px] p-2 border transition-all duration-200 cursor-pointer hover:opacity-80"
+      style={getCardStyles()}
       onClick={() => onClick?.(ordem)}
     >
       {/* Header - Sempre visível */}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -7,17 +7,20 @@ import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/Calenda
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
+import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import logoInstalacoes from "@/assets/logo-instalacoes.png";
 import { OrdemInstalacaoDetails } from "@/components/instalacoes/OrdemInstalacaoDetails";
 import { OrdensSemData } from "@/components/instalacoes/OrdensSemData";
+
 export default function Instalacoes() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
+  const { equipes } = useEquipesInstalacao();
   const { 
     ordens, 
     isLoading, 
@@ -28,6 +31,43 @@ export default function Instalacoes() {
     currentDate, 
     tipoVisualizacao === 'mensal' ? 'month' : 'week'
   );
+
+  // Mapear responsável para cor da equipe
+  const getEquipeCorByResponsavel = useMemo(() => {
+    const map = new Map<string, string>();
+    
+    equipes.forEach(equipe => {
+      // Adicionar responsável
+      if (equipe.responsavel_id) {
+        map.set(equipe.responsavel_id, equipe.cor);
+      }
+      // Adicionar membros
+      equipe.membros?.forEach(membro => {
+        map.set(membro.id, equipe.cor);
+      });
+    });
+    
+    return (responsavelId: string | null) => {
+      if (!responsavelId) return null;
+      return map.get(responsavelId) || null;
+    };
+  }, [equipes]);
+
+  // Enriquecer ordens com cor da equipe
+  const ordensComCores = useMemo(() => {
+    return ordens.map(ordem => {
+      const instalacao = Array.isArray(ordem.pedido?.instalacao) 
+        ? ordem.pedido?.instalacao[0] 
+        : ordem.pedido?.instalacao;
+      
+      const corEquipe = getEquipeCorByResponsavel(instalacao?.responsavel_instalacao_id || null);
+      
+      return {
+        ...ordem,
+        _corEquipe: corEquipe
+      };
+    });
+  }, [ordens, getEquipeCorByResponsavel]);
   
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -144,7 +184,7 @@ export default function Instalacoes() {
             {isMobile ? (
               <CalendarioSemanalExpedicaoMobile
                 startDate={currentDate}
-                ordens={ordens}
+                ordens={ordensComCores}
                 onPreviousWeek={handlePreviousWeek}
                 onNextWeek={handleNextWeek}
                 onToday={handleToday}
@@ -156,7 +196,7 @@ export default function Instalacoes() {
               tipoVisualizacao === 'semanal' ? (
                 <CalendarioSemanalExpedicaoDesktop
                   startDate={currentDate}
-                  ordens={ordens}
+                  ordens={ordensComCores}
                   onPreviousWeek={handlePreviousWeek}
                   onNextWeek={handleNextWeek}
                   onToday={handleToday}
@@ -169,7 +209,7 @@ export default function Instalacoes() {
               ) : (
                 <CalendarioMensalExpedicaoDesktop
                   currentMonth={currentDate}
-                  ordens={ordens}
+                  ordens={ordensComCores}
                   onMonthChange={setCurrentDate}
                   onUpdateOrdem={handleUpdateOrdem}
                   onEdit={() => {}}
