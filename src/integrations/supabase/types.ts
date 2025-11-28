@@ -1222,6 +1222,8 @@ export type Database = {
           id: string
           nome_produto: string
           peso_porta: number | null
+          pontuacao_por_metro: number | null
+          pontuacao_producao: number | null
           quantidade: number
           quantidade_ideal: number | null
           requer_pintura: boolean | null
@@ -1244,6 +1246,8 @@ export type Database = {
           id?: string
           nome_produto: string
           peso_porta?: number | null
+          pontuacao_por_metro?: number | null
+          pontuacao_producao?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
           requer_pintura?: boolean | null
@@ -1266,6 +1270,8 @@ export type Database = {
           id?: string
           nome_produto?: string
           peso_porta?: number | null
+          pontuacao_por_metro?: number | null
+          pontuacao_producao?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
           requer_pintura?: boolean | null
@@ -3618,6 +3624,69 @@ export type Database = {
           },
         ]
       }
+      pontuacao_colaboradores: {
+        Row: {
+          created_at: string | null
+          estoque_id: string | null
+          id: string
+          item_nome: string
+          linha_id: string
+          metragem: number | null
+          ordem_id: string
+          pontos_metro: number
+          pontos_total: number
+          pontos_unidade: number
+          quantidade: number
+          tipo_ordem: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          estoque_id?: string | null
+          id?: string
+          item_nome: string
+          linha_id: string
+          metragem?: number | null
+          ordem_id: string
+          pontos_metro?: number
+          pontos_total?: number
+          pontos_unidade?: number
+          quantidade?: number
+          tipo_ordem: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          estoque_id?: string | null
+          id?: string
+          item_nome?: string
+          linha_id?: string
+          metragem?: number | null
+          ordem_id?: string
+          pontos_metro?: number
+          pontos_total?: number
+          pontos_unidade?: number
+          quantidade?: number
+          tipo_ordem?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pontuacao_colaboradores_estoque_id_fkey"
+            columns: ["estoque_id"]
+            isOneToOne: false
+            referencedRelation: "estoque"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pontuacao_colaboradores_linha_id_fkey"
+            columns: ["linha_id"]
+            isOneToOne: false
+            referencedRelation: "linhas_ordens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       postagens: {
         Row: {
           comentarios: number | null
@@ -5020,6 +5089,16 @@ export type Database = {
       get_pedidos_na_fila: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_hoje: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_mes: { Args: never; Returns: number }
+      get_ranking_pontuacao_mes: {
+        Args: never
+        Returns: {
+          foto_perfil_url: string
+          nome: string
+          total_linhas: number
+          total_pontos: number
+          user_id: string
+        }[]
+      }
       has_role:
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
         | {

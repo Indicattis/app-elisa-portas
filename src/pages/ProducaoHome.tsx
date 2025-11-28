@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, Trophy, Medal } from "lucide-react";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
+import { usePontuacaoRanking } from "@/hooks/usePontuacaoRanking";
 
 interface ProducaoRoute {
   key: string;
@@ -24,12 +26,15 @@ const iconMap: Record<string, any> = {
   CheckSquare,
   Truck,
   BarChart3,
+  Trophy,
+  Medal,
 };
 
 export default function ProducaoHome() {
   const navigate = useNavigate();
   const { user } = useProducaoAuth();
   const { data: ordensCount } = useOrdensCount();
+  const { data: ranking = [], isLoading: loadingRanking } = usePontuacaoRanking();
 
   // Buscar rotas da interface producao que o usuário tem acesso
   const { data: routes = [], isLoading } = useQuery({
@@ -102,6 +107,54 @@ export default function ProducaoHome() {
         <p className="text-muted-foreground">
           Acompanhe as ordens de produção e acesse os diferentes painéis
         </p>
+      </div>
+
+      {/* Ranking de Pontuação Fabril */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Ranking de Pontuação Fabril - Mês Atual</h2>
+        </div>
+        <Card className="p-4">
+          {loadingRanking ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Carregando ranking...
+            </div>
+          ) : ranking.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma pontuação registrada este mês
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {ranking.map((colaborador, index) => (
+                <div 
+                  key={colaborador.user_id}
+                  className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                    index < 3 ? 'bg-accent/50' : 'hover:bg-accent/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-center w-8">
+                    {index === 0 && <Medal className="h-6 w-6 text-yellow-500" />}
+                    {index === 1 && <Medal className="h-6 w-6 text-gray-400" />}
+                    {index === 2 && <Medal className="h-6 w-6 text-amber-700" />}
+                    {index > 2 && <span className="text-sm font-medium text-muted-foreground">{index + 1}º</span>}
+                  </div>
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={colaborador.foto_perfil_url || undefined} />
+                    <AvatarFallback>{colaborador.nome.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{colaborador.nome}</p>
+                    <p className="text-xs text-muted-foreground">{colaborador.total_linhas} linhas concluídas</p>
+                  </div>
+                  <Badge variant="secondary" className="text-sm font-bold">
+                    {colaborador.total_pontos.toFixed(1)} pts
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* Acesso aos Painéis */}

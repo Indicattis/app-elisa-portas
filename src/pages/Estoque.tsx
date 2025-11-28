@@ -39,6 +39,8 @@ export default function Estoque() {
     setor_responsavel_producao: "",
     fornecedor_id: "",
     requer_pintura: false,
+    pontuacao_producao: 0,
+    pontuacao_por_metro: 0,
   });
 
   const getCategoriaColor = (categoriaId: string) => {
@@ -67,6 +69,8 @@ export default function Estoque() {
         setor_responsavel_producao: formData.setor_responsavel_producao as any,
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
+        pontuacao_producao: formData.pontuacao_producao,
+        pontuacao_por_metro: formData.pontuacao_por_metro,
       });
       
       setFormData({
@@ -81,6 +85,8 @@ export default function Estoque() {
         setor_responsavel_producao: "",
         fornecedor_id: "",
         requer_pintura: false,
+        pontuacao_producao: 0,
+        pontuacao_por_metro: 0,
       });
       setNovoModal(false);
       toast.success("Produto adicionado com sucesso");
@@ -323,6 +329,29 @@ export default function Estoque() {
                   </Label>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pontuacao_producao">Pontuação por Unidade</Label>
+                    <Input
+                      id="pontuacao_producao"
+                      type="number"
+                      step="0.01"
+                      value={formData.pontuacao_producao}
+                      onChange={(e) => setFormData({ ...formData, pontuacao_producao: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pontuacao_por_metro">Pontuação por Metro</Label>
+                    <Input
+                      id="pontuacao_por_metro"
+                      type="number"
+                      step="0.01"
+                      value={formData.pontuacao_por_metro}
+                      onChange={(e) => setFormData({ ...formData, pontuacao_por_metro: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setNovoModal(false)}>
                     Cancelar
@@ -357,6 +386,8 @@ export default function Estoque() {
                   <TableHead className="text-xs font-medium">Categoria</TableHead>
                   <TableHead className="text-xs font-medium">Setor</TableHead>
                   <TableHead className="text-center text-xs font-medium">Pintura</TableHead>
+                  <TableHead className="text-center text-xs font-medium">Pts/Un</TableHead>
+                  <TableHead className="text-center text-xs font-medium">Pts/M</TableHead>
                   <TableHead className="text-right text-xs font-medium">Estoque</TableHead>
                   <TableHead className="text-right text-xs font-medium">Custo</TableHead>
                   <TableHead className="text-right text-xs font-medium">Ações</TableHead>
@@ -365,7 +396,7 @@ export default function Estoque() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-sm text-muted-foreground">
                       Carregando...
                     </TableCell>
                   </TableRow>
@@ -376,7 +407,7 @@ export default function Estoque() {
                     p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-sm text-muted-foreground">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
@@ -441,6 +472,16 @@ export default function Estoque() {
                         ) : (
                           <span className="text-xs text-muted-foreground">Não</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-center px-3 py-2">
+                        <span className="text-xs font-medium">
+                          {produto.pontuacao_producao > 0 ? produto.pontuacao_producao.toFixed(2) : '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center px-3 py-2">
+                        <span className="text-xs font-medium">
+                          {produto.pontuacao_por_metro > 0 ? produto.pontuacao_por_metro.toFixed(2) : '-'}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right px-3 py-2">
                         <div>
