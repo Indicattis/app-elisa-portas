@@ -1,12 +1,18 @@
-import { NavLink } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import * as icons from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoLight from "@/assets/logo-light.png";
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import logoDark from "@/assets/logo-dark.png";
+import { useState, useEffect } from "react";
+import { ChevronRight, ChevronsDown, ChevronsUp, Lock } from "lucide-react";
+import { icons } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 interface AppRoute {
   key: string;
@@ -20,10 +26,13 @@ interface AppRoute {
 }
 
 export function AdminSidebar() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
+  const { theme } = useTheme();
 
   // Buscar rotas da interface admin
-  const { data: routes = [] } = useQuery({
+  const { data: routes = [], isLoading } = useQuery({
     queryKey: ['admin-routes', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -38,136 +47,249 @@ export function AdminSidebar() {
       if (error) throw error;
 
       // Verificar acesso para cada rota
-      if (isAdmin) return routesData || [];
+      const routesWithAccess = await Promise.all(
+        (routesData || []).map(async (route) => {
+          // Admin sempre tem acesso
+          if (isAdmin) {
+            return { ...route, can_access: true };
+          }
 
-      const accessibleRoutes = [];
-      for (const route of routesData || []) {
-        const { data: hasAccess } = await supabase.rpc('has_route_access', {
-          _user_id: user.id,
-          _route_key: route.key
-        });
-        
-        if (hasAccess) {
-          accessibleRoutes.push(route);
-        }
-      }
+          // Verificar acesso via função RLS
+          const { data: hasAccess } = await supabase.rpc('has_route_access', {
+            _user_id: user.id,
+            _route_key: route.key
+          });
 
-      return accessibleRoutes as AppRoute[];
+          return { ...route, can_access: hasAccess || false };
+        })
+      );
+
+      return routesWithAccess as AppRoute[];
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const getIcon = (iconName?: string) => {
-    if (!iconName) return icons.Circle;
-    const IconComponent = (icons as any)[iconName];
-    return IconComponent || icons.Circle;
+  // Função recursiva para construir árvore completa
+  const buildRouteTree = (routes: AppRoute[], parentKey: string | null = null): any[] => {
+    return routes
+      .filter((route) => route.parent_key === parentKey)
+      .map((route) => ({
+        ...route,
+        children: buildRouteTree(routes, route.key),
+      }));
   };
 
-  // Agrupar rotas por parent_key
-  const parentRoutes = routes.filter(r => !r.parent_key);
-  const childRoutesByParent = routes.reduce((acc, route) => {
-    if (route.parent_key) {
-      if (!acc[route.parent_key]) {
-        acc[route.parent_key] = [];
-      }
-      acc[route.parent_key].push(route);
-    }
-    return acc;
-  }, {} as Record<string, AppRoute[]>);
+  const routeTree = buildRouteTree(routes, null);
 
-  // Estado para controlar quais grupos estão expandidos
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  // Persistir estado dos grupos no localStorage
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('admin-sidebar-groups-state');
+    return saved ? JSON.parse(saved) : {};
+  });
 
-  const toggleGroup = (key: string) => {
-    setExpandedGroups(prev => ({
+  // Salvar estado quando mudar
+  useEffect(() => {
+    localStorage.setItem('admin-sidebar-groups-state', JSON.stringify(openGroups));
+  }, [openGroups]);
+
+  // Determinar qual logo usar baseado no tema
+  const isDarkMode =
+    theme === "dark" ||
+    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const currentLogo = isDarkMode ? logoLight : logoDark;
+
+  const isActive = (path: string) => {
+    if (path === '#') return false;
+    return location.pathname === path;
+  };
+
+  const getIcon = (iconName?: string | null) => {
+    if (!iconName) return icons.Settings;
+    const IconComponent = icons[iconName as keyof typeof icons];
+    return IconComponent || icons.Settings;
+  };
+
+  const toggleGroup = (routeKey: string, open: boolean) => {
+    setOpenGroups((prev) => ({
       ...prev,
-      [key]: !prev[key]
+      [routeKey]: open,
     }));
   };
 
+  const handleOpenAll = () => {
+    const getAllKeys = (routes: any[]): string[] => {
+      return routes.flatMap((route) => [
+        route.key,
+        ...(route.children ? getAllKeys(route.children) : []),
+      ]);
+    };
+    const allKeys = getAllKeys(routeTree);
+    const allOpen = allKeys.reduce((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setOpenGroups(allOpen);
+  };
+
+  const handleCloseAll = () => {
+    setOpenGroups({});
+  };
+
+  // Função recursiva para renderizar itens da sidebar
+  const renderRouteItem = (route: any, level: number): React.ReactNode => {
+    const RouteIcon = getIcon(route.icon);
+    const canAccess = route.can_access;
+    const itemIsActive = canAccess && isActive(route.path);
+    const hasChildren = route.children && route.children.length > 0;
+
+    // Se não tem acesso e não tem children acessíveis, não renderizar
+    if (!canAccess && !hasChildren) return null;
+
+    // Rota com children (pasta)
+    if (hasChildren) {
+      const hasAccessToChildren = route.children.some(
+        (c: any) => c.can_access || (c.children && c.children.length > 0)
+      );
+      if (!hasAccessToChildren && !canAccess) return null;
+
+      const isOpen = openGroups[route.key] ?? false;
+      const isHomeActive = canAccess && isActive(route.path);
+
+      return (
+        <Collapsible
+          key={route.key}
+          open={isOpen}
+          onOpenChange={(open) => toggleGroup(route.key, open)}
+          className="group/collapsible"
+        >
+          <SidebarMenuItem>
+            <div className="flex items-center w-full">
+              <SidebarMenuButton
+                asChild={canAccess}
+                isActive={isHomeActive}
+                className={cn("flex-1 cursor-pointer", !canAccess && "opacity-50")}
+              >
+                {canAccess ? (
+                  <Link to={route.path} className="flex items-center gap-2">
+                    <RouteIcon className="h-5 w-5" />
+                    <span>{route.label}</span>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <RouteIcon className="h-5 w-5" />
+                    <span>{route.label}</span>
+                  </div>
+                )}
+              </SidebarMenuButton>
+
+              <CollapsibleTrigger asChild>
+                <button
+                  className="flex items-center justify-center h-8 w-8 hover:bg-accent rounded-md transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-200",
+                      isOpen && "rotate-90"
+                    )}
+                  />
+                </button>
+              </CollapsibleTrigger>
+            </div>
+
+            <CollapsibleContent className="transition-all duration-300 ease-in-out">
+              <SidebarMenuSub>
+                {route.children.map((child: any) => renderRouteItem(child, level + 1))}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          </SidebarMenuItem>
+        </Collapsible>
+      );
+    }
+
+    // Rota sem children (item final)
+    return (
+      <SidebarMenuSubItem key={route.key}>
+        <SidebarMenuSubButton
+          asChild={canAccess}
+          isActive={itemIsActive}
+          className={cn(!canAccess && "opacity-50 cursor-not-allowed")}
+        >
+          {canAccess ? (
+            <Link to={route.path} className="flex items-center gap-2 w-full">
+              <RouteIcon className="h-4 w-4" />
+              <span>{route.label}</span>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2 w-full">
+              <RouteIcon className="h-4 w-4" />
+              <span>{route.label}</span>
+              <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
+            </div>
+          )}
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    );
+  };
+
   return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-3 border-b border-sidebar-border">
-        <img src={logoLight} alt="Logo" className="h-10 w-auto mx-auto" />
-        <p className="text-center text-xs text-sidebar-foreground/60 mt-1.5 font-medium">
-          Interface Administrativa
-        </p>
+    <Sidebar collapsible="offcanvas" className="border-r">
+      <div className="flex gap-2 px-2 py-2 border-b">
+        <button
+          onClick={() => navigate('/admin')}
+          className="flex items-center justify-center px-2 py-1.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+          title="Admin Home"
+        >
+          <img src={currentLogo} alt="Admin" className="h-5 w-5 object-contain" />
+        </button>
+        <button
+          onClick={handleOpenAll}
+          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          title="Abrir Todos"
+        >
+          <ChevronsDown className="h-3 w-3" />
+          <span>Abrir</span>
+        </button>
+        <button
+          onClick={handleCloseAll}
+          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          title="Fechar Todos"
+        >
+          <ChevronsUp className="h-3 w-3" />
+          <span>Fechar</span>
+        </button>
       </div>
 
-      <nav className="flex-1 p-2 space-y-0.5 overflow-auto">
-        {parentRoutes.map((route) => {
-          const Icon = getIcon(route.icon);
-          const hasChildren = childRoutesByParent[route.key]?.length > 0;
-          const isExpanded = expandedGroups[route.key];
+      <SidebarContent>
+        <ScrollArea className="flex-1 px-2">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  routeTree.map((route) => renderRouteItem(route, 0))
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </ScrollArea>
+      </SidebarContent>
 
-          return (
-            <div key={route.key}>
-              {hasChildren ? (
-                <>
-                  <button
-                    onClick={() => toggleGroup(route.key)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground"
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="flex-1 text-left">{route.label}</span>
-                    <ChevronDown 
-                      className={cn(
-                        "h-4 w-4 transition-transform",
-                        isExpanded && "rotate-180"
-                      )}
-                    />
-                  </button>
-                  
-                  {isExpanded && (
-                    <div className="ml-3 mt-0.5 space-y-0.5">
-                      {childRoutesByParent[route.key].map((childRoute) => {
-                        const ChildIcon = getIcon(childRoute.icon);
-                        return (
-                          <NavLink
-                            key={childRoute.key}
-                            to={childRoute.path}
-                            className={({ isActive }) =>
-                              cn(
-                                "flex items-center gap-2 px-3 py-1 rounded-lg transition-colors text-sm font-medium",
-                                "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                                isActive
-                                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                                  : "text-sidebar-foreground"
-                              )
-                            }
-                          >
-                            <ChildIcon className="h-4 w-4" />
-                            <span>{childRoute.label}</span>
-                          </NavLink>
-                        );
-                      })}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <NavLink
-                  to={route.path}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground"
-                    )
-                  }
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{route.label}</span>
-                </NavLink>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-    </aside>
+      <SidebarFooter className="p-2 space-y-1.5">
+        <div className="space-y-1">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium"
+          >
+            <icons.LayoutDashboard className="h-4 w-4" />
+            <span>Dashboard</span>
+          </Link>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
