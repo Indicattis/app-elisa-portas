@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
-import { Search, Edit, Save, X, Eye, EyeOff, Loader2, KeyRound, Lock, FileDown } from "lucide-react";
+import { Search, Edit, Save, X, Eye, EyeOff, Loader2, KeyRound, Lock, FileDown, ImageIcon } from "lucide-react";
 import { baixarUsuariosPDF } from "@/utils/usuariosPDFGenerator";
 import {
   Dialog,
@@ -52,6 +52,7 @@ export default function Users() {
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
   const [showPasswordInfoUser, setShowPasswordInfoUser] = useState<AdminUser | null>(null);
+  const [avatarEditUser, setAvatarEditUser] = useState<AdminUser | null>(null);
   const { toast } = useToast();
 
   // Buscar cargos ativos do sistema
@@ -538,6 +539,15 @@ export default function Users() {
                              <Button
                                variant="outline"
                                size="sm"
+                               onClick={() => setAvatarEditUser(user)}
+                               title="Editar foto de perfil"
+                               className="h-5 w-5 p-0"
+                             >
+                               <ImageIcon className="w-3 h-3" />
+                             </Button>
+                             <Button
+                               variant="outline"
+                               size="sm"
                                onClick={() => setShowPasswordInfoUser(user)}
                                title="Ver informações de senha"
                                className="h-5 w-5 p-0"
@@ -572,6 +582,41 @@ export default function Users() {
         userName={resetPasswordUser?.nome || ""}
         userEmail={resetPasswordUser?.email || ""}
       />
+
+      <Dialog open={!!avatarEditUser} onOpenChange={(open) => !open && setAvatarEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5" />
+              Editar Foto de Perfil
+            </DialogTitle>
+            <DialogDescription>
+              Usuário: <strong>{avatarEditUser?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {avatarEditUser && (
+              <AvatarUpload
+                userId={avatarEditUser.user_id}
+                currentAvatarUrl={avatarEditUser.foto_perfil_url}
+                userName={avatarEditUser.nome}
+                onAvatarUpdate={(url) => {
+                  handleAvatarUpdate(avatarEditUser.user_id, url);
+                  setAvatarEditUser(null);
+                }}
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAvatarEditUser(null)}
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!showPasswordInfoUser} onOpenChange={(open) => !open && setShowPasswordInfoUser(null)}>
         <DialogContent>
