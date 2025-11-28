@@ -52,6 +52,8 @@ export default function EstoqueEdit() {
     setor_responsavel_producao: string;
     fornecedor_id: string;
     requer_pintura: boolean;
+    pontuacao_producao: number;
+    pontuacao_por_metro: number;
   }>({
     nome_produto: "",
     descricao_produto: "",
@@ -65,6 +67,8 @@ export default function EstoqueEdit() {
     setor_responsavel_producao: "",
     fornecedor_id: "",
     requer_pintura: false,
+    pontuacao_producao: 0,
+    pontuacao_por_metro: 0,
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -113,6 +117,8 @@ export default function EstoqueEdit() {
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
         fornecedor_id: produto.fornecedor_id || "",
         requer_pintura: produto.requer_pintura === true,
+        pontuacao_producao: Number(produto.pontuacao_producao) || 0,
+        pontuacao_por_metro: Number(produto.pontuacao_por_metro) || 0,
       };
       
       console.log('[EstoqueEdit] Novo formData:', newFormData);
@@ -147,6 +153,8 @@ export default function EstoqueEdit() {
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
+        pontuacao_producao: formData.pontuacao_producao,
+        pontuacao_por_metro: formData.pontuacao_por_metro,
       };
       
       console.log('[EstoqueEdit] handleSubmit - dados que serão salvos:', dadosParaSalvar);
@@ -388,6 +396,32 @@ export default function EstoqueEdit() {
                     <SelectItem value="pintura">Pintura</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="pontuacao_producao">Pontuação por Unidade</Label>
+                <Input
+                  id="pontuacao_producao"
+                  type="number"
+                  step="0.01"
+                  value={formData.pontuacao_producao}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pontuacao_producao: parseFloat(e.target.value) || 0 })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="pontuacao_por_metro">Pontuação por Metro</Label>
+                <Input
+                  id="pontuacao_por_metro"
+                  type="number"
+                  step="0.01"
+                  value={formData.pontuacao_por_metro}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pontuacao_por_metro: parseFloat(e.target.value) || 0 })
+                  }
+                />
               </div>
             </div>
 
