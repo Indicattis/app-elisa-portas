@@ -62,6 +62,7 @@ export const useOrdensInstalacaoCalendario = (
             id,
             numero_pedido,
             etapa_atual,
+            arquivado,
             data_producao,
             instalacao:instalacoes(
               id,
