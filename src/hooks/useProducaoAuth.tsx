@@ -8,7 +8,6 @@ interface ProducaoUser {
   nome: string;
   role: string;
   foto_perfil_url?: string;
-  codigo: string;
 }
 
 interface ProducaoAuthContextType {
@@ -52,7 +51,6 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
               nome: adminUser.nome,
               role: adminUser.role,
               foto_perfil_url: adminUser.foto_perfil_url,
-              codigo: adminUser.codigo_usuario,
             });
           } else {
             // Se não encontrou admin_user ou teve erro, fazer logout
@@ -101,7 +99,6 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
                     nome: adminUser.nome,
                     role: adminUser.role,
                     foto_perfil_url: adminUser.foto_perfil_url,
-                    codigo: adminUser.codigo_usuario,
                   });
                 }
               });

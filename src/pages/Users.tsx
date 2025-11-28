@@ -33,7 +33,6 @@ interface AdminUser {
   nome: string;
   role: string; // TEXT in database, validated via FK against system_roles.key
   setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
-  codigo_usuario: string | null;
   cpf: string | null;
   data_nascimento: string | null;
   ativo: boolean;
@@ -51,7 +50,6 @@ export default function Users() {
   const [filterRole, setFilterRole] = useState<string>("todos");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
-  const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
   const [showPasswordInfoUser, setShowPasswordInfoUser] = useState<AdminUser | null>(null);
   const { toast } = useToast();
@@ -77,17 +75,6 @@ export default function Users() {
     return acc;
   }, {} as Record<string, string>);
 
-  const toggleCodeVisibility = (userId: string) => {
-    setVisibleCodes(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(userId)) {
-        newSet.delete(userId);
-      } else {
-        newSet.add(userId);
-      }
-      return newSet;
-    });
-  };
 
   useEffect(() => {
     fetchUsers();
@@ -123,7 +110,6 @@ export default function Users() {
       nome: user.nome,
       role: user.role,
       setor: user.setor,
-      codigo_usuario: user.codigo_usuario,
       cpf: user.cpf,
       data_nascimento: user.data_nascimento,
       ativo: user.ativo,
@@ -141,7 +127,6 @@ export default function Users() {
           nome: editForm.nome,
           role: editForm.role,
           setor: editForm.setor,
-          codigo_usuario: editForm.codigo_usuario,
           cpf: cpfNumerico,
           data_nascimento: editForm.data_nascimento,
           ativo: editForm.ativo,
@@ -244,7 +229,6 @@ export default function Users() {
         role: u.role,
         setor: u.setor,
         ativo: u.ativo,
-        codigo_usuario: u.codigo_usuario,
         created_at: u.created_at,
       })),
       roleLabelsMap,
@@ -348,7 +332,6 @@ export default function Users() {
                   <TableHead className="text-[10px] py-1 px-2">Aniversário</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Função</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Setor</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2">Código</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Status</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Data</TableHead>
                   <TableHead className="text-right text-[10px] py-1 px-2">Ações</TableHead>
@@ -496,40 +479,6 @@ export default function Users() {
                            user.setor === "fabrica" ? "Fábrica" :
                            user.setor === "administrativo" ? "Admin" : "—"}
                         </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-0 px-2">
-                      {editingUser === user.id ? (
-                        <Input
-                          value={editForm.codigo_usuario || ""}
-                          onChange={(e) => setEditForm({ ...editForm, codigo_usuario: e.target.value })}
-                          placeholder="Código"
-                          className="h-6 text-[10px] px-1"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] font-mono">
-                            {user.codigo_usuario ? (
-                              visibleCodes.has(user.id) ? user.codigo_usuario : "••••••"
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </span>
-                          {user.codigo_usuario && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleCodeVisibility(user.id)}
-                              className="h-4 w-4 p-0"
-                            >
-                              {visibleCodes.has(user.id) ? (
-                                <EyeOff className="h-2.5 w-2.5" />
-                              ) : (
-                                <Eye className="h-2.5 w-2.5" />
-                              )}
-                            </Button>
-                          )}
-                        </div>
                       )}
                     </TableCell>
                     <TableCell className="py-0 px-2">
