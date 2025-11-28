@@ -78,6 +78,7 @@ export type Database = {
         Row: {
           ativo: boolean
           codigo_usuario: string | null
+          cpf: string | null
           created_at: string
           email: string
           foto_perfil_url: string | null
@@ -92,6 +93,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           codigo_usuario?: string | null
+          cpf?: string | null
           created_at?: string
           email: string
           foto_perfil_url?: string | null
@@ -106,6 +108,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           codigo_usuario?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string
           foto_perfil_url?: string | null

@@ -8,6 +8,7 @@ export interface User {
   email: string;
   role: string;
   foto_perfil_url?: string;
+  cpf?: string;
   ativo: boolean;
 }
 

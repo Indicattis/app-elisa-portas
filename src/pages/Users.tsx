@@ -34,6 +34,7 @@ interface AdminUser {
   role: string; // TEXT in database, validated via FK against system_roles.key
   setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
   codigo_usuario: string | null;
+  cpf: string | null;
   ativo: boolean;
   foto_perfil_url: string | null;
   created_at: string;
@@ -122,6 +123,7 @@ export default function Users() {
       role: user.role,
       setor: user.setor,
       codigo_usuario: user.codigo_usuario,
+      cpf: user.cpf,
       ativo: user.ativo,
     });
   };
@@ -135,6 +137,7 @@ export default function Users() {
           role: editForm.role,
           setor: editForm.setor,
           codigo_usuario: editForm.codigo_usuario,
+          cpf: editForm.cpf,
           ativo: editForm.ativo,
         })
         .eq("id", userId);
@@ -230,6 +233,7 @@ export default function Users() {
         id: u.id,
         nome: u.nome,
         email: u.email,
+        cpf: u.cpf,
         role: u.role,
         setor: u.setor,
         ativo: u.ativo,
@@ -333,6 +337,7 @@ export default function Users() {
                   <TableHead className="text-[10px] py-1 px-2">Foto</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Nome</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Email</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">CPF</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Função</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Setor</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Código</TableHead>
@@ -368,6 +373,18 @@ export default function Users() {
                     </TableCell>
                     <TableCell className="py-0 px-2 text-[10px]">
                       <span className="truncate block max-w-[140px]">{user.email}</span>
+                    </TableCell>
+                    <TableCell className="py-0 px-2 text-[10px]">
+                      {editingUser === user.id ? (
+                        <Input
+                          value={editForm.cpf || ""}
+                          onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
+                          className="h-6 text-[10px] px-1"
+                          placeholder="000.000.000-00"
+                        />
+                      ) : (
+                        <span className="truncate block max-w-[100px]">{user.cpf || "—"}</span>
+                      )}
                     </TableCell>
                     <TableCell className="py-0 px-2">
                       {editingUser === user.id ? (
