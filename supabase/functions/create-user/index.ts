@@ -93,7 +93,7 @@ serve(async (req) => {
     console.log('Admin verified:', user.id);
 
     // Get request body
-    const { email, password, nome, role } = await req.json();
+    const { email, password, nome, role, data_nascimento } = await req.json();
 
     if (!email || !password || !nome || !role) {
       return new Response(
@@ -135,6 +135,7 @@ serve(async (req) => {
         email,
         nome,
         role,
+        data_nascimento: data_nascimento || null,
         ativo: true,
       });
 

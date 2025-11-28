@@ -22,6 +22,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     email: "",
     password: "",
     role: "",
+    data_nascimento: "",
   });
   const { toast } = useToast();
 
@@ -59,6 +60,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
           password: formData.password,
           nome: formData.nome,
           role: formData.role,
+          data_nascimento: formData.data_nascimento || null,
         },
       });
 
@@ -78,6 +80,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         email: "",
         password: "",
         role: "",
+        data_nascimento: "",
       });
       setOpen(false);
       onUserAdded();
@@ -147,6 +150,18 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                 className="col-span-3"
                 required
                 minLength={6}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="data_nascimento" className="text-right">
+                Aniversário
+              </Label>
+              <Input
+                id="data_nascimento"
+                type="date"
+                value={formData.data_nascimento}
+                onChange={(e) => setFormData({ ...formData, data_nascimento: e.target.value })}
+                className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

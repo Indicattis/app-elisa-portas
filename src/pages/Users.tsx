@@ -35,6 +35,7 @@ interface AdminUser {
   setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
   codigo_usuario: string | null;
   cpf: string | null;
+  data_nascimento: string | null;
   ativo: boolean;
   foto_perfil_url: string | null;
   created_at: string;
@@ -124,6 +125,7 @@ export default function Users() {
       setor: user.setor,
       codigo_usuario: user.codigo_usuario,
       cpf: user.cpf,
+      data_nascimento: user.data_nascimento,
       ativo: user.ativo,
     });
   };
@@ -141,6 +143,7 @@ export default function Users() {
           setor: editForm.setor,
           codigo_usuario: editForm.codigo_usuario,
           cpf: cpfNumerico,
+          data_nascimento: editForm.data_nascimento,
           ativo: editForm.ativo,
         })
         .eq("id", userId);
@@ -237,6 +240,7 @@ export default function Users() {
         nome: u.nome,
         email: u.email,
         cpf: u.cpf,
+        data_nascimento: u.data_nascimento,
         role: u.role,
         setor: u.setor,
         ativo: u.ativo,
@@ -341,6 +345,7 @@ export default function Users() {
                   <TableHead className="text-[10px] py-1 px-2">Nome</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Email</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">CPF</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Aniversário</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Função</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Setor</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Código</TableHead>
@@ -410,6 +415,23 @@ export default function Users() {
                             user.cpf.length === 11 && /^\d+$/.test(user.cpf) ?
                               `${user.cpf.slice(0, 3)}.${user.cpf.slice(3, 6)}.${user.cpf.slice(6, 9)}-${user.cpf.slice(9, 11)}` :
                               user.cpf
+                            : "—"
+                          }
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-0 px-2 text-[10px]">
+                      {editingUser === user.id ? (
+                        <Input
+                          type="date"
+                          value={editForm.data_nascimento || ""}
+                          onChange={(e) => setEditForm({ ...editForm, data_nascimento: e.target.value })}
+                          className="h-6 text-[10px] px-1"
+                        />
+                      ) : (
+                        <span className="truncate block max-w-[90px]">
+                          {user.data_nascimento ? 
+                            format(new Date(user.data_nascimento), 'dd/MM/yyyy', { locale: ptBR })
                             : "—"
                           }
                         </span>

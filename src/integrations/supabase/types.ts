@@ -80,6 +80,7 @@ export type Database = {
           codigo_usuario: string | null
           cpf: string | null
           created_at: string
+          data_nascimento: string | null
           email: string
           foto_perfil_url: string | null
           id: string
@@ -95,6 +96,7 @@ export type Database = {
           codigo_usuario?: string | null
           cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email: string
           foto_perfil_url?: string | null
           id?: string
@@ -110,6 +112,7 @@ export type Database = {
           codigo_usuario?: string | null
           cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string
           foto_perfil_url?: string | null
           id?: string
