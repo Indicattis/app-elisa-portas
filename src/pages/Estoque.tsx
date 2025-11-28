@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowUpDown, Tags } from "lucide-react";
+import { Plus, ArrowUpDown, Tags, FileDown, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { toast } from "sonner";
+import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
 
 export default function Estoque() {
   const navigate = useNavigate();
@@ -121,6 +122,46 @@ export default function Estoque() {
     navigate(`/dashboard/administrativo/compras/estoque/editar/${produtoId}`);
   };
 
+  const handleDownloadPDF = () => {
+    const categoriasMap: Record<string, string> = {};
+    categorias.forEach(cat => {
+      categoriasMap[cat.id] = cat.nome;
+    });
+    
+    const produtosFiltrados = produtos.filter(p => 
+      !searchTerm || 
+      p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    baixarEstoquePDF({
+      produtos: produtosFiltrados,
+      categoriasMap,
+    });
+    
+    toast.success("PDF gerado com sucesso!");
+  };
+
+  const handlePrint = () => {
+    const categoriasMap: Record<string, string> = {};
+    categorias.forEach(cat => {
+      categoriasMap[cat.id] = cat.nome;
+    });
+    
+    const produtosFiltrados = produtos.filter(p => 
+      !searchTerm || 
+      p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    imprimirEstoquePDF({
+      produtos: produtosFiltrados,
+      categoriasMap,
+    });
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between mb-6">
@@ -131,6 +172,20 @@ export default function Estoque() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleDownloadPDF}
+          >
+            <FileDown className="mr-2 h-4 w-4" />
+            Baixar PDF
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={handlePrint}
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Imprimir
+          </Button>
           <Button 
             variant="outline"
             onClick={() => navigate("/dashboard/administrativo/compras/estoque/regras-etiquetas")}
