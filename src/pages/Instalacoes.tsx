@@ -128,59 +128,48 @@ export default function Instalacoes() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header Fixo */}
-      <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <img src={logoInstalacoes} alt="Logo" className="h-9 w-9 object-contain" />
-            <div>
-              <h1 className="text-lg font-semibold">Instalações</h1>
-              <p className="text-xs text-muted-foreground">Calendário de instalações</p>
+    <div className="space-y-4">
+      {/* Controles de Visualização */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {!isMobile && (
+            <div className="flex gap-1 border rounded-md p-1">
+              <Button 
+                variant={tipoVisualizacao === 'semanal' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setTipoVisualizacao('semanal')}
+                className="h-8 px-3 text-xs"
+              >
+                Semana
+              </Button>
+              <Button 
+                variant={tipoVisualizacao === 'mensal' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setTipoVisualizacao('mensal')}
+                className="h-8 px-3 text-xs"
+              >
+                Mês
+              </Button>
             </div>
-          </div>
-          
-          <div className="flex gap-2">
-            {/* Toggle Semana/Mês (desktop) */}
-            {!isMobile && (
-              <div className="flex gap-1 border rounded-md p-1 mr-2">
-                <Button 
-                  variant={tipoVisualizacao === 'semanal' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setTipoVisualizacao('semanal')}
-                  className="h-8 px-3 text-xs"
-                >
-                  Semana
-                </Button>
-                <Button 
-                  variant={tipoVisualizacao === 'mensal' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setTipoVisualizacao('mensal')}
-                  className="h-8 px-3 text-xs"
-                >
-                  Mês
-                </Button>
-              </div>
-            )}
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">Atualizar</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleBaixarPDF}>
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">PDF</span>
-            </Button>
-          </div>
+          )}
         </div>
-      </header>
-
-      {/* Conteúdo */}
-      <main className="p-4 pb-8 space-y-4">
-        {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Carregando calendário...</p>
-          </div>
-        ) : (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2">Atualizar</span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleBaixarPDF}>
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2">PDF</span>
+          </Button>
+        </div>
+      </div>
+      {/* Calendários */}
+      {isLoading ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Carregando calendário...</p>
+        </div>
+      ) : (
           <>
             {/* Calendários */}
             {isMobile ? (
@@ -221,9 +210,8 @@ export default function Instalacoes() {
                 />
               )
             )}
-          </>
-        )}
-      </main>
+        </>
+      )}
 
       {/* Sidebar de Detalhes com botão de Concluir Instalação */}
       <OrdemInstalacaoDetails

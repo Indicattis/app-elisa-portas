@@ -45,7 +45,9 @@ import ProducaoQualidade from "./pages/ProducaoQualidade";
 import ProducaoPintura from "./pages/ProducaoPintura";
 import InstalacoesAdmin from "./pages/InstalacoesAdmin";
 import Instalacoes from "./pages/Instalacoes";
+import InstalacoesControle from "./pages/InstalacoesControle";
 import InstalacoesNovas from "./pages/InstalacoesNovas";
+import { InstalacoesLayout } from "./components/InstalacoesLayout";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
 import Marketing from "./pages/Marketing";
@@ -669,13 +671,25 @@ const App = () => (
                   }
                 />
                 <Route
-                   path="/instalacoes"
-                   element={
-                     <ProtectedRoute routeKey="instalacoes_calendario">
-                       <Instalacoes />
-                     </ProtectedRoute>
-                   }
-                 />
+                  path="/instalacoes"
+                  element={
+                    <ProtectedRoute routeKey="instalacoes_calendario">
+                      <InstalacoesLayout title="Calendário">
+                        <Instalacoes />
+                      </InstalacoesLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instalacoes/controle"
+                  element={
+                    <ProtectedRoute routeKey="instalacoes_calendario">
+                      <InstalacoesLayout title="Controle de Instalações">
+                        <InstalacoesControle />
+                      </InstalacoesLayout>
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/instalacoes/nova"
                   element={
