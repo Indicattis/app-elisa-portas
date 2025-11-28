@@ -44,7 +44,7 @@ import ProducaoSeparacao from "./pages/ProducaoSeparacao";
 import ProducaoQualidade from "./pages/ProducaoQualidade";
 import ProducaoPintura from "./pages/ProducaoPintura";
 import InstalacoesAdmin from "./pages/InstalacoesAdmin";
-import InstalacoesMobile from "./pages/InstalacoesMobile";
+import Instalacoes from "./pages/Instalacoes";
 import InstalacoesNovas from "./pages/InstalacoesNovas";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
@@ -669,13 +669,13 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_calendario">
-                      <InstalacoesMobile />
-                    </ProtectedRoute>
-                  }
-                />
+                   path="/instalacoes"
+                   element={
+                     <ProtectedRoute routeKey="instalacoes_calendario">
+                       <Instalacoes />
+                     </ProtectedRoute>
+                   }
+                 />
                 <Route
                   path="/instalacoes/nova"
                   element={
