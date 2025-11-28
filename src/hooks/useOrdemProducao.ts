@@ -232,16 +232,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     mutationFn: async ({ linhaId, concluida }: { linhaId: string; concluida: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Buscar informações da linha para registrar pontuação
-      const { data: linha, error: linhaError } = await supabase
-        .from('linhas_ordens')
-        .select('*, estoque:estoque_id(pontuacao_producao, pontuacao_por_metro)')
-        .eq('id', linhaId)
-        .maybeSingle();
-      
-      if (linhaError) throw linhaError;
-      
       // Atualizar linha como concluída
+      // A pontuação será registrada automaticamente pelo trigger do banco
       const { error } = await supabase
         .from('linhas_ordens')
         .update({
@@ -252,36 +244,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         .eq('id', linhaId);
 
       if (error) throw error;
-      
-      // Se está marcando como concluída e tem estoque com pontuação
-      if (concluida && linha && linha.estoque && user) {
-        const estoque = Array.isArray(linha.estoque) ? linha.estoque[0] : linha.estoque;
-        const pontuacaoProducao = estoque?.pontuacao_producao || 0;
-        const pontuacaoPorMetro = estoque?.pontuacao_por_metro || 0;
-        
-        // Calcular pontos se houver alguma pontuação configurada
-        if (pontuacaoProducao > 0 || pontuacaoPorMetro > 0) {
-          const metragem = linha.tamanho ? parseFloat(linha.tamanho.replace(',', '.')) : 0;
-          const pontosUnidade = linha.quantidade * pontuacaoProducao;
-          const pontosPorMetro = metragem * linha.quantidade * pontuacaoPorMetro;
-          const pontosTotal = pontosUnidade + pontosPorMetro;
-          
-          // Inserir pontuação
-          await supabase.from('pontuacao_colaboradores').insert({
-            user_id: user.id,
-            linha_id: linhaId,
-            ordem_id: linha.ordem_id,
-            tipo_ordem: tipoOrdem,
-            estoque_id: linha.estoque_id,
-            item_nome: linha.item,
-            quantidade: linha.quantidade,
-            metragem,
-            pontos_unidade: pontosUnidade,
-            pontos_metro: pontosPorMetro,
-            pontos_total: pontosTotal,
-          });
-        }
-      }
       
       return { linhaId, concluida };
     },

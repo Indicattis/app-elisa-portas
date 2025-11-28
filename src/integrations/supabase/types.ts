@@ -3681,7 +3681,7 @@ export type Database = {
           {
             foreignKeyName: "pontuacao_colaboradores_linha_id_fkey"
             columns: ["linha_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "linhas_ordens"
             referencedColumns: ["id"]
           },
@@ -5131,6 +5131,13 @@ export type Database = {
       pode_marcar_linhas_ordem: {
         Args: { p_ordem_id: string; p_tipo_ordem: string }
         Returns: boolean
+      }
+      recalcular_pontuacao_linhas_concluidas: {
+        Args: never
+        Returns: {
+          linhas_processadas: number
+          pontuacoes_inseridas: number
+        }[]
       }
       resetar_pedido_para_aberto: {
         Args: { p_pedido_id: string }
