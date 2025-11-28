@@ -98,7 +98,6 @@ Deno.serve(async (req) => {
     const { data: adminUsers, error: adminError } = await supabaseAdmin
       .from('admin_users')
       .select('*')
-      .in('setor', ['fabrica', 'administrativo'])
       .eq('ativo', true)
 
     console.log('Usuários encontrados:', adminUsers?.length || 0)
