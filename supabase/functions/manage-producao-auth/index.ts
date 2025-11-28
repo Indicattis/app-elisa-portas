@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
       // Buscar usuário pelo email
       const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-      const user = users.find(u => u.email === body.email)
+      const user = users.find(u => u.email?.toLowerCase() === body.email.toLowerCase())
 
       if (!user) {
         return new Response(
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     if (listUsersError) {
       console.error('Erro ao listar usuários:', listUsersError)
     }
-    const existingUser = usersData?.users?.find((u) => u.email === email)
+    const existingUser = usersData?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase())
 
     let authUser
 
