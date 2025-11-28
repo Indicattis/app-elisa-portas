@@ -20,7 +20,6 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tv, Map, BookOpen, Calendar as CalendarIcon, Calculator } from "lucide-react";
 
 interface AppRoute {
   key: string;
@@ -30,15 +29,6 @@ interface AppRoute {
   sort_order: number;
   interface?: string;
 }
-
-// Links rápidos para outras interfaces
-const quickLinks = [
-  { title: "TV Dashboard", url: "/paineis/tv-dashboard", icon: Tv },
-  { title: "Mapa", url: "/paineis/mapa-autorizados", icon: Map },
-  { title: "Wiki", url: "/paineis/wiki", icon: BookOpen },
-  { title: "Calendário", url: "/paineis/calendario", icon: CalendarIcon },
-  { title: "Calculadoras", url: "/paineis/calculadoras", icon: Calculator },
-];
 
 export function PaineisSidebar() {
   const { user, isAdmin } = useAuth();
@@ -139,32 +129,6 @@ export function PaineisSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-
-          {quickLinks.length > 0 && (
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {quickLinks.map((link) => {
-                    const active = isActive(link.url);
-                    return (
-                      <SidebarMenuItem key={link.url}>
-                        <SidebarMenuButton 
-                          asChild 
-                          isActive={active}
-                          tooltip={link.title}
-                        >
-                          <NavLink to={link.url}>
-                            <link.icon className="h-4 w-4" />
-                            <span>{link.title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
         </ScrollArea>
       </SidebarContent>
 
