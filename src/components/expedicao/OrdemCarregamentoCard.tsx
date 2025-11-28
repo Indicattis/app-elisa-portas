@@ -1,22 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MoreVertical, Pencil, XCircle, Package, MapPin, Info } from "lucide-react";
+import { Package, MapPin, Info } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 
 interface OrdemCarregamentoCardProps {
   ordem: OrdemCarregamento;
-  onEdit: (ordem: OrdemCarregamento) => void;
-  onRemoverDoCalendario: (id: string) => void;
   onClick?: (ordem: OrdemCarregamento) => void;
   dragListeners?: any;
 }
 
 export const OrdemCarregamentoCard = ({
   ordem,
-  onEdit,
-  onRemoverDoCalendario,
   onClick,
   dragListeners,
 }: OrdemCarregamentoCardProps) => {
@@ -165,41 +160,6 @@ export const OrdemCarregamentoCard = ({
               </Tooltip>
             </TooltipProvider>
           )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button 
-                className="p-0.5 hover:bg-accent rounded-md transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreVertical className="h-3.5 w-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end"
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(ordem);
-                }}
-              >
-                <Pencil className="h-4 w-4 mr-2" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoverDoCalendario(ordem.id);
-                }}
-                className="text-destructive"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Remover do Calendário
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

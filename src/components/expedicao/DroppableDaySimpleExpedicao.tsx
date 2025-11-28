@@ -112,8 +112,6 @@ export const DroppableDaySimpleExpedicao = ({
             <DraggableOrdemCarregamento
               key={ordem.id}
               ordem={ordem}
-              onEdit={onEdit}
-              onRemoverDoCalendario={onRemoverDoCalendario}
               onClick={onOrdemClick}
             />
           ))}
