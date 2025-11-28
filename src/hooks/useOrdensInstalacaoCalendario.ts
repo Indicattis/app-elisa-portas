@@ -85,20 +85,9 @@ export const useOrdensInstalacaoCalendario = (
       // Filtrar apenas ordens que NÃO têm instalação concluída
       const filteredData = (data || []).filter((ordem: any) => {
         const instalacao = ordem.pedido?.instalacao?.[0];
-        const etapaAtual = ordem.pedido?.etapa_atual;
-        const arquivado = ordem.pedido?.arquivado;
-        
-        // Excluir se pedido está finalizado ou arquivado
-        if (etapaAtual === 'finalizado' || arquivado === true) {
-          return false;
-        }
-        
-        // Excluir se instalação está concluída
-        if (instalacao?.instalacao_concluida === true) {
-          return false;
-        }
-        
-        return true;
+
+        // Excluir apenas se a instalação está concluída
+        return instalacao?.instalacao_concluida !== true;
       });
       
       return filteredData as OrdemCarregamento[];
