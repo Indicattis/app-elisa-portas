@@ -119,7 +119,7 @@ export default function InstalacoesControle() {
                       <div className="flex items-center gap-1 text-sm">
                         <MapPin className="h-3 w-3 text-muted-foreground" />
                         <span>
-                          {ordem.venda?.cliente_cidade}/{ordem.venda?.cliente_estado}
+                          {ordem.venda?.cidade}/{ordem.venda?.estado}
                         </span>
                       </div>
                     </TableCell>
