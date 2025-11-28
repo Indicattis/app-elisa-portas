@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { PaineisSidebar } from "./PaineisSidebar";
 import { PaineisHeader } from "./PaineisHeader";
 
@@ -7,16 +7,11 @@ interface PaineisLayoutProps {
 }
 
 export function PaineisLayout({ children }: PaineisLayoutProps) {
-  const [sidebarVisible, setSidebarVisible] = useState(true);
-
   return (
-    <div className="min-h-screen bg-background">
-      {sidebarVisible && <PaineisSidebar />}
-      <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarVisible ? 'ml-64' : 'ml-0'}`}>
-        <PaineisHeader 
-          sidebarVisible={sidebarVisible}
-          onToggleSidebar={() => setSidebarVisible(!sidebarVisible)}
-        />
+    <div className="min-h-screen bg-background flex">
+      <PaineisSidebar />
+      <div className="flex flex-col flex-1 min-h-screen transition-all duration-500">
+        <PaineisHeader />
         <main className="flex-1 p-2 md:p-3 overflow-auto">
           {children}
         </main>
