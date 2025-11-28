@@ -12,8 +12,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import logoInstalacoes from "@/assets/logo-instalacoes.png";
 import { OrdemInstalacaoDetails } from "@/components/instalacoes/OrdemInstalacaoDetails";
-import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
-
+import { OrdensSemData } from "@/components/instalacoes/OrdensSemData";
 export default function Instalacoes() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -32,8 +31,6 @@ export default function Instalacoes() {
   
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [editOrdem, setEditOrdem] = useState<OrdemCarregamento | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -61,34 +58,6 @@ export default function Instalacoes() {
 
   const handleDayClick = (date: Date) => {
     // Implementar navegação para criar nova ordem se necessário
-  };
-
-  const handleEdit = (ordem: OrdemCarregamento) => {
-    setEditOrdem(ordem);
-    setEditOpen(true);
-  };
-
-  const handleSaveEdit = async (data: {
-    data_carregamento: string;
-    hora_carregamento: string;
-    tipo_carregamento: 'elisa' | 'autorizados';
-    responsavel_carregamento_id: string;
-    responsavel_carregamento_nome: string;
-  }) => {
-    if (!editOrdem) return;
-
-    await updateOrdem({
-      id: editOrdem.id,
-      data: {
-        data_carregamento: data.data_carregamento,
-        hora: data.hora_carregamento,
-        hora_carregamento: data.hora_carregamento,
-        tipo_carregamento: data.tipo_carregamento,
-        responsavel_carregamento_id: data.responsavel_carregamento_id,
-        responsavel_carregamento_nome: data.responsavel_carregamento_nome,
-        status: 'agendada',
-      },
-    });
   };
 
   const handleRemoverDoCalendario = async (id: string) => {
@@ -180,7 +149,7 @@ export default function Instalacoes() {
                 onNextWeek={handleNextWeek}
                 onToday={handleToday}
                 onDayClick={handleDayClick}
-                onEdit={handleEdit}
+                onEdit={() => {}}
                 onRemoverDoCalendario={handleRemoverDoCalendario}
               />
             ) : (
@@ -192,7 +161,7 @@ export default function Instalacoes() {
                   onNextWeek={handleNextWeek}
                   onToday={handleToday}
                   onUpdateOrdem={handleUpdateOrdem}
-                  onEdit={handleEdit}
+                  onEdit={() => {}}
                   onRemoverDoCalendario={handleRemoverDoCalendario}
                   onOrdemDropped={() => {}}
                   onOrdemClick={handleOrdemClick}
@@ -203,7 +172,7 @@ export default function Instalacoes() {
                   ordens={ordens}
                   onMonthChange={setCurrentDate}
                   onUpdateOrdem={handleUpdateOrdem}
-                  onEdit={handleEdit}
+                  onEdit={() => {}}
                   onRemoverDoCalendario={handleRemoverDoCalendario}
                   onOrdemDropped={() => {}}
                   onOrdemClick={handleOrdemClick}
@@ -213,6 +182,11 @@ export default function Instalacoes() {
         </>
       )}
 
+      {/* Listagem de Ordens Sem Data de Carregamento */}
+      <div className="mt-8">
+        <OrdensSemData />
+      </div>
+
       {/* Sidebar de Detalhes com botão de Concluir Instalação */}
       <OrdemInstalacaoDetails
         ordem={selectedOrdem}
@@ -220,14 +194,6 @@ export default function Instalacoes() {
         onOpenChange={setDetailsOpen}
         onConcluirInstalacao={handleConcluirInstalacao}
         isConcluindo={isConcluindo}
-      />
-
-      {/* Drawer de Edição */}
-      <EditarOrdemCarregamentoDrawer
-        ordem={editOrdem}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onSave={handleSaveEdit}
       />
     </div>
   );
