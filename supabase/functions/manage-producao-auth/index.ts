@@ -140,16 +140,77 @@ Deno.serve(async (req) => {
     }
 
     const email = adminUser.email
+    const password = 'Producao@2024'
 
-    console.log('Usuário encontrado:', { nome: adminUser.nome, email, setor: adminUser.setor })
+    console.log('Configurando autenticação para email:', email)
 
-    // Para o login, apenas retornar o email do usuário
-    // O frontend vai usar esse email para fazer signInWithPassword
+    // Tentar buscar usuário auth existente pelo email real
+    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
+    const existingUser = users.find(u => u.email === email)
+
+    let authUser
+
+    if (existingUser) {
+      // Atualizar senha e confirmar email
+      const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
+        {
+          password: password,
+          email_confirm: true,
+          user_metadata: {
+            nome: adminUser.nome,
+            cpf_ultimos_4: cpf_ultimos_4,
+            setor: adminUser.setor || 'fabrica'
+          }
+        }
+      )
+
+      if (error) {
+        console.error('Erro ao atualizar usuário:', error)
+        return new Response(
+          JSON.stringify({ error: 'Erro ao atualizar credenciais' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      authUser = data.user
+    } else {
+      // Criar novo usuário com email já confirmado
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email: email,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          nome: adminUser.nome,
+          cpf_ultimos_4: cpf_ultimos_4,
+          setor: adminUser.setor || 'fabrica'
+        }
+      })
+
+      if (error) {
+        console.error('Erro ao criar usuário:', error)
+        return new Response(
+          JSON.stringify({ error: 'Erro ao criar conta' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      authUser = data.user
+    }
+
+    // Atualizar user_id em admin_users se necessário
+    if (adminUser.user_id !== authUser.id) {
+      await supabaseAdmin
+        .from('admin_users')
+        .update({ user_id: authUser.id })
+        .eq('id', adminUser.id)
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
         email: email,
-        message: 'Usuário encontrado',
+        message: 'Autenticação configurada com sucesso',
         user: {
           id: adminUser.id,
           nome: adminUser.nome,
