@@ -18,8 +18,8 @@ export const useOrdensInstalacaoListagem = () => {
             id,
             cliente_nome,
             cliente_telefone,
-            cliente_cidade,
-            cliente_estado
+            cidade,
+            estado
           ),
           pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey (
             id,
