@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   format, 
   startOfMonth, 
@@ -14,13 +14,13 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TarefaCard, TarefaCalendario } from "./TarefaCard";
+import { AdicionarTarefaPopover } from "./AdicionarTarefaPopover";
 
 interface CalendarioMensalTarefasDesktopProps {
   mesAtual: Date;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
-  onDayClick: (date: Date) => void;
   onTarefaClick?: (tarefa: TarefaCalendario) => void;
   onMarcarConcluida?: (tarefa: TarefaCalendario) => void;
   getTarefasDoDia: (date: Date) => TarefaCalendario[];
@@ -31,7 +31,6 @@ export const CalendarioMensalTarefasDesktop = ({
   onPreviousMonth,
   onNextMonth,
   onToday,
-  onDayClick,
   onTarefaClick,
   onMarcarConcluida,
   getTarefasDoDia,
@@ -127,16 +126,7 @@ export const CalendarioMensalTarefasDesktop = ({
                   )}
                 </div>
                 
-                {isMesAtual && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => onDayClick(dia)}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                )}
+                {isMesAtual && <AdicionarTarefaPopover date={dia} />}
               </div>
 
               {/* Lista de tarefas (max 3 visíveis) */}
@@ -150,12 +140,9 @@ export const CalendarioMensalTarefasDesktop = ({
                   />
                 ))}
                 {tarefasDoDia.length > 3 && (
-                  <button
-                    className="text-xs text-primary hover:underline w-full text-center"
-                    onClick={() => onDayClick(dia)}
-                  >
+                  <p className="text-xs text-muted-foreground text-center">
                     +{tarefasDoDia.length - 3} mais
-                  </button>
+                  </p>
                 )}
               </div>
             </div>

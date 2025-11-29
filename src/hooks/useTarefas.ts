@@ -62,6 +62,7 @@ export interface TarefaInput {
   dias_semana?: number[];
   hora_criacao?: string;
   data_proxima_criacao?: string;
+  data_referencia?: string;
 }
 
 export function useTarefas(userId?: string, setor?: string) {
@@ -222,6 +223,7 @@ export function useTarefas(userId?: string, setor?: string) {
           recorrente: false,
           tipo_recorrencia: null,
           setor: input.setor,
+          data_referencia: input.data_referencia || null,
           created_by: user.id,
         }])
         .select()
@@ -232,6 +234,7 @@ export function useTarefas(userId?: string, setor?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tarefas'] });
+      queryClient.invalidateQueries({ queryKey: ['tarefas-calendario'] });
       toast({
         title: "Tarefa criada",
         description: "A tarefa foi criada com sucesso.",
