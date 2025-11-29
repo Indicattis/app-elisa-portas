@@ -215,12 +215,12 @@ export function ConfiguracoesFiscaisForm() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sandbox">🧪 Sandbox (Homologação/Testes)</SelectItem>
-                <SelectItem value="production">🚀 Produção</SelectItem>
+                <SelectItem value="sandbox">🧪 Homologação (https://homologacao.focusnfe.com.br)</SelectItem>
+                <SelectItem value="production">🚀 Produção (https://api.focusnfe.com.br)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
-              Use "Sandbox" para testes. Mude para "Produção" apenas quando estiver pronto para emitir notas reais.
+              Use "Homologação" para testes (não envia para a SEFAZ real). Mude para "Produção" apenas quando estiver pronto para emitir notas fiscais reais.
             </p>
           </div>
         </CardContent>
