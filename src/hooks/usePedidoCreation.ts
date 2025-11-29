@@ -30,6 +30,18 @@ export const usePedidoCreation = () => {
       if (vendaError) throw vendaError;
       if (!venda) throw new Error('Venda não encontrada');
 
+      // Buscar produtos da venda para determinar o tipo
+      const { data: produtos, error: produtosError } = await supabase
+        .from('produtos_vendas')
+        .select('tipo_produto')
+        .eq('venda_id', vendaId);
+
+      if (produtosError) throw produtosError;
+
+      // Verificar se é apenas manutenção
+      const apenasManutencao = produtos && produtos.length > 0 && 
+        produtos.every(p => p.tipo_produto === 'manutencao');
+
       // Buscar usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
@@ -37,6 +49,10 @@ export const usePedidoCreation = () => {
       // Gerar número do pedido
       const numeroSequencial = await gerarProximoNumero('pedido');
       const numeroPedido = formatarNumeroPedido(numeroSequencial);
+
+      // Definir etapa e status inicial baseado no tipo de produto
+      const etapaInicial = apenasManutencao ? 'aguardando_instalacao' : 'aberto';
+      const statusInicial = apenasManutencao ? 'aguardando_instalacao' : 'pendente';
 
       // Criar pedido
       const { data: pedido, error: pedidoError } = await supabase
@@ -47,8 +63,8 @@ export const usePedidoCreation = () => {
           cliente_nome: venda.cliente_nome,
           cliente_telefone: venda.cliente_telefone,
           cliente_email: venda.cliente_email,
-          etapa_atual: 'aberto',
-          status: 'pendente',
+          etapa_atual: etapaInicial,
+          status: statusInicial,
           created_by: user.id,
           prioridade_etapa: 0,
         } as any)
@@ -62,7 +78,7 @@ export const usePedidoCreation = () => {
         .from('pedidos_etapas')
         .insert({
           pedido_id: pedido.id,
-          etapa: 'aberto',
+          etapa: etapaInicial,
           checkboxes: [],
         });
 
@@ -72,10 +88,50 @@ export const usePedidoCreation = () => {
       await supabase.from('pedidos_movimentacoes').insert({
         pedido_id: pedido.id,
         user_id: user.id,
-        etapa_destino: 'aberto',
+        etapa_destino: etapaInicial,
         teor: 'criacao',
-        descricao: `Pedido criado a partir da venda ${venda.cliente_nome}`
+        descricao: apenasManutencao 
+          ? `Pedido de manutenção criado - direto para expedição instalação`
+          : `Pedido criado a partir da venda ${venda.cliente_nome}`
       });
+
+      // Se for apenas manutenção, criar registros de instalação e ordem de carregamento
+      if (apenasManutencao) {
+        // Criar instalação
+        const { error: instalacaoError } = await supabase
+          .from('instalacoes')
+          .insert({
+            pedido_id: pedido.id,
+            venda_id: vendaId,
+            nome_cliente: venda.cliente_nome,
+            hora: '08:00',
+            status: 'pronta_fabrica',
+            tipo_instalacao: 'elisa',
+            created_by: user.id
+          });
+
+        if (instalacaoError) {
+          console.error('Error creating instalacao:', instalacaoError);
+        }
+
+        // Criar ordem de carregamento
+        const { error: ordemError } = await supabase
+          .from('ordens_carregamento')
+          .insert({
+            pedido_id: pedido.id,
+            venda_id: vendaId,
+            nome_cliente: venda.cliente_nome,
+            hora: '08:00',
+            status: 'pronta_fabrica',
+            tipo_carregamento: 'elisa',
+            created_by: user.id,
+            data_carregamento: null
+          });
+
+        if (ordemError) {
+          console.error('Error creating ordem_carregamento:', ordemError);
+        }
+      }
 
       toast.success(`Pedido ${numeroPedido} criado com sucesso!`);
       return pedido.id;

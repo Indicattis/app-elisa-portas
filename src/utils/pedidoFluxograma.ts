@@ -69,6 +69,18 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
     tipoEntrega = vendaData?.tipo_entrega;
   }
   
+  // Verificar se é apenas manutenção
+  const apenasManutencao = produtos.length > 0 && 
+    produtos.every((p: any) => p.tipo_produto === 'manutencao');
+  
+  // Se for apenas manutenção, fluxo direto para expedição instalação
+  if (apenasManutencao) {
+    return [
+      FLUXOGRAMA_ETAPAS.aguardando_instalacao,
+      FLUXOGRAMA_ETAPAS.finalizado
+    ];
+  }
+  
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
   
   // Etapas base que todos os pedidos passam
