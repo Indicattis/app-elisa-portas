@@ -12,22 +12,28 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    console.log('Authorization header:', authHeader ? 'Present' : 'Missing');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader! },
         },
       }
     );
 
     const {
       data: { user },
+      error: userError
     } = await supabaseClient.auth.getUser();
 
+    console.log('User ID:', user?.id, 'Error:', userError?.message);
+
     if (!user) {
-      throw new Error('Unauthorized');
+      throw new Error('Unauthorized: ' + (userError?.message || 'No user found'));
     }
 
     const focusToken = Deno.env.get('FOCUSNFE_TOKEN');
