@@ -5,7 +5,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Phone, Mouse, TrendingUp, Globe } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Phone, Mouse, TrendingUp, Globe, Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSalesData, useWhatsAppRoulette } from "@/hooks/useDashboardData";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,6 +50,8 @@ export default function Performance() {
   const [canalStats, setCanalStats] = useState<CanalStats[]>([]);
   const [referrerStats, setReferrerStats] = useState<ReferrerStats[]>([]);
   const [loadingWhatsApp, setLoadingWhatsApp] = useState(false);
+  const [dataInicio, setDataInicio] = useState<Date>(new Date());
+  const [dataFim, setDataFim] = useState<Date>(new Date());
   const today = new Date();
 
   // Use the corrected sales data hook
@@ -151,6 +157,17 @@ export default function Performance() {
   }, [canalStats]);
 
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
+
+  const clicksFiltrados = useMemo(() => {
+    return whatsAppClicks.filter(click => {
+      const clickDate = new Date(click.created_at);
+      const inicio = new Date(dataInicio);
+      inicio.setHours(0, 0, 0, 0);
+      const fim = new Date(dataFim);
+      fim.setHours(23, 59, 59, 999);
+      return clickDate >= inicio && clickDate <= fim;
+    });
+  }, [whatsAppClicks, dataInicio, dataFim]);
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
@@ -298,10 +315,65 @@ export default function Performance() {
       {/* Histórico de Cliques */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mouse className="h-5 w-5" />
-            Histórico Recente de Cliques
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Mouse className="h-5 w-5" />
+              <CardTitle>Histórico Recente de Cliques</CardTitle>
+              <Badge variant="outline">{clicksFiltrados.length}</Badge>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(dataInicio, "dd/MM/yyyy")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={dataInicio}
+                    onSelect={(date) => date && setDataInicio(date)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <span className="text-sm text-muted-foreground">até</span>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(dataFim, "dd/MM/yyyy")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={dataFim}
+                    onSelect={(date) => date && setDataFim(date)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  const hoje = new Date();
+                  setDataInicio(hoje);
+                  setDataFim(hoje);
+                }}
+              >
+                Hoje
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loadingWhatsApp ? (
@@ -322,7 +394,7 @@ export default function Performance() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {whatsAppClicks.slice(0, 10).map((click) => {
+                  {clicksFiltrados.map((click) => {
                   let canal = 'Outros';
                   if (click.fbclid || click.utm_source?.toLowerCase().includes('facebook') || click.utm_source?.toLowerCase().includes('meta')) {
                     canal = 'Meta';
