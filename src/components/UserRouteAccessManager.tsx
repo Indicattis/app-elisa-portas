@@ -45,8 +45,22 @@ export function UserRouteAccessManager() {
 
   // Função para construir árvore de rotas
   const buildRouteTree = (routes: AppRoute[], parentKey: string | null): RouteTreeNode[] => {
+    // Identificar quais parent_keys existem na lista de rotas
+    const existingKeys = new Set(routes.map(r => r.key));
+    
     return routes
-      .filter(route => route.parent_key === parentKey)
+      .filter(route => {
+        // Se parent_key é null, incluir
+        if (route.parent_key === parentKey) return true;
+        
+        // Se o parentKey procurado é null e o parent_key da rota não existe na lista, 
+        // tratar como raiz (órfã)
+        if (parentKey === null && route.parent_key && !existingKeys.has(route.parent_key)) {
+          return true;
+        }
+        
+        return false;
+      })
       .map(route => ({
         ...route,
         children: buildRouteTree(routes, route.key)
