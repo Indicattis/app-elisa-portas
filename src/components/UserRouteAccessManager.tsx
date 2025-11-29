@@ -8,9 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
 
 interface AppRoute {
   key: string;
@@ -21,6 +23,10 @@ interface AppRoute {
   sort_order: number;
   interface?: string;
   parent_key?: string | null;
+}
+
+interface RouteTreeNode extends AppRoute {
+  children: RouteTreeNode[];
 }
 
 interface UserRouteAccess {
@@ -36,6 +42,17 @@ export function UserRouteAccessManager() {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedInterface, setSelectedInterface] = useState<string>('dashboard');
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Função para construir árvore de rotas
+  const buildRouteTree = (routes: AppRoute[], parentKey: string | null): RouteTreeNode[] => {
+    return routes
+      .filter(route => route.parent_key === parentKey)
+      .map(route => ({
+        ...route,
+        children: buildRouteTree(routes, route.key)
+      }))
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  };
 
   // Buscar todos os usuários ativos
   const { data: users } = useQuery({
@@ -186,17 +203,32 @@ export function UserRouteAccessManager() {
     });
   };
 
-  // Agrupar rotas por interface primeiro, depois por grupo
+  // Função para alternar acesso de uma pasta e todos os filhos
+  const handleToggleFolder = (node: RouteTreeNode, checked: boolean) => {
+    if (!selectedUserId) return;
+    
+    const toggleRecursive = (n: RouteTreeNode) => {
+      handleToggle(n.key, checked);
+      n.children.forEach(child => toggleRecursive(child));
+    };
+    
+    toggleRecursive(node);
+  };
+
+  // Verificar se uma pasta tem todos os filhos com acesso
+  const hasFolderAccess = (node: RouteTreeNode): boolean => {
+    const hasOwnAccess = hasAccess(node.key);
+    const allChildrenHaveAccess = node.children.length > 0 
+      ? node.children.every(child => hasFolderAccess(child))
+      : true;
+    return hasOwnAccess && allChildrenHaveAccess;
+  };
+
+  // Filtrar rotas pela interface
   const filteredRoutesByInterface = routes?.filter(route => route.interface === selectedInterface) || [];
   
-  const groupedRoutes = filteredRoutesByInterface.reduce((acc, route) => {
-    const group = route.group || 'outros';
-    if (!acc[group]) {
-      acc[group] = [];
-    }
-    acc[group].push(route);
-    return acc;
-  }, {} as Record<string, AppRoute[]>);
+  // Construir árvore de rotas
+  const routeTree = buildRouteTree(filteredRoutesByInterface, null);
 
   // Filtrar rotas pela busca
   const filteredRoutes = routes?.filter(route => 
@@ -208,6 +240,78 @@ export function UserRouteAccessManager() {
   const selectedUser = users?.find(u => u.user_id === selectedUserId);
   const grantedCount = userAccess?.filter(a => a.can_access).length || 0;
   const totalCount = routes?.length || 0;
+
+  // Componente recursivo para renderizar item da árvore
+  const RouteTreeItem = ({ node, level = 0 }: { node: RouteTreeNode; level?: number }) => {
+    const [isOpen, setIsOpen] = useState(true);
+    const hasChildren = node.children.length > 0;
+    const paddingLeft = level * 16;
+
+    if (hasChildren) {
+      const folderHasAccess = hasFolderAccess(node);
+      
+      return (
+        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-1">
+          <div 
+            className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded group"
+            style={{ paddingLeft: `${paddingLeft}px` }}
+          >
+            <CollapsibleTrigger className="flex items-center gap-1 p-0 hover:bg-transparent">
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </CollapsibleTrigger>
+            <Checkbox
+              id={`folder-${node.key}`}
+              checked={folderHasAccess}
+              onCheckedChange={(checked) => handleToggleFolder(node, checked as boolean)}
+            />
+            {isOpen ? (
+              <FolderOpen className="h-4 w-4 text-primary" />
+            ) : (
+              <Folder className="h-4 w-4 text-muted-foreground" />
+            )}
+            <label
+              htmlFor={`folder-${node.key}`}
+              className="flex-1 text-sm font-medium cursor-pointer"
+            >
+              {node.label}
+            </label>
+          </div>
+          <CollapsibleContent className="space-y-1">
+            {node.children.map(child => (
+              <RouteTreeItem key={child.key} node={child} level={level + 1} />
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      );
+    }
+
+    return (
+      <div 
+        className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded"
+        style={{ paddingLeft: `${paddingLeft + 20}px` }}
+      >
+        <Checkbox
+          id={`route-${node.key}`}
+          checked={hasAccess(node.key)}
+          onCheckedChange={(checked) => handleToggle(node.key, checked as boolean)}
+        />
+        <label
+          htmlFor={`route-${node.key}`}
+          className="flex-1 text-sm cursor-pointer"
+        >
+          <div className="font-medium">{node.label}</div>
+          <div className="text-xs text-muted-foreground">{node.path}</div>
+          {node.description && (
+            <div className="text-xs text-muted-foreground">{node.description}</div>
+          )}
+        </label>
+      </div>
+    );
+  };
 
   return (
     <Card>
@@ -315,46 +419,13 @@ export function UserRouteAccessManager() {
                 ))}
               </div>
             ) : (
-              <Tabs defaultValue={Object.keys(groupedRoutes || {})[0]} className="w-full">
-                <TabsList className="w-full flex-wrap h-auto">
-                  {Object.keys(groupedRoutes || {}).map((group) => (
-                    <TabsTrigger key={group} value={group} className="capitalize">
-                      {group}
-                    </TabsTrigger>
+              <ScrollArea className="h-[500px] pr-4">
+                <div className="space-y-1">
+                  {routeTree.map(node => (
+                    <RouteTreeItem key={node.key} node={node} />
                   ))}
-                </TabsList>
-                {Object.entries(groupedRoutes || {}).map(([group, groupRoutes]) => (
-                  <TabsContent key={group} value={group} className="space-y-2 mt-4">
-                    {groupRoutes.map((route) => (
-                      <div key={route.key} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
-                        <Checkbox
-                          id={`route-${route.key}`}
-                          checked={hasAccess(route.key)}
-                          onCheckedChange={(checked) => handleToggle(route.key, checked as boolean)}
-                        />
-                        <label
-                          htmlFor={`route-${route.key}`}
-                          className="flex-1 text-sm cursor-pointer"
-                        >
-                          <div className="font-medium">
-                            {route.parent_key && '↳ '}
-                            {route.label}
-                            {route.interface && route.interface !== 'dashboard' && (
-                              <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">
-                                {route.interface}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground">{route.path}</div>
-                          {route.description && (
-                            <div className="text-xs text-muted-foreground">{route.description}</div>
-                          )}
-                        </label>
-                      </div>
-                    ))}
-                  </TabsContent>
-                ))}
-              </Tabs>
+                </div>
+              </ScrollArea>
             )}
           </>
         )}
