@@ -92,13 +92,15 @@ Deno.serve(async (req) => {
       }
     )
 
-    // Buscar todos os usuários da fábrica/administrativo ativos
+    // Buscar apenas usuários da fábrica/instalações (NÃO administradores)
     console.log('Buscando usuário com CPF terminando em:', cpf_ultimos_4)
     
     const { data: adminUsers, error: adminError } = await supabaseAdmin
       .from('admin_users')
       .select('*')
       .eq('ativo', true)
+      .in('setor', ['fabrica', 'instalacoes'])
+      .not('role', 'in', '("administrador","diretor","gerente_comercial","gerente_financeiro")')
 
     console.log('Usuários encontrados:', adminUsers?.length || 0)
 
@@ -129,6 +131,19 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Validação extra: verificar se não é um cargo protegido
+    const rolesProtegidos = ['administrador', 'diretor', 'gerente_comercial', 'gerente_financeiro']
+    if (rolesProtegidos.includes(adminUser.role)) {
+      console.log('Tentativa de login bloqueada para cargo protegido:', adminUser.role)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Acesso negado', 
+          message: 'Este usuário deve acessar pelo login principal em /auth' 
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Usar o email real do usuário
     if (!adminUser.email) {
       console.error('Usuário sem email cadastrado:', adminUser)
@@ -141,7 +156,7 @@ Deno.serve(async (req) => {
     const email = adminUser.email
     const password = 'Producao@2024'
 
-    console.log('Configurando autenticação para email:', email)
+    console.log('[AUDIT] Configurando autenticação para:', email, '- Setor:', adminUser.setor, '- Role:', adminUser.role)
 
     // Tentar buscar usuário auth existente pelo email real (considerando paginação)
     const { data: usersData, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
