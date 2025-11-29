@@ -169,6 +169,25 @@ export default function Performance() {
     });
   }, [whatsAppClicks, dataInicio, dataFim]);
 
+  // Detectar cliques duplicados (mesmo horário arredondado para minuto + mesmo referrer)
+  const clicksComDuplicatas = useMemo(() => {
+    const clicksMap = new Map<string, number>();
+    
+    return clicksFiltrados.map(click => {
+      const clickMinute = format(new Date(click.created_at), "yyyy-MM-dd HH:mm");
+      const referrer = click.referrer ? new URL(click.referrer).hostname : 'Acesso Direto';
+      const key = `${clickMinute}|${referrer}`;
+      
+      const count = clicksMap.get(key) || 0;
+      clicksMap.set(key, count + 1);
+      
+      return {
+        ...click,
+        isDuplicate: count > 0 // Se já existe um click com mesmo horário/referrer
+      };
+    });
+  }, [clicksFiltrados]);
+
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       <div className="text-center space-y-2">
@@ -384,17 +403,17 @@ export default function Performance() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
-                    <TableHead className="whitespace-nowrap">Atendente</TableHead>
-                    <TableHead className="whitespace-nowrap">Canal</TableHead>
-                    <TableHead className="whitespace-nowrap hidden sm:table-cell">Telefone</TableHead>
-                    <TableHead className="whitespace-nowrap hidden md:table-cell">Referenciador</TableHead>
-                    <TableHead className="whitespace-nowrap hidden lg:table-cell">Origem</TableHead>
+                  <TableRow className="h-8">
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1">Data/Hora</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1">Atendente</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1">Canal</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden sm:table-cell">Telefone</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden md:table-cell">Referenciador</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden lg:table-cell">Origem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clicksFiltrados.map((click) => {
+                  {clicksComDuplicatas.map((click) => {
                   let canal = 'Outros';
                   if (click.fbclid || click.utm_source?.toLowerCase().includes('facebook') || click.utm_source?.toLowerCase().includes('meta')) {
                     canal = 'Meta';
@@ -405,25 +424,38 @@ export default function Performance() {
                   }
 
                     return (
-                      <TableRow key={click.id}>
-                        <TableCell className="whitespace-nowrap text-sm">
-                          {format(new Date(click.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      <TableRow 
+                        key={click.id} 
+                        className={cn(
+                          "h-[35px]",
+                          click.isDuplicate && "bg-destructive/10 border-l-2 border-destructive"
+                        )}
+                      >
+                        <TableCell className="whitespace-nowrap text-xs h-[35px] py-1">
+                          <div className="flex items-center gap-1">
+                            {click.isDuplicate && (
+                              <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4">
+                                DUP
+                              </Badge>
+                            )}
+                            {format(new Date(click.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </div>
                         </TableCell>
-                        <TableCell className="font-medium text-sm">{click.atendente_nome}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-medium text-xs h-[35px] py-1">{click.atendente_nome}</TableCell>
+                        <TableCell className="h-[35px] py-1">
                           <Badge 
                             variant={canal === 'Meta' ? 'default' : 
                                    canal === 'Google' ? 'secondary' : 'outline'}
-                            className="text-xs"
+                            className="text-[10px] px-1.5 py-0 h-4"
                           >
                             {canal}
                           </Badge>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-sm">{click.atendente_telefone || '-'}</TableCell>
-                        <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                        <TableCell className="hidden sm:table-cell text-xs h-[35px] py-1">{click.atendente_telefone || '-'}</TableCell>
+                        <TableCell className="hidden md:table-cell text-[10px] text-muted-foreground h-[35px] py-1">
                           {click.referrer ? new URL(click.referrer).hostname : 'Acesso Direto'}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                        <TableCell className="hidden lg:table-cell text-[10px] text-muted-foreground h-[35px] py-1">
                           {click.page_url ? new URL(click.page_url).hostname : '-'}
                         </TableCell>
                       </TableRow>
