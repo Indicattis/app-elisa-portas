@@ -11,7 +11,6 @@ interface CalendarioSemanalTarefasMobileProps {
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
-  onDayClick: (date: Date) => void;
   onTarefaClick?: (tarefa: TarefaCalendario) => void;
   onMarcarConcluida?: (tarefa: TarefaCalendario) => void;
   getTarefasDoDia: (date: Date) => TarefaCalendario[];
@@ -23,7 +22,6 @@ export const CalendarioSemanalTarefasMobile = ({
   onPreviousWeek,
   onNextWeek,
   onToday,
-  onDayClick,
   onTarefaClick,
   onMarcarConcluida,
   getTarefasDoDia,
@@ -76,7 +74,6 @@ export const CalendarioSemanalTarefasMobile = ({
             key={day.toISOString()}
             date={day}
             tarefas={getTarefasDoDia(day)}
-            onDayClick={onDayClick}
             onTarefaClick={onTarefaClick}
             onMarcarConcluida={onMarcarConcluida}
           />

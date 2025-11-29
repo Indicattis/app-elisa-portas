@@ -50,10 +50,7 @@ export default function DirecaoHome() {
   const handleNextMonth = () => setMesAno(addMonths(mesAno, 1));
   const handleTodayMonth = () => setMesAno(new Date());
 
-  // Click no dia (navegar para checklist)
-  const handleDayClick = (date: Date) => {
-    navigate('/dashboard/direcao/checklist');
-  };
+  // Removido handleDayClick - agora usamos o popover diretamente no DiaCardTarefa
 
   // Click na tarefa
   const handleTarefaClick = (tarefa: TarefaCalendario) => {
@@ -176,7 +173,6 @@ export default function DirecaoHome() {
               onPreviousWeek={handlePreviousWeek}
               onNextWeek={handleNextWeek}
               onToday={handleTodayWeek}
-              onDayClick={handleDayClick}
               onTarefaClick={handleTarefaClick}
               onMarcarConcluida={handleMarcarConcluida}
               getTarefasDoDia={getTarefasDoDia}
@@ -187,7 +183,6 @@ export default function DirecaoHome() {
               onPreviousMonth={handlePreviousMonth}
               onNextMonth={handleNextMonth}
               onToday={handleTodayMonth}
-              onDayClick={handleDayClick}
               onTarefaClick={handleTarefaClick}
               onMarcarConcluida={handleMarcarConcluida}
               getTarefasDoDia={getTarefasDoDia}

@@ -1,15 +1,13 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
 import { format, isSameDay, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TarefaCard, TarefaCalendario } from "./TarefaCard";
+import { AdicionarTarefaPopover } from "./AdicionarTarefaPopover";
 
 interface DiaCardTarefaProps {
   date: Date;
   tarefas: TarefaCalendario[];
-  onDayClick: (date: Date) => void;
   onTarefaClick?: (tarefa: TarefaCalendario) => void;
   onMarcarConcluida?: (tarefa: TarefaCalendario) => void;
 }
@@ -17,7 +15,6 @@ interface DiaCardTarefaProps {
 export const DiaCardTarefa = ({
   date,
   tarefas,
-  onDayClick,
   onTarefaClick,
   onMarcarConcluida,
 }: DiaCardTarefaProps) => {
@@ -74,14 +71,7 @@ export const DiaCardTarefa = ({
                 {concluidas}
               </Badge>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => onDayClick(date)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+            <AdicionarTarefaPopover date={date} />
           </div>
         </div>
       </CardHeader>
