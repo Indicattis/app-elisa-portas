@@ -80,7 +80,16 @@ export function AdminSidebar() {
       }));
   };
 
-  const routeTree = buildRouteTree(routes, null);
+  // Construir árvore e promover filhos do item "Admin" para o nível raiz
+  const rawRouteTree = buildRouteTree(routes, null);
+  const routeTree = rawRouteTree.flatMap((route) => {
+    // Se for o item "Admin", retornar apenas seus filhos
+    if (route.key === 'admin' || route.path === '/admin') {
+      return route.children || [];
+    }
+    // Outros itens permanecem normais
+    return [route];
+  });
 
   // Persistir estado dos grupos no localStorage
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
