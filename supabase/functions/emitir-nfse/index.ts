@@ -22,7 +22,6 @@ serve(async (req) => {
       }
     );
 
-    // Verificar autenticação
     const {
       data: { user },
     } = await supabaseClient.auth.getUser();
@@ -31,119 +30,136 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const nfeioApiKey = Deno.env.get('NFEIO_API_KEY');
-    const nfeioCompanyId = Deno.env.get('NFEIO_COMPANY_ID');
+    const focusToken = Deno.env.get('FOCUSNFE_TOKEN');
 
-    if (!nfeioApiKey || !nfeioCompanyId) {
-      throw new Error('Configurações da API NFe.io não encontradas. Por favor, configure as secrets NFEIO_API_KEY e NFEIO_COMPANY_ID.');
+    if (!focusToken) {
+      throw new Error('Token da API Focus NFe não encontrado. Configure a secret FOCUSNFE_TOKEN.');
     }
 
     const payload = await req.json();
-    console.log('Payload recebido para emissão NFS-e:', payload);
+    console.log('Payload recebido:', payload);
 
     // Buscar configurações fiscais
-    const { data: config } = await supabaseClient
+    const { data: config, error: configError } = await supabaseClient
       .from('configuracoes_fiscais')
       .select('*')
       .single();
 
-    const ambiente = config?.ambiente || 'sandbox';
+    if (configError) {
+      console.error('Erro ao buscar configurações:', configError);
+      throw new Error('Configurações fiscais não encontradas');
+    }
 
-    // Montar payload para NFe.io
-    const nfeioPayload = {
-      borrower: {
-        federalTaxNumber: payload.cnpj_cpf,
-        name: payload.razao_social,
-        email: payload.email || '',
-        address: {
-          country: 'BRA',
-          postalCode: payload.tomador_cep || '',
-          street: payload.tomador_endereco || '',
-          number: payload.tomador_numero || '',
-          additionalInformation: '',
-          district: payload.tomador_bairro || '',
-          city: {
-            code: config?.codigo_municipio_ibge || '',
-            name: payload.tomador_cidade || '',
-          },
-          state: payload.tomador_uf || '',
-        },
+    // Determinar URL base (homologação ou produção)
+    const baseUrl = config.ambiente === 'production'
+      ? 'https://api.focusnfe.com.br'
+      : 'https://homologacao.focusnfe.com.br';
+
+    // Gerar referência única
+    const ref = `nfse-${Date.now()}-${user.id.substring(0, 8)}`;
+
+    // Montar payload para Focus NFe API
+    const focusPayload = {
+      data_emissao: new Date().toISOString().split('T')[0],
+      prestador: {
+        cnpj: config.inscricao_estadual || '',
+        inscricao_municipal: config.inscricao_municipal || '',
+        codigo_municipio: config.codigo_municipio_ibge || '',
       },
-      cityServiceCode: payload.codigo_servico || config?.codigo_servico_padrao,
-      description: payload.descricao_servico,
-      servicesAmount: payload.valor_total,
-      issTax: payload.aliquota_iss || config?.aliquota_iss_padrao || 5,
+      tomador: {
+        cpf_cnpj: payload.cnpj_cpf.replace(/\D/g, ''),
+        razao_social: payload.razao_social,
+        email: payload.email || '',
+        endereco: {
+          logradouro: payload.tomador_endereco || '',
+          numero: payload.tomador_numero || 'S/N',
+          bairro: payload.tomador_bairro || '',
+          codigo_municipio: config.codigo_municipio_ibge || '',
+          uf: payload.tomador_uf || '',
+          cep: payload.tomador_cep?.replace(/\D/g, '') || '',
+        }
+      },
+      servico: {
+        aliquota: (payload.aliquota_iss || config.aliquota_iss_padrao || 5) / 100,
+        discriminacao: payload.descricao_servico || config.descricao_servico_padrao || '',
+        iss_retido: false,
+        item_lista_servico: payload.codigo_servico || config.codigo_servico_padrao || '',
+        codigo_tributacao_municipio: payload.codigo_servico || config.codigo_servico_padrao || '',
+        valor_servicos: payload.valor_total,
+      }
     };
 
-    // Chamar API NFe.io
-    const nfeioUrl = ambiente === 'production' 
-      ? `https://api.nfe.io/v1/companies/${nfeioCompanyId}/serviceinvoices`
-      : `https://api.nfe.io/v1/companies/${nfeioCompanyId}/serviceinvoices?sandbox=true`;
+    console.log('Payload Focus NFe:', JSON.stringify(focusPayload, null, 2));
 
-    console.log('Chamando NFe.io:', nfeioUrl);
+    // Fazer requisição para Focus NFe API
+    const focusUrl = `${baseUrl}/v2/nfse?ref=${ref}`;
+    console.log('URL Focus NFe:', focusUrl);
 
-    const response = await fetch(nfeioUrl, {
+    const authHeader = 'Basic ' + btoa(focusToken + ':');
+
+    const response = await fetch(focusUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${nfeioApiKey}`,
+        'Authorization': authHeader,
       },
-      body: JSON.stringify(nfeioPayload),
+      body: JSON.stringify(focusPayload),
     });
 
+    const responseText = await response.text();
+    console.log('Resposta Focus NFe:', responseText);
+
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Erro da API NFe.io:', errorData);
-      throw new Error(`Erro ao emitir NFS-e: ${response.status} - ${errorData}`);
+      throw new Error(`Erro Focus NFe (${response.status}): ${responseText}`);
     }
 
-    const nfeioResponse = await response.json();
-    console.log('Resposta NFe.io:', nfeioResponse);
+    const focusResponse = JSON.parse(responseText);
 
-    // Salvar nota no banco com referência NFe.io
-    const refExterna = `NFSE-${Date.now()}`;
-    const { data: notaFiscal, error: dbError } = await supabaseClient
+    // Salvar nota fiscal no banco
+    const { data: notaFiscal, error: notaError } = await supabaseClient
       .from('notas_fiscais')
-      .insert({
-        tipo: 'saida',
-        numero: nfeioResponse.number || 'Aguardando',
-        serie: config?.serie_nfse?.toString() || '1',
-        valor_total: payload.valor_total,
+      .insert([{
+        tipo: 'nfse',
+        numero: focusResponse.numero || 'Pendente',
+        serie: config.serie_nfse?.toString() || '1',
         data_emissao: new Date().toISOString(),
         cnpj_cpf: payload.cnpj_cpf,
         razao_social: payload.razao_social,
-        status: 'pendente',
-        ref_externa: refExterna,
-        nfeio_id: nfeioResponse.id,
-        status_sefaz: nfeioResponse.status || 'processando',
-        ambiente,
-        codigo_servico: payload.codigo_servico,
-        descricao_servico: payload.descricao_servico,
-        aliquota_iss: payload.aliquota_iss,
-        valor_iss: (payload.valor_total * (payload.aliquota_iss || 5)) / 100,
+        valor_total: payload.valor_total,
+        codigo_servico: payload.codigo_servico || config.codigo_servico_padrao,
+        descricao_servico: payload.descricao_servico || config.descricao_servico_padrao,
+        aliquota_iss: payload.aliquota_iss || config.aliquota_iss_padrao,
+        valor_iss: payload.valor_total * ((payload.aliquota_iss || config.aliquota_iss_padrao || 5) / 100),
         tomador_endereco: payload.tomador_endereco,
         tomador_numero: payload.tomador_numero,
         tomador_bairro: payload.tomador_bairro,
         tomador_cidade: payload.tomador_cidade,
         tomador_uf: payload.tomador_uf,
         tomador_cep: payload.tomador_cep,
-        venda_id: payload.venda_id,
+        status: focusResponse.status || 'processando',
+        status_sefaz: focusResponse.status_sefaz || 'processando',
+        ambiente: config.ambiente,
+        api_id: focusResponse.numero || null,
+        ref_externa: ref,
+        chave_acesso: focusResponse.chave_nfe || null,
+        pdf_url: focusResponse.caminho_pdf || null,
+        xml_url: focusResponse.caminho_xml_nota_fiscal || null,
         created_by: user.id,
-      })
+      }])
       .select()
       .single();
 
-    if (dbError) {
-      console.error('Erro ao salvar no banco:', dbError);
-      throw dbError;
+    if (notaError) {
+      console.error('Erro ao salvar nota:', notaError);
+      throw notaError;
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         notaFiscal,
-        nfeioResponse,
-        message: 'NFS-e enviada para processamento. Aguarde a autorização da prefeitura.',
+        focusResponse,
+        message: 'NFS-e emitida com sucesso via Focus NFe.',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

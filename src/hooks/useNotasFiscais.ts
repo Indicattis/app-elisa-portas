@@ -23,9 +23,9 @@ export interface NotaFiscal {
   created_at: string;
   created_by?: string;
   updated_at: string;
-  // Campos NFe.io
+  // Campos API Focus NFe
   ref_externa?: string;
-  nfeio_id?: string;
+  api_id?: string;
   protocolo_autorizacao?: string;
   status_sefaz?: string;
   motivo_rejeicao?: string;

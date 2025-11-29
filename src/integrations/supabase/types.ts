@@ -1925,6 +1925,7 @@ export type Database = {
         Row: {
           aliquota_iss: number | null
           ambiente: string | null
+          api_id: string | null
           chave_acesso: string | null
           cnpj_cpf: string
           codigo_servico: string | null
@@ -1938,7 +1939,6 @@ export type Database = {
           email_enviado: boolean | null
           id: string
           motivo_rejeicao: string | null
-          nfeio_id: string | null
           numero: string
           observacoes: string | null
           pdf_nome_arquivo: string | null
@@ -1967,6 +1967,7 @@ export type Database = {
         Insert: {
           aliquota_iss?: number | null
           ambiente?: string | null
+          api_id?: string | null
           chave_acesso?: string | null
           cnpj_cpf: string
           codigo_servico?: string | null
@@ -1980,7 +1981,6 @@ export type Database = {
           email_enviado?: boolean | null
           id?: string
           motivo_rejeicao?: string | null
-          nfeio_id?: string | null
           numero: string
           observacoes?: string | null
           pdf_nome_arquivo?: string | null
@@ -2009,6 +2009,7 @@ export type Database = {
         Update: {
           aliquota_iss?: number | null
           ambiente?: string | null
+          api_id?: string | null
           chave_acesso?: string | null
           cnpj_cpf?: string
           codigo_servico?: string | null
@@ -2022,7 +2023,6 @@ export type Database = {
           email_enviado?: boolean | null
           id?: string
           motivo_rejeicao?: string | null
-          nfeio_id?: string | null
           numero?: string
           observacoes?: string | null
           pdf_nome_arquivo?: string | null
