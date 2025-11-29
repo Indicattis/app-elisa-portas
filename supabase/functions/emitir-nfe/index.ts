@@ -17,29 +17,30 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
+    const authHeader = req.headers.get('Authorization') || '';
     console.log('Authorization header:', authHeader ? 'Present' : 'Missing');
+
+    // Tentar extrair o userId do JWT, mas não bloquear se não conseguir
+    let userId: string | null = null;
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        userId = payload.sub || null;
+      } catch (e) {
+        console.error('Erro ao decodificar JWT:', e);
+      }
+    }
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: authHeader! },
+          headers: { Authorization: authHeader },
         },
       }
     );
-
-    const {
-      data: { user },
-      error: userError
-    } = await supabaseClient.auth.getUser();
-
-    console.log('User ID:', user?.id, 'Error:', userError?.message);
-
-    if (!user) {
-      throw new Error('Unauthorized: ' + (userError?.message || 'No user found'));
-    }
 
     const focusToken = Deno.env.get('FOCUSNFE_TOKEN');
 
@@ -67,7 +68,8 @@ serve(async (req) => {
       : 'https://homologacao.focusnfe.com.br';
 
     // Gerar referência única
-    const ref = `nfe-${Date.now()}-${user.id.substring(0, 8)}`;
+    const refSuffix = userId ? userId.substring(0, 8) : Math.random().toString(36).substring(2, 10);
+    const ref = `nfe-${Date.now()}-${refSuffix}`;
 
     // Montar payload para Focus NFe API
     const focusPayload = {
@@ -166,7 +168,7 @@ serve(async (req) => {
         danfe_url: focusResponse.caminho_danfe || null,
         pdf_url: focusResponse.caminho_pdf || null,
         xml_url: focusResponse.caminho_xml_nota_fiscal || null,
-        created_by: user.id,
+        created_by: userId,
       }])
       .select()
       .single();
