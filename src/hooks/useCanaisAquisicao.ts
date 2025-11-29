@@ -5,6 +5,7 @@ export interface CanalAquisicao {
   id: string;
   nome: string;
   ativo: boolean;
+  pago: boolean;
   ordem: number;
   created_at: string;
   updated_at: string;

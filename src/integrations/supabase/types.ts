@@ -396,6 +396,7 @@ export type Database = {
           id: string
           nome: string
           ordem: number
+          pago: boolean
           updated_at: string
         }
         Insert: {
@@ -405,6 +406,7 @@ export type Database = {
           id?: string
           nome: string
           ordem?: number
+          pago?: boolean
           updated_at?: string
         }
         Update: {
@@ -414,6 +416,7 @@ export type Database = {
           id?: string
           nome?: string
           ordem?: number
+          pago?: boolean
           updated_at?: string
         }
         Relationships: []

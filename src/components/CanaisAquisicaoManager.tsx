@@ -32,6 +32,7 @@ import {
 interface CanalFormData {
   nome: string;
   ativo: boolean;
+  pago: boolean;
   ordem: number;
 }
 
@@ -44,6 +45,7 @@ export function CanaisAquisicaoManager() {
   const [formData, setFormData] = useState<CanalFormData>({
     nome: "",
     ativo: true,
+    pago: false,
     ordem: 0
   });
   const { toast } = useToast();
@@ -70,7 +72,7 @@ export function CanaisAquisicaoManager() {
   };
 
   const resetForm = () => {
-    setFormData({ nome: "", ativo: true, ordem: 0 });
+    setFormData({ nome: "", ativo: true, pago: false, ordem: 0 });
     setEditingCanal(null);
     setShowForm(false);
   };
@@ -116,6 +118,7 @@ export function CanaisAquisicaoManager() {
     setFormData({
       nome: canal.nome,
       ativo: canal.ativo,
+      pago: canal.pago || false,
       ordem: canal.ordem
     });
     setShowForm(true);
@@ -224,6 +227,15 @@ export function CanaisAquisicaoManager() {
                 />
                 <Label htmlFor="ativo">Canal ativo</Label>
               </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="pago"
+                  checked={formData.pago}
+                  onCheckedChange={(checked) => setFormData({ ...formData, pago: checked })}
+                />
+                <Label htmlFor="pago">Canal pago</Label>
+              </div>
               
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={resetForm}>
@@ -257,7 +269,7 @@ export function CanaisAquisicaoManager() {
                   <div className="flex items-start sm:items-center gap-1.5 sm:gap-4 flex-1 min-w-0">
                     <GripVertical className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground shrink-0 mt-0.5 sm:mt-0 hidden sm:block" />
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-wrap">
                         <span className="font-medium text-xs sm:text-base truncate">{canal.nome}</span>
                         <Badge 
                           variant={canal.ativo ? "default" : "secondary"}
@@ -265,6 +277,14 @@ export function CanaisAquisicaoManager() {
                         >
                           {canal.ativo ? "Ativo" : "Inativo"}
                         </Badge>
+                        {canal.pago && (
+                          <Badge 
+                            variant="outline"
+                            className="shrink-0 text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 border-primary text-primary"
+                          >
+                            Pago
+                          </Badge>
+                        )}
                       </div>
                       <span className="text-[10px] sm:text-sm text-muted-foreground shrink-0">
                         Ordem: {canal.ordem}
