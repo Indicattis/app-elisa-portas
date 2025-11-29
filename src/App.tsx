@@ -109,6 +109,9 @@ import PedidoView from "./pages/PedidoView";
 import DRE from "./pages/DRE";
 import Despesas from "./pages/Despesas";
 import NotasFiscais from "./pages/NotasFiscais";
+import EmitirNfse from "./pages/EmitirNfse";
+import EmitirNfe from "./pages/EmitirNfe";
+import ConfiguracoesFiscais from "./pages/ConfiguracoesFiscais";
 import Vagas from "./pages/Vagas";
 import Etiquetas from "./pages/Etiquetas";
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
@@ -1176,6 +1179,36 @@ const App = () => (
                     <ProtectedRoute routeKey="notas_fiscais">
                       <DashboardLayout>
                         <NotasFiscais />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/notas-fiscais/emitir-nfse"
+                  element={
+                    <ProtectedRoute routeKey="notas_fiscais">
+                      <DashboardLayout>
+                        <EmitirNfse />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/notas-fiscais/emitir-nfe"
+                  element={
+                    <ProtectedRoute routeKey="notas_fiscais">
+                      <DashboardLayout>
+                        <EmitirNfe />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/notas-fiscais/configuracoes"
+                  element={
+                    <ProtectedRoute routeKey="notas_fiscais">
+                      <DashboardLayout>
+                        <ConfiguracoesFiscais />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

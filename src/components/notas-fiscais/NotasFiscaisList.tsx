@@ -50,78 +50,58 @@ export function NotasFiscaisList() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Tipo</Label>
-              <Select
-                value={filtros.tipo || 'todos'}
-                onValueChange={(value) => 
-                  setFiltros(prev => ({ ...prev, tipo: value === 'todos' ? undefined : value as any }))
-                }
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="entrada">Entrada</SelectItem>
-                  <SelectItem value="saida">Saída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="flex items-center gap-3 h-[35px]">
+        <Select
+          value={filtros.tipo || 'todos'}
+          onValueChange={(value) => 
+            setFiltros(prev => ({ ...prev, tipo: value === 'todos' ? undefined : value as any }))
+          }
+        >
+          <SelectTrigger className="h-[35px] w-[140px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os tipos</SelectItem>
+            <SelectItem value="entrada">Entrada</SelectItem>
+            <SelectItem value="saida">Saída</SelectItem>
+          </SelectContent>
+        </Select>
 
-            <div className="space-y-1">
-              <Label className="text-xs">Status</Label>
-              <Select
-                value={filtros.status || 'todos'}
-                onValueChange={(value) => 
-                  setFiltros(prev => ({ ...prev, status: value === 'todos' ? undefined : value }))
-                }
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="autorizada">Autorizada</SelectItem>
-                  <SelectItem value="processando">Processando</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="rejeitada">Rejeitada</SelectItem>
-                  <SelectItem value="cancelada">Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <Select
+          value={filtros.status || 'todos'}
+          onValueChange={(value) => 
+            setFiltros(prev => ({ ...prev, status: value === 'todos' ? undefined : value }))
+          }
+        >
+          <SelectTrigger className="h-[35px] w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os status</SelectItem>
+            <SelectItem value="autorizada">Autorizada</SelectItem>
+            <SelectItem value="processando">Processando</SelectItem>
+            <SelectItem value="pendente">Pendente</SelectItem>
+            <SelectItem value="rejeitada">Rejeitada</SelectItem>
+            <SelectItem value="cancelada">Cancelada</SelectItem>
+          </SelectContent>
+        </Select>
 
-            <div className="space-y-1">
-              <Label className="text-xs">Data Início</Label>
-              <Input
-                type="date"
-                value={filtros.dataInicio || ''}
-                onChange={(e) => setFiltros(prev => ({ ...prev, dataInicio: e.target.value || undefined }))}
-                className="h-9"
-              />
-            </div>
+        <Input
+          type="date"
+          value={filtros.dataInicio || ''}
+          onChange={(e) => setFiltros(prev => ({ ...prev, dataInicio: e.target.value || undefined }))}
+          className="h-[35px] w-[160px]"
+          placeholder="Data início"
+        />
 
-            <div className="space-y-1">
-              <Label className="text-xs">Data Fim</Label>
-              <Input
-                type="date"
-                value={filtros.dataFim || ''}
-                onChange={(e) => setFiltros(prev => ({ ...prev, dataFim: e.target.value || undefined }))}
-                className="h-9"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <Input
+          type="date"
+          value={filtros.dataFim || ''}
+          onChange={(e) => setFiltros(prev => ({ ...prev, dataFim: e.target.value || undefined }))}
+          className="h-[35px] w-[160px]"
+          placeholder="Data fim"
+        />
+      </div>
 
       <Card>
         <CardHeader className="pb-3">
