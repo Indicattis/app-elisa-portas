@@ -30,11 +30,10 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const nfeioApiKey = Deno.env.get('NFEIO_API_KEY');
-    const nfeioCompanyId = Deno.env.get('NFEIO_COMPANY_ID');
+    const focusToken = Deno.env.get('FOCUSNFE_TOKEN');
 
-    if (!nfeioApiKey || !nfeioCompanyId) {
-      throw new Error('Configurações da API NFe.io não encontradas.');
+    if (!focusToken) {
+      throw new Error('Token da API Focus NFe não encontrado.');
     }
 
     const { notaFiscalId } = await req.json();
@@ -51,66 +50,71 @@ serve(async (req) => {
       throw new Error('Nota fiscal não encontrada');
     }
 
-    if (!nota.nfeio_id) {
-      throw new Error('Esta nota não possui ID da NFe.io');
+    if (!nota.ref_externa) {
+      throw new Error('Esta nota não possui referência da Focus NFe');
     }
+
+    // Buscar configurações para determinar ambiente
+    const { data: config } = await supabaseClient
+      .from('configuracoes_fiscais')
+      .select('ambiente')
+      .single();
+
+    const baseUrl = config?.ambiente === 'production'
+      ? 'https://api.focusnfe.com.br'
+      : 'https://homologacao.focusnfe.com.br';
 
     // Determinar o tipo de nota
     const isNfse = nota.codigo_servico ? true : false;
-    const endpoint = isNfse ? 'serviceinvoices' : 'productinvoices';
+    const endpoint = isNfse ? 'nfse' : 'nfe';
 
-    const nfeioUrl = `https://api.nfe.io/v1/companies/${nfeioCompanyId}/${endpoint}/${nota.nfeio_id}`;
+    const focusUrl = `${baseUrl}/v2/${endpoint}/${nota.ref_externa}`;
+    console.log('Consultando Focus NFe:', focusUrl);
 
-    console.log('Consultando NFe.io:', nfeioUrl);
+    const authHeader = 'Basic ' + btoa(focusToken + ':');
 
-    const response = await fetch(nfeioUrl, {
+    const response = await fetch(focusUrl, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${nfeioApiKey}`,
+        'Authorization': authHeader,
       },
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Erro da API NFe.io:', errorData);
-      throw new Error(`Erro ao consultar nota: ${response.status}`);
+      console.error('Erro da API Focus NFe:', errorData);
+      throw new Error(`Erro ao consultar nota: ${response.status} - ${errorData}`);
     }
 
-    const nfeioResponse = await response.json();
-    console.log('Resposta NFe.io:', nfeioResponse);
+    const focusResponse = await response.json();
+    console.log('Resposta Focus NFe:', focusResponse);
 
-    // Atualizar dados no banco
-    const updateData: any = {
-      status_sefaz: nfeioResponse.status,
-      numero: nfeioResponse.number || nota.numero,
+    // Mapear status Focus NFe para nosso sistema
+    const statusMap: Record<string, string> = {
+      'processando_autorizacao': 'processando',
+      'autorizado': 'autorizada',
+      'erro_autorizacao': 'rejeitada',
+      'cancelado': 'cancelada',
     };
 
-    if (nfeioResponse.status === 'Issued') {
-      updateData.status = 'emitida';
-      updateData.status_sefaz = 'autorizada';
-      updateData.data_autorizacao = new Date().toISOString();
-      updateData.protocolo_autorizacao = nfeioResponse.authorizationProtocol;
-    } else if (nfeioResponse.status === 'Cancelled') {
-      updateData.status = 'cancelada';
-      updateData.status_sefaz = 'cancelada';
-    } else if (nfeioResponse.status === 'Rejected') {
-      updateData.status_sefaz = 'rejeitada';
-      updateData.motivo_rejeicao = nfeioResponse.rejectionReason || 'Rejeitada pela SEFAZ/Prefeitura';
-    }
+    const statusSefaz = statusMap[focusResponse.status] || focusResponse.status;
 
-    // URLs de arquivos
-    if (nfeioResponse.pdfUrl) {
-      updateData.danfe_url = nfeioResponse.pdfUrl;
-      updateData.pdf_url = nfeioResponse.pdfUrl;
-    }
-    if (nfeioResponse.xmlUrl) {
-      updateData.xml_autorizado_url = nfeioResponse.xmlUrl;
-      updateData.xml_url = nfeioResponse.xmlUrl;
-    }
-
+    // Atualizar nota no banco
     const { data: updatedNota, error: updateError } = await supabaseClient
       .from('notas_fiscais')
-      .update(updateData)
+      .update({
+        numero: focusResponse.numero || nota.numero,
+        status_sefaz: statusSefaz,
+        status: statusSefaz,
+        chave_acesso: focusResponse.chave_nfe || nota.chave_acesso,
+        protocolo_autorizacao: focusResponse.protocolo || nota.protocolo_autorizacao,
+        data_autorizacao: focusResponse.data_emissao || nota.data_autorizacao,
+        danfe_url: focusResponse.caminho_danfe || nota.danfe_url,
+        pdf_url: focusResponse.caminho_pdf || nota.pdf_url,
+        xml_url: focusResponse.caminho_xml_nota_fiscal || nota.xml_url,
+        xml_autorizado_url: focusResponse.caminho_xml_nota_fiscal || nota.xml_autorizado_url,
+        motivo_rejeicao: focusResponse.mensagem_sefaz || nota.motivo_rejeicao,
+      })
       .eq('id', notaFiscalId)
       .select()
       .single();
@@ -124,7 +128,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         notaFiscal: updatedNota,
-        nfeioResponse,
+        focusResponse,
+        message: 'Nota fiscal consultada com sucesso.',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

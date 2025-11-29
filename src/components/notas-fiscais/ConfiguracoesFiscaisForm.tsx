@@ -71,8 +71,8 @@ export function ConfiguracoesFiscaisForm() {
         <CardContent>
           <p className="text-sm text-muted-foreground">
             {hasApiKeys 
-              ? "As chaves de API da NFe.io estão configuradas. O sistema está pronto para emitir notas fiscais."
-              : "Configure as secrets NFEIO_API_KEY e NFEIO_COMPANY_ID no Supabase para habilitar a emissão de notas."}
+              ? "O token da API Focus NFe está configurado. O sistema está pronto para emitir notas fiscais."
+              : "Configure a secret FOCUSNFE_TOKEN no Supabase para habilitar a emissão de notas via Focus NFe."}
           </p>
         </CardContent>
       </Card>
