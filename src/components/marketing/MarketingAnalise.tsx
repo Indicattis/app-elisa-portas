@@ -359,7 +359,7 @@ export default function MarketingAnalise() {
 
       let query = supabase
         .from("produtos_vendas")
-        .select("descricao, quantidade, vendas!inner(data_venda, estado, id)")
+        .select("descricao, tipo_produto, quantidade, vendas!inner(data_venda, estado, id)")
         .gte("vendas.data_venda", startDate)
         .lte("vendas.data_venda", endDate);
 
@@ -379,7 +379,12 @@ export default function MarketingAnalise() {
       // Agrupar por produto
       const produtosMap = new Map();
       filteredData.forEach((p: any) => {
-        const produtoNome = p.descricao || "Produto sem nome";
+        let produtoNome = p.descricao;
+        if (!produtoNome && p.tipo_produto === 'porta_enrolar') {
+          produtoNome = 'Porta de Enrolar';
+        } else if (!produtoNome) {
+          produtoNome = 'Produto sem nome';
+        }
         const current = produtosMap.get(produtoNome) || 0;
         produtosMap.set(produtoNome, current + (p.quantidade || 1));
       });
