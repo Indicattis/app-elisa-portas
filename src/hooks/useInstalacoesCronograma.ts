@@ -35,7 +35,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
           venda:vendas!inner(
             id, cliente_nome, cliente_telefone, cliente_email, tipo_entrega,
             estado, cidade, cep, valor_a_receber,
-            pagamento_na_entrega, forma_pagamento, observacoes
+            pagamento_na_entrega, forma_pagamento
           ),
           pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
             id, numero_pedido, etapa_atual,
