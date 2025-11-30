@@ -185,6 +185,11 @@ export default function Expedicao() {
           </div>
         ) : (
           <>
+            {/* Lista de Ordens Disponíveis no topo (apenas desktop) */}
+            {!isMobile && (
+              <OrdensCarregamentoDisponiveis key={refreshOrdensDisponiveis} />
+            )}
+
             {/* Calendários */}
             {isMobile ? (
               <CalendarioSemanalExpedicaoMobile
@@ -223,11 +228,6 @@ export default function Expedicao() {
                   onOrdemClick={handleOrdemClick}
                 />
               )
-            )}
-
-            {/* Lista de Ordens Disponíveis abaixo (apenas desktop) */}
-            {!isMobile && (
-              <OrdensCarregamentoDisponiveis key={refreshOrdensDisponiveis} />
             )}
           </>
         )}
