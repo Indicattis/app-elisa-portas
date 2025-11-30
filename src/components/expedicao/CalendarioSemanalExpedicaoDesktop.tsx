@@ -7,6 +7,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { Button } from "@/components/ui/button";
 import { DroppableDaySimpleExpedicao } from "./DroppableDaySimpleExpedicao";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
+import { CalendarioLegendas } from "./CalendarioLegendas";
 import { toast } from "sonner";
 
 interface CalendarioSemanalExpedicaoDesktopProps {
@@ -128,6 +129,9 @@ export const CalendarioSemanalExpedicaoDesktop = ({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Legendas */}
+        <CalendarioLegendas />
 
         {/* Grid de dias */}
         <div className="grid grid-cols-7 gap-4">
