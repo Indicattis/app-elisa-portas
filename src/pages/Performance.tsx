@@ -63,6 +63,7 @@ interface CacCanalData {
   investimento: number;
   faturamento: number;
   lucro: number;
+  lucroLiquido: number;
   roi: number;
   cac: number;
   totalVendas: number;
@@ -474,6 +475,7 @@ export default function Performance() {
         const lucro = vendasDoCanal.reduce((sum: number, v: any) => sum + Number(v.lucro_total || 0), 0);
         const investimento = investimentoPorCanal[canal.id] || 0;
         
+        const lucroLiquido = lucro - investimento;
         const roi = investimento > 0 ? ((faturamento - investimento) / investimento) * 100 : 0;
         const cac = (investimento > 0 && totalVendas > 0) ? investimento / totalVendas : 0;
         
@@ -483,6 +485,7 @@ export default function Performance() {
           investimento,
           faturamento,
           lucro,
+          lucroLiquido,
           roi,
           cac,
           totalVendas,
@@ -971,6 +974,7 @@ export default function Performance() {
                         </Tooltip>
                       </div>
                     </TableHead>
+                    <TableHead className="text-right">Lucro Líquido</TableHead>
                     <TableHead className="text-right">ROI</TableHead>
                     <TableHead className="text-right">CAC</TableHead>
                   </TableRow>
@@ -999,6 +1003,11 @@ export default function Performance() {
                             </Tooltip>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className={canal.lucroLiquido >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                          R$ {canal.lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant={canal.roi >= 100 ? "default" : canal.roi >= 0 ? "secondary" : "destructive"}>
@@ -1034,6 +1043,16 @@ export default function Performance() {
                             </Tooltip>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {(() => {
+                          const totalLucroLiquido = cacData.reduce((sum, c) => sum + c.lucroLiquido, 0);
+                          return (
+                            <span className={totalLucroLiquido >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                              R$ {totalLucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="outline">
