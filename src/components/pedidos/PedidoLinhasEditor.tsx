@@ -155,7 +155,7 @@ export const PedidoLinhasEditor = ({
     if (!produtoEstoque) return;
 
     const novaLinhaCompleta: PedidoLinhaNova = {
-      produto_venda_id: rascunhoLinha.produto_venda_id,
+      produto_venda_id: temPortasEnrolar ? rascunhoLinha.produto_venda_id : undefined,
       estoque_id: rascunhoLinha.estoque_id,
       nome_produto: produtoEstoque.nome_produto,
       descricao_produto: produtoEstoque.descricao_produto,
@@ -471,7 +471,7 @@ export const PedidoLinhasEditor = ({
                         size="sm"
                         onClick={handleSalvarNovaLinha}
                         className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                        disabled={!rascunhoLinha.produto_venda_id || !rascunhoLinha.estoque_id}
+                        disabled={(temPortasEnrolar && !rascunhoLinha.produto_venda_id) || !rascunhoLinha.estoque_id}
                       >
                         <Check className="h-4 w-4" />
                       </Button>
