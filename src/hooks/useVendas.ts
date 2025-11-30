@@ -208,7 +208,7 @@ export function useVendas() {
         desconto_percentual: produto.desconto_percentual,
         desconto_valor: produto.desconto_valor,
         quantidade: produto.quantidade,
-        descricao: produto.descricao || null,
+        descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
         valor_credito: produto.valor_credito || 0,
         percentual_credito: produto.percentual_credito || 0
       }));
