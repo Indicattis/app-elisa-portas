@@ -9,16 +9,24 @@ interface OrdensCarregamentoSlimTableProps {
 }
 
 export const OrdensCarregamentoSlimTable = ({ ordens }: OrdensCarregamentoSlimTableProps) => {
-  const getStatusBadge = (status: string | null) => {
-    const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-      pendente: { label: "Pendente", variant: "secondary" },
-      agendada: { label: "Agendada", variant: "default" },
-      concluida: { label: "Concluída", variant: "outline" },
-      em_coleta: { label: "Em Coleta", variant: "default" },
-    };
-    
-    const config = statusMap[status || "pendente"];
-    return <Badge variant={config.variant} className="h-5 text-xs">{config.label}</Badge>;
+  const getStatusBadge = (carregamentoConcluido: boolean | null) => {
+    if (carregamentoConcluido) {
+      return <Badge variant="outline" className="h-5 text-xs">Concluída</Badge>;
+    }
+    return <Badge variant="secondary" className="h-5 text-xs">Pendente</Badge>;
+  };
+
+  const getCarregamentoBadge = (dataCarregamento: string | null) => {
+    if (dataCarregamento) {
+      return <Badge variant="default" className="h-5 text-xs">
+        <CheckCircle2 className="h-3 w-3 mr-1" />
+        Agendado
+      </Badge>;
+    }
+    return <Badge variant="secondary" className="h-5 text-xs">
+      <XCircle className="h-3 w-3 mr-1" />
+      Pendente Agendamento
+    </Badge>;
   };
 
   if (ordens.length === 0) {
@@ -72,7 +80,7 @@ export const OrdensCarregamentoSlimTable = ({ ordens }: OrdensCarregamentoSlimTa
 
             {/* Status */}
             <div>
-              {getStatusBadge(ordem.status)}
+              {getStatusBadge(ordem.carregamento_concluido)}
             </div>
 
             {/* Data Carregamento */}
@@ -111,19 +119,9 @@ export const OrdensCarregamentoSlimTable = ({ ordens }: OrdensCarregamentoSlimTa
               )}
             </div>
 
-            {/* Carregamento Concluído */}
+            {/* Carregamento */}
             <div>
-              {ordem.carregamento_concluido ? (
-                <Badge variant="outline" className="h-5 text-xs bg-green-500/10 text-green-600 border-green-500/20">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Concluído
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="h-5 text-xs">
-                  <XCircle className="h-3 w-3 mr-1" />
-                  Pendente
-                </Badge>
-              )}
+              {getCarregamentoBadge(ordem.data_carregamento)}
             </div>
           </div>
         ))}
