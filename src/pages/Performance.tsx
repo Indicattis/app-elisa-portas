@@ -194,11 +194,12 @@ export default function Performance() {
     if (!vendasDateRange?.from || !vendasDateRange?.to) return;
     
     try {
-      // Buscar vendedores ativos
+      // Buscar apenas atendentes ativos
       const { data: users } = await supabase
         .from("admin_users")
         .select("user_id, nome, foto_perfil_url, role")
         .eq("ativo", true)
+        .eq("role", "atendente")
         .order("nome");
 
       if (!users) return;
