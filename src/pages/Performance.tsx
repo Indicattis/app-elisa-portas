@@ -4,15 +4,16 @@ import { ptBR } from "date-fns/locale";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Mouse, TrendingUp, Globe, Calendar as CalendarIcon } from "lucide-react";
+import { Phone, Mouse, TrendingUp, Globe, Calendar as CalendarIcon, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSalesData, useWhatsAppRoulette } from "@/hooks/useDashboardData";
 import { supabase } from "@/integrations/supabase/client";
+import { ROLE_LABELS } from "@/types/permissions";
 import type { DateRange } from "react-day-picker";
 
 interface WhatsAppClick {
@@ -46,6 +47,14 @@ interface ReferrerStats {
   total_clicks: number;
 }
 
+interface VendedorCompleto {
+  id: string;
+  nome: string;
+  foto_perfil_url: string | null;
+  role: string;
+  vendasCount: number;
+}
+
 export default function Performance() {
   const [whatsAppClicks, setWhatsAppClicks] = useState<WhatsAppClick[]>([]);
   const [atendenteStats, setAtendenteStats] = useState<AtendenteStats[]>([]);
@@ -61,13 +70,13 @@ export default function Performance() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   });
-  const [vendedorPublicoAlvo, setVendedorPublicoAlvo] = useState<string>("all");
-  const [vendedorCanalAquisicao, setVendedorCanalAquisicao] = useState<string>("all");
-  const [vendedorEstado, setVendedorEstado] = useState<string>("all");
+  const [vendedorIndexPublicoAlvo, setVendedorIndexPublicoAlvo] = useState<number>(0);
+  const [vendedorIndexCanalAquisicao, setVendedorIndexCanalAquisicao] = useState<number>(0);
+  const [vendedorIndexEstado, setVendedorIndexEstado] = useState<number>(0);
   const [publicoAlvoData, setPublicoAlvoData] = useState<{name: string; value: number}[]>([]);
   const [canalAquisicaoData, setCanalAquisicaoData] = useState<{name: string; value: number}[]>([]);
   const [estadoData, setEstadoData] = useState<{name: string; value: number}[]>([]);
-  const [vendedores, setVendedores] = useState<{id: string; nome: string}[]>([]);
+  const [vendedoresCompletos, setVendedoresCompletos] = useState<VendedorCompleto[]>([]);
   const [loadingVendas, setLoadingVendas] = useState(false);
 
   // Use the corrected sales data hook
@@ -76,7 +85,6 @@ export default function Performance() {
 
   useEffect(() => {
     fetchWhatsAppData();
-    fetchVendedores();
     
     // Atualizar a cada 5 minutos
     const interval = setInterval(() => {
@@ -87,16 +95,20 @@ export default function Performance() {
   }, []);
 
   useEffect(() => {
+    fetchVendedores();
+  }, [vendasDateRange]);
+
+  useEffect(() => {
     fetchPublicoAlvoData();
-  }, [vendasDateRange, vendedorPublicoAlvo]);
+  }, [vendasDateRange, vendedorIndexPublicoAlvo, vendedoresCompletos]);
 
   useEffect(() => {
     fetchCanalAquisicaoData();
-  }, [vendasDateRange, vendedorCanalAquisicao]);
+  }, [vendasDateRange, vendedorIndexCanalAquisicao, vendedoresCompletos]);
 
   useEffect(() => {
     fetchEstadoData();
-  }, [vendasDateRange, vendedorEstado]);
+  }, [vendasDateRange, vendedorIndexEstado, vendedoresCompletos]);
 
   const fetchWhatsAppData = async () => {
     setLoadingWhatsApp(true);
@@ -179,32 +191,69 @@ export default function Performance() {
   };
 
   const fetchVendedores = async () => {
+    if (!vendasDateRange?.from || !vendasDateRange?.to) return;
+    
     try {
-      const { data } = await supabase
+      // Buscar vendedores ativos
+      const { data: users } = await supabase
         .from("admin_users")
-        .select("user_id, nome")
+        .select("user_id, nome, foto_perfil_url, role")
         .eq("ativo", true)
         .order("nome");
+
+      if (!users) return;
+
+      // Buscar quantidade de vendas por vendedor no período
+      const { data: vendas } = await supabase
+        .from("vendas")
+        .select("atendente_id")
+        .gte("data_venda", format(vendasDateRange.from, "yyyy-MM-dd"))
+        .lte("data_venda", format(vendasDateRange.to, "yyyy-MM-dd"));
+
+      const vendasCount = (vendas || []).reduce((acc: Record<string, number>, venda) => {
+        acc[venda.atendente_id] = (acc[venda.atendente_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Criar lista completa com "Todos" no início
+      const vendedoresComTodos: VendedorCompleto[] = [
+        {
+          id: "all",
+          nome: "Todos os Vendedores",
+          foto_perfil_url: null,
+          role: "",
+          vendasCount: vendas?.length || 0
+        },
+        ...users.map(u => ({
+          id: u.user_id,
+          nome: u.nome,
+          foto_perfil_url: u.foto_perfil_url,
+          role: u.role,
+          vendasCount: vendasCount[u.user_id] || 0
+        }))
+      ];
       
-      setVendedores(data?.map(v => ({ id: v.user_id, nome: v.nome })) || []);
+      setVendedoresCompletos(vendedoresComTodos);
     } catch (error) {
       console.error("Erro ao buscar vendedores:", error);
     }
   };
 
   const fetchPublicoAlvoData = async () => {
-    if (!vendasDateRange?.from || !vendasDateRange?.to) return;
+    if (!vendasDateRange?.from || !vendasDateRange?.to || vendedoresCompletos.length === 0) return;
     
     setLoadingVendas(true);
     try {
+      const vendedorAtual = vendedoresCompletos[vendedorIndexPublicoAlvo];
+      
       let query = supabase
         .from("vendas")
         .select("publico_alvo, valor_venda, valor_frete")
         .gte("data_venda", format(vendasDateRange.from, "yyyy-MM-dd"))
         .lte("data_venda", format(vendasDateRange.to, "yyyy-MM-dd"));
 
-      if (vendedorPublicoAlvo !== "all") {
-        query = query.eq("atendente_id", vendedorPublicoAlvo);
+      if (vendedorAtual?.id !== "all") {
+        query = query.eq("atendente_id", vendedorAtual.id);
       }
 
       const { data, error } = await query;
@@ -228,18 +277,20 @@ export default function Performance() {
   };
 
   const fetchCanalAquisicaoData = async () => {
-    if (!vendasDateRange?.from || !vendasDateRange?.to) return;
+    if (!vendasDateRange?.from || !vendasDateRange?.to || vendedoresCompletos.length === 0) return;
     
     setLoadingVendas(true);
     try {
+      const vendedorAtual = vendedoresCompletos[vendedorIndexCanalAquisicao];
+      
       let query = supabase
         .from("vendas")
         .select("canal_aquisicao_id, valor_venda, valor_frete, canais_aquisicao(nome)")
         .gte("data_venda", format(vendasDateRange.from, "yyyy-MM-dd"))
         .lte("data_venda", format(vendasDateRange.to, "yyyy-MM-dd"));
 
-      if (vendedorCanalAquisicao !== "all") {
-        query = query.eq("atendente_id", vendedorCanalAquisicao);
+      if (vendedorAtual?.id !== "all") {
+        query = query.eq("atendente_id", vendedorAtual.id);
       }
 
       const { data, error } = await query;
@@ -263,18 +314,20 @@ export default function Performance() {
   };
 
   const fetchEstadoData = async () => {
-    if (!vendasDateRange?.from || !vendasDateRange?.to) return;
+    if (!vendasDateRange?.from || !vendasDateRange?.to || vendedoresCompletos.length === 0) return;
     
     setLoadingVendas(true);
     try {
+      const vendedorAtual = vendedoresCompletos[vendedorIndexEstado];
+      
       let query = supabase
         .from("vendas")
         .select("estado, valor_venda, valor_frete")
         .gte("data_venda", format(vendasDateRange.from, "yyyy-MM-dd"))
         .lte("data_venda", format(vendasDateRange.to, "yyyy-MM-dd"));
 
-      if (vendedorEstado !== "all") {
-        query = query.eq("atendente_id", vendedorEstado);
+      if (vendedorAtual?.id !== "all") {
+        query = query.eq("atendente_id", vendedorAtual.id);
       }
 
       const { data, error } = await query;
@@ -385,17 +438,58 @@ export default function Performance() {
         <Card>
           <CardHeader className="pb-2 space-y-3">
             <CardTitle className="text-sm">Vendas por Público Alvo</CardTitle>
-            <Select value={vendedorPublicoAlvo} onValueChange={setVendedorPublicoAlvo}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Vendedores</SelectItem>
-                {vendedores.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            
+            {/* Card do vendedor com navegação */}
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexPublicoAlvo(prev => 
+                  prev === 0 ? vendedoresCompletos.length - 1 : prev - 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-3 flex-1 min-w-0 bg-muted/50 rounded-lg p-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={vendedoresCompletos[vendedorIndexPublicoAlvo]?.foto_perfil_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {vendedoresCompletos[vendedorIndexPublicoAlvo]?.nome.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {vendedoresCompletos[vendedorIndexPublicoAlvo]?.nome}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {vendedoresCompletos[vendedorIndexPublicoAlvo]?.role && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1">
+                        {ROLE_LABELS[vendedoresCompletos[vendedorIndexPublicoAlvo]?.role] || vendedoresCompletos[vendedorIndexPublicoAlvo]?.role}
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <ShoppingCart className="h-3 w-3" />
+                      {vendedoresCompletos[vendedorIndexPublicoAlvo]?.vendasCount || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexPublicoAlvo(prev => 
+                  prev === vendedoresCompletos.length - 1 ? 0 : prev + 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {loadingVendas ? (
@@ -435,17 +529,58 @@ export default function Performance() {
         <Card>
           <CardHeader className="pb-2 space-y-3">
             <CardTitle className="text-sm">Vendas por Canal de Aquisição</CardTitle>
-            <Select value={vendedorCanalAquisicao} onValueChange={setVendedorCanalAquisicao}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Vendedores</SelectItem>
-                {vendedores.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            
+            {/* Card do vendedor com navegação */}
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexCanalAquisicao(prev => 
+                  prev === 0 ? vendedoresCompletos.length - 1 : prev - 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-3 flex-1 min-w-0 bg-muted/50 rounded-lg p-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={vendedoresCompletos[vendedorIndexCanalAquisicao]?.foto_perfil_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {vendedoresCompletos[vendedorIndexCanalAquisicao]?.nome.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {vendedoresCompletos[vendedorIndexCanalAquisicao]?.nome}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {vendedoresCompletos[vendedorIndexCanalAquisicao]?.role && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1">
+                        {ROLE_LABELS[vendedoresCompletos[vendedorIndexCanalAquisicao]?.role] || vendedoresCompletos[vendedorIndexCanalAquisicao]?.role}
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <ShoppingCart className="h-3 w-3" />
+                      {vendedoresCompletos[vendedorIndexCanalAquisicao]?.vendasCount || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexCanalAquisicao(prev => 
+                  prev === vendedoresCompletos.length - 1 ? 0 : prev + 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {loadingVendas ? (
@@ -485,17 +620,58 @@ export default function Performance() {
         <Card>
           <CardHeader className="pb-2 space-y-3">
             <CardTitle className="text-sm">Vendas por Estado</CardTitle>
-            <Select value={vendedorEstado} onValueChange={setVendedorEstado}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Vendedores</SelectItem>
-                {vendedores.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            
+            {/* Card do vendedor com navegação */}
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexEstado(prev => 
+                  prev === 0 ? vendedoresCompletos.length - 1 : prev - 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-3 flex-1 min-w-0 bg-muted/50 rounded-lg p-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={vendedoresCompletos[vendedorIndexEstado]?.foto_perfil_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {vendedoresCompletos[vendedorIndexEstado]?.nome.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {vendedoresCompletos[vendedorIndexEstado]?.nome}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {vendedoresCompletos[vendedorIndexEstado]?.role && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1">
+                        {ROLE_LABELS[vendedoresCompletos[vendedorIndexEstado]?.role] || vendedoresCompletos[vendedorIndexEstado]?.role}
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <ShoppingCart className="h-3 w-3" />
+                      {vendedoresCompletos[vendedorIndexEstado]?.vendasCount || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexEstado(prev => 
+                  prev === vendedoresCompletos.length - 1 ? 0 : prev + 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {loadingVendas ? (
