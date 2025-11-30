@@ -21,39 +21,59 @@ export const OrdemCarregamentoCard = ({
   onRemoverDoCalendario,
   dragListeners,
 }: OrdemCarregamentoCardProps) => {
-  // Pegar a cor da equipe do campo enriquecido
-  const corEquipe = (ordem as any)._corEquipe;
+  const tipoEntrega = ordem.venda?.tipo_entrega;
+  const tipoCarregamento = ordem.tipo_carregamento;
 
-  // Estilos baseados na cor da equipe
+  // Nova lógica de cores
   const getCardStyles = () => {
-    if (corEquipe) {
+    // Sem responsável definido - Amarelo
+    if (!tipoCarregamento) {
       return {
-        backgroundColor: `${corEquipe}15`,
-        borderColor: corEquipe,
+        backgroundColor: 'rgb(234 179 8 / 0.15)',
+        borderColor: 'rgb(234 179 8 / 0.5)',
       };
     }
-    
-    // Fallback para cor baseada no tipo de serviço
-    switch (ordem.tipo_carregamento) {
-      case 'autorizados':
-        return {
-          backgroundColor: 'rgb(59 130 246 / 0.1)',
-          borderColor: 'rgb(59 130 246 / 0.4)',
-        };
-      case 'elisa':
-        return {
-          backgroundColor: 'rgb(239 68 68 / 0.1)',
-          borderColor: 'rgb(239 68 68 / 0.4)',
-        };
-      default:
-        return {};
+
+    // Entrega - Cinza
+    if (tipoEntrega === 'entrega') {
+      return {
+        backgroundColor: 'rgb(107 114 128 / 0.15)',
+        borderColor: 'rgb(107 114 128 / 0.5)',
+      };
     }
+
+    // Instalação com Elisa - Vermelho
+    if (tipoCarregamento === 'elisa') {
+      return {
+        backgroundColor: 'rgb(239 68 68 / 0.15)',
+        borderColor: 'rgb(239 68 68 / 0.5)',
+      };
+    }
+
+    // Instalação com Autorizado - Azul
+    if (tipoCarregamento === 'autorizados') {
+      return {
+        backgroundColor: 'rgb(59 130 246 / 0.15)',
+        borderColor: 'rgb(59 130 246 / 0.5)',
+      };
+    }
+
+    return {};
   };
 
-  // Pegar dados da instalação
-  const instalacaoData = ordem.pedido?.instalacao;
-  const instalacao = Array.isArray(instalacaoData) ? instalacaoData[0] : instalacaoData;
-  const equipeNome = instalacao?.responsavel_instalacao_nome;
+  // Obter nome do responsável
+  const getResponsavelNome = () => {
+    if (!tipoCarregamento) return 'Sem responsável';
+    
+    if (tipoEntrega === 'entrega') {
+      if (tipoCarregamento === 'elisa') return 'Entrega Elisa';
+      if (tipoCarregamento === 'terceiro') return 'Terceiro';
+      return 'Autorizado';
+    }
+    
+    if (tipoCarregamento === 'elisa') return 'Instalação Elisa';
+    return 'Autorizado';
+  };
 
   return (
     <Card 
@@ -61,37 +81,18 @@ export const OrdemCarregamentoCard = ({
       style={getCardStyles()}
       onClick={() => onClick?.(ordem)}
     >
-      {/* Header - Sempre visível */}
       <div className="flex items-center justify-between gap-2 h-[19px]">
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
           <h4 className="font-semibold text-xs truncate">{ordem.nome_cliente}</h4>
-          {/* Badge de Serviço */}
-          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
-            {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
-          </Badge>
-          {/* Badge de Responsável */}
           <Badge 
             variant="secondary" 
             className="text-[9px] px-1 py-0 h-4 shrink-0"
           >
-            {ordem.venda?.tipo_entrega === 'entrega' 
-              ? (ordem.tipo_carregamento === 'elisa' ? 'Entrega Elisa' : ordem.tipo_carregamento === 'terceiro' ? 'Terceiro' : 'Autorizado')
-              : (ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado')
-            }
+            {getResponsavelNome()}
           </Badge>
-          {/* Tag de equipe - apenas para instalação Elisa */}
-          {ordem.venda?.tipo_entrega === 'instalacao' && ordem.tipo_carregamento === 'elisa' && equipeNome && (
-            <Badge 
-              variant="secondary" 
-              className="text-[9px] px-1 py-0 h-4 shrink-0 bg-red-500/20 border-red-500/40"
-            >
-              {equipeNome}
-            </Badge>
-          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {/* Menu de Ações */}
           {(onEdit || onRemoverDoCalendario) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -132,51 +133,40 @@ export const OrdemCarregamentoCard = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-sm">
                   <div className="space-y-2">
-                    <div className="font-semibold text-xs border-b border-border pb-1">
+                    <div className="font-semibold text-[11px] border-b border-border pb-1">
                       {ordem.venda?.cliente_nome || ordem.nome_cliente}
                     </div>
 
-                    {/* Tipo de Serviço */}
-                    <div className="flex items-center gap-1 text-xs">
+                    <div className="flex items-center gap-1 text-[10px]">
                       <Package className="h-3 w-3 flex-shrink-0" />
                       <span className="font-medium">
                         {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
                       </span>
                       <span className="text-muted-foreground">•</span>
                       <span className="text-muted-foreground">
-                        {ordem.venda?.tipo_entrega === 'entrega' 
-                          ? (ordem.tipo_carregamento === 'elisa' ? 'Entrega Elisa' : ordem.tipo_carregamento === 'terceiro' ? 'Terceiro' : 'Autorizado')
-                          : (ordem.tipo_carregamento === 'elisa' ? 'Instalação Elisa' : 'Autorizado')
-                        }
+                        {getResponsavelNome()}
                       </span>
                     </div>
-
-                    {/* Responsável - mostrar equipe para instalação Elisa */}
-                    {ordem.venda?.tipo_entrega === 'instalacao' && ordem.tipo_carregamento === 'elisa' && equipeNome && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>Equipe: {equipeNome}</span>
-                      </div>
-                    )}
                     
                     {ordem.venda.cidade && (
-                      <div className="flex items-center gap-1 text-xs">
+                      <div className="flex items-center gap-1 text-[10px]">
                         <MapPin className="h-3 w-3 flex-shrink-0" />
                         <span>{ordem.venda.cidade}/{ordem.venda.estado}</span>
                       </div>
                     )}
 
                     {ordem.venda.data_prevista_entrega && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[10px] text-muted-foreground">
                         Entrega prevista: {new Date(ordem.venda.data_prevista_entrega).toLocaleDateString('pt-BR')}
                       </div>
                     )}
 
                     {ordem.venda.produtos && ordem.venda.produtos.length > 0 && (
                       <div className="pt-1 border-t border-border/50">
-                        <p className="text-[10px] font-medium mb-1.5">Produtos:</p>
+                        <p className="text-[9px] font-medium mb-1.5">Produtos:</p>
                         <div className="space-y-1">
                           {ordem.venda.produtos.map((produto, idx) => (
-                            <div key={idx} className="flex items-start gap-1.5 text-[10px]">
+                            <div key={idx} className="flex items-start gap-1.5 text-[9px]">
                               {produto.cor && (
                                 <div 
                                   className="h-2.5 w-2.5 rounded-full border border-border/30 shrink-0 mt-0.5" 
@@ -212,7 +202,6 @@ export const OrdemCarregamentoCard = ({
           )}
         </div>
       </div>
-
     </Card>
   );
 };

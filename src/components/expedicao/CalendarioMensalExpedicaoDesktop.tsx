@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { DroppableDayExpedicao } from "./DroppableDayExpedicao";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
+import { CalendarioLegendas } from "./CalendarioLegendas";
 import { toast } from "sonner";
 
 interface CalendarioMensalExpedicaoDesktopProps {
@@ -137,6 +138,9 @@ export const CalendarioMensalExpedicaoDesktop = ({
             Ir para hoje
           </Button>
         </div>
+
+        {/* Legendas */}
+        <CalendarioLegendas />
 
         {/* Grid do calendário */}
         <div className="rounded-lg overflow-hidden bg-muted/20 border border-border">

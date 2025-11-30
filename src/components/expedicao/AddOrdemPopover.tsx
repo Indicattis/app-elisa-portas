@@ -59,24 +59,24 @@ export const AddOrdemPopover = ({
       </PopoverTrigger>
       <PopoverContent className="w-[600px] p-0" align="start">
         <div className="p-3 border-b">
-          <h4 className="font-semibold text-sm">Adicionar Ordem</h4>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h4 className="font-semibold text-[11px]">Adicionar Ordem</h4>
+          <p className="text-[10px] text-muted-foreground mt-1">
             Selecione uma ordem para agendar em {format(date, "dd/MM/yyyy")}
           </p>
         </div>
         
         <div className="max-h-[400px] overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
+            <div className="p-4 text-center text-[10px] text-muted-foreground">
               Carregando...
             </div>
           ) : ordens.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
+            <div className="p-4 text-center text-[10px] text-muted-foreground">
               Nenhuma ordem disponível
             </div>
           ) : (
             <div>
-              <div className="grid grid-cols-[2fr,1.5fr,1.5fr] gap-2 px-3 py-2 bg-muted/50 border-b text-xs font-medium">
+              <div className="grid grid-cols-[2fr,1.5fr,1.5fr] gap-2 px-3 py-2 bg-muted/50 border-b text-[11px] font-medium">
                 <div>Cliente</div>
                 <div>Pedido</div>
                 <div>Localização</div>
@@ -86,13 +86,13 @@ export const AddOrdemPopover = ({
                   <button
                     key={ordem.id}
                     onClick={() => handleSelectOrdem(ordem)}
-                    className="w-full grid grid-cols-[2fr,1.5fr,1.5fr] gap-2 px-3 py-1.5 text-left hover:bg-muted/50 transition-colors max-h-[20px] items-center"
+                    className="w-full grid grid-cols-[2fr,1.5fr,1.5fr] gap-2 px-3 py-1 text-left hover:bg-muted/50 transition-colors items-center"
                   >
-                    <div className="text-xs font-medium truncate">{ordem.nome_cliente}</div>
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="text-[10px] font-medium truncate">{ordem.nome_cliente}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">
                       {ordem.pedido?.numero_pedido || '-'}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="text-[10px] text-muted-foreground truncate">
                       {ordem.venda ? `${ordem.venda.cidade} - ${ordem.venda.estado}` : '-'}
                     </div>
                   </button>
