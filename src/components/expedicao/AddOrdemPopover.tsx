@@ -57,7 +57,7 @@ export const AddOrdemPopover = ({
           <Plus className={size === "icon" ? "h-3 w-3" : "h-4 w-4"} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
+      <PopoverContent className="w-[600px] p-0" align="start">
         <div className="p-3 border-b">
           <h4 className="font-semibold text-sm">Adicionar Ordem</h4>
           <p className="text-xs text-muted-foreground mt-1">
@@ -65,7 +65,7 @@ export const AddOrdemPopover = ({
           </p>
         </div>
         
-        <div className="max-h-[300px] overflow-y-auto">
+        <div className="max-h-[400px] overflow-y-auto">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Carregando...
@@ -75,28 +75,29 @@ export const AddOrdemPopover = ({
               Nenhuma ordem disponível
             </div>
           ) : (
-            <div className="divide-y">
-              {ordens.map((ordem) => (
-                <button
-                  key={ordem.id}
-                  onClick={() => handleSelectOrdem(ordem)}
-                  className="w-full p-3 text-left hover:bg-muted/50 transition-colors"
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium text-sm">{ordem.nome_cliente}</p>
-                    {ordem.pedido && (
-                      <p className="text-xs text-muted-foreground">
-                        Pedido: {ordem.pedido.numero_pedido}
-                      </p>
-                    )}
-                    {ordem.venda && (
-                      <p className="text-xs text-muted-foreground">
-                        {ordem.venda.cidade} - {ordem.venda.estado}
-                      </p>
-                    )}
-                  </div>
-                </button>
-              ))}
+            <div>
+              <div className="grid grid-cols-[2fr,1.5fr,1.5fr] gap-2 px-3 py-2 bg-muted/50 border-b text-xs font-medium">
+                <div>Cliente</div>
+                <div>Pedido</div>
+                <div>Localização</div>
+              </div>
+              <div className="divide-y">
+                {ordens.map((ordem) => (
+                  <button
+                    key={ordem.id}
+                    onClick={() => handleSelectOrdem(ordem)}
+                    className="w-full grid grid-cols-[2fr,1.5fr,1.5fr] gap-2 px-3 py-1.5 text-left hover:bg-muted/50 transition-colors max-h-[20px] items-center"
+                  >
+                    <div className="text-xs font-medium truncate">{ordem.nome_cliente}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {ordem.pedido?.numero_pedido || '-'}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {ordem.venda ? `${ordem.venda.cidade} - ${ordem.venda.estado}` : '-'}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
