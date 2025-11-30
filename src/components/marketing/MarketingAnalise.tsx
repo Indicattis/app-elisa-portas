@@ -83,8 +83,8 @@ export default function MarketingAnalise() {
   const [publicoAlvoData, setPublicoAlvoData] = useState<PublicoAlvoData[]>([]);
   const [canalAquisicaoData, setCanalAquisicaoData] = useState<CanalAquisicaoData[]>([]);
   const [regionPerformanceData, setRegionPerformanceData] = useState<RegionPerformanceData[]>([]);
-  const [corMaisVendida, setCorMaisVendida] = useState<{ cor: string; quantidade: number } | null>(null);
-  const [produtoMaisVendido, setProdutoMaisVendido] = useState<{ produto: string; quantidade: number } | null>(null);
+  const [coresMaisVendidas, setCoresMaisVendidas] = useState<{ cor: string; quantidade: number }[]>([]);
+  const [produtosMaisVendidos, setProdutosMaisVendidos] = useState<{ produto: string; quantidade: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartMode, setChartMode] = useState<'quantidade' | 'faturamento'>('quantidade');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -338,17 +338,13 @@ export default function MarketingAnalise() {
         coresMap.set(corNome, current + (p.quantidade || 1));
       });
 
-      // Encontrar a cor mais vendida
-      let maxCor = null;
-      let maxQtd = 0;
-      coresMap.forEach((qtd, cor) => {
-        if (qtd > maxQtd) {
-          maxQtd = qtd;
-          maxCor = cor;
-        }
-      });
+      // Converter para array e ordenar
+      const coresArray = Array.from(coresMap.entries())
+        .map(([cor, quantidade]) => ({ cor, quantidade }))
+        .sort((a, b) => b.quantidade - a.quantidade)
+        .slice(0, 3);
 
-      setCorMaisVendida(maxCor ? { cor: maxCor, quantidade: maxQtd } : null);
+      setCoresMaisVendidas(coresArray);
     } catch (error) {
       console.error("Erro ao buscar cores mais vendidas:", error);
     }
@@ -388,17 +384,13 @@ export default function MarketingAnalise() {
         produtosMap.set(produtoNome, current + (p.quantidade || 1));
       });
 
-      // Encontrar o produto mais vendido
-      let maxProduto = null;
-      let maxQtd = 0;
-      produtosMap.forEach((qtd, produto) => {
-        if (qtd > maxQtd) {
-          maxQtd = qtd;
-          maxProduto = produto;
-        }
-      });
+      // Converter para array e ordenar
+      const produtosArray = Array.from(produtosMap.entries())
+        .map(([produto, quantidade]) => ({ produto, quantidade }))
+        .sort((a, b) => b.quantidade - a.quantidade)
+        .slice(0, 3);
 
-      setProdutoMaisVendido(maxProduto ? { produto: maxProduto, quantidade: maxQtd } : null);
+      setProdutosMaisVendidos(produtosArray);
     } catch (error) {
       console.error("Erro ao buscar produtos mais vendidos:", error);
     }
@@ -739,31 +731,43 @@ export default function MarketingAnalise() {
 
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Cor Mais Vendida</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Top 3 Cores</CardTitle>
             <Palette className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
-              {corMaisVendida ? corMaisVendida.cor : "-"}
-            </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {corMaisVendida ? `${corMaisVendida.quantidade} unidades` : "Nenhuma venda no período"}
-            </p>
+            {coresMaisVendidas.length > 0 ? (
+              <div className="space-y-1">
+                {coresMaisVendidas.map((cor, index) => (
+                  <div key={index} className="flex items-center justify-between h-[15px] text-xs">
+                    <span className="truncate font-medium">{index + 1}. {cor.cor}</span>
+                    <span className="text-muted-foreground ml-2 shrink-0">{cor.quantidade}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Nenhuma venda no período</p>
+            )}
           </CardContent>
         </Card>
 
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Produto Mais Vendido</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Top 3 Produtos</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
-              {produtoMaisVendido ? produtoMaisVendido.produto : "-"}
-            </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {produtoMaisVendido ? `${produtoMaisVendido.quantidade} unidades` : "Nenhuma venda no período"}
-            </p>
+            {produtosMaisVendidos.length > 0 ? (
+              <div className="space-y-1">
+                {produtosMaisVendidos.map((produto, index) => (
+                  <div key={index} className="flex items-center justify-between h-[15px] text-xs">
+                    <span className="truncate font-medium">{index + 1}. {produto.produto}</span>
+                    <span className="text-muted-foreground ml-2 shrink-0">{produto.quantidade}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Nenhuma venda no período</p>
+            )}
           </CardContent>
         </Card>
 
