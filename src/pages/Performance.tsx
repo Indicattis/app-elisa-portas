@@ -97,10 +97,14 @@ export default function Performance() {
 
   // Estados para a seção de CAC
   const [cacMes, setCacMes] = useState<Date>(startOfMonth(new Date()));
+  const [cacMesIndex, setCacMesIndex] = useState<number>(0);
   const [cacRegiao, setCacRegiao] = useState<string>("all");
+  const [cacRegiaoIndex, setCacRegiaoIndex] = useState<number>(0);
   const [vendedorIndexCAC, setVendedorIndexCAC] = useState<number>(0);
   const [cacData, setCacData] = useState<CacCanalData[]>([]);
   const [loadingCAC, setLoadingCAC] = useState(false);
+  const [cacMeses, setCacMeses] = useState<Date[]>([]);
+  const [cacRegioes, setCacRegioes] = useState<string[]>(["all"]);
 
   // Use the corrected sales data hook
   const { data: salesData, isLoading: loadingSales } = useSalesData();
@@ -136,6 +140,42 @@ export default function Performance() {
   useEffect(() => {
     fetchCacData();
   }, [cacMes, cacRegiao, vendedorIndexCAC, vendedoresCompletos]);
+
+  useEffect(() => {
+    // Gerar lista de meses (últimos 12 meses)
+    const meses: Date[] = [];
+    for (let i = 0; i < 12; i++) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      meses.push(startOfMonth(date));
+    }
+    setCacMeses(meses);
+    
+    // Buscar regiões disponíveis
+    const fetchCacRegioes = async () => {
+      const { data } = await supabase
+        .from("vendas")
+        .select("estado")
+        .not("estado", "is", null);
+      
+      const regionesUnicas = [...new Set(data?.map((v: any) => v.estado))] as string[];
+      setCacRegioes(["all", ...regionesUnicas]);
+    };
+    
+    fetchCacRegioes();
+  }, []);
+
+  useEffect(() => {
+    if (cacMeses.length > 0) {
+      setCacMes(cacMeses[cacMesIndex]);
+    }
+  }, [cacMesIndex, cacMeses]);
+
+  useEffect(() => {
+    if (cacRegioes.length > 0) {
+      setCacRegiao(cacRegioes[cacRegiaoIndex]);
+    }
+  }, [cacRegiaoIndex, cacRegioes]);
 
   const fetchWhatsAppData = async () => {
     setLoadingWhatsApp(true);
@@ -861,90 +901,127 @@ export default function Performance() {
       {/* Seção de Análise de CAC */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Análise de CAC por Canal Pago
-            </CardTitle>
-            
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Filtro de Mês */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(cacMes, "MMMM 'de' yyyy", { locale: ptBR })}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={cacMes}
-                    onSelect={(date) => date && setCacMes(startOfMonth(date))}
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
-              
-              {/* Filtro de Região */}
-              <Select value={cacRegiao} onValueChange={setCacRegiao}>
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue placeholder="Região" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas Regiões</SelectItem>
-                  <SelectItem value="RS">RS</SelectItem>
-                  <SelectItem value="SC">SC</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CardTitle className="text-lg flex items-center gap-2 mb-4">
+            <DollarSign className="h-5 w-5" />
+            Análise de CAC por Canal Pago
+          </CardTitle>
           
-          {/* Slider de Atendente */}
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setVendedorIndexCAC(prev => 
-                prev === 0 ? vendedoresCompletos.length - 1 : prev - 1
-              )}
-              disabled={vendedoresCompletos.length === 0}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 rounded-lg p-2">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={vendedoresCompletos[vendedorIndexCAC]?.foto_perfil_url || undefined} />
-                <AvatarFallback className="text-xs">
-                  {vendedoresCompletos[vendedorIndexCAC]?.nome.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {vendedoresCompletos[vendedorIndexCAC]?.nome}
-                </p>
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {vendedoresCompletos[vendedorIndexCAC]?.vendasCount || 0} vendas
-                  </span>
+          {/* Sliders dos três filtros lado a lado */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Slider de Mês */}
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCacMesIndex(prev => 
+                  prev === cacMeses.length - 1 ? 0 : prev + 1
+                )}
+                disabled={cacMeses.length === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-3 flex-1 bg-muted/50 rounded-lg p-2 justify-center">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="text-sm font-medium">
+                  {cacMeses[cacMesIndex] && format(cacMeses[cacMesIndex], "MMMM 'de' yyyy", { locale: ptBR })}
                 </div>
               </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCacMesIndex(prev => 
+                  prev === 0 ? cacMeses.length - 1 : prev - 1
+                )}
+                disabled={cacMeses.length === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setVendedorIndexCAC(prev => 
-                prev === vendedoresCompletos.length - 1 ? 0 : prev + 1
-              )}
-              disabled={vendedoresCompletos.length === 0}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+
+            {/* Slider de Região */}
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCacRegiaoIndex(prev => 
+                  prev === 0 ? cacRegioes.length - 1 : prev - 1
+                )}
+                disabled={cacRegioes.length === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-3 flex-1 bg-muted/50 rounded-lg p-2 justify-center">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                <div className="text-sm font-medium">
+                  {cacRegioes[cacRegiaoIndex] === "all" ? "Todas Regiões" : cacRegioes[cacRegiaoIndex]}
+                </div>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCacRegiaoIndex(prev => 
+                  prev === cacRegioes.length - 1 ? 0 : prev + 1
+                )}
+                disabled={cacRegioes.length === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Slider de Atendente */}
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexCAC(prev => 
+                  prev === 0 ? vendedoresCompletos.length - 1 : prev - 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-3 flex-1 bg-muted/50 rounded-lg p-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={vendedoresCompletos[vendedorIndexCAC]?.foto_perfil_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {vendedoresCompletos[vendedorIndexCAC]?.nome.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {vendedoresCompletos[vendedorIndexCAC]?.nome}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {vendedoresCompletos[vendedorIndexCAC]?.vendasCount || 0} vendas
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setVendedorIndexCAC(prev => 
+                  prev === vendedoresCompletos.length - 1 ? 0 : prev + 1
+                )}
+                disabled={vendedoresCompletos.length === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         
