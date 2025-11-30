@@ -78,9 +78,9 @@ export default function Expedicao() {
   const handleSaveEdit = async (data: {
     data_carregamento: string;
     hora_carregamento: string;
-    tipo_carregamento: 'elisa' | 'autorizados';
-    responsavel_carregamento_id: string;
-    responsavel_carregamento_nome: string;
+    tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro' | null;
+    responsavel_carregamento_id: string | null;
+    responsavel_carregamento_nome: string | null;
   }) => {
     if (!editOrdem) return;
 
