@@ -519,7 +519,6 @@ export default function Performance() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -610,7 +609,6 @@ export default function Performance() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -701,7 +699,6 @@ export default function Performance() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
