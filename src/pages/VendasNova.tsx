@@ -292,6 +292,16 @@ export default function VendasNova() {
       return;
     }
 
+    // Validar localização obrigatória
+    if (!formData.estado || !formData.cidade) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Estado e cidade são obrigatórios.'
+      });
+      return;
+    }
+
     // Validar CPF/CNPJ
     const documentoDigitos = formData.cpf_cliente?.replace(/\D/g, '') || '';
     if (documentoDigitos && documentoDigitos.length !== 11 && documentoDigitos.length !== 14) {
