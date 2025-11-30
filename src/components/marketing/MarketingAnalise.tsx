@@ -69,9 +69,7 @@ export default function MarketingAnalise() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   });
-  const [selectedVendedor, setSelectedVendedor] = useState<string>("all");
   const [selectedRegiao, setSelectedRegiao] = useState<string>("all");
-  const [selectedCanalAquisicao, setSelectedCanalAquisicao] = useState<string>("all");
   const [investimentos, setInvestimentos] = useState<MarketingInvestment[]>([]);
   const [investimentosHistorico, setInvestimentosHistorico] = useState<MarketingInvestment[]>([]);
   const [metrics, setMetrics] = useState<MarketingMetrics>({
@@ -81,7 +79,6 @@ export default function MarketingAnalise() {
     cac: null,
     vendasConvertidas: 0
   });
-  const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
   const [regioes, setRegioes] = useState<string[]>([]);
   const [publicoAlvoData, setPublicoAlvoData] = useState<PublicoAlvoData[]>([]);
   const [canalAquisicaoData, setCanalAquisicaoData] = useState<CanalAquisicaoData[]>([]);
@@ -133,7 +130,7 @@ export default function MarketingAnalise() {
     return () => {
       isMounted = false;
     };
-  }, [selectedVendedor, selectedRegiao, selectedCanalAquisicao, dateRange]);
+  }, [selectedRegiao, dateRange]);
 
   // Helper para evitar erro de tipos profundos do Supabase
   const fetchVendasFaturadas = async (startDate: string, endDate: string): Promise<any[]> => {
@@ -161,7 +158,6 @@ export default function MarketingAnalise() {
       await Promise.all([
         fetchInvestimentos(),
         fetchInvestimentosHistorico(),
-        fetchVendedores(),
         fetchRegioes(),
         fetchMetrics(),
         fetchChartData(),
@@ -224,25 +220,6 @@ export default function MarketingAnalise() {
     }
   };
 
-  const fetchVendedores = async () => {
-    try {
-      const { data, error }: any = await supabase
-        .from("admin_users")
-        .select("user_id, nome")
-        .eq("ativo", true);
-
-      if (error) {
-        console.error("Erro ao buscar vendedores:", error);
-        return;
-      }
-
-      console.log("Vendedores encontrados:", data);
-      setVendedores(data?.map((v: any) => ({ id: v.user_id, nome: v.nome })) || []);
-    } catch (error) {
-      console.error("Erro ao buscar vendedores:", error);
-    }
-  };
-
   const fetchRegioes = async () => {
     const { data, error } = await (supabase
       .from("vendas")
@@ -278,26 +255,12 @@ export default function MarketingAnalise() {
         : investimentosData;
 
       let totalInvestimento = 0;
-      const canalSelecionadoNome = canais.find(c => c.id === selectedCanalAquisicao)?.nome;
       if (investimentosFiltrados && investimentosFiltrados.length > 0) {
-        if (selectedCanalAquisicao && canalSelecionadoNome) {
-          const nomeLower = canalSelecionadoNome.toLowerCase();
-          if (nomeLower.includes('google')) {
-            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_google_ads || 0), 0);
-          } else if (nomeLower.includes('meta')) {
-            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_meta_ads || 0), 0);
-          } else if (nomeLower.includes('linkedin')) {
-            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.investimento_linkedin_ads || 0), 0);
-          } else {
-            totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) => total + Number(inv.outros_investimentos || 0), 0);
-          }
-        } else {
-          totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) =>
-            total + Number(inv.investimento_google_ads || 0) +
-                    Number(inv.investimento_meta_ads || 0) +
-                    Number(inv.investimento_linkedin_ads || 0) +
-                    Number(inv.outros_investimentos || 0), 0);
-        }
+        totalInvestimento = investimentosFiltrados.reduce((total: number, inv: any) =>
+          total + Number(inv.investimento_google_ads || 0) +
+                  Number(inv.investimento_meta_ads || 0) +
+                  Number(inv.investimento_linkedin_ads || 0) +
+                  Number(inv.outros_investimentos || 0), 0);
       }
 
       // Buscar vendas FATURADAS usando helper
@@ -306,16 +269,8 @@ export default function MarketingAnalise() {
       // Aplicar filtros manualmente
       let vendasData = allVendas;
       
-      if (selectedVendedor && selectedVendedor !== "all") {
-        vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
-      }
-      
       if (selectedRegiao && selectedRegiao !== "all") {
         vendasData = vendasData.filter((v: any) => v.estado === selectedRegiao);
-      }
-      
-      if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-        vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
       }
 
       const totalVendas = vendasData?.reduce((sum: number, venda: any) => sum + (Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0)), 0) || 0;
@@ -362,16 +317,8 @@ export default function MarketingAnalise() {
         v.data_venda <= endDate
       );
 
-      if (selectedVendedor && selectedVendedor !== "all") {
-        vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
-      }
-
       if (selectedRegiao && selectedRegiao !== "all") {
         vendasData = vendasData.filter((v: any) => v.estado === selectedRegiao);
-      }
-
-      if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-        vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
       }
 
       if (vendasData) {
@@ -436,14 +383,6 @@ export default function MarketingAnalise() {
         v.data_venda <= endDate &&
         v.estado !== null
       );
-
-      if (selectedCanalAquisicao && selectedCanalAquisicao !== "all") {
-        vendasData = vendasData.filter((v: any) => v.canal_aquisicao_id === selectedCanalAquisicao);
-      }
-
-      if (selectedVendedor && selectedVendedor !== "all") {
-        vendasData = vendasData.filter((v: any) => v.atendente_id === selectedVendedor);
-      }
 
       if (selectedRegiao && selectedRegiao !== "all") {
         vendasData = vendasData.filter((v: any) => v.estado === selectedRegiao);
@@ -616,7 +555,7 @@ export default function MarketingAnalise() {
       {/* Filters Section */}
       <Card className="w-full">
         <CardContent className="p-2 sm:p-3">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -655,20 +594,6 @@ export default function MarketingAnalise() {
               </PopoverContent>
             </Popover>
 
-            <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
-              <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {vendedores.map((vendedor) => (
-                  <SelectItem key={vendedor.id} value={vendedor.id}>
-                    {vendedor.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             <Select value={selectedRegiao} onValueChange={setSelectedRegiao}>
               <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                 <SelectValue placeholder="Região" />
@@ -678,20 +603,6 @@ export default function MarketingAnalise() {
                 {regioes.filter(regiao => regiao && regiao.trim() !== '').map((regiao) => (
                   <SelectItem key={regiao} value={regiao}>
                     {regiao}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedCanalAquisicao} onValueChange={setSelectedCanalAquisicao}>
-              <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
-                <SelectValue placeholder="Canal" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {canais.filter(canal => canal.id && canal.id.trim() !== '').map((canal) => (
-                  <SelectItem key={canal.id} value={canal.id}>
-                    {canal.nome}
                   </SelectItem>
                 ))}
               </SelectContent>
