@@ -13,13 +13,15 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, DollarSign, Users, Target, Plus, Edit } from "lucide-react";
+import { TrendingUp, DollarSign, Users, Target, Plus, Edit, Palette, Package, Receipt } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
+import { useCoresPintadasHoje } from "@/hooks/useCoresPintadasHoje";
+import { useMateriaisProducaoRanking } from "@/hooks/useMateriaisProducaoRanking";
 
 interface MarketingInvestment {
   id: string;
@@ -65,6 +67,8 @@ interface RegionPerformanceData {
 
 export default function MarketingAnalise() {
   const { toast } = useToast();
+  const { data: coresPintadas = [] } = useCoresPintadasHoje();
+  const { rankingCompleto = [] } = useMateriaisProducaoRanking();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
@@ -615,18 +619,6 @@ export default function MarketingAnalise() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Investimento Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
-              R$ {metrics.totalInvestimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="w-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs sm:text-sm font-medium">Faturamento</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
@@ -639,35 +631,49 @@ export default function MarketingAnalise() {
 
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">ROI</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground shrink-0" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Cor Mais Vendida</CardTitle>
+            <Palette className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold">
-              {metrics.roi !== null ? `${metrics.roi.toFixed(2)}%` : "N/A"}
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
+              {coresPintadas.length > 0 ? coresPintadas[0].cor_nome : "-"}
             </div>
-            {metrics.roi === null && (
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                Cadastre investimentos para visualizar
-              </p>
-            )}
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+              {coresPintadas.length > 0 ? `${coresPintadas[0].quantidade_pecas} peças hoje` : "Nenhuma cor pintada hoje"}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">CAC</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Produto Mais Vendido</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold">
-              {metrics.cac !== null ? `R$ ${metrics.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "N/A"}
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
+              {rankingCompleto.length > 0 ? rankingCompleto[0].item : "-"}
             </div>
-            {metrics.cac === null && (
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                Cadastre investimentos para visualizar
-              </p>
-            )}
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+              {rankingCompleto.length > 0 ? `${rankingCompleto[0].total_quantidade} unidades hoje` : "Nenhum produto hoje"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Ticket Médio</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground shrink-0" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
+              {metrics.vendasConvertidas > 0 
+                ? `R$ ${(metrics.totalVendas / metrics.vendasConvertidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                : "R$ 0,00"
+              }
+            </div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+              {metrics.vendasConvertidas} vendas no período
+            </p>
           </CardContent>
         </Card>
       </div>
