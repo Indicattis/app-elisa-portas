@@ -932,6 +932,49 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     }
   });
 
+  // Deletar pedido e todas as suas ordens
+  const deletarPedido = useMutation({
+    mutationFn: async (pedidoId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Verificar se é admin
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (adminError || adminData?.role !== 'administrador') {
+        throw new Error('Apenas administradores podem deletar pedidos');
+      }
+
+      // Chamar função RPC que deleta tudo
+      const { error } = await supabase.rpc('deletar_pedido_completo', {
+        p_pedido_id: pedidoId
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      queryClient.invalidateQueries({ queryKey: ['historico-ordens'] });
+      toast({
+        title: "Pedido deletado",
+        description: "O pedido e todas as suas ordens foram deletados com sucesso"
+      });
+    },
+    onError: (error: any) => {
+      console.error('Erro ao deletar pedido:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível deletar o pedido",
+        variant: "destructive"
+      });
+    }
+  });
+
   return {
     pedidos,
     isLoading,
@@ -942,5 +985,6 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     atualizarPrioridade,
     reorganizarPedidos,
     arquivarPedido,
+    deletarPedido,
   };
 }
