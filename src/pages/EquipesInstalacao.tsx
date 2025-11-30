@@ -216,7 +216,7 @@ export default function EquipesInstalacao() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/instalacoes")}
+              onClick={() => navigate("/dashboard/logistica/instalacoes/cronograma")}
               className="h-9 w-9 p-0"
             >
               <ArrowLeft className="h-5 w-5" />
