@@ -27,40 +27,86 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
       const fimRange = dia === 1 ? endOfMonth(semanaInicio) : endOfWeek(semanaInicio, { weekStartsOn: 1 });
       const fimFormatado = format(fimRange, 'yyyy-MM-dd');
       
-      // Buscar instalações com joins para equipes e autorizados
+      // Buscar ordens de carregamento que são instalações
       const { data, error } = await supabase
-        .from('instalacoes')
+        .from('ordens_carregamento')
         .select(`
           *,
-          pedido:pedidos_producao(id, numero_pedido, etapa_atual),
-          venda:vendas(id, cliente_nome, cliente_telefone, cliente_email),
+          venda:vendas!inner(
+            id, cliente_nome, cliente_telefone, cliente_email, tipo_entrega,
+            estado, cidade, cep, endereco_completo, valor_a_receber,
+            pagamento_na_entrega, forma_pagamento, observacoes
+          ),
+          pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
+            id, numero_pedido, etapa_atual,
+            instalacao:instalacoes(id, status, tipo_instalacao, instalacao_concluida)
+          ),
           equipe:equipes_instalacao(id, nome, cor),
           autorizado:autorizados(id, nome, cidade, estado)
         `)
-        .not('data_instalacao', 'is', null)
-        .gte('data_instalacao', inicioFormatado)
-        .lte('data_instalacao', fimFormatado)
-        .order('data_instalacao');
+        .eq('venda.tipo_entrega', 'instalacao')
+        .not('data_carregamento', 'is', null)
+        .gte('data_carregamento', inicioFormatado)
+        .lte('data_carregamento', fimFormatado)
+        .order('data_carregamento');
 
       if (error) throw error;
 
-      // Adicionar dia_semana e responsável unificado para cada instalação
+      // Adicionar dia_semana e mapear para estrutura compatível
       const instalacoesComDia: InstalacaoCronograma[] = (data || [])
-        .map((instalacao: any) => {
+        .map((ordem: any) => {
           // Criar data no timezone local para evitar problemas de conversão
-          const [ano, mes, dia] = instalacao.data_instalacao!.split('-').map(Number);
-          const dataInstalacao = new Date(ano, mes - 1, dia);
-          const diaSemana = getDay(dataInstalacao); // 0 = Domingo, 1 = Segunda, etc.
+          const [ano, mes, dia] = ordem.data_carregamento!.split('-').map(Number);
+          const dataCarregamento = new Date(ano, mes - 1, dia);
+          const diaSemana = getDay(dataCarregamento); // 0 = Domingo, 1 = Segunda, etc.
+          
+          const pedidoData = Array.isArray(ordem.pedido) ? ordem.pedido[0] : ordem.pedido;
+          const instalacaoData = pedidoData?.instalacao ? (Array.isArray(pedidoData.instalacao) ? pedidoData.instalacao[0] : pedidoData.instalacao) : null;
           
           return {
-            ...instalacao,
-            status: instalacao.status as 'pendente_producao' | 'pronta_fabrica' | 'finalizada',
-            tipo_instalacao: instalacao.tipo_instalacao as 'elisa' | 'autorizados' | null,
+            id: ordem.id,
+            venda_id: ordem.venda_id,
+            pedido_id: ordem.pedido_id,
+            nome_cliente: ordem.venda?.cliente_nome || '',
+            data_instalacao: ordem.data_carregamento,
+            hora: '08:00',
+            responsavel_instalacao_id: ordem.responsavel_carregamento_id,
+            responsavel_instalacao_nome: ordem.responsavel_carregamento_nome,
+            tipo_instalacao: ordem.tipo_carregamento as 'elisa' | 'autorizados' | null,
+            status: instalacaoData?.status || 'pendente_producao',
+            instalacao_concluida: instalacaoData?.instalacao_concluida || false,
+            instalacao_concluida_em: null,
+            instalacao_concluida_por: null,
+            latitude: null,
+            longitude: null,
+            last_geocoded_at: null,
+            geocode_precision: null,
+            created_at: ordem.created_at,
+            updated_at: ordem.updated_at,
+            created_by: ordem.created_by,
+            observacoes: ordem.observacoes,
             dia_semana: diaSemana,
-            equipe: Array.isArray(instalacao.equipe) ? instalacao.equipe[0] : instalacao.equipe,
-            autorizado: Array.isArray(instalacao.autorizado) ? instalacao.autorizado[0] : instalacao.autorizado,
-            pedido: Array.isArray(instalacao.pedido) ? instalacao.pedido[0] : instalacao.pedido,
-            venda: Array.isArray(instalacao.venda) ? instalacao.venda[0] : instalacao.venda
+            equipe: Array.isArray(ordem.equipe) ? ordem.equipe[0] : ordem.equipe,
+            autorizado: Array.isArray(ordem.autorizado) ? ordem.autorizado[0] : ordem.autorizado,
+            pedido: pedidoData ? {
+              id: pedidoData.id,
+              numero_pedido: pedidoData.numero_pedido,
+              etapa_atual: pedidoData.etapa_atual
+            } : null,
+            venda: ordem.venda ? {
+              id: ordem.venda.id,
+              cliente_nome: ordem.venda.cliente_nome,
+              cliente_telefone: ordem.venda.cliente_telefone,
+              cliente_email: ordem.venda.cliente_email,
+              estado: ordem.venda.estado || '',
+              cidade: ordem.venda.cidade || '',
+              cep: ordem.venda.cep || '',
+              endereco_completo: ordem.venda.endereco_completo || '',
+              valor_a_receber: ordem.venda.valor_a_receber || 0,
+              pagamento_na_entrega: ordem.venda.pagamento_na_entrega || false,
+              forma_pagamento: ordem.venda.forma_pagamento || '',
+              observacoes_venda: ordem.venda.observacoes || ''
+            } : null
           } as InstalacaoCronograma;
         });
 
@@ -92,14 +138,14 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
         .eq('id', novaEquipeId)
         .single();
 
-      // Atualizar a instalação
+      // Atualizar a ordem de carregamento
       const { error } = await supabase
-        .from('instalacoes')
+        .from('ordens_carregamento')
         .update({
-          data_instalacao: dataFormatada,
-          responsavel_instalacao_id: novaEquipeId,
-          responsavel_instalacao_nome: equipeData?.nome || null,
-          tipo_instalacao: 'elisa'
+          data_carregamento: dataFormatada,
+          responsavel_carregamento_id: novaEquipeId,
+          responsavel_carregamento_nome: equipeData?.nome || null,
+          tipo_carregamento: 'elisa'
         })
         .eq('id', id);
 
@@ -126,7 +172,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
         {
           event: '*',
           schema: 'public',
-          table: 'instalacoes'
+          table: 'ordens_carregamento'
         },
         () => {
           fetchInstalacoes();
