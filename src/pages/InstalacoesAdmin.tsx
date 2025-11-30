@@ -16,7 +16,7 @@ export default function InstalacoesAdmin() {
   // E filtrar por status de conclusão baseado no filtro
   const ordensInstalacao = ordens.filter(ordem => {
     const comInstalacao = ordem.venda?.valor_instalacao != null && ordem.venda.valor_instalacao > 0;
-    const filtroStatus = mostrarConcluidos || !ordem.carregamento_concluido;
+    const filtroStatus = mostrarConcluidos || ordem.status !== 'concluida';
     return comInstalacao && filtroStatus;
   });
 

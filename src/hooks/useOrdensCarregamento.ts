@@ -159,6 +159,30 @@ export const useOrdensCarregamento = (filters?: {
     },
   });
 
+  const concluirOrdemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("ordens_carregamento")
+        .update({
+          status: 'concluida',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens_instalacao_calendario"] });
+      toast.success("Ordem concluída com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao concluir ordem:", error);
+      toast.error("Erro ao concluir ordem");
+    },
+  });
+
   // Subscription em tempo real
   useEffect(() => {
     const channel = supabase
@@ -187,9 +211,11 @@ export const useOrdensCarregamento = (filters?: {
     isLoading,
     agendarCarregamento: agendarMutation.mutateAsync,
     concluirCarregamento: concluirMutation.mutateAsync,
+    concluirOrdem: concluirOrdemMutation.mutateAsync,
     updateStatus: updateStatusMutation.mutateAsync,
     isAgendando: agendarMutation.isPending,
     isConcluindo: concluirMutation.isPending,
+    isConcluindoOrdem: concluirOrdemMutation.isPending,
     isUpdating: updateStatusMutation.isPending,
   };
 };

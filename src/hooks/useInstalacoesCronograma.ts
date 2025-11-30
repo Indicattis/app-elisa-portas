@@ -50,8 +50,9 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
 
       if (error) throw error;
 
-      // Adicionar dia_semana e mapear para estrutura compatível
+      // Filtrar ordens com status concluído e mapear para estrutura compatível
       const instalacoesComDia: InstalacaoCronograma[] = (data || [])
+        .filter((ordem: any) => ordem.status !== 'concluida')
         .map((ordem: any) => {
           // Criar data no timezone local para evitar problemas de conversão
           const [ano, mes, dia] = ordem.data_carregamento!.split('-').map(Number);
