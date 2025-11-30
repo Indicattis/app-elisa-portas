@@ -20,8 +20,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
-import { useCoresPintadasHoje } from "@/hooks/useCoresPintadasHoje";
-import { useMateriaisProducaoRanking } from "@/hooks/useMateriaisProducaoRanking";
 
 interface MarketingInvestment {
   id: string;
@@ -67,8 +65,6 @@ interface RegionPerformanceData {
 
 export default function MarketingAnalise() {
   const { toast } = useToast();
-  const { data: coresPintadas = [] } = useCoresPintadasHoje();
-  const { rankingCompleto = [] } = useMateriaisProducaoRanking();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
@@ -87,6 +83,8 @@ export default function MarketingAnalise() {
   const [publicoAlvoData, setPublicoAlvoData] = useState<PublicoAlvoData[]>([]);
   const [canalAquisicaoData, setCanalAquisicaoData] = useState<CanalAquisicaoData[]>([]);
   const [regionPerformanceData, setRegionPerformanceData] = useState<RegionPerformanceData[]>([]);
+  const [corMaisVendida, setCorMaisVendida] = useState<{ cor: string; quantidade: number } | null>(null);
+  const [produtoMaisVendido, setProdutoMaisVendido] = useState<{ produto: string; quantidade: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [chartMode, setChartMode] = useState<'quantidade' | 'faturamento'>('quantidade');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -125,7 +123,9 @@ export default function MarketingAnalise() {
       await Promise.all([
         fetchMetrics(),
         fetchChartData(),
-        fetchRegionPerformance()
+        fetchRegionPerformance(),
+        fetchCoresMaisVendidas(),
+        fetchProdutosMaisVendidos()
       ]);
     };
     
@@ -293,6 +293,114 @@ export default function MarketingAnalise() {
       });
     } catch (error) {
       console.error("Erro ao calcular métricas:", error);
+    }
+  };
+
+  const fetchCoresMaisVendidas = async () => {
+    if (!dateRange?.from || !dateRange?.to) return;
+
+    try {
+      const startDate = format(dateRange.from, "yyyy-MM-dd");
+      const endDate = format(dateRange.to, "yyyy-MM-dd");
+
+      let query = supabase
+        .from("produtos_vendas")
+        .select("cor_id, quantidade, vendas!inner(data_venda, estado, id)")
+        .gte("vendas.data_venda", startDate)
+        .lte("vendas.data_venda", endDate)
+        .not("cor_id", "is", null);
+
+      const { data: produtosData, error } = await query;
+
+      if (error) {
+        console.error("Erro ao buscar cores:", error);
+        return;
+      }
+
+      // Filtrar por região se necessário
+      let filteredData = produtosData || [];
+      if (selectedRegiao && selectedRegiao !== "all") {
+        filteredData = filteredData.filter((p: any) => p.vendas?.estado === selectedRegiao);
+      }
+
+      // Buscar nomes das cores
+      const coresIds = [...new Set(filteredData.map((p: any) => p.cor_id))];
+      const { data: coresData } = await supabase
+        .from("catalogo_cores")
+        .select("id, nome")
+        .in("id", coresIds);
+
+      // Agrupar por cor
+      const coresMap = new Map();
+      filteredData.forEach((p: any) => {
+        const corNome = coresData?.find(c => c.id === p.cor_id)?.nome || "Sem cor";
+        const current = coresMap.get(corNome) || 0;
+        coresMap.set(corNome, current + (p.quantidade || 1));
+      });
+
+      // Encontrar a cor mais vendida
+      let maxCor = null;
+      let maxQtd = 0;
+      coresMap.forEach((qtd, cor) => {
+        if (qtd > maxQtd) {
+          maxQtd = qtd;
+          maxCor = cor;
+        }
+      });
+
+      setCorMaisVendida(maxCor ? { cor: maxCor, quantidade: maxQtd } : null);
+    } catch (error) {
+      console.error("Erro ao buscar cores mais vendidas:", error);
+    }
+  };
+
+  const fetchProdutosMaisVendidos = async () => {
+    if (!dateRange?.from || !dateRange?.to) return;
+
+    try {
+      const startDate = format(dateRange.from, "yyyy-MM-dd");
+      const endDate = format(dateRange.to, "yyyy-MM-dd");
+
+      let query = supabase
+        .from("produtos_vendas")
+        .select("descricao, quantidade, vendas!inner(data_venda, estado, id)")
+        .gte("vendas.data_venda", startDate)
+        .lte("vendas.data_venda", endDate);
+
+      const { data: produtosData, error } = await query;
+
+      if (error) {
+        console.error("Erro ao buscar produtos:", error);
+        return;
+      }
+
+      // Filtrar por região se necessário
+      let filteredData = produtosData || [];
+      if (selectedRegiao && selectedRegiao !== "all") {
+        filteredData = filteredData.filter((p: any) => p.vendas?.estado === selectedRegiao);
+      }
+
+      // Agrupar por produto
+      const produtosMap = new Map();
+      filteredData.forEach((p: any) => {
+        const produtoNome = p.descricao || "Produto sem nome";
+        const current = produtosMap.get(produtoNome) || 0;
+        produtosMap.set(produtoNome, current + (p.quantidade || 1));
+      });
+
+      // Encontrar o produto mais vendido
+      let maxProduto = null;
+      let maxQtd = 0;
+      produtosMap.forEach((qtd, produto) => {
+        if (qtd > maxQtd) {
+          maxQtd = qtd;
+          maxProduto = produto;
+        }
+      });
+
+      setProdutoMaisVendido(maxProduto ? { produto: maxProduto, quantidade: maxQtd } : null);
+    } catch (error) {
+      console.error("Erro ao buscar produtos mais vendidos:", error);
     }
   };
 
@@ -636,10 +744,10 @@ export default function MarketingAnalise() {
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
-              {coresPintadas.length > 0 ? coresPintadas[0].cor_nome : "-"}
+              {corMaisVendida ? corMaisVendida.cor : "-"}
             </div>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {coresPintadas.length > 0 ? `${coresPintadas[0].quantidade_pecas} peças hoje` : "Nenhuma cor pintada hoje"}
+              {corMaisVendida ? `${corMaisVendida.quantidade} unidades` : "Nenhuma venda no período"}
             </p>
           </CardContent>
         </Card>
@@ -651,10 +759,10 @@ export default function MarketingAnalise() {
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl md:text-2xl font-bold break-words">
-              {rankingCompleto.length > 0 ? rankingCompleto[0].item : "-"}
+              {produtoMaisVendido ? produtoMaisVendido.produto : "-"}
             </div>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {rankingCompleto.length > 0 ? `${rankingCompleto[0].total_quantidade} unidades hoje` : "Nenhum produto hoje"}
+              {produtoMaisVendido ? `${produtoMaisVendido.quantidade} unidades` : "Nenhuma venda no período"}
             </p>
           </CardContent>
         </Card>
