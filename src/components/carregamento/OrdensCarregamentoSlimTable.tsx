@@ -10,7 +10,7 @@ interface OrdensCarregamentoSlimTableProps {
   onConcluirOrdem?: (id: string) => Promise<void>;
 }
 
-export const OrdensCarregamentoSlimTable = ({ ordens, onConcluirOrdem }: OrdensCarregamentoSlimTableProps) {
+export const OrdensCarregamentoSlimTable = ({ ordens, onConcluirOrdem }: OrdensCarregamentoSlimTableProps) => {
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'concluida':
