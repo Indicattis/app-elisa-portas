@@ -40,9 +40,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
           pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
             id, numero_pedido, etapa_atual,
             instalacao:instalacoes(id, status, tipo_instalacao, instalacao_concluida)
-          ),
-          equipe:equipes_instalacao(id, nome, cor),
-          autorizado:autorizados(id, nome, cidade, estado)
+          )
         `)
         .eq('venda.tipo_entrega', 'instalacao')
         .not('data_carregamento', 'is', null)
@@ -86,8 +84,8 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
             created_by: ordem.created_by,
             observacoes: ordem.observacoes,
             dia_semana: diaSemana,
-            equipe: Array.isArray(ordem.equipe) ? ordem.equipe[0] : ordem.equipe,
-            autorizado: Array.isArray(ordem.autorizado) ? ordem.autorizado[0] : ordem.autorizado,
+            equipe: null,
+            autorizado: null,
             pedido: pedidoData ? {
               id: pedidoData.id,
               numero_pedido: pedidoData.numero_pedido,
