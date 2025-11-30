@@ -35,24 +35,22 @@ export function useConferencias(veiculoId?: string) {
   const { data: conferencias, isLoading } = useQuery({
     queryKey: ['conferencias', veiculoId],
     queryFn: async () => {
-      let query = supabase
+      if (!veiculoId) {
+        return [];
+      }
+
+      const { data, error } = await supabase
         .from('veiculos_conferencias')
         .select('*')
+        .eq('veiculo_id', veiculoId)
         .order('created_at', { ascending: false });
-      
-      if (veiculoId) {
-        query = query.eq('veiculo_id', veiculoId);
-      }
-      
-      const { data, error } = await query;
       
       if (error) throw error;
       return data?.map(c => ({
         ...c,
         status: c.status as 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso'
       })) as Conferencia[];
-    },
-    enabled: !!veiculoId
+    }
   });
 
   const createConferenciaMutation = useMutation({
