@@ -7,7 +7,6 @@ export interface OrdemCarregamento {
   data_carregamento: string | null;
   hora: string | null;
   hora_carregamento?: string | null;
-  responsavel_tipo: string | null;
   responsavel_carregamento_id: string | null;
   responsavel_carregamento_nome: string | null;
   status: string | null;
@@ -25,27 +24,27 @@ export interface OrdemCarregamento {
   pedido?: {
     id: string;
     numero_pedido: string;
-    etapa_atual: string;
+    etapa_atual?: string;
     data_producao?: string | null;
     instalacao?: Array<{
       id: string;
-      responsavel_instalacao_id: string | null;
-      responsavel_instalacao_nome: string | null;
-      tipo_instalacao: string | null;
-      instalacao_concluida: boolean | null;
-      instalacao_concluida_em: string | null;
-      instalacao_concluida_por: string | null;
+      responsavel_instalacao_id?: string | null;
+      responsavel_instalacao_nome?: string | null;
+      tipo_instalacao?: string | null;
+      instalacao_concluida?: boolean | null;
+      instalacao_concluida_em?: string | null;
+      instalacao_concluida_por?: string | null;
     }> | null;
   };
   venda?: {
     id: string;
     cliente_nome: string;
-    cliente_telefone: string | null;
-    cidade: string | null;
-    estado: string | null;
-    cep: string | null;
-    bairro: string | null;
-    data_prevista_entrega: string | null;
+    cliente_telefone?: string | null;
+    cidade?: string | null;
+    estado?: string | null;
+    cep?: string | null;
+    bairro?: string | null;
+    data_prevista_entrega?: string | null;
     cliente_email?: string | null;
     valor_instalacao?: number | null;
     tipo_entrega?: 'instalacao' | 'entrega' | null;

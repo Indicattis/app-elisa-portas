@@ -2363,7 +2363,6 @@ export type Database = {
           pedido_id: string | null
           responsavel_carregamento_id: string | null
           responsavel_carregamento_nome: string | null
-          responsavel_tipo: string | null
           status: string | null
           tipo_carregamento:
             | Database["public"]["Enums"]["tipo_carregamento"]
@@ -2390,7 +2389,6 @@ export type Database = {
           pedido_id?: string | null
           responsavel_carregamento_id?: string | null
           responsavel_carregamento_nome?: string | null
-          responsavel_tipo?: string | null
           status?: string | null
           tipo_carregamento?:
             | Database["public"]["Enums"]["tipo_carregamento"]
@@ -2417,7 +2415,6 @@ export type Database = {
           pedido_id?: string | null
           responsavel_carregamento_id?: string | null
           responsavel_carregamento_nome?: string | null
-          responsavel_tipo?: string | null
           status?: string | null
           tipo_carregamento?:
             | Database["public"]["Enums"]["tipo_carregamento"]
