@@ -21,9 +21,9 @@ interface EditarOrdemCarregamentoDrawerProps {
   onSave: (data: {
     data_carregamento: string;
     hora_carregamento: string;
-    tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
-    responsavel_carregamento_id: string;
-    responsavel_carregamento_nome: string;
+    tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro' | null;
+    responsavel_carregamento_id: string | null;
+    responsavel_carregamento_nome: string | null;
   }) => Promise<void>;
 }
 
@@ -35,7 +35,7 @@ export const EditarOrdemCarregamentoDrawer = ({
 }: EditarOrdemCarregamentoDrawerProps) => {
   const [dataCarregamento, setDataCarregamento] = useState<Date | undefined>();
   const [hora, setHora] = useState("08:00");
-  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados" | "terceiro">("elisa");
+  const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados" | "terceiro" | "sem-responsavel">("sem-responsavel");
   const [responsavelId, setResponsavelId] = useState("");
   const [responsavelNomeTerceiro, setResponsavelNomeTerceiro] = useState("");
   const [responsaveis, setResponsaveis] = useState<any[]>([]);
@@ -49,13 +49,17 @@ export const EditarOrdemCarregamentoDrawer = ({
   useEffect(() => {
     if (open && ordem) {
       if (ordem.data_carregamento) {
-        setDataCarregamento(new Date(ordem.data_carregamento));
+        // Parse da data sem problemas de timezone
+        const [year, month, day] = ordem.data_carregamento.split('-').map(Number);
+        setDataCarregamento(new Date(year, month - 1, day));
       }
       if (ordem.hora || ordem.hora_carregamento) {
         setHora(ordem.hora || ordem.hora_carregamento || "08:00");
       }
       if (ordem.tipo_carregamento) {
         setResponsavelTipo(ordem.tipo_carregamento as "elisa" | "autorizados" | "terceiro");
+      } else {
+        setResponsavelTipo("sem-responsavel");
       }
       if (ordem.responsavel_carregamento_id) {
         if (ordem.tipo_carregamento === 'terceiro') {
@@ -68,7 +72,7 @@ export const EditarOrdemCarregamentoDrawer = ({
       // Reset
       setDataCarregamento(undefined);
       setHora("08:00");
-      setResponsavelTipo("elisa");
+      setResponsavelTipo("sem-responsavel");
       setResponsavelId("");
       setResponsavelNomeTerceiro("");
     }
@@ -76,7 +80,7 @@ export const EditarOrdemCarregamentoDrawer = ({
 
   // Carregar responsáveis quando o tipo muda
   useEffect(() => {
-    if (open && responsavelTipo !== 'terceiro') {
+    if (open && responsavelTipo !== 'terceiro' && responsavelTipo !== 'sem-responsavel') {
       loadResponsaveis();
     }
   }, [responsavelTipo, open]);
@@ -128,48 +132,58 @@ export const EditarOrdemCarregamentoDrawer = ({
       return;
     }
 
-    if (isEntrega) {
-      if (responsavelTipo === 'elisa' && !responsavelId) {
-        toast.error("Selecione um veículo");
-        return;
-      }
-      if (responsavelTipo === 'terceiro' && !responsavelNomeTerceiro.trim()) {
-        toast.error("Informe o nome do responsável");
-        return;
-      }
-    } else {
-      if (!responsavelId) {
-        toast.error("Selecione um responsável");
-        return;
+    // Validação apenas se não for "sem responsável"
+    if (responsavelTipo !== 'sem-responsavel') {
+      if (isEntrega) {
+        if (responsavelTipo === 'elisa' && !responsavelId) {
+          toast.error("Selecione um veículo");
+          return;
+        }
+        if (responsavelTipo === 'terceiro' && !responsavelNomeTerceiro.trim()) {
+          toast.error("Informe o nome do responsável");
+          return;
+        }
+      } else {
+        if (!responsavelId) {
+          toast.error("Selecione um responsável");
+          return;
+        }
       }
     }
 
     setSaving(true);
     try {
-      let responsavelNome = '';
-      let finalResponsavelId: string | null = responsavelId;
+      let responsavelNome: string | null = null;
+      let finalResponsavelId: string | null = null;
+      let tipoCarregamentoFinal: 'elisa' | 'autorizados' | 'terceiro' | null = null;
 
-      if (isEntrega) {
-        if (responsavelTipo === 'elisa') {
-          const veiculo = veiculos.find(v => v.id === responsavelId);
-          responsavelNome = veiculo?.nome || '';
+      if (responsavelTipo !== 'sem-responsavel') {
+        tipoCarregamentoFinal = responsavelTipo as 'elisa' | 'autorizados' | 'terceiro';
+        
+        if (isEntrega) {
+          if (responsavelTipo === 'elisa') {
+            const veiculo = veiculos.find(v => v.id === responsavelId);
+            responsavelNome = veiculo?.nome || '';
+            finalResponsavelId = responsavelId;
+          } else {
+            responsavelNome = responsavelNomeTerceiro.trim();
+            finalResponsavelId = null;
+          }
         } else {
-          responsavelNome = responsavelNomeTerceiro.trim();
-          finalResponsavelId = null; // Para terceiros, ID é null
+          const responsavel = responsaveis.find(r => r.id === responsavelId);
+          if (!responsavel) {
+            toast.error("Responsável não encontrado");
+            return;
+          }
+          responsavelNome = responsavel.nome;
+          finalResponsavelId = responsavelId;
         }
-      } else {
-        const responsavel = responsaveis.find(r => r.id === responsavelId);
-        if (!responsavel) {
-          toast.error("Responsável não encontrado");
-          return;
-        }
-        responsavelNome = responsavel.nome;
       }
 
       await onSave({
         data_carregamento: format(dataCarregamento, "yyyy-MM-dd"),
         hora_carregamento: hora,
-        tipo_carregamento: responsavelTipo,
+        tipo_carregamento: tipoCarregamentoFinal,
         responsavel_carregamento_id: finalResponsavelId,
         responsavel_carregamento_nome: responsavelNome,
       });
@@ -269,7 +283,7 @@ export const EditarOrdemCarregamentoDrawer = ({
             <Label>{isEntrega ? 'Tipo de Carregamento' : 'Tipo de Responsável'}</Label>
             <Select
               value={responsavelTipo}
-              onValueChange={(value: "elisa" | "autorizados" | "terceiro") => {
+              onValueChange={(value: "elisa" | "autorizados" | "terceiro" | "sem-responsavel") => {
                 setResponsavelTipo(value);
                 setResponsavelId("");
                 setResponsavelNomeTerceiro("");
@@ -279,6 +293,9 @@ export const EditarOrdemCarregamentoDrawer = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="sem-responsavel">
+                  Sem responsável
+                </SelectItem>
                 <SelectItem value="elisa">
                   {isEntrega ? 'Carregamento Elisa' : 'Instalação Elisa'}
                 </SelectItem>
@@ -289,61 +306,63 @@ export const EditarOrdemCarregamentoDrawer = ({
             </Select>
           </div>
 
-          {/* Responsável */}
-          {isEntrega && responsavelTipo === 'terceiro' ? (
-            <div className="space-y-2">
-              <Label>Nome do Responsável</Label>
-              <Input
-                type="text"
-                placeholder="Digite o nome do responsável"
-                value={responsavelNomeTerceiro}
-                onChange={(e) => setResponsavelNomeTerceiro(e.target.value)}
-              />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label>
-                {isEntrega 
-                  ? 'Veículo'
-                  : (responsavelTipo === 'elisa' ? 'Equipe' : 'Autorizado')
-                }
-              </Label>
-              <Select
-                value={responsavelId}
-                onValueChange={setResponsavelId}
-                disabled={loading || (isEntrega && loadingVeiculos) || responsaveis.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={loading || (isEntrega && loadingVeiculos) ? "Carregando..." : "Selecione"}>
-                    {responsavelId && (
-                      isEntrega && responsavelTipo === 'elisa'
-                        ? veiculos.find(v => v.id === responsavelId)?.nome
-                        : responsaveis.find(r => r.id === responsavelId)?.nome
+          {/* Responsável - só mostra se não for "sem-responsavel" */}
+          {responsavelTipo !== 'sem-responsavel' && (
+            isEntrega && responsavelTipo === 'terceiro' ? (
+              <div className="space-y-2">
+                <Label>Nome do Responsável</Label>
+                <Input
+                  type="text"
+                  placeholder="Digite o nome do responsável"
+                  value={responsavelNomeTerceiro}
+                  onChange={(e) => setResponsavelNomeTerceiro(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>
+                  {isEntrega 
+                    ? 'Veículo'
+                    : (responsavelTipo === 'elisa' ? 'Equipe' : 'Autorizado')
+                  }
+                </Label>
+                <Select
+                  value={responsavelId}
+                  onValueChange={setResponsavelId}
+                  disabled={loading || (isEntrega && loadingVeiculos) || responsaveis.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={loading || (isEntrega && loadingVeiculos) ? "Carregando..." : "Selecione"}>
+                      {responsavelId && (
+                        isEntrega && responsavelTipo === 'elisa'
+                          ? veiculos.find(v => v.id === responsavelId)?.nome
+                          : responsaveis.find(r => r.id === responsavelId)?.nome
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isEntrega && responsavelTipo === 'elisa' ? (
+                      veiculos.filter(v => v.ativo).map((veiculo) => (
+                        <SelectItem key={veiculo.id} value={veiculo.id}>
+                          {veiculo.nome}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      responsaveis.map((resp) => (
+                        <SelectItem key={resp.id} value={resp.id}>
+                          {resp.nome}
+                          {responsavelTipo === "autorizados" && resp.cidade && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              - {resp.cidade}/{resp.estado}
+                            </span>
+                          )}
+                        </SelectItem>
+                      ))
                     )}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {isEntrega && responsavelTipo === 'elisa' ? (
-                    veiculos.filter(v => v.ativo).map((veiculo) => (
-                      <SelectItem key={veiculo.id} value={veiculo.id}>
-                        {veiculo.nome}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    responsaveis.map((resp) => (
-                      <SelectItem key={resp.id} value={resp.id}>
-                        {resp.nome}
-                        {responsavelTipo === "autorizados" && resp.cidade && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            - {resp.cidade}/{resp.estado}
-                          </span>
-                        )}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                  </SelectContent>
+                </Select>
+              </div>
+            )
           )}
         </div>
 
