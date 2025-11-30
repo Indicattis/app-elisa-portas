@@ -98,6 +98,11 @@ export function useVendas() {
         throw new Error('É necessário adicionar pelo menos um produto');
       }
 
+      // Validar localização obrigatória
+      if (!vendaData.estado || !vendaData.cidade) {
+        throw new Error('Estado e cidade são obrigatórios');
+      }
+
       // 1. Obter usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
