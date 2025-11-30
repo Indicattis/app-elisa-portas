@@ -583,22 +583,34 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                {/* Nova rota: Agendamento (antiga Expedição) */}
                 <Route
-                  path="/dashboard/entregas"
+                  path="/dashboard/logistica/agendamento"
                   element={
-                    <ProtectedRoute routeKey="entregas">
+                    <ProtectedRoute routeKey="logistica_agendamento">
                       <DashboardLayout>
-                        <Entregas />
+                        <Expedicao />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                {/* Subitens de Instalações dentro de Logística */}
+                <Route
+                  path="/dashboard/logistica/instalacoes/cronograma"
+                  element={
+                    <ProtectedRoute routeKey="cronograma_instalacoes">
+                      <DashboardLayout>
+                        <CronogramaInstalacoes />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/dashboard/logistica/entregas"
+                  path="/dashboard/logistica/instalacoes/equipes"
                   element={
-                    <ProtectedRoute routeKey="entregas">
+                    <ProtectedRoute routeKey="instalacoes_equipes_dashboard">
                       <DashboardLayout>
-                        <Entregas />
+                        <EquipesInstalacao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
@@ -653,26 +665,9 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_home">
-                      <DashboardLayout>
-                        <InstalacoesHome />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/instalacoes/listagem"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_listagem">
-                      <DashboardLayout>
-                        <InstalacoesAdmin />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Rotas antigas de instalações - redirecionamento para Logística */}
+                <Route path="/dashboard/instalacoes" element={<Navigate to="/dashboard/logistica" replace />} />
+                <Route path="/dashboard/instalacoes/listagem" element={<Navigate to="/dashboard/logistica" replace />} />
                 <Route
                   path="/instalacoes"
                   element={
@@ -709,28 +704,12 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/instalacoes/expedicao"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_expedicao">
-                      <DashboardLayout>
-                        <Expedicao />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Redirect old route to new location */}
-                <Route path="/expedicao" element={<Navigate to="/dashboard/instalacoes/expedicao" replace />} />
-                <Route
-                  path="/dashboard/instalacoes/cronograma-instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="cronograma_instalacoes">
-                      <DashboardLayout>
-                        <CronogramaInstalacoes />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Redirects para as novas rotas de Logística */}
+                <Route path="/dashboard/instalacoes/expedicao" element={<Navigate to="/dashboard/logistica/agendamento" replace />} />
+                <Route path="/expedicao" element={<Navigate to="/dashboard/logistica/agendamento" replace />} />
+                <Route path="/dashboard/instalacoes/cronograma-instalacoes" element={<Navigate to="/dashboard/logistica/instalacoes/cronograma" replace />} />
+                <Route path="/dashboard/instalacoes/cronograma" element={<Navigate to="/dashboard/logistica/instalacoes/cronograma" replace />} />
+                <Route path="/dashboard/logistica/entregas" element={<Navigate to="/dashboard/logistica" replace />} />
                 <Route
                   path="/dashboard/fabrica/novo-pedido"
                   element={
@@ -1356,16 +1335,13 @@ const App = () => (
                 <Route path="/dashboard/novo-pedido" element={<Navigate to="/dashboard/fabrica/novo-pedido" replace />} />
                 
                 {/* Redirects Logística */}
-                <Route path="/dashboard/entregas" element={<Navigate to="/dashboard/logistica/entregas" replace />} />
+                <Route path="/dashboard/entregas" element={<Navigate to="/dashboard/logistica" replace />} />
                 <Route path="/dashboard/frota" element={<Navigate to="/dashboard/logistica/frota" replace />} />
                 <Route path="/dashboard/instalacoes/frota" element={<Navigate to="/dashboard/logistica/frota" replace />} />
                 <Route path="/dashboard/instalacoes/frota/novo" element={<Navigate to="/dashboard/logistica/frota/novo" replace />} />
                 <Route path="/dashboard/instalacoes/frota/:id/editar" element={<Navigate to="/dashboard/logistica/frota/:id/editar" replace />} />
                 <Route path="/dashboard/instalacoes/frota/conferencia" element={<Navigate to="/dashboard/logistica/frota/conferencia" replace />} />
                 <Route path="/dashboard/instalacoes/frota/:id/conferencias" element={<Navigate to="/dashboard/logistica/frota/:id/conferencias" replace />} />
-                
-                {/* Redirects Instalações */}
-                <Route path="/dashboard/instalacoes/cronograma" element={<Navigate to="/dashboard/instalacoes/cronograma-instalacoes" replace />} />
                 
                 {/* Redirects Administrativo - Compras */}
                 <Route path="/dashboard/compras/fornecedores" element={<Navigate to="/dashboard/administrativo/compras/fornecedores" replace />} />
