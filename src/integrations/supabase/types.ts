@@ -5027,6 +5027,10 @@ export type Database = {
         Args: { orcamento_uuid: string }
         Returns: string
       }
+      deletar_pedido_completo: {
+        Args: { p_pedido_id: string }
+        Returns: undefined
+      }
       excluir_pedido_em_aberto: {
         Args: { pedido_uuid: string }
         Returns: boolean

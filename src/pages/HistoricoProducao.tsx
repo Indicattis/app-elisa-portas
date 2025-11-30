@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useHistoricoOrdens } from "@/hooks/useHistoricoOrdens";
+import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
 import { HistoricoFiltros } from "@/components/production/HistoricoFiltros";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,10 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatDuration } from "@/utils/timeFormat";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, ChevronDown, ChevronRight, FolderOpen, Archive } from "lucide-react";
+import { History, ChevronDown, ChevronRight, FolderOpen, Archive, Trash2 } from "lucide-react";
 
 const TIPO_ORDEM_COLORS: Record<string, string> = {
   soldagem: "bg-orange-500/10 text-orange-700 border-orange-500/20",
@@ -36,6 +48,7 @@ export default function HistoricoProducao() {
   const [dataFim, setDataFim] = useState<Date>();
   const [busca, setBusca] = useState("");
   const [openPedidos, setOpenPedidos] = useState<Set<string>>(new Set());
+  const [pedidoParaDeletar, setPedidoParaDeletar] = useState<string | null>(null);
 
   const { data: ordens = [], isLoading } = useHistoricoOrdens({
     tipoOrdem: tipoOrdem as any,
@@ -43,6 +56,8 @@ export default function HistoricoProducao() {
     dataFim,
     busca,
   });
+
+  const { deletarPedido } = usePedidosEtapas();
 
   // Agrupar ordens por pedido
   const ordensAgrupadas = ordens.reduce((acc, ordem) => {
@@ -67,6 +82,13 @@ export default function HistoricoProducao() {
       }
       return newSet;
     });
+  };
+
+  const handleDeletar = () => {
+    if (pedidoParaDeletar) {
+      deletarPedido.mutate(pedidoParaDeletar);
+      setPedidoParaDeletar(null);
+    }
   };
 
   return (
@@ -146,11 +168,22 @@ export default function HistoricoProducao() {
                               <span className="text-sm text-muted-foreground">
                                 {pedido?.cliente_nome || "Cliente não informado"}
                               </span>
-                              <Badge variant="secondary" className="ml-auto">
+                              <Badge variant="secondary">
                                 {ordensGrupo.length} ordem{ordensGrupo.length !== 1 ? 's' : ''}
                               </Badge>
                             </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPedidoParaDeletar(pedidoId);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
@@ -226,6 +259,27 @@ export default function HistoricoProducao() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!pedidoParaDeletar} onOpenChange={() => setPedidoParaDeletar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar este pedido e todas as suas ordens? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletar}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
