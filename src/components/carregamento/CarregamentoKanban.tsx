@@ -42,13 +42,15 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                 {ordem.venda.cidade} - {ordem.venda.estado}
               </span>
             )}
-            {ordem.responsavel_carregamento_nome && (
-              <>
-                <span className="text-muted-foreground">•</span>
-                <span className="font-medium text-foreground">
-                  {ordem.responsavel_carregamento_nome}
-                </span>
-              </>
+            <span className="text-muted-foreground">•</span>
+            {ordem.responsavel_carregamento_nome ? (
+              <span className="font-medium text-foreground">
+                {ordem.responsavel_carregamento_nome}
+              </span>
+            ) : (
+              <span className="text-muted-foreground italic">
+                Sem responsável definido
+              </span>
             )}
           </div>
           <div className="flex items-center gap-2">
