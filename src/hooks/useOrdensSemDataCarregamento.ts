@@ -7,7 +7,7 @@ import { useEffect } from "react";
 export const useOrdensSemDataCarregamento = () => {
   const queryClient = useQueryClient();
 
-  const { data: ordens = [], isLoading } = useQuery({
+  const { data: ordens = [], isLoading, refetch } = useQuery({
     queryKey: ["ordens_sem_data_carregamento"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -127,5 +127,6 @@ export const useOrdensSemDataCarregamento = () => {
     isLoading,
     updateOrdem: updateOrdemMutation.mutateAsync,
     isUpdating: updateOrdemMutation.isPending,
+    refetch,
   };
 };
