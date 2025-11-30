@@ -1,5 +1,7 @@
-import { Calendar, MapPin } from "lucide-react";
+import { Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { InstalacaoCronograma } from "@/hooks/useInstalacoesCronograma";
 
 interface PontoInstalacaoProps {
@@ -25,55 +27,107 @@ export function PontoInstalacao({
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pendente_producao': return 'bg-yellow-500/10 text-yellow-700 border-yellow-300';
-      case 'pronta_fabrica': return 'bg-blue-500/10 text-blue-700 border-blue-300';
-      case 'finalizada': return 'bg-green-500/10 text-green-700 border-green-300';
-      default: return 'bg-gray-500/10 text-gray-700 border-gray-300';
+  // Lógica de cores baseada no tipo de instalação
+  const getCardStyles = () => {
+    // Instalação com Elisa - Vermelho
+    if (instalacao.tipo_instalacao === 'elisa') {
+      return {
+        backgroundColor: 'rgb(239 68 68 / 0.15)',
+        borderColor: 'rgb(239 68 68 / 0.5)',
+      };
     }
+
+    // Instalação com Autorizado - Azul
+    if (instalacao.tipo_instalacao === 'autorizados') {
+      return {
+        backgroundColor: 'rgb(59 130 246 / 0.15)',
+        borderColor: 'rgb(59 130 246 / 0.5)',
+      };
+    }
+
+    // Sem responsável definido - Amarelo
+    return {
+      backgroundColor: 'rgb(234 179 8 / 0.15)',
+      borderColor: 'rgb(234 179 8 / 0.5)',
+    };
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'pendente_producao': return 'Pendente';
-      case 'pronta_fabrica': return 'Pronta';
-      case 'finalizada': return 'Finalizada';
-      default: return status;
-    }
+  // Obter nome do responsável
+  const getResponsavelNome = () => {
+    if (!instalacao.tipo_instalacao) return 'Sem responsável';
+    
+    if (instalacao.tipo_instalacao === 'elisa') return 'Instalação Elisa';
+    return 'Autorizado';
   };
 
   return (
-    <div
+    <Card 
       draggable
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
-      className="group relative bg-card border border-border rounded-lg p-3 mb-2 cursor-move hover:shadow-md transition-all"
-      style={{ borderLeftColor: cor, borderLeftWidth: '4px' }}
+      className="relative h-[35px] p-2 border transition-all duration-200 cursor-grab active:cursor-grabbing hover:opacity-80 mb-2"
+      style={getCardStyles()}
       onDoubleClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         onEdit();
       }}
     >
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="font-semibold text-sm truncate flex-1">
-            {instalacao.nome_cliente}
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          <span className="truncate">{instalacao.venda?.cidade || 'N/A'}</span>
-        </div>
-
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="outline" className={`text-xs ${getStatusColor(instalacao.status)}`}>
-            {getStatusLabel(instalacao.status)}
+      <div className="flex items-center justify-between gap-2 h-[19px]">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h4 className="font-semibold text-xs truncate">{instalacao.nome_cliente}</h4>
+          <Badge 
+            variant="secondary" 
+            className="text-[9px] px-1 py-0 h-4 shrink-0"
+          >
+            {getResponsavelNome()}
           </Badge>
         </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {instalacao.venda && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    className="p-0.5 hover:bg-accent rounded-md transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-sm">
+                  <div className="space-y-2">
+                    <div className="font-semibold text-[11px] border-b border-border pb-1">
+                      {instalacao.venda?.cliente_nome || instalacao.nome_cliente}
+                    </div>
+
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span className="font-medium">Instalação</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
+                        {getResponsavelNome()}
+                      </span>
+                    </div>
+                    
+                    {instalacao.venda.cidade && (
+                      <div className="text-[10px]">
+                        <span>{instalacao.venda.cidade}/{instalacao.venda.estado}</span>
+                      </div>
+                    )}
+
+                    {instalacao.pedido && (
+                      <div className="text-[10px] text-muted-foreground">
+                        Pedido: {instalacao.pedido.numero_pedido}
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }
