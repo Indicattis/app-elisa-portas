@@ -342,7 +342,7 @@ export default function MarketingAnalise() {
       const coresArray = Array.from(coresMap.entries())
         .map(([cor, quantidade]) => ({ cor, quantidade }))
         .sort((a, b) => b.quantidade - a.quantidade)
-        .slice(0, 3);
+        .slice(0, 5);
 
       setCoresMaisVendidas(coresArray);
     } catch (error) {
@@ -388,7 +388,7 @@ export default function MarketingAnalise() {
       const produtosArray = Array.from(produtosMap.entries())
         .map(([produto, quantidade]) => ({ produto, quantidade }))
         .sort((a, b) => b.quantidade - a.quantidade)
-        .slice(0, 3);
+        .slice(0, 5);
 
       setProdutosMaisVendidos(produtosArray);
     } catch (error) {
