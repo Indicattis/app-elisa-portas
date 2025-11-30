@@ -8,7 +8,7 @@ import { OrdensCarregamentoSlimTable } from "@/components/carregamento/OrdensCar
 
 export default function LogisticaHome() {
   const { data: instalacaoMetrics, isLoading: loadingInstalacoes } = useInstalacoesDashboard();
-  const { ordens: ordensCarregamento, isLoading: loadingOrdens } = useOrdensCarregamento();
+  const { ordens: ordensCarregamento, isLoading: loadingOrdens, concluirOrdem } = useOrdensCarregamento();
 
   const { data: entregasMetrics, isLoading: loadingEntregas } = useQuery({
     queryKey: ['entregas-dashboard'],
@@ -116,7 +116,7 @@ export default function LogisticaHome() {
           <CardTitle className="text-sm sm:text-base md:text-lg">Ordens de Carregamento</CardTitle>
         </CardHeader>
         <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
-          <OrdensCarregamentoSlimTable ordens={ordensCarregamento || []} />
+          <OrdensCarregamentoSlimTable ordens={ordensCarregamento || []} onConcluirOrdem={concluirOrdem} />
         </CardContent>
       </Card>
     </div>

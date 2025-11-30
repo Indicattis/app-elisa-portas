@@ -82,12 +82,9 @@ export const useOrdensInstalacaoCalendario = (
 
       if (error) throw error;
       
-      // Filtrar apenas ordens que NÃO têm instalação concluída
+      // Filtrar ordens com status concluído
       const filteredData = (data || []).filter((ordem: any) => {
-        const instalacao = ordem.pedido?.instalacao?.[0];
-
-        // Excluir apenas se a instalação está concluída
-        return instalacao?.instalacao_concluida !== true;
+        return ordem.status !== 'concluida';
       });
       
       return filteredData as OrdemCarregamento[];
