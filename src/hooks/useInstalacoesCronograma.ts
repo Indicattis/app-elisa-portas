@@ -34,7 +34,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
           *,
           venda:vendas!inner(
             id, cliente_nome, cliente_telefone, cliente_email, tipo_entrega,
-            estado, cidade, cep, endereco_completo, valor_a_receber,
+            estado, cidade, cep, valor_a_receber,
             pagamento_na_entrega, forma_pagamento, observacoes
           ),
           pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
@@ -99,7 +99,7 @@ export function useInstalacoesCronograma(semanaInicio: Date) {
               estado: ordem.venda.estado || '',
               cidade: ordem.venda.cidade || '',
               cep: ordem.venda.cep || '',
-              endereco_completo: ordem.venda.endereco_completo || '',
+              endereco_completo: null,
               valor_a_receber: ordem.venda.valor_a_receber || 0,
               pagamento_na_entrega: ordem.venda.pagamento_na_entrega || false,
               forma_pagamento: ordem.venda.forma_pagamento || '',

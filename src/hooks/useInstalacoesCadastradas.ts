@@ -107,7 +107,6 @@ export const useInstalacoesCadastradas = () => {
             estado,
             cidade,
             cep,
-            endereco_completo,
             valor_a_receber,
             pagamento_na_entrega,
             forma_pagamento,
