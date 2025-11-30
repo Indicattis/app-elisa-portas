@@ -4,9 +4,12 @@ import { useInstalacoesDashboard } from "@/hooks/useInstalacoesDashboard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
+import { OrdensCarregamentoSlimTable } from "@/components/carregamento/OrdensCarregamentoSlimTable";
 
 export default function LogisticaHome() {
   const { data: instalacaoMetrics, isLoading: loadingInstalacoes } = useInstalacoesDashboard();
+  const { ordens: ordensCarregamento, isLoading: loadingOrdens } = useOrdensCarregamento();
 
   const { data: entregasMetrics, isLoading: loadingEntregas } = useQuery({
     queryKey: ['entregas-dashboard'],
@@ -30,7 +33,7 @@ export default function LogisticaHome() {
     }
   });
 
-  const isLoading = loadingInstalacoes || loadingEntregas;
+  const isLoading = loadingInstalacoes || loadingEntregas || loadingOrdens;
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
@@ -173,6 +176,16 @@ export default function LogisticaHome() {
           </CardContent>
         </Card>
       )}
+
+      {/* Ordens de Carregamento */}
+      <Card>
+        <CardHeader className="p-3 sm:p-4 md:p-6">
+          <CardTitle className="text-sm sm:text-base md:text-lg">Ordens de Carregamento</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
+          <OrdensCarregamentoSlimTable ordens={ordensCarregamento || []} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
