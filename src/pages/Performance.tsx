@@ -1,17 +1,19 @@
 import { useEffect, useState, useMemo } from "react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone, Mouse, TrendingUp, Globe, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSalesData, useWhatsAppRoulette } from "@/hooks/useDashboardData";
 import { supabase } from "@/integrations/supabase/client";
+import type { DateRange } from "react-day-picker";
 
 interface WhatsAppClick {
   id: string;
@@ -54,12 +56,27 @@ export default function Performance() {
   const [dataFim, setDataFim] = useState<Date>(new Date());
   const today = new Date();
 
+  // Estados para a nova seção de vendas
+  const [vendasDateRange, setVendasDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
+  const [vendedorPublicoAlvo, setVendedorPublicoAlvo] = useState<string>("all");
+  const [vendedorCanalAquisicao, setVendedorCanalAquisicao] = useState<string>("all");
+  const [vendedorEstado, setVendedorEstado] = useState<string>("all");
+  const [publicoAlvoData, setPublicoAlvoData] = useState<{name: string; value: number}[]>([]);
+  const [canalAquisicaoData, setCanalAquisicaoData] = useState<{name: string; value: number}[]>([]);
+  const [estadoData, setEstadoData] = useState<{name: string; value: number}[]>([]);
+  const [vendedores, setVendedores] = useState<{id: string; nome: string}[]>([]);
+  const [loadingVendas, setLoadingVendas] = useState(false);
+
   // Use the corrected sales data hook
   const { data: salesData, isLoading: loadingSales } = useSalesData();
   const { data: whatsAppData } = useWhatsAppRoulette();
 
   useEffect(() => {
     fetchWhatsAppData();
+    fetchVendedores();
     
     // Atualizar a cada 5 minutos
     const interval = setInterval(() => {
@@ -68,6 +85,18 @@ export default function Performance() {
     
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    fetchPublicoAlvoData();
+  }, [vendasDateRange, vendedorPublicoAlvo]);
+
+  useEffect(() => {
+    fetchCanalAquisicaoData();
+  }, [vendasDateRange, vendedorCanalAquisicao]);
+
+  useEffect(() => {
+    fetchEstadoData();
+  }, [vendasDateRange, vendedorEstado]);
 
   const fetchWhatsAppData = async () => {
     setLoadingWhatsApp(true);
@@ -149,6 +178,125 @@ export default function Performance() {
     }
   };
 
+  const fetchVendedores = async () => {
+    try {
+      const { data } = await supabase
+        .from("admin_users")
+        .select("user_id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      
+      setVendedores(data?.map(v => ({ id: v.user_id, nome: v.nome })) || []);
+    } catch (error) {
+      console.error("Erro ao buscar vendedores:", error);
+    }
+  };
+
+  const fetchPublicoAlvoData = async () => {
+    if (!vendasDateRange?.from || !vendasDateRange?.to) return;
+    
+    setLoadingVendas(true);
+    try {
+      let query = supabase
+        .from("vendas")
+        .select("publico_alvo, valor_venda, valor_frete")
+        .gte("data_venda", format(vendasDateRange.from, "yyyy-MM-dd"))
+        .lte("data_venda", format(vendasDateRange.to, "yyyy-MM-dd"));
+
+      if (vendedorPublicoAlvo !== "all") {
+        query = query.eq("atendente_id", vendedorPublicoAlvo);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      const grouped = (data || []).reduce((acc: Record<string, number>, venda) => {
+        const publico = venda.publico_alvo || "Não Informado";
+        const faturamento = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+        acc[publico] = (acc[publico] || 0) + faturamento;
+        return acc;
+      }, {});
+
+      const chartData = Object.entries(grouped).map(([name, value]) => ({ name, value }));
+      setPublicoAlvoData(chartData);
+    } catch (error) {
+      console.error("Erro ao buscar dados de público alvo:", error);
+    } finally {
+      setLoadingVendas(false);
+    }
+  };
+
+  const fetchCanalAquisicaoData = async () => {
+    if (!vendasDateRange?.from || !vendasDateRange?.to) return;
+    
+    setLoadingVendas(true);
+    try {
+      let query = supabase
+        .from("vendas")
+        .select("canal_aquisicao_id, valor_venda, valor_frete, canais_aquisicao(nome)")
+        .gte("data_venda", format(vendasDateRange.from, "yyyy-MM-dd"))
+        .lte("data_venda", format(vendasDateRange.to, "yyyy-MM-dd"));
+
+      if (vendedorCanalAquisicao !== "all") {
+        query = query.eq("atendente_id", vendedorCanalAquisicao);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      const grouped = (data || []).reduce((acc: Record<string, number>, venda: any) => {
+        const canal = venda.canais_aquisicao?.nome || "Não Informado";
+        const faturamento = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+        acc[canal] = (acc[canal] || 0) + faturamento;
+        return acc;
+      }, {});
+
+      const chartData = Object.entries(grouped).map(([name, value]) => ({ name, value }));
+      setCanalAquisicaoData(chartData);
+    } catch (error) {
+      console.error("Erro ao buscar dados de canal de aquisição:", error);
+    } finally {
+      setLoadingVendas(false);
+    }
+  };
+
+  const fetchEstadoData = async () => {
+    if (!vendasDateRange?.from || !vendasDateRange?.to) return;
+    
+    setLoadingVendas(true);
+    try {
+      let query = supabase
+        .from("vendas")
+        .select("estado, valor_venda, valor_frete")
+        .gte("data_venda", format(vendasDateRange.from, "yyyy-MM-dd"))
+        .lte("data_venda", format(vendasDateRange.to, "yyyy-MM-dd"));
+
+      if (vendedorEstado !== "all") {
+        query = query.eq("atendente_id", vendedorEstado);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      const grouped = (data || []).reduce((acc: Record<string, number>, venda) => {
+        const estado = venda.estado || "Não Informado";
+        const faturamento = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+        acc[estado] = (acc[estado] || 0) + faturamento;
+        return acc;
+      }, {});
+
+      const chartData = Object.entries(grouped).map(([name, value]) => ({ name, value }));
+      setEstadoData(chartData);
+    } catch (error) {
+      console.error("Erro ao buscar dados de estado:", error);
+    } finally {
+      setLoadingVendas(false);
+    }
+  };
+
   const canalChartData = useMemo(() => {
     return canalStats.map(stat => ({
       canal: stat.canal,
@@ -197,44 +345,192 @@ export default function Performance() {
         </p>
       </div>
 
-      {/* Gráfico de cliques por canal */}
-      <Card>
+      {/* Nova seção de Vendas */}
+      <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <TrendingUp className="h-5 w-5" />
-            Cliques por Canal de Aquisição
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-lg">Análise de Vendas por Faturamento</CardTitle>
+            
+            {/* Filtro de Datas */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {vendasDateRange?.from ? (
+                    vendasDateRange.to ? (
+                      `${format(vendasDateRange.from, "dd/MM/yy")} - ${format(vendasDateRange.to, "dd/MM/yy")}`
+                    ) : format(vendasDateRange.from, "dd/MM/yyyy")
+                  ) : "Selecionar período"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={vendasDateRange}
+                  onSelect={setVendasDateRange}
+                  numberOfMonths={2}
+                  locale={ptBR}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </CardHeader>
-        <CardContent>
-          {loadingWhatsApp ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <div className="text-muted-foreground">Carregando dados...</div>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={canalChartData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis 
-                  type="category" 
-                  dataKey="canal" 
-                  width={150}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [`${value} cliques`, 'Total']}
-                  contentStyle={{ fontSize: '14px' }}
-                />
-                <Bar dataKey="cliques" radius={[0, 4, 4, 0]}>
-                  {canalChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
       </Card>
+
+      {/* Grid de 3 gráficos de pizza */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        
+        {/* Gráfico 1: Público Alvo */}
+        <Card>
+          <CardHeader className="pb-2 space-y-3">
+            <CardTitle className="text-sm">Vendas por Público Alvo</CardTitle>
+            <Select value={vendedorPublicoAlvo} onValueChange={setVendedorPublicoAlvo}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Vendedores</SelectItem>
+                {vendedores.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardHeader>
+          <CardContent>
+            {loadingVendas ? (
+              <div className="flex items-center justify-center h-[250px]">
+                <div className="text-muted-foreground text-sm">Carregando...</div>
+              </div>
+            ) : publicoAlvoData.length === 0 ? (
+              <div className="flex items-center justify-center h-[250px]">
+                <div className="text-muted-foreground text-sm">Sem dados no período</div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie 
+                    data={publicoAlvoData} 
+                    dataKey="value" 
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={(entry) => `${entry.name}: R$ ${entry.value.toLocaleString('pt-BR')}`}
+                    labelLine={false}
+                  >
+                    {publicoAlvoData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico 2: Canal de Aquisição */}
+        <Card>
+          <CardHeader className="pb-2 space-y-3">
+            <CardTitle className="text-sm">Vendas por Canal de Aquisição</CardTitle>
+            <Select value={vendedorCanalAquisicao} onValueChange={setVendedorCanalAquisicao}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Vendedores</SelectItem>
+                {vendedores.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardHeader>
+          <CardContent>
+            {loadingVendas ? (
+              <div className="flex items-center justify-center h-[250px]">
+                <div className="text-muted-foreground text-sm">Carregando...</div>
+              </div>
+            ) : canalAquisicaoData.length === 0 ? (
+              <div className="flex items-center justify-center h-[250px]">
+                <div className="text-muted-foreground text-sm">Sem dados no período</div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie 
+                    data={canalAquisicaoData} 
+                    dataKey="value" 
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={(entry) => `${entry.name}: R$ ${entry.value.toLocaleString('pt-BR')}`}
+                    labelLine={false}
+                  >
+                    {canalAquisicaoData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico 3: Estado */}
+        <Card>
+          <CardHeader className="pb-2 space-y-3">
+            <CardTitle className="text-sm">Vendas por Estado</CardTitle>
+            <Select value={vendedorEstado} onValueChange={setVendedorEstado}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Vendedores</SelectItem>
+                {vendedores.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardHeader>
+          <CardContent>
+            {loadingVendas ? (
+              <div className="flex items-center justify-center h-[250px]">
+                <div className="text-muted-foreground text-sm">Carregando...</div>
+              </div>
+            ) : estadoData.length === 0 ? (
+              <div className="flex items-center justify-center h-[250px]">
+                <div className="text-muted-foreground text-sm">Sem dados no período</div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie 
+                    data={estadoData} 
+                    dataKey="value" 
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={(entry) => `${entry.name}: R$ ${entry.value.toLocaleString('pt-BR')}`}
+                    labelLine={false}
+                  >
+                    {estadoData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Indicadores da Roleta WhatsApp */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
