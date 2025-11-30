@@ -106,7 +106,14 @@ export default function Expedicao() {
     try {
       await updateOrdem({
         id,
-        data: { data_carregamento: null, status: 'pendente' },
+        data: { 
+          data_carregamento: null, 
+          status: 'pendente',
+          tipo_carregamento: null,
+          responsavel_carregamento_id: null,
+          responsavel_carregamento_nome: null,
+          hora_carregamento: null,
+        },
       });
       toast.success("Ordem removida do calendário");
       setRefreshOrdensDisponiveis(prev => prev + 1);
