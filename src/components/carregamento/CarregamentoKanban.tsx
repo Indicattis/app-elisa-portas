@@ -42,6 +42,14 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                 {ordem.venda.cidade} - {ordem.venda.estado}
               </span>
             )}
+            {ordem.responsavel_carregamento_nome && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <span className="font-medium text-foreground">
+                  {ordem.responsavel_carregamento_nome}
+                </span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Badge 
@@ -49,7 +57,7 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
               className="flex items-center gap-1 text-xs h-5"
             >
               <Icon className="h-3 w-3" />
-              {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado'}
+              {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : ordem.tipo_carregamento === 'autorizados' ? 'Autorizado' : ordem.tipo_carregamento || 'Sem Responsável'}
             </Badge>
             <Badge variant={podeIniciar ? 'default' : 'secondary'} className="text-xs h-5">
               {ordem.status === 'agendada' ? 'Agendada' : ordem.status}
@@ -155,7 +163,11 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
             >
               <PackageCheck className="h-8 w-8" />
               <span className="text-xs font-semibold text-center">
-                {podeIniciar ? 'Iniciar Coleta' : 'Sem Data'}
+                {!ordem.data_carregamento 
+                  ? 'Sem Data' 
+                  : !ordem.responsavel_carregamento_nome 
+                    ? 'Sem Responsável' 
+                    : 'Iniciar Coleta'}
               </span>
             </Button>
           </div>
@@ -179,8 +191,10 @@ export function CarregamentoKanban({
   onRefresh,
 }: CarregamentoKanbanProps) {
   const podeIniciarColeta = (ordem: OrdemCarregamento) => {
-    // Só pode iniciar se tiver data de carregamento agendada
-    return !ordem.carregamento_concluido && !!ordem.data_carregamento;
+    // Só pode iniciar se tiver data de carregamento agendada E responsável definido
+    return !ordem.carregamento_concluido && 
+           !!ordem.data_carregamento && 
+           !!ordem.responsavel_carregamento_nome;
   };
 
   const renderSkeletons = () => (
