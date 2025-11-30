@@ -54,19 +54,12 @@ export const useOrdensSemDataCarregamento = () => {
             )
           )
         `)
-        .eq("venda.tipo_entrega", "instalacao")
         .is("data_carregamento", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      // Filtrar apenas ordens que NÃO têm instalação concluída
-      const filteredData = (data || []).filter((ordem: any) => {
-        const instalacao = ordem.pedido?.instalacao?.[0];
-        return instalacao?.instalacao_concluida !== true;
-      });
-      
-      return filteredData as OrdemCarregamento[];
+      return (data || []) as OrdemCarregamento[];
     },
   });
 
