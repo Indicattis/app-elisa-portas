@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,13 @@ export const AddOrdemPopover = ({
   className = "",
 }: AddOrdemPopoverProps) => {
   const [open, setOpen] = useState(false);
-  const { ordens, isLoading } = useOrdensSemDataCarregamento();
+  const { ordens, isLoading, refetch } = useOrdensSemDataCarregamento();
+
+  useEffect(() => {
+    if (open) {
+      refetch();
+    }
+  }, [open, refetch]);
 
   const handleSelectOrdem = async (ordem: OrdemCarregamento) => {
     try {
