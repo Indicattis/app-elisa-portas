@@ -38,6 +38,28 @@ export function useCanaisAquisicao() {
     }
   };
 
+  const fetchCanaisPagos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase
+        .from('canais_aquisicao')
+        .select('*')
+        .eq('ativo', true)
+        .eq('pago', true)
+        .order('ordem');
+
+      if (error) throw error;
+      setCanais(data || []);
+    } catch (err) {
+      console.error('Erro ao buscar canais pagos:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchCanais();
   }, []);
@@ -46,6 +68,7 @@ export function useCanaisAquisicao() {
     canais,
     loading,
     error,
-    refetch: fetchCanais
+    refetch: fetchCanais,
+    fetchCanaisPagos
   };
 }
