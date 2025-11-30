@@ -49,11 +49,11 @@ export function AgendarCarregamentoModal({
       if (ordem?.hora) {
         setHora(ordem.hora);
       }
-      if (ordem?.responsavel_tipo) {
-        setResponsavelTipo(ordem.responsavel_tipo as "elisa" | "autorizados" | "terceiro");
+      if (ordem?.tipo_carregamento) {
+        setResponsavelTipo(ordem.tipo_carregamento as "elisa" | "autorizados" | "terceiro");
       }
       if (ordem?.responsavel_carregamento_id) {
-        if (ordem.responsavel_tipo === 'terceiro') {
+        if (ordem.tipo_carregamento === 'terceiro') {
           setResponsavelNomeTerceiro(ordem.responsavel_carregamento_nome || '');
         } else {
           setResponsavelId(ordem.responsavel_carregamento_id);

@@ -58,7 +58,7 @@ export const EditarOrdemCarregamentoDrawer = ({
         setResponsavelTipo(ordem.tipo_carregamento as "elisa" | "autorizados" | "terceiro");
       }
       if (ordem.responsavel_carregamento_id) {
-        if (ordem.responsavel_tipo === 'terceiro') {
+        if (ordem.tipo_carregamento === 'terceiro') {
           setResponsavelNomeTerceiro(ordem.responsavel_carregamento_nome || '');
         } else {
           setResponsavelId(ordem.responsavel_carregamento_id);

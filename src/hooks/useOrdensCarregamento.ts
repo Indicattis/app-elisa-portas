@@ -7,7 +7,6 @@ import { useEffect } from "react";
 export const useOrdensCarregamento = (filters?: {
   status?: string;
   tipo_carregamento?: string;
-  responsavel_tipo?: string;
   data_inicio?: string;
   data_fim?: string;
 }) => {
@@ -60,10 +59,6 @@ export const useOrdensCarregamento = (filters?: {
       if (filters?.tipo_carregamento) {
         query = query.eq("tipo_carregamento", filters.tipo_carregamento as any);
       }
-      
-      if (filters?.responsavel_tipo) {
-        query = query.eq("responsavel_tipo", filters.responsavel_tipo as any);
-      }
 
       if (filters?.data_inicio) {
         query = query.gte("data_carregamento", filters.data_inicio);
@@ -87,8 +82,7 @@ export const useOrdensCarregamento = (filters?: {
         .update({
           data_carregamento: data.data_carregamento,
           hora: data.hora,
-          tipo_carregamento: data.responsavel_tipo, // Atualizar tipo_carregamento
-          responsavel_tipo: data.responsavel_tipo,
+          tipo_carregamento: data.responsavel_tipo,
           responsavel_carregamento_id: data.responsavel_carregamento_id,
           responsavel_carregamento_nome: data.responsavel_carregamento_nome,
           status: 'agendada',
