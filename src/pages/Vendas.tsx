@@ -35,7 +35,6 @@ import {
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { ContratosVendaModal } from '@/components/vendas/ContratosVendaModal';
-import { FaturamentoAnualChart } from '@/components/vendas/FaturamentoAnualChart';
 
 export default function Vendas() {
   const navigate = useNavigate();
@@ -237,9 +236,6 @@ export default function Vendas() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Gráfico de Faturamento Anual */}
-      <FaturamentoAnualChart />
 
       <Card className="max-w-full overflow-hidden">
         <CardContent className="p-2 sm:p-3">

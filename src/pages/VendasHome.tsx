@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { FaturamentoAnualChart } from "@/components/vendas/FaturamentoAnualChart";
 export default function VendasHome() {
   const {
     data: vendasMes
@@ -91,8 +92,8 @@ export default function VendasHome() {
         </Card>
       </div>
 
-      {/* Chart */}
-      
+      {/* Gráfico de Faturamento Anual */}
+      <FaturamentoAnualChart />
 
       {/* Top Vendedores */}
       <Card>
