@@ -1,15 +1,17 @@
 import { useEffect, useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Phone, Mouse, TrendingUp, Globe, Calendar as CalendarIcon, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { Phone, Mouse, TrendingUp, Globe, Calendar as CalendarIcon, ChevronLeft, ChevronRight, ShoppingCart, DollarSign, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSalesData, useWhatsAppRoulette } from "@/hooks/useDashboardData";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +57,19 @@ interface VendedorCompleto {
   vendasCount: number;
 }
 
+interface CacCanalData {
+  canal_id: string;
+  canal_nome: string;
+  investimento: number;
+  faturamento: number;
+  lucro: number;
+  roi: number;
+  cac: number;
+  totalVendas: number;
+  vendasFaturadas: number;
+  vendasPendentes: number;
+}
+
 export default function Performance() {
   const [whatsAppClicks, setWhatsAppClicks] = useState<WhatsAppClick[]>([]);
   const [atendenteStats, setAtendenteStats] = useState<AtendenteStats[]>([]);
@@ -78,6 +93,13 @@ export default function Performance() {
   const [estadoData, setEstadoData] = useState<{name: string; value: number}[]>([]);
   const [vendedoresCompletos, setVendedoresCompletos] = useState<VendedorCompleto[]>([]);
   const [loadingVendas, setLoadingVendas] = useState(false);
+
+  // Estados para a seção de CAC
+  const [cacMes, setCacMes] = useState<Date>(startOfMonth(new Date()));
+  const [cacRegiao, setCacRegiao] = useState<string>("all");
+  const [vendedorIndexCAC, setVendedorIndexCAC] = useState<number>(0);
+  const [cacData, setCacData] = useState<CacCanalData[]>([]);
+  const [loadingCAC, setLoadingCAC] = useState(false);
 
   // Use the corrected sales data hook
   const { data: salesData, isLoading: loadingSales } = useSalesData();
@@ -109,6 +131,10 @@ export default function Performance() {
   useEffect(() => {
     fetchEstadoData();
   }, [vendasDateRange, vendedorIndexEstado, vendedoresCompletos]);
+
+  useEffect(() => {
+    fetchCacData();
+  }, [cacMes, cacRegiao, vendedorIndexCAC, vendedoresCompletos]);
 
   const fetchWhatsAppData = async () => {
     setLoadingWhatsApp(true);
@@ -351,6 +377,128 @@ export default function Performance() {
     }
   };
 
+  const fetchCacData = async () => {
+    if (!cacMes || vendedoresCompletos.length === 0) return;
+    
+    setLoadingCAC(true);
+    try {
+      const mesInicio = format(cacMes, "yyyy-MM-dd");
+      const mesFim = format(endOfMonth(cacMes), "yyyy-MM-dd");
+      const mesFormatado = format(cacMes, "yyyy-MM") + "-01";
+
+      // 1. Buscar canais pagos
+      const { data: canaisPagos } = await supabase
+        .from("canais_aquisicao")
+        .select("id, nome")
+        .eq("ativo", true)
+        .eq("pago", true)
+        .order("ordem");
+
+      // 2. Buscar investimentos do mês/região
+      let investQuery = supabase
+        .from("marketing_investimentos")
+        .select("*")
+        .eq("mes", mesFormatado);
+      
+      if (cacRegiao !== "all") {
+        investQuery = investQuery.eq("regiao", cacRegiao);
+      }
+      
+      const { data: investimentos } = await investQuery;
+
+      // 3. Buscar vendas do mês com produtos
+      const vendedorAtual = vendedoresCompletos[vendedorIndexCAC];
+      
+      let vendasQuery = supabase
+        .from("vendas")
+        .select(`
+          id, 
+          canal_aquisicao_id, 
+          valor_venda, 
+          valor_frete, 
+          lucro_total,
+          estado,
+          produtos_vendas(faturamento)
+        `)
+        .gte("data_venda", mesInicio)
+        .lte("data_venda", mesFim + " 23:59:59");
+
+      if (vendedorAtual?.id !== "all") {
+        vendasQuery = vendasQuery.eq("atendente_id", vendedorAtual.id);
+      }
+      
+      if (cacRegiao !== "all") {
+        vendasQuery = vendasQuery.eq("estado", cacRegiao);
+      }
+
+      const { data: vendas } = await vendasQuery;
+
+      // 4. Mapear investimentos por canal
+      const investimentoPorCanal: Record<string, number> = {};
+      
+      canaisPagos?.forEach(canal => {
+        const key = canal.nome.toLowerCase();
+        let total = 0;
+        
+        investimentos?.forEach(inv => {
+          if (key.includes("google")) {
+            total += Number(inv.investimento_google_ads || 0);
+          } else if (key.includes("meta") || key.includes("facebook") || key.includes("instagram")) {
+            total += Number(inv.investimento_meta_ads || 0);
+          } else if (key.includes("linkedin")) {
+            total += Number(inv.investimento_linkedin_ads || 0);
+          }
+        });
+        
+        investimentoPorCanal[canal.id] = total;
+      });
+
+      // 5. Calcular métricas por canal
+      const cacPorCanal: CacCanalData[] = [];
+      
+      canaisPagos?.forEach(canal => {
+        const vendasDoCanal = vendas?.filter((v: any) => v.canal_aquisicao_id === canal.id) || [];
+        const totalVendas = vendasDoCanal.length;
+        
+        // Contar vendas faturadas
+        let vendasFaturadas = 0;
+        vendasDoCanal.forEach((venda: any) => {
+          const produtos = venda.produtos_vendas || [];
+          if (produtos.length > 0 && produtos.every((p: any) => p.faturamento === true)) {
+            vendasFaturadas++;
+          }
+        });
+        
+        const faturamento = vendasDoCanal.reduce((sum: number, v: any) => 
+          sum + (Number(v.valor_venda || 0) - Number(v.valor_frete || 0)), 0);
+        const lucro = vendasDoCanal.reduce((sum: number, v: any) => sum + Number(v.lucro_total || 0), 0);
+        const investimento = investimentoPorCanal[canal.id] || 0;
+        
+        const roi = investimento > 0 ? ((faturamento - investimento) / investimento) * 100 : 0;
+        const cac = (investimento > 0 && totalVendas > 0) ? investimento / totalVendas : 0;
+        
+        cacPorCanal.push({
+          canal_id: canal.id,
+          canal_nome: canal.nome,
+          investimento,
+          faturamento,
+          lucro,
+          roi,
+          cac,
+          totalVendas,
+          vendasFaturadas,
+          vendasPendentes: totalVendas - vendasFaturadas
+        });
+      });
+      
+      setCacData(cacPorCanal);
+    } catch (error) {
+      console.error("Erro ao buscar dados de CAC:", error);
+    } finally {
+      setLoadingCAC(false);
+    }
+  };
+
   const canalChartData = useMemo(() => {
     return canalStats.map(stat => ({
       canal: stat.canal,
@@ -391,6 +539,7 @@ export default function Performance() {
   }, [clicksFiltrados]);
 
   return (
+    <TooltipProvider>
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Performance</h1>
@@ -518,7 +667,7 @@ export default function Performance() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                  <RechartsTooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -608,7 +757,7 @@ export default function Performance() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                  <RechartsTooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -698,13 +847,218 @@ export default function Performance() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                  <RechartsTooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Seção de Análise de CAC */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Análise de CAC por Canal Pago
+            </CardTitle>
+            
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Filtro de Mês */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(cacMes, "MMMM 'de' yyyy", { locale: ptBR })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={cacMes}
+                    onSelect={(date) => date && setCacMes(startOfMonth(date))}
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              {/* Filtro de Região */}
+              <Select value={cacRegiao} onValueChange={setCacRegiao}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder="Região" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Regiões</SelectItem>
+                  <SelectItem value="RS">RS</SelectItem>
+                  <SelectItem value="SC">SC</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Slider de Atendente */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setVendedorIndexCAC(prev => 
+                prev === 0 ? vendedoresCompletos.length - 1 : prev - 1
+              )}
+              disabled={vendedoresCompletos.length === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 rounded-lg p-2">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={vendedoresCompletos[vendedorIndexCAC]?.foto_perfil_url || undefined} />
+                <AvatarFallback className="text-xs">
+                  {vendedoresCompletos[vendedorIndexCAC]?.nome.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {vendedoresCompletos[vendedorIndexCAC]?.nome}
+                </p>
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    {vendedoresCompletos[vendedorIndexCAC]?.vendasCount || 0} vendas
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setVendedorIndexCAC(prev => 
+                prev === vendedoresCompletos.length - 1 ? 0 : prev + 1
+              )}
+              disabled={vendedoresCompletos.length === 0}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          {loadingCAC ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="text-muted-foreground">Carregando...</div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Canal</TableHead>
+                    <TableHead className="text-right">Investimento</TableHead>
+                    <TableHead className="text-right">Faturamento</TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        Lucro
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="h-3 w-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Lucro das vendas faturadas
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right">ROI</TableHead>
+                    <TableHead className="text-right">CAC</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cacData.map((canal) => (
+                    <TableRow key={canal.canal_id}>
+                      <TableCell className="font-medium">{canal.canal_nome}</TableCell>
+                      <TableCell className="text-right">
+                        R$ {canal.investimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        R$ {canal.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          R$ {canal.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {canal.vendasPendentes > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertCircle className="h-4 w-4 text-amber-500" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {canal.vendasPendentes} venda{canal.vendasPendentes !== 1 ? 's' : ''} pendente{canal.vendasPendentes !== 1 ? 's' : ''} de faturamento
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={canal.roi >= 100 ? "default" : canal.roi >= 0 ? "secondary" : "destructive"}>
+                          {canal.roi.toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        R$ {canal.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  
+                  {cacData.length > 0 && (
+                    <TableRow className="bg-muted/50 font-medium">
+                      <TableCell>Total</TableCell>
+                      <TableCell className="text-right">
+                        R$ {cacData.reduce((sum, c) => sum + c.investimento, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        R$ {cacData.reduce((sum, c) => sum + c.faturamento, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          R$ {cacData.reduce((sum, c) => sum + c.lucro, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {cacData.reduce((sum, c) => sum + c.vendasPendentes, 0) > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertCircle className="h-4 w-4 text-amber-500" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {cacData.reduce((sum, c) => sum + c.vendasPendentes, 0)} vendas pendentes de faturamento
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline">
+                          {(() => {
+                            const totalInv = cacData.reduce((sum, c) => sum + c.investimento, 0);
+                            const totalFat = cacData.reduce((sum, c) => sum + c.faturamento, 0);
+                            return totalInv > 0 ? (((totalFat - totalInv) / totalInv) * 100).toFixed(1) : 0;
+                          })()}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        R$ {(() => {
+                          const totalInv = cacData.reduce((sum, c) => sum + c.investimento, 0);
+                          const totalVendas = cacData.reduce((sum, c) => sum + c.totalVendas, 0);
+                          return (totalInv > 0 && totalVendas > 0 ? totalInv / totalVendas : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                        })()}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Indicadores da Roleta WhatsApp */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -938,5 +1292,6 @@ export default function Performance() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
