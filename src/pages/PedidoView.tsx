@@ -694,6 +694,7 @@ export default function PedidoView() {
               isReadOnly={!modoEdicao}
               todasOrdensConcluidas={todasOrdensConcluidas}
               vendaId={pedido.venda_id}
+              temPortasEnrolar={portasEnrolar.length > 0}
               onAdicionarLinha={adicionarLinha}
               onRemoverLinha={removerLinha}
               onAtualizarCheckbox={async (linhaId: string, campo: string, valor: boolean) => {

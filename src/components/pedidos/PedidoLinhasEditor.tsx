@@ -29,6 +29,7 @@ interface PedidoLinhasEditorProps {
   isReadOnly: boolean;
   todasOrdensConcluidas?: boolean;
   vendaId?: string;
+  temPortasEnrolar?: boolean;
   onAdicionarLinha: (linha: PedidoLinhaNova) => Promise<any>;
   onRemoverLinha: (linhaId: string) => Promise<void>;
   onAtualizarCheckbox?: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
@@ -67,6 +68,7 @@ export const PedidoLinhasEditor = ({
   isReadOnly,
   todasOrdensConcluidas = false,
   vendaId,
+  temPortasEnrolar = false,
   onAdicionarLinha,
   onRemoverLinha,
   onAtualizarCheckbox,
@@ -135,7 +137,8 @@ export const PedidoLinhasEditor = ({
 
   const handleSalvarNovaLinha = async () => {
     // Validações
-    if (!rascunhoLinha.produto_venda_id) {
+    // produto_venda_id só é obrigatório se há portas enrolar
+    if (temPortasEnrolar && !rascunhoLinha.produto_venda_id) {
       return;
     }
     if (!rascunhoLinha.estoque_id) {
@@ -332,7 +335,7 @@ export const PedidoLinhasEditor = ({
                       }
                     >
                       <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Selecione a porta" />
+                        <SelectValue placeholder={temPortasEnrolar ? "Selecione a porta" : "Porta (opcional)"} />
                       </SelectTrigger>
                       <SelectContent>
                         {portas.map((porta, idx) => (
