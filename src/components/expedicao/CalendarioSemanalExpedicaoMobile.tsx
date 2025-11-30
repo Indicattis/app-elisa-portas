@@ -14,6 +14,8 @@ interface CalendarioSemanalExpedicaoMobileProps {
   onDayClick: (date: Date) => void;
   onEdit: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario: (id: string) => void;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onOrdemAdded?: () => void;
 }
 
 export const CalendarioSemanalExpedicaoMobile = ({
@@ -25,6 +27,8 @@ export const CalendarioSemanalExpedicaoMobile = ({
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
+  onUpdateOrdem,
+  onOrdemAdded,
 }: CalendarioSemanalExpedicaoMobileProps) => {
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -62,6 +66,8 @@ export const CalendarioSemanalExpedicaoMobile = ({
             onDayClick={onDayClick}
             onEdit={onEdit}
             onRemoverDoCalendario={onRemoverDoCalendario}
+            onUpdateOrdem={onUpdateOrdem}
+            onOrdemAdded={onOrdemAdded}
           />
         ))}
       </div>

@@ -1,12 +1,8 @@
 import { useDroppable } from "@dnd-kit/core";
 import { format, isSameDay, isSameMonth, isToday as isTodayFn, isWeekend, parseISO } from "date-fns";
-import { Plus } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { SelecionarOrdemModal } from "./SelecionarOrdemModal";
-import { toast } from "sonner";
+import { AddOrdemPopover } from "./AddOrdemPopover";
 
 interface DroppableDayExpedicaoProps {
   date: Date;
@@ -31,7 +27,6 @@ export const DroppableDayExpedicao = ({
   onUpdateOrdem,
   onOrdemClick,
 }: DroppableDayExpedicaoProps) => {
-  const [modalOpen, setModalOpen] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id: format(date, "yyyy-MM-dd"),
     data: {
@@ -48,35 +43,6 @@ export const DroppableDayExpedicao = ({
     if (!ordem.data_carregamento) return false;
     return isSameDay(parseISO(ordem.data_carregamento), date);
   });
-
-  const handleConfirmModal = async (
-    ordemId: string,
-    hora: string,
-    responsavelTipo: 'elisa' | 'autorizados',
-    responsavelId: string,
-    responsavelNome: string
-  ) => {
-    try {
-      const dataFormatada = format(date, 'yyyy-MM-dd');
-      
-      await onUpdateOrdem({
-        id: ordemId,
-        data: {
-          data_carregamento: dataFormatada,
-          hora: hora,
-          responsavel_tipo: responsavelTipo,
-          responsavel_carregamento_id: responsavelId,
-          responsavel_carregamento_nome: responsavelNome,
-          status: 'agendada',
-        }
-      });
-      toast.success("Ordem adicionada ao calendário!");
-      onOrdemDropped?.();
-    } catch (error) {
-      console.error("Erro ao adicionar ordem:", error);
-      toast.error("Erro ao adicionar ordem ao calendário");
-    }
-  };
 
   return (
     <>
@@ -107,14 +73,13 @@ export const DroppableDayExpedicao = ({
             {format(date, "d")}
           </span>
           {isCurrentMonth && (
-            <Button
-              variant="ghost"
+            <AddOrdemPopover
+              date={date}
+              onUpdateOrdem={onUpdateOrdem}
+              onOrdemAdded={onOrdemDropped}
               size="icon"
               className="h-5 w-5"
-              onClick={() => setModalOpen(true)}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
+            />
           )}
         </div>
 
@@ -130,13 +95,6 @@ export const DroppableDayExpedicao = ({
           ))}
         </div>
       </div>
-
-      <SelecionarOrdemModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        dataSelecionada={date}
-        onConfirm={handleConfirmModal}
-      />
     </>
   );
 };
