@@ -201,6 +201,8 @@ export default function Expedicao() {
                 onDayClick={handleDayClick}
                 onEdit={handleEdit}
                 onRemoverDoCalendario={handleRemoverDoCalendario}
+                onUpdateOrdem={handleUpdateOrdem}
+                onOrdemAdded={handleOrdemDropped}
               />
             ) : (
               tipoVisualizacao === 'semanal' ? (

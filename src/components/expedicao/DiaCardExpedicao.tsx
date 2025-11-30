@@ -1,12 +1,9 @@
 import { format, isSameDay, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
-import { useState } from "react";
-import { AgendarCarregamentoModal } from "./AgendarCarregamentoModal";
+import { AddOrdemPopover } from "./AddOrdemPopover";
 
 interface DiaCardExpedicaoProps {
   date: Date;
@@ -14,6 +11,8 @@ interface DiaCardExpedicaoProps {
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onOrdemAdded?: () => void;
 }
 
 export const DiaCardExpedicao = ({
@@ -22,8 +21,9 @@ export const DiaCardExpedicao = ({
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
+  onUpdateOrdem,
+  onOrdemAdded,
 }: DiaCardExpedicaoProps) => {
-  const [modalOpen, setModalOpen] = useState(false);
   const hoje = new Date();
   const isToday = isSameDay(date, hoje);
   const isWeekendDay = isWeekend(date);
@@ -55,14 +55,15 @@ export const DiaCardExpedicao = ({
             </p>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setModalOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          {onUpdateOrdem && (
+            <AddOrdemPopover
+              date={date}
+              onUpdateOrdem={onUpdateOrdem}
+              onOrdemAdded={onOrdemAdded}
+              size="icon"
+              className="h-7 w-7"
+            />
+          )}
         </div>
 
         {/* Lista de ordens */}
@@ -83,15 +84,6 @@ export const DiaCardExpedicao = ({
           )}
         </div>
       </Card>
-
-      <AgendarCarregamentoModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        ordem={null}
-        onConfirm={async () => {
-          setModalOpen(false);
-        }}
-      />
     </>
   );
 };
