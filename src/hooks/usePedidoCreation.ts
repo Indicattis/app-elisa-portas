@@ -123,7 +123,7 @@ export const usePedidoCreation = () => {
             nome_cliente: venda.cliente_nome,
             hora: '08:00',
             status: 'pronta_fabrica',
-            tipo_carregamento: 'elisa',
+            tipo_carregamento: null,
             created_by: user.id,
             data_carregamento: null
           });
