@@ -113,6 +113,8 @@ export const DroppableDaySimpleExpedicao = ({
               key={ordem.id}
               ordem={ordem}
               onClick={onOrdemClick}
+              onEdit={onEdit}
+              onRemoverDoCalendario={onRemoverDoCalendario}
             />
           ))}
         </div>

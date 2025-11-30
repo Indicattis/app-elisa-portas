@@ -60,6 +60,8 @@ export const CalendarioSemanalExpedicaoMobile = ({
             date={day}
             ordens={ordens}
             onDayClick={onDayClick}
+            onEdit={onEdit}
+            onRemoverDoCalendario={onRemoverDoCalendario}
           />
         ))}
       </div>

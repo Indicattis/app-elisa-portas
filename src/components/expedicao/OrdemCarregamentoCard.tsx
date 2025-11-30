@@ -1,18 +1,24 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Package, MapPin, Info } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Package, MapPin, Info, MoreVertical, Edit, XCircle } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { Button } from "@/components/ui/button";
 
 interface OrdemCarregamentoCardProps {
   ordem: OrdemCarregamento;
   onClick?: (ordem: OrdemCarregamento) => void;
+  onEdit?: (ordem: OrdemCarregamento) => void;
+  onRemoverDoCalendario?: (id: string) => void;
   dragListeners?: any;
 }
 
 export const OrdemCarregamentoCard = ({
   ordem,
   onClick,
+  onEdit,
+  onRemoverDoCalendario,
   dragListeners,
 }: OrdemCarregamentoCardProps) => {
   // Pegar a cor da equipe do campo enriquecido
@@ -85,6 +91,34 @@ export const OrdemCarregamentoCard = ({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          {/* Menu de Ações */}
+          {(onEdit || onRemoverDoCalendario) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
+                  <MoreVertical className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {onEdit && (
+                  <DropdownMenuItem onClick={() => onEdit(ordem)}>
+                    <Edit className="h-3.5 w-3.5 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                )}
+                {onRemoverDoCalendario && (
+                  <DropdownMenuItem 
+                    onClick={() => onRemoverDoCalendario(ordem.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <XCircle className="h-3.5 w-3.5 mr-2" />
+                    Remover do calendário
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
           {ordem.venda && (
             <TooltipProvider>
               <Tooltip>
