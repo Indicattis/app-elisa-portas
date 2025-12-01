@@ -199,7 +199,10 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
         }
       };
 
-      generateOrcamentoPDF(pdfData);
+      generateOrcamentoPDF({
+        ...orcamento,
+        produtos: pdfData.produtos
+      }, pdfData.calculatedTotal);
       
       toast({
         title: "PDF Gerado",

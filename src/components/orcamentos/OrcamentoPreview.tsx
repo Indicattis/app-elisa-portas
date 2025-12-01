@@ -37,8 +37,7 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal, valorIns
 
   // Distribuir custos logísticos entre produtos de porta
   const valorFrete = parseFloat(formData.valor_frete) || 0;
-  const valorInstalacaoFromForm = parseFloat(formData.valor_instalacao) || 0;
-  const produtosComCustosDistribuidos = distribuirCustosLogisticos(produtos, valorFrete, valorInstalacaoFromForm);
+  const produtosComCustosDistribuidos = produtos;
   const itensLogisticos = criarItensLogisticosIncluso();
 
   return (
@@ -194,8 +193,8 @@ export function OrcamentoPreview({ formData, produtos, calculatedTotal, valorIns
               <span className="font-medium">Forma de Pagamento:</span> {formData.forma_pagamento || 'Não informado'}
             </p>
             <p className="text-sm">
-              <span className="font-medium">Modalidade de Instalação:</span> {
-                formData.modalidade_instalacao === 'instalacao_elisa' ? 'Instalação Elisa' : 'Autorizado Elisa'
+              <span className="font-medium">Tipo de Entrega:</span> {
+                formData.tipo_entrega === 'instalacao' ? 'Com Instalação' : 'Apenas Entrega'
               }
             </p>
           </div>

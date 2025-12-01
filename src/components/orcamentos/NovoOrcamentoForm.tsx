@@ -1,39 +1,42 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Minus, Download, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
-import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
-import type { OrcamentoFormData, Acessorio, Adicional } from "@/types/orcamento";
-import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
-import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
-interface Cor {
-  id: string;
-  nome: string;
-  codigo_hex: string;
-}
-interface Autorizado {
-  id: string;
-  nome: string;
-  cidade: string;
-  estado: string;
-}
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, CalendarIcon, Download, Package, Paintbrush, Wrench } from 'lucide-react';
+import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
+import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
+import { ProdutosOrcamentoTable } from './ProdutosOrcamentoTable';
+import { OrcamentoResumo } from './OrcamentoResumo';
+import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
+import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { generateOrcamentoPDF } from '@/utils/orcamentoPDFGenerator';
+import type { OrcamentoFormData } from '@/types/orcamento';
+import type { OrcamentoProduto } from '@/types/produto';
+import type { ProdutoVenda } from '@/hooks/useVendas';
+
 interface NovoOrcamentoFormProps {
-  onSubmit?: (data: OrcamentoFormData, produtos: OrcamentoProduto[], custos: OrcamentoCusto[], valorTotal: number) => Promise<void>;
+  onSubmit?: (data: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => Promise<void>;
   onCancel?: () => void;
   loading?: boolean;
-  leadId?: string;
+  leadId?: string | null;
   initialData?: any;
   isEdit?: boolean;
 }
+
 export function NovoOrcamentoForm({
   onSubmit,
   onCancel,
@@ -42,732 +45,718 @@ export function NovoOrcamentoForm({
   initialData,
   isEdit
 }: NovoOrcamentoFormProps) {
-  const {
-    toast
-  } = useToast();
-  const {
-    canais
-  } = useCanaisAquisicao();
+  const { toast } = useToast();
+  const { canais } = useCanaisAquisicao();
+  
   const [formData, setFormData] = useState<OrcamentoFormData>({
-    lead_id: leadId || "",
-    cliente_nome: "",
-    cliente_cpf: "",
-    cliente_telefone: "",
-    cliente_estado: "",
-    cliente_cidade: "",
-    cliente_bairro: "",
-    cliente_cep: "",
-    valor_frete: "0",
-    valor_instalacao: "0",
-    modalidade_instalacao: "instalacao_elisa",
-    forma_pagamento: "",
+    lead_id: leadId || '',
+    cliente_nome: '',
+    cliente_cpf: '',
+    cliente_telefone: '',
+    cliente_email: '',
+    cliente_estado: '',
+    cliente_cidade: '',
+    cliente_bairro: '',
+    cliente_cep: '',
+    valor_frete: '0',
+    publico_alvo: '',
+    tipo_entrega: 'instalacao',
+    forma_pagamento: '',
     desconto_total_percentual: 0,
     requer_analise: false,
-    motivo_analise: "",
-    canal_aquisicao_id: ""
+    motivo_analise: '',
+    canal_aquisicao_id: '',
+    data_orcamento: '',
+    observacoes: ''
   });
+
   const [produtos, setProdutos] = useState<OrcamentoProduto[]>([]);
-  const [custos, setCustos] = useState<OrcamentoCusto[]>([]);
-  const [cores, setCores] = useState<Cor[]>([]);
-  const [acessorios, setAcessorios] = useState<Acessorio[]>([]);
-  const [adicionais, setAdicionais] = useState<Adicional[]>([]);
-  const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
-  const [calculatedTotal, setCalculatedTotal] = useState(0);
+  const [dataOrcamento, setDataOrcamento] = useState<Date>();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
+  const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
+  const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
 
-  // Produto temporário para adição
-  const [novoProduto, setNovoProduto] = useState<Partial<OrcamentoProduto>>({
-    tipo_produto: 'porta_enrolar',
-    valor: 0,
-    quantidade: 1
-  });
-
-  // Custo temporário para adição
-  const [novoCusto, setNovoCusto] = useState<Partial<OrcamentoCusto>>({
-    tipo: 'frete',
-    valor: 0
-  });
+  // Carregar dados iniciais se estiver editando
   useEffect(() => {
-    fetchData();
     if (initialData && isEdit) {
-      loadInitialData();
+      setFormData({
+        lead_id: initialData.lead_id || '',
+        cliente_nome: initialData.cliente_nome || '',
+        cliente_cpf: initialData.cliente_cpf || '',
+        cliente_telefone: initialData.cliente_telefone || '',
+        cliente_email: initialData.cliente_email || '',
+        cliente_estado: initialData.cliente_estado || '',
+        cliente_cidade: initialData.cliente_cidade || '',
+        cliente_bairro: initialData.cliente_bairro || '',
+        cliente_cep: initialData.cliente_cep || '',
+        valor_frete: String(initialData.valor_frete || 0),
+        publico_alvo: initialData.publico_alvo || '',
+        tipo_entrega: initialData.tipo_entrega || 'instalacao',
+        forma_pagamento: initialData.forma_pagamento || '',
+        desconto_total_percentual: initialData.desconto_total_percentual || 0,
+        requer_analise: initialData.requer_analise || false,
+        motivo_analise: initialData.motivo_analise || '',
+        canal_aquisicao_id: initialData.canal_aquisicao_id || '',
+        data_orcamento: initialData.data_orcamento || '',
+        observacoes: initialData.observacoes || ''
+      });
+      
+      if (initialData.produtos) {
+        setProdutos(initialData.produtos);
+      }
     }
   }, [initialData, isEdit]);
-  const loadInitialData = () => {
-    if (!initialData) return;
-    setFormData({
-      lead_id: initialData.lead_id,
-      cliente_nome: initialData.cliente_nome || "",
-      cliente_cpf: initialData.cliente_cpf || "",
-      cliente_telefone: initialData.cliente_telefone || "",
-      cliente_email: initialData.cliente_email || "",
-      cliente_estado: initialData.cliente_estado || "",
-      cliente_cidade: initialData.cliente_cidade || "",
-      cliente_bairro: initialData.cliente_bairro || "",
-      cliente_cep: initialData.cliente_cep || "",
-      valor_frete: initialData.valor_frete?.toString() || "0",
-      valor_instalacao: initialData.valor_instalacao?.toString() || "0",
-      modalidade_instalacao: initialData.modalidade_instalacao || "instalacao_elisa",
-      forma_pagamento: initialData.forma_pagamento || "",
-      desconto_total_percentual: initialData.desconto_total_percentual || 0,
-      requer_analise: initialData.requer_analise || false,
-      motivo_analise: initialData.motivo_analise || ""
-    });
-    if (initialData.orcamento_produtos) {
-      setProdutos(initialData.orcamento_produtos);
-    }
-  };
-  const fetchData = async () => {
-    try {
-      const [coresResponse, acessoriosResponse, adicionaisResponse, autorizadosResponse] = await Promise.all([supabase.from('catalogo_cores').select('*').eq('ativa', true), supabase.from('acessorios').select('*').eq('ativo', true), supabase.from('adicionais').select('*').eq('ativo', true), supabase.from('autorizados').select('*').eq('ativo', true)]);
-      if (coresResponse.data) setCores(coresResponse.data);
-      if (acessoriosResponse.data) setAcessorios(acessoriosResponse.data);
-      if (adicionaisResponse.data) setAdicionais(adicionaisResponse.data);
-      if (autorizadosResponse.data) setAutorizados(autorizadosResponse.data);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao carregar dados do formulário"
-      });
-    }
-  };
 
-  // Calcular total
-  useEffect(() => {
-    const subtotalProdutos = produtos.reduce((acc, produto) => {
-      return acc + (produto.valor * (produto.quantidade || 1));
-    }, 0);
-    const subtotalCustos = custos.reduce((acc, custo) => {
-      return acc + custo.valor;
-    }, 0);
-    const subtotal = subtotalProdutos + subtotalCustos;
-    const total = subtotal * (1 - formData.desconto_total_percentual / 100);
-    setCalculatedTotal(total);
-  }, [produtos, custos, formData.desconto_total_percentual]);
-  const adicionarProduto = () => {
-    if (!novoProduto.tipo_produto) return;
+  const handleAddProduto = (produto: ProdutoVenda) => {
+    // Normalizar tipo_produto para os tipos permitidos em orçamentos
+    let tipoProduto = produto.tipo_produto;
+    if (tipoProduto === 'porta') {
+      tipoProduto = 'porta_enrolar'; // Converter tipo legado
+    }
     
-    let valor = 0;
-    let produto: OrcamentoProduto = {
-      tipo_produto: novoProduto.tipo_produto,
-      valor: 0,
-      descricao: '',
-      quantidade: novoProduto.quantidade || 1
+    const orcamentoProduto: OrcamentoProduto = {
+      tipo_produto: tipoProduto as 'porta_enrolar' | 'porta_social' | 'acessorio' | 'manutencao' | 'adicional' | 'pintura_epoxi',
+      medidas: produto.tamanho,
+      largura: produto.largura,
+      altura: produto.altura,
+      cor_id: produto.cor_id,
+      acessorio_id: produto.acessorio_id,
+      adicional_id: produto.adicional_id,
+      estoque_id: produto.estoque_id,
+      descricao: produto.descricao,
+      valor: produto.valor_produto,
+      quantidade: produto.quantidade || 1,
+      preco_instalacao: produto.valor_instalacao || 0,
+      valor_pintura: produto.valor_pintura || 0,
+      desconto_percentual: produto.tipo_desconto === 'percentual' ? produto.desconto_percentual : 0,
+      desconto_valor: produto.tipo_desconto === 'valor' ? produto.desconto_valor : 0,
+      tipo_desconto: produto.tipo_desconto || 'percentual',
+      tamanho: produto.tamanho
     };
 
-    // Definir campos específicos baseado no tipo
-    switch (novoProduto.tipo_produto) {
-      case 'porta_enrolar':
-      case 'porta_social':
-        produto.medidas = novoProduto.medidas;
-        produto.preco_producao = novoProduto.preco_producao || 0;
-        produto.descricao = `${getNomeProduto(produto)} ${produto.medidas || ''}`.trim();
-        valor = novoProduto.preco_producao || 0;
-        break;
-      case 'acessorio':
-        produto.acessorio_id = novoProduto.acessorio_id;
-        const acessorio = acessorios.find(a => a.id === novoProduto.acessorio_id);
-        produto.descricao = acessorio?.nome || 'Acessório';
-        valor = acessorio?.preco || 0;
-        break;
-      case 'adicional':
-        produto.adicional_id = novoProduto.adicional_id;
-        const adicional = adicionais.find(a => a.id === novoProduto.adicional_id);
-        produto.descricao = adicional?.nome || 'Adicional';
-        valor = adicional?.preco || 0;
-        break;
-      case 'manutencao':
-        produto.descricao_manutencao = novoProduto.descricao_manutencao;
-        produto.descricao = novoProduto.descricao_manutencao || 'Serviço de Manutenção';
-        valor = novoProduto.valor || 0;
-        break;
-      case 'pintura_epoxi':
-        produto.cor_id = novoProduto.cor_id;
-        const corSelecionada = cores.find(c => c.id === novoProduto.cor_id);
-        produto.descricao = corSelecionada ? `Pintura Epóxi - ${corSelecionada.nome}` : 'Pintura Epóxi';
-        valor = novoProduto.valor || 0;
-        break;
-    }
-    produto.valor = valor;
-    setProdutos([...produtos, produto]);
-
-    // Reset form
-    setNovoProduto({
-      tipo_produto: 'porta_enrolar',
-      valor: 0,
-      quantidade: 1
+    setProdutos(prev => {
+      if (indexEditando !== undefined) {
+        const newProdutos = [...prev];
+        newProdutos[indexEditando] = orcamentoProduto;
+        return newProdutos;
+      }
+      return [...prev, orcamentoProduto];
     });
+
+    setProdutoEditando(undefined);
+    setIndexEditando(undefined);
   };
 
-  const adicionarCusto = () => {
-    if (!novoCusto.tipo || !novoCusto.valor || novoCusto.valor <= 0) return;
-    
-    const custo: OrcamentoCusto = {
-      tipo: novoCusto.tipo,
-      descricao: novoCusto.descricao || (novoCusto.tipo === 'frete' ? 'Frete' : 'Instalação'),
-      valor: novoCusto.valor
-    };
-    
-    setCustos([...custos, custo]);
-    
-    // Reset form
-    setNovoCusto({
-      tipo: 'frete',
-      valor: 0,
-      descricao: ''
-    });
-  };
-  const removerProduto = (index: number) => {
-    setProdutos(produtos.filter((_, i) => i !== index));
-  };
-
-  const removerCusto = (index: number) => {
-    setCustos(custos.filter((_, i) => i !== index));
-  };
-  const renderCamposProduto = () => {
-    switch (novoProduto.tipo_produto) {
-      case 'porta_enrolar':
-      case 'porta_social':
-        return <>
-            <div className="space-y-2">
-              <Label>Medidas</Label>
-              <Input placeholder="Ex: 3x3m" value={novoProduto.medidas || ""} onChange={e => setNovoProduto({
-              ...novoProduto,
-              medidas: e.target.value
-            })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Preço de Produção (R$)</Label>
-              <Input type="number" step="0.01" value={novoProduto.preco_producao || ""} onChange={e => setNovoProduto({
-              ...novoProduto,
-              preco_producao: parseFloat(e.target.value) || 0
-            })} />
-            </div>
-          </>;
-      case 'acessorio':
-        return <div className="space-y-2">
-            <Label>Acessório</Label>
-            <Select value={novoProduto.acessorio_id || ""} onValueChange={value => setNovoProduto({
-            ...novoProduto,
-            acessorio_id: value
-          })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o acessório" />
-              </SelectTrigger>
-              <SelectContent>
-                {acessorios.map(acessorio => <SelectItem key={acessorio.id} value={acessorio.id}>
-                    {acessorio.nome} - R$ {acessorio.preco.toFixed(2)}
-                  </SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>;
-      case 'adicional':
-        return <div className="space-y-2">
-            <Label>Adicional</Label>
-            <Select value={novoProduto.adicional_id || ""} onValueChange={value => setNovoProduto({
-            ...novoProduto,
-            adicional_id: value
-          })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o adicional" />
-              </SelectTrigger>
-              <SelectContent>
-                {adicionais.map(adicional => <SelectItem key={adicional.id} value={adicional.id}>
-                    {adicional.nome} - R$ {adicional.preco.toFixed(2)}
-                  </SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>;
-      case 'manutencao':
-        return <>
-            <div className="space-y-2">
-              <Label>Descrição da Manutenção</Label>
-              <Textarea placeholder="Descreva o serviço de manutenção" value={novoProduto.descricao_manutencao || ""} onChange={e => setNovoProduto({
-              ...novoProduto,
-              descricao_manutencao: e.target.value
-            })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Preço (R$)</Label>
-              <Input type="number" step="0.01" value={novoProduto.valor || ""} onChange={e => setNovoProduto({
-              ...novoProduto,
-              valor: parseFloat(e.target.value) || 0
-            })} />
-            </div>
-          </>;
-      case 'pintura_epoxi':
-        return <>
-            <div className="space-y-2">
-              <Label>Cor</Label>
-              <Select value={novoProduto.cor_id || ""} onValueChange={value => setNovoProduto({
-              ...novoProduto,
-              cor_id: value
-            })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a cor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cores.map(cor => <SelectItem key={cor.id} value={cor.id}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded border" style={{
-                      backgroundColor: cor.codigo_hex
-                    }} />
-                        {cor.nome}
-                      </div>
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Preço Total (R$)</Label>
-              <Input type="number" step="0.01" placeholder="Ex: 2500.00" value={novoProduto.valor || ""} onChange={e => setNovoProduto({
-              ...novoProduto,
-              valor: parseFloat(e.target.value) || 0
-            })} />
-            </div>
-          </>;
-      default:
-        return null;
-    }
-  };
-  const getNomeProduto = (produto: OrcamentoProduto) => {
-    const tipos = {
-      'porta_enrolar': 'Porta de Enrolar',
-      'porta_social': 'Porta Social',
-      'acessorio': 'Acessório',
-      'adicional': 'Adicional',
-      'manutencao': 'Manutenção',
-      'pintura_epoxi': 'Pintura Epóxi'
-    };
-    return tipos[produto.tipo_produto];
-  };
-  const handleDownloadPDF = () => {
-    try {
-      const pdfData = {
-        formData,
-        produtos,
-        calculatedTotal,
-        valorInstalacao: parseFloat(formData.valor_instalacao) || 0
+  const handleAddAcessorios = (produtosVenda: ProdutoVenda[]) => {
+    const orcamentoProdutos: OrcamentoProduto[] = produtosVenda.map(produto => {
+      // Normalizar tipo_produto
+      let tipoProduto = produto.tipo_produto;
+      if (tipoProduto === 'porta') {
+        tipoProduto = 'porta_enrolar';
+      }
+      
+      return {
+        tipo_produto: tipoProduto as 'porta_enrolar' | 'porta_social' | 'acessorio' | 'manutencao' | 'adicional' | 'pintura_epoxi',
+        estoque_id: produto.estoque_id,
+        descricao: produto.descricao,
+        valor: produto.valor_produto,
+        quantidade: produto.quantidade || 1,
+        tipo_desconto: 'percentual',
+        desconto_percentual: 0,
+        desconto_valor: 0
       };
-      generateOrcamentoPDF(pdfData);
-      toast({
-        title: "PDF Gerado",
-        description: "O orçamento foi baixado com sucesso"
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao gerar o PDF. Tente novamente."
-      });
-    }
+    });
+
+    setProdutos(prev => [...prev, ...orcamentoProdutos]);
   };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+
+  const handleEditProduto = (index: number) => {
+    const produto = produtos[index];
+    
+    // Converter OrcamentoProduto para ProdutoVenda
+    const produtoVenda: ProdutoVenda = {
+      tipo_produto: produto.tipo_produto,
+      tamanho: produto.medidas || produto.tamanho || '',
+      largura: produto.largura,
+      altura: produto.altura,
+      cor_id: produto.cor_id || '',
+      acessorio_id: produto.acessorio_id || '',
+      adicional_id: produto.adicional_id || '',
+      estoque_id: produto.estoque_id,
+      tipo_pintura: '',
+      valor_produto: produto.valor,
+      valor_pintura: produto.valor_pintura || 0,
+      valor_instalacao: produto.preco_instalacao || 0,
+      valor_frete: 0,
+      tipo_desconto: produto.tipo_desconto || 'percentual',
+      desconto_percentual: produto.desconto_percentual || 0,
+      desconto_valor: produto.desconto_valor || 0,
+      quantidade: produto.quantidade || 1,
+      descricao: produto.descricao || ''
+    };
+
+    setProdutoEditando(produtoVenda);
+    setIndexEditando(index);
+    setDialogOpen(true);
+  };
+
+  const handleRemoveProduto = (index: number) => {
+    setProdutos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateQuantidade = (index: number, novaQuantidade: number) => {
+    if (novaQuantidade < 1) return;
+    
+    setProdutos(prev => {
+      const newProdutos = [...prev];
+      newProdutos[index] = { ...newProdutos[index], quantidade: novaQuantidade };
+      return newProdutos;
+    });
+  };
+
+  const handleRemoverDesconto = (index: number) => {
+    setProdutos(prev => {
+      const newProdutos = [...prev];
+      newProdutos[index] = {
+        ...newProdutos[index],
+        desconto_valor: 0,
+        desconto_percentual: 0
+      };
+      return newProdutos;
+    });
+    
+    toast({ title: "Desconto removido com sucesso" });
+  };
+
+  const calcularValorTotal = () => {
+    const totalProdutos = produtos.reduce((acc, p) => {
+      const valorBase = (p.valor + (p.valor_pintura || 0) + (p.preco_instalacao || 0)) * (p.quantidade || 1);
+      const desconto = p.tipo_desconto === 'valor' 
+        ? (p.desconto_valor || 0)
+        : valorBase * ((p.desconto_percentual || 0) / 100);
+      return acc + valorBase - desconto;
+    }, 0);
+
+    return totalProdutos + parseFloat(formData.valor_frete || '0');
+  };
+
+  const handleDownloadPDF = async () => {
     if (produtos.length === 0) {
       toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Adicione pelo menos um produto ao orçamento"
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Adicione pelo menos um produto antes de gerar o PDF'
       });
       return;
     }
-    if (onSubmit) {
-      await onSubmit(formData, produtos, custos, calculatedTotal);
+
+    try {
+      await generateOrcamentoPDF({
+        ...formData,
+        produtos
+      }, calcularValorTotal());
+      toast({
+        title: 'Sucesso',
+        description: 'PDF gerado com sucesso!'
+      });
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao gerar PDF'
+      });
     }
   };
-  return <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Formulário */}
-      <div className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informações do Cliente */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações do Cliente</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nome *</Label>
-                <Input value={formData.cliente_nome} onChange={e => setFormData({
-                  ...formData,
-                  cliente_nome: e.target.value
-                })} required />
-              </div>
-              <div className="space-y-2">
-                <Label>CPF</Label>
-                <Input value={formData.cliente_cpf} onChange={e => setFormData({
-                  ...formData,
-                  cliente_cpf: e.target.value
-                })} />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Telefone *</Label>
-                <Input value={formData.cliente_telefone} onChange={e => setFormData({
-                  ...formData,
-                  cliente_telefone: e.target.value
-                })} required />
-              </div>
-              <div className="space-y-2">
-                <Label>E-mail</Label>
-                <Input type="email" placeholder="E-mail do cliente" value={formData.cliente_email || ""} onChange={e => setFormData({
-                  ...formData,
-                  cliente_email: e.target.value
-                })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Estado *</Label>
-                <Input value={formData.cliente_estado} onChange={e => setFormData({
-                  ...formData,
-                  cliente_estado: e.target.value
-                })} required />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Cidade *</Label>
-                <Input value={formData.cliente_cidade} onChange={e => setFormData({
-                  ...formData,
-                  cliente_cidade: e.target.value
-                })} required />
-              </div>
-              <div className="space-y-2">
-                <Label>Bairro</Label>
-                <Input value={formData.cliente_bairro} onChange={e => setFormData({
-                  ...formData,
-                  cliente_bairro: e.target.value
-                })} />
-              </div>
-              <div className="space-y-2">
-                <Label>CEP</Label>
-                <Input value={formData.cliente_cep} onChange={e => setFormData({
-                  ...formData,
-                  cliente_cep: e.target.value
-                })} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (produtos.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'É necessário adicionar pelo menos um produto'
+      });
+      return;
+    }
 
-        {/* Produtos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Produtos do Orçamento</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Formulário para adicionar produto */}
-            <div className="border rounded-lg p-4 space-y-4">
-              <div className="space-y-2">
-                <Label>Tipo de Produto</Label>
-                <Select value={novoProduto.tipo_produto} onValueChange={(value: any) => setNovoProduto({
-                  ...novoProduto,
-                  tipo_produto: value
-                })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="porta_enrolar">Porta de Enrolar</SelectItem>
-                    <SelectItem value="porta_social">Porta Social</SelectItem>
-                    <SelectItem value="acessorio">Acessório</SelectItem>
-                    <SelectItem value="adicional">Adicional</SelectItem>
-                    <SelectItem value="manutencao">Manutenção</SelectItem>
-                    <SelectItem value="pintura_epoxi">Pintura Epóxi</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+    if (!formData.cliente_estado || !formData.cliente_cidade) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Estado e cidade são obrigatórios.'
+      });
+      return;
+    }
 
-              {renderCamposProduto()}
+    if (formData.requer_analise && !formData.motivo_analise.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Motivo da análise é obrigatório.'
+      });
+      return;
+    }
 
-              <div className="space-y-2">
-                <Label>Quantidade</Label>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  value={novoProduto.quantidade || 1}
-                  onChange={e => setNovoProduto({
-                    ...novoProduto,
-                    quantidade: parseInt(e.target.value) || 1
-                  })}
-                />
-              </div>
+    const valorTotal = calcularValorTotal();
 
-              <Button type="button" onClick={adicionarProduto}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Produto
-              </Button>
-            </div>
+    if (onSubmit) {
+      await onSubmit({
+        ...formData,
+        data_orcamento: dataOrcamento ? dataOrcamento.toISOString() : new Date().toISOString()
+      }, produtos, valorTotal);
+    }
+  };
 
-            {/* Tabela de produtos adicionados */}
-            {produtos.length > 0 && (
-              <div className="space-y-4">
-                <Label>Produtos Adicionados</Label>
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Qtd</TableHead>
-                        <TableHead>Valor Unit.</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead className="w-20">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {produtos.map((produto, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {getNomeProduto(produto)}
-                          </TableCell>
-                          <TableCell>{produto.descricao || produto.medidas}</TableCell>
-                          <TableCell>{produto.quantidade || 1}</TableCell>
-                          <TableCell>R$ {produto.valor.toFixed(2)}</TableCell>
-                          <TableCell className="font-medium">
-                            R$ {(produto.valor * (produto.quantidade || 1)).toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removerProduto(index)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+  const cidades = formData.cliente_estado ? getCidadesPorEstado(formData.cliente_estado) : [];
 
-        {/* Custos Logísticos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Custos Logísticos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Formulário para adicionar custos */}
-            <div className="border rounded-lg p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Tipo de Custo</Label>
-                  <Select 
-                    value={novoCusto.tipo || 'frete'} 
-                    onValueChange={(value: 'frete' | 'instalacao') => setNovoCusto({
-                      ...novoCusto,
-                      tipo: value
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="frete">Frete</SelectItem>
-                      <SelectItem value="instalacao">Instalação</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Descrição (Opcional)</Label>
-                  <Input 
-                    placeholder="Ex: Frete para interior"
-                    value={novoCusto.descricao || ""}
-                    onChange={e => setNovoCusto({
-                      ...novoCusto,
-                      descricao: e.target.value
-                    })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Valor (R$)</Label>
-                  <Input 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    value={novoCusto.valor || ""}
-                    onChange={e => setNovoCusto({
-                      ...novoCusto,
-                      valor: parseFloat(e.target.value) || 0
-                    })}
-                  />
-                </div>
-              </div>
-
-              <Button type="button" onClick={adicionarCusto}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Custo
-              </Button>
-            </div>
-
-            {/* Tabela de custos adicionados */}
-            {custos.length > 0 && (
-              <div className="space-y-4">
-                <Label>Custos Adicionados</Label>
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead className="w-20">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {custos.map((custo, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {custo.tipo === 'frete' ? 'Frete' : 'Instalação'}
-                          </TableCell>
-                          <TableCell>{custo.descricao}</TableCell>
-                          <TableCell className="font-medium">
-                            R$ {custo.valor.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removerCusto(index)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Modalidade de Instalação</Label>
-              <Select value={formData.modalidade_instalacao} onValueChange={(value: any) => setFormData({
-                ...formData,
-                modalidade_instalacao: value
-              })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="instalacao_elisa">Instalação Elisa</SelectItem>
-                  <SelectItem value="autorizado_elisa">Autorizado Elisa</SelectItem>
-                  <SelectItem value="sem_instalacao">Sem instalação</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Informações Finais */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações Finais</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Canal de Aquisição</Label>
-              <Select value={formData.canal_aquisicao_id || ""} onValueChange={value => setFormData({
-                ...formData,
-                canal_aquisicao_id: value
-              })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o canal de aquisição" />
-                </SelectTrigger>
-                <SelectContent>
-                  {canais.map(canal => <SelectItem key={canal.id} value={canal.id}>
-                      {canal.nome}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <FormaPagamentoSelect
-              value={formData.forma_pagamento}
-              onValueChange={(value) => setFormData({
-                ...formData,
-                forma_pagamento: value
-              })}
-              showLabel={true}
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Dados do Cliente */}
+      <Card>
+        <CardHeader className="pb-3 pt-4">
+          <CardTitle className="text-base font-semibold">Dados do Cliente</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
+          <div className="space-y-1">
+            <Label htmlFor="cliente_nome" className="text-xs font-medium">Nome *</Label>
+            <Input
+              id="cliente_nome"
+              value={formData.cliente_nome}
+              onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
+              placeholder="Nome completo"
+              className="h-9"
+              required
             />
-
-            <div className="space-y-2">
-              <Label>Desconto Total (%)</Label>
-              <Input type="number" min="0" max={formData.forma_pagamento === "a_vista" ? "10" : "5"} step="0.1" value={formData.desconto_total_percentual} onChange={e => {
-                const valor = parseFloat(e.target.value) || 0;
-                const maxDesconto = formData.forma_pagamento === "a_vista" ? 10 : 5;
-                if (valor <= maxDesconto) {
-                  setFormData({
-                    ...formData,
-                    desconto_total_percentual: valor
-                  });
-                }
-              }} />
-              <p className="text-xs text-muted-foreground">
-                {formData.forma_pagamento === "a_vista" ? "Pagamentos à vista permitem desconto de até 10%. Demais formas até 5%" : "Descontos maiores que 5% requerem aprovação da gerência"}
-              </p>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox id="requer_analise" checked={formData.requer_analise} onCheckedChange={checked => setFormData({
-                ...formData,
-                requer_analise: !!checked
-              })} />
-              <Label htmlFor="requer_analise">Requer análise da gerência</Label>
-            </div>
-
-            {formData.requer_analise && <div className="space-y-2">
-                <Label>Motivo da Análise *</Label>
-                <Textarea placeholder="Descreva o motivo pelo qual este orçamento requer análise..." value={formData.motivo_analise} onChange={e => setFormData({
-                ...formData,
-                motivo_analise: e.target.value
-              })} required={formData.requer_analise} />
-              </div>}
-          </CardContent>
-        </Card>
-
-          {/* Total */}
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-            <span className="text-lg font-semibold">Total do Orçamento:</span>
-            <span className="text-2xl font-bold text-primary">
-              R$ {calculatedTotal.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2
-            })}
-            </span>
           </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex gap-4">
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancelar
-                </Button>
-                <Button type="button" variant="outline" onClick={handleDownloadPDF} disabled={produtos.length === 0}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Baixar PDF
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Salvando..." : isEdit ? "Atualizar" : "Criar Orçamento"}
-                </Button>
+          <div className="space-y-1">
+            <Label htmlFor="cliente_telefone" className="text-xs font-medium">Telefone *</Label>
+            <Input
+              id="cliente_telefone"
+              value={formData.cliente_telefone}
+              onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
+              placeholder="(00) 00000-0000"
+              className="h-9"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="cliente_email" className="text-xs font-medium">E-mail</Label>
+            <Input
+              id="cliente_email"
+              type="email"
+              value={formData.cliente_email}
+              onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
+              placeholder="email@exemplo.com"
+              className="h-9"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="cliente_cpf" className="text-xs font-medium">CPF/CNPJ *</Label>
+            <Input
+              id="cliente_cpf"
+              value={formData.cliente_cpf}
+              onChange={(e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 11) {
+                  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                } else {
+                  value = value.replace(/(\d{2})(\d)/, '$1.$2');
+                  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                  value = value.replace(/(\d{3})(\d)/, '$1/$2');
+                  value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+                }
+                setFormData(prev => ({ ...prev, cliente_cpf: value }));
+              }}
+              placeholder="000.000.000-00"
+              className="h-9"
+              required
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Localização */}
+      <Card>
+        <CardHeader className="pb-3 pt-4">
+          <CardTitle className="text-base font-semibold">Localização</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
+          <div className="space-y-1">
+            <Label htmlFor="cliente_estado" className="text-xs font-medium">Estado *</Label>
+            <Select
+              value={formData.cliente_estado}
+              onValueChange={(value) => {
+                setFormData(prev => ({ ...prev, cliente_estado: value, cliente_cidade: '' }));
+              }}
+              required
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {ESTADOS_BRASIL.map((estado) => (
+                  <SelectItem key={estado.sigla} value={estado.sigla}>
+                    {estado.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="cliente_cidade" className="text-xs font-medium">Cidade *</Label>
+            <Select
+              value={formData.cliente_cidade}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, cliente_cidade: value }))}
+              disabled={!formData.cliente_estado}
+              required
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {cidades.map((cidade) => (
+                  <SelectItem key={cidade} value={cidade}>
+                    {cidade}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="cliente_cep" className="text-xs font-medium">CEP</Label>
+            <Input
+              id="cliente_cep"
+              value={formData.cliente_cep}
+              onChange={(e) => setFormData(prev => ({ ...prev, cliente_cep: e.target.value }))}
+              placeholder="00000-000"
+              className="h-9"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="cliente_bairro" className="text-xs font-medium">Bairro</Label>
+            <Input
+              id="cliente_bairro"
+              value={formData.cliente_bairro}
+              onChange={(e) => setFormData(prev => ({ ...prev, cliente_bairro: e.target.value }))}
+              placeholder="Nome do bairro"
+              className="h-9"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Dados do Orçamento */}
+      <Card>
+        <CardHeader className="pb-3 pt-4">
+          <CardTitle className="text-base font-semibold">Dados do Orçamento</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Data do Orçamento</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 w-full justify-start text-left font-normal",
+                      !dataOrcamento && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dataOrcamento ? format(dataOrcamento, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dataOrcamento}
+                    onSelect={setDataOrcamento}
+                    initialFocus
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="publico_alvo" className="text-xs font-medium">Público Alvo</Label>
+              <Select
+                value={formData.publico_alvo}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, publico_alvo: value }))}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                  <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                  <SelectItem value="empresa">Empresa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="canal_aquisicao" className="text-xs font-medium">Canal de Aquisição</Label>
+              <Select
+                value={formData.canal_aquisicao_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {canais.map((canal) => (
+                    <SelectItem key={canal.id} value={canal.id}>
+                      {canal.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="forma_pagamento" className="text-xs font-medium">Forma de Pagamento *</Label>
+              <FormaPagamentoSelect
+                value={formData.forma_pagamento}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="valor_frete" className="text-xs font-medium">Valor do Frete</Label>
+              <Input
+                id="valor_frete"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valor_frete}
+                onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: e.target.value }))}
+                placeholder="0.00"
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Tipo de Entrega</Label>
+              <RadioGroup
+                value={formData.tipo_entrega}
+                onValueChange={(value: 'instalacao' | 'entrega') => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
+                className="flex gap-4 pt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="instalacao" id="instalacao" />
+                  <Label htmlFor="instalacao" className="cursor-pointer font-normal">Instalação</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="entrega" id="entrega" />
+                  <Label htmlFor="entrega" className="cursor-pointer font-normal">Entrega</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="observacoes" className="text-xs font-medium">Observações</Label>
+            <Textarea
+              id="observacoes"
+              value={formData.observacoes}
+              onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+              placeholder="Observações adicionais sobre o orçamento..."
+              className="min-h-[80px]"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Produtos */}
+      <Card>
+        <CardHeader className="pb-3 pt-4">
+          <CardTitle className="text-base font-semibold">Produtos</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 pb-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setTipoInicial('porta_enrolar');
+                setProdutoEditando(undefined);
+                setIndexEditando(undefined);
+                setDialogOpen(true);
+              }}
+            >
+              <Package className="w-4 h-4 mr-2" />
+              Porta de Enrolar
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setTipoInicial('porta_social');
+                setProdutoEditando(undefined);
+                setIndexEditando(undefined);
+                setDialogOpen(true);
+              }}
+            >
+              <Package className="w-4 h-4 mr-2" />
+              Porta Social
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setTipoInicial('pintura_epoxi');
+                setProdutoEditando(undefined);
+                setIndexEditando(undefined);
+                setDialogOpen(true);
+              }}
+            >
+              <Paintbrush className="w-4 h-4 mr-2" />
+              Pintura Eletrostática
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setTipoInicial('manutencao');
+                setProdutoEditando(undefined);
+                setIndexEditando(undefined);
+                setDialogOpen(true);
+              }}
+            >
+              <Wrench className="w-4 h-4 mr-2" />
+              Manutenção
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAcessoriosModalOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Acessório/Adicional
+            </Button>
+          </div>
+
+          <ProdutosOrcamentoTable
+            produtos={produtos}
+            onRemoveProduto={handleRemoveProduto}
+            onEditProduto={handleEditProduto}
+            onUpdateQuantidade={handleUpdateQuantidade}
+            onRemoverDesconto={handleRemoverDesconto}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Resumo e Análise */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <OrcamentoResumo 
+          produtos={produtos} 
+          valorFrete={parseFloat(formData.valor_frete || '0')} 
+        />
+
+        <Card>
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-base font-semibold">Requer Análise?</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pb-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="requer_analise"
+                checked={formData.requer_analise}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requer_analise: checked as boolean }))}
+              />
+              <Label htmlFor="requer_analise" className="cursor-pointer">
+                Este orçamento requer análise antes da aprovação
+              </Label>
+            </div>
+
+            {formData.requer_analise && (
+              <div className="space-y-1">
+                <Label htmlFor="motivo_analise" className="text-xs font-medium">Motivo *</Label>
+                <Textarea
+                  id="motivo_analise"
+                  value={formData.motivo_analise}
+                  onChange={(e) => setFormData(prev => ({ ...prev, motivo_analise: e.target.value }))}
+                  placeholder="Descreva o motivo da análise..."
+                  className="min-h-[80px]"
+                  required={formData.requer_analise}
+                />
               </div>
-            </CardContent>
-          </Card>
-        </form>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </div>;
+
+      {/* Ações */}
+      <div className="flex justify-between items-center pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={loading}
+        >
+          Cancelar
+        </Button>
+
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDownloadPDF}
+            disabled={loading || produtos.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Baixar PDF
+          </Button>
+
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Salvando...' : (isEdit ? 'Atualizar Orçamento' : 'Criar Orçamento')}
+          </Button>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <ProdutoVendaForm
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setProdutoEditando(undefined);
+            setIndexEditando(undefined);
+            setTipoInicial(undefined);
+          }
+        }}
+        onAddProduto={handleAddProduto}
+        produtoEditando={produtoEditando}
+        indexEditando={indexEditando}
+        tipoInicial={tipoInicial}
+        permitirTrocaTipo={false}
+      />
+
+      <SelecionarAcessoriosModal
+        open={acessoriosModalOpen}
+        onOpenChange={setAcessoriosModalOpen}
+        onConfirm={handleAddAcessorios}
+      />
+    </form>
+  );
 }

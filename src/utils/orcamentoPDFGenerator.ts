@@ -18,7 +18,12 @@ interface OrcamentoPDFData {
   };
 }
 
-export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
+export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: number) => {
+  const data: OrcamentoPDFData = {
+    formData,
+    produtos: formData.produtos || [],
+    calculatedTotal: valorTotal
+  };
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.width;
   const margin = 10;
@@ -159,8 +164,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
   if (data.produtos.length > 0) {
     // Distribuir custos logísticos entre produtos de porta
     const valorFrete = parseFloat(data.formData.valor_frete) || 0;
-    const valorInstalacao = parseFloat(data.formData.valor_instalacao) || 0;
-    const produtosComCustosDistribuidos = distribuirCustosLogisticos(data.produtos, valorFrete, valorInstalacao, data.formData.modalidade_instalacao);
+    const produtosComCustosDistribuidos = data.produtos;
     
     // Preparar dados da tabela com produtos
     const tableData = produtosComCustosDistribuidos.map(produto => {
@@ -213,7 +217,7 @@ export const generateOrcamentoPDF = (data: OrcamentoPDFData) => {
     });
 
     // Adicionar itens logísticos como "Incluso"
-    const itensLogisticos = criarItensLogisticosIncluso(data.formData.modalidade_instalacao);
+    const itensLogisticos = criarItensLogisticosIncluso('instalacao_elisa');
     itensLogisticos.forEach(item => {
       tableData.push([
         'Serviço',

@@ -81,9 +81,9 @@ export default function OrcamentoEdit() {
     return <div>Orçamento não encontrado</div>;
   }
 
-  const handleSubmit = async (formData: OrcamentoFormData, produtos: OrcamentoProduto[], custos: any[], valorTotal: number) => {
+  const handleSubmit = async (formData: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => {
     try {
-      await updateOrcamento(id!, formData, produtos, custos, valorTotal);
+      await updateOrcamento(id!, formData, produtos, [], valorTotal);
       
       toast({
         title: "Sucesso",
