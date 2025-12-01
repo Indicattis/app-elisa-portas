@@ -91,8 +91,9 @@ serve(async (req) => {
 
     const focusToken = empresa.focusnfe_token;
 
-    // Determinar URL base
-    const baseUrl = empresa.ambiente === 'production'
+    // Determinar URL base - verificar 'producao' (pt) ou 'production' (en)
+    const isProducao = empresa.ambiente === 'producao' || empresa.ambiente === 'production';
+    const baseUrl = isProducao
       ? 'https://api.focusnfe.com.br'
       : 'https://homologacao.focusnfe.com.br';
 
