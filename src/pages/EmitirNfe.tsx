@@ -98,6 +98,17 @@ export default function EmitirNfe() {
       return;
     }
 
+    // Validação de campos de endereço obrigatórios
+    if (!formData.endereco || formData.endereco.length < 2) {
+      toast.error("O endereço é obrigatório e deve ter no mínimo 2 caracteres");
+      return;
+    }
+
+    if (!formData.bairro || formData.bairro.length < 2) {
+      toast.error("O bairro é obrigatório e deve ter no mínimo 2 caracteres");
+      return;
+    }
+
     emitirNfe({
       ...formData,
       empresa_emissora_id: empresaEmissoraId,
@@ -191,12 +202,15 @@ export default function EmitirNfe() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="endereco">Endereço</Label>
+                <Label htmlFor="endereco">Endereço *</Label>
                 <Input
                   id="endereco"
                   name="endereco"
                   value={formData.endereco}
                   onChange={handleChange}
+                  minLength={2}
+                  required
+                  placeholder="Ex: Rua das Flores"
                 />
               </div>
               <div className="space-y-2">
@@ -206,18 +220,22 @@ export default function EmitirNfe() {
                   name="numero"
                   value={formData.numero}
                   onChange={handleChange}
+                  placeholder="Ex: 123"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro</Label>
+                <Label htmlFor="bairro">Bairro *</Label>
                 <Input
                   id="bairro"
                   name="bairro"
                   value={formData.bairro}
                   onChange={handleChange}
+                  minLength={2}
+                  required
+                  placeholder="Ex: Centro"
                 />
               </div>
               <div className="space-y-2">

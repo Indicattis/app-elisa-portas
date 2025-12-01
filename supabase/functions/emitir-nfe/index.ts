@@ -75,6 +75,15 @@ serve(async (req) => {
     const refSuffix = userId ? userId.substring(0, 8) : Math.random().toString(36).substring(2, 10);
     const ref = `nfe-${Date.now()}-${refSuffix}`;
 
+    // Validar campos obrigatórios com tamanho mínimo
+    if (!payload.endereco || payload.endereco.length < 2) {
+      throw new Error('Logradouro do destinatário deve ter no mínimo 2 caracteres');
+    }
+
+    if (!payload.bairro || payload.bairro.length < 2) {
+      throw new Error('Bairro do destinatário deve ter no mínimo 2 caracteres');
+    }
+
     // Determinar CPF ou CNPJ do destinatário
     const cpfCnpjLimpo = payload.cnpj_cpf.replace(/\D/g, '');
     const isCpf = cpfCnpjLimpo.length === 11;
