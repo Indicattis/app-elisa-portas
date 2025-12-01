@@ -1,4 +1,3 @@
-
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -12,9 +11,9 @@ export default function NovoOrcamento() {
 
   const { loading, createOrcamento } = useOrcamentos();
 
-  const handleCreateOrcamento = async (formData: any, produtos: any[], custos: any[], valorTotal: number) => {
+  const handleCreateOrcamento = async (formData: any, produtos: any[], valorTotal: number) => {
     try {
-      await createOrcamento(formData, produtos, custos, valorTotal);
+      await createOrcamento(formData, produtos, [], valorTotal);
       navigate("/dashboard/orcamentos");
     } catch (error) {
       console.error("Erro ao criar orçamento:", error);

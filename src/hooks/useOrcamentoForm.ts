@@ -15,12 +15,14 @@ export function useOrcamentoForm() {
     cliente_bairro: "",
     cliente_cep: "",
     valor_frete: "0",
-    valor_instalacao: "0",
-    modalidade_instalacao: "instalacao_elisa",
+    publico_alvo: "",
+    tipo_entrega: "instalacao",
     forma_pagamento: "",
     desconto_total_percentual: 0,
     requer_analise: false,
-    motivo_analise: ""
+    motivo_analise: "",
+    data_orcamento: "",
+    observacoes: ""
   });
 
   const [camposPersonalizados, setCamposPersonalizados] = useState<CampoPersonalizado[]>([]);
@@ -39,12 +41,14 @@ export function useOrcamentoForm() {
       cliente_bairro: "",
       cliente_cep: "",
       valor_frete: "0",
-      valor_instalacao: "0",
-      modalidade_instalacao: "instalacao_elisa",
+      publico_alvo: "",
+      tipo_entrega: "instalacao",
       forma_pagamento: "",
       desconto_total_percentual: 0,
       requer_analise: false,
-      motivo_analise: ""
+      motivo_analise: "",
+      data_orcamento: "",
+      observacoes: ""
     });
     setCamposPersonalizados([]);
     setProdutos([]);

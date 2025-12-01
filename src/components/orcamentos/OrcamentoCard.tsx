@@ -175,7 +175,10 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: O
         }
       };
 
-      generateOrcamentoPDF(pdfData);
+      generateOrcamentoPDF({
+        ...orcamento,
+        produtos: pdfData.produtos
+      }, pdfData.calculatedTotal);
       
       toast({
         title: "PDF Gerado",

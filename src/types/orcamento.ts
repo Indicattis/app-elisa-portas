@@ -12,15 +12,16 @@ export interface OrcamentoFormData {
   cliente_bairro: string;
   cliente_cep: string;
   valor_frete: string;
-  valor_instalacao: string;
-  modalidade_instalacao: 'instalacao_elisa' | 'autorizado_elisa' | 'sem_instalacao';
+  publico_alvo?: string;
+  tipo_entrega?: 'instalacao' | 'entrega';
   forma_pagamento: string;
   desconto_total_percentual: number;
   requer_analise: boolean;
   motivo_analise: string;
   canal_aquisicao_id?: string;
+  data_orcamento?: string;
+  observacoes?: string;
   produtos?: OrcamentoProduto[];
-  custos?: OrcamentoCusto[];
 }
 
 export interface Acessorio {
