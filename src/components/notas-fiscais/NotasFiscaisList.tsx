@@ -223,19 +223,37 @@ export function NotasFiscaisList() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar Nota Fiscal</AlertDialogTitle>
             <AlertDialogDescription>
-              Informe o motivo do cancelamento:
+              Informe o motivo do cancelamento (mínimo 15 caracteres):
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <Textarea
-            value={motivoCancelamento}
-            onChange={(e) => setMotivoCancelamento(e.target.value)}
-            placeholder="Ex: Erro no valor, cliente desistiu da compra..."
-            rows={3}
-          />
+          <div className="space-y-2">
+            <Textarea
+              value={motivoCancelamento}
+              onChange={(e) => setMotivoCancelamento(e.target.value)}
+              placeholder="Ex: Erro no valor do produto informado na nota fiscal..."
+              rows={3}
+              className={motivoCancelamento.length > 0 && motivoCancelamento.length < 15 
+                ? "border-destructive focus-visible:ring-destructive" 
+                : ""}
+            />
+            <div className="flex justify-between text-xs">
+              <span className={motivoCancelamento.length < 15 ? "text-destructive" : "text-green-600"}>
+                {motivoCancelamento.length}/15 caracteres mínimos
+              </span>
+              {motivoCancelamento.length > 0 && motivoCancelamento.length < 15 && (
+                <span className="text-destructive">
+                  Faltam {15 - motivoCancelamento.length} caracteres
+                </span>
+              )}
+            </div>
+          </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCancel} disabled={!motivoCancelamento}>
-              Confirmar Cancelamento
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmCancel} 
+              disabled={motivoCancelamento.length < 15 || isCancelando}
+            >
+              {isCancelando ? "Cancelando..." : "Confirmar Cancelamento"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
