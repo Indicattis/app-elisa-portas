@@ -8,9 +8,11 @@ import { useNavigate } from "react-router-dom";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { EmpresaEmissoraSelector } from "@/components/notas-fiscais/EmpresaEmissoraSelector";
 import { VendaSelector } from "@/components/notas-fiscais/VendaSelector";
+import { AdicionarNaturezaModal } from "@/components/notas-fiscais/AdicionarNaturezaModal";
 
 export default function EmitirNfe() {
   const navigate = useNavigate();
@@ -54,6 +56,21 @@ export default function EmitirNfe() {
         `)
         .order("created_at", { ascending: false })
         .limit(100);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Buscar naturezas de operação
+  const { data: naturezas, refetch: refetchNaturezas } = useQuery({
+    queryKey: ["naturezas-operacao"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("naturezas_operacao")
+        .select("*")
+        .eq("ativo", true)
+        .order("nome");
 
       if (error) throw error;
       return data;
@@ -268,14 +285,27 @@ export default function EmitirNfe() {
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Dados da Nota</h3>
           <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="natureza_operacao">Natureza da Operação</Label>
-              <Input
-                id="natureza_operacao"
-                name="natureza_operacao"
-                value={formData.natureza_operacao}
-                onChange={handleChange}
-              />
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="natureza_operacao">Natureza da Operação *</Label>
+                <Select
+                  value={formData.natureza_operacao}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, natureza_operacao: value }))}
+                  required
+                >
+                  <SelectTrigger id="natureza_operacao">
+                    <SelectValue placeholder="Selecione a natureza" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {naturezas?.map((natureza) => (
+                      <SelectItem key={natureza.id} value={natureza.nome}>
+                        {natureza.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <AdicionarNaturezaModal onNaturezaAdded={refetchNaturezas} />
             </div>
 
             <div className="space-y-2">
