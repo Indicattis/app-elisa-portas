@@ -299,6 +299,24 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
     }
   });
 
+  const sincronizarNotasMutation = useMutation({
+    mutationFn: async (empresaEmissoraId: string) => {
+      const { data: result, error } = await supabase.functions.invoke('sincronizar-notas-focusnfe', {
+        body: { empresaEmissoraId }
+      });
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['notas-fiscais'] });
+      toast.success(data?.message || 'Sincronização concluída!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao sincronizar notas: ' + error.message);
+    }
+  });
+
   return {
     notasFiscais,
     isLoading,
@@ -310,12 +328,14 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
     emitirNfe: emitirNfeMutation.mutate,
     consultarNota: consultarNotaMutation.mutate,
     cancelarNota: cancelarNotaMutation.mutate,
+    sincronizarNotas: sincronizarNotasMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isEmitindoNfse: emitirNfseMutation.isPending,
     isEmitindoNfe: emitirNfeMutation.isPending,
     isConsultando: consultarNotaMutation.isPending,
-    isCancelando: cancelarNotaMutation.isPending
+    isCancelando: cancelarNotaMutation.isPending,
+    isSincronizando: sincronizarNotasMutation.isPending
   };
 };

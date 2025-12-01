@@ -58,3 +58,6 @@ verify_jwt = true
 
 [functions.cancelar-nota]
 verify_jwt = true
+
+[functions.sincronizar-notas-focusnfe]
+verify_jwt = true
