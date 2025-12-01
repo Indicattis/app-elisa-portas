@@ -6,20 +6,14 @@ interface CaixaIndicadoresProps {
   depositos: DepositoCaixa[];
   giroCaixaTotal: number;
   capitalTomado: number;
+  totalTravesseiro: number;
+  totalPrecaucoes: number;
 }
 
-export function CaixaIndicadores({ depositos, giroCaixaTotal, capitalTomado }: CaixaIndicadoresProps) {
+export function CaixaIndicadores({ depositos, giroCaixaTotal, capitalTomado, totalTravesseiro, totalPrecaucoes }: CaixaIndicadoresProps) {
   const valorDisponivel = giroCaixaTotal - capitalTomado;
   
-  const travesseiro = depositos
-    .filter(d => d.categoria === 'travesseiro')
-    .reduce((sum, dep) => sum + Number(dep.valor), 0);
-  
-  const precaucoes = depositos
-    .filter(d => d.categoria === 'precaucoes')
-    .reduce((sum, dep) => sum + Number(dep.valor), 0);
-  
-  const totalDepositos = travesseiro + precaucoes;
+  const totalDepositos = totalTravesseiro + totalPrecaucoes;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -83,10 +77,10 @@ export function CaixaIndicadores({ depositos, giroCaixaTotal, capitalTomado }: C
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold" style={{ color: 'hsl(var(--info))' }}>
-            {formatCurrency(travesseiro)}
+            {formatCurrency(totalTravesseiro)}
           </div>
           <p className="text-xs text-muted-foreground">
-            {((travesseiro / totalDepositos) * 100 || 0).toFixed(1)}% dos depósitos
+            {((totalTravesseiro / totalDepositos) * 100 || 0).toFixed(1)}% dos depósitos
           </p>
         </CardContent>
       </Card>
@@ -98,10 +92,10 @@ export function CaixaIndicadores({ depositos, giroCaixaTotal, capitalTomado }: C
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold" style={{ color: 'hsl(var(--warning))' }}>
-            {formatCurrency(precaucoes)}
+            {formatCurrency(totalPrecaucoes)}
           </div>
           <p className="text-xs text-muted-foreground">
-            {((precaucoes / totalDepositos) * 100 || 0).toFixed(1)}% dos depósitos
+            {((totalPrecaucoes / totalDepositos) * 100 || 0).toFixed(1)}% dos depósitos
           </p>
         </CardContent>
       </Card>

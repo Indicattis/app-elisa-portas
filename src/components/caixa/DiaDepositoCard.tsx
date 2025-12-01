@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, AlertCircle } from "lucide-react";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DepositoCaixa } from "@/types/caixa";
 import { DepositoLinha } from "./DepositoLinha";
@@ -11,10 +11,11 @@ interface DiaDepositoCardProps {
   depositos: DepositoCaixa[];
   onAddDeposito: (date: Date) => void;
   onEditDeposito: (deposito: DepositoCaixa) => void;
+  onDeleteDeposito: (id: string) => void;
 }
 
-export function DiaDepositoCard({ date, depositos, onAddDeposito, onEditDeposito }: DiaDepositoCardProps) {
-  const depositosDoDia = depositos.filter((d) => isSameDay(new Date(d.data_deposito), date));
+export function DiaDepositoCard({ date, depositos, onAddDeposito, onEditDeposito, onDeleteDeposito }: DiaDepositoCardProps) {
+  const depositosDoDia = depositos.filter((d) => isSameDay(parseISO(d.data_deposito), date));
 
   const totalDia = depositosDoDia.reduce((sum, dep) => sum + Number(dep.valor), 0);
 
@@ -42,8 +43,13 @@ export function DiaDepositoCard({ date, depositos, onAddDeposito, onEditDeposito
         {depositosDoDia.length > 0 ? (
           <>
             <div className="space-y-1">
-              {depositosDoDia.map((deposito) => (
-                <DepositoLinha key={deposito.id} deposito={deposito} onClick={() => onEditDeposito(deposito)} />
+            {depositosDoDia.map((deposito) => (
+                <DepositoLinha 
+                  key={deposito.id} 
+                  deposito={deposito} 
+                  onClick={() => onEditDeposito(deposito)} 
+                  onDelete={onDeleteDeposito}
+                />
               ))}
             </div>
             <div className="pt-2 border-t">

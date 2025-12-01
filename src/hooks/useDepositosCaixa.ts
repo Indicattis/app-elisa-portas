@@ -4,8 +4,14 @@ import { DepositoCaixa, DepositoCaixaFormData } from "@/types/caixa";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
+interface TotaisAcumulados {
+  totalTravesseiro: number;
+  totalPrecaucoes: number;
+}
+
 export function useDepositosCaixa(currentDate: Date, viewMode: 'week' | 'month' = 'week') {
   const [depositos, setDepositos] = useState<DepositoCaixa[]>([]);
+  const [totaisAcumulados, setTotaisAcumulados] = useState<TotaisAcumulados>({ totalTravesseiro: 0, totalPrecaucoes: 0 });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -47,8 +53,32 @@ export function useDepositosCaixa(currentDate: Date, viewMode: 'week' | 'month' 
     }
   };
 
+  const fetchTotaisAcumulados = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('depositos_caixa')
+        .select('valor, categoria');
+
+      if (error) throw error;
+      
+      const totais = (data || []).reduce((acc, dep) => {
+        if (dep.categoria === 'travesseiro') {
+          acc.totalTravesseiro += Number(dep.valor);
+        } else if (dep.categoria === 'precaucoes') {
+          acc.totalPrecaucoes += Number(dep.valor);
+        }
+        return acc;
+      }, { totalTravesseiro: 0, totalPrecaucoes: 0 });
+      
+      setTotaisAcumulados(totais);
+    } catch (error) {
+      console.error('Erro ao buscar totais acumulados:', error);
+    }
+  };
+
   useEffect(() => {
     fetchDepositos();
+    fetchTotaisAcumulados();
 
     // Subscription para atualizações em tempo real
     const channel = supabase
@@ -58,6 +88,7 @@ export function useDepositosCaixa(currentDate: Date, viewMode: 'week' | 'month' 
         { event: '*', schema: 'public', table: 'depositos_caixa' },
         () => {
           fetchDepositos();
+          fetchTotaisAcumulados();
         }
       )
       .subscribe();
@@ -152,6 +183,7 @@ export function useDepositosCaixa(currentDate: Date, viewMode: 'week' | 'month' 
 
   return {
     depositos,
+    totaisAcumulados,
     loading,
     createDeposito,
     updateDeposito,

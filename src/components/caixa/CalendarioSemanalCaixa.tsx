@@ -10,6 +10,7 @@ interface CalendarioSemanalCaixaProps {
   depositos: DepositoCaixa[];
   onAddDeposito: (date: Date) => void;
   onEditDeposito: (deposito: DepositoCaixa) => void;
+  onDeleteDeposito: (id: string) => void;
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
@@ -20,6 +21,7 @@ export function CalendarioSemanalCaixa({
   depositos,
   onAddDeposito,
   onEditDeposito,
+  onDeleteDeposito,
   onPreviousWeek,
   onNextWeek,
   onToday
@@ -59,6 +61,7 @@ export function CalendarioSemanalCaixa({
             depositos={depositos}
             onAddDeposito={onAddDeposito}
             onEditDeposito={onEditDeposito}
+            onDeleteDeposito={onDeleteDeposito}
           />
         ))}
       </div>
