@@ -97,6 +97,10 @@ serve(async (req) => {
       ? 'https://api.focusnfe.com.br'
       : 'https://homologacao.focusnfe.com.br';
 
+    // Número da nota manual (se informado)
+    const numeroNotaManual = payload.numero_nota ? parseInt(payload.numero_nota) : undefined;
+    console.log('[emitir-nfe] Número da nota manual:', numeroNotaManual || 'automático');
+
     // Gerar referência única (máximo 20 caracteres para o campo ref_externa)
     // Formato: nfe + últimos 10 dígitos timestamp + 6 caracteres do userId = 19 caracteres
     const refSuffix = userId ? userId.substring(0, 6) : Math.random().toString(36).substring(2, 8);
@@ -121,6 +125,9 @@ serve(async (req) => {
 
     // Montar payload para Focus NFe API (estrutura flat)
     const focusPayload: Record<string, any> = {
+      // Número da nota (se informado manualmente)
+      ...(numeroNotaManual && { numero: numeroNotaManual }),
+      
       // Dados da operação
       natureza_operacao: payload.natureza_operacao || 'Venda de mercadoria',
       data_emissao: new Date().toISOString().split('T')[0], // Formato: YYYY-MM-DD

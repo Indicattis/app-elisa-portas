@@ -45,6 +45,7 @@ export default function EmitirNfe() {
     cfop: "5102",
     ncm: "",
     informacoes_adicionais: "",
+    numero_nota: "", // Número manual da nota (opcional, para testes)
   });
 
   // Buscar vendas para vincular
@@ -298,6 +299,21 @@ export default function EmitirNfe() {
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Dados da Nota</h3>
           <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="numero_nota">Número da Nota (Opcional)</Label>
+              <Input
+                id="numero_nota"
+                name="numero_nota"
+                type="number"
+                value={formData.numero_nota}
+                onChange={handleChange}
+                placeholder="Ex: 912"
+              />
+              <p className="text-xs text-muted-foreground">
+                Deixe em branco para numeração automática da SEFAZ. Use apenas para testes.
+              </p>
+            </div>
+
             <div className="flex gap-2 items-end">
               <div className="flex-1 space-y-2">
                 <Label htmlFor="natureza_operacao">Natureza da Operação *</Label>
