@@ -81,9 +81,10 @@ serve(async (req) => {
       ? 'https://api.focusnfe.com.br'
       : 'https://homologacao.focusnfe.com.br';
 
-    // Gerar referência única
-    const refSuffix = userId ? userId.substring(0, 8) : Math.random().toString(36).substring(2, 10);
-    const ref = `nfe-${Date.now()}-${refSuffix}`;
+    // Gerar referência única (máximo 20 caracteres para o campo ref_externa)
+    // Formato: nfe + últimos 10 dígitos timestamp + 6 caracteres do userId = 19 caracteres
+    const refSuffix = userId ? userId.substring(0, 6) : Math.random().toString(36).substring(2, 8);
+    const ref = `nfe${Date.now().toString().slice(-10)}${refSuffix}`;
 
     // Validar campos obrigatórios com tamanho mínimo
     if (!payload.endereco || payload.endereco.length < 2) {
