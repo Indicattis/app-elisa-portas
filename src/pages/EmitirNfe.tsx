@@ -8,9 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { EmpresaEmissoraSelector } from "@/components/notas-fiscais/EmpresaEmissoraSelector";
+import { VendaSelector } from "@/components/notas-fiscais/VendaSelector";
 
 export default function EmitirNfe() {
   const navigate = useNavigate();
@@ -47,10 +47,13 @@ export default function EmitirNfe() {
           estado,
           cep,
           bairro,
-          valor_venda
+          valor_venda,
+          forma_pagamento,
+          data_venda,
+          produtos_vendas:produtos_vendas(id)
         `)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
       return data;
@@ -144,21 +147,11 @@ export default function EmitirNfe() {
 
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Vincular a Venda (Opcional)</h3>
-          <div className="space-y-2">
-            <Label htmlFor="venda">Selecione a Venda</Label>
-            <Select value={selectedVenda} onValueChange={handleVendaSelect}>
-              <SelectTrigger id="venda">
-                <SelectValue placeholder="Selecione uma venda" />
-              </SelectTrigger>
-              <SelectContent>
-                {vendas?.map((venda) => (
-                  <SelectItem key={venda.id} value={venda.id}>
-                    {venda.cliente_nome} - {venda.id.substring(0, 8)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <VendaSelector
+            vendas={vendas}
+            selectedVenda={selectedVenda}
+            onSelect={handleVendaSelect}
+          />
         </Card>
 
         <Card className="p-4">
