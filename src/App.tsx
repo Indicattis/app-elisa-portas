@@ -129,6 +129,8 @@ import AdminHome from "./pages/admin/AdminHome";
 import AdminPermissions from "./pages/admin/AdminPermissions";
 import AdminRoles from "./pages/admin/AdminRoles";
 import CompanySettings from "./pages/admin/CompanySettings";
+import CompanyList from "./pages/admin/CompanyList";
+import CompanyEdit from "./pages/admin/CompanyEdit";
 import ParceiroHome from "./pages/ParceiroHome";
 import ComprasHome from "./pages/ComprasHome";
 import FinanceiroHome from "./pages/FinanceiroHome";
@@ -1296,13 +1298,29 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/admin/company"
+                  path="/admin/companies"
                   element={
-                    <ProtectedRoute routeKey="admin">
+                    <ProtectedRoute routeKey="admin_companies">
                       <AdminLayout>
-                        <CompanySettings />
+                        <CompanyList />
                       </AdminLayout>
                     </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/companies/:id"
+                  element={
+                    <ProtectedRoute routeKey="admin_companies">
+                      <AdminLayout>
+                        <CompanyEdit />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/company"
+                  element={
+                    <Navigate to="/admin/companies" replace />
                   }
                 />
 

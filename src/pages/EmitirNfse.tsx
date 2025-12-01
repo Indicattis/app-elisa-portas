@@ -1,24 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNotasFiscais } from "@/hooks/useNotasFiscais";
-import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
-import { ArrowLeft, FileText, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
+import { toast } from "sonner";
+import { EmpresaEmissoraSelector } from "@/components/notas-fiscais/EmpresaEmissoraSelector";
 
 export default function EmitirNfse() {
   const navigate = useNavigate();
   const { emitirNfse, isEmitindoNfse } = useNotasFiscais();
   const { configuracoes } = useConfiguracoesFiscais();
-  
-  const [vendaSelecionada, setVendaSelecionada] = useState<string>("");
+  const [selectedVenda, setSelectedVenda] = useState<string | undefined>();
+
+  const [empresaEmissoraId, setEmpresaEmissoraId] = useState("");
   const [formData, setFormData] = useState({
     cnpj_cpf: "",
     razao_social: "",
@@ -29,274 +31,279 @@ export default function EmitirNfse() {
     tomador_cidade: "",
     tomador_uf: "",
     tomador_cep: "",
-    codigo_servico: "",
-    descricao_servico: "",
     valor_total: 0,
-    aliquota_iss: 5,
+    codigo_servico: configuracoes?.codigo_servico_padrao || "",
+    descricao_servico: configuracoes?.descricao_servico_padrao || "",
+    aliquota_iss: configuracoes?.aliquota_iss_padrao || 5,
   });
 
+  // Buscar vendas para vincular
   const { data: vendas } = useQuery({
-    queryKey: ['vendas-para-faturar'],
+    queryKey: ["vendas-nfse"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('vendas')
-        .select('id, cliente_nome, valor_venda, data_venda, cpf_cliente, cliente_email, cidade, estado, bairro, cep')
-        .order('data_venda', { ascending: false })
-        .limit(100);
-      return data;
-    }
-  });
+      const { data, error } = await supabase
+        .from("vendas")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(50);
 
-  useEffect(() => {
-    if (configuracoes) {
-      setFormData(prev => ({
-        ...prev,
-        codigo_servico: configuracoes.codigo_servico_padrao || "",
-        descricao_servico: configuracoes.descricao_servico_padrao || "",
-        aliquota_iss: configuracoes.aliquota_iss_padrao || 5,
-      }));
-    }
-  }, [configuracoes]);
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleVendaSelect = (vendaId: string) => {
-    setVendaSelecionada(vendaId);
-    const venda = vendas?.find(v => v.id === vendaId);
-    if (venda) {
-      setFormData(prev => ({
-        ...prev,
-        cnpj_cpf: venda.cpf_cliente || "",
-        razao_social: venda.cliente_nome || "",
-        email: venda.cliente_email || "",
-        tomador_cidade: venda.cidade || "",
-        tomador_uf: venda.estado || "",
-        tomador_bairro: venda.bairro || "",
-        tomador_cep: venda.cep || "",
-        valor_total: venda.valor_venda || 0,
-      }));
-    }
+    setSelectedVenda(vendaId);
   };
 
-  const valorIss = (formData.valor_total * formData.aliquota_iss) / 100;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "valor_total" || name === "aliquota_iss" ? parseFloat(value) || 0 : value,
+    }));
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.cnpj_cpf || !formData.razao_social) {
-      toast.error("Preencha os dados do tomador");
+
+    if (!empresaEmissoraId) {
+      toast.error("Selecione a empresa emissora");
       return;
     }
 
-    if (!formData.descricao_servico || formData.valor_total <= 0) {
-      toast.error("Preencha os dados do serviço");
+    if (!formData.cnpj_cpf || !formData.razao_social || !formData.valor_total) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
-    emitirNfse(formData);
+    emitirNfse({
+      ...formData,
+      empresa_emissora_id: empresaEmissoraId,
+      venda_id: selectedVenda,
+    });
   };
+
+  const valorIss = formData.valor_total * (formData.aliquota_iss / 100);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between pb-2 border-b">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/administrativo/financeiro/notas-fiscais')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard/administrativo/financeiro/notas-fiscais")}
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Emitir NFS-e</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Nota Fiscal de Serviço Eletrônica
+              Emissão de Nota Fiscal de Serviço Eletrônica
             </p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Vincular a uma Venda (Opcional)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select value={vendaSelecionada} onValueChange={handleVendaSelect}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecione uma venda..." />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <EmpresaEmissoraSelector 
+          value={empresaEmissoraId}
+          onChange={setEmpresaEmissoraId}
+        />
+
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">Vincular a Venda (Opcional)</h3>
+          <div className="space-y-2">
+            <Label htmlFor="venda">Selecione a Venda</Label>
+            <Select value={selectedVenda} onValueChange={handleVendaSelect}>
+              <SelectTrigger id="venda">
+                <SelectValue placeholder="Selecione uma venda" />
               </SelectTrigger>
               <SelectContent>
-                {vendas?.map(venda => (
+                {vendas?.map((venda) => (
                   <SelectItem key={venda.id} value={venda.id}>
-                    {venda.cliente_nome} - R$ {venda.valor_venda?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    Venda {venda.id.substring(0, 8)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Dados do Tomador (Cliente)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">CPF/CNPJ *</Label>
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">Dados do Tomador</h3>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cnpj_cpf">CPF/CNPJ *</Label>
                 <Input
+                  id="cnpj_cpf"
+                  name="cnpj_cpf"
                   value={formData.cnpj_cpf}
-                  onChange={(e) => setFormData(prev => ({ ...prev, cnpj_cpf: e.target.value }))}
-                  placeholder="000.000.000-00"
+                  onChange={handleChange}
                   required
-                  className="h-9"
+                  placeholder="00.000.000/0000-00"
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Nome/Razão Social *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="razao_social">Razão Social *</Label>
                 <Input
+                  id="razao_social"
+                  name="razao_social"
                   value={formData.razao_social}
-                  onChange={(e) => setFormData(prev => ({ ...prev, razao_social: e.target.value }))}
+                  onChange={handleChange}
                   required
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Email</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="cliente@email.com"
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">CEP</Label>
-                <Input
-                  value={formData.tomador_cep}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tomador_cep: e.target.value }))}
-                  placeholder="00000-000"
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1 col-span-2">
-                <Label className="text-xs">Endereço</Label>
-                <Input
-                  value={formData.tomador_endereco}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tomador_endereco: e.target.value }))}
-                  placeholder="Rua, Avenida..."
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Número</Label>
-                <Input
-                  value={formData.tomador_numero}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tomador_numero: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Bairro</Label>
-                <Input
-                  value={formData.tomador_bairro}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tomador_bairro: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Cidade</Label>
-                <Input
-                  value={formData.tomador_cidade}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tomador_cidade: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">UF</Label>
-                <Input
-                  value={formData.tomador_uf}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tomador_uf: e.target.value.toUpperCase() }))}
-                  maxLength={2}
-                  placeholder="RS"
-                  className="h-9"
                 />
               </div>
             </div>
-          </CardContent>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="tomador_endereco">Endereço</Label>
+                <Input
+                  id="tomador_endereco"
+                  name="tomador_endereco"
+                  value={formData.tomador_endereco}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tomador_numero">Número</Label>
+                <Input
+                  id="tomador_numero"
+                  name="tomador_numero"
+                  value={formData.tomador_numero}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tomador_bairro">Bairro</Label>
+                <Input
+                  id="tomador_bairro"
+                  name="tomador_bairro"
+                  value={formData.tomador_bairro}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tomador_cidade">Cidade</Label>
+                <Input
+                  id="tomador_cidade"
+                  name="tomador_cidade"
+                  value={formData.tomador_cidade}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tomador_uf">UF</Label>
+                <Input
+                  id="tomador_uf"
+                  name="tomador_uf"
+                  value={formData.tomador_uf}
+                  onChange={handleChange}
+                  maxLength={2}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tomador_cep">CEP</Label>
+              <Input
+                id="tomador_cep"
+                name="tomador_cep"
+                value={formData.tomador_cep}
+                onChange={handleChange}
+                placeholder="00000-000"
+              />
+            </div>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Dados do Serviço</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Código do Serviço Municipal *</Label>
-              <Input
-                value={formData.codigo_servico}
-                onChange={(e) => setFormData(prev => ({ ...prev, codigo_servico: e.target.value }))}
-                placeholder="Ex: 07.02"
-                required
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Descrição do Serviço *</Label>
-              <Textarea
-                value={formData.descricao_servico}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao_servico: e.target.value }))}
-                placeholder="Descreva o serviço prestado..."
-                required
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Valor do Serviço (R$) *</Label>
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">Dados do Serviço</h3>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="codigo_servico">Código do Serviço</Label>
                 <Input
+                  id="codigo_servico"
+                  name="codigo_servico"
+                  value={formData.codigo_servico}
+                  onChange={handleChange}
+                  placeholder="Ex: 07.02"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="valor_total">Valor Total *</Label>
+                <Input
+                  id="valor_total"
+                  name="valor_total"
                   type="number"
                   step="0.01"
                   value={formData.valor_total}
-                  onChange={(e) => setFormData(prev => ({ ...prev, valor_total: parseFloat(e.target.value) || 0 }))}
+                  onChange={handleChange}
                   required
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Alíquota ISS (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.aliquota_iss}
-                  onChange={(e) => setFormData(prev => ({ ...prev, aliquota_iss: parseFloat(e.target.value) || 0 }))}
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Valor ISS (R$)</Label>
-                <Input
-                  value={valorIss.toFixed(2)}
-                  disabled
-                  className="h-9 bg-muted"
                 />
               </div>
             </div>
-          </CardContent>
+
+            <div className="space-y-2">
+              <Label htmlFor="descricao_servico">Descrição do Serviço</Label>
+              <Textarea
+                id="descricao_servico"
+                name="descricao_servico"
+                value={formData.descricao_servico}
+                onChange={handleChange}
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="aliquota_iss">Alíquota ISS (%)</Label>
+                <Input
+                  id="aliquota_iss"
+                  name="aliquota_iss"
+                  type="number"
+                  step="0.01"
+                  value={formData.aliquota_iss}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor ISS Calculado</Label>
+                <Input value={`R$ ${valorIss.toFixed(2)}`} disabled />
+              </div>
+            </div>
+          </div>
         </Card>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate('/dashboard/administrativo/financeiro/notas-fiscais')}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/dashboard/administrativo/financeiro/notas-fiscais")}
+          >
             Cancelar
           </Button>
           <Button type="submit" disabled={isEmitindoNfse}>
-            {isEmitindoNfse ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Emitindo...
-              </>
-            ) : (
-              <>
-                <FileText className="w-4 h-4" />
-                Emitir NFS-e
-              </>
-            )}
+            {isEmitindoNfse ? "Emitindo..." : "Emitir NFS-e"}
           </Button>
         </div>
       </form>

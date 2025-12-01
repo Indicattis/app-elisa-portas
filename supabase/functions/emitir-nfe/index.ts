@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       headers: corsHeaders,
@@ -20,7 +19,6 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization') || '';
     console.log('Authorization header:', authHeader ? 'Present' : 'Missing');
 
-    // Tentar extrair o userId do JWT, mas não bloquear se não conseguir
     let userId: string | null = null;
     if (authHeader.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
@@ -42,28 +40,34 @@ serve(async (req) => {
       }
     );
 
-    const focusToken = Deno.env.get('FOCUSNFE_TOKEN');
-
-    if (!focusToken) {
-      throw new Error('Token da API Focus NFe não encontrado. Configure a secret FOCUSNFE_TOKEN.');
-    }
-
     const payload = await req.json();
     console.log('Payload recebido:', payload);
 
-    // Buscar configurações fiscais
-    const { data: config, error: configError } = await supabaseClient
-      .from('configuracoes_fiscais')
-      .select('*')
-      .single();
-
-    if (configError) {
-      console.error('Erro ao buscar configurações:', configError);
-      throw new Error('Configurações fiscais não encontradas');
+    const empresaEmissoraId = payload.empresa_emissora_id;
+    if (!empresaEmissoraId) {
+      throw new Error('empresa_emissora_id é obrigatório');
     }
 
+    // Buscar dados da empresa emissora
+    const { data: empresa, error: empresaError } = await supabaseClient
+      .from('empresas_emissoras')
+      .select('*')
+      .eq('id', empresaEmissoraId)
+      .single();
+
+    if (empresaError || !empresa) {
+      console.error('Erro ao buscar empresa:', empresaError);
+      throw new Error('Empresa emissora não encontrada');
+    }
+
+    if (!empresa.focusnfe_token) {
+      throw new Error('Token Focus NFe não configurado para esta empresa');
+    }
+
+    const focusToken = empresa.focusnfe_token;
+
     // Determinar URL base
-    const baseUrl = config.ambiente === 'production'
+    const baseUrl = empresa.ambiente === 'production'
       ? 'https://api.focusnfe.com.br'
       : 'https://homologacao.focusnfe.com.br';
 
@@ -75,9 +79,9 @@ serve(async (req) => {
     const focusPayload = {
       natureza_operacao: payload.natureza_operacao || 'Venda de mercadoria',
       data_emissao: new Date().toISOString(),
-      tipo_documento: '1', // 1=NF-e
-      finalidade_emissao: '1', // 1=Normal
-      presenca_comprador: '9', // 9=Operação não presencial
+      tipo_documento: '1',
+      finalidade_emissao: '1',
+      presenca_comprador: '9',
       
       destinatario: {
         cpf_cnpj: payload.cnpj_cpf.replace(/\D/g, ''),
@@ -87,7 +91,7 @@ serve(async (req) => {
           logradouro: payload.endereco || '',
           numero: payload.numero || 'S/N',
           bairro: payload.bairro || '',
-          codigo_municipio: config.codigo_municipio_ibge || '',
+          codigo_municipio: empresa.codigo_municipio_ibge || '',
           uf: payload.uf || '',
           cep: payload.cep?.replace(/\D/g, '') || '',
         }
@@ -103,9 +107,9 @@ serve(async (req) => {
         quantidade_comercial: item.quantidade || 1,
         valor_unitario_comercial: item.valor_unitario || 0,
         valor_bruto: (item.quantidade || 1) * (item.valor_unitario || 0),
-        icms_situacao_tributaria: '102', // 102=Sem tributação
-        pis_situacao_tributaria: '07', // 07=Operação isenta
-        cofins_situacao_tributaria: '07', // 07=Operação isenta
+        icms_situacao_tributaria: '102',
+        pis_situacao_tributaria: '07',
+        cofins_situacao_tributaria: '07',
       })) || [{
         numero_item: 1,
         codigo_produto: 'PROD1',
@@ -154,20 +158,22 @@ serve(async (req) => {
       .insert([{
         tipo: 'nfe',
         numero: focusResponse.numero || 'Pendente',
-        serie: config.serie_nfe?.toString() || '1',
+        serie: empresa.serie_nfe?.toString() || '1',
         data_emissao: new Date().toISOString(),
         cnpj_cpf: payload.cnpj_cpf,
         razao_social: payload.razao_social,
         valor_total: payload.valor_total || 0,
         status: focusResponse.status || 'processando',
         status_sefaz: focusResponse.status_sefaz || 'processando',
-        ambiente: config.ambiente,
+        ambiente: empresa.ambiente,
         api_id: focusResponse.numero || null,
         ref_externa: ref,
         chave_acesso: focusResponse.chave_nfe || null,
         danfe_url: focusResponse.caminho_danfe || null,
         pdf_url: focusResponse.caminho_pdf || null,
         xml_url: focusResponse.caminho_xml_nota_fiscal || null,
+        empresa_emissora_id: empresaEmissoraId,
+        venda_id: payload.venda_id || null,
         created_by: userId,
       }])
       .select()
