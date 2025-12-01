@@ -38,6 +38,7 @@ export interface VendaFormData {
   cidade: string;
   cep?: string;
   bairro?: string;
+  endereco?: string;
   publico_alvo: string;
   forma_pagamento: string;
   observacoes_venda?: string;
@@ -98,9 +99,18 @@ export function useVendas() {
         throw new Error('É necessário adicionar pelo menos um produto');
       }
 
-      // Validar localização obrigatória
-      if (!vendaData.estado || !vendaData.cidade) {
-        throw new Error('Estado e cidade são obrigatórios');
+      // Validar localização obrigatória para emissão de NF-e
+      if (!vendaData.estado || !vendaData.cidade || !vendaData.cep || !vendaData.bairro || !vendaData.endereco) {
+        throw new Error('Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço)');
+      }
+
+      // Validar tamanho mínimo de endereço e bairro (requisito SEFAZ)
+      if (vendaData.endereco && vendaData.endereco.length < 2) {
+        throw new Error('O endereço deve ter no mínimo 2 caracteres');
+      }
+
+      if (vendaData.bairro && vendaData.bairro.length < 2) {
+        throw new Error('O bairro deve ter no mínimo 2 caracteres');
       }
 
       // 1. Obter usuário atual

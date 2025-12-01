@@ -49,6 +49,7 @@ export default function VendasNova() {
     cidade: '',
     cep: '',
     bairro: '',
+    endereco: '',
     publico_alvo: '',
     forma_pagamento: '',
     observacoes_venda: '',
@@ -292,12 +293,31 @@ export default function VendasNova() {
       return;
     }
 
-    // Validar localização obrigatória
-    if (!formData.estado || !formData.cidade) {
+    // Validar localização obrigatória para emissão de NF-e
+    if (!formData.estado || !formData.cidade || !formData.cep || !formData.bairro || !formData.endereco) {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Estado e cidade são obrigatórios.'
+        description: 'Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço).'
+      });
+      return;
+    }
+
+    // Validar tamanho mínimo de endereço e bairro (requisito SEFAZ)
+    if (formData.endereco.length < 2) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'O endereço deve ter no mínimo 2 caracteres.'
+      });
+      return;
+    }
+
+    if (formData.bairro.length < 2) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'O bairro deve ter no mínimo 2 caracteres.'
       });
       return;
     }
@@ -467,8 +487,9 @@ export default function VendasNova() {
         <Card>
           <CardHeader className="pb-3 pt-4">
             <CardTitle className="text-base font-semibold">Localização</CardTitle>
+            <CardDescription className="text-xs">Todos os campos são obrigatórios para emissão de NF-e</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-4">
             <div className="space-y-1">
               <Label htmlFor="estado" className="text-xs font-medium">Estado *</Label>
               <Select
@@ -511,24 +532,47 @@ export default function VendasNova() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="cep" className="text-xs font-medium">CEP</Label>
+              <Label htmlFor="cep" className="text-xs font-medium">CEP *</Label>
               <Input
                 id="cep"
                 value={formData.cep}
-                onChange={(e) => setFormData(prev => ({ ...prev, cep: e.target.value }))}
+                onChange={(e) => {
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length > 5) {
+                    value = value.replace(/(\d{5})(\d{1,3})/, '$1-$2');
+                  }
+                  setFormData(prev => ({ ...prev, cep: value }));
+                }}
                 placeholder="00000-000"
                 className="h-9"
+                maxLength={9}
+                required
+              />
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <Label htmlFor="endereco" className="text-xs font-medium">Endereço *</Label>
+              <Input
+                id="endereco"
+                value={formData.endereco}
+                onChange={(e) => setFormData(prev => ({ ...prev, endereco: e.target.value }))}
+                placeholder="Ex: Rua das Flores, 123"
+                className="h-9"
+                minLength={2}
+                required
               />
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="bairro" className="text-xs font-medium">Bairro</Label>
+              <Label htmlFor="bairro" className="text-xs font-medium">Bairro *</Label>
               <Input
                 id="bairro"
                 value={formData.bairro}
                 onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
                 placeholder="Nome do bairro"
                 className="h-9"
+                minLength={2}
+                required
               />
             </div>
           </CardContent>
