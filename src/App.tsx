@@ -458,7 +458,7 @@ const App = () => (
                 <Route
                   path="/dashboard/administrativo/financeiro/faturamento"
                   element={
-                    <ProtectedRoute routeKey="faturamento">
+                    <ProtectedRoute routeKey="financeiro_faturamento">
                       <DashboardLayout>
                         <Faturamento />
                       </DashboardLayout>
@@ -558,7 +558,7 @@ const App = () => (
                 <Route
                   path="/dashboard/administrativo/financeiro/faturamento/:id/editar"
                   element={
-                    <ProtectedRoute routeKey="faturamento">
+                    <ProtectedRoute routeKey="financeiro_faturamento">
                       <DashboardLayout>
                         <FaturamentoEdit />
                       </DashboardLayout>
