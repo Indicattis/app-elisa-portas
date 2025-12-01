@@ -55,7 +55,7 @@ export function EmpresaEmissoraSelector({ value, onChange }: EmpresaEmissoraSele
           <SelectTrigger id="empresa-emissora">
             <SelectValue placeholder="Selecione a empresa emissora" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             {empresasAtivas.map((empresa) => (
               <SelectItem key={empresa.id} value={empresa.id}>
                 <div className="flex items-center gap-2">
