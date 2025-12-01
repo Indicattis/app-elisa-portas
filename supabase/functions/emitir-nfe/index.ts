@@ -17,6 +17,21 @@ const focusNfeErrorMessages: Record<string, string> = {
   'certificado_vencido': 'O certificado digital do emitente está vencido. É necessário renovar.',
 };
 
+// Mapear status da Focus NFe para status do sistema (máximo 50 caracteres)
+const mapearStatus = (statusFocus: string | undefined): string => {
+  if (!statusFocus) return 'processando';
+  
+  const statusMap: Record<string, string> = {
+    'processando_autorizacao': 'processando',
+    'autorizado': 'autorizada',
+    'cancelado': 'cancelada',
+    'erro_autorizacao': 'rejeitada',
+    'rejeitado': 'rejeitada',
+  };
+  
+  return statusMap[statusFocus] || statusFocus.substring(0, 50);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
@@ -257,8 +272,8 @@ serve(async (req) => {
         cnpj_cpf: payload.cnpj_cpf,
         razao_social: payload.razao_social,
         valor_total: payload.valor_total || 0,
-        status: focusResponse.status || 'processando',
-        status_sefaz: focusResponse.status_sefaz || 'processando',
+        status: mapearStatus(focusResponse.status),
+        status_sefaz: mapearStatus(focusResponse.status_sefaz),
         ambiente: empresa.ambiente,
         api_id: focusResponse.numero || null,
         ref_externa: ref,
