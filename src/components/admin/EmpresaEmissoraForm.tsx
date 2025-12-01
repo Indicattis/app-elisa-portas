@@ -11,6 +11,7 @@ import { EmpresaEmissora, EmpresaEmissoraFormData } from "@/types/empresaEmissor
 import { Loader2 } from "lucide-react";
 
 const empresaSchema = z.object({
+  titulo: z.string().optional(),
   nome: z.string().min(1, "Nome é obrigatório"),
   razao_social: z.string().min(1, "Razão social é obrigatória"),
   cnpj: z.string().min(14, "CNPJ inválido"),
@@ -82,6 +83,17 @@ export function EmpresaEmissoraForm({
           <CardTitle>Dados da Empresa</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="titulo">Título</Label>
+            <Input 
+              id="titulo" 
+              {...register("titulo")} 
+              placeholder="Ex: Empresa Produção, Empresa Homologação"
+            />
+            <p className="text-xs text-muted-foreground">
+              Identificação para diferenciar ambientes (produção/homologação)
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome Fantasia *</Label>

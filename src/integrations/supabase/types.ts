@@ -1072,6 +1072,7 @@ export type Database = {
           serie_nfe: number | null
           serie_nfse: number | null
           telefone: string | null
+          titulo: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1105,6 +1106,7 @@ export type Database = {
           serie_nfe?: number | null
           serie_nfse?: number | null
           telefone?: string | null
+          titulo?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1138,6 +1140,7 @@ export type Database = {
           serie_nfe?: number | null
           serie_nfse?: number | null
           telefone?: string | null
+          titulo?: string | null
           updated_at?: string | null
         }
         Relationships: []

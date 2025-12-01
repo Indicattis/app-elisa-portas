@@ -1,5 +1,6 @@
 export interface EmpresaEmissora {
   id: string;
+  titulo?: string;
   nome: string;
   razao_social: string;
   cnpj: string;
@@ -33,6 +34,7 @@ export interface EmpresaEmissora {
 }
 
 export interface EmpresaEmissoraFormData {
+  titulo?: string;
   nome: string;
   razao_social: string;
   cnpj: string;
