@@ -153,7 +153,8 @@ serve(async (req) => {
         aliquota: (payload.aliquota_iss || empresa.aliquota_iss_padrao || 5) / 100,
         discriminacao: payload.descricao_servico || empresa.descricao_servico_padrao || '',
         iss_retido: false,
-        item_lista_servico: payload.codigo_servico || empresa.codigo_servico_padrao || '',
+        // Usar codigo_servico (gera cServ no XML) ao invés de item_lista_servico (gera cLCServ)
+        codigo_servico: payload.codigo_servico || empresa.codigo_servico_padrao || '',
         valor_servicos: payload.valor_total,
       }
     };
