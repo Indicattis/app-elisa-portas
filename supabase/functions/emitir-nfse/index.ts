@@ -30,28 +30,34 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const focusToken = Deno.env.get('FOCUSNFE_TOKEN');
-
-    if (!focusToken) {
-      throw new Error('Token da API Focus NFe não encontrado. Configure a secret FOCUSNFE_TOKEN.');
-    }
-
     const payload = await req.json();
     console.log('Payload recebido:', payload);
 
-    // Buscar configurações fiscais
-    const { data: config, error: configError } = await supabaseClient
-      .from('configuracoes_fiscais')
-      .select('*')
-      .single();
-
-    if (configError) {
-      console.error('Erro ao buscar configurações:', configError);
-      throw new Error('Configurações fiscais não encontradas');
+    const empresaEmissoraId = payload.empresa_emissora_id;
+    if (!empresaEmissoraId) {
+      throw new Error('empresa_emissora_id é obrigatório');
     }
 
+    // Buscar dados da empresa emissora
+    const { data: empresa, error: empresaError } = await supabaseClient
+      .from('empresas_emissoras')
+      .select('*')
+      .eq('id', empresaEmissoraId)
+      .single();
+
+    if (empresaError || !empresa) {
+      console.error('Erro ao buscar empresa:', empresaError);
+      throw new Error('Empresa emissora não encontrada');
+    }
+
+    if (!empresa.focusnfe_token) {
+      throw new Error('Token Focus NFe não configurado para esta empresa');
+    }
+
+    const focusToken = empresa.focusnfe_token;
+
     // Determinar URL base (homologação ou produção)
-    const baseUrl = config.ambiente === 'production'
+    const baseUrl = empresa.ambiente === 'production'
       ? 'https://api.focusnfe.com.br'
       : 'https://homologacao.focusnfe.com.br';
 
@@ -62,9 +68,9 @@ serve(async (req) => {
     const focusPayload = {
       data_emissao: new Date().toISOString().split('T')[0],
       prestador: {
-        cnpj: config.inscricao_estadual || '',
-        inscricao_municipal: config.inscricao_municipal || '',
-        codigo_municipio: config.codigo_municipio_ibge || '',
+        cnpj: empresa.cnpj.replace(/\D/g, ''),
+        inscricao_municipal: empresa.inscricao_municipal || '',
+        codigo_municipio: empresa.codigo_municipio_ibge || '',
       },
       tomador: {
         cpf_cnpj: payload.cnpj_cpf.replace(/\D/g, ''),
@@ -74,17 +80,17 @@ serve(async (req) => {
           logradouro: payload.tomador_endereco || '',
           numero: payload.tomador_numero || 'S/N',
           bairro: payload.tomador_bairro || '',
-          codigo_municipio: config.codigo_municipio_ibge || '',
+          codigo_municipio: empresa.codigo_municipio_ibge || '',
           uf: payload.tomador_uf || '',
           cep: payload.tomador_cep?.replace(/\D/g, '') || '',
         }
       },
       servico: {
-        aliquota: (payload.aliquota_iss || config.aliquota_iss_padrao || 5) / 100,
-        discriminacao: payload.descricao_servico || config.descricao_servico_padrao || '',
+        aliquota: (payload.aliquota_iss || empresa.aliquota_iss_padrao || 5) / 100,
+        discriminacao: payload.descricao_servico || empresa.descricao_servico_padrao || '',
         iss_retido: false,
-        item_lista_servico: payload.codigo_servico || config.codigo_servico_padrao || '',
-        codigo_tributacao_municipio: payload.codigo_servico || config.codigo_servico_padrao || '',
+        item_lista_servico: payload.codigo_servico || empresa.codigo_servico_padrao || '',
+        codigo_tributacao_municipio: payload.codigo_servico || empresa.codigo_servico_padrao || '',
         valor_servicos: payload.valor_total,
       }
     };
@@ -121,15 +127,15 @@ serve(async (req) => {
       .insert([{
         tipo: 'nfse',
         numero: focusResponse.numero || 'Pendente',
-        serie: config.serie_nfse?.toString() || '1',
+        serie: empresa.serie_nfse?.toString() || '1',
         data_emissao: new Date().toISOString(),
         cnpj_cpf: payload.cnpj_cpf,
         razao_social: payload.razao_social,
         valor_total: payload.valor_total,
-        codigo_servico: payload.codigo_servico || config.codigo_servico_padrao,
-        descricao_servico: payload.descricao_servico || config.descricao_servico_padrao,
-        aliquota_iss: payload.aliquota_iss || config.aliquota_iss_padrao,
-        valor_iss: payload.valor_total * ((payload.aliquota_iss || config.aliquota_iss_padrao || 5) / 100),
+        codigo_servico: payload.codigo_servico || empresa.codigo_servico_padrao,
+        descricao_servico: payload.descricao_servico || empresa.descricao_servico_padrao,
+        aliquota_iss: payload.aliquota_iss || empresa.aliquota_iss_padrao,
+        valor_iss: payload.valor_total * ((payload.aliquota_iss || empresa.aliquota_iss_padrao || 5) / 100),
         tomador_endereco: payload.tomador_endereco,
         tomador_numero: payload.tomador_numero,
         tomador_bairro: payload.tomador_bairro,
@@ -138,12 +144,14 @@ serve(async (req) => {
         tomador_cep: payload.tomador_cep,
         status: focusResponse.status || 'processando',
         status_sefaz: focusResponse.status_sefaz || 'processando',
-        ambiente: config.ambiente,
+        ambiente: empresa.ambiente,
         api_id: focusResponse.numero || null,
         ref_externa: ref,
         chave_acesso: focusResponse.chave_nfe || null,
         pdf_url: focusResponse.caminho_pdf || null,
         xml_url: focusResponse.caminho_xml_nota_fiscal || null,
+        empresa_emissora_id: empresaEmissoraId,
+        venda_id: payload.venda_id || null,
         created_by: user.id,
       }])
       .select()
