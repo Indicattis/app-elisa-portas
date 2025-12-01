@@ -17,9 +17,9 @@ const focusNfeErrorMessages: Record<string, string> = {
   'certificado_vencido': 'O certificado digital do emitente está vencido. É necessário renovar.',
 };
 
-// Mapear status da Focus NFe para status do sistema (máximo 50 caracteres)
+// Mapear status da Focus NFe para status do sistema
 const mapearStatus = (statusFocus: string | undefined): string => {
-  if (!statusFocus) return 'processando';
+  if (!statusFocus) return 'pendente';
   
   const statusMap: Record<string, string> = {
     'processando_autorizacao': 'processando',
@@ -29,7 +29,8 @@ const mapearStatus = (statusFocus: string | undefined): string => {
     'rejeitado': 'rejeitada',
   };
   
-  return statusMap[statusFocus] || statusFocus.substring(0, 50);
+  // Retorna 'pendente' como fallback seguro (compatível com constraint do banco)
+  return statusMap[statusFocus] || 'pendente';
 };
 
 serve(async (req) => {
