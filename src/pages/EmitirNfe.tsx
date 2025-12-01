@@ -38,7 +38,16 @@ export default function EmitirNfe() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendas")
-        .select("id")
+        .select(`
+          id,
+          cliente_nome,
+          cpf_cliente,
+          cliente_email,
+          cidade,
+          estado,
+          cep,
+          bairro
+        `)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -49,6 +58,21 @@ export default function EmitirNfe() {
 
   const handleVendaSelect = (vendaId: string) => {
     setSelectedVenda(vendaId);
+    
+    // Preencher dados do destinatário automaticamente
+    const venda = vendas?.find(v => v.id === vendaId);
+    if (venda) {
+      setFormData(prev => ({
+        ...prev,
+        cnpj_cpf: venda.cpf_cliente || "",
+        razao_social: venda.cliente_nome || "",
+        email: venda.cliente_email || "",
+        bairro: venda.bairro || "",
+        cidade: venda.cidade || "",
+        uf: venda.estado || "",
+        cep: venda.cep || "",
+      }));
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +140,7 @@ export default function EmitirNfe() {
               <SelectContent>
                 {vendas?.map((venda) => (
                   <SelectItem key={venda.id} value={venda.id}>
-                    Venda {venda.id.substring(0, 8)}
+                    {venda.cliente_nome} - {venda.id.substring(0, 8)}
                   </SelectItem>
                 ))}
               </SelectContent>
