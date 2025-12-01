@@ -116,16 +116,28 @@ serve(async (req) => {
       throw new Error('Bairro do tomador deve ter no mínimo 2 caracteres');
     }
 
+    // Determinar se é CPF ou CNPJ baseado no tamanho
+    const cpfCnpjLimpo = payload.cnpj_cpf.replace(/\D/g, '');
+    const isCpf = cpfCnpjLimpo.length === 11;
+    console.log('[emitir-nfse] Documento tomador:', cpfCnpjLimpo, '| isCPF:', isCpf);
+
+    // Determinar se é optante do Simples Nacional
+    const isOptanteSimplesNacional = empresa.regime_tributario === 'simples_nacional' || 
+                                      empresa.regime_tributario === '1';
+
     // Montar payload para Focus NFe API
     const focusPayload = {
       data_emissao: new Date().toISOString().split('T')[0],
+      natureza_operacao: 1, // 1 = Tributação no município
+      optante_simples_nacional: isOptanteSimplesNacional,
       prestador: {
         cnpj: empresa.cnpj.replace(/\D/g, ''),
         inscricao_municipal: empresa.inscricao_municipal || '',
         codigo_municipio: empresa.codigo_municipio_ibge || '',
       },
       tomador: {
-        cpf_cnpj: payload.cnpj_cpf.replace(/\D/g, ''),
+        // Separar CPF e CNPJ em campos distintos conforme esperado pela API
+        ...(isCpf ? { cpf: cpfCnpjLimpo } : { cnpj: cpfCnpjLimpo }),
         razao_social: payload.razao_social,
         email: payload.email || '',
         endereco: {
@@ -142,7 +154,6 @@ serve(async (req) => {
         discriminacao: payload.descricao_servico || empresa.descricao_servico_padrao || '',
         iss_retido: false,
         item_lista_servico: payload.codigo_servico || empresa.codigo_servico_padrao || '',
-        codigo_tributacao_municipio: payload.codigo_servico || empresa.codigo_servico_padrao || '',
         valor_servicos: payload.valor_total,
       }
     };
