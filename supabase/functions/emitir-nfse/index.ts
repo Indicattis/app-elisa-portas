@@ -153,8 +153,9 @@ serve(async (req) => {
         aliquota: (payload.aliquota_iss || empresa.aliquota_iss_padrao || 5) / 100,
         discriminacao: payload.descricao_servico || empresa.descricao_servico_padrao || '',
         iss_retido: false,
-        // Usar codigo_servico (gera cServ no XML) ao invés de item_lista_servico (gera cLCServ)
-        codigo_servico: payload.codigo_servico || empresa.codigo_servico_padrao || '',
+        // Usar codigo_tributario_municipio (gera cServ no XML)
+        // NÃO usar codigo_servico (gera xServ) nem item_lista_servico (gera cLCServ)
+        codigo_tributario_municipio: payload.codigo_servico || empresa.codigo_servico_padrao || '',
         valor_servicos: payload.valor_total,
       }
     };
