@@ -153,9 +153,11 @@ serve(async (req) => {
         aliquota: (payload.aliquota_iss || empresa.aliquota_iss_padrao || 5) / 100,
         discriminacao: payload.descricao_servico || empresa.descricao_servico_padrao || '',
         iss_retido: false,
-        // Usar codigo_tributario_municipio (gera cServ no XML) - padrão NFS-e Nacional
-        // NÃO usar item_lista_servico (gera cLCServ) para municípios que migraram para NFS-e Nacional
+        // NFS-e Nacional de Caxias do Sul exige AMBOS os códigos de serviço:
+        // - codigo_tributario_municipio → gera <cServ> (código municipal)
+        // - item_lista_servico → gera <cLCServ> (código LC 116/2003)
         codigo_tributario_municipio: payload.codigo_servico || empresa.codigo_servico_padrao || '',
+        item_lista_servico: payload.codigo_servico || empresa.codigo_servico_padrao || '',
         valor_servicos: payload.valor_total,
       }
     };
