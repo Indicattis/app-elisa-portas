@@ -9,10 +9,10 @@ import { useNavigate } from "react-router-dom";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { toast } from "sonner";
 import { EmpresaEmissoraSelector } from "@/components/notas-fiscais/EmpresaEmissoraSelector";
+import { VendaSelector } from "@/components/notas-fiscais/VendaSelector";
 
 export default function EmitirNfse() {
   const navigate = useNavigate();
@@ -37,15 +37,28 @@ export default function EmitirNfse() {
     aliquota_iss: configuracoes?.aliquota_iss_padrao || 5,
   });
 
-  // Buscar vendas para vincular
+  // Buscar vendas para vincular (com dados completos)
   const { data: vendas } = useQuery({
     queryKey: ["vendas-nfse"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendas")
-        .select("id")
+        .select(`
+          id,
+          cliente_nome,
+          cpf_cliente,
+          cliente_email,
+          cidade,
+          estado,
+          cep,
+          bairro,
+          valor_venda,
+          forma_pagamento,
+          data_venda,
+          produtos_vendas:produtos_vendas(id)
+        `)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
       return data;
@@ -54,6 +67,22 @@ export default function EmitirNfse() {
 
   const handleVendaSelect = (vendaId: string) => {
     setSelectedVenda(vendaId);
+    
+    // Preencher dados do tomador automaticamente
+    const venda = vendas?.find(v => v.id === vendaId);
+    if (venda) {
+      setFormData(prev => ({
+        ...prev,
+        cnpj_cpf: venda.cpf_cliente || "",
+        razao_social: venda.cliente_nome || "",
+        email: venda.cliente_email || "",
+        tomador_bairro: venda.bairro || "",
+        tomador_cidade: venda.cidade || "",
+        tomador_uf: venda.estado || "",
+        tomador_cep: venda.cep || "",
+        valor_total: venda.valor_venda || 0,
+      }));
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -74,6 +103,17 @@ export default function EmitirNfse() {
 
     if (!formData.cnpj_cpf || !formData.razao_social || !formData.valor_total) {
       toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Validação de campos de endereço obrigatórios
+    if (!formData.tomador_endereco || formData.tomador_endereco.length < 2) {
+      toast.error("O endereço é obrigatório e deve ter no mínimo 2 caracteres");
+      return;
+    }
+
+    if (!formData.tomador_bairro || formData.tomador_bairro.length < 2) {
+      toast.error("O bairro é obrigatório e deve ter no mínimo 2 caracteres");
       return;
     }
 
@@ -114,21 +154,11 @@ export default function EmitirNfse() {
 
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Vincular a Venda (Opcional)</h3>
-          <div className="space-y-2">
-            <Label htmlFor="venda">Selecione a Venda</Label>
-            <Select value={selectedVenda} onValueChange={handleVendaSelect}>
-              <SelectTrigger id="venda">
-                <SelectValue placeholder="Selecione uma venda" />
-              </SelectTrigger>
-              <SelectContent>
-                {vendas?.map((venda) => (
-                  <SelectItem key={venda.id} value={venda.id}>
-                    Venda {venda.id.substring(0, 8)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <VendaSelector
+            vendas={vendas}
+            selectedVenda={selectedVenda}
+            onSelect={handleVendaSelect}
+          />
         </Card>
 
         <Card className="p-4">
@@ -172,12 +202,15 @@ export default function EmitirNfse() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="tomador_endereco">Endereço</Label>
+                <Label htmlFor="tomador_endereco">Endereço *</Label>
                 <Input
                   id="tomador_endereco"
                   name="tomador_endereco"
                   value={formData.tomador_endereco}
                   onChange={handleChange}
+                  minLength={2}
+                  required
+                  placeholder="Ex: Rua das Flores"
                 />
               </div>
               <div className="space-y-2">
@@ -187,18 +220,22 @@ export default function EmitirNfse() {
                   name="tomador_numero"
                   value={formData.tomador_numero}
                   onChange={handleChange}
+                  placeholder="Ex: 123"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tomador_bairro">Bairro</Label>
+                <Label htmlFor="tomador_bairro">Bairro *</Label>
                 <Input
                   id="tomador_bairro"
                   name="tomador_bairro"
                   value={formData.tomador_bairro}
                   onChange={handleChange}
+                  minLength={2}
+                  required
+                  placeholder="Ex: Centro"
                 />
               </div>
               <div className="space-y-2">
