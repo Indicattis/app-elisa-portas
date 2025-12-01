@@ -25,6 +25,7 @@ export default function Caixa() {
 
   const { 
     depositos, 
+    totaisAcumulados,
     loading, 
     createDeposito, 
     updateDeposito, 
@@ -122,6 +123,8 @@ export default function Caixa() {
           depositos={depositos} 
           giroCaixaTotal={giroCaixaTotal}
           capitalTomado={capitalTomado}
+          totalTravesseiro={totaisAcumulados.totalTravesseiro}
+          totalPrecaucoes={totaisAcumulados.totalPrecaucoes}
         />
       )}
 
@@ -143,6 +146,7 @@ export default function Caixa() {
               depositos={depositos}
               onAddDeposito={handleAddDeposito}
               onEditDeposito={handleEditDeposito}
+              onDeleteDeposito={deleteDeposito}
               onPreviousWeek={() => setCurrentDate(addWeeks(currentDate, -1))}
               onNextWeek={() => setCurrentDate(addWeeks(currentDate, 1))}
               onToday={() => setCurrentDate(new Date())}
@@ -153,6 +157,7 @@ export default function Caixa() {
               depositos={depositos}
               onAddDeposito={handleAddDeposito}
               onEditDeposito={handleEditDeposito}
+              onDeleteDeposito={deleteDeposito}
               onPreviousMonth={() => setCurrentDate(addMonths(currentDate, -1))}
               onNextMonth={() => setCurrentDate(addMonths(currentDate, 1))}
               onToday={() => setCurrentDate(new Date())}

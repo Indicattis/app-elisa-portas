@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from "date-fns";
+import { ChevronLeft, ChevronRight, AlertCircle, Trash2 } from "lucide-react";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DepositoCaixa, CATEGORIAS_DEPOSITO } from "@/types/caixa";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ interface CalendarioMensalCaixaProps {
   depositos: DepositoCaixa[];
   onAddDeposito: (date: Date) => void;
   onEditDeposito: (deposito: DepositoCaixa) => void;
+  onDeleteDeposito: (id: string) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
@@ -20,6 +21,7 @@ export function CalendarioMensalCaixa({
   depositos,
   onAddDeposito,
   onEditDeposito,
+  onDeleteDeposito,
   onPreviousMonth,
   onNextMonth,
   onToday
@@ -52,7 +54,7 @@ export function CalendarioMensalCaixa({
   };
 
   const getDepositosDoDia = (date: Date) => {
-    return depositos.filter(d => isSameDay(new Date(d.data_deposito), date));
+    return depositos.filter(d => isSameDay(parseISO(d.data_deposito), date));
   };
 
   return (
@@ -123,7 +125,7 @@ export function CalendarioMensalCaixa({
                       return (
                         <div
                           key={deposito.id}
-                          className="flex items-center gap-1.5 text-xs p-1 rounded hover:opacity-80 transition-opacity cursor-pointer"
+                          className="flex items-center gap-1 text-xs p-1 rounded hover:opacity-80 transition-opacity cursor-pointer group/item"
                           style={{ 
                             backgroundColor: `${categoria.color}20`
                           }}
@@ -136,9 +138,20 @@ export function CalendarioMensalCaixa({
                             className="w-2 h-2 rounded-full flex-shrink-0" 
                             style={{ backgroundColor: categoria.color }}
                           />
-                          <div className="font-medium truncate" style={{ color: categoria.color }}>
+                          <div className="font-medium truncate flex-1" style={{ color: categoria.color }}>
                             {formatCurrency(Number(deposito.valor))}
                           </div>
+                          <button
+                            className="opacity-0 group-hover/item:opacity-100 text-destructive hover:text-destructive/80 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Deseja excluir este depósito?')) {
+                                onDeleteDeposito(deposito.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       );
                     })}
