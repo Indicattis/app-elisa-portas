@@ -114,8 +114,12 @@ serve(async (req) => {
     const cpfCnpjLimpo = payload.cnpj_cpf.replace(/\D/g, '');
     const isCpf = cpfCnpjLimpo.length === 11;
     
+    // CFOP e NCM do payload (com valores padrão)
+    const cfopPadrao = parseInt(payload.cfop) || 5102;
+    const ncmPadrao = payload.ncm?.replace(/\D/g, '') || '00000000';
+
     // Montar payload para Focus NFe API (estrutura flat)
-    const focusPayload = {
+    const focusPayload: Record<string, any> = {
       // Dados da operação
       natureza_operacao: payload.natureza_operacao || 'Venda de mercadoria',
       data_emissao: new Date().toISOString().split('T')[0], // Formato: YYYY-MM-DD
@@ -155,18 +159,18 @@ serve(async (req) => {
       valor_seguro: 0,
       modalidade_frete: 9, // Sem frete
       
-      // Items
+      // Items - usando CFOP e NCM do formulário
       items: payload.items?.map((item: any, index: number) => ({
         numero_item: index + 1,
         codigo_produto: item.codigo || `PROD${index + 1}`,
         descricao: item.descricao || 'Produto',
-        cfop: parseInt(item.cfop) || 5102,
+        cfop: parseInt(item.cfop) || cfopPadrao,
         unidade_comercial: item.unidade || 'UN',
         quantidade_comercial: item.quantidade || 1,
         valor_unitario_comercial: item.valor_unitario || 0,
         valor_unitario_tributavel: item.valor_unitario || 0,
         unidade_tributavel: item.unidade || 'UN',
-        codigo_ncm: item.ncm || '00000000',
+        codigo_ncm: item.ncm?.replace(/\D/g, '') || ncmPadrao,
         quantidade_tributavel: item.quantidade || 1,
         valor_bruto: (item.quantidade || 1) * (item.valor_unitario || 0),
         icms_situacao_tributaria: 102,
@@ -177,13 +181,13 @@ serve(async (req) => {
         numero_item: 1,
         codigo_produto: 'PROD001',
         descricao: 'Produto/Serviço',
-        cfop: 5102,
+        cfop: cfopPadrao,
         unidade_comercial: 'UN',
         quantidade_comercial: 1,
         valor_unitario_comercial: payload.valor_total || 0,
         valor_unitario_tributavel: payload.valor_total || 0,
         unidade_tributavel: 'UN',
-        codigo_ncm: '00000000',
+        codigo_ncm: ncmPadrao,
         quantidade_tributavel: 1,
         valor_bruto: payload.valor_total || 0,
         icms_situacao_tributaria: 102,
@@ -192,6 +196,11 @@ serve(async (req) => {
         cofins_situacao_tributaria: '07',
       }]
     };
+
+    // Adicionar informações adicionais se fornecidas
+    if (payload.informacoes_adicionais && payload.informacoes_adicionais.trim()) {
+      focusPayload.informacoes_adicionais_contribuinte = payload.informacoes_adicionais.trim().substring(0, 5000);
+    }
 
     console.log('Payload Focus NFe:', JSON.stringify(focusPayload, null, 2));
     console.log('Token Focus NFe (mascarado):', focusToken.substring(0, 8) + '...');

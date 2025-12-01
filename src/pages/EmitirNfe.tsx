@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +14,15 @@ import { toast } from "sonner";
 import { EmpresaEmissoraSelector } from "@/components/notas-fiscais/EmpresaEmissoraSelector";
 import { VendaSelector } from "@/components/notas-fiscais/VendaSelector";
 import { AdicionarNaturezaModal } from "@/components/notas-fiscais/AdicionarNaturezaModal";
+
+const CFOP_OPTIONS = [
+  { value: "5102", label: "5102 - Venda de mercadoria (dentro do estado)" },
+  { value: "5101", label: "5101 - Venda de produção própria (dentro do estado)" },
+  { value: "6102", label: "6102 - Venda de mercadoria (fora do estado)" },
+  { value: "6101", label: "6101 - Venda de produção própria (fora do estado)" },
+  { value: "5405", label: "5405 - Venda com ST já retido anteriormente" },
+  { value: "5403", label: "5403 - Venda com ST retida na operação" },
+];
 
 export default function EmitirNfe() {
   const navigate = useNavigate();
@@ -32,6 +42,9 @@ export default function EmitirNfe() {
     cep: "",
     natureza_operacao: "Venda de mercadoria",
     valor_total: 0,
+    cfop: "5102",
+    ncm: "",
+    informacoes_adicionais: "",
   });
 
   // Buscar vendas para vincular
@@ -308,6 +321,38 @@ export default function EmitirNfe() {
               <AdicionarNaturezaModal onNaturezaAdded={refetchNaturezas} />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cfop">CFOP</Label>
+                <Select
+                  value={formData.cfop}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, cfop: value }))}
+                >
+                  <SelectTrigger id="cfop">
+                    <SelectValue placeholder="Selecione o CFOP" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {CFOP_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ncm">NCM</Label>
+                <Input
+                  id="ncm"
+                  name="ncm"
+                  value={formData.ncm}
+                  onChange={handleChange}
+                  placeholder="00000000"
+                  maxLength={8}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="valor_total">Valor Total *</Label>
               <Input
@@ -319,6 +364,22 @@ export default function EmitirNfe() {
                 onChange={handleChange}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="informacoes_adicionais">Informações Adicionais</Label>
+              <Textarea
+                id="informacoes_adicionais"
+                name="informacoes_adicionais"
+                value={formData.informacoes_adicionais}
+                onChange={(e) => setFormData(prev => ({ ...prev, informacoes_adicionais: e.target.value }))}
+                placeholder="Informações complementares que aparecerão na nota fiscal..."
+                rows={3}
+                maxLength={5000}
+              />
+              <p className="text-xs text-muted-foreground">
+                Máximo 5000 caracteres. {formData.informacoes_adicionais.length}/5000
+              </p>
             </div>
           </div>
         </Card>
