@@ -16,7 +16,7 @@ import { ptBR } from "date-fns/locale";
 
 export function NotasFiscaisList() {
   const [filtros, setFiltros] = useState({
-    tipo: undefined as 'entrada' | 'saida' | undefined,
+    tipo: undefined as 'entrada' | 'saida' | 'nfe' | 'nfse' | undefined,
     status: undefined as string | undefined,
     dataInicio: undefined as string | undefined,
     dataFim: undefined as string | undefined
@@ -29,9 +29,17 @@ export function NotasFiscaisList() {
   const { notasFiscais, isLoading, consultarNota, cancelarNota, isConsultando, isCancelando } = useNotasFiscais(filtros);
 
   const getTipoBadge = (tipo: string) => {
-    return tipo === 'entrada' 
-      ? <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Entrada</Badge>
-      : <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Saída</Badge>;
+    switch(tipo) {
+      case 'nfe':
+        return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">NF-e</Badge>;
+      case 'nfse':
+        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">NFS-e</Badge>;
+      case 'entrada':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Entrada</Badge>;
+      case 'saida':
+      default:
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Saída</Badge>;
+    }
   };
 
   const handleCancelClick = (notaId: string) => {
@@ -62,6 +70,8 @@ export function NotasFiscaisList() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
+            <SelectItem value="nfe">NF-e (Produto)</SelectItem>
+            <SelectItem value="nfse">NFS-e (Serviço)</SelectItem>
             <SelectItem value="entrada">Entrada</SelectItem>
             <SelectItem value="saida">Saída</SelectItem>
           </SelectContent>
