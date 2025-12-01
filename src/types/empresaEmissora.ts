@@ -1,0 +1,63 @@
+export interface EmpresaEmissora {
+  id: string;
+  nome: string;
+  razao_social: string;
+  cnpj: string;
+  endereco: string;
+  numero?: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  telefone?: string;
+  email?: string;
+  inscricao_estadual?: string;
+  inscricao_municipal?: string;
+  regime_tributario?: string;
+  cnae?: string;
+  codigo_municipio_ibge?: string;
+  codigo_servico_padrao?: string;
+  descricao_servico_padrao?: string;
+  aliquota_iss_padrao?: number;
+  serie_nfe?: number;
+  serie_nfse?: number;
+  focusnfe_token?: string;
+  ambiente?: string;
+  email_copia?: string;
+  ativo: boolean;
+  padrao: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+}
+
+export interface EmpresaEmissoraFormData {
+  nome: string;
+  razao_social: string;
+  cnpj: string;
+  endereco: string;
+  numero?: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  telefone?: string;
+  email?: string;
+  inscricao_estadual?: string;
+  inscricao_municipal?: string;
+  regime_tributario?: string;
+  cnae?: string;
+  codigo_municipio_ibge?: string;
+  codigo_servico_padrao?: string;
+  descricao_servico_padrao?: string;
+  aliquota_iss_padrao?: number;
+  serie_nfe?: number;
+  serie_nfse?: number;
+  focusnfe_token?: string;
+  ambiente?: string;
+  email_copia?: string;
+  ativo?: boolean;
+  padrao?: boolean;
+}
