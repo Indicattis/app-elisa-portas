@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export interface NotaFiscal {
   id: string;
-  tipo: 'entrada' | 'saida';
+  tipo: 'entrada' | 'saida' | 'nfe' | 'nfse';
   numero: string;
   serie: string;
   chave_acesso?: string;
@@ -13,7 +13,7 @@ export interface NotaFiscal {
   data_vencimento?: string;
   cnpj_cpf: string;
   razao_social: string;
-  status: 'emitida' | 'pendente' | 'cancelada';
+  status: 'emitida' | 'pendente' | 'cancelada' | 'processando' | 'autorizada' | 'rejeitada';
   venda_id?: string;
   xml_url?: string;
   pdf_url?: string;
@@ -47,7 +47,7 @@ export interface NotaFiscal {
 }
 
 export interface NotaFiscalFormData {
-  tipo: 'entrada' | 'saida';
+  tipo: 'entrada' | 'saida' | 'nfe' | 'nfse';
   numero: string;
   serie: string;
   chave_acesso?: string;
@@ -56,7 +56,7 @@ export interface NotaFiscalFormData {
   data_vencimento?: string;
   cnpj_cpf: string;
   razao_social: string;
-  status: 'emitida' | 'pendente' | 'cancelada';
+  status: 'emitida' | 'pendente' | 'cancelada' | 'processando' | 'autorizada' | 'rejeitada';
   venda_id?: string;
   observacoes?: string;
   xml_url?: string;
@@ -66,7 +66,7 @@ export interface NotaFiscalFormData {
 }
 
 interface UseNotasFiscaisParams {
-  tipo?: 'entrada' | 'saida';
+  tipo?: 'entrada' | 'saida' | 'nfe' | 'nfse';
   status?: string;
   dataInicio?: string;
   dataFim?: string;
