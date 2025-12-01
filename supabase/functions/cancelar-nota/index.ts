@@ -12,95 +12,133 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization') || '';
+    console.log('[cancelar-nota] Authorization header:', authHeader ? 'Present' : 'Missing');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
 
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
-
-    if (!user) {
-      throw new Error('Unauthorized');
-    }
-
-    const focusToken = Deno.env.get('FOCUSNFE_TOKEN');
-
-    if (!focusToken) {
-      throw new Error('Token da API Focus NFe não encontrado.');
-    }
-
     const { notaFiscalId, motivo } = await req.json();
-    console.log('Cancelando nota:', notaFiscalId, 'Motivo:', motivo);
+    console.log('[cancelar-nota] Cancelando nota:', notaFiscalId, 'Motivo:', motivo);
 
     // Validar motivo (Focus NFe exige mínimo 15 caracteres)
     if (!motivo || motivo.length < 15) {
       throw new Error('Motivo do cancelamento deve ter no mínimo 15 caracteres');
     }
 
-    // Buscar nota no banco
+    // Buscar nota no banco com empresa emissora
     const { data: nota, error: notaError } = await supabaseClient
       .from('notas_fiscais')
-      .select('*')
+      .select('*, empresas_emissoras(*)')
       .eq('id', notaFiscalId)
       .single();
 
     if (notaError || !nota) {
+      console.error('[cancelar-nota] Erro ao buscar nota:', notaError);
       throw new Error('Nota fiscal não encontrada');
     }
+
+    console.log('[cancelar-nota] Nota encontrada:', nota.numero, 'Ref:', nota.ref_externa);
 
     if (!nota.ref_externa) {
       throw new Error('Esta nota não possui referência da Focus NFe');
     }
 
     if (nota.status_sefaz !== 'autorizada') {
-      throw new Error('Apenas notas autorizadas podem ser canceladas');
+      throw new Error(`Apenas notas autorizadas podem ser canceladas. Status atual: ${nota.status_sefaz}`);
     }
 
-    // Buscar configurações para determinar ambiente
-    const { data: config } = await supabaseClient
-      .from('configuracoes_fiscais')
-      .select('ambiente')
-      .single();
+    // Buscar token e ambiente da empresa emissora
+    let focusToken: string;
+    let ambiente: string;
 
-    const baseUrl = config?.ambiente === 'production'
+    if (nota.empresas_emissoras) {
+      focusToken = nota.empresas_emissoras.focusnfe_token;
+      ambiente = nota.empresas_emissoras.ambiente || 'producao';
+    } else if (nota.empresa_emissora_id) {
+      // Fallback: buscar empresa emissora separadamente
+      const { data: empresa, error: empresaError } = await supabaseClient
+        .from('empresas_emissoras')
+        .select('*')
+        .eq('id', nota.empresa_emissora_id)
+        .single();
+
+      if (empresaError || !empresa) {
+        throw new Error('Empresa emissora não encontrada');
+      }
+      
+      focusToken = empresa.focusnfe_token;
+      ambiente = empresa.ambiente || 'producao';
+    } else {
+      // Fallback: usar configurações fiscais ou env
+      const { data: config } = await supabaseClient
+        .from('configuracoes_fiscais')
+        .select('ambiente')
+        .single();
+      
+      focusToken = Deno.env.get('FOCUSNFE_TOKEN') || '';
+      ambiente = config?.ambiente || 'producao';
+    }
+
+    if (!focusToken) {
+      throw new Error('Token da API Focus NFe não configurado para a empresa emissora');
+    }
+
+    console.log('[cancelar-nota] Ambiente:', ambiente);
+
+    // Determinar URL base pelo ambiente
+    const isProducao = ambiente === 'producao' || ambiente === 'production';
+    const baseUrl = isProducao
       ? 'https://api.focusnfe.com.br'
       : 'https://homologacao.focusnfe.com.br';
 
     // Determinar o tipo de nota
-    const isNfse = nota.codigo_servico ? true : false;
+    const isNfse = nota.tipo === 'nfse' || nota.codigo_servico ? true : false;
     const endpoint = isNfse ? 'nfse' : 'nfe';
 
     const focusUrl = `${baseUrl}/v2/${endpoint}/${nota.ref_externa}`;
-    console.log('Cancelando na Focus NFe:', focusUrl);
+    console.log('[cancelar-nota] Cancelando na Focus NFe:', focusUrl);
 
-    const authHeader = 'Basic ' + btoa(focusToken + ':');
+    const basicAuthHeader = 'Basic ' + btoa(focusToken + ':');
 
     const response = await fetch(focusUrl, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
+        'Authorization': basicAuthHeader,
       },
       body: JSON.stringify({
         justificativa: motivo,
       }),
     });
 
+    const responseText = await response.text();
+    console.log('[cancelar-nota] Resposta Focus NFe:', response.status, responseText);
+
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Erro da API Focus NFe:', errorData);
-      throw new Error(`Erro ao cancelar nota: ${response.status} - ${errorData}`);
+      let errorMessage = `Erro ao cancelar nota: ${response.status}`;
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorMessage = errorJson.mensagem || errorJson.erro || errorJson.message || errorMessage;
+      } catch {
+        errorMessage = responseText || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
 
-    const focusResponse = await response.json();
-    console.log('Resposta Focus NFe:', focusResponse);
+    let focusResponse = {};
+    try {
+      focusResponse = JSON.parse(responseText);
+    } catch {
+      focusResponse = { raw: responseText };
+    }
 
     // Atualizar status no banco
     const { data: updatedNota, error: updateError } = await supabaseClient
@@ -108,21 +146,21 @@ serve(async (req) => {
       .update({
         status: 'cancelada',
         status_sefaz: 'cancelada',
-        observacoes: `Cancelada: ${motivo}`,
+        observacoes: `Cancelada em ${new Date().toLocaleString('pt-BR')}: ${motivo}`,
       })
       .eq('id', notaFiscalId)
       .select()
       .single();
 
     if (updateError) {
-      console.error('Erro ao atualizar nota:', updateError);
-      throw updateError;
+      console.error('[cancelar-nota] Erro ao atualizar nota:', updateError);
+      // Nota foi cancelada na Focus, mas erro ao atualizar localmente
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        notaFiscal: updatedNota,
+        notaFiscal: updatedNota || nota,
         focusResponse,
         message: 'Nota fiscal cancelada com sucesso.',
       }),
@@ -132,7 +170,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Erro ao cancelar nota:', error);
+    console.error('[cancelar-nota] Erro:', error);
     return new Response(
       JSON.stringify({
         error: error.message,
