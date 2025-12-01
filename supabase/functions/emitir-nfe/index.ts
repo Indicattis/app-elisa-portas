@@ -7,6 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+// Mapeamento de códigos de erro Focus NFe para mensagens amigáveis
+const focusNfeErrorMessages: Record<string, string> = {
+  'erro_validacao_schema': 'Erro na validação do XML. Verifique os dados informados.',
+  'nfe_nao_autorizada': 'NF-e não autorizada. O cancelamento só é possível para NFe\'s autorizadas.',
+  'nao_encontrado': 'Recurso não encontrado. Verifique se a nota existe.',
+  'requisicao_invalida': 'Requisição inválida. Verifique os campos obrigatórios.',
+  'permissao_negada': 'CNPJ do emitente não autorizado. Verifique o cadastro no Painel API Focus NFe.',
+  'certificado_vencido': 'O certificado digital do emitente está vencido. É necessário renovar.',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
@@ -190,7 +200,47 @@ serve(async (req) => {
     console.log('Resposta Focus NFe:', responseText);
 
     if (!response.ok) {
-      throw new Error(`Erro Focus NFe (${response.status}): ${responseText}`);
+      let errorDetails = {
+        status_http: response.status,
+        status_api: 'erro_desconhecido',
+        mensagem: responseText,
+        erros: [] as string[],
+        correcao: ''
+      };
+
+      // Tentar parsear resposta JSON
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorDetails.status_api = errorJson.status || errorJson.status_sefaz || 'erro_desconhecido';
+        errorDetails.mensagem = errorJson.mensagem || errorJson.message || responseText;
+        
+        // Capturar erros específicos de validação
+        if (errorJson.erros && Array.isArray(errorJson.erros)) {
+          errorDetails.erros = errorJson.erros.map((e: any) => 
+            typeof e === 'string' ? e : (e.mensagem || e.message || JSON.stringify(e))
+          );
+        }
+        
+        // Adicionar sugestão de correção baseada no status
+        errorDetails.correcao = focusNfeErrorMessages[errorDetails.status_api] || '';
+      } catch (parseError) {
+        // Se não for JSON, usar texto bruto
+        console.log('Resposta não é JSON válido');
+      }
+
+      // Retornar erro estruturado
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: errorDetails.mensagem,
+          errorDetails: errorDetails,
+          focusResponse: null
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
     const focusResponse = JSON.parse(responseText);
