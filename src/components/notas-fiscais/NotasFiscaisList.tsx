@@ -28,6 +28,18 @@ export function NotasFiscaisList() {
 
   const { notasFiscais, isLoading, consultarNota, cancelarNota, isConsultando, isCancelando } = useNotasFiscais(filtros);
 
+  // Função para construir URL completa da Focus NFe
+  const buildFocusUrl = (url: string | null | undefined, ambiente?: string): string | null => {
+    if (!url) return null;
+    // Se já é URL completa, retorna
+    if (url.startsWith('http')) return url;
+    // Adiciona base URL baseado no ambiente
+    const baseUrl = ambiente === 'homologacao' 
+      ? 'https://homologacao.focusnfe.com.br'
+      : 'https://api.focusnfe.com.br';
+    return `${baseUrl}${url}`;
+  };
+
   const getTipoBadge = (tipo: string) => {
     switch(tipo) {
       case 'nfe':
@@ -165,7 +177,7 @@ export function NotasFiscaisList() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => window.open(nf.danfe_url, '_blank')}
+                            onClick={() => window.open(buildFocusUrl(nf.danfe_url, nf.ambiente), '_blank')}
                             title="Ver DANFE"
                           >
                             <FileText className="w-3.5 h-3.5" />
@@ -175,7 +187,7 @@ export function NotasFiscaisList() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => window.open(nf.xml_autorizado_url, '_blank')}
+                            onClick={() => window.open(buildFocusUrl(nf.xml_autorizado_url, nf.ambiente), '_blank')}
                             title="Baixar XML"
                           >
                             <Download className="w-3.5 h-3.5" />
