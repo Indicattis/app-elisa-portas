@@ -46,7 +46,8 @@ export default function EmitirNfe() {
           cidade,
           estado,
           cep,
-          bairro
+          bairro,
+          valor_venda
         `)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -71,6 +72,7 @@ export default function EmitirNfe() {
         cidade: venda.cidade || "",
         uf: venda.estado || "",
         cep: venda.cep || "",
+        valor_total: venda.valor_venda || 0,
       }));
     }
   };
