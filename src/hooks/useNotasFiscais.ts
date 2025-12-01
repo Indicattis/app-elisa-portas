@@ -209,12 +209,24 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
 
   const emitirNfeMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Verificar se o usuário está autenticado
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Você precisa estar autenticado para emitir notas fiscais. Por favor, faça login novamente.');
+      }
+
       const { data: result, error } = await supabase.functions.invoke('emitir-nfe', {
         body: data
       });
       
       // Verificar erro do Supabase
-      if (error) throw error;
+      if (error) {
+        // Tratamento especial para erro de autenticação
+        if (error.message?.includes('Missing authorization') || error.message?.includes('401')) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.');
+        }
+        throw error;
+      }
       
       // Verificar se a resposta indica erro da API Focus
       if (result && !result.success && result.errorDetails) {
@@ -241,6 +253,8 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
       toast.success('NF-e enviada para processamento!');
     },
     onError: (error: Error) => {
+      console.error('Erro detalhado ao emitir NF-e:', error);
+      
       // Mostrar erro com formatação melhorada
       toast.error('Erro ao emitir NF-e', {
         description: error.message,
