@@ -131,6 +131,15 @@ serve(async (req) => {
         const detalhe = await detalheResponse.json();
         console.log('[sincronizar-notas] Detalhe da nota:', nfe.ref, detalhe.status);
 
+        // Função para construir URL completa da Focus NFe
+        const buildFocusUrl = (path: string | null): string | null => {
+          if (!path) return null;
+          // Se já é URL completa, retorna
+          if (path.startsWith('http')) return path;
+          // Adiciona base URL
+          return `${baseUrl}${path}`;
+        };
+
         // Criar nota no banco
         const novaNota = {
           tipo: 'nfe',
@@ -146,9 +155,9 @@ serve(async (req) => {
           protocolo_autorizacao: detalhe.protocolo || null,
           status_sefaz: mapearStatus(detalhe.status),
           motivo_rejeicao: detalhe.mensagem_sefaz || null,
-          danfe_url: detalhe.caminho_danfe || null,
-          xml_url: detalhe.caminho_xml_nota_fiscal || null,
-          xml_autorizado_url: detalhe.caminho_xml_nota_fiscal || null,
+          danfe_url: buildFocusUrl(detalhe.caminho_danfe),
+          xml_url: buildFocusUrl(detalhe.caminho_xml_nota_fiscal),
+          xml_autorizado_url: buildFocusUrl(detalhe.caminho_xml_nota_fiscal),
           ambiente: empresa.ambiente || 'producao',
           empresa_emissora_id: empresaEmissoraId,
           data_autorizacao: detalhe.status === 'autorizado' ? new Date().toISOString() : null,
