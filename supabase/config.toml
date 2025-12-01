@@ -58,3 +58,6 @@ verify_jwt = true
 
 [functions.cancelar-nota]
 verify_jwt = true
+
+[functions.cancelar-nota-por-referencia]
+verify_jwt = true
