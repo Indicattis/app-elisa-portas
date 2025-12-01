@@ -182,8 +182,11 @@ export function useVendas() {
       const valor_a_receber = valor_total_venda - valor_entrada;
 
       // 4. Criar venda com valores calculados
+      // Remover campos que não existem na tabela vendas
+      const { endereco, venda_presencial, ...vendaDataLimpo } = vendaData;
+      
       const vendaPayload = {
-        ...vendaData,
+        ...vendaDataLimpo,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
