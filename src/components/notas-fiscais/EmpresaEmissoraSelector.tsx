@@ -60,7 +60,7 @@ export function EmpresaEmissoraSelector({ value, onChange }: EmpresaEmissoraSele
               <SelectItem key={empresa.id} value={empresa.id}>
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4" />
-                  {empresa.nome} ({empresa.cnpj})
+                  {empresa.titulo || empresa.nome}
                   {empresa.padrao && <span className="text-yellow-500">⭐</span>}
                 </div>
               </SelectItem>
