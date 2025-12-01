@@ -213,7 +213,27 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
         body: data
       });
       
+      // Verificar erro do Supabase
       if (error) throw error;
+      
+      // Verificar se a resposta indica erro da API Focus
+      if (result && !result.success && result.errorDetails) {
+        const details = result.errorDetails;
+        let errorMessage = details.mensagem;
+        
+        // Adicionar erros específicos se existirem
+        if (details.erros && details.erros.length > 0) {
+          errorMessage += '\n\nDetalhes:\n• ' + details.erros.join('\n• ');
+        }
+        
+        // Adicionar sugestão de correção
+        if (details.correcao) {
+          errorMessage += '\n\n💡 ' + details.correcao;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
       return result;
     },
     onSuccess: () => {
@@ -221,7 +241,11 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
       toast.success('NF-e enviada para processamento!');
     },
     onError: (error: Error) => {
-      toast.error('Erro ao emitir NF-e: ' + error.message);
+      // Mostrar erro com formatação melhorada
+      toast.error('Erro ao emitir NF-e', {
+        description: error.message,
+        duration: 10000, // 10 segundos para dar tempo de ler
+      });
     }
   });
 
