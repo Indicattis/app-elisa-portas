@@ -153,8 +153,9 @@ serve(async (req) => {
         aliquota: (payload.aliquota_iss || empresa.aliquota_iss_padrao || 5) / 100,
         discriminacao: payload.descricao_servico || empresa.descricao_servico_padrao || '',
         iss_retido: false,
-        // Usar item_lista_servico (gera cLCServ no XML) - padrão LC 116/2003
-        item_lista_servico: payload.codigo_servico || empresa.codigo_servico_padrao || '',
+        // Usar codigo_tributario_municipio (gera cServ no XML) - padrão NFS-e Nacional
+        // NÃO usar item_lista_servico (gera cLCServ) para municípios que migraram para NFS-e Nacional
+        codigo_tributario_municipio: payload.codigo_servico || empresa.codigo_servico_padrao || '',
         valor_servicos: payload.valor_total,
       }
     };
