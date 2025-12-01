@@ -1040,6 +1040,108 @@ export type Database = {
           },
         ]
       }
+      empresas_emissoras: {
+        Row: {
+          aliquota_iss_padrao: number | null
+          ambiente: string | null
+          ativo: boolean | null
+          bairro: string
+          cep: string
+          cidade: string
+          cnae: string | null
+          cnpj: string
+          codigo_municipio_ibge: string | null
+          codigo_servico_padrao: string | null
+          complemento: string | null
+          created_at: string | null
+          created_by: string | null
+          descricao_servico_padrao: string | null
+          email: string | null
+          email_copia: string | null
+          endereco: string
+          estado: string
+          focusnfe_token: string | null
+          id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
+          nome: string
+          numero: string | null
+          padrao: boolean | null
+          razao_social: string
+          regime_tributario: string | null
+          serie_nfe: number | null
+          serie_nfse: number | null
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aliquota_iss_padrao?: number | null
+          ambiente?: string | null
+          ativo?: boolean | null
+          bairro: string
+          cep: string
+          cidade: string
+          cnae?: string | null
+          cnpj: string
+          codigo_municipio_ibge?: string | null
+          codigo_servico_padrao?: string | null
+          complemento?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao_servico_padrao?: string | null
+          email?: string | null
+          email_copia?: string | null
+          endereco: string
+          estado: string
+          focusnfe_token?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          nome: string
+          numero?: string | null
+          padrao?: boolean | null
+          razao_social: string
+          regime_tributario?: string | null
+          serie_nfe?: number | null
+          serie_nfse?: number | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aliquota_iss_padrao?: number | null
+          ambiente?: string | null
+          ativo?: boolean | null
+          bairro?: string
+          cep?: string
+          cidade?: string
+          cnae?: string | null
+          cnpj?: string
+          codigo_municipio_ibge?: string | null
+          codigo_servico_padrao?: string | null
+          complemento?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao_servico_padrao?: string | null
+          email?: string | null
+          email_copia?: string | null
+          endereco?: string
+          estado?: string
+          focusnfe_token?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          nome?: string
+          numero?: string | null
+          padrao?: boolean | null
+          razao_social?: string
+          regime_tributario?: string | null
+          serie_nfe?: number | null
+          serie_nfse?: number | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       entregas: {
         Row: {
           cidade: string
@@ -1940,6 +2042,7 @@ export type Database = {
           data_vencimento: string | null
           descricao_servico: string | null
           email_enviado: boolean | null
+          empresa_emissora_id: string | null
           id: string
           motivo_rejeicao: string | null
           numero: string
@@ -1982,6 +2085,7 @@ export type Database = {
           data_vencimento?: string | null
           descricao_servico?: string | null
           email_enviado?: boolean | null
+          empresa_emissora_id?: string | null
           id?: string
           motivo_rejeicao?: string | null
           numero: string
@@ -2024,6 +2128,7 @@ export type Database = {
           data_vencimento?: string | null
           descricao_servico?: string | null
           email_enviado?: boolean | null
+          empresa_emissora_id?: string | null
           id?: string
           motivo_rejeicao?: string | null
           numero?: string
@@ -2052,6 +2157,13 @@ export type Database = {
           xml_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_empresa_emissora_id_fkey"
+            columns: ["empresa_emissora_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_emissoras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notas_fiscais_venda_id_fkey"
             columns: ["venda_id"]

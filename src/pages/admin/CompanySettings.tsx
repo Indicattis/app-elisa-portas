@@ -1,222 +1,116 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Building2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, Building2 } from "lucide-react";
-import { useEffect } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-const companySchema = z.object({
-  id: z.string(),
-  nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  cnpj: z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, 'CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX'),
-  endereco: z.string().min(5, 'Endereço deve ter pelo menos 5 caracteres'),
-  cidade: z.string().min(3, 'Cidade deve ter pelo menos 3 caracteres'),
-  cep: z.string().regex(/^\d{5}-\d{3}$/, 'CEP deve estar no formato XXXXX-XXX'),
-  telefone: z.string().optional(),
-  email: z.string().email('E-mail inválido').or(z.literal('')).optional(),
-  site: z.string().url('URL inválida').or(z.literal('')).optional()
-});
-
-type CompanyFormData = z.infer<typeof companySchema>;
+import { useEmpresasEmissoras } from "@/hooks/useEmpresasEmissoras";
+import { EmpresaEmissoraCard } from "@/components/admin/EmpresaEmissoraCard";
+import { EmpresaEmissoraForm } from "@/components/admin/EmpresaEmissoraForm";
+import { EmpresaEmissora, EmpresaEmissoraFormData } from "@/types/empresaEmissora";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 export default function CompanySettings() {
-  const { settings, isLoading, updateSettings, isUpdating } = useCompanySettings();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEmpresa, setEditingEmpresa] = useState<EmpresaEmissora | undefined>();
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CompanyFormData>({
-    resolver: zodResolver(companySchema)
-  });
+  const {
+    empresas,
+    isLoading,
+    createEmpresa,
+    updateEmpresa,
+    setPadrao,
+    isCreating,
+    isUpdating,
+    isSettingPadrao
+  } = useEmpresasEmissoras();
 
-  useEffect(() => {
-    if (settings) {
-      reset(settings);
+  const handleOpenDialog = (empresa?: EmpresaEmissora) => {
+    setEditingEmpresa(empresa);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingEmpresa(undefined);
+  };
+
+  const handleSubmit = (data: EmpresaEmissoraFormData) => {
+    if (editingEmpresa) {
+      updateEmpresa({ id: editingEmpresa.id, ...data });
+    } else {
+      createEmpresa(data);
     }
-  }, [settings, reset]);
-
-  const onSubmit = (data: CompanyFormData) => {
-    updateSettings(data);
-  };
-
-  const formatCNPJ = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/^(\d{2})(\d)/, '$1.$2')
-      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-      .replace(/\.(\d{3})(\d)/, '.$1/$2')
-      .replace(/(\d{4})(\d)/, '$1-$2')
-      .slice(0, 18);
-  };
-
-  const formatCEP = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/^(\d{5})(\d)/, '$1-$2')
-      .slice(0, 9);
+    handleCloseDialog();
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Building2 className="h-8 w-8" />
-          Configurações da Empresa
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Gerencie as informações da empresa utilizadas nos contratos e documentos.
-        </p>
+      <div className="flex items-center justify-between pb-4 border-b">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Building2 className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Empresas Emissoras</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Gerencie as empresas que podem emitir notas fiscais
+            </p>
+          </div>
+        </div>
+        <Button onClick={() => handleOpenDialog()}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Empresa
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações da Empresa</CardTitle>
-          <CardDescription>
-            Estas informações serão utilizadas automaticamente na geração de contratos
-            {settings?.updated_at && (
-              <span className="block mt-1 text-xs">
-                Última atualização: {format(new Date(settings.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-              </span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="nome">
-                  Nome da Empresa <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="nome"
-                  {...register('nome')}
-                  placeholder="Nome completo da empresa"
-                />
-                {errors.nome && (
-                  <p className="text-sm text-destructive">{errors.nome.message}</p>
-                )}
-              </div>
+      {empresas && empresas.length === 0 ? (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <Building2 className="w-16 h-16 text-muted-foreground/50 mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Nenhuma empresa cadastrada</h3>
+          <p className="text-muted-foreground mb-4">
+            Cadastre sua primeira empresa emissora para começar
+          </p>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="w-4 h-4 mr-2" />
+            Cadastrar Primeira Empresa
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {empresas?.map((empresa) => (
+            <EmpresaEmissoraCard
+              key={empresa.id}
+              empresa={empresa}
+              onEdit={handleOpenDialog}
+              onSetPadrao={setPadrao}
+              isSettingPadrao={isSettingPadrao}
+            />
+          ))}
+        </div>
+      )}
 
-              <div className="space-y-2">
-                <Label htmlFor="cnpj">
-                  CNPJ <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cnpj"
-                  {...register('cnpj')}
-                  placeholder="00.000.000/0000-00"
-                  onChange={(e) => {
-                    e.target.value = formatCNPJ(e.target.value);
-                  }}
-                />
-                {errors.cnpj && (
-                  <p className="text-sm text-destructive">{errors.cnpj.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="endereco">
-                  Endereço Completo <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="endereco"
-                  {...register('endereco')}
-                  placeholder="Rua, número, complemento"
-                />
-                {errors.endereco && (
-                  <p className="text-sm text-destructive">{errors.endereco.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cidade">
-                  Cidade/Estado <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cidade"
-                  {...register('cidade')}
-                  placeholder="Cidade - UF"
-                />
-                {errors.cidade && (
-                  <p className="text-sm text-destructive">{errors.cidade.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cep">
-                  CEP <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cep"
-                  {...register('cep')}
-                  placeholder="00000-000"
-                  onChange={(e) => {
-                    e.target.value = formatCEP(e.target.value);
-                  }}
-                />
-                {errors.cep && (
-                  <p className="text-sm text-destructive">{errors.cep.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  {...register('telefone')}
-                  placeholder="(00) 0000-0000"
-                />
-                {errors.telefone && (
-                  <p className="text-sm text-destructive">{errors.telefone.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  {...register('email')}
-                  placeholder="contato@empresa.com.br"
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="site">Site</Label>
-                <Input
-                  id="site"
-                  {...register('site')}
-                  placeholder="https://www.empresa.com.br"
-                />
-                {errors.site && (
-                  <p className="text-sm text-destructive">{errors.site.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isUpdating}>
-                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar Alterações
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}
+            </DialogTitle>
+          </DialogHeader>
+          <EmpresaEmissoraForm
+            empresa={editingEmpresa}
+            onSubmit={handleSubmit}
+            onCancel={handleCloseDialog}
+            isSubmitting={isCreating || isUpdating}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
