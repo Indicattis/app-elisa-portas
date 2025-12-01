@@ -299,6 +299,34 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
     }
   });
 
+  const cancelarNotaPorReferenciaMutation = useMutation({
+    mutationFn: async (data: { 
+      empresaEmissoraId: string; 
+      referencia: string; 
+      tipoNota: 'nfe' | 'nfse';
+      motivo: string;
+    }) => {
+      const { data: result, error } = await supabase.functions.invoke('cancelar-nota-por-referencia', {
+        body: data
+      });
+      
+      if (error) throw error;
+      
+      if (result && !result.success && result.error) {
+        throw new Error(result.error);
+      }
+      
+      return result;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['notas-fiscais'] });
+      toast.success(result?.message || 'Nota cancelada com sucesso na Focus NFe!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao cancelar nota: ' + error.message);
+    }
+  });
+
   return {
     notasFiscais,
     isLoading,
@@ -310,12 +338,14 @@ export const useNotasFiscais = (params?: UseNotasFiscaisParams) => {
     emitirNfe: emitirNfeMutation.mutate,
     consultarNota: consultarNotaMutation.mutate,
     cancelarNota: cancelarNotaMutation.mutate,
+    cancelarNotaPorReferencia: cancelarNotaPorReferenciaMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isEmitindoNfse: emitirNfseMutation.isPending,
     isEmitindoNfe: emitirNfeMutation.isPending,
     isConsultando: consultarNotaMutation.isPending,
-    isCancelando: cancelarNotaMutation.isPending
+    isCancelando: cancelarNotaMutation.isPending,
+    isCancelandoPorReferencia: cancelarNotaPorReferenciaMutation.isPending
   };
 };
