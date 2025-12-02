@@ -106,12 +106,14 @@ export default function ContasReceber() {
         });
       }
       
-      // Combinar dados
-      const contasComRelacoes = (data || []).map(conta => ({
-        ...conta,
-        venda: conta.venda_id ? vendasMap[conta.venda_id] : undefined,
-        empresa: conta.empresa_receptora_id ? empresasMap[conta.empresa_receptora_id] : undefined
-      }));
+      // Combinar dados e filtrar contas órfãs (sem venda válida)
+      const contasComRelacoes = (data || [])
+        .map(conta => ({
+          ...conta,
+          venda: conta.venda_id ? vendasMap[conta.venda_id] : undefined,
+          empresa: conta.empresa_receptora_id ? empresasMap[conta.empresa_receptora_id] : undefined
+        }))
+        .filter(conta => conta.venda !== undefined); // Filtra contas sem venda válida
       
       return contasComRelacoes as ContaReceber[];
     }
