@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { OrcamentoFormData, CampoPersonalizado } from "@/types/orcamento";
 import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
+import { gerarProximoNumero } from "@/utils/numberingService";
 
 export const createOrcamento = async (
   formData: OrcamentoFormData,
@@ -13,6 +14,9 @@ export const createOrcamento = async (
   if (formData.requer_analise && !formData.motivo_analise.trim()) {
     throw new Error("Motivo da análise é obrigatório quando necessário");
   }
+
+  // Gerar número sequencial do orçamento
+  const numeroOrcamento = await gerarProximoNumero('orcamento');
 
   const orcamentoData = {
     lead_id: formData.lead_id || null,
@@ -35,7 +39,9 @@ export const createOrcamento = async (
     valor_produto: 0, // Será calculado automaticamente pelo trigger
     valor_pintura: 0,
     campos_personalizados: {},
-    canal_aquisicao_id: formData.canal_aquisicao_id || null
+    canal_aquisicao_id: formData.canal_aquisicao_id || null,
+    numero_orcamento: numeroOrcamento,
+    observacoes: formData.observacoes || null
   };
 
   const { data, error } = await supabase
@@ -156,7 +162,8 @@ export const updateOrcamento = async (
     motivo_analise: formData.requer_analise ? formData.motivo_analise : null,
     valor_produto: 0, // Será calculado automaticamente pelo trigger
     valor_pintura: 0,
-    canal_aquisicao_id: formData.canal_aquisicao_id || null
+    canal_aquisicao_id: formData.canal_aquisicao_id || null,
+    observacoes: formData.observacoes || null
   };
 
   const { error } = await supabase

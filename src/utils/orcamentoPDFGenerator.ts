@@ -21,6 +21,7 @@ interface OrcamentoPDFData {
 interface GeneratePDFOptions {
   id?: string;
   numeroOrcamento?: string;
+  observacoes?: string;
   vendedora?: {
     nome: string;
     cargo: string;
@@ -325,7 +326,28 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
   const totalTextWidth = pdf.getTextWidth(totalText);
   pdf.text(totalText, pageWidth - margin - totalTextWidth, yPosition);
   
-  yPosition += 25;
+  yPosition += 20;
+
+  // Seção de Observações (se houver)
+  if (options?.observacoes && options.observacoes.trim()) {
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('OBSERVAÇÕES:', margin, yPosition);
+    yPosition += 8;
+    
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...grayColor);
+    
+    // Quebrar texto longo em múltiplas linhas
+    const linhasObs = pdf.splitTextToSize(options.observacoes, pageWidth - 2 * margin);
+    linhasObs.forEach((linha: string) => {
+      pdf.text(linha, margin, yPosition);
+      yPosition += 5;
+    });
+    yPosition += 10;
+  }
 
   // Verificar se há espaço suficiente para informações de pagamento
   // const remainingSpace = pdf.internal.pageSize.height - yPosition - 60; // 60 para o rodapé
