@@ -207,99 +207,102 @@ export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
   return calculos.reduce((total, calculo) => total + calculo.etiquetasNecessarias, 0);
 }
 
-// Função auxiliar para desenhar uma etiqueta de produção
+// Função auxiliar para desenhar uma etiqueta de produção em formato de tabela
 function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: number, pageHeight: number): void {
-  // Header com fundo transparente
-  const headerHeight = 104;
+  // Configurações da tabela
+  const tableMargin = 30;
+  const tableWidth = pageWidth - (tableMargin * 2);
+  const labelColWidth = 200;
+  const valueColWidth = tableWidth - labelColWidth;
+  const rowHeight = 38;
+  const fontSize = 42;
+  const headerFontSize = 48;
   
-  // Logo (centralizada no header)
+  // Logo no topo
+  const logoHeight = 80;
   try {
-    const logoWidth = 300;
-    const logoHeight = 90;
+    const logoWidth = 280;
     const logoX = (pageWidth - logoWidth) / 2;
-    const logoY = 7;
+    const logoY = 10;
     doc.addImage(logoEtiqueta, 'PNG', logoX, logoY, logoWidth, logoHeight);
   } catch (error) {
-    // Se logo não disponível, usar texto preto centralizado
-    doc.setFontSize(80);
+    doc.setFontSize(60);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text('ELISA PORTAS', pageWidth / 2, 65, { align: 'center' });
+    doc.text('ELISA PORTAS', pageWidth / 2, 55, { align: 'center' });
   }
   
-  // Reset color
-  doc.setTextColor(0, 0, 0);
+  // Início da tabela após o logo
+  let tableY = logoHeight + 25;
+  const tableX = tableMargin;
   
-  // Content area centralizado
-  let currentY = 154;
-  const lineSpacing = 50; // Reduzido de 65 para 50
-
-  // Cliente
-  if (tag.clienteNome) {
-    doc.setFontSize(64);
+  // Função para desenhar uma linha da tabela
+  const drawTableRow = (label: string, value: string, isHeader: boolean = false) => {
+    // Fundo da célula de rótulo (cinza claro)
+    doc.setFillColor(240, 240, 240);
+    doc.rect(tableX, tableY, labelColWidth, rowHeight, 'F');
+    
+    // Fundo da célula de valor (branco)
+    doc.setFillColor(255, 255, 255);
+    doc.rect(tableX + labelColWidth, tableY, valueColWidth, rowHeight, 'F');
+    
+    // Bordas
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(1);
+    doc.rect(tableX, tableY, labelColWidth, rowHeight, 'S');
+    doc.rect(tableX + labelColWidth, tableY, valueColWidth, rowHeight, 'S');
+    
+    // Texto do rótulo
+    doc.setFontSize(isHeader ? headerFontSize : fontSize);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
-    const truncatedCliente = truncateText(tag.clienteNome, 60);
-    doc.text(`CLIENTE: ${truncatedCliente}`, pageWidth / 2, currentY, { align: 'center' });
-    currentY += lineSpacing;
+    doc.text(label, tableX + 10, tableY + (rowHeight / 2) + (fontSize / 3));
+    
+    // Texto do valor
+    doc.setFont('helvetica', isHeader ? 'bold' : 'normal');
+    doc.setTextColor(0, 0, 0);
+    const truncatedValue = truncateText(value, 55);
+    doc.text(truncatedValue, tableX + labelColWidth + 10, tableY + (rowHeight / 2) + (fontSize / 3));
+    
+    tableY += rowHeight;
+  };
+  
+  // Desenhar linhas da tabela
+  if (tag.clienteNome) {
+    drawTableRow('CLIENTE', tag.clienteNome, true);
   }
-
-  // Product name
-  doc.setFontSize(84);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 0, 0);
-  const truncatedName = truncateText(tag.nomeProduto, 60);
-  doc.text(`PRODUTO: ${truncatedName}`, pageWidth / 2, currentY, { align: 'center' });
-  currentY += lineSpacing;
-
-  // Tamanho da porta (informação do cadastro)
+  
+  drawTableRow('PRODUTO', tag.nomeProduto, true);
+  
   if (tag.tamanho) {
-    doc.setFontSize(76);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.text(`TAMANHO: ${tag.tamanho}m`, pageWidth / 2, currentY, { align: 'center' });
-    currentY += lineSpacing;
+    drawTableRow('TAMANHO', `${tag.tamanho}m`);
   }
-
-  // Dimensions (medidas exatas)
+  
   if (tag.largura && tag.altura) {
-    doc.setFontSize(76);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.text(`DIMENSÕES: ${tag.largura}m x ${tag.altura}m`, pageWidth / 2, currentY, { align: 'center' });
-    currentY += lineSpacing;
+    drawTableRow('DIMENSÕES', `${tag.largura}m x ${tag.altura}m`);
   }
-
-  // Cor/Pintura
+  
   if (tag.corNome || tag.tipoPintura) {
-    doc.setFontSize(76);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
     const pinturaTexto = [tag.corNome, tag.tipoPintura].filter(Boolean).join(' - ');
-    doc.text(`PINTURA: ${pinturaTexto || 'Sem pintura'}`, pageWidth / 2, currentY, { align: 'center' });
-    currentY += lineSpacing;
+    drawTableRow('PINTURA', pinturaTexto || 'Sem pintura');
   }
-
-  // Quantity
-  doc.setFontSize(76);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(60, 60, 60);
-  doc.text(`QUANTIDADE: ${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`, pageWidth / 2, currentY, { align: 'center' });
-  currentY += lineSpacing;
-
-  // Order number
-  doc.setFontSize(76);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(0, 0, 0);
-  doc.text(`PEDIDO: ${tag.numeroPedido}`, pageWidth / 2, currentY, { align: 'center' });
-  currentY += lineSpacing;
-
-  // Origem da ordem (se disponível)
+  
+  drawTableRow('QUANTIDADE', `${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`);
+  
+  drawTableRow('PEDIDO', tag.numeroPedido);
+  
+  // Responsável (novo campo)
+  if (tag.responsavelNome) {
+    drawTableRow('RESPONSÁVEL', tag.responsavelNome);
+  }
+  
+  // Rodapé com origem da ordem
   if (tag.origemOrdem) {
-    doc.setFontSize(48);
+    tableY += 15;
+    doc.setFontSize(36);
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Impresso em: ${tag.origemOrdem}`, pageWidth / 2, currentY, { align: 'center' });
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Impresso em: ${tag.origemOrdem}`, pageWidth / 2, tableY, { align: 'center' });
   }
 }
 
