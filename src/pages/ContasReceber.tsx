@@ -76,34 +76,44 @@ export default function ContasReceber() {
       
       if (error) throw error;
       
-      const contasComVendas = await Promise.all(
-        (data || []).map(async (conta: any) => {
-          let venda = undefined;
-          let empresa = undefined;
-          
-          if (conta.venda_id) {
-            const { data: vendaData } = await supabase
-              .from('vendas')
-              .select('cliente_nome, cliente_telefone, valor_venda')
-              .eq('id', conta.venda_id)
-              .maybeSingle();
-            venda = vendaData || undefined;
-          }
-          
-          if (conta.empresa_receptora_id) {
-            const { data: empresaData } = await supabase
-              .from('empresas_emissoras')
-              .select('nome')
-              .eq('id', conta.empresa_receptora_id)
-              .maybeSingle();
-            empresa = empresaData || undefined;
-          }
-          
-          return { ...conta, venda, empresa };
-        })
-      );
+      // Buscar todos os venda_ids únicos
+      const vendaIds = [...new Set((data || []).map(c => c.venda_id).filter(Boolean))];
+      const empresaIds = [...new Set((data || []).map(c => c.empresa_receptora_id).filter(Boolean))];
       
-      return contasComVendas as ContaReceber[];
+      // Buscar vendas em uma única query
+      let vendasMap: Record<string, any> = {};
+      if (vendaIds.length > 0) {
+        const { data: vendas } = await supabase
+          .from('vendas')
+          .select('id, cliente_nome, cliente_telefone, valor_venda')
+          .in('id', vendaIds);
+        
+        (vendas || []).forEach(v => {
+          vendasMap[v.id] = v;
+        });
+      }
+      
+      // Buscar empresas em uma única query
+      let empresasMap: Record<string, any> = {};
+      if (empresaIds.length > 0) {
+        const { data: empresas } = await supabase
+          .from('empresas_emissoras')
+          .select('id, nome')
+          .in('id', empresaIds);
+        
+        (empresas || []).forEach(e => {
+          empresasMap[e.id] = e;
+        });
+      }
+      
+      // Combinar dados
+      const contasComRelacoes = (data || []).map(conta => ({
+        ...conta,
+        venda: conta.venda_id ? vendasMap[conta.venda_id] : undefined,
+        empresa: conta.empresa_receptora_id ? empresasMap[conta.empresa_receptora_id] : undefined
+      }));
+      
+      return contasComRelacoes as ContaReceber[];
     }
   });
 
