@@ -41,7 +41,6 @@ export default function Estoque() {
     fornecedor_id: "",
     requer_pintura: false,
     pontuacao_producao: 0,
-    pontuacao_por_metro: 0,
   });
 
   const getCategoriaColor = (categoriaId: string) => {
@@ -71,7 +70,6 @@ export default function Estoque() {
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
         pontuacao_producao: formData.pontuacao_producao,
-        pontuacao_por_metro: formData.pontuacao_por_metro,
       });
       
       setFormData({
@@ -87,7 +85,6 @@ export default function Estoque() {
         fornecedor_id: "",
         requer_pintura: false,
         pontuacao_producao: 0,
-        pontuacao_por_metro: 0,
       });
       setNovoModal(false);
       toast.success("Produto adicionado com sucesso");
@@ -395,16 +392,6 @@ export default function Estoque() {
                       onChange={(e) => setFormData({ ...formData, pontuacao_producao: Number(e.target.value) })}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pontuacao_por_metro">Pontuação por Metro</Label>
-                    <Input
-                      id="pontuacao_por_metro"
-                      type="number"
-                      step="0.01"
-                      value={formData.pontuacao_por_metro}
-                      onChange={(e) => setFormData({ ...formData, pontuacao_por_metro: Number(e.target.value) })}
-                    />
-                  </div>
                 </div>
 
                 <DialogFooter>
@@ -442,7 +429,6 @@ export default function Estoque() {
                   <TableHead className="text-xs font-medium">Setor</TableHead>
                   <TableHead className="text-center text-xs font-medium">Pintura</TableHead>
                   <TableHead className="text-center text-xs font-medium">Pts/Un</TableHead>
-                  <TableHead className="text-center text-xs font-medium">Pts/M</TableHead>
                   <TableHead className="text-right text-xs font-medium">Estoque</TableHead>
                   <TableHead className="text-right text-xs font-medium">Custo</TableHead>
                   <TableHead className="text-right text-xs font-medium">Ações</TableHead>
@@ -531,11 +517,6 @@ export default function Estoque() {
                       <TableCell className="text-center px-3 py-2">
                         <span className="text-xs font-medium">
                           {produto.pontuacao_producao > 0 ? produto.pontuacao_producao.toFixed(2) : '-'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center px-3 py-2">
-                        <span className="text-xs font-medium">
-                          {produto.pontuacao_por_metro > 0 ? produto.pontuacao_por_metro.toFixed(2) : '-'}
                         </span>
                       </TableCell>
                       <TableCell className="text-right px-3 py-2">

@@ -1353,7 +1353,6 @@ export type Database = {
           id: string
           nome_produto: string
           peso_porta: number | null
-          pontuacao_por_metro: number | null
           pontuacao_producao: number | null
           quantidade: number
           quantidade_ideal: number | null
@@ -1377,7 +1376,6 @@ export type Database = {
           id?: string
           nome_produto: string
           peso_porta?: number | null
-          pontuacao_por_metro?: number | null
           pontuacao_producao?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
@@ -1401,7 +1399,6 @@ export type Database = {
           id?: string
           nome_produto?: string
           peso_porta?: number | null
-          pontuacao_por_metro?: number | null
           pontuacao_producao?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
@@ -3802,13 +3799,11 @@ export type Database = {
           id: string
           item_nome: string
           linha_id: string
-          metragem: number | null
           ordem_id: string
-          pontos_metro: number
           pontos_total: number
-          pontos_unidade: number
           quantidade: number
           tipo_ordem: string
+          tipo_ranking: string | null
           user_id: string
         }
         Insert: {
@@ -3817,13 +3812,11 @@ export type Database = {
           id?: string
           item_nome: string
           linha_id: string
-          metragem?: number | null
           ordem_id: string
-          pontos_metro?: number
           pontos_total?: number
-          pontos_unidade?: number
           quantidade?: number
           tipo_ordem: string
+          tipo_ranking?: string | null
           user_id: string
         }
         Update: {
@@ -3832,13 +3825,11 @@ export type Database = {
           id?: string
           item_nome?: string
           linha_id?: string
-          metragem?: number | null
           ordem_id?: string
-          pontos_metro?: number
           pontos_total?: number
-          pontos_unidade?: number
           quantidade?: number
           tipo_ordem?: string
+          tipo_ranking?: string | null
           user_id?: string
         }
         Relationships: [
@@ -5310,12 +5301,42 @@ export type Database = {
       get_pedidos_na_fila: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_hoje: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_mes: { Args: never; Returns: number }
+      get_ranking_perfiladeira_mes: {
+        Args: never
+        Returns: {
+          foto_perfil_url: string
+          nome: string
+          total_ordens: number
+          total_pontos: number
+          user_id: string
+        }[]
+      }
+      get_ranking_pintura_mes: {
+        Args: never
+        Returns: {
+          foto_perfil_url: string
+          nome: string
+          total_ordens: number
+          total_pontos: number
+          user_id: string
+        }[]
+      }
       get_ranking_pontuacao_mes: {
         Args: never
         Returns: {
           foto_perfil_url: string
           nome: string
           total_linhas: number
+          total_pontos: number
+          user_id: string
+        }[]
+      }
+      get_ranking_solda_mes: {
+        Args: never
+        Returns: {
+          foto_perfil_url: string
+          nome: string
+          total_ordens: number
           total_pontos: number
           user_id: string
         }[]
