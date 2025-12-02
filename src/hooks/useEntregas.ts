@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { addDays } from 'date-fns';
 
 export interface ProdutoEntrega {
   id: string;
@@ -377,11 +378,57 @@ export const useEntregas = () => {
 
   const concluirEntrega = async (id: string): Promise<boolean> => {
     try {
+      // Buscar a entrega para obter venda_id
+      const entrega = entregas.find(e => e.id === id);
+      
+      // Chamar RPC para concluir entrega
       const { data, error } = await supabase.rpc('concluir_entrega_e_avancar_pedido', {
         p_entrega_id: id
       });
 
       if (error) throw error;
+
+      // Se a entrega tem venda associada, verificar se precisa gerar parcelas de cartão
+      if (entrega?.venda_id) {
+        const { data: venda } = await supabase
+          .from('vendas')
+          .select('*, metodo_pagamento, pago_na_instalacao, quantidade_parcelas, empresa_receptora_id, valor_a_receber')
+          .eq('id', entrega.venda_id)
+          .single();
+        
+        // Gerar parcelas se foi cartão de crédito com pagamento na instalação
+        if (venda && venda.pago_na_instalacao && venda.metodo_pagamento === 'cartao_credito') {
+          const numParcelas = venda.quantidade_parcelas || 1;
+          const valorParcela = (venda.valor_a_receber || 0) / numParcelas;
+          const dataBase = new Date();
+          const parcelas = [];
+          
+          for (let i = 1; i <= numParcelas; i++) {
+            const dataVencimento = addDays(dataBase, 30 * i);
+            parcelas.push({
+              venda_id: venda.id,
+              numero_parcela: i,
+              valor_parcela: valorParcela,
+              data_vencimento: dataVencimento.toISOString().split('T')[0],
+              metodo_pagamento: 'cartao_credito',
+              empresa_receptora_id: venda.empresa_receptora_id || null,
+              status: 'pendente'
+            });
+          }
+          
+          if (parcelas.length > 0) {
+            const { error: parcelasError } = await supabase
+              .from('contas_receber')
+              .insert(parcelas);
+            
+            if (parcelasError) {
+              console.error('Erro ao criar parcelas do cartão na entrega:', parcelasError);
+            } else {
+              console.log('Parcelas de cartão geradas após conclusão da entrega');
+            }
+          }
+        }
+      }
 
       toast.success('Entrega concluída e pedido finalizado com sucesso!');
       await fetchEntregas();

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { addDays } from 'date-fns';
+import { PagamentoData } from '@/components/vendas/PagamentoSection';
 
 export interface ProdutoVenda {
   id?: string;
@@ -89,10 +91,12 @@ export function useVendas() {
     mutationFn: async ({ 
       vendaData, 
       portas, 
+      pagamentoData,
       autorizacaoDesconto 
     }: { 
       vendaData: VendaFormData; 
       portas: ProdutoVenda[];
+      pagamentoData?: PagamentoData;
       autorizacaoDesconto?: AutorizacaoDesconto;
     }) => {
       if (portas.length === 0) {
@@ -127,17 +131,6 @@ export function useVendas() {
         .maybeSingle();
       
       console.log('✅ Admin user found:', adminUser, 'Error:', adminError);
-      console.log('📧 Admin user details - ID:', adminUser?.id, 'User ID:', adminUser?.user_id, 'Email:', adminUser?.email);
-      
-      // Verificar se o admin_user.id realmente existe na tabela
-      if (adminUser) {
-        const { data: verifyAdmin, error: verifyError } = await supabase
-          .from('admin_users')
-          .select('id, nome')
-          .eq('id', adminUser.id)
-          .maybeSingle();
-        console.log('🔎 Verification - Admin user exists:', verifyAdmin, 'Error:', verifyError);
-      }
       
       if (adminError) {
         throw new Error(`Erro ao buscar usuário: ${adminError.message}`);
@@ -182,25 +175,30 @@ export function useVendas() {
       const valor_a_receber = valor_total_venda - valor_entrada;
 
       // 4. Criar venda com valores calculados
-      // Remover campos que não existem na tabela vendas
       const { endereco, venda_presencial, ...vendaDataLimpo } = vendaData;
+      
+      // Definir se pagamento é na instalação (para cartão de crédito)
+      const pagoNaInstalacao = pagamentoData?.metodo_pagamento === 'cartao_credito' && pagamentoData?.pago_na_instalacao;
       
       const vendaPayload = {
         ...vendaDataLimpo,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
-        valor_venda: valor_total_venda, // Soma de todos os produtos + frete
-        lucro_total: 0, // Inicialmente zero, será preenchido no faturamento
+        valor_venda: valor_total_venda,
+        lucro_total: 0,
         valor_frete: valor_frete,
         valor_instalacao: totais.valor_instalacao,
         valor_entrada: valor_entrada,
-        valor_a_receber: valor_a_receber
+        valor_a_receber: valor_a_receber,
+        // Campos de pagamento
+        metodo_pagamento: pagamentoData?.metodo_pagamento || vendaData.forma_pagamento,
+        empresa_receptora_id: pagamentoData?.empresa_receptora_id || null,
+        quantidade_parcelas: pagamentoData?.quantidade_parcelas || 1,
+        pago_na_instalacao: pagoNaInstalacao
       };
 
       console.log('📦 Venda payload:', vendaPayload);
-      console.log('👤 atendente_id being sent:', adminUser.user_id);
-      console.log('🔑 Type of atendente_id:', typeof adminUser.user_id);
 
       const { data: venda, error: vendaError } = await supabase
         .from('vendas')
@@ -237,8 +235,128 @@ export function useVendas() {
       
       if (produtosError) throw produtosError;
 
-      // 6. Atualizar instalação criada automaticamente pelo trigger
-      // A instalação já foi criada com venda_id pelo trigger
+      // 6. GERAR CONTAS A RECEBER baseado no método de pagamento
+      const dataVendaBase = new Date(vendaData.data_venda || new Date().toISOString());
+      
+      if (pagamentoData) {
+        // === BOLETO ===
+        if (pagamentoData.metodo_pagamento === 'boleto') {
+          const valorParcela = valor_a_receber / pagamentoData.quantidade_parcelas;
+          const parcelas = [];
+          
+          for (let i = 1; i <= pagamentoData.quantidade_parcelas; i++) {
+            const dataVencimento = addDays(dataVendaBase, pagamentoData.intervalo_boletos * i);
+            parcelas.push({
+              venda_id: venda.id,
+              numero_parcela: i,
+              valor_parcela: valorParcela,
+              data_vencimento: dataVencimento.toISOString().split('T')[0],
+              metodo_pagamento: 'boleto',
+              empresa_receptora_id: pagamentoData.empresa_receptora_id || null,
+              status: 'pendente'
+            });
+          }
+          
+          if (parcelas.length > 0) {
+            const { error: parcelasError } = await supabase
+              .from('contas_receber')
+              .insert(parcelas);
+            
+            if (parcelasError) {
+              console.error('Erro ao criar parcelas boleto:', parcelasError);
+            }
+          }
+        }
+        
+        // === CARTÃO DE CRÉDITO (sem pagamento na instalação) ===
+        if (pagamentoData.metodo_pagamento === 'cartao_credito' && !pagamentoData.pago_na_instalacao) {
+          const valorParcela = valor_a_receber / pagamentoData.quantidade_parcelas;
+          const parcelas = [];
+          
+          for (let i = 1; i <= pagamentoData.quantidade_parcelas; i++) {
+            const dataVencimento = addDays(dataVendaBase, 30 * i);
+            parcelas.push({
+              venda_id: venda.id,
+              numero_parcela: i,
+              valor_parcela: valorParcela,
+              data_vencimento: dataVencimento.toISOString().split('T')[0],
+              metodo_pagamento: 'cartao_credito',
+              empresa_receptora_id: pagamentoData.empresa_receptora_id || null,
+              status: 'pendente'
+            });
+          }
+          
+          if (parcelas.length > 0) {
+            const { error: parcelasError } = await supabase
+              .from('contas_receber')
+              .insert(parcelas);
+            
+            if (parcelasError) {
+              console.error('Erro ao criar parcelas cartão:', parcelasError);
+            }
+          }
+        }
+        
+        // === CARTÃO DE CRÉDITO (com pagamento na instalação) ===
+        // As parcelas serão geradas quando a entrega for concluída
+        // A flag pago_na_instalacao já foi salva na venda
+        
+        // === DINHEIRO COM 2 PARCELAS ===
+        if (pagamentoData.metodo_pagamento === 'dinheiro' && pagamentoData.parcelas_dinheiro === 2) {
+          const saldoRestante = valor_a_receber - (pagamentoData.valor_entrada_dinheiro || 0);
+          
+          // Data de vencimento = data prevista de entrega ou 30 dias após a venda
+          const dataVencimento = vendaData.data_prevista_entrega 
+            ? new Date(vendaData.data_prevista_entrega)
+            : addDays(dataVendaBase, 30);
+          
+          const { error: parcelaDinheiroError } = await supabase
+            .from('contas_receber')
+            .insert({
+              venda_id: venda.id,
+              numero_parcela: 2,
+              valor_parcela: saldoRestante,
+              data_vencimento: dataVencimento.toISOString().split('T')[0],
+              metodo_pagamento: 'dinheiro',
+              status: 'pendente',
+              pago_na_instalacao: pagamentoData.restante_na_instalacao
+            });
+          
+          if (parcelaDinheiroError) {
+            console.error('Erro ao criar parcela dinheiro:', parcelaDinheiroError);
+          }
+        }
+        
+        // === À VISTA ou DINHEIRO 1 PARCELA ===
+        // Não gera contas a receber (pagamento já realizado)
+        
+        // === UPLOAD COMPROVANTE PARA À VISTA ===
+        if (pagamentoData.metodo_pagamento === 'a_vista' && pagamentoData.comprovante_file) {
+          const fileName = `${venda.id}/${Date.now()}_${pagamentoData.comprovante_file.name}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('comprovantes-pagamento')
+            .upload(fileName, pagamentoData.comprovante_file);
+          
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('comprovantes-pagamento')
+              .getPublicUrl(fileName);
+            
+            await supabase
+              .from('vendas')
+              .update({ 
+                comprovante_url: urlData.publicUrl,
+                comprovante_nome: pagamentoData.comprovante_file.name 
+              })
+              .eq('id', venda.id);
+          } else {
+            console.error('Erro ao fazer upload do comprovante:', uploadError);
+          }
+        }
+      }
+
+      // 7. Atualizar instalação criada automaticamente pelo trigger
       const tamanhosConcatenados = portas.map(p => p.tamanho).join(', ');
       
       const updateData: any = { 
@@ -277,11 +395,10 @@ export function useVendas() {
 
         if (autorizacaoError) {
           console.error('Erro ao salvar autorização:', autorizacaoError);
-          // Não bloquear a criação da venda por erro ao salvar autorização
         }
       }
 
-      // 9. Buscar a instalação para geocodificar (apenas o ID)
+      // 9. Buscar a instalação para geocodificar
       const { data: instalacao } = await supabase
         .from('instalacoes')
         .select('id')
@@ -300,7 +417,6 @@ export function useVendas() {
           });
         } catch (geoError) {
           console.error('Erro na geocodificação:', geoError);
-          // Não bloquear a criação da venda por erro de geocodificação
         }
       }
 
@@ -310,9 +426,10 @@ export function useVendas() {
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['contador-vendas'] });
       queryClient.invalidateQueries({ queryKey: ['instalacoes'] });
+      queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
       toast({
         title: 'Sucesso',
-        description: 'Venda criada com sucesso! Instalação e contador atualizados automaticamente.',
+        description: 'Venda criada com sucesso!',
       });
     },
     onError: (error: Error) => {
@@ -326,7 +443,6 @@ export function useVendas() {
 
   const deleteVendaMutation = useMutation({
     mutationFn: async (vendaId: string) => {
-      // A instalação será excluída automaticamente devido ao ON DELETE CASCADE
       const { error } = await supabase
         .from('vendas')
         .delete()
@@ -337,9 +453,10 @@ export function useVendas() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['instalacoes'] });
+      queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
       toast({
         title: 'Sucesso',
-        description: 'Venda e instalação excluídas com sucesso',
+        description: 'Venda excluída com sucesso',
       });
     },
     onError: (error: Error) => {
