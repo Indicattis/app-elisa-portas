@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Trash2, Pencil, X, TrendingUp } from 'lucide-react';
+import { Trash2, Pencil, X } from 'lucide-react';
 import { ProdutoVenda } from '@/hooks/useVendas';
 
 interface ProdutosVendaTableProps {
@@ -11,7 +11,6 @@ interface ProdutosVendaTableProps {
   onEditProduto?: (index: number) => void;
   onUpdateQuantidade?: (index: number, quantidade: number) => void;
   onRemoverDesconto?: (index: number) => void;
-  onRemoverCredito?: (index: number) => void;
 }
 
 const getTipoProdutoLabel = (tipo: string) => {
@@ -42,7 +41,7 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
   }
 };
 
-export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade, onRemoverDesconto, onRemoverCredito }: ProdutosVendaTableProps) {
+export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade, onRemoverDesconto }: ProdutosVendaTableProps) {
   if (produtos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/50">
@@ -60,20 +59,17 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
           <TableHead>Qtd</TableHead>
           <TableHead>Valor Unit.</TableHead>
           <TableHead>Desconto</TableHead>
-          <TableHead>Crédito</TableHead>
           <TableHead>Total</TableHead>
           <TableHead className="w-[120px]">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {produtos.map((produto, index) => {
-          // Para pintura_epoxi, valor_pintura não deve ser somado (é 0)
           const valorBase = (produto.valor_produto + produto.valor_pintura + produto.valor_instalacao) * produto.quantidade;
           const descontoAplicado = produto.tipo_desconto === 'valor' 
             ? produto.desconto_valor 
             : valorBase * (produto.desconto_percentual / 100);
-          const creditoAplicado = (produto.valor_credito || 0) * produto.quantidade;
-          const valorTotal = valorBase - descontoAplicado + creditoAplicado;
+          const valorTotal = valorBase - descontoAplicado;
           
           // Priorizar largura x altura sobre tamanho (para novos registros)
           const detalhes = (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social' || produto.tipo_produto === 'porta')
@@ -128,30 +124,6 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
                     </Button>
                   )}
                 </div>
-              </TableCell>
-              <TableCell>
-                {(produto.valor_credito || 0) > 0 ? (
-                  <div className="flex items-center gap-1">
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      +R$ {produto.valor_credito.toFixed(2)}
-                    </Badge>
-                    {onRemoverCredito && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => onRemoverCredito(index)}
-                        title="Remover crédito"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
               </TableCell>
               <TableCell className="font-semibold">R$ {valorTotal.toFixed(2)}</TableCell>
               <TableCell>

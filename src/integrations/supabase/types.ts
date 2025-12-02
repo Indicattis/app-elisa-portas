@@ -4703,12 +4703,14 @@ export type Database = {
           pago_na_instalacao: boolean | null
           parcelas_dinheiro: number | null
           parcelas_geradas: boolean | null
+          percentual_credito: number | null
           publico_alvo: string | null
           quantidade_parcelas: number | null
           restante_na_instalacao: boolean | null
           tipo_entrega: string | null
           updated_at: string
           valor_a_receber: number | null
+          valor_credito: number | null
           valor_entrada: number | null
           valor_entrada_dinheiro: number | null
           valor_frete: number | null
@@ -4746,12 +4748,14 @@ export type Database = {
           pago_na_instalacao?: boolean | null
           parcelas_dinheiro?: number | null
           parcelas_geradas?: boolean | null
+          percentual_credito?: number | null
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
           restante_na_instalacao?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_credito?: number | null
           valor_entrada?: number | null
           valor_entrada_dinheiro?: number | null
           valor_frete?: number | null
@@ -4789,12 +4793,14 @@ export type Database = {
           pago_na_instalacao?: boolean | null
           parcelas_dinheiro?: number | null
           parcelas_geradas?: boolean | null
+          percentual_credito?: number | null
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
           restante_na_instalacao?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_credito?: number | null
           valor_entrada?: number | null
           valor_entrada_dinheiro?: number | null
           valor_frete?: number | null
