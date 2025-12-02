@@ -9,20 +9,17 @@ export default function Ordens() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
   const [tipoOrdem, setTipoOrdem] = useState("todos");
-  const [mostrarHistorico, setMostrarHistorico] = useState(false);
 
   const { data: pedidos = [], isLoading } = useOrdensProducao({
     search,
     status: status === "todos" ? "" : status,
     tipoOrdem: tipoOrdem === "todos" ? "" : tipoOrdem,
-    mostrarHistorico,
   });
 
   const handleReset = () => {
     setSearch("");
     setStatus("todos");
     setTipoOrdem("todos");
-    setMostrarHistorico(false);
   };
 
   const totalOrdens = pedidos.reduce((acc, p) => acc + p.total_ordens, 0);
@@ -77,8 +74,6 @@ export default function Ordens() {
         onStatusChange={setStatus}
         tipoOrdem={tipoOrdem}
         onTipoOrdemChange={setTipoOrdem}
-        mostrarHistorico={mostrarHistorico}
-        onMostrarHistoricoChange={setMostrarHistorico}
         onReset={handleReset}
       />
 

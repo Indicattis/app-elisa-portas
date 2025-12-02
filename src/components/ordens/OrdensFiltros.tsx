@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -7,7 +6,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 
@@ -18,8 +16,6 @@ interface OrdensFiltrosProps {
   onStatusChange: (value: string) => void;
   tipoOrdem: string;
   onTipoOrdemChange: (value: string) => void;
-  mostrarHistorico: boolean;
-  onMostrarHistoricoChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -30,11 +26,9 @@ export function OrdensFiltros({
   onStatusChange,
   tipoOrdem,
   onTipoOrdemChange,
-  mostrarHistorico,
-  onMostrarHistoricoChange,
   onReset,
 }: OrdensFiltrosProps) {
-  const hasActiveFilters = search || status || tipoOrdem || mostrarHistorico;
+  const hasActiveFilters = search || status !== "todos" || tipoOrdem !== "todos";
 
   return (
     <div className="bg-card border rounded-lg p-3">
@@ -77,18 +71,6 @@ export function OrdensFiltros({
             <SelectItem value="carregamento">Carregamento</SelectItem>
           </SelectContent>
         </Select>
-
-        <div className="flex items-center gap-2 px-2 border rounded-md h-8">
-          <Switch
-            id="historico"
-            checked={mostrarHistorico}
-            onCheckedChange={onMostrarHistoricoChange}
-            className="scale-75"
-          />
-          <Label htmlFor="historico" className="cursor-pointer text-xs whitespace-nowrap">
-            Histórico
-          </Label>
-        </div>
 
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={onReset} className="h-8 px-2">

@@ -36,14 +36,13 @@ interface UseOrdensProducaoFilters {
   search?: string;
   status?: string;
   tipoOrdem?: string;
-  mostrarHistorico?: boolean;
 }
 
 export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
-  const { search = '', status = '', tipoOrdem = '', mostrarHistorico = false } = filters;
+  const { search = '', status = '', tipoOrdem = '' } = filters;
 
   return useQuery({
-    queryKey: ['ordens-producao', search, status, tipoOrdem, mostrarHistorico],
+    queryKey: ['ordens-producao', search, status, tipoOrdem],
     queryFn: async () => {
       // Buscar pedidos
       let pedidosQuery = supabase
@@ -76,13 +75,13 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         { data: ordensInstalacao },
         { data: ordensCarregamento }
       ] = await Promise.all([
-        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
-        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds).eq('historico', mostrarHistorico),
+        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
+        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
+        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
+        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
+        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
         supabase.from('ordens_instalacao').select('id, numero_ordem, pedido_id, status, created_at, responsavel_id').in('pedido_id', pedidoIds),
-        supabase.from('ordens_carregamento').select('id, pedido_id, status, created_at, carregamento_concluido, responsavel_carregamento_id').in('pedido_id', pedidoIds).eq('carregamento_concluido', mostrarHistorico)
+        supabase.from('ordens_carregamento').select('id, pedido_id, status, created_at, carregamento_concluido, responsavel_carregamento_id').in('pedido_id', pedidoIds)
       ]);
 
       // Buscar nomes dos responsáveis
