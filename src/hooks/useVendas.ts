@@ -63,6 +63,11 @@ export interface AutorizacaoDesconto {
   observacoes?: string;
 }
 
+export interface CreditoVenda {
+  valorCredito: number;
+  percentualCredito: number;
+}
+
 export function useVendas() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -92,12 +97,14 @@ export function useVendas() {
       vendaData, 
       portas, 
       pagamentoData,
-      autorizacaoDesconto 
+      autorizacaoDesconto,
+      creditoVenda
     }: { 
       vendaData: VendaFormData; 
       portas: ProdutoVenda[];
       pagamentoData?: PagamentoData;
       autorizacaoDesconto?: AutorizacaoDesconto;
+      creditoVenda?: CreditoVenda;
     }) => {
       if (portas.length === 0) {
         throw new Error('É necessário adicionar pelo menos um produto');
@@ -140,7 +147,7 @@ export function useVendas() {
         throw new Error('Usuário não encontrado no sistema. Por favor, entre em contato com o administrador.');
       }
 
-      // 3. Calcular totais dos produtos
+      // 3. Calcular totais dos produtos (sem crédito por produto - agora é a nível de venda)
       const totais = portas.reduce((acc, produto) => {
         const valorBase = (
           produto.valor_produto + 
@@ -152,9 +159,7 @@ export function useVendas() {
           ? (produto.desconto_valor || 0)
           : valorBase * ((produto.desconto_percentual || 0) / 100);
         
-        const creditoAplicado = (produto.valor_credito || 0) * (produto.quantidade || 1);
-        
-        const valorComDesconto = valorBase - descontoAplicado + creditoAplicado;
+        const valorComDesconto = valorBase - descontoAplicado;
         
         return {
           valor_produto: acc.valor_produto + (produto.valor_produto * (produto.quantidade || 1)),
@@ -169,8 +174,12 @@ export function useVendas() {
         valor_total: 0
       });
 
+      // Crédito a nível de venda
+      const valorCreditoVenda = creditoVenda?.valorCredito || 0;
+      const percentualCreditoVenda = creditoVenda?.percentualCredito || 0;
+
       const valor_frete = vendaData.valor_frete || 0;
-      const valor_total_venda = totais.valor_total + valor_frete;
+      const valor_total_venda = totais.valor_total + valorCreditoVenda + valor_frete;
       const valor_entrada = vendaData.valor_entrada || 0;
       const valor_a_receber = valor_total_venda - valor_entrada;
 
@@ -191,6 +200,9 @@ export function useVendas() {
         valor_instalacao: totais.valor_instalacao,
         valor_entrada: valor_entrada,
         valor_a_receber: valor_a_receber,
+        // Crédito a nível de venda
+        valor_credito: valorCreditoVenda,
+        percentual_credito: percentualCreditoVenda,
         // Campos de pagamento
         metodo_pagamento: pagamentoData?.metodo_pagamento || vendaData.forma_pagamento,
         empresa_receptora_id: pagamentoData?.empresa_receptora_id || null,
