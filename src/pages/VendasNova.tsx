@@ -32,7 +32,7 @@ import { validarCredito } from '@/utils/creditoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData } from '@/components/vendas/PagamentoSection';
-import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
+// FormaPagamentoSelect substituído por PagamentoSection
 
 export default function VendasNova() {
   const navigate = useNavigate();
@@ -369,10 +369,12 @@ export default function VendasNova() {
       await createVenda({ 
         vendaData: {
           ...formData,
+          forma_pagamento: pagamentoData.metodo_pagamento,
           // Usar a data selecionada ou a data atual
           data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
         }, 
-        portas 
+        portas,
+        pagamentoData
       });
       navigate('/dashboard/vendas');
     } catch (error) {
@@ -395,9 +397,11 @@ export default function VendasNova() {
       await createVenda({ 
         vendaData: {
           ...formData,
+          forma_pagamento: pagamentoData.metodo_pagamento,
           data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
         }, 
         portas: produtosComDesconto,
+        pagamentoData,
         autorizacaoDesconto: {
           autorizado_por: autorizadorUserId,
           solicitado_por: user.id,
@@ -665,15 +669,30 @@ export default function VendasNova() {
               </Select>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-medium">Forma Pagamento *</Label>
-              <FormaPagamentoSelect
-                value={formData.forma_pagamento}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
-                showLabel={false}
-                required={true}
-              />
-            </div>
+          </CardContent>
+        </Card>
+
+        {/* Forma de Pagamento */}
+        <PagamentoSection
+          pagamentoData={pagamentoData}
+          onChange={setPagamentoData}
+          tipoEntrega={formData.tipo_entrega || 'instalacao'}
+          vendaPresencial={formData.venda_presencial || false}
+          dataVenda={dataVenda}
+          valorTotal={portas.reduce((acc, p) => {
+            const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+            const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+            const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+            return acc + valorBase - desconto + credito;
+          }, 0) + (formData.valor_frete || 0)}
+        />
+
+        {/* Dados Adicionais */}
+        <Card>
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-base font-semibold">Dados Adicionais</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3 pb-4">
 
             <div className="space-y-1">
               <Label htmlFor="valor_frete" className="text-xs font-medium">Frete (R$)</Label>
