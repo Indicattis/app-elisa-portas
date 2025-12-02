@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy, Medal, ChevronLeft, ChevronRight, Paintbrush, Wrench, Flame } from "lucide-react";
 import { useRankingPintura, useRankingPerfiladeira, useRankingSolda, RankingColaborador } from "@/hooks/useRankingProducao";
@@ -114,45 +113,43 @@ export function RankingPorSetor() {
         <h2 className="text-xl font-semibold">Rankings de Produção - Mês Atual</h2>
       </div>
       
-      <Card className="p-4">
-        <Tabs defaultValue="pintura" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="pintura" className="text-xs gap-1">
-              <Paintbrush className="h-3 w-3" />
-              Pintura
-            </TabsTrigger>
-            <TabsTrigger value="perfiladeira" className="text-xs gap-1">
-              <Wrench className="h-3 w-3" />
-              Perfiladeira
-            </TabsTrigger>
-            <TabsTrigger value="solda" className="text-xs gap-1">
-              <Flame className="h-3 w-3" />
-              Solda
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="pintura">
-            <div className="text-[10px] text-muted-foreground mb-2">
-              Pontuação por m² de portas pintadas
-            </div>
-            <RankingList ranking={rankingPintura} isLoading={loadingPintura} unidade="m²" />
-          </TabsContent>
-          
-          <TabsContent value="perfiladeira">
-            <div className="text-[10px] text-muted-foreground mb-2">
-              Pontuação por metro de linhas concluídas
-            </div>
-            <RankingList ranking={rankingPerfiladeira} isLoading={loadingPerfiladeira} unidade="m" />
-          </TabsContent>
-          
-          <TabsContent value="solda">
-            <div className="text-[10px] text-muted-foreground mb-2">
-              Pontuação por item (definida no estoque)
-            </div>
-            <RankingList ranking={rankingSolda} isLoading={loadingSolda} unidade="pts" />
-          </TabsContent>
-        </Tabs>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Ranking Pintura */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Paintbrush className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">Pintura</h3>
+          </div>
+          <div className="text-[10px] text-muted-foreground mb-2">
+            Pontuação por m² de portas pintadas
+          </div>
+          <RankingList ranking={rankingPintura} isLoading={loadingPintura} unidade="m²" />
+        </Card>
+
+        {/* Ranking Perfiladeira */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Wrench className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">Perfiladeira</h3>
+          </div>
+          <div className="text-[10px] text-muted-foreground mb-2">
+            Pontuação por metro de linhas concluídas
+          </div>
+          <RankingList ranking={rankingPerfiladeira} isLoading={loadingPerfiladeira} unidade="m" />
+        </Card>
+
+        {/* Ranking Solda */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Flame className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">Solda</h3>
+          </div>
+          <div className="text-[10px] text-muted-foreground mb-2">
+            Pontuação por item (definida no estoque)
+          </div>
+          <RankingList ranking={rankingSolda} isLoading={loadingSolda} unidade="pts" />
+        </Card>
+      </div>
     </div>
   );
 }
