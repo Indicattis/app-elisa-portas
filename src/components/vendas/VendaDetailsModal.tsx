@@ -38,7 +38,8 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
   );
   const valorInstalacao = venda.valor_instalacao || 0;
   const valorFrete = venda.valor_frete || 0;
-  const valorTotal = venda.valor_venda || 0;
+  const valorCredito = venda.valor_credito || 0;
+  const valorTotal = (venda.valor_venda || 0) + valorCredito;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

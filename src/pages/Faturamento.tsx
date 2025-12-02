@@ -55,6 +55,7 @@ interface Venda {
   valor_instalacao: number;
   valor_frete: number;
   valor_venda: number;
+  valor_credito?: number;
   lucro_total: number;
   frete_aprovado?: boolean;
   portas?: any[];
@@ -214,6 +215,7 @@ export default function Faturamento() {
           valor_instalacao,
           valor_frete,
           valor_venda,
+          valor_credito,
           lucro_total,
           custo_total,
           frete_aprovado,
@@ -322,7 +324,7 @@ export default function Faturamento() {
 
       const { data: vendasPeriodo, error } = await supabase
         .from("vendas")
-        .select("valor_venda, custo_total, valor_instalacao, valor_frete, lucro_total, estado")
+        .select("valor_venda, valor_credito, custo_total, valor_instalacao, valor_frete, lucro_total, estado")
         .gte("data_venda", startDate + " 00:00:00")
         .lte("data_venda", endDate + " 23:59:59");
 
@@ -338,7 +340,7 @@ export default function Faturamento() {
         totalInstalacoes: vendas.reduce((acc, v) => acc + (v.valor_instalacao || 0), 0),
         totalFretes: vendas.reduce((acc, v) => acc + (v.valor_frete || 0), 0),
         lucroTotal: vendas.reduce((acc, v) => acc + (v.lucro_total || 0), 0),
-        faturamentoTotal: vendas.reduce((acc, v) => acc + (v.valor_venda || 0), 0),
+        faturamentoTotal: vendas.reduce((acc, v) => acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
       });
 
       setStats({
@@ -391,10 +393,10 @@ export default function Faturamento() {
     // Calcular estatísticas com base nas vendas filtradas
     const vendasFaturadas = filteredVendas.filter(isFaturada);
     
-    // Usar a mesma lógica de cálculo dos indicadores
+    // Usar a mesma lógica de cálculo dos indicadores (incluindo valor_credito)
     const stats = {
       faturamentoTotal: filteredVendas.reduce((acc, v) => 
-        acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
+        acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0),
       custosProducao: vendasFaturadas.reduce((acc, v) => 
         acc + (v.custo_produto || 0), 0),
       custosPintura: vendasFaturadas.reduce((acc, v) => 
@@ -527,7 +529,7 @@ export default function Faturamento() {
     }, 0),
     
     faturamentoTotal: vendasParaIndicadores.reduce((acc, v) => 
-      acc + ((v.valor_venda || 0) - (v.valor_frete || 0)), 0),
+      acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0),
     
     fretesTotais: vendasParaIndicadores.reduce((acc, v) => 
       acc + (v.valor_frete || 0), 0),
@@ -987,7 +989,8 @@ export default function Faturamento() {
                         <TableCell className="text-right">
                           {(() => {
                             const custosTotais = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
-                            const valorFinal = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+                            const valorVendaTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+                            const valorFinal = valorVendaTotal - (venda.valor_frete || 0);
                             const margem = custosTotais > 0 ? ((valorFinal - custosTotais) / custosTotais) * 100 : 0;
                             
                             if (custosTotais === 0) {
@@ -1021,12 +1024,14 @@ export default function Faturamento() {
                         </TableCell>
 
                         <TableCell className="text-right font-semibold text-primary">
-                          R$ {((venda.valor_venda || 0) - (venda.valor_frete || 0))
-                            .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          {(() => {
+                            const valorVendaTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+                            return `R$ ${(valorVendaTotal - (venda.valor_frete || 0)).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+                          })()}
                         </TableCell>
 
                         <TableCell className="text-right font-semibold">
-                          R$ {(venda.valor_venda || 0)
+                          R$ {((venda.valor_venda || 0) + (venda.valor_credito || 0))
                             .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
 
