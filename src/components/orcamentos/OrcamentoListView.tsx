@@ -34,6 +34,32 @@ import {
 import type { OrcamentoClasse } from "@/types/orcamento";
 import type { MotivoPerda } from "@/types/orcamento";
 
+const getCargoLabel = (role?: string): string => {
+  const cargoLabels: Record<string, string> = {
+    'administrador': 'Administrador',
+    'diretor': 'Diretor',
+    'gerente_comercial': 'Gerente Comercial',
+    'coordenador_vendas': 'Coordenador de Vendas',
+    'vendedor': 'Vendedor',
+    'atendente': 'Atendente Comercial',
+    'gerente_marketing': 'Gerente de Marketing',
+    'analista_marketing': 'Analista de Marketing',
+    'assistente_marketing': 'Assistente de Marketing',
+    'gerente_instalacoes': 'Gerente de Instalações',
+    'instalador': 'Instalador',
+    'aux_instalador': 'Auxiliar de Instalação',
+    'gerente_fabril': 'Gerente Fabril',
+    'gerente_producao': 'Gerente de Produção',
+    'soldador': 'Soldador',
+    'pintor': 'Pintor',
+    'aux_pintura': 'Auxiliar de Pintura',
+    'aux_geral': 'Auxiliar Geral',
+    'gerente_financeiro': 'Gerente Financeiro',
+    'assistente_administrativo': 'Assistente Administrativo'
+  };
+  return cargoLabels[role || ''] || 'Consultor de Vendas';
+};
+
 interface OrcamentoListViewProps {
   orcamentos: any[];
   onEdit?: (orcamento: any) => void;
@@ -194,15 +220,16 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
         numeroOrcamento: `ORC-${orcamento.id.slice(-8).toUpperCase()}`,
         vendedora: {
           nome: orcamento.admin_users?.nome || 'Atendente',
-          cargo: orcamento.admin_users?.role || 'Consultor',
+          cargo: getCargoLabel(orcamento.admin_users?.role),
           avatar_url: orcamento.admin_users?.foto_perfil_url || null
         }
       };
 
-      generateOrcamentoPDF({
-        ...orcamento,
-        produtos: pdfData.produtos
-      }, pdfData.calculatedTotal);
+      generateOrcamentoPDF(pdfData.formData as any, pdfData.calculatedTotal, {
+        id: pdfData.id,
+        numeroOrcamento: pdfData.numeroOrcamento,
+        vendedora: pdfData.vendedora
+      });
       
       toast({
         title: "PDF Gerado",
