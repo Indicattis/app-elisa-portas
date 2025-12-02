@@ -2,9 +2,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 
 export const FORMAS_PAGAMENTO = [
-  { value: "a_vista", label: "À Vista" },
   { value: "boleto", label: "Boleto" },
+  { value: "a_vista", label: "À Vista (PIX, Débito)" },
   { value: "cartao_credito", label: "Cartão de Crédito" },
+  { value: "dinheiro", label: "Dinheiro" },
 ] as const;
 
 interface FormaPagamentoSelectProps {
