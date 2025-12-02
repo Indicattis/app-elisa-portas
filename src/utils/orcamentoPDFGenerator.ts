@@ -18,11 +18,24 @@ interface OrcamentoPDFData {
   };
 }
 
-export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: number) => {
+interface GeneratePDFOptions {
+  id?: string;
+  numeroOrcamento?: string;
+  vendedora?: {
+    nome: string;
+    cargo: string;
+    avatar_url?: string;
+  };
+}
+
+export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: number, options?: GeneratePDFOptions) => {
   const data: OrcamentoPDFData = {
+    id: options?.id,
     formData,
     produtos: formData.produtos || [],
-    calculatedTotal: valorTotal
+    calculatedTotal: valorTotal,
+    numeroOrcamento: options?.numeroOrcamento,
+    vendedora: options?.vendedora
   };
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.width;
