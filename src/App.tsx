@@ -113,7 +113,7 @@ import EmitirNfse from "./pages/EmitirNfse";
 import EmitirNfe from "./pages/EmitirNfe";
 import ConfiguracoesFiscais from "./pages/ConfiguracoesFiscais";
 import Vagas from "./pages/Vagas";
-import Etiquetas from "./pages/Etiquetas";
+// Etiquetas removido - funcionalidade movida para página de Ordens
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
 import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
 import { ProducaoLayout } from "@/components/ProducaoLayout";
@@ -753,16 +753,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/fabrica/etiquetas"
-                  element={
-                    <ProtectedRoute routeKey="etiquetas">
-                      <DashboardLayout>
-                        <Etiquetas />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Rota de etiquetas removida - funcionalidade movida para /ordens */}
                 <Route
                   path="/dashboard/marketing"
                   element={
@@ -783,16 +774,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/fabrica/etiquetas"
-                  element={
-                    <ProtectedRoute routeKey="etiquetas">
-                      <DashboardLayout>
-                        <Etiquetas />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Rota de etiquetas removida - funcionalidade movida para /ordens */}
                 <Route
                   path="/dashboard/administrativo"
                   element={
@@ -1359,7 +1341,7 @@ const App = () => (
                 {/* Redirects Fábrica */}
                 <Route path="/dashboard/pedidos" element={<Navigate to="/dashboard/fabrica/pedidos" replace />} />
                 <Route path="/dashboard/ordens" element={<Navigate to="/dashboard/fabrica/ordens" replace />} />
-                <Route path="/dashboard/etiquetas" element={<Navigate to="/dashboard/fabrica/etiquetas" replace />} />
+                {/* Redirect de etiquetas removido */}
                 <Route path="/dashboard/historico-producao" element={<Navigate to="/dashboard/fabrica/historico-producao" replace />} />
                 <Route path="/dashboard/novo-pedido" element={<Navigate to="/dashboard/fabrica/novo-pedido" replace />} />
                 
@@ -1417,7 +1399,7 @@ const App = () => (
                 {/* Redirects Fábrica */}
                 <Route path="/dashboard/pedidos" element={<Navigate to="/dashboard/fabrica/pedidos" replace />} />
                 <Route path="/dashboard/ordens" element={<Navigate to="/dashboard/fabrica/ordens" replace />} />
-                <Route path="/dashboard/etiquetas" element={<Navigate to="/dashboard/fabrica/etiquetas" replace />} />
+                {/* Redirect de etiquetas removido */}
                 <Route path="/dashboard/historico-producao" element={<Navigate to="/dashboard/fabrica/historico-producao" replace />} />
                 <Route path="/dashboard/novo-pedido" element={<Navigate to="/dashboard/fabrica/novo-pedido" replace />} />
                 
