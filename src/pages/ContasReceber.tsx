@@ -34,7 +34,6 @@ interface ContaReceber {
     cliente_nome: string;
     cliente_telefone: string;
     valor_venda: number;
-    numero_pedido?: number;
   };
   empresa?: {
     nome: string;
@@ -45,7 +44,6 @@ interface GrupoPedido {
   venda_id: string;
   cliente_nome: string;
   cliente_telefone: string;
-  numero_pedido?: number;
   valor_total_venda: number;
   contas: ContaReceber[];
   total_parcelas: number;
@@ -86,7 +84,7 @@ export default function ContasReceber() {
           if (conta.venda_id) {
             const { data: vendaData } = await supabase
               .from('vendas')
-              .select('cliente_nome, cliente_telefone, valor_venda, numero_pedido')
+              .select('cliente_nome, cliente_telefone, valor_venda')
               .eq('id', conta.venda_id)
               .maybeSingle();
             venda = vendaData || undefined;
@@ -188,8 +186,7 @@ export default function ContasReceber() {
     
     const matchBusca = !busca || 
       conta.venda?.cliente_nome?.toLowerCase().includes(busca.toLowerCase()) ||
-      conta.venda?.cliente_telefone?.includes(busca) ||
-      conta.venda?.numero_pedido?.toString().includes(busca);
+      conta.venda?.cliente_telefone?.includes(busca);
     
     return matchStatus && matchMetodo && matchBusca;
   });
@@ -203,7 +200,6 @@ export default function ContasReceber() {
           venda_id: conta.venda_id,
           cliente_nome: conta.venda?.cliente_nome || 'Cliente não identificado',
           cliente_telefone: conta.venda?.cliente_telefone || '',
-          numero_pedido: conta.venda?.numero_pedido,
           valor_total_venda: conta.venda?.valor_venda || 0,
           contas: [],
           total_parcelas: 0,
@@ -230,7 +226,7 @@ export default function ContasReceber() {
     // Priorizar os que têm vencido
     if (a.tem_vencido && !b.tem_vencido) return -1;
     if (!a.tem_vencido && b.tem_vencido) return 1;
-    return (b.numero_pedido || 0) - (a.numero_pedido || 0);
+    return b.total_a_receber - a.total_a_receber;
   });
 
   // Calcular resumos
@@ -431,11 +427,6 @@ export default function ContasReceber() {
                         <div className="flex-1 text-left">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold">{grupo.cliente_nome}</span>
-                            {grupo.numero_pedido && (
-                              <Badge variant="outline" className="text-xs">
-                                Pedido #{grupo.numero_pedido}
-                              </Badge>
-                            )}
                             {grupo.tem_vencido && (
                               <Badge variant="destructive" className="text-xs">
                                 Possui parcelas vencidas
