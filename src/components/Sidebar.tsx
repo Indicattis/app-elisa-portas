@@ -136,7 +136,7 @@ export function Sidebar() {
         </div>
 
         {/* Modern Navigation with Smooth Animations */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {filteredNavigation.map((item, index) => (
             <div key={item.name} className="relative group">
               <NavLink 
@@ -189,7 +189,7 @@ export function Sidebar() {
                       ${collapsed ? "justify-center" : ""}
                     `}
                   >
-                    <financeiroGroup.icon className={`h-4 w-4 md:h-5 md:w-5 ${collapsed ? "" : "mr-4"}`} />
+                    <Wallet className={`h-4 w-4 md:h-5 md:w-5 ${collapsed ? "" : "mr-4"}`} />
                     {!collapsed && (
                       <>
                         <span className="flex-1 text-left">{financeiroGroup.name}</span>
@@ -214,24 +214,27 @@ export function Sidebar() {
               
               {!collapsed && (
                 <CollapsibleContent className="pl-4 mt-1 space-y-1">
-                  {financeiroGroup.children.map((child) => (
-                    <div key={child.name} className="relative group">
-                      <NavLink 
-                        to={child.href} 
-                        className={() => `
-                          relative flex items-center px-3 py-2 rounded-lg text-xs md:text-sm font-medium
-                          transition-colors duration-200
-                          ${location.pathname === child.href 
-                            ? "bg-primary text-primary-foreground" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                          }
-                        `}
-                      >
-                        <child.icon className="h-4 w-4 mr-3" />
-                        <span>{child.name}</span>
-                      </NavLink>
-                    </div>
-                  ))}
+                  {financeiroGroup.children.map((child) => {
+                    const ChildIcon = child.icon;
+                    return (
+                      <div key={child.name} className="relative group">
+                        <NavLink 
+                          to={child.href} 
+                          className={() => `
+                            relative flex items-center px-3 py-2 rounded-lg text-xs md:text-sm font-medium
+                            transition-colors duration-200
+                            ${location.pathname === child.href 
+                              ? "bg-primary text-primary-foreground" 
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }
+                          `}
+                        >
+                          <ChildIcon className="h-4 w-4 mr-3" />
+                          <span>{child.name}</span>
+                        </NavLink>
+                      </div>
+                    );
+                  })}
                 </CollapsibleContent>
               )}
             </Collapsible>
