@@ -6,15 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, isAfter, isBefore, isToday, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Check, X, Search, DollarSign, Clock, AlertTriangle, TrendingUp } from "lucide-react";
+import { CalendarIcon, Check, X, Search, DollarSign, Clock, AlertTriangle, TrendingUp, FolderOpen, Folder, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ContaReceber {
@@ -34,10 +34,25 @@ interface ContaReceber {
     cliente_nome: string;
     cliente_telefone: string;
     valor_venda: number;
+    numero_pedido?: number;
   };
   empresa?: {
     nome: string;
   };
+}
+
+interface GrupoPedido {
+  venda_id: string;
+  cliente_nome: string;
+  cliente_telefone: string;
+  numero_pedido?: number;
+  valor_total_venda: number;
+  contas: ContaReceber[];
+  total_parcelas: number;
+  parcelas_pagas: number;
+  total_a_receber: number;
+  total_pago: number;
+  tem_vencido: boolean;
 }
 
 export default function ContasReceber() {
@@ -51,6 +66,7 @@ export default function ContasReceber() {
   const [contaSelecionada, setContaSelecionada] = useState<ContaReceber | null>(null);
   const [dataPagamento, setDataPagamento] = useState<Date | undefined>(new Date());
   const [valorPago, setValorPago] = useState<number>(0);
+  const [pastasAbertas, setPastasAbertas] = useState<Set<string>>(new Set());
 
   const { data: contas = [], isLoading } = useQuery({
     queryKey: ['contas-receber'],
@@ -62,7 +78,6 @@ export default function ContasReceber() {
       
       if (error) throw error;
       
-      // Buscar dados das vendas separadamente
       const contasComVendas = await Promise.all(
         (data || []).map(async (conta: any) => {
           let venda = undefined;
@@ -71,7 +86,7 @@ export default function ContasReceber() {
           if (conta.venda_id) {
             const { data: vendaData } = await supabase
               .from('vendas')
-              .select('cliente_nome, cliente_telefone, valor_venda')
+              .select('cliente_nome, cliente_telefone, valor_venda, numero_pedido')
               .eq('id', conta.venda_id)
               .maybeSingle();
             venda = vendaData || undefined;
@@ -150,25 +165,75 @@ export default function ContasReceber() {
     });
   };
 
+  const togglePasta = (vendaId: string) => {
+    const novas = new Set(pastasAbertas);
+    if (novas.has(vendaId)) {
+      novas.delete(vendaId);
+    } else {
+      novas.add(vendaId);
+    }
+    setPastasAbertas(novas);
+  };
+
   // Filtrar contas
+  const hoje = new Date();
   const contasFiltradas = contas.filter(conta => {
     const matchStatus = filtroStatus === "todos" || 
       (filtroStatus === "pendente" && conta.status === "pendente") ||
       (filtroStatus === "pago" && conta.status === "pago") ||
-      (filtroStatus === "vencido" && conta.status === "pendente" && isBefore(parseISO(conta.data_vencimento), new Date()) && !isToday(parseISO(conta.data_vencimento))) ||
+      (filtroStatus === "vencido" && conta.status === "pendente" && isBefore(parseISO(conta.data_vencimento), hoje) && !isToday(parseISO(conta.data_vencimento))) ||
       (filtroStatus === "cancelado" && conta.status === "cancelado");
     
     const matchMetodo = filtroMetodo === "todos" || conta.metodo_pagamento === filtroMetodo;
     
     const matchBusca = !busca || 
       conta.venda?.cliente_nome?.toLowerCase().includes(busca.toLowerCase()) ||
-      conta.venda?.cliente_telefone?.includes(busca);
+      conta.venda?.cliente_telefone?.includes(busca) ||
+      conta.venda?.numero_pedido?.toString().includes(busca);
     
     return matchStatus && matchMetodo && matchBusca;
   });
 
+  // Agrupar por pedido
+  const gruposPorPedido: GrupoPedido[] = Object.values(
+    contasFiltradas.reduce((acc, conta) => {
+      const key = conta.venda_id;
+      if (!acc[key]) {
+        acc[key] = {
+          venda_id: conta.venda_id,
+          cliente_nome: conta.venda?.cliente_nome || 'Cliente não identificado',
+          cliente_telefone: conta.venda?.cliente_telefone || '',
+          numero_pedido: conta.venda?.numero_pedido,
+          valor_total_venda: conta.venda?.valor_venda || 0,
+          contas: [],
+          total_parcelas: 0,
+          parcelas_pagas: 0,
+          total_a_receber: 0,
+          total_pago: 0,
+          tem_vencido: false
+        };
+      }
+      acc[key].contas.push(conta);
+      acc[key].total_parcelas++;
+      if (conta.status === 'pago') {
+        acc[key].parcelas_pagas++;
+        acc[key].total_pago += conta.valor_pago || conta.valor_parcela;
+      } else if (conta.status === 'pendente') {
+        acc[key].total_a_receber += conta.valor_parcela;
+        if (isBefore(parseISO(conta.data_vencimento), hoje) && !isToday(parseISO(conta.data_vencimento))) {
+          acc[key].tem_vencido = true;
+        }
+      }
+      return acc;
+    }, {} as Record<string, GrupoPedido>)
+  ).sort((a, b) => {
+    // Priorizar os que têm vencido
+    if (a.tem_vencido && !b.tem_vencido) return -1;
+    if (!a.tem_vencido && b.tem_vencido) return 1;
+    return (b.numero_pedido || 0) - (a.numero_pedido || 0);
+  });
+
   // Calcular resumos
-  const hoje = new Date();
   const totalAReceber = contas
     .filter(c => c.status === 'pendente')
     .reduce((acc, c) => acc + c.valor_parcela, 0);
@@ -212,6 +277,9 @@ export default function ContasReceber() {
     return metodo ? labels[metodo] || metodo : '-';
   };
 
+  const formatCurrency = (value: number) => 
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
   return (
     <div className="space-y-6">
       <div>
@@ -230,7 +298,7 @@ export default function ContasReceber() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAReceber)}
+              {formatCurrency(totalAReceber)}
             </div>
           </CardContent>
         </Card>
@@ -242,7 +310,7 @@ export default function ContasReceber() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalVencido)}
+              {formatCurrency(totalVencido)}
             </div>
           </CardContent>
         </Card>
@@ -254,7 +322,7 @@ export default function ContasReceber() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venceHoje)}
+              {formatCurrency(venceHoje)}
             </div>
           </CardContent>
         </Card>
@@ -266,7 +334,7 @@ export default function ContasReceber() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venceSemana)}
+              {formatCurrency(venceSemana)}
             </div>
           </CardContent>
         </Card>
@@ -280,7 +348,7 @@ export default function ContasReceber() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por cliente..."
+                  placeholder="Buscar por cliente ou nº pedido..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   className="pl-9"
@@ -316,73 +384,163 @@ export default function ContasReceber() {
         </CardContent>
       </Card>
 
-      {/* Tabela */}
-      <Card>
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="text-center py-8">Carregando...</div>
-          ) : contasFiltradas.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+      {/* Lista de Pastas por Pedido */}
+      <div className="space-y-3">
+        {isLoading ? (
+          <Card>
+            <CardContent className="py-8 text-center">Carregando...</CardContent>
+          </Card>
+        ) : gruposPorPedido.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
               Nenhuma conta encontrada
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Parcela</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Método</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contasFiltradas.map((conta) => (
-                  <TableRow key={conta.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{conta.venda?.cliente_nome || '-'}</p>
-                        <p className="text-sm text-muted-foreground">{conta.venda?.cliente_telefone}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{conta.numero_parcela}ª</TableCell>
-                    <TableCell className="font-medium">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(conta.valor_parcela)}
-                    </TableCell>
-                    <TableCell>
-                      {format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>{getMetodoPagamentoLabel(conta.metodo_pagamento)}</TableCell>
-                    <TableCell>{getStatusBadge(conta)}</TableCell>
-                    <TableCell className="text-right">
-                      {conta.status === 'pendente' && (
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleAbrirDialogPagar(conta)}
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Pagar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => cancelarMutation.mutate(conta.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          gruposPorPedido.map((grupo) => {
+            const isAberta = pastasAbertas.has(grupo.venda_id);
+            
+            return (
+              <Collapsible
+                key={grupo.venda_id}
+                open={isAberta}
+                onOpenChange={() => togglePasta(grupo.venda_id)}
+              >
+                <Card className={cn(
+                  "transition-all",
+                  grupo.tem_vencido && "border-destructive/50 bg-destructive/5"
+                )}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="py-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <ChevronRight className={cn(
+                            "h-5 w-5 text-muted-foreground transition-transform",
+                            isAberta && "rotate-90"
+                          )} />
+                          {isAberta ? (
+                            <FolderOpen className="h-6 w-6 text-primary" />
+                          ) : (
+                            <Folder className={cn(
+                              "h-6 w-6",
+                              grupo.tem_vencido ? "text-destructive" : "text-muted-foreground"
+                            )} />
+                          )}
                         </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                        
+                        <div className="flex-1 text-left">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{grupo.cliente_nome}</span>
+                            {grupo.numero_pedido && (
+                              <Badge variant="outline" className="text-xs">
+                                Pedido #{grupo.numero_pedido}
+                              </Badge>
+                            )}
+                            {grupo.tem_vencido && (
+                              <Badge variant="destructive" className="text-xs">
+                                Possui parcelas vencidas
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {grupo.cliente_telefone}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-6 text-sm">
+                          <div className="text-right">
+                            <p className="text-muted-foreground">Parcelas</p>
+                            <p className="font-medium">{grupo.parcelas_pagas}/{grupo.total_parcelas}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-muted-foreground">A Receber</p>
+                            <p className="font-semibold text-primary">{formatCurrency(grupo.total_a_receber)}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-muted-foreground">Recebido</p>
+                            <p className="font-medium text-green-600">{formatCurrency(grupo.total_pago)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 pb-4">
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-sm font-medium">Parcela</th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">Valor</th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">Vencimento</th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">Método</th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">Status</th>
+                              <th className="px-4 py-2 text-right text-sm font-medium">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {grupo.contas.map((conta) => (
+                              <tr key={conta.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-3 text-sm">
+                                  {conta.numero_parcela}ª parcela
+                                </td>
+                                <td className="px-4 py-3 text-sm font-medium">
+                                  {formatCurrency(conta.valor_parcela)}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {getMetodoPagamentoLabel(conta.metodo_pagamento)}
+                                </td>
+                                <td className="px-4 py-3">
+                                  {getStatusBadge(conta)}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  {conta.status === 'pendente' && (
+                                    <div className="flex justify-end gap-2">
+                                      <Button
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleAbrirDialogPagar(conta);
+                                        }}
+                                      >
+                                        <Check className="h-4 w-4 mr-1" />
+                                        Pagar
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          cancelarMutation.mutate(conta.id);
+                                        }}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                  {conta.status === 'pago' && conta.data_pagamento && (
+                                    <span className="text-sm text-muted-foreground">
+                                      Pago em {format(parseISO(conta.data_pagamento), 'dd/MM/yyyy')}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+            );
+          })
+        )}
+      </div>
 
       {/* Dialog de Pagamento */}
       <Dialog open={dialogPagarOpen} onOpenChange={setDialogPagarOpen}>
@@ -401,7 +559,7 @@ export default function ContasReceber() {
               <div>
                 <p className="text-sm text-muted-foreground">Parcela {contaSelecionada.numero_parcela}ª</p>
                 <p className="font-medium">
-                  Valor: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contaSelecionada.valor_parcela)}
+                  Valor: {formatCurrency(contaSelecionada.valor_parcela)}
                 </p>
               </div>
 
