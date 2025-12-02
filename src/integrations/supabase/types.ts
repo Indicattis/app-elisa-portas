@@ -629,12 +629,17 @@ export type Database = {
       }
       contas_receber: {
         Row: {
+          comprovante_nome: string | null
+          comprovante_url: string | null
           created_at: string
           data_pagamento: string | null
           data_vencimento: string
+          empresa_receptora_id: string | null
           id: string
+          metodo_pagamento: string | null
           numero_parcela: number
           observacoes: string | null
+          pago_na_instalacao: boolean | null
           status: string
           updated_at: string
           valor_pago: number | null
@@ -642,12 +647,17 @@ export type Database = {
           venda_id: string
         }
         Insert: {
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
           created_at?: string
           data_pagamento?: string | null
           data_vencimento: string
+          empresa_receptora_id?: string | null
           id?: string
+          metodo_pagamento?: string | null
           numero_parcela: number
           observacoes?: string | null
+          pago_na_instalacao?: boolean | null
           status?: string
           updated_at?: string
           valor_pago?: number | null
@@ -655,19 +665,32 @@ export type Database = {
           venda_id: string
         }
         Update: {
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
           created_at?: string
           data_pagamento?: string | null
           data_vencimento?: string
+          empresa_receptora_id?: string | null
           id?: string
+          metodo_pagamento?: string | null
           numero_parcela?: number
           observacoes?: string | null
+          pago_na_instalacao?: boolean | null
           status?: string
           updated_at?: string
           valor_pago?: number | null
           valor_parcela?: number
           venda_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contas_receber_empresa_receptora_id_fkey"
+            columns: ["empresa_receptora_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_emissoras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contratos_templates: {
         Row: {
@@ -4659,24 +4682,35 @@ export type Database = {
           cliente_email: string | null
           cliente_nome: string | null
           cliente_telefone: string | null
+          comprovante_nome: string | null
+          comprovante_url: string | null
           cpf_cliente: string | null
           created_at: string
           custo_total: number | null
           data_prevista_entrega: string | null
           data_venda: string
+          empresa_receptora_id: string | null
           estado: string | null
           forma_pagamento: string | null
           frete_aprovado: boolean
           id: string
+          intervalo_boletos: number | null
           lucro_total: number | null
+          metodo_pagamento: string | null
           numero_parcelas: number | null
           observacoes_venda: string | null
           pagamento_na_entrega: boolean | null
+          pago_na_instalacao: boolean | null
+          parcelas_dinheiro: number | null
+          parcelas_geradas: boolean | null
           publico_alvo: string | null
+          quantidade_parcelas: number | null
+          restante_na_instalacao: boolean | null
           tipo_entrega: string | null
           updated_at: string
           valor_a_receber: number | null
           valor_entrada: number | null
+          valor_entrada_dinheiro: number | null
           valor_frete: number | null
           valor_instalacao: number | null
           valor_venda: number | null
@@ -4691,24 +4725,35 @@ export type Database = {
           cliente_email?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
           custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
+          empresa_receptora_id?: string | null
           estado?: string | null
           forma_pagamento?: string | null
           frete_aprovado?: boolean
           id?: string
+          intervalo_boletos?: number | null
           lucro_total?: number | null
+          metodo_pagamento?: string | null
           numero_parcelas?: number | null
           observacoes_venda?: string | null
           pagamento_na_entrega?: boolean | null
+          pago_na_instalacao?: boolean | null
+          parcelas_dinheiro?: number | null
+          parcelas_geradas?: boolean | null
           publico_alvo?: string | null
+          quantidade_parcelas?: number | null
+          restante_na_instalacao?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
           valor_entrada?: number | null
+          valor_entrada_dinheiro?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null
           valor_venda?: number | null
@@ -4723,24 +4768,35 @@ export type Database = {
           cliente_email?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
           custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
+          empresa_receptora_id?: string | null
           estado?: string | null
           forma_pagamento?: string | null
           frete_aprovado?: boolean
           id?: string
+          intervalo_boletos?: number | null
           lucro_total?: number | null
+          metodo_pagamento?: string | null
           numero_parcelas?: number | null
           observacoes_venda?: string | null
           pagamento_na_entrega?: boolean | null
+          pago_na_instalacao?: boolean | null
+          parcelas_dinheiro?: number | null
+          parcelas_geradas?: boolean | null
           publico_alvo?: string | null
+          quantidade_parcelas?: number | null
+          restante_na_instalacao?: boolean | null
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
           valor_entrada?: number | null
+          valor_entrada_dinheiro?: number | null
           valor_frete?: number | null
           valor_instalacao?: number | null
           valor_venda?: number | null
@@ -4759,6 +4815,13 @@ export type Database = {
             columns: ["canal_aquisicao_id"]
             isOneToOne: false
             referencedRelation: "canais_aquisicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_empresa_receptora_id_fkey"
+            columns: ["empresa_receptora_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_emissoras"
             referencedColumns: ["id"]
           },
         ]

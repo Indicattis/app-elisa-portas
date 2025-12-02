@@ -23,7 +23,6 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
@@ -32,6 +31,8 @@ import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoV
 import { validarCredito } from '@/utils/creditoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PagamentoSection, PagamentoData } from '@/components/vendas/PagamentoSection';
+import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 
 export default function VendasNova() {
   const navigate = useNavigate();
@@ -76,6 +77,19 @@ export default function VendasNova() {
   const [autorizadorId, setAutorizadorId] = useState<string | null>(null);
   const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master' | null>(null);
   const [limitePermitido, setLimitePermitido] = useState<number>(10);
+
+  // Estado para pagamento
+  const [pagamentoData, setPagamentoData] = useState<PagamentoData>({
+    metodo_pagamento: '',
+    empresa_receptora_id: '',
+    quantidade_parcelas: 1,
+    intervalo_boletos: 30,
+    pago_na_instalacao: false,
+    parcelas_dinheiro: 1,
+    valor_entrada_dinheiro: 0,
+    restante_na_instalacao: false,
+    comprovante_file: null
+  });
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
