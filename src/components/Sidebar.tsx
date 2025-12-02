@@ -1,9 +1,27 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, TrendingUp, CreditCard, CalendarDays, ChevronRight, DollarSign } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calculator, Calendar, Settings, LogOut, Menu, X, TrendingUp, CreditCard, CalendarDays, ChevronRight, ChevronDown, DollarSign, Wallet, Receipt, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-const navigation = [{
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  adminOnly?: boolean;
+  adminOrManager?: boolean;
+}
+
+interface NavGroup {
+  name: string;
+  icon: any;
+  adminOnly?: boolean;
+  adminOrManager?: boolean;
+  children: NavItem[];
+}
+
+const navigation: NavItem[] = [{
   name: "Dashboard",
   href: "/dashboard",
   icon: LayoutDashboard
@@ -25,19 +43,9 @@ const navigation = [{
   icon: Users,
   adminOnly: true
 }, {
-  name: "Faturamento",
-  href: "/dashboard/faturamento",
-  icon: LayoutDashboard,
-  adminOrManager: true
-}, {
   name: "Marketing",
   href: "/dashboard/marketing",
   icon: TrendingUp,
-  adminOrManager: true
-}, {
-  name: "Contas a Receber",
-  href: "/dashboard/contas-receber",
-  icon: CreditCard,
   adminOrManager: true
 }, {
   name: "Calendário",
@@ -53,8 +61,23 @@ const navigation = [{
   icon: Users,
   adminOnly: true
 }];
+
+const financeiroGroup: NavGroup = {
+  name: "Financeiro",
+  icon: Wallet,
+  adminOrManager: true,
+  children: [
+    { name: "Visão Geral", href: "/dashboard/administrativo/financeiro", icon: Wallet },
+    { name: "Faturamento", href: "/dashboard/administrativo/financeiro/faturamento", icon: Receipt },
+    { name: "Contas a Receber", href: "/dashboard/administrativo/financeiro/contas-a-receber", icon: HandCoins },
+    { name: "DRE", href: "/dashboard/administrativo/financeiro/dre", icon: TrendingUp },
+    { name: "Despesas", href: "/dashboard/administrativo/financeiro/despesas", icon: CreditCard },
+    { name: "Gestão de Caixa", href: "/dashboard/administrativo/financeiro/caixa", icon: DollarSign },
+  ]
+};
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [financeiroOpen, setFinanceiroOpen] = useState(false);
   const location = useLocation();
   const {
     signOut,
@@ -69,11 +92,16 @@ export function Sidebar() {
     }
     return location.pathname.startsWith(path);
   };
+  
+  const isFinanceiroActive = location.pathname.startsWith("/dashboard/administrativo/financeiro");
+  
   const filteredNavigation = navigation.filter(item => {
     if (item.adminOnly && !isAdmin) return false;
     if (item.adminOrManager && !isAdmin && !isGerenteComercial) return false;
     return true;
   });
+  
+  const showFinanceiro = isAdmin || isGerenteComercial;
   return (
     <div className={`bg-gradient-to-b from-card via-card to-card/95 backdrop-blur-sm border-r border-border/50 shadow-lg transition-all duration-500 ease-in-out ${collapsed ? "w-16" : "w-72"}`}>
       <div className="flex flex-col h-full relative">
@@ -144,6 +172,70 @@ export function Sidebar() {
               )}
             </div>
           ))}
+          
+          {/* Financeiro Group */}
+          {showFinanceiro && (
+            <Collapsible open={financeiroOpen || isFinanceiroActive} onOpenChange={setFinanceiroOpen}>
+              <div className="relative group">
+                <CollapsibleTrigger asChild>
+                  <button
+                    className={`
+                      w-full relative flex items-center px-3 py-2 md:px-4 md:py-3 rounded-xl text-xs md:text-sm font-medium
+                      transition-colors duration-200
+                      ${isFinanceiroActive 
+                        ? "bg-primary/10 text-primary" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      }
+                      ${collapsed ? "justify-center" : ""}
+                    `}
+                  >
+                    <financeiroGroup.icon className={`h-4 w-4 md:h-5 md:w-5 ${collapsed ? "" : "mr-4"}`} />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 text-left">{financeiroGroup.name}</span>
+                        {financeiroOpen || isFinanceiroActive ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </>
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                
+                {/* Tooltip for Collapsed State */}
+                {collapsed && (
+                  <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-popover text-popover-foreground text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 whitespace-nowrap">
+                    {financeiroGroup.name}
+                    <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-popover"></div>
+                  </div>
+                )}
+              </div>
+              
+              {!collapsed && (
+                <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                  {financeiroGroup.children.map((child) => (
+                    <div key={child.name} className="relative group">
+                      <NavLink 
+                        to={child.href} 
+                        className={() => `
+                          relative flex items-center px-3 py-2 rounded-lg text-xs md:text-sm font-medium
+                          transition-colors duration-200
+                          ${location.pathname === child.href 
+                            ? "bg-primary text-primary-foreground" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }
+                        `}
+                      >
+                        <child.icon className="h-4 w-4 mr-3" />
+                        <span>{child.name}</span>
+                      </NavLink>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              )}
+            </Collapsible>
+          )}
         </nav>
 
         {/* Botão de Configurações */}
