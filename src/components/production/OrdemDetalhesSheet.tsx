@@ -155,6 +155,7 @@ export function OrdemDetalhesSheet({
         corNome: linha.cor_nome,
         tipoPintura: linha.tipo_pintura,
         origemOrdem: origemOrdemLabel,
+        responsavelNome: ordem?.admin_users?.nome,
       };
       
       const doc = gerarPDFEtiquetaProducao(tag);
@@ -275,6 +276,7 @@ export function OrdemDetalhesSheet({
             corNome: linha.cor_nome,
             tipoPintura: linha.tipo_pintura,
             origemOrdem: origemOrdemLabel,
+            responsavelNome: ordem?.admin_users?.nome,
           });
         }
       });

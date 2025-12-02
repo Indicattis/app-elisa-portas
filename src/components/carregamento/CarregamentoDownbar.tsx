@@ -72,6 +72,7 @@ export function CarregamentoDownbar({
             clienteNome: ordem?.nome_cliente,
             tamanho: linha.tamanho,
             origemOrdem: 'Carregamento',
+            responsavelNome: ordem?.responsavel_carregamento_nome || undefined,
           });
         }
       });
