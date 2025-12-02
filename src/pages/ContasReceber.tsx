@@ -60,6 +60,8 @@ export default function ContasReceber() {
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [filtroMetodo, setFiltroMetodo] = useState<string>("todos");
   const [busca, setBusca] = useState("");
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(undefined);
+  const [dataFim, setDataFim] = useState<Date | undefined>(undefined);
   const [dialogPagarOpen, setDialogPagarOpen] = useState(false);
   const [contaSelecionada, setContaSelecionada] = useState<ContaReceber | null>(null);
   const [dataPagamento, setDataPagamento] = useState<Date | undefined>(new Date());
@@ -200,7 +202,11 @@ export default function ContasReceber() {
       conta.venda?.cliente_nome?.toLowerCase().includes(busca.toLowerCase()) ||
       conta.venda?.cliente_telefone?.includes(busca);
     
-    return matchStatus && matchMetodo && matchBusca;
+    const dataVencimento = parseISO(conta.data_vencimento);
+    const matchDataInicio = !dataInicio || !isBefore(dataVencimento, dataInicio);
+    const matchDataFim = !dataFim || !isAfter(dataVencimento, dataFim);
+    
+    return matchStatus && matchMetodo && matchBusca && matchDataInicio && matchDataFim;
   });
 
   // Agrupar por pedido
@@ -388,6 +394,49 @@ export default function ContasReceber() {
                 <SelectItem value="dinheiro">Dinheiro</SelectItem>
               </SelectContent>
             </Select>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !dataInicio && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dataInicio ? format(dataInicio, "dd/MM/yyyy", { locale: ptBR }) : "Data Inicial"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dataInicio}
+                  onSelect={setDataInicio}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !dataFim && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dataFim ? format(dataFim, "dd/MM/yyyy", { locale: ptBR }) : "Data Final"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dataFim}
+                  onSelect={setDataFim}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            {(dataInicio || dataFim) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDataInicio(undefined); setDataFim(undefined); }}>
+                <X className="h-4 w-4 mr-1" />
+                Limpar datas
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
