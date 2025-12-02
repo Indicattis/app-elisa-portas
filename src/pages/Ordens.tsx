@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useOrdensProducao } from "@/hooks/useOrdensProducao";
 import { OrdensAccordion } from "@/components/ordens/OrdensAccordion";
 import { OrdensFiltros } from "@/components/ordens/OrdensFiltros";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Clock, Play, FolderOpen, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Ordens() {
@@ -23,6 +23,20 @@ export default function Ordens() {
   };
 
   const totalOrdens = pedidos.reduce((acc, p) => acc + p.total_ordens, 0);
+  
+  // Ordens pendentes: sem responsável
+  const ordensPendentes = pedidos.flatMap(p => p.ordens)
+    .filter(o => !o.responsavel_id).length;
+
+  // Ordens em produção: com responsável mas não concluídas
+  const ordensEmProducao = pedidos.flatMap(p => p.ordens)
+    .filter(o => o.responsavel_id && !o.historico).length;
+
+  // Pedidos em aberto: não em backlog
+  const pedidosEmAberto = pedidos.filter(p => !p.em_backlog).length;
+
+  // Pedidos em backlog
+  const pedidosBacklog = pedidos.filter(p => p.em_backlog).length;
 
   return (
     <div className="space-y-6">
@@ -38,31 +52,65 @@ export default function Ordens() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total de Pedidos</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Total Pedidos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pedidos.length}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total de Ordens</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Total Ordens</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOrdens}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Média por Pedido</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Pendentes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {pedidos.length > 0 ? (totalOrdens / pedidos.length).toFixed(1) : '0'}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600">{ordensPendentes}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <Play className="h-3 w-3" />
+              Em Produção
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{ordensEmProducao}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <FolderOpen className="h-3 w-3" />
+              Ped. Abertos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{pedidosEmAberto}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Backlog
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{pedidosBacklog}</div>
           </CardContent>
         </Card>
       </div>

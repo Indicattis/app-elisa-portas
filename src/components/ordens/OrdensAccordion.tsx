@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { PedidoComOrdens, OrdemBase } from "@/hooks/useOrdensProducao";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck, Printer } from "lucide-react";
+import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck, Printer, Calendar, MapPin } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImprimirEtiquetasModal } from "./ImprimirEtiquetasModal";
+import { formatDuration } from "@/utils/timeFormat";
 
 const ORDEM_ICONS = {
   soldagem: Hammer,
@@ -91,15 +92,39 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
             value={pedido.id}
             className="border rounded-lg bg-card"
           >
-            <AccordionTrigger className="px-4 hover:no-underline h-12">
-              <div className="flex items-center justify-between w-full pr-4">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <p className="font-semibold text-left text-sm">{pedido.numero_pedido}</p>
-                    <p className="text-xs text-muted-foreground text-left">{pedido.cliente_nome}</p>
-                  </div>
+            <AccordionTrigger className="px-4 hover:no-underline py-3">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full pr-4 gap-2">
+                {/* Coluna 1: Número e Cliente */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-left text-sm">{pedido.numero_pedido}</p>
+                  <p className="text-xs text-muted-foreground text-left truncate">{pedido.cliente_nome}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                
+                {/* Coluna 2: Datas e Localização */}
+                <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                  {pedido.data_entrega && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>Entrega: {format(new Date(pedido.data_entrega), "dd/MM/yy", { locale: ptBR })}</span>
+                    </div>
+                  )}
+                  {(pedido.endereco_cidade || pedido.endereco_estado) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      <span>
+                        {pedido.endereco_cidade}{pedido.endereco_cidade && pedido.endereco_estado ? '/' : ''}{pedido.endereco_estado}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Coluna 3: Badges */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {pedido.em_backlog && (
+                    <Badge variant="destructive" className="text-xs">
+                      Backlog
+                    </Badge>
+                  )}
                   <Badge variant="outline" className="text-xs">
                     {pedido.etapa_atual || 'N/A'}
                   </Badge>
@@ -119,6 +144,7 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
                       <TableHead className="text-xs">Status</TableHead>
                       <TableHead className="text-xs">Responsável</TableHead>
                       <TableHead className="text-xs">Data</TableHead>
+                      <TableHead className="text-xs">Tempo</TableHead>
                       <TableHead className="text-xs w-[60px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -153,6 +179,15 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
                             <span className="text-xs text-muted-foreground">
                               {format(new Date(ordem.created_at), "dd/MM/yy", { locale: ptBR })}
                             </span>
+                          </TableCell>
+                          <TableCell className="py-0">
+                            {ordem.historico && ordem.tempo_conclusao_segundos ? (
+                              <span className="text-xs text-green-600 font-medium">
+                                {formatDuration(ordem.tempo_conclusao_segundos)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell className="py-0">
                             <Button

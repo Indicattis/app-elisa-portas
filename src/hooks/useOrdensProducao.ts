@@ -10,6 +10,8 @@ export interface OrdemBase {
   historico?: boolean;
   tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura' | 'qualidade' | 'instalacao' | 'carregamento';
   responsavel_nome?: string;
+  responsavel_id?: string;
+  tempo_conclusao_segundos?: number;
 }
 
 export interface PedidoComOrdens {
@@ -19,6 +21,11 @@ export interface PedidoComOrdens {
   status: string;
   etapa_atual?: string;
   created_at: string;
+  data_entrega?: string;
+  data_carregamento?: string;
+  endereco_cidade?: string;
+  endereco_estado?: string;
+  em_backlog?: boolean;
   ordens: OrdemBase[];
   total_ordens: number;
   contadores: {
@@ -44,10 +51,10 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
   return useQuery({
     queryKey: ['ordens-producao', search, status, tipoOrdem],
     queryFn: async () => {
-      // Buscar pedidos
+      // Buscar pedidos com campos adicionais
       let pedidosQuery = supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, status, etapa_atual, created_at')
+        .select('id, numero_pedido, cliente_nome, status, etapa_atual, created_at, data_entrega, data_carregamento, endereco_cidade, endereco_estado, em_backlog')
         .order('created_at', { ascending: false });
 
       if (search) {
@@ -63,7 +70,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
       if (pedidosError) throw pedidosError;
       if (!pedidos?.length) return [];
 
-      // Buscar ordens de todas as tabelas
+      // Buscar ordens de todas as tabelas com tempo_conclusao_segundos
       const pedidoIds = pedidos.map(p => p.id);
       
       const [
@@ -75,11 +82,11 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         { data: ordensInstalacao },
         { data: ordensCarregamento }
       ] = await Promise.all([
-        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
-        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
-        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
-        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
-        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id').in('pedido_id', pedidoIds),
+        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
+        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
+        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
+        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
+        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
         supabase.from('ordens_instalacao').select('id, numero_ordem, pedido_id, status, created_at, responsavel_id').in('pedido_id', pedidoIds),
         supabase.from('ordens_carregamento').select('id, pedido_id, status, created_at, carregamento_concluido, responsavel_carregamento_id').in('pedido_id', pedidoIds)
       ]);
@@ -104,7 +111,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
 
       // Agrupar ordens por pedido
       const pedidosComOrdens: PedidoComOrdens[] = pedidos.map(pedido => {
-        const todasOrdens: any[] = [
+        const todasOrdens: OrdemBase[] = [
           ...(ordensSoldagem?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
             numero_ordem: o.numero_ordem,
@@ -113,7 +120,9 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             created_at: o.created_at,
             historico: o.historico,
             tipo: 'soldagem' as const,
-            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
+            responsavel_id: o.responsavel_id || undefined,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined,
+            tempo_conclusao_segundos: o.tempo_conclusao_segundos || undefined
           })) || []),
           ...(ordensPerfiladeira?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -123,7 +132,9 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             created_at: o.created_at,
             historico: o.historico,
             tipo: 'perfiladeira' as const,
-            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
+            responsavel_id: o.responsavel_id || undefined,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined,
+            tempo_conclusao_segundos: o.tempo_conclusao_segundos || undefined
           })) || []),
           ...(ordensSeparacao?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -133,7 +144,9 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             created_at: o.created_at,
             historico: o.historico,
             tipo: 'separacao' as const,
-            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
+            responsavel_id: o.responsavel_id || undefined,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined,
+            tempo_conclusao_segundos: o.tempo_conclusao_segundos || undefined
           })) || []),
           ...(ordensPintura?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -143,7 +156,9 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             created_at: o.created_at,
             historico: o.historico,
             tipo: 'pintura' as const,
-            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
+            responsavel_id: o.responsavel_id || undefined,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined,
+            tempo_conclusao_segundos: o.tempo_conclusao_segundos || undefined
           })) || []),
           ...(ordensQualidade?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -153,7 +168,9 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             created_at: o.created_at,
             historico: o.historico,
             tipo: 'qualidade' as const,
-            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
+            responsavel_id: o.responsavel_id || undefined,
+            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined,
+            tempo_conclusao_segundos: o.tempo_conclusao_segundos || undefined
           })) || []),
           ...(ordensInstalacao?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
             id: o.id,
@@ -163,6 +180,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             created_at: o.created_at,
             historico: false,
             tipo: 'instalacao' as const,
+            responsavel_id: o.responsavel_id || undefined,
             responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
           })) || []),
           ...(ordensCarregamento?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
@@ -173,6 +191,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             created_at: o.created_at,
             historico: o.carregamento_concluido,
             tipo: 'carregamento' as const,
+            responsavel_id: o.responsavel_carregamento_id || undefined,
             responsavel_nome: o.responsavel_carregamento_id ? usuariosMap.get(o.responsavel_carregamento_id) : undefined
           })) || [])
         ];
@@ -189,6 +208,11 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
           status: pedido.status,
           etapa_atual: pedido.etapa_atual,
           created_at: pedido.created_at,
+          data_entrega: pedido.data_entrega || undefined,
+          data_carregamento: pedido.data_carregamento || undefined,
+          endereco_cidade: pedido.endereco_cidade || undefined,
+          endereco_estado: pedido.endereco_estado || undefined,
+          em_backlog: pedido.em_backlog || false,
           ordens: ordensFiltradas,
           total_ordens: ordensFiltradas.length,
           contadores: {
