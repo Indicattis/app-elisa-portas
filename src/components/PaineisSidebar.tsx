@@ -3,10 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import * as icons from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
 import logoLight from "@/assets/logo-light.png";
 import logoDark from "@/assets/logo-dark.png";
+import { Input } from "@/components/ui/input";
+import { useState, useMemo } from "react";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -35,6 +38,7 @@ export function PaineisSidebar() {
   const location = useLocation();
   const { theme } = useTheme();
   const { open } = useSidebar();
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Buscar rotas da interface paineis
   const { data: routes = [] } = useQuery({
@@ -83,23 +87,54 @@ export function PaineisSidebar() {
 
   const logo = theme === 'dark' ? logoDark : logoLight;
 
+  // Normalizar texto para busca
+  const normalizeText = (text: string) => {
+    return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
+  // Filtrar rotas
+  const filteredRoutes = useMemo(() => {
+    if (!searchTerm.trim()) return routes;
+    const normalizedTerm = normalizeText(searchTerm);
+    return routes.filter(route => normalizeText(route.label).includes(normalizedTerm));
+  }, [routes, searchTerm]);
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-4">
+        <div className="flex items-center gap-2 px-2 py-2">
           <img 
             src={logo} 
             alt="Elisa Portas" 
             className="h-8 w-auto transition-all duration-300"
           />
           {open && (
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground font-medium">
-                Painéis e Dashboards
-              </span>
-            </div>
+            <span className="text-xs text-muted-foreground font-medium">
+              Painéis e Dashboards
+            </span>
           )}
         </div>
+        {open && (
+          <div className="px-2 pb-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 pl-7 pr-7 text-xs"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -107,7 +142,7 @@ export function PaineisSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {routes.map((route) => {
+                {filteredRoutes.map((route) => {
                   const Icon = getIcon(route.icon);
                   const active = isActive(route.path);
 

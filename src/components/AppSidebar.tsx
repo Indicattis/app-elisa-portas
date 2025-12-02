@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, ChevronDown, BookOpen, Truck, ChevronsDown, ChevronsUp, Clock, CheckSquare, ClipboardCheck, ChevronRight, Tv, ClipboardList, Shield, Building2, FileBarChart, PieChart, Wallet, BadgeDollarSign, Users2, Hammer, PackageCheck, ClipboardSignature, CalendarCheck } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Home, Users, FileText, Calculator, Calendar, Settings, Factory, TrendingUp, CreditCard, CalendarDays, DollarSign, BarChart3, Lock, UserPlus, FileSpreadsheet, ShoppingCart, MapPin, Cog, Handshake, FolderOpen, Wrench, Receipt, Megaphone, Banknote, Network, Target, LayoutDashboard, Briefcase, Package, UserCog, Award, BookOpen, Truck, Clock, CheckSquare, ClipboardCheck, ChevronRight, Tv, ClipboardList, Shield, Building2, FileBarChart, PieChart, Wallet, BadgeDollarSign, Users2, Hammer, PackageCheck, ClipboardSignature, CalendarCheck, Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -177,20 +178,56 @@ export function AppSidebar() {
       [routeKey]: open
     }));
   };
-  const handleOpenAll = () => {
-    const getAllKeys = (routes: any[]): string[] => {
-      return routes.flatMap(route => [route.key, ...(route.children ? getAllKeys(route.children) : [])]);
-    };
-    const allKeys = getAllKeys(routeTree);
-    const allOpen = allKeys.reduce((acc, key) => {
-      acc[key] = true;
+  // Estado da pesquisa
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Normalizar texto para busca (remove acentos e lowercase)
+  const normalizeText = (text: string) => {
+    return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
+  // Filtrar rotas recursivamente
+  const filterRoutes = (routes: any[], term: string): any[] => {
+    if (!term.trim()) return routes;
+    
+    const normalizedTerm = normalizeText(term);
+    
+    return routes.reduce((acc: any[], route) => {
+      const normalizedLabel = normalizeText(route.label);
+      const matches = normalizedLabel.includes(normalizedTerm);
+      
+      const filteredChildren = route.children ? filterRoutes(route.children, term) : [];
+      
+      if (matches || filteredChildren.length > 0) {
+        acc.push({
+          ...route,
+          children: filteredChildren,
+        });
+      }
+      
       return acc;
-    }, {} as Record<string, boolean>);
-    setOpenGroups(allOpen);
+    }, []);
   };
-  const handleCloseAll = () => {
-    setOpenGroups({});
-  };
+
+  const filteredRouteTree = useMemo(() => filterRoutes(routeTree, searchTerm), [routeTree, searchTerm]);
+
+  // Auto-expandir grupos quando pesquisando
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const getAllKeys = (routes: any[]): string[] => {
+        return routes.flatMap((route) => [
+          route.key,
+          ...(route.children ? getAllKeys(route.children) : []),
+        ]);
+      };
+      const allKeys = getAllKeys(filteredRouteTree);
+      const allOpen = allKeys.reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {} as Record<string, boolean>);
+      setOpenGroups(allOpen);
+    }
+  }, [searchTerm, filteredRouteTree]);
 
   // Estado para o relógio
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -293,14 +330,23 @@ export function AppSidebar() {
         <button onClick={() => navigate('/dashboard')} className="flex items-center justify-center px-2 py-1.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-colors" title="Home">
           <img src={currentLogo} alt="Home" className="h-5 w-5 object-contain" />
         </button>
-        <button onClick={handleOpenAll} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors" title="Abrir Todos">
-          <ChevronsDown className="h-3 w-3" />
-          <span>Abrir</span>
-        </button>
-        <button onClick={handleCloseAll} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors" title="Fechar Todos">
-          <ChevronsUp className="h-3 w-3" />
-          <span>Fechar</span>
-        </button>
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-8 pl-7 pr-7 text-xs"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <SidebarContent>
@@ -310,7 +356,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {isLoading ? <div className="flex items-center justify-center py-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                  </div> : routeTree.map(route => renderRouteItem(route, 0))}
+                  </div> : filteredRouteTree.map(route => renderRouteItem(route, 0))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

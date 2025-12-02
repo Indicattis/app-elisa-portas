@@ -3,10 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import * as icons from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { Badge } from "./ui/badge";
+import { Input } from "./ui/input";
 import logoLight from "@/assets/logo-light.png";
+import { useState, useMemo } from "react";
 
 interface AppRoute {
   key: string;
@@ -20,6 +23,7 @@ interface AppRoute {
 export function ProducaoSidebar() {
   const { user, isAdmin } = useAuth();
   const { data: ordensCount } = useOrdensCount();
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Buscar rotas da interface producao
   const { data: routes = [] } = useQuery({
@@ -79,17 +83,48 @@ export function ProducaoSidebar() {
     }
   };
 
+  // Normalizar texto para busca
+  const normalizeText = (text: string) => {
+    return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
+  // Filtrar rotas
+  const filteredRoutes = useMemo(() => {
+    if (!searchTerm.trim()) return routes;
+    const normalizedTerm = normalizeText(searchTerm);
+    return routes.filter(route => normalizeText(route.label).includes(normalizedTerm));
+  }, [routes, searchTerm]);
+
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-3 border-b border-sidebar-border">
-        <img src={logoLight} alt="Logo" className="h-10 w-auto mx-auto" />
-        <p className="text-center text-xs text-sidebar-foreground/60 mt-1.5 font-medium">
-          Interface de Produção
-        </p>
+      <div className="p-3 border-b border-sidebar-border space-y-2">
+        <div className="flex items-center gap-2">
+          <img src={logoLight} alt="Logo" className="h-8 w-auto" />
+          <p className="text-xs text-sidebar-foreground/60 font-medium">
+            Interface de Produção
+          </p>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-8 pl-7 pr-7 text-xs bg-sidebar-accent/50"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <nav className="flex-1 p-2 space-y-0.5">
-        {routes.map((route) => {
+        {filteredRoutes.map((route) => {
           const Icon = getIcon(route.icon);
           const count = getCount(route.key);
 
