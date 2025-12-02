@@ -16,6 +16,7 @@ import {
   Plus
 } from "lucide-react";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
+import { formatarNumeroOrcamento } from "@/utils/numberingService";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -218,7 +219,10 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
           }))
         },
         calculatedTotal: orcamento.valor_total,
-        numeroOrcamento: `ORC-${orcamento.id.slice(-8).toUpperCase()}`,
+        numeroOrcamento: orcamento.numero_orcamento 
+          ? formatarNumeroOrcamento(orcamento.numero_orcamento)
+          : `ORC-${orcamento.id.slice(-8).toUpperCase()}`,
+        observacoes: orcamento.observacoes || '',
         vendedora: {
           nome: orcamento.admin_users?.nome || 'Atendente',
           cargo: getCargoLabel(orcamento.admin_users?.role),
@@ -229,6 +233,7 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
       generateOrcamentoPDF(pdfData.formData as any, pdfData.calculatedTotal, {
         id: pdfData.id,
         numeroOrcamento: pdfData.numeroOrcamento,
+        observacoes: pdfData.observacoes,
         vendedora: pdfData.vendedora
       });
       

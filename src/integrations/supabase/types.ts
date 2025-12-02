@@ -2396,6 +2396,8 @@ export type Database = {
           modalidade_instalacao: string | null
           motivo_analise: string | null
           motivo_perda: string | null
+          numero_orcamento: number | null
+          observacoes: string | null
           observacoes_aprovacao: string | null
           publico_alvo: string | null
           requer_analise: boolean
@@ -2434,6 +2436,8 @@ export type Database = {
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
           motivo_perda?: string | null
+          numero_orcamento?: number | null
+          observacoes?: string | null
           observacoes_aprovacao?: string | null
           publico_alvo?: string | null
           requer_analise?: boolean
@@ -2472,6 +2476,8 @@ export type Database = {
           modalidade_instalacao?: string | null
           motivo_analise?: string | null
           motivo_perda?: string | null
+          numero_orcamento?: number | null
+          observacoes?: string | null
           observacoes_aprovacao?: string | null
           publico_alvo?: string | null
           requer_analise?: boolean
