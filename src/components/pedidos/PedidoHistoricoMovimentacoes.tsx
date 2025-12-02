@@ -130,7 +130,7 @@ export function PedidoHistoricoMovimentacoes({ pedidoId }: PedidoHistoricoMovime
   return (
     <div className="space-y-4">
       {movimentacoes.map((mov, index) => {
-        const config = TEOR_CONFIG[mov.teor];
+        const config = TEOR_CONFIG[mov.teor as keyof typeof TEOR_CONFIG] || TEOR_CONFIG.avanco;
         const Icon = config.icon;
         const isLast = index === movimentacoes.length - 1;
 
