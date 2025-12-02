@@ -195,27 +195,28 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
           cliente_cidade: orcamento.cliente_cidade,
           cliente_bairro: orcamento.cliente_bairro,
           cliente_cep: orcamento.cliente_cep,
-          valor_frete: orcamento.valor_frete.toString(),
+          valor_frete: orcamento.valor_frete?.toString() || "0",
           valor_instalacao: orcamento.valor_instalacao?.toString() || "0",
           modalidade_instalacao: orcamento.modalidade_instalacao,
           forma_pagamento: orcamento.forma_pagamento,
           desconto_total_percentual: orcamento.desconto_percentual || 0,
           requer_analise: orcamento.requer_analise,
-          motivo_analise: orcamento.motivo_analise
+          motivo_analise: orcamento.motivo_analise,
+          produtos: (produtos || []).map(p => ({
+            tipo_produto: p.tipo_produto as any,
+            valor: p.valor,
+            quantidade: p.quantidade || 1,
+            desconto_percentual: p.desconto_percentual,
+            medidas: p.medidas,
+            cor_id: p.cor_id,
+            acessorio_id: p.acessorio_id,
+            adicional_id: p.adicional_id,
+            descricao: p.descricao,
+            descricao_manutencao: p.descricao_manutencao,
+            preco_producao: p.preco_producao,
+            preco_instalacao: p.preco_instalacao
+          }))
         },
-        produtos: (produtos || []).map(p => ({
-          tipo_produto: p.tipo_produto as any,
-          valor: p.valor,
-          desconto_percentual: p.desconto_percentual,
-          medidas: p.medidas,
-          cor_id: p.cor_id,
-          acessorio_id: p.acessorio_id,
-          adicional_id: p.adicional_id,
-          descricao: p.descricao,
-          descricao_manutencao: p.descricao_manutencao,
-          preco_producao: p.preco_producao,
-          preco_instalacao: p.preco_instalacao
-        })),
         calculatedTotal: orcamento.valor_total,
         numeroOrcamento: `ORC-${orcamento.id.slice(-8).toUpperCase()}`,
         vendedora: {
