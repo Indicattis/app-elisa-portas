@@ -5374,14 +5374,24 @@ export type Database = {
         }
         Returns: undefined
       }
-      retroceder_pedido_para_etapa: {
-        Args: {
-          p_etapa_destino: string
-          p_motivo_backlog: string
-          p_pedido_id: string
-        }
-        Returns: undefined
-      }
+      retroceder_pedido_para_etapa:
+        | {
+            Args: {
+              p_etapa_destino: string
+              p_motivo_backlog: string
+              p_pedido_id: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_etapa_destino: string
+              p_motivo_backlog: string
+              p_pedido_id: string
+            }
+            Returns: undefined
+          }
       verificar_ordem_pintura_concluida: {
         Args: { p_pedido_id: string }
         Returns: boolean
