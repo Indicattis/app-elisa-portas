@@ -12,7 +12,6 @@ interface EstoquePDF {
   setor_responsavel_producao: string | null;
   requer_pintura: boolean | null;
   pontuacao_producao: number;
-  pontuacao_por_metro: number;
   quantidade: number;
   quantidade_ideal: number | null;
   unidade: string | null;
@@ -59,14 +58,13 @@ export const gerarEstoquePDF = (data: EstoquePDFData): jsPDF => {
     setorLabel(p.setor_responsavel_producao),
     p.requer_pintura ? 'Sim' : 'Não',
     p.pontuacao_producao.toFixed(2),
-    p.pontuacao_por_metro.toFixed(2),
     `${p.quantidade} ${p.unidade || 'UN'}`,
     `R$ ${p.custo_unitario.toFixed(2)}`,
   ]);
 
   // Tabela de produtos
   autoTable(doc, {
-    head: [['SKU', 'Produto', 'Categoria', 'Setor', 'Pintura', 'Pts/Un', 'Pts/M', 'Estoque', 'Custo']],
+    head: [['SKU', 'Produto', 'Categoria', 'Setor', 'Pintura', 'Pts/Un', 'Estoque', 'Custo']],
     body: tableData,
     startY: 38,
     theme: 'striped',
@@ -82,15 +80,14 @@ export const gerarEstoquePDF = (data: EstoquePDFData): jsPDF => {
       cellPadding: 2,
     },
     columnStyles: {
-      0: { cellWidth: 20, halign: 'center' }, // SKU
-      1: { cellWidth: 50, halign: 'left' },   // Produto
-      2: { cellWidth: 30, halign: 'left' },   // Categoria
-      3: { cellWidth: 28, halign: 'center' }, // Setor
-      4: { cellWidth: 18, halign: 'center' }, // Pintura
-      5: { cellWidth: 18, halign: 'center' }, // Pts/Un
-      6: { cellWidth: 18, halign: 'center' }, // Pts/M
-      7: { cellWidth: 28, halign: 'right' },  // Estoque
-      8: { cellWidth: 28, halign: 'right' },  // Custo
+      0: { cellWidth: 22, halign: 'center' }, // SKU
+      1: { cellWidth: 55, halign: 'left' },   // Produto
+      2: { cellWidth: 32, halign: 'left' },   // Categoria
+      3: { cellWidth: 30, halign: 'center' }, // Setor
+      4: { cellWidth: 20, halign: 'center' }, // Pintura
+      5: { cellWidth: 20, halign: 'center' }, // Pts/Un
+      6: { cellWidth: 30, halign: 'right' },  // Estoque
+      7: { cellWidth: 30, halign: 'right' },  // Custo
     },
     alternateRowStyles: {
       fillColor: [245, 245, 245],
