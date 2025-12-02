@@ -19,7 +19,7 @@ export function useFaturamentoMensal() {
 
       const { data: vendas, error } = await supabase
         .from('vendas')
-        .select('data_venda, valor_venda, valor_frete')
+        .select('data_venda, valor_venda, valor_frete, valor_credito')
         .gte('data_venda', inicioAno.toISOString())
         .lte('data_venda', fimAno.toISOString())
         .order('data_venda');
@@ -38,8 +38,9 @@ export function useFaturamentoMensal() {
 
       vendas?.forEach(venda => {
         const mes = new Date(venda.data_venda).getMonth();
-        // Calcular valor sem frete
-        const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+        // Calcular valor sem frete (incluindo crédito para vendas antigas)
+        const valorVendaTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+        const valorSemFrete = valorVendaTotal - (venda.valor_frete || 0);
         vendasPorMes[mes].valor += valorSemFrete;
         vendasPorMes[mes].count += 1;
       });
