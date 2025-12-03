@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useVendas, VendaFormData, ProdutoVenda } from '@/hooks/useVendas';
-import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Cliente } from '@/hooks/useClientes';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +15,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -32,13 +31,12 @@ import { validarCredito } from '@/utils/creditoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData } from '@/components/vendas/PagamentoSection';
-// FormaPagamentoSelect substituído por PagamentoSection
+import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 
 export default function VendasNova() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createVenda, isCreating } = useVendas();
-  const { canais } = useCanaisAquisicao();
   const { user } = useAuth();
   
   const [formData, setFormData] = useState<VendaFormData>({
@@ -373,8 +371,6 @@ export default function VendasNova() {
     }
   };
 
-  const cidades = formData.estado ? getCidadesPorEstado(formData.estado) : [];
-
   return (
     <div className="container mx-auto p-4 space-y-4 max-w-7xl">
       <div className="flex items-center gap-3 pb-2 border-b">
@@ -386,179 +382,29 @@ export default function VendasNova() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Dados do Cliente */}
-        <Card>
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-base font-semibold">Dados do Cliente</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
-            <div className="space-y-1">
-              <Label htmlFor="cliente_nome" className="text-xs font-medium">Nome *</Label>
-              <Input
-                id="cliente_nome"
-                value={formData.cliente_nome}
-                onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
-                placeholder="Nome completo"
-                className="h-9"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="cliente_telefone" className="text-xs font-medium">Telefone *</Label>
-              <Input
-                id="cliente_telefone"
-                value={formData.cliente_telefone}
-                onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
-                placeholder="(00) 00000-0000"
-                className="h-9"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="cliente_email" className="text-xs font-medium">E-mail</Label>
-              <Input
-                id="cliente_email"
-                type="email"
-                value={formData.cliente_email}
-                onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
-                placeholder="email@exemplo.com"
-                className="h-9"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="cpf_cliente" className="text-xs font-medium">CPF/CNPJ *</Label>
-              <Input
-                id="cpf_cliente"
-                value={formData.cpf_cliente}
-                onChange={(e) => {
-                  let value = e.target.value.replace(/\D/g, '');
-                  if (value.length <= 11) {
-                    // Máscara CPF: 000.000.000-00
-                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-                  } else {
-                    // Máscara CNPJ: 00.000.000/0000-00
-                    value = value.replace(/(\d{2})(\d)/, '$1.$2');
-                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                    value = value.replace(/(\d{3})(\d)/, '$1/$2');
-                    value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-                  }
-                  setFormData(prev => ({ ...prev, cpf_cliente: value }));
-                }}
-                placeholder="CPF ou CNPJ"
-                className="h-9"
-                maxLength={18}
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Localização */}
-        <Card>
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-base font-semibold">Localização</CardTitle>
-            <CardDescription className="text-xs">Todos os campos são obrigatórios para emissão de NF-e</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-4">
-            <div className="space-y-1">
-              <Label htmlFor="estado" className="text-xs font-medium">Estado *</Label>
-              <Select
-                value={formData.estado}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, estado: value, cidade: '' }))}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="UF" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ESTADOS_BRASIL.map(estado => (
-                    <SelectItem key={estado.sigla} value={estado.sigla}>
-                      {estado.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="cidade" className="text-xs font-medium">Cidade *</Label>
-              <Select
-                value={formData.cidade}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, cidade: value }))}
-                required
-                disabled={!formData.estado}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a cidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cidades.map(cidade => (
-                    <SelectItem key={cidade} value={cidade}>
-                      {cidade}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="cep" className="text-xs font-medium">CEP *</Label>
-              <Input
-                id="cep"
-                value={formData.cep}
-                onChange={(e) => {
-                  let value = e.target.value.replace(/\D/g, '');
-                  if (value.length > 5) {
-                    value = value.replace(/(\d{5})(\d{1,3})/, '$1-$2');
-                  }
-                  setFormData(prev => ({ ...prev, cep: value }));
-                }}
-                placeholder="00000-000"
-                className="h-9"
-                maxLength={9}
-                required
-              />
-            </div>
-
-            <div className="space-y-1 md:col-span-2">
-              <Label htmlFor="endereco" className="text-xs font-medium">Endereço *</Label>
-              <Input
-                id="endereco"
-                value={formData.endereco}
-                onChange={(e) => setFormData(prev => ({ ...prev, endereco: e.target.value }))}
-                placeholder="Ex: Rua das Flores, 123"
-                className="h-9"
-                minLength={2}
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="bairro" className="text-xs font-medium">Bairro *</Label>
-              <Input
-                id="bairro"
-                value={formData.bairro}
-                onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
-                placeholder="Nome do bairro"
-                className="h-9"
-                minLength={2}
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Cliente - Buscar ou Cadastrar */}
+        <ClienteVendaSection
+          dados={{
+            cliente_nome: formData.cliente_nome,
+            cliente_telefone: formData.cliente_telefone,
+            cliente_email: formData.cliente_email,
+            cpf_cliente: formData.cpf_cliente,
+            estado: formData.estado,
+            cidade: formData.cidade,
+            cep: formData.cep,
+            endereco: formData.endereco,
+            bairro: formData.bairro,
+            canal_aquisicao_id: formData.canal_aquisicao_id || '',
+          }}
+          onChange={(dados) => setFormData(prev => ({ ...prev, ...dados }))}
+        />
 
         {/* Dados da Venda */}
         <Card>
           <CardHeader className="pb-3 pt-4">
             <CardTitle className="text-base font-semibold">Dados da Venda</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-4">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-4">
             <div className="space-y-1">
               <Label htmlFor="data_venda" className="text-xs font-medium">Data</Label>
               <Popover>
@@ -605,27 +451,6 @@ export default function VendasNova() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="canal_aquisicao_id" className="text-xs font-medium">Canal *</Label>
-              <Select
-                value={formData.canal_aquisicao_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o canal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {canais.map((canal) => (
-                    <SelectItem key={canal.id} value={canal.id}>
-                      {canal.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
           </CardContent>
         </Card>
 
