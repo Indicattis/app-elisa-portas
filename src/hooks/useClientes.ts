@@ -39,7 +39,6 @@ export function useClientes() {
   return useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
-      // Buscar clientes
       const { data: clientesData, error: clientesError } = await supabase
         .from("clientes" as any)
         .select("*")
@@ -48,14 +47,12 @@ export function useClientes() {
 
       if (clientesError) throw clientesError;
       
-      // Buscar canais separadamente para evitar problemas de tipo
       const { data: canaisData } = await supabase
         .from("canais_aquisicao")
         .select("id, nome");
       
       const canaisMap = new Map(canaisData?.map(c => [c.id, c]) || []);
       
-      // Combinar dados
       const clientes = (clientesData || []).map((cliente: any) => ({
         ...cliente,
         canal_aquisicao: cliente.canal_aquisicao_id 
@@ -65,6 +62,64 @@ export function useClientes() {
 
       return clientes as Cliente[];
     },
+  });
+}
+
+// Hook para buscar clientes por nome ou CPF/CNPJ
+export function useSearchClientes(searchTerm: string) {
+  return useQuery({
+    queryKey: ["clientes-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) return [];
+      
+      // Normalizar busca removendo caracteres especiais para CPF/CNPJ
+      const termNormalizado = searchTerm.replace(/\D/g, '');
+      const isNumeric = termNormalizado.length >= 3;
+      
+      let query = supabase
+        .from("clientes" as any)
+        .select("*")
+        .eq("ativo", true);
+      
+      if (isNumeric) {
+        // Buscar por CPF/CNPJ (contém os números)
+        query = query.ilike("cpf_cnpj", `%${termNormalizado}%`);
+      } else {
+        // Buscar por nome
+        query = query.ilike("nome", `%${searchTerm}%`);
+      }
+      
+      const { data, error } = await query.order("nome").limit(10);
+      
+      if (error) throw error;
+      return (data || []) as unknown as Cliente[];
+    },
+    enabled: searchTerm.length >= 2,
+  });
+}
+
+// Hook para verificar duplicação de CPF/CNPJ
+export function useCheckClienteDuplicado(cpfCnpj: string) {
+  return useQuery({
+    queryKey: ["cliente-duplicado", cpfCnpj],
+    queryFn: async () => {
+      if (!cpfCnpj) return null;
+      
+      const cpfNormalizado = cpfCnpj.replace(/\D/g, '');
+      if (cpfNormalizado.length < 11) return null;
+      
+      const { data, error } = await supabase
+        .from("clientes" as any)
+        .select("id, nome, cpf_cnpj, telefone, email, estado, cidade, cep, endereco, bairro, canal_aquisicao_id")
+        .eq("ativo", true)
+        .ilike("cpf_cnpj", `%${cpfNormalizado}%`)
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as unknown as Cliente | null;
+    },
+    enabled: cpfCnpj.replace(/\D/g, '').length >= 11,
   });
 }
 
@@ -89,6 +144,7 @@ export function useCreateCliente() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      queryClient.invalidateQueries({ queryKey: ["clientes-search"] });
       toast.success("Cliente criado com sucesso!");
     },
     onError: (error) => {
@@ -115,6 +171,7 @@ export function useUpdateCliente() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      queryClient.invalidateQueries({ queryKey: ["clientes-search"] });
       toast.success("Cliente atualizado com sucesso!");
     },
     onError: (error) => {
@@ -129,7 +186,6 @@ export function useDeleteCliente() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Soft delete - marca como inativo
       const { error } = await supabase
         .from("clientes" as any)
         .update({ ativo: false })
@@ -139,6 +195,7 @@ export function useDeleteCliente() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      queryClient.invalidateQueries({ queryKey: ["clientes-search"] });
       toast.success("Cliente excluído com sucesso!");
     },
     onError: (error) => {
