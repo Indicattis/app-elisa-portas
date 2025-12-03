@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy, TrendingUp, FileText, X, Edit, DoorClosed, Home, FileSignature } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy, TrendingUp, FileText, X, Edit, DoorClosed, Home, FileSignature, Download } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
+import { generateVendaPDF } from '@/utils/vendaIndividualPDFGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { ContratosVendaModal } from '@/components/vendas/ContratosVendaModal';
 
@@ -107,6 +108,58 @@ export default function Vendas() {
       toast({
         title: "Erro ao gerar relatório",
         description: "Ocorreu um erro ao exportar o relatório.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadVendaPDF = async (venda: any) => {
+    try {
+      // Buscar produtos da venda com informações da cor
+      const { data: produtos } = await supabase
+        .from('produtos_vendas')
+        .select(`
+          *,
+          cor:catalogo_cores(nome, codigo_hex)
+        `)
+        .eq('venda_id', venda.id);
+
+      generateVendaPDF({
+        id: venda.id,
+        dataVenda: venda.data_venda,
+        dataPrevistaEntrega: venda.data_prevista_entrega,
+        cliente: {
+          nome: venda.cliente_nome,
+          cpf: venda.cpf_cliente,
+          telefone: venda.cliente_telefone,
+          email: venda.cliente_email,
+          cidade: venda.cidade,
+          estado: venda.estado,
+          cep: venda.cep,
+          bairro: venda.bairro,
+        },
+        produtos: produtos || [],
+        valores: {
+          valorVenda: venda.valor_venda,
+          valorFrete: venda.valor_frete,
+          valorInstalacao: venda.valor_instalacao,
+          valorEntrada: venda.valor_entrada,
+          valorAReceber: venda.valor_a_receber,
+        },
+        formaPagamento: venda.forma_pagamento || venda.metodo_pagamento,
+        observacoes: venda.observacoes_venda,
+        atendente: venda.atendente,
+      });
+
+      toast({
+        title: "PDF gerado",
+        description: "O comprovante de venda foi baixado.",
+      });
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o comprovante.",
         variant: "destructive",
       });
     }
@@ -455,6 +508,14 @@ export default function Vendas() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => handleDownloadVendaPDF(venda)}
+                                className="h-7 w-7"
+                              >
+                                <Download className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => {
                                   setSelectedVendaId(venda.id);
                                   setContratosModalOpen(true);
@@ -528,6 +589,14 @@ export default function Vendas() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-right py-1">
                           <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownloadVendaPDF(venda)}
+                              title="Baixar PDF"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
