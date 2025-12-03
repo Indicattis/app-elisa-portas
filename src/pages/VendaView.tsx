@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, DollarSign, Package, User, Calendar, CreditCard, FileText, Home, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Package, User, Calendar, CreditCard, FileText, Home, CheckCircle2, Clock, AlertCircle, XCircle, Banknote, QrCode, Wallet, ExternalLink, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -64,6 +64,18 @@ interface Venda {
   parcelas: Parcela[];
   pedido?: Pedido;
   instalacao?: Instalacao;
+  // Novos campos de pagamento
+  metodo_pagamento?: string;
+  quantidade_parcelas?: number;
+  intervalo_boletos?: number;
+  pago_na_instalacao?: boolean;
+  parcelas_dinheiro?: number;
+  valor_entrada_dinheiro?: number;
+  restante_na_instalacao?: boolean;
+  comprovante_url?: string;
+  comprovante_nome?: string;
+  empresa_receptora_id?: string;
+  empresa_receptora?: { nome: string };
 }
 
 export default function VendaView() {
@@ -173,6 +185,17 @@ export default function VendaView() {
         .eq("user_id", vendaData.atendente_id)
         .maybeSingle();
 
+      // Buscar empresa receptora se existir
+      let empresaReceptoraData = null;
+      if (vendaData.empresa_receptora_id) {
+        const { data } = await supabase
+          .from("empresas_emissoras")
+          .select("nome")
+          .eq("id", vendaData.empresa_receptora_id)
+          .maybeSingle();
+        empresaReceptoraData = data;
+      }
+
       setVenda({
         ...vendaData,
         parcelas: parcelasData || [],
@@ -180,6 +203,7 @@ export default function VendaView() {
         instalacao: instalacaoData || undefined,
         canal_aquisicao: canalData || undefined,
         atendente: atendenteData || undefined,
+        empresa_receptora: empresaReceptoraData || undefined,
       } as any);
     } catch (error) {
       console.error("Erro ao buscar venda:", error);
@@ -391,22 +415,6 @@ export default function VendaView() {
               <p className="text-sm text-muted-foreground">Tipo de Entrega</p>
               <p className="font-medium">{venda.tipo_entrega === 'instalacao' ? 'Instalação' : venda.tipo_entrega === 'retirada' ? 'Retirada' : 'Não informado'}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Forma de Pagamento</p>
-              <p className="font-medium">{venda.forma_pagamento || "Não informado"}</p>
-            </div>
-            {venda.numero_parcelas && (
-              <div>
-                <p className="text-sm text-muted-foreground">Número de Parcelas</p>
-                <p className="font-medium">{venda.numero_parcelas}x</p>
-              </div>
-            )}
-            {venda.valor_entrada !== undefined && venda.valor_entrada > 0 && (
-              <div>
-                <p className="text-sm text-muted-foreground">Valor de Entrada</p>
-                <p className="font-medium">{formatCurrency(venda.valor_entrada)}</p>
-              </div>
-            )}
             {venda.publico_alvo && (
               <div>
                 <p className="text-sm text-muted-foreground">Público Alvo</p>
@@ -420,17 +428,166 @@ export default function VendaView() {
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Pagamento na Entrega</p>
-              <Badge variant={venda.pagamento_na_entrega ? "default" : "secondary"} className="mt-1">
-                {venda.pagamento_na_entrega ? "Sim" : "Não"}
-              </Badge>
-            </div>
-            <div>
               <p className="text-sm text-muted-foreground">Frete Aprovado</p>
               <Badge variant={venda.frete_aprovado ? "default" : "secondary"} className="mt-1">
                 {venda.frete_aprovado ? "Sim" : "Não"}
               </Badge>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Detalhes do Pagamento */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            Forma de Pagamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Ícone e Nome do Método */}
+            <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
+              {venda.forma_pagamento === 'boleto' && <Banknote className="w-6 h-6 text-blue-600" />}
+              {venda.forma_pagamento === 'a_vista' && <QrCode className="w-6 h-6 text-green-600" />}
+              {venda.forma_pagamento === 'cartao_credito' && <CreditCard className="w-6 h-6 text-purple-600" />}
+              {venda.forma_pagamento === 'dinheiro' && <Wallet className="w-6 h-6 text-amber-600" />}
+              {!venda.forma_pagamento && <DollarSign className="w-6 h-6 text-muted-foreground" />}
+              
+              <div className="flex-1">
+                <p className="font-semibold text-lg">
+                  {venda.forma_pagamento === 'boleto' && 'Boleto Bancário'}
+                  {venda.forma_pagamento === 'a_vista' && 'À Vista (PIX/Débito)'}
+                  {venda.forma_pagamento === 'cartao_credito' && 'Cartão de Crédito'}
+                  {venda.forma_pagamento === 'dinheiro' && 'Dinheiro'}
+                  {!venda.forma_pagamento && 'Não informado'}
+                </p>
+                {venda.metodo_pagamento && (
+                  <p className="text-sm text-muted-foreground capitalize">{venda.metodo_pagamento.replace('_', ' ')}</p>
+                )}
+              </div>
+
+              {/* Badges de Status */}
+              <div className="flex gap-2">
+                {venda.pago_na_instalacao && (
+                  <Badge className="bg-blue-500/10 text-blue-700 border-blue-500/20">
+                    Pago na Instalação
+                  </Badge>
+                )}
+                {venda.restante_na_instalacao && (
+                  <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/20">
+                    Restante na Instalação
+                  </Badge>
+                )}
+                {venda.pagamento_na_entrega && (
+                  <Badge className="bg-green-500/10 text-green-700 border-green-500/20">
+                    Pagamento na Entrega
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Detalhes específicos por forma de pagamento */}
+            <div className="grid gap-4 md:grid-cols-3">
+              {/* Boleto */}
+              {venda.forma_pagamento === 'boleto' && (
+                <>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Quantidade de Boletos</p>
+                    <p className="font-medium">{venda.quantidade_parcelas || venda.numero_parcelas || 1}</p>
+                  </div>
+                  {venda.intervalo_boletos && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Intervalo entre Boletos</p>
+                      <p className="font-medium">{venda.intervalo_boletos} dias</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Cartão de Crédito */}
+              {venda.forma_pagamento === 'cartao_credito' && (
+                <>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Número de Parcelas</p>
+                    <p className="font-medium">{venda.quantidade_parcelas || venda.numero_parcelas || 1}x</p>
+                  </div>
+                  {(venda.quantidade_parcelas || venda.numero_parcelas) && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor por Parcela</p>
+                      <p className="font-medium">
+                        {formatCurrency(venda.valor_venda / (venda.quantidade_parcelas || venda.numero_parcelas || 1))}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Dinheiro */}
+              {venda.forma_pagamento === 'dinheiro' && (
+                <>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Parcelas em Dinheiro</p>
+                    <p className="font-medium">{venda.parcelas_dinheiro || 1}x</p>
+                  </div>
+                  {venda.valor_entrada_dinheiro !== undefined && venda.valor_entrada_dinheiro > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor de Entrada</p>
+                      <p className="font-medium text-green-600">{formatCurrency(venda.valor_entrada_dinheiro)}</p>
+                    </div>
+                  )}
+                  {venda.parcelas_dinheiro === 2 && venda.valor_entrada_dinheiro && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Saldo Restante</p>
+                      <p className="font-medium">{formatCurrency(venda.valor_venda - venda.valor_entrada_dinheiro)}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* À Vista */}
+              {venda.forma_pagamento === 'a_vista' && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Valor Total</p>
+                  <p className="font-medium text-green-600">{formatCurrency(venda.valor_venda)}</p>
+                </div>
+              )}
+
+              {/* Valor de Entrada (genérico) */}
+              {venda.valor_entrada !== undefined && venda.valor_entrada > 0 && venda.forma_pagamento !== 'dinheiro' && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Valor de Entrada</p>
+                  <p className="font-medium text-green-600">{formatCurrency(venda.valor_entrada)}</p>
+                </div>
+              )}
+
+              {/* Empresa Receptora */}
+              {venda.empresa_receptora && (
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Building2 className="w-3 h-3" /> Empresa que Recebe
+                  </p>
+                  <p className="font-medium">{venda.empresa_receptora.nome}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Comprovante de Pagamento */}
+            {venda.comprovante_url && (
+              <div className="pt-2 border-t">
+                <p className="text-sm text-muted-foreground mb-2">Comprovante de Pagamento</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(venda.comprovante_url!, '_blank')}
+                  className="gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {venda.comprovante_nome || 'Ver Comprovante'}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
