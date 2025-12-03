@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import type { ProdutoVenda } from '@/hooks/useVendas';
 
 interface SelecionarAcessoriosModalProps {
@@ -31,6 +32,7 @@ export function SelecionarAcessoriosModal({
   onConfirm
 }: SelecionarAcessoriosModalProps) {
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
+  const [busca, setBusca] = useState('');
 
   // Buscar produtos do catálogo de vendas
   const { data: produtosEstoque = [], isLoading } = useQuery({
@@ -56,6 +58,16 @@ export function SelecionarAcessoriosModal({
     },
     enabled: open
   });
+
+  // Filtrar produtos pela busca
+  const produtosFiltrados = useMemo(() => {
+    if (!busca.trim()) return produtosEstoque;
+    const termoBusca = busca.toLowerCase().trim();
+    return produtosEstoque.filter(item => 
+      item.nome.toLowerCase().includes(termoBusca) ||
+      item.categoria.toLowerCase().includes(termoBusca)
+    );
+  }, [produtosEstoque, busca]);
 
   const toggleItem = (itemId: string) => {
     setItensSelecionados(prev => {
@@ -99,6 +111,7 @@ export function SelecionarAcessoriosModal({
 
   const handleCancelar = () => {
     setItensSelecionados(new Set());
+    setBusca('');
     onOpenChange(false);
   };
 
@@ -120,17 +133,37 @@ export function SelecionarAcessoriosModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px]">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar produto..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="pl-9 h-9"
+          />
+        </div>
+
+        <ScrollArea className="h-[350px]">
           {isLoading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
               Carregando itens...
             </div>
-          ) : produtosEstoque.length === 0 ? (
+          ) : produtosFiltrados.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhum produto disponível para venda avulsa.
-              <br />
-              <span className="text-xs">Configure produtos no módulo de Estoque</span>
+              {busca ? (
+                <>
+                  Nenhum produto encontrado para "{busca}".
+                  <br />
+                  <span className="text-xs">Tente outro termo de busca</span>
+                </>
+              ) : (
+                <>
+                  Nenhum produto disponível para venda avulsa.
+                  <br />
+                  <span className="text-xs">Configure produtos no módulo de Estoque</span>
+                </>
+              )}
             </div>
           ) : (
             <Table>
@@ -143,7 +176,7 @@ export function SelecionarAcessoriosModal({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {produtosEstoque.map((item) => (
+                {produtosFiltrados.map((item) => (
                   <TableRow 
                     key={item.id} 
                     className="h-[30px] cursor-pointer hover:bg-accent/50 transition-colors"
