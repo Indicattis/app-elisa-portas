@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, LayoutGrid, List, History, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2 } from "lucide-react";
+import { Package, LayoutGrid, List, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
@@ -197,10 +197,6 @@ export default function Pedidos() {
             <span className="lg:hidden hidden sm:inline">Produção</span>
           </Button>
           
-          <Button variant="outline" onClick={() => navigate('/dashboard/historico-producao')} className="gap-2" size="sm">
-            <History className="h-4 w-4" />
-            <span className="hidden sm:inline">Histórico</span>
-          </Button>
         </div>
 
         {/* Controles de visualização */}

@@ -121,7 +121,6 @@ import { ProducaoLayout } from "@/components/ProducaoLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
-import HistoricoProducao from "./pages/HistoricoProducao";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import ProducaoHome from "./pages/ProducaoHome";
 import ProducaoControle from "./pages/ProducaoControle";
@@ -735,16 +734,6 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/fabrica/historico-producao"
-                  element={
-                    <ProtectedRoute routeKey="historico_producao">
-                      <DashboardLayout>
-                        <HistoricoProducao />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/dashboard/fabrica/ordens"
                   element={
                     <ProtectedRoute routeKey="ordens">
@@ -1353,7 +1342,6 @@ const App = () => (
                 <Route path="/dashboard/pedidos" element={<Navigate to="/dashboard/fabrica/pedidos" replace />} />
                 <Route path="/dashboard/ordens" element={<Navigate to="/dashboard/fabrica/ordens" replace />} />
                 {/* Redirect de etiquetas removido */}
-                <Route path="/dashboard/historico-producao" element={<Navigate to="/dashboard/fabrica/historico-producao" replace />} />
                 <Route path="/dashboard/novo-pedido" element={<Navigate to="/dashboard/fabrica/novo-pedido" replace />} />
                 
                 {/* Redirects Logística */}
@@ -1411,7 +1399,7 @@ const App = () => (
                 <Route path="/dashboard/pedidos" element={<Navigate to="/dashboard/fabrica/pedidos" replace />} />
                 <Route path="/dashboard/ordens" element={<Navigate to="/dashboard/fabrica/ordens" replace />} />
                 {/* Redirect de etiquetas removido */}
-                <Route path="/dashboard/historico-producao" element={<Navigate to="/dashboard/fabrica/historico-producao" replace />} />
+                
                 <Route path="/dashboard/novo-pedido" element={<Navigate to="/dashboard/fabrica/novo-pedido" replace />} />
                 
                 {/* Redirects Logística */}
