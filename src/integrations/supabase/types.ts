@@ -4742,6 +4742,7 @@ export type Database = {
           cep: string | null
           cidade: string | null
           cliente_email: string | null
+          cliente_id: string | null
           cliente_nome: string | null
           cliente_telefone: string | null
           comprovante_nome: string | null
@@ -4787,6 +4788,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           cliente_email?: string | null
+          cliente_id?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
           comprovante_nome?: string | null
@@ -4832,6 +4834,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           cliente_email?: string | null
+          cliente_id?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
           comprovante_nome?: string | null
@@ -4883,6 +4886,13 @@ export type Database = {
             columns: ["canal_aquisicao_id"]
             isOneToOne: false
             referencedRelation: "canais_aquisicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {

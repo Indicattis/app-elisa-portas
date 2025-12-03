@@ -53,6 +53,7 @@ export interface VendaFormData {
   data_prevista_entrega?: string;
   tipo_entrega?: string;
   venda_presencial?: boolean;
+  cliente_id?: string; // ID do cliente existente selecionado
 }
 
 export interface AutorizacaoDesconto {
@@ -184,14 +185,89 @@ export function useVendas() {
       const valor_entrada = vendaData.valor_entrada || 0;
       const valor_a_receber = valor_total_venda - valor_entrada;
 
-      // 4. Criar venda com valores calculados
-      const { endereco, venda_presencial, ...vendaDataLimpo } = vendaData;
+      // 4. Criar ou vincular cliente
+      let clienteId: string | null = null;
+
+      if (vendaData.cliente_id) {
+        // Cliente existente selecionado
+        clienteId = vendaData.cliente_id;
+      } else if (vendaData.cpf_cliente) {
+        // Verificar se cliente já existe por CPF/CNPJ
+        const cpfNormalizado = vendaData.cpf_cliente.replace(/\D/g, '');
+        if (cpfNormalizado.length >= 11) {
+          const { data: clienteExistente } = await supabase
+            .from('clientes')
+            .select('id')
+            .eq('ativo', true)
+            .ilike('cpf_cnpj', `%${cpfNormalizado}%`)
+            .maybeSingle();
+          
+          if (clienteExistente) {
+            clienteId = clienteExistente.id;
+          } else {
+            // Criar novo cliente
+            const { data: novoCliente, error: clienteError } = await supabase
+              .from('clientes')
+              .insert({
+                nome: vendaData.cliente_nome,
+                telefone: vendaData.cliente_telefone || null,
+                email: vendaData.cliente_email || null,
+                cpf_cnpj: vendaData.cpf_cliente,
+                estado: vendaData.estado || null,
+                cidade: vendaData.cidade || null,
+                cep: vendaData.cep || null,
+                endereco: vendaData.endereco || null,
+                bairro: vendaData.bairro || null,
+                canal_aquisicao_id: vendaData.canal_aquisicao_id || null,
+                created_by: user.id
+              })
+              .select()
+              .single();
+            
+            if (!clienteError && novoCliente) {
+              clienteId = novoCliente.id;
+              console.log('✅ Novo cliente criado:', novoCliente.id);
+            } else if (clienteError) {
+              console.error('Erro ao criar cliente:', clienteError);
+            }
+          }
+        }
+      } else if (vendaData.cliente_nome) {
+        // Cliente sem CPF - criar mesmo assim
+        const { data: novoCliente, error: clienteError } = await supabase
+          .from('clientes')
+          .insert({
+            nome: vendaData.cliente_nome,
+            telefone: vendaData.cliente_telefone || null,
+            email: vendaData.cliente_email || null,
+            estado: vendaData.estado || null,
+            cidade: vendaData.cidade || null,
+            cep: vendaData.cep || null,
+            endereco: vendaData.endereco || null,
+            bairro: vendaData.bairro || null,
+            canal_aquisicao_id: vendaData.canal_aquisicao_id || null,
+            created_by: user.id
+          })
+          .select()
+          .single();
+        
+        if (!clienteError && novoCliente) {
+          clienteId = novoCliente.id;
+          console.log('✅ Novo cliente (sem CPF) criado:', novoCliente.id);
+        } else if (clienteError) {
+          console.error('Erro ao criar cliente:', clienteError);
+        }
+      }
+
+      // 5. Criar venda com valores calculados
+      const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
       
       // Definir se pagamento é na instalação (para cartão de crédito)
       const pagoNaInstalacao = pagamentoData?.metodo_pagamento === 'cartao_credito' && pagamentoData?.pago_na_instalacao;
       
       const vendaPayload = {
         ...vendaDataLimpo,
+        cliente_id: clienteId, // Vincula ao cliente
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
@@ -221,7 +297,7 @@ export function useVendas() {
       
       if (vendaError) throw vendaError;
 
-      // 5. Criar produtos da venda
+      // 6. Criar produtos da venda
       const produtosComVendaId = portas.map(produto => ({
         venda_id: venda.id,
         tipo_produto: produto.tipo_produto,
@@ -248,7 +324,7 @@ export function useVendas() {
       
       if (produtosError) throw produtosError;
 
-      // 6. GERAR CONTAS A RECEBER baseado no método de pagamento
+      // 7. GERAR CONTAS A RECEBER baseado no método de pagamento
       const dataVendaBase = new Date(vendaData.data_venda || new Date().toISOString());
       
       if (pagamentoData) {
@@ -369,7 +445,7 @@ export function useVendas() {
         }
       }
 
-      // 7. Atualizar instalação criada automaticamente pelo trigger
+      // 8. Atualizar instalação criada automaticamente pelo trigger
       const tamanhosConcatenados = portas.map(p => p.tamanho).join(', ');
       
       const updateData: any = { 
@@ -392,7 +468,7 @@ export function useVendas() {
         console.error('Erro ao atualizar instalação:', instalacaoError);
       }
 
-      // 8. Salvar autorização de desconto, se houver
+      // 9. Salvar autorização de desconto, se houver
       if (autorizacaoDesconto) {
         const { error: autorizacaoError } = await supabase
           .from('vendas_autorizacoes_desconto')
@@ -411,14 +487,14 @@ export function useVendas() {
         }
       }
 
-      // 9. Buscar a instalação para geocodificar
+      // 10. Buscar a instalação para geocodificar
       const { data: instalacao } = await supabase
         .from('instalacoes')
         .select('id')
         .eq('venda_id', venda.id)
         .single();
 
-      // 10. Chamar geocodificação
+      // 11. Chamar geocodificação
       if (instalacao && venda.cidade && venda.estado) {
         try {
           await supabase.functions.invoke('geocode-instalacao', {
@@ -440,6 +516,7 @@ export function useVendas() {
       queryClient.invalidateQueries({ queryKey: ['contador-vendas'] });
       queryClient.invalidateQueries({ queryKey: ['instalacoes'] });
       queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({
         title: 'Sucesso',
         description: 'Venda criada com sucesso!',

@@ -423,6 +423,10 @@ export default function VendasNova() {
             canal_aquisicao_id: formData.canal_aquisicao_id || '',
           }}
           onChange={(dados) => setFormData(prev => ({ ...prev, ...dados }))}
+          onClienteSelecionado={(cliente) => {
+            // Quando um cliente existente é selecionado, armazena o ID
+            setFormData(prev => ({ ...prev, cliente_id: cliente?.id }));
+          }}
         />
 
         {/* Dados da Venda */}
