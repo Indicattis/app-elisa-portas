@@ -26,6 +26,7 @@ import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessor
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
+import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
 import { validarCredito } from '@/utils/creditoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,6 +80,10 @@ export default function VendasNova() {
   // Estado para crédito a nível de venda
   const [valorCredito, setValorCredito] = useState<number>(0);
   const [percentualCredito, setPercentualCredito] = useState<number>(0);
+
+  // Estado para pintura rápida após adicionar porta de enrolar
+  const [pinturaRapidaOpen, setPinturaRapidaOpen] = useState(false);
+  const [portaRecemAdicionada, setPortaRecemAdicionada] = useState<{largura: number, altura: number} | null>(null);
 
   // Estado para pagamento
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>({
@@ -142,6 +147,27 @@ export default function VendasNova() {
       
       return newPortas;
     });
+
+    // Se for porta de enrolar nova (não editando), abrir modal de pintura rápida
+    if (produto.tipo_produto === 'porta_enrolar' && indexEditando === undefined && produto.largura && produto.altura) {
+      setPortaRecemAdicionada({ largura: produto.largura, altura: produto.altura });
+      setPinturaRapidaOpen(true);
+    }
+  };
+
+  const handleAddPinturaRapida = (pintura: ProdutoVenda) => {
+    setPortas(prev => {
+      const newPortas = [...prev, pintura];
+      const valorTotal = recalcularValorTotal(newPortas);
+      
+      setFormData(prevForm => ({
+        ...prevForm,
+        valor_a_receber: valorTotal - (prevForm.valor_entrada || 0)
+      }));
+      
+      return newPortas;
+    });
+    setPortaRecemAdicionada(null);
   };
 
   const handleAddAcessorios = (produtos: ProdutoVenda[]) => {
@@ -659,7 +685,7 @@ export default function VendasNova() {
                 }}
               >
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Manutenção
+                Serviço
               </Button>
               <Button 
                 type="button"
@@ -668,7 +694,7 @@ export default function VendasNova() {
                 onClick={() => setAcessoriosModalOpen(true)}
               >
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Acessório/Adicional
+                Catálogo
               </Button>
             </div>
               <ProdutoVendaForm 
@@ -868,6 +894,17 @@ export default function VendasNova() {
           percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
+        />
+      )}
+
+      {portaRecemAdicionada && (
+        <PinturaRapidaModal
+          open={pinturaRapidaOpen}
+          onOpenChange={setPinturaRapidaOpen}
+          largura={portaRecemAdicionada.largura}
+          altura={portaRecemAdicionada.altura}
+          onConfirm={handleAddPinturaRapida}
+          onSkip={() => setPortaRecemAdicionada(null)}
         />
       )}
     </div>

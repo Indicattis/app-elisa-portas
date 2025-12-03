@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { ProdutoVenda } from '@/hooks/useVendas';
 
 interface SelecionarAcessoriosModalProps {
@@ -57,11 +57,6 @@ export function SelecionarAcessoriosModal({
     enabled: open
   });
 
-  // Separar por tipo para exibição (mantém compatibilidade com acessórios/adicionais)
-  const acessorios = produtosEstoque.filter(item => item.categoria === 'acessório');
-  const adicionais = produtosEstoque.filter(item => item.categoria === 'adicional');
-  const outrosProdutos = produtosEstoque.filter(item => item.categoria !== 'acessório' && item.categoria !== 'adicional');
-
   const toggleItem = (itemId: string) => {
     setItensSelecionados(prev => {
       const newSet = new Set(prev);
@@ -75,8 +70,7 @@ export function SelecionarAcessoriosModal({
   };
 
   const handleConfirmar = () => {
-    const todosItens: ItemSelecionavel[] = [...acessorios, ...adicionais, ...outrosProdutos];
-    const itensSelecionadosArray = todosItens.filter(item => itensSelecionados.has(item.id));
+    const itensSelecionadosArray = produtosEstoque.filter(item => itensSelecionados.has(item.id));
     
     const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => ({
       tipo_produto: item.tipo === 'acessorio' ? 'acessorio' : 'adicional',
@@ -108,156 +102,78 @@ export function SelecionarAcessoriosModal({
     onOpenChange(false);
   };
 
+  const getCategoriaColor = (categoria: string) => {
+    switch (categoria) {
+      case 'acessório': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'adicional': return 'bg-purple-100 text-purple-800 border-purple-200';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Selecionar Acessórios e Adicionais</DialogTitle>
+          <DialogTitle>Catálogo de Produtos</DialogTitle>
           <DialogDescription>
             Selecione os itens que deseja adicionar à venda
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="h-[400px]">
           {isLoading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
               Carregando itens...
             </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Acessórios */}
-              {acessorios.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Package className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-lg">Acessórios</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {acessorios.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
-                      >
-                        <Checkbox
-                          id={item.id}
-                          checked={itensSelecionados.has(item.id)}
-                          onCheckedChange={() => toggleItem(item.id)}
-                        />
-                        <div className="flex-1 space-y-1">
-                          <Label
-                            htmlFor={item.id}
-                            className="text-sm font-medium leading-none cursor-pointer"
-                          >
-                            {item.nome}
-                          </Label>
-                          {item.descricao && (
-                            <p className="text-xs text-muted-foreground">
-                              {item.descricao}
-                            </p>
-                          )}
-                          <p className="text-sm font-semibold text-primary">
-                            R$ {item.preco.toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {acessorios.length > 0 && adicionais.length > 0 && <Separator />}
-
-              {/* Adicionais */}
-              {adicionais.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-lg">Adicionais</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {adicionais.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
-                      >
-                        <Checkbox
-                          id={item.id}
-                          checked={itensSelecionados.has(item.id)}
-                          onCheckedChange={() => toggleItem(item.id)}
-                        />
-                        <div className="flex-1 space-y-1">
-                          <Label
-                            htmlFor={item.id}
-                            className="text-sm font-medium leading-none cursor-pointer"
-                          >
-                            {item.nome}
-                          </Label>
-                          {item.descricao && (
-                            <p className="text-xs text-muted-foreground">
-                              {item.descricao}
-                            </p>
-                          )}
-                          <p className="text-sm font-semibold text-primary">
-                            R$ {item.preco.toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Outros Produtos */}
-              {outrosProdutos.length > 0 && (
-                <>
-                  {(acessorios.length > 0 || adicionais.length > 0) && <Separator />}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-5 h-5 text-primary" />
-                      <h3 className="font-semibold text-lg">Outros Produtos</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {outrosProdutos.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
-                        >
-                          <Checkbox
-                            id={item.id}
-                            checked={itensSelecionados.has(item.id)}
-                            onCheckedChange={() => toggleItem(item.id)}
-                          />
-                          <div className="flex-1 space-y-1">
-                            <Label
-                              htmlFor={item.id}
-                              className="text-sm font-medium leading-none cursor-pointer"
-                            >
-                              {item.nome}
-                            </Label>
-                            {item.descricao && (
-                              <p className="text-xs text-muted-foreground">
-                                {item.descricao}
-                              </p>
-                            )}
-                            <p className="text-sm font-semibold text-primary">
-                              R$ {item.preco.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {acessorios.length === 0 && adicionais.length === 0 && outrosProdutos.length === 0 && !isLoading && (
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum produto disponível para venda avulsa.
-                  <br />
-                  <span className="text-xs">Configure produtos no módulo de Estoque</span>
-                </div>
-              )}
+          ) : produtosEstoque.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum produto disponível para venda avulsa.
+              <br />
+              <span className="text-xs">Configure produtos no módulo de Estoque</span>
             </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="h-8">
+                  <TableHead className="w-10"></TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead className="w-24">Categoria</TableHead>
+                  <TableHead className="text-right w-24">Preço</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {produtosEstoque.map((item) => (
+                  <TableRow 
+                    key={item.id} 
+                    className="h-[30px] cursor-pointer hover:bg-accent/50 transition-colors"
+                    onClick={() => toggleItem(item.id)}
+                  >
+                    <TableCell className="py-1 px-3">
+                      <Checkbox
+                        checked={itensSelecionados.has(item.id)}
+                        onCheckedChange={() => toggleItem(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </TableCell>
+                    <TableCell className="py-1 font-medium text-sm">
+                      {item.nome}
+                    </TableCell>
+                    <TableCell className="py-1">
+                      <Badge 
+                        variant="outline" 
+                        className={`text-[10px] px-1.5 py-0 h-5 ${getCategoriaColor(item.categoria)}`}
+                      >
+                        {item.categoria}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-1 text-right font-semibold text-primary text-sm">
+                      R$ {item.preco.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </ScrollArea>
 

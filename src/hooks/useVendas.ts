@@ -15,6 +15,7 @@ export interface ProdutoVenda {
   adicional_id?: string;
   estoque_id?: string;
   tipo_pintura?: string;
+  tipo_servico?: string;
   valor_produto: number;
   valor_pintura: number;
   valor_instalacao: number;

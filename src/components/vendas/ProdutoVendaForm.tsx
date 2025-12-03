@@ -430,32 +430,6 @@ export function ProdutoVendaForm({
                 </div>
               </div>
 
-              <div className="border-t pt-6">
-                <div className="space-y-2">
-                  <Label htmlFor="cor" className="text-base">Cor (Opcional)</Label>
-                  <Select
-                    value={formData.cor_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, cor_id: value }))}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Selecione uma cor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cores?.map((cor) => (
-                        <SelectItem key={cor.id} value={cor.id}>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-4 h-4 rounded border"
-                              style={{ backgroundColor: cor.codigo_hex }}
-                            />
-                            {cor.nome}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </>
           )}
 
@@ -663,16 +637,39 @@ export function ProdutoVendaForm({
           )}
 
           {formData.tipo_produto === 'manutencao' && (
-            <div className="space-y-2">
-              <Label htmlFor="descricao_manutencao">Descrição do Serviço *</Label>
-              <Textarea
-                id="descricao_manutencao"
-                value={formData.descricao}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                placeholder="Descreva o serviço de manutenção a ser realizado"
-                rows={3}
-                required
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="tipo_servico">Tipo de Serviço *</Label>
+                <Select
+                  value={formData.tipo_servico || ''}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_servico: value }))}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manutencao">Manutenção</SelectItem>
+                    <SelectItem value="instalacao_avulsa">Instalação Avulsa</SelectItem>
+                    <SelectItem value="suporte">Suporte Técnico</SelectItem>
+                    <SelectItem value="visita_tecnica">Visita Técnica</SelectItem>
+                    <SelectItem value="reparo">Reparo</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="descricao_manutencao">Descrição do Serviço *</Label>
+                <Textarea
+                  id="descricao_manutencao"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                  placeholder="Descreva o serviço a ser realizado"
+                  rows={3}
+                  required
+                />
+              </div>
             </div>
           )}
 
@@ -704,21 +701,6 @@ export function ProdutoVendaForm({
           )}
 
 
-          {/* Descrição - ocultar se for manutenção pois já tem campo específico */}
-          {formData.tipo_produto !== 'manutencao' && (
-            <div className="border-t pt-6">
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Observações (Opcional)</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                  rows={3}
-                  placeholder="Adicione observações sobre este produto..."
-                />
-              </div>
-            </div>
-          )}
 
           <div className="border-t pt-6">
             <Button type="submit" className="w-full h-12 text-base">
