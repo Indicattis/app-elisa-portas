@@ -22,22 +22,26 @@ export function VendaResumo({
       produto.valor_instalacao
     ) * produto.quantidade;
     
+    const creditoProduto = (produto.valor_credito || 0) * produto.quantidade;
+    
     const descontoAplicado = produto.tipo_desconto === 'valor' 
       ? produto.desconto_valor 
       : valorBase * (produto.desconto_percentual / 100);
     
-    const valorFinal = valorBase - descontoAplicado;
+    const valorFinal = valorBase - descontoAplicado + creditoProduto;
     
     return {
       produto: acc.produto + (produto.valor_produto * produto.quantidade),
       pintura: acc.pintura + (produto.valor_pintura * produto.quantidade),
       instalacao: acc.instalacao + (produto.valor_instalacao * produto.quantidade),
+      credito: acc.credito + creditoProduto,
       total: acc.total + valorFinal
     };
   }, {
     produto: 0,
     pintura: 0,
     instalacao: 0,
+    credito: 0,
     total: 0
   });
 
@@ -45,7 +49,7 @@ export function VendaResumo({
   const descontoAplicado = calcularDescontoTotal(produtos);
   const percentualDescontoCalc = calcularPercentualDesconto(descontoAplicado, totalVendaSemDesconto);
   
-  const valorTotalComCreditoEFrete = totais.total + valorCredito + valorFrete;
+  const valorTotalComCreditoEFrete = totais.total + valorFrete;
 
   return (
     <Card>
@@ -77,11 +81,11 @@ export function VendaResumo({
             </span>
           </div>
         )}
-        {valorCredito > 0 && (
+        {totais.credito > 0 && (
           <div className="flex justify-between text-blue-600 dark:text-blue-400">
             <span className="font-medium">Crédito Aplicado:</span>
             <span className="font-semibold">
-              +R$ {valorCredito.toFixed(2)} ({percentualCredito.toFixed(2)}%)
+              +R$ {totais.credito.toFixed(2)} ({percentualCredito.toFixed(2)}%)
             </span>
           </div>
         )}
