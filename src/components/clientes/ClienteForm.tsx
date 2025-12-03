@@ -1,0 +1,279 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
+import { Cliente, ClienteFormData } from "@/hooks/useClientes";
+import { Loader2 } from "lucide-react";
+
+const ESTADOS_BR = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+  "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+];
+
+const formSchema = z.object({
+  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  telefone: z.string().optional(),
+  email: z.string().email("E-mail inválido").optional().or(z.literal("")),
+  cpf_cnpj: z.string().optional(),
+  estado: z.string().optional(),
+  cidade: z.string().optional(),
+  cep: z.string().optional(),
+  endereco: z.string().optional(),
+  bairro: z.string().optional(),
+  canal_aquisicao_id: z.string().optional(),
+  observacoes: z.string().optional(),
+});
+
+interface ClienteFormProps {
+  cliente?: Cliente | null;
+  onSubmit: (data: ClienteFormData) => void;
+  isLoading?: boolean;
+}
+
+export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) {
+  const { canais } = useCanaisAquisicao();
+
+  const form = useForm<ClienteFormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      nome: cliente?.nome || "",
+      telefone: cliente?.telefone || "",
+      email: cliente?.email || "",
+      cpf_cnpj: cliente?.cpf_cnpj || "",
+      estado: cliente?.estado || "",
+      cidade: cliente?.cidade || "",
+      cep: cliente?.cep || "",
+      endereco: cliente?.endereco || "",
+      bairro: cliente?.bairro || "",
+      canal_aquisicao_id: cliente?.canal_aquisicao_id || "",
+      observacoes: cliente?.observacoes || "",
+    },
+  });
+
+  const handleSubmit = (data: ClienteFormData) => {
+    // Remove campos vazios
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== "" && v !== undefined)
+    ) as ClienteFormData;
+    onSubmit(cleanData);
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="nome"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome completo *</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome do cliente" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="telefone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Telefone</FormLabel>
+                <FormControl>
+                  <Input placeholder="(00) 00000-0000" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>E-mail</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="email@exemplo.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="cpf_cnpj"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>CPF/CNPJ</FormLabel>
+              <FormControl>
+                <Input placeholder="000.000.000-00 ou 00.000.000/0001-00" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="estado"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Estado</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {ESTADOS_BR.map((uf) => (
+                      <SelectItem key={uf} value={uf}>
+                        {uf}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="cidade"
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Cidade</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nome da cidade" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="cep"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CEP</FormLabel>
+                <FormControl>
+                  <Input placeholder="00000-000" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="bairro"
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Bairro</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nome do bairro" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="endereco"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Endereço</FormLabel>
+              <FormControl>
+                <Input placeholder="Rua, número, complemento" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="canal_aquisicao_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Canal de Aquisição</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Como conheceu a empresa?" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {canais.map((canal) => (
+                    <SelectItem key={canal.id} value={canal.id}>
+                      {canal.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="observacoes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Observações</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Informações adicionais sobre o cliente"
+                  className="resize-none"
+                  rows={3}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {cliente ? "Salvar Alterações" : "Criar Cliente"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
