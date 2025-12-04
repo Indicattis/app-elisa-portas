@@ -1,12 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { OrcamentoProduto } from '@/types/produto';
+import { X } from 'lucide-react';
 
 interface OrcamentoResumoProps {
   produtos: OrcamentoProduto[];
   valorFrete?: number;
+  valorCredito?: number;
+  percentualCredito?: number;
+  onRemoverCredito?: () => void;
 }
 
-export function OrcamentoResumo({ produtos, valorFrete = 0 }: OrcamentoResumoProps) {
+export function OrcamentoResumo({ 
+  produtos, 
+  valorFrete = 0,
+  valorCredito = 0,
+  percentualCredito = 0,
+  onRemoverCredito
+}: OrcamentoResumoProps) {
   const totais = produtos.reduce((acc, produto) => {
     const valorBase = produto.valor * (produto.quantidade || 1);
     const valorPintura = (produto.valor_pintura || 0) * (produto.quantidade || 1);
@@ -33,7 +44,8 @@ export function OrcamentoResumo({ produtos, valorFrete = 0 }: OrcamentoResumoPro
     total: 0
   });
 
-  const valorTotalComFrete = totais.total + valorFrete;
+  // Total final = produtos + frete + crédito
+  const valorTotalFinal = totais.total + valorFrete + valorCredito;
   const percentualDesconto = totais.desconto > 0 && (totais.produto + totais.pintura + totais.instalacao) > 0
     ? (totais.desconto / (totais.produto + totais.pintura + totais.instalacao)) * 100
     : 0;
@@ -72,10 +84,32 @@ export function OrcamentoResumo({ produtos, valorFrete = 0 }: OrcamentoResumoPro
             </span>
           </div>
         )}
+        {valorCredito > 0 && (
+          <div className="flex justify-between items-center text-blue-600 dark:text-blue-400">
+            <span className="font-medium">Crédito Aplicado:</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">
+                +R$ {valorCredito.toFixed(2)} ({percentualCredito.toFixed(2)}%)
+              </span>
+              {onRemoverCredito && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={onRemoverCredito}
+                  title="Remover crédito"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
         <div className="h-px bg-border my-2" />
         <div className="flex justify-between text-lg">
           <span className="font-bold">Total:</span>
-          <span className="font-bold text-primary">R$ {valorTotalComFrete.toFixed(2)}</span>
+          <span className="font-bold text-primary">R$ {valorTotalFinal.toFixed(2)}</span>
         </div>
       </CardContent>
     </Card>

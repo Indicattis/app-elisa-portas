@@ -6,6 +6,7 @@ import type { OrcamentoProduto, OrcamentoCusto } from "@/types/produto";
 export function useOrcamentoForm() {
   const [formData, setFormData] = useState<OrcamentoFormData>({
     lead_id: "",
+    cliente_id: "",
     cliente_nome: "",
     cliente_cpf: "",
     cliente_telefone: "",
@@ -14,6 +15,7 @@ export function useOrcamentoForm() {
     cliente_cidade: "",
     cliente_bairro: "",
     cliente_cep: "",
+    cliente_endereco: "",
     valor_frete: "0",
     publico_alvo: "",
     tipo_entrega: "instalacao",
@@ -22,7 +24,9 @@ export function useOrcamentoForm() {
     requer_analise: false,
     motivo_analise: "",
     data_orcamento: "",
-    observacoes: ""
+    observacoes: "",
+    valor_credito: 0,
+    percentual_credito: 0
   });
 
   const [camposPersonalizados, setCamposPersonalizados] = useState<CampoPersonalizado[]>([]);
@@ -32,6 +36,7 @@ export function useOrcamentoForm() {
   const resetForm = () => {
     setFormData({
       lead_id: "",
+      cliente_id: "",
       cliente_nome: "",
       cliente_cpf: "",
       cliente_telefone: "",
@@ -40,6 +45,7 @@ export function useOrcamentoForm() {
       cliente_cidade: "",
       cliente_bairro: "",
       cliente_cep: "",
+      cliente_endereco: "",
       valor_frete: "0",
       publico_alvo: "",
       tipo_entrega: "instalacao",
@@ -48,7 +54,9 @@ export function useOrcamentoForm() {
       requer_analise: false,
       motivo_analise: "",
       data_orcamento: "",
-      observacoes: ""
+      observacoes: "",
+      valor_credito: 0,
+      percentual_credito: 0
     });
     setCamposPersonalizados([]);
     setProdutos([]);
