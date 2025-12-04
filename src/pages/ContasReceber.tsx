@@ -15,8 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, isAfter, isBefore, isToday, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Check, X, Search, DollarSign, Clock, AlertTriangle, TrendingUp, FolderOpen, Folder, ChevronRight, Building2 } from "lucide-react";
+import { CalendarIcon, Check, X, Search, DollarSign, Clock, AlertTriangle, TrendingUp, FolderOpen, Folder, ChevronRight, Building2, Factory } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EtapaPedido, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 
 interface ContaReceber {
   id: string;
@@ -52,6 +53,7 @@ interface GrupoPedido {
   total_a_receber: number;
   total_pago: number;
   tem_vencido: boolean;
+  etapa_fabrica?: EtapaPedido;
 }
 
 export default function ContasReceber() {
@@ -109,16 +111,30 @@ export default function ContasReceber() {
         });
       }
       
+      // Buscar pedidos de produção para obter a etapa
+      let pedidosMap: Record<string, { etapa_atual: string }> = {};
+      if (vendaIds.length > 0) {
+        const { data: pedidos } = await supabase
+          .from('pedidos_producao')
+          .select('venda_id, etapa_atual')
+          .in('venda_id', vendaIds);
+        
+        (pedidos || []).forEach(p => {
+          if (p.venda_id) pedidosMap[p.venda_id] = { etapa_atual: p.etapa_atual };
+        });
+      }
+      
       // Combinar dados e filtrar contas órfãs (sem venda válida)
       const contasComRelacoes = (data || [])
         .map(conta => ({
           ...conta,
           venda: conta.venda_id ? vendasMap[conta.venda_id] : undefined,
-          empresa: conta.empresa_receptora_id ? empresasMap[conta.empresa_receptora_id] : undefined
+          empresa: conta.empresa_receptora_id ? empresasMap[conta.empresa_receptora_id] : undefined,
+          pedido: conta.venda_id ? pedidosMap[conta.venda_id] : undefined
         }))
         .filter(conta => conta.venda !== undefined); // Filtra contas sem venda válida
       
-      return contasComRelacoes as ContaReceber[];
+      return contasComRelacoes as (ContaReceber & { pedido?: { etapa_atual: string } })[];
     }
   });
 
@@ -212,7 +228,7 @@ export default function ContasReceber() {
 
   // Agrupar por pedido
   const gruposPorPedido: GrupoPedido[] = Object.values(
-    contasFiltradas.reduce((acc, conta) => {
+    contasFiltradas.reduce((acc, conta: any) => {
       const key = conta.venda_id;
       if (!acc[key]) {
         acc[key] = {
@@ -225,7 +241,8 @@ export default function ContasReceber() {
           parcelas_pagas: 0,
           total_a_receber: 0,
           total_pago: 0,
-          tem_vencido: false
+          tem_vencido: false,
+          etapa_fabrica: conta.pedido?.etapa_atual as EtapaPedido | undefined
         };
       }
       acc[key].contas.push(conta);
@@ -564,8 +581,17 @@ export default function ContasReceber() {
                         </div>
                         
                         <div className="flex-1 text-left">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold">{grupo.cliente_nome}</span>
+                            {grupo.etapa_fabrica && ETAPAS_CONFIG[grupo.etapa_fabrica] && (
+                              <Badge className={cn(
+                                "text-xs text-white",
+                                ETAPAS_CONFIG[grupo.etapa_fabrica].color
+                              )}>
+                                <Factory className="h-3 w-3 mr-1" />
+                                {ETAPAS_CONFIG[grupo.etapa_fabrica].label}
+                              </Badge>
+                            )}
                             {grupo.tem_vencido && (
                               <Badge variant="destructive" className="text-xs">
                                 Possui parcelas vencidas
