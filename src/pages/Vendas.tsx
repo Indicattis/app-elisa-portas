@@ -198,11 +198,11 @@ export default function Vendas() {
       return matchesSearch;
     }) || [];
 
-    // Ordenação por valor
+    // Ordenação por valor (incluindo crédito)
     if (sortByValue !== 'none') {
       result = [...result].sort((a, b) => {
-        const valorA = a.valor_venda || 0;
-        const valorB = b.valor_venda || 0;
+        const valorA = (a.valor_venda || 0) + (a.valor_credito || 0);
+        const valorB = (b.valor_venda || 0) + (b.valor_credito || 0);
         return sortByValue === 'desc' ? valorB - valorA : valorA - valorB;
       });
     }
@@ -217,8 +217,8 @@ export default function Vendas() {
     return {
       totalVendas: filteredVendas.length,
       totalValor: filteredVendas.reduce((sum, v) => {
-        // Calcula o valor sem frete: valor_venda - valor_frete
-        const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0);
+        // Calcula o valor sem frete + crédito: valor_venda - valor_frete + valor_credito
+        const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
         return sum + valorSemFrete;
       }, 0),
       totalProdutos: filteredVendas.reduce((sum, v) => sum + (v.produtos?.length || 0), 0),
@@ -503,7 +503,7 @@ export default function Vendas() {
                          {/* Mobile: Coluna 2 - Valor + Ações */}
                         <TableCell className="py-1 px-2 md:hidden text-right">
                           <div className="space-y-1">
-                            <div className="font-bold text-xs">{formatCurrency(venda.valor_venda || 0)}</div>
+                            <div className="font-bold text-xs">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</div>
                             <div className="flex justify-end gap-1">
                               <Button
                                 variant="ghost"
@@ -571,10 +571,10 @@ export default function Vendas() {
                           )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-xs font-semibold text-right py-1">
-                          {formatCurrency((venda.valor_venda || 0) - (venda.valor_frete || 0))}
+                          {formatCurrency((venda.valor_venda || 0) - (venda.valor_frete || 0) + (venda.valor_credito || 0))}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-xs font-bold text-right py-1">
-                          {formatCurrency(venda.valor_venda || 0)}
+                          {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
                         </TableCell>
                         <TableCell className="hidden md:table-cell py-1">
                           <div className="flex items-center gap-2">
