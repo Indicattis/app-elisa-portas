@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, MapPin, Calendar, DollarSign, FileText, Package, Phone, Mail, Truck, Wrench } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { User, MapPin, Calendar, DollarSign, FileText, Package, Phone, Mail, Truck, Wrench, Receipt, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -246,6 +247,34 @@ export function VendaDetailsModal({ open, onOpenChange, venda }: VendaDetailsMod
             </CardContent>
           </Card>
         </div>
+
+        {/* Comprovante */}
+        {venda.comprovante_url && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Receipt className="w-4 h-4" />
+                Comprovante Anexado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{venda.comprovante_nome || 'Comprovante'}</p>
+                  <p className="text-xs text-muted-foreground">Arquivo anexado à venda</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(venda.comprovante_url, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Visualizar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Observações */}
         {venda.observacoes_venda && (
