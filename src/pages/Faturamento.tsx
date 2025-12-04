@@ -903,6 +903,7 @@ export default function Faturamento() {
                       <TableHead className="text-right">Valor Produtos</TableHead>
                       <TableHead className="text-right">Descontos</TableHead>
                       <TableHead className="text-right">% Desconto</TableHead>
+                      <TableHead className="text-right">Acréscimo</TableHead>
                       <TableHead className="text-right">Custos</TableHead>
                       <TableHead className="text-right">% Margem</TableHead>
                       <TableHead className="text-right">Instalação</TableHead>
@@ -977,6 +978,16 @@ export default function Faturamento() {
                               <span className="text-muted-foreground">-</span>
                             );
                           })()}
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          {(venda.valor_credito || 0) > 0 ? (
+                            <Badge variant="outline" className="font-medium text-emerald-600 border-emerald-600">
+                              + R$ {(venda.valor_credito || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
 
                         <TableCell className="text-right">
