@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, isAfter, isBefore, isToday, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Check, X, Search, DollarSign, Clock, AlertTriangle, TrendingUp, FolderOpen, Folder, ChevronRight } from "lucide-react";
+import { CalendarIcon, Check, X, Search, DollarSign, Clock, AlertTriangle, TrendingUp, FolderOpen, Folder, ChevronRight, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ContaReceber {
@@ -264,6 +265,38 @@ export default function ContasReceber() {
     .filter(c => c.status === 'pendente' && isAfter(parseISO(c.data_vencimento), hoje) && isBefore(parseISO(c.data_vencimento), addDays(hoje, 7)))
     .reduce((acc, c) => acc + c.valor_parcela, 0);
 
+  // Calcular valores por empresa
+  const valoresPorEmpresa = useMemo(() => {
+    const empresasMap: Record<string, { nome: string; totalReceber: number; totalVencido: number; totalPago: number }> = {};
+    
+    contas.forEach(conta => {
+      const empresaId = conta.empresa_receptora_id || 'sem_empresa';
+      const empresaNome = conta.empresa?.nome || 'Sem empresa definida';
+      
+      if (!empresasMap[empresaId]) {
+        empresasMap[empresaId] = {
+          nome: empresaNome,
+          totalReceber: 0,
+          totalVencido: 0,
+          totalPago: 0
+        };
+      }
+      
+      if (conta.status === 'pendente') {
+        empresasMap[empresaId].totalReceber += conta.valor_parcela;
+        if (isBefore(parseISO(conta.data_vencimento), hoje) && !isToday(parseISO(conta.data_vencimento))) {
+          empresasMap[empresaId].totalVencido += conta.valor_parcela;
+        }
+      } else if (conta.status === 'pago') {
+        empresasMap[empresaId].totalPago += conta.valor_pago || conta.valor_parcela;
+      }
+    });
+    
+    return Object.entries(empresasMap)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.totalReceber - a.totalReceber);
+  }, [contas, hoje]);
+
   const getStatusBadge = (conta: ContaReceber) => {
     if (conta.status === 'pago') {
       return <Badge className="bg-green-500">Pago</Badge>;
@@ -353,6 +386,51 @@ export default function ContasReceber() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Tabela de Valores por Empresa */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Valores por Empresa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Empresa</TableHead>
+                <TableHead className="text-right">A Receber</TableHead>
+                <TableHead className="text-right">Vencido</TableHead>
+                <TableHead className="text-right">Recebido</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {valoresPorEmpresa.map((empresa) => (
+                <TableRow key={empresa.id}>
+                  <TableCell className="font-medium">{empresa.nome}</TableCell>
+                  <TableCell className="text-right text-green-600 font-medium">
+                    {formatCurrency(empresa.totalReceber)}
+                  </TableCell>
+                  <TableCell className="text-right text-destructive font-medium">
+                    {formatCurrency(empresa.totalVencido)}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {formatCurrency(empresa.totalPago)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {valoresPorEmpresa.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                    Nenhum dado disponível
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Filtros */}
       <Card>
