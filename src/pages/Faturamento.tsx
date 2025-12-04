@@ -219,6 +219,8 @@ export default function Faturamento() {
           lucro_total,
           custo_total,
           frete_aprovado,
+          comprovante_url,
+          comprovante_nome,
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
