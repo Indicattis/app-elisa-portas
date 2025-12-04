@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Eye, Pencil, Trash2, Search, DollarSign, ShoppingCart, Package, FileDown, CalendarIcon, Trophy, TrendingUp, FileText, X, Edit, DoorClosed, Home, FileSignature, Download } from 'lucide-react';
+import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -36,6 +36,7 @@ import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { generateVendaPDF } from '@/utils/vendaIndividualPDFGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { ContratosVendaModal } from '@/components/vendas/ContratosVendaModal';
+import { ComprovanteUploadModal } from '@/components/vendas/ComprovanteUploadModal';
 
 export default function Vendas() {
   const navigate = useNavigate();
@@ -45,6 +46,8 @@ export default function Vendas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [contratosModalOpen, setContratosModalOpen] = useState(false);
   const [selectedVendaId, setSelectedVendaId] = useState<string>('');
+  const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
+  const [selectedVendaForComprovante, setSelectedVendaForComprovante] = useState<any>(null);
   
   // Estados para filtros avançados
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -471,11 +474,12 @@ export default function Vendas() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredVendas?.map((venda) => {
-                    const canEdit = isAdmin || venda.atendente_id === userRole?.user_id;
-                    
-                    return (
-                      <TableRow key={venda.id} className="h-[30px] max-h-[30px]">
+                  filteredVendas?.map((venda) => (
+                      <TableRow 
+                        key={venda.id} 
+                        className="h-[30px] max-h-[30px] cursor-pointer hover:bg-muted/50"
+                        onDoubleClick={() => navigate(`/dashboard/vendas/${venda.id}/view`)}
+                      >
                         {/* Mobile: Coluna 1 - Cliente + Info */}
                         <TableCell className="py-1 px-2 md:hidden">
                           <div className="space-y-1">
@@ -508,7 +512,7 @@ export default function Vendas() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleDownloadVendaPDF(venda)}
+                                onClick={(e) => { e.stopPropagation(); handleDownloadVendaPDF(venda); }}
                                 className="h-7 w-7"
                               >
                                 <Download className="h-3 w-3" />
@@ -516,7 +520,8 @@ export default function Vendas() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedVendaId(venda.id);
                                   setContratosModalOpen(true);
                                 }}
@@ -527,21 +532,15 @@ export default function Vendas() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => navigate(`/dashboard/vendas/${venda.id}/view`)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedVendaForComprovante(venda);
+                                  setComprovanteModalOpen(true);
+                                }}
                                 className="h-7 w-7"
                               >
-                                <Eye className="h-3 w-3" />
+                                <Paperclip className={cn("h-3 w-3", venda.comprovante_url && "text-green-500")} />
                               </Button>
-                              {canEdit && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
-                                  className="h-7 w-7"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              )}
                             </div>
                           </div>
                         </TableCell>
@@ -592,7 +591,7 @@ export default function Vendas() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDownloadVendaPDF(venda)}
+                              onClick={(e) => { e.stopPropagation(); handleDownloadVendaPDF(venda); }}
                               title="Baixar PDF"
                             >
                               <Download className="w-4 h-4" />
@@ -600,7 +599,8 @@ export default function Vendas() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedVendaId(venda.id);
                                 setContratosModalOpen(true);
                               }}
@@ -611,23 +611,19 @@ export default function Vendas() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => navigate(`/dashboard/vendas/${venda.id}/view`)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedVendaForComprovante(venda);
+                                setComprovanteModalOpen(true);
+                              }}
+                              title={venda.comprovante_url ? "Ver/Alterar Comprovante" : "Anexar Comprovante"}
                             >
-                              <Eye className="w-4 h-4" />
+                              <Paperclip className={cn("w-4 h-4", venda.comprovante_url && "text-green-500")} />
                             </Button>
-                            {canEdit && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => navigate(`/dashboard/vendas/${venda.id}/editar`)}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            )}
                             {isAdmin && (
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon">
+                                  <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
                                     <Trash2 className="w-4 h-4 text-destructive" />
                                   </Button>
                                 </AlertDialogTrigger>
@@ -650,9 +646,8 @@ export default function Vendas() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })
-                )}
+                    ))
+                  )}
               </TableBody>
             </Table>
           </div>
@@ -663,6 +658,12 @@ export default function Vendas() {
         open={contratosModalOpen} 
         onOpenChange={setContratosModalOpen}
         vendaId={selectedVendaId}
+      />
+
+      <ComprovanteUploadModal
+        open={comprovanteModalOpen}
+        onOpenChange={setComprovanteModalOpen}
+        venda={selectedVendaForComprovante}
       />
     </div>
   );
