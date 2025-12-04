@@ -3,6 +3,7 @@ import type { OrcamentoProduto, OrcamentoCusto } from "./produto";
 
 export interface OrcamentoFormData {
   lead_id?: string;
+  cliente_id?: string;
   cliente_nome: string;
   cliente_cpf: string;
   cliente_telefone: string;
@@ -11,6 +12,7 @@ export interface OrcamentoFormData {
   cliente_cidade: string;
   cliente_bairro: string;
   cliente_cep: string;
+  cliente_endereco?: string;
   valor_frete: string;
   publico_alvo?: string;
   tipo_entrega?: 'instalacao' | 'entrega';
@@ -22,6 +24,8 @@ export interface OrcamentoFormData {
   data_orcamento?: string;
   observacoes?: string;
   produtos?: OrcamentoProduto[];
+  valor_credito?: number;
+  percentual_credito?: number;
 }
 
 export interface Acessorio {

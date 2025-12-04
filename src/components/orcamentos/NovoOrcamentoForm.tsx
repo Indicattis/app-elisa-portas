@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,12 +10,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, CalendarIcon, Download, Package, Paintbrush, Wrench } from 'lucide-react';
-import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
+import { Plus, CalendarIcon, Download, Package, Paintbrush, Wrench, Percent, TrendingUp } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosOrcamentoTable } from './ProdutosOrcamentoTable';
 import { OrcamentoResumo } from './OrcamentoResumo';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
+import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
+import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
+import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -27,6 +27,7 @@ import { generateOrcamentoPDF } from '@/utils/orcamentoPDFGenerator';
 import type { OrcamentoFormData } from '@/types/orcamento';
 import type { OrcamentoProduto } from '@/types/produto';
 import type { ProdutoVenda } from '@/hooks/useVendas';
+import type { Cliente } from '@/hooks/useClientes';
 
 interface NovoOrcamentoFormProps {
   onSubmit?: (data: OrcamentoFormData, produtos: OrcamentoProduto[], valorTotal: number) => Promise<void>;
@@ -50,6 +51,7 @@ export function NovoOrcamentoForm({
   
   const [formData, setFormData] = useState<OrcamentoFormData>({
     lead_id: leadId || '',
+    cliente_id: '',
     cliente_nome: '',
     cliente_cpf: '',
     cliente_telefone: '',
@@ -58,6 +60,7 @@ export function NovoOrcamentoForm({
     cliente_cidade: '',
     cliente_bairro: '',
     cliente_cep: '',
+    cliente_endereco: '',
     valor_frete: '0',
     publico_alvo: '',
     tipo_entrega: 'instalacao',
@@ -77,12 +80,19 @@ export function NovoOrcamentoForm({
   const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
   const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
+  
+  // Estados para desconto e crédito
+  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
+  const [creditoModalOpen, setCreditoModalOpen] = useState(false);
+  const [valorCredito, setValorCredito] = useState(0);
+  const [percentualCredito, setPercentualCredito] = useState(0);
 
   // Carregar dados iniciais se estiver editando
   useEffect(() => {
     if (initialData && isEdit) {
       setFormData({
         lead_id: initialData.lead_id || '',
+        cliente_id: initialData.cliente_id || '',
         cliente_nome: initialData.cliente_nome || '',
         cliente_cpf: initialData.cliente_cpf || '',
         cliente_telefone: initialData.cliente_telefone || '',
@@ -91,6 +101,7 @@ export function NovoOrcamentoForm({
         cliente_cidade: initialData.cliente_cidade || '',
         cliente_bairro: initialData.cliente_bairro || '',
         cliente_cep: initialData.cliente_cep || '',
+        cliente_endereco: initialData.cliente_endereco || '',
         valor_frete: String(initialData.valor_frete || 0),
         publico_alvo: initialData.publico_alvo || '',
         tipo_entrega: initialData.tipo_entrega || 'instalacao',
@@ -106,8 +117,38 @@ export function NovoOrcamentoForm({
       if (initialData.produtos) {
         setProdutos(initialData.produtos);
       }
+      
+      if (initialData.valor_credito) {
+        setValorCredito(initialData.valor_credito);
+        setPercentualCredito(initialData.percentual_credito || 0);
+      }
     }
   }, [initialData, isEdit]);
+
+  // Handler para mudança de dados do cliente
+  const handleClienteChange = (dados: any) => {
+    setFormData(prev => ({
+      ...prev,
+      cliente_nome: dados.cliente_nome ?? prev.cliente_nome,
+      cliente_telefone: dados.cliente_telefone ?? prev.cliente_telefone,
+      cliente_email: dados.cliente_email ?? prev.cliente_email,
+      cliente_cpf: dados.cpf_cliente ?? prev.cliente_cpf,
+      cliente_estado: dados.estado ?? prev.cliente_estado,
+      cliente_cidade: dados.cidade ?? prev.cliente_cidade,
+      cliente_cep: dados.cep ?? prev.cliente_cep,
+      cliente_endereco: dados.endereco ?? prev.cliente_endereco,
+      cliente_bairro: dados.bairro ?? prev.cliente_bairro,
+      canal_aquisicao_id: dados.canal_aquisicao_id ?? prev.canal_aquisicao_id,
+    }));
+  };
+
+  // Handler para seleção de cliente existente
+  const handleClienteSelecionado = (cliente: Cliente | null) => {
+    setFormData(prev => ({
+      ...prev,
+      cliente_id: cliente?.id || ''
+    }));
+  };
 
   const handleAddProduto = (produto: ProdutoVenda) => {
     // Normalizar tipo_produto para os tipos permitidos em orçamentos
@@ -230,7 +271,86 @@ export function NovoOrcamentoForm({
     toast({ title: "Desconto removido com sucesso" });
   };
 
+  // Converter OrcamentoProduto[] para ProdutoVenda[] para o modal de desconto
+  const produtosParaDesconto = (): ProdutoVenda[] => {
+    return produtos.map(p => ({
+      tipo_produto: p.tipo_produto,
+      tamanho: p.medidas || p.tamanho || '',
+      largura: p.largura,
+      altura: p.altura,
+      cor_id: p.cor_id || '',
+      acessorio_id: p.acessorio_id || '',
+      adicional_id: p.adicional_id || '',
+      estoque_id: p.estoque_id,
+      tipo_pintura: '',
+      valor_produto: p.valor,
+      valor_pintura: p.valor_pintura || 0,
+      valor_instalacao: p.preco_instalacao || 0,
+      valor_frete: 0,
+      tipo_desconto: p.tipo_desconto || 'percentual',
+      desconto_percentual: p.desconto_percentual || 0,
+      desconto_valor: p.desconto_valor || 0,
+      quantidade: p.quantidade || 1,
+      descricao: p.descricao || ''
+    }));
+  };
+
+  // Handler para aplicar desconto
+  const handleAplicarDesconto = (produtosAtualizados: ProdutoVenda[]) => {
+    const novoProdutos = produtosAtualizados.map(p => ({
+      tipo_produto: p.tipo_produto as 'porta_enrolar' | 'porta_social' | 'acessorio' | 'manutencao' | 'adicional' | 'pintura_epoxi',
+      medidas: p.tamanho,
+      largura: p.largura,
+      altura: p.altura,
+      cor_id: p.cor_id,
+      acessorio_id: p.acessorio_id,
+      adicional_id: p.adicional_id,
+      estoque_id: p.estoque_id,
+      descricao: p.descricao,
+      valor: p.valor_produto,
+      quantidade: p.quantidade || 1,
+      preco_instalacao: p.valor_instalacao || 0,
+      valor_pintura: p.valor_pintura || 0,
+      desconto_percentual: p.tipo_desconto === 'percentual' ? p.desconto_percentual : 0,
+      desconto_valor: p.tipo_desconto === 'valor' ? p.desconto_valor : 0,
+      tipo_desconto: p.tipo_desconto || 'percentual',
+      tamanho: p.tamanho
+    }));
+    
+    setProdutos(novoProdutos);
+    toast({ title: "Desconto aplicado com sucesso" });
+  };
+
+  // Handler para aplicar crédito
+  const handleAplicarCredito = (valor: number, percentual: number) => {
+    setValorCredito(valor);
+    setPercentualCredito(percentual);
+    toast({ title: "Crédito aplicado com sucesso" });
+  };
+
+  // Handler para remover crédito
+  const handleRemoverCredito = () => {
+    setValorCredito(0);
+    setPercentualCredito(0);
+    toast({ title: "Crédito removido com sucesso" });
+  };
+
+  // Verificar se tem desconto aplicado (para desabilitar crédito)
+  const temDesconto = produtos.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0);
+
   const calcularValorTotal = () => {
+    const totalProdutos = produtos.reduce((acc, p) => {
+      const valorBase = (p.valor + (p.valor_pintura || 0) + (p.preco_instalacao || 0)) * (p.quantidade || 1);
+      const desconto = p.tipo_desconto === 'valor' 
+        ? (p.desconto_valor || 0)
+        : valorBase * ((p.desconto_percentual || 0) / 100);
+      return acc + valorBase - desconto;
+    }, 0);
+
+    return totalProdutos + parseFloat(formData.valor_frete || '0') + valorCredito;
+  };
+
+  const calcularValorTotalSemCredito = () => {
     const totalProdutos = produtos.reduce((acc, p) => {
       const valorBase = (p.valor + (p.valor_pintura || 0) + (p.preco_instalacao || 0)) * (p.quantidade || 1);
       const desconto = p.tipo_desconto === 'valor' 
@@ -306,156 +426,35 @@ export function NovoOrcamentoForm({
     if (onSubmit) {
       await onSubmit({
         ...formData,
+        valor_credito: valorCredito,
+        percentual_credito: percentualCredito,
         data_orcamento: dataOrcamento ? dataOrcamento.toISOString() : new Date().toISOString()
       }, produtos, valorTotal);
     }
   };
 
-  const cidades = formData.cliente_estado ? getCidadesPorEstado(formData.cliente_estado) : [];
+  // Dados do cliente para o componente ClienteVendaSection
+  const dadosCliente = {
+    cliente_nome: formData.cliente_nome,
+    cliente_telefone: formData.cliente_telefone,
+    cliente_email: formData.cliente_email || '',
+    cpf_cliente: formData.cliente_cpf,
+    estado: formData.cliente_estado,
+    cidade: formData.cliente_cidade,
+    cep: formData.cliente_cep,
+    endereco: formData.cliente_endereco || '',
+    bairro: formData.cliente_bairro,
+    canal_aquisicao_id: formData.canal_aquisicao_id || '',
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Dados do Cliente */}
-      <Card>
-        <CardHeader className="pb-3 pt-4">
-          <CardTitle className="text-base font-semibold">Dados do Cliente</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
-          <div className="space-y-1">
-            <Label htmlFor="cliente_nome" className="text-xs font-medium">Nome *</Label>
-            <Input
-              id="cliente_nome"
-              value={formData.cliente_nome}
-              onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
-              placeholder="Nome completo"
-              className="h-9"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="cliente_telefone" className="text-xs font-medium">Telefone *</Label>
-            <Input
-              id="cliente_telefone"
-              value={formData.cliente_telefone}
-              onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
-              placeholder="(00) 00000-0000"
-              className="h-9"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="cliente_email" className="text-xs font-medium">E-mail</Label>
-            <Input
-              id="cliente_email"
-              type="email"
-              value={formData.cliente_email}
-              onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
-              placeholder="email@exemplo.com"
-              className="h-9"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="cliente_cpf" className="text-xs font-medium">CPF/CNPJ *</Label>
-            <Input
-              id="cliente_cpf"
-              value={formData.cliente_cpf}
-              onChange={(e) => {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 11) {
-                  value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                  value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-                } else {
-                  value = value.replace(/(\d{2})(\d)/, '$1.$2');
-                  value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                  value = value.replace(/(\d{3})(\d)/, '$1/$2');
-                  value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-                }
-                setFormData(prev => ({ ...prev, cliente_cpf: value }));
-              }}
-              placeholder="000.000.000-00"
-              className="h-9"
-              required
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Localização */}
-      <Card>
-        <CardHeader className="pb-3 pt-4">
-          <CardTitle className="text-base font-semibold">Localização</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pb-4">
-          <div className="space-y-1">
-            <Label htmlFor="cliente_estado" className="text-xs font-medium">Estado *</Label>
-            <Select
-              value={formData.cliente_estado}
-              onValueChange={(value) => {
-                setFormData(prev => ({ ...prev, cliente_estado: value, cliente_cidade: '' }));
-              }}
-              required
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {ESTADOS_BRASIL.map((estado) => (
-                  <SelectItem key={estado.sigla} value={estado.sigla}>
-                    {estado.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="cliente_cidade" className="text-xs font-medium">Cidade *</Label>
-            <Select
-              value={formData.cliente_cidade}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, cliente_cidade: value }))}
-              disabled={!formData.cliente_estado}
-              required
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {cidades.map((cidade) => (
-                  <SelectItem key={cidade} value={cidade}>
-                    {cidade}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="cliente_cep" className="text-xs font-medium">CEP</Label>
-            <Input
-              id="cliente_cep"
-              value={formData.cliente_cep}
-              onChange={(e) => setFormData(prev => ({ ...prev, cliente_cep: e.target.value }))}
-              placeholder="00000-000"
-              className="h-9"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="cliente_bairro" className="text-xs font-medium">Bairro</Label>
-            <Input
-              id="cliente_bairro"
-              value={formData.cliente_bairro}
-              onChange={(e) => setFormData(prev => ({ ...prev, cliente_bairro: e.target.value }))}
-              placeholder="Nome do bairro"
-              className="h-9"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Cliente - usando componente reutilizável */}
+      <ClienteVendaSection
+        dados={dadosCliente}
+        onChange={handleClienteChange}
+        onClienteSelecionado={handleClienteSelecionado}
+      />
 
       {/* Dados do Orçamento */}
       <Card>
@@ -663,6 +662,30 @@ export function NovoOrcamentoForm({
             onUpdateQuantidade={handleUpdateQuantidade}
             onRemoverDesconto={handleRemoverDesconto}
           />
+
+          {/* Botões de Desconto e Crédito */}
+          {produtos.length > 0 && (
+            <div className="flex gap-2 pt-2 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDescontoModalOpen(true)}
+                disabled={valorCredito > 0}
+              >
+                <Percent className="w-4 h-4 mr-2" />
+                Aplicar Desconto
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreditoModalOpen(true)}
+                disabled={temDesconto}
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Aplicar Crédito
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -670,7 +693,10 @@ export function NovoOrcamentoForm({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <OrcamentoResumo 
           produtos={produtos} 
-          valorFrete={parseFloat(formData.valor_frete || '0')} 
+          valorFrete={parseFloat(formData.valor_frete || '0')}
+          valorCredito={valorCredito}
+          percentualCredito={percentualCredito}
+          onRemoverCredito={valorCredito > 0 ? handleRemoverCredito : undefined}
         />
 
         <Card>
@@ -756,6 +782,25 @@ export function NovoOrcamentoForm({
         open={acessoriosModalOpen}
         onOpenChange={setAcessoriosModalOpen}
         onConfirm={handleAddAcessorios}
+      />
+
+      <DescontoVendaModal
+        open={descontoModalOpen}
+        onOpenChange={setDescontoModalOpen}
+        produtos={produtosParaDesconto()}
+        onAplicarDesconto={handleAplicarDesconto}
+        formaPagamento={formData.forma_pagamento}
+        vendaPresencial={false}
+      />
+
+      <CreditoVendaModal
+        open={creditoModalOpen}
+        onOpenChange={setCreditoModalOpen}
+        valorTotalVenda={calcularValorTotalSemCredito()}
+        temDesconto={temDesconto}
+        valorCreditoAtual={valorCredito}
+        percentualCreditoAtual={percentualCredito}
+        onAplicarCredito={handleAplicarCredito}
       />
     </form>
   );
