@@ -745,6 +745,11 @@ export default function VendasNova() {
               valorFrete={formData.valor_frete} 
               valorCredito={valorCredito}
               percentualCredito={percentualCredito}
+              onRemoverCredito={() => {
+                setValorCredito(0);
+                setPercentualCredito(0);
+                recalcularValorTotal(portas, 0);
+              }}
             />
             
             {/* Indicador de Autorização Necessária */}
