@@ -70,6 +70,9 @@ export default function ContasReceber() {
   const [dataPagamento, setDataPagamento] = useState<Date | undefined>(new Date());
   const [valorPago, setValorPago] = useState<number>(0);
   const [pastasAbertas, setPastasAbertas] = useState<Set<string>>(new Set());
+  const [dialogAlterarDataOpen, setDialogAlterarDataOpen] = useState(false);
+  const [grupoParaAlterar, setGrupoParaAlterar] = useState<GrupoPedido | null>(null);
+  const [novaDataInicio, setNovaDataInicio] = useState<Date | undefined>(undefined);
 
   const { data: contas = [], isLoading } = useQuery({
     queryKey: ['contas-receber'],
@@ -176,6 +179,39 @@ export default function ContasReceber() {
       toast({ title: "Conta cancelada" });
     }
   });
+
+  const alterarDatasMutation = useMutation({
+    mutationFn: async ({ contas, novaDataInicio }: { contas: ContaReceber[]; novaDataInicio: Date }) => {
+      const parcelasOrdenadas = [...contas].sort((a, b) => a.numero_parcela - b.numero_parcela);
+      const intervalo = 30;
+      
+      for (let i = 0; i < parcelasOrdenadas.length; i++) {
+        const novaData = addDays(novaDataInicio, i * intervalo);
+        const { error } = await supabase
+          .from('contas_receber')
+          .update({ data_vencimento: format(novaData, 'yyyy-MM-dd') })
+          .eq('id', parcelasOrdenadas[i].id);
+        
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+      toast({ title: "Datas atualizadas com sucesso!" });
+      setDialogAlterarDataOpen(false);
+      setGrupoParaAlterar(null);
+    },
+    onError: (error: Error) => {
+      toast({ variant: "destructive", title: "Erro ao atualizar datas", description: error.message });
+    }
+  });
+
+  const handleAbrirDialogAlterar = (grupo: GrupoPedido) => {
+    const primeiraParcela = grupo.contas.sort((a, b) => a.numero_parcela - b.numero_parcela)[0];
+    setNovaDataInicio(parseISO(primeiraParcela.data_vencimento));
+    setGrupoParaAlterar(grupo);
+    setDialogAlterarDataOpen(true);
+  };
 
   const handleAbrirDialogPagar = (conta: ContaReceber) => {
     setContaSelecionada(conta);
@@ -616,6 +652,17 @@ export default function ContasReceber() {
                             <p className="text-muted-foreground">Recebido</p>
                             <p className="font-medium text-green-600">{formatCurrency(grupo.total_pago)}</p>
                           </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAbrirDialogAlterar(grupo);
+                            }}
+                          >
+                            <CalendarIcon className="h-4 w-4 mr-1" />
+                            Alterar Datas
+                          </Button>
                         </div>
                       </div>
                     </CardHeader>
@@ -763,6 +810,86 @@ export default function ContasReceber() {
             </Button>
             <Button onClick={handleConfirmarPagamento} disabled={marcarPagoMutation.isPending}>
               Confirmar Pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Alterar Datas */}
+      <Dialog open={dialogAlterarDataOpen} onOpenChange={setDialogAlterarDataOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alterar Data de Início</DialogTitle>
+          </DialogHeader>
+          
+          {grupoParaAlterar && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Selecione a nova data para a primeira parcela. As {grupoParaAlterar.total_parcelas} parcelas 
+                serão recalculadas com intervalo de 30 dias.
+              </p>
+              
+              <div className="space-y-2">
+                <Label>Nova Data da 1ª Parcela</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {novaDataInicio ? format(novaDataInicio, "PPP", { locale: ptBR }) : "Selecione"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={novaDataInicio}
+                      onSelect={setNovaDataInicio}
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="border rounded-lg p-3 bg-muted/30 max-h-48 overflow-y-auto">
+                <p className="text-sm font-medium mb-2">Preview das novas datas:</p>
+                {grupoParaAlterar.contas
+                  .sort((a, b) => a.numero_parcela - b.numero_parcela)
+                  .map((conta, index) => {
+                    const novaData = novaDataInicio ? addDays(novaDataInicio, index * 30) : null;
+                    return (
+                      <div key={conta.id} className="flex justify-between text-sm py-1">
+                        <span>{conta.numero_parcela}ª parcela</span>
+                        <span className="flex items-center gap-2">
+                          <span className="text-muted-foreground line-through">
+                            {format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}
+                          </span>
+                          <span>→</span>
+                          <span className="font-medium text-primary">
+                            {novaData ? format(novaData, 'dd/MM/yyyy') : '-'}
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogAlterarDataOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                if (grupoParaAlterar && novaDataInicio) {
+                  alterarDatasMutation.mutate({
+                    contas: grupoParaAlterar.contas,
+                    novaDataInicio
+                  });
+                }
+              }}
+              disabled={alterarDatasMutation.isPending || !novaDataInicio}
+            >
+              Confirmar Alteração
             </Button>
           </DialogFooter>
         </DialogContent>
