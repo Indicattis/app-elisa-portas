@@ -897,23 +897,23 @@ export default function Faturamento() {
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Atendente</TableHead>
-                      <TableHead>Produtos</TableHead>
-                      <TableHead className="text-right">Valor Produtos</TableHead>
-                      <TableHead className="text-right">Descontos</TableHead>
-                      <TableHead className="text-right">% Desconto</TableHead>
-                      <TableHead className="text-right">Acréscimo</TableHead>
-                      <TableHead className="text-right">Custos</TableHead>
-                      <TableHead className="text-right">% Margem</TableHead>
-                      <TableHead className="text-right">Instalação</TableHead>
-                      <TableHead className="text-right">Frete</TableHead>
-                      <TableHead className="text-right">Lucro Bruto</TableHead>
-                      <TableHead className="text-right">Valor Final</TableHead>
-                      <TableHead className="text-right">Valor Final c/ Frete</TableHead>
-                      <TableHead>Ações</TableHead>
+                    <TableRow className="text-xs">
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Cliente</TableHead>
+                      <TableHead className="text-xs">Atendente</TableHead>
+                      <TableHead className="text-xs">Produtos</TableHead>
+                      <TableHead className="text-xs text-right">Valor Produtos</TableHead>
+                      <TableHead className="text-xs text-right">Descontos</TableHead>
+                      <TableHead className="text-xs text-right">% Desconto</TableHead>
+                      <TableHead className="text-xs text-right">Acréscimo</TableHead>
+                      <TableHead className="text-xs text-right">Custos</TableHead>
+                      <TableHead className="text-xs text-right">% Margem</TableHead>
+                      <TableHead className="text-xs text-right">Instalação</TableHead>
+                      <TableHead className="text-xs text-right">Frete</TableHead>
+                      <TableHead className="text-xs text-right">Lucro Bruto</TableHead>
+                      <TableHead className="text-xs text-right">Valor Final</TableHead>
+                      <TableHead className="text-xs text-right">Valor Final c/ Frete</TableHead>
+                      <TableHead className="text-xs">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -931,18 +931,18 @@ export default function Faturamento() {
                         </TableCell>
 
                         <TableCell>
-                          <span className="text-sm font-medium">{venda.cliente_nome || '-'}</span>
+                          <span className="text-xs font-medium">{venda.cliente_nome || '-'}</span>
                         </TableCell>
                         
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
+                          <div className="flex items-center gap-1.5">
+                            <Avatar className="h-6 w-6">
                               <AvatarImage src={venda.atendente_foto || undefined} alt={venda.atendente_nome} />
-                              <AvatarFallback>
+                              <AvatarFallback className="text-[10px]">
                                 {venda.atendente_nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium">{venda.atendente_nome}</span>
+                            <span className="text-xs font-medium">{venda.atendente_nome}</span>
                           </div>
                         </TableCell>
 
@@ -950,14 +950,14 @@ export default function Faturamento() {
                           <ProductIconsSummary venda={venda} />
                         </TableCell>
 
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="text-right text-xs font-medium">
                           R$ {((venda.valor_produto || 0) + (venda.valor_pintura || 0))
                             .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
 
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs">
                           {calculateTotalDiscount(venda) > 0 ? (
-                            <Badge variant="destructive" className="font-medium">
+                            <Badge variant="destructive" className="text-[10px] font-medium px-1.5 py-0.5">
                               - R$ {calculateTotalDiscount(venda).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </Badge>
                           ) : (
@@ -965,7 +965,7 @@ export default function Faturamento() {
                           )}
                         </TableCell>
 
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs">
                           {(() => {
                             const desconto = calculateTotalDiscount(venda);
                             const valorProdutos = (venda.valor_produto || 0) + (venda.valor_pintura || 0);
@@ -982,9 +982,9 @@ export default function Faturamento() {
                           })()}
                         </TableCell>
 
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs">
                           {(venda.valor_credito || 0) > 0 ? (
-                            <Badge variant="outline" className="font-medium text-emerald-600 border-emerald-600">
+                            <Badge variant="outline" className="text-[10px] font-medium px-1.5 py-0.5 text-emerald-600 border-emerald-600">
                               + R$ {(venda.valor_credito || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </Badge>
                           ) : (
@@ -992,14 +992,14 @@ export default function Faturamento() {
                           )}
                         </TableCell>
 
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs">
                           <span className="font-medium text-orange-600">
                             R$ {((venda.custo_produto || 0) + (venda.custo_pintura || 0))
                               .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </span>
                         </TableCell>
 
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs">
                           {(() => {
                             const custosTotais = (venda.custo_produto || 0) + (venda.custo_pintura || 0);
                             const valorVendaTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
@@ -1020,15 +1020,15 @@ export default function Faturamento() {
                           })()}
                         </TableCell>
 
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs">
                           R$ {(venda.valor_instalacao || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
 
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs">
                           R$ {(venda.valor_frete || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
 
-                        <TableCell className="text-right font-semibold text-green-600">
+                        <TableCell className="text-right text-xs font-semibold text-green-600">
                           {isFaturada(venda) ? (
                             `R$ ${(venda.lucro_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
                           ) : (
@@ -1036,14 +1036,14 @@ export default function Faturamento() {
                           )}
                         </TableCell>
 
-                        <TableCell className="text-right font-semibold text-primary">
+                        <TableCell className="text-right text-xs font-semibold text-primary">
                           {(() => {
                             const valorVendaTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
                             return `R$ ${(valorVendaTotal - (venda.valor_frete || 0)).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
                           })()}
                         </TableCell>
 
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-right text-xs font-semibold">
                           R$ {((venda.valor_venda || 0) + (venda.valor_credito || 0))
                             .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </TableCell>
