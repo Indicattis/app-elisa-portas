@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
+import { FaturamentoAnualChart } from '@/components/vendas/FaturamentoAnualChart';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -292,6 +293,9 @@ export default function Vendas() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Gráfico de Faturamento Anual */}
+      <FaturamentoAnualChart />
 
       <Card className="max-w-full overflow-hidden">
         <CardContent className="p-2 sm:p-3">
