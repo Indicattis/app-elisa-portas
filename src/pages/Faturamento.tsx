@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package, Eye, ExternalLink } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package, Eye, ExternalLink, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,6 +29,7 @@ import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { RelatorioProdutos } from "@/components/vendas/RelatorioProdutos";
+import { ComprovanteUploadModal } from "@/components/vendas/ComprovanteUploadModal";
 
 interface Venda {
   id: string;
@@ -59,6 +60,8 @@ interface Venda {
   lucro_total: number;
   frete_aprovado?: boolean;
   portas?: any[];
+  comprovante_url?: string | null;
+  comprovante_nome?: string | null;
 }
 
 interface VendaStats {
@@ -131,6 +134,8 @@ export default function Faturamento() {
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [selectedVenda, setSelectedVenda] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
+  const [vendaForComprovante, setVendaForComprovante] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { createPedidoFromVenda } = usePedidoCreation();
@@ -1103,6 +1108,20 @@ export default function Faturamento() {
                               </Button>
                             )}
 
+                            {/* Botão Comprovante */}
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setVendaForComprovante(venda);
+                                setComprovanteModalOpen(true);
+                              }}
+                              title={venda.comprovante_url ? "Ver/Alterar comprovante" : "Adicionar comprovante"}
+                            >
+                              <Upload className={cn("w-4 h-4", venda.comprovante_url ? "text-green-600" : "text-muted-foreground")} />
+                            </Button>
+
                             {/* Botão Acessar Venda */}
                             <Button 
                               variant="ghost" 
@@ -1177,6 +1196,17 @@ export default function Faturamento() {
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
         venda={selectedVenda}
+      />
+
+      <ComprovanteUploadModal
+        open={comprovanteModalOpen}
+        onOpenChange={(open) => {
+          setComprovanteModalOpen(open);
+          if (!open) {
+            fetchVendas();
+          }
+        }}
+        venda={vendaForComprovante}
       />
     </div>
   );
