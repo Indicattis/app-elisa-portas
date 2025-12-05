@@ -19,6 +19,7 @@ export interface Cliente {
   ativo: boolean;
   created_at: string;
   updated_at: string;
+  total_vendas?: number;
 }
 
 export interface ClienteFormData {
@@ -51,13 +52,28 @@ export function useClientes() {
         .from("canais_aquisicao")
         .select("id, nome");
       
+      // Buscar totais de vendas por cliente
+      const { data: vendasData } = await supabase
+        .from("vendas")
+        .select("cliente_id, valor_venda");
+      
+      // Calcular total de vendas por cliente
+      const totaisVendas = new Map<string, number>();
+      (vendasData || []).forEach((venda: any) => {
+        if (venda.cliente_id) {
+          const atual = totaisVendas.get(venda.cliente_id) || 0;
+          totaisVendas.set(venda.cliente_id, atual + (venda.valor_venda || 0));
+        }
+      });
+      
       const canaisMap = new Map(canaisData?.map(c => [c.id, c]) || []);
       
       const clientes = (clientesData || []).map((cliente: any) => ({
         ...cliente,
         canal_aquisicao: cliente.canal_aquisicao_id 
           ? canaisMap.get(cliente.canal_aquisicao_id) || null 
-          : null
+          : null,
+        total_vendas: totaisVendas.get(cliente.id) || 0
       }));
 
       return clientes as Cliente[];

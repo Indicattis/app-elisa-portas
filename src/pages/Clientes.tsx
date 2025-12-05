@@ -226,6 +226,7 @@ export default function Clientes() {
                     <TableHead className="hidden md:table-cell">CPF/CNPJ</TableHead>
                     <TableHead className="hidden lg:table-cell">Cidade/UF</TableHead>
                     <TableHead className="hidden xl:table-cell">Canal</TableHead>
+                    <TableHead className="hidden sm:table-cell text-right">Total Vendas</TableHead>
                     <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -251,6 +252,11 @@ export default function Clientes() {
                       </TableCell>
                       <TableCell className="hidden xl:table-cell">
                         {cliente.canal_aquisicao?.nome || "-"}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-right font-medium">
+                        {cliente.total_vendas && cliente.total_vendas > 0
+                          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cliente.total_vendas)
+                          : "-"}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
