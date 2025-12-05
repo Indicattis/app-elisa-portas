@@ -449,21 +449,21 @@ export default function Vendas() {
               <TableHeader>
                 <TableRow>
                   {/* Mobile: 2 colunas */}
-                  <TableHead className="text-xs sm:text-sm md:hidden">Cliente</TableHead>
-                  <TableHead className="text-xs sm:text-sm text-right md:hidden">Valor/Ações</TableHead>
-                  {/* Desktop: todas as colunas alinhadas com as células */}
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Data</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cliente</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">CPF</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Telefone</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Cidade/Estado</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Previsão</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Produtos</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-center">VP</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Valor Total</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Com Frete</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Atendente</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs sm:text-sm text-right">Ações</TableHead>
+                  <TableHead className="text-[10px] md:hidden">Cliente</TableHead>
+                  <TableHead className="text-[10px] text-right md:hidden">Valor/Ações</TableHead>
+                  {/* Desktop: todas as colunas - foto do atendente primeiro */}
+                  <TableHead className="hidden md:table-cell text-[10px] w-8"></TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px]">Data</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px]">Cliente</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px]">CPF</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px]">Telefone</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px]">Cidade/Estado</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px]">Previsão</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px]">Produtos</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px] text-center">VP</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px] text-right">Valor Total</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px] text-right">Com Frete</TableHead>
+                  <TableHead className="hidden md:table-cell text-[10px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -545,7 +545,15 @@ export default function Vendas() {
                           </div>
                         </TableCell>
 
-                        {/* Desktop: Todas as colunas */}
+                        {/* Desktop: Todas as colunas - foto do atendente primeiro */}
+                        <TableCell className="hidden md:table-cell py-1 w-8">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={venda.atendente?.foto_perfil_url || ''} alt={venda.atendente?.nome || 'Atendente'} />
+                            <AvatarFallback className="text-[10px]">
+                              {venda.atendente?.nome?.charAt(0) || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TableCell>
                         <TableCell className="hidden md:table-cell text-xs py-1">
                           {format(new Date(venda.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
                         </TableCell>
@@ -574,17 +582,6 @@ export default function Vendas() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-xs font-bold text-right py-1">
                           {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell py-1">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage src={venda.atendente?.foto_perfil_url || ''} alt={venda.atendente?.nome || 'Atendente'} />
-                              <AvatarFallback className="text-[10px]">
-                                {venda.atendente?.nome?.charAt(0) || '?'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs">{venda.atendente?.nome || 'N/A'}</span>
-                          </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-right py-1">
                           <div className="flex justify-end gap-1">
