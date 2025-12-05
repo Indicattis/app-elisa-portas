@@ -641,6 +641,10 @@ export default function ContasReceber() {
                         
                         <div className="flex items-center gap-6 text-sm">
                           <div className="text-right">
+                            <p className="text-muted-foreground">Método</p>
+                            <p className="font-medium">{getMetodoPagamentoLabel(grupo.contas[0]?.metodo_pagamento)}</p>
+                          </div>
+                          <div className="text-right">
                             <p className="text-muted-foreground">Parcelas</p>
                             <p className="font-medium">{grupo.parcelas_pagas}/{grupo.total_parcelas}</p>
                           </div>
