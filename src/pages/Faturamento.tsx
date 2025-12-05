@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package, Eye, ExternalLink, Upload } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package, Eye, ExternalLink, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -1116,7 +1116,7 @@ export default function Faturamento() {
                                 }}
                                 title="Visualizar comprovante"
                               >
-                                <Upload className="w-4 h-4 text-green-600" />
+                                <Paperclip className="w-4 h-4 text-green-600" />
                               </Button>
                             )}
 
