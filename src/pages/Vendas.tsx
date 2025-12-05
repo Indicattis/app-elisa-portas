@@ -248,6 +248,10 @@ export default function Vendas() {
           </div>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => navigate('/dashboard/vendas/contratos')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <FileSignature className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline ml-2">Contratos</span>
+          </Button>
           <Button variant="outline" onClick={() => navigate('/dashboard/vendas/tabela-precos')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
             <Receipt className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline ml-2">Preços</span>
