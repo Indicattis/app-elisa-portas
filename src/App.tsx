@@ -509,9 +509,9 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/vendas/suporte"
+                  path="/dashboard/logistica/suporte"
                   element={
-                    <ProtectedRoute routeKey="vendas">
+                    <ProtectedRoute routeKey="logistica_suporte">
                       <DashboardLayout>
                         <Suporte />
                       </DashboardLayout>
