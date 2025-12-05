@@ -491,7 +491,7 @@ const App = () => (
                 <Route
                   path="/dashboard/vendas/contratos"
                   element={
-                    <ProtectedRoute routeKey="vendas">
+                    <ProtectedRoute routeKey="vendas_home">
                       <DashboardLayout>
                         <ContratoVendas />
                       </DashboardLayout>
@@ -501,7 +501,7 @@ const App = () => (
                 <Route
                   path="/dashboard/vendas/contratos/templates"
                   element={
-                    <ProtectedRoute routeKey="vendas">
+                    <ProtectedRoute routeKey="vendas_home">
                       <DashboardLayout>
                         <ContratoTemplates />
                       </DashboardLayout>
