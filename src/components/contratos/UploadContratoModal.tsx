@@ -3,9 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { useContratosTemplates } from "@/hooks/useContratosTemplates";
 import { useContratosVendas } from "@/hooks/useContratosVendas";
 import { useVendas } from "@/hooks/useVendas";
 import { Upload, FileCheck } from "lucide-react";
@@ -19,15 +17,10 @@ interface UploadContratoModalProps {
 
 export function UploadContratoModal({ open, onOpenChange, vendaIdInicial }: UploadContratoModalProps) {
   const [vendaId, setVendaId] = useState(vendaIdInicial || '');
-  const [templateId, setTemplateId] = useState('');
-  const [observacoes, setObservacoes] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  const { templates } = useContratosTemplates();
   const { uploadContrato, isUploading } = useContratosVendas();
   const { vendas } = useVendas();
-
-  const templatesAtivos = templates?.filter(t => t.ativo) || [];
 
   // Sincronizar vendaId quando vendaIdInicial mudar ou modal abrir
   useEffect(() => {
@@ -62,16 +55,12 @@ export function UploadContratoModal({ open, onOpenChange, vendaIdInicial }: Uplo
     uploadContrato(
       {
         file,
-        vendaId,
-        templateId: templateId || undefined,
-        observacoes: observacoes || undefined
+        vendaId
       },
       {
         onSuccess: () => {
           onOpenChange(false);
           setVendaId('');
-          setTemplateId('');
-          setObservacoes('');
           setFile(null);
         }
       }
@@ -103,22 +92,6 @@ export function UploadContratoModal({ open, onOpenChange, vendaIdInicial }: Uplo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="template-upload">Template Usado (opcional)</Label>
-            <Select value={templateId} onValueChange={setTemplateId}>
-              <SelectTrigger id="template-upload">
-                <SelectValue placeholder="Selecione o template usado" />
-              </SelectTrigger>
-              <SelectContent>
-                {templatesAtivos.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="file-upload">Arquivo do Contrato (PDF) *</Label>
             <div className="flex items-center gap-2">
               <Input
@@ -139,17 +112,6 @@ export function UploadContratoModal({ open, onOpenChange, vendaIdInicial }: Uplo
             <p className="text-xs text-muted-foreground">
               Apenas PDF, máximo 10MB
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="observacoes-upload">Observações</Label>
-            <Textarea
-              id="observacoes-upload"
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              placeholder="Adicione observações sobre este contrato..."
-              rows={3}
-            />
           </div>
 
           <DialogFooter>
