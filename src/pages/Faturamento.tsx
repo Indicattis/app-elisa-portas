@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package, Eye, ExternalLink, Paperclip } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Users, Plus, Filter, Trash2, Edit, Download, CalendarIcon, Receipt, DoorOpen, Wrench, Hammer, Palette, Percent, FileText, CheckCircle2, Clock, Package, ExternalLink, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -61,6 +61,7 @@ interface Venda {
   portas?: any[];
   comprovante_url?: string | null;
   comprovante_nome?: string | null;
+  contratos_vendas?: { id: string; arquivo_url: string; nome_arquivo: string }[];
 }
 
 interface VendaStats {
@@ -223,6 +224,11 @@ export default function Faturamento() {
           frete_aprovado,
           comprovante_url,
           comprovante_nome,
+          contratos_vendas (
+            id,
+            arquivo_url,
+            nome_arquivo
+          ),
           canais_aquisicao:canal_aquisicao_id (
             id,
             nome
@@ -1120,18 +1126,20 @@ export default function Faturamento() {
                               </Button>
                             )}
 
-                            {/* Botão Acessar Venda */}
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/dashboard/vendas/${venda.id}/view`);
-                              }}
-                              title="Ver detalhes da venda"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
+                            {/* Botão Visualizar Contrato */}
+                            {venda.contratos_vendas && venda.contratos_vendas.length > 0 && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(venda.contratos_vendas![0].arquivo_url, '_blank');
+                                }}
+                                title="Visualizar contrato"
+                              >
+                                <FileText className="w-4 h-4 text-purple-600" />
+                              </Button>
+                            )}
                             
                             <Button 
                               variant="ghost" 
