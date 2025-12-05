@@ -140,6 +140,8 @@ import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
 import Caixa from "./pages/Caixa";
 import ContasReceber from "./pages/ContasReceber";
+import ContasPagar from "./pages/ContasPagar";
+import ContasPagarNova from "./pages/ContasPagarNova";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -1203,6 +1205,26 @@ const App = () => (
                     <ProtectedRoute routeKey="contas_receber">
                       <DashboardLayout>
                         <ContasReceber />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/contas-a-pagar"
+                  element={
+                    <ProtectedRoute routeKey="financeiro_contas_pagar">
+                      <DashboardLayout>
+                        <ContasPagar />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/financeiro/contas-a-pagar/nova"
+                  element={
+                    <ProtectedRoute routeKey="financeiro_contas_pagar">
+                      <DashboardLayout>
+                        <ContasPagarNova />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
