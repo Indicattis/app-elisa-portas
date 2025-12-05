@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShoppingCart, Plus, Pencil, Trash2, Star, Package } from "lucide-react";
+import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2 } from "lucide-react";
 import { useVendasCatalogo, ProdutoCatalogoInput } from "@/hooks/useVendasCatalogo";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
+import { useCatalogoUpload } from "@/hooks/useCatalogoUpload";
+import { toast } from "sonner";
 
 export default function VendasCatalogo() {
   const [modalAberto, setModalAberto] = useState(false);
@@ -20,6 +21,7 @@ export default function VendasCatalogo() {
   const [busca, setBusca] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { produtos, isLoading, adicionarProduto, editarProduto, inativarProduto } = useVendasCatalogo({
     busca: busca || undefined,
@@ -28,6 +30,7 @@ export default function VendasCatalogo() {
   
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias(categoriaSelecionada || undefined);
+  const uploadMutation = useCatalogoUpload();
 
   const [formData, setFormData] = useState<ProdutoCatalogoInput>({
     nome_produto: "",
@@ -43,7 +46,38 @@ export default function VendasCatalogo() {
     estoque_minimo: 0,
     tags: [],
     sku: "",
+    imagem_url: undefined,
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione apenas arquivos de imagem');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    try {
+      const url = await uploadMutation.mutateAsync(file);
+      setFormData({ ...formData, imagem_url: url });
+      toast.success('Imagem enviada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({ ...formData, imagem_url: undefined });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async () => {
     await adicionarProduto.mutateAsync(formData);
@@ -83,6 +117,7 @@ export default function VendasCatalogo() {
       estoque_minimo: produto.estoque_minimo,
       tags: produto.tags || [],
       sku: produto.sku || "",
+      imagem_url: produto.imagem_url,
     });
     const catId = categorias.find(c => c.nome.toLowerCase() === produto.categoria.toLowerCase())?.id;
     setCategoriaSelecionada(catId || null);
@@ -104,13 +139,64 @@ export default function VendasCatalogo() {
       estoque_minimo: 0,
       tags: [],
       sku: "",
+      imagem_url: undefined,
     });
     setCategoriaSelecionada(null);
     setProdutoEditando(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const FormularioProduto = ({ isEdit = false }: { isEdit?: boolean }) => (
     <div className="space-y-4">
+      {/* Upload de Imagem */}
+      <div>
+        <Label>Foto de Capa</Label>
+        <div className="mt-2">
+          {formData.imagem_url ? (
+            <div className="relative w-full h-48 rounded-lg overflow-hidden border">
+              <img 
+                src={formData.imagem_url} 
+                alt="Preview" 
+                className="w-full h-full object-cover"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={handleRemoveImage}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div 
+              className="w-full h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploadMutation.isPending ? (
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                  <span className="text-sm text-muted-foreground">Clique para enviar uma imagem</span>
+                  <span className="text-xs text-muted-foreground mt-1">PNG, JPG até 5MB</span>
+                </>
+              )}
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Nome do Produto *</Label>
@@ -256,11 +342,6 @@ export default function VendasCatalogo() {
     </div>
   );
 
-  const calcularMargem = (preco: number, custo: number) => {
-    if (preco === 0) return 0;
-    return ((preco - custo) / preco) * 100;
-  };
-
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -318,81 +399,76 @@ export default function VendasCatalogo() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead className="text-right">Quantidade</TableHead>
-                <TableHead className="text-right">Preço Venda</TableHead>
-                <TableHead className="text-right">Custo</TableHead>
-                <TableHead className="text-right">Margem</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          {produtos.length === 0 ? (
+            <div className="text-center text-muted-foreground py-12">
+              <Package className="h-16 w-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">Nenhum produto no catálogo</p>
+              <p className="text-sm">Adicione seu primeiro produto clicando em "Novo Produto"</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {produtos.map((produto) => (
-                <TableRow key={produto.id}>
-                  <TableCell className="font-mono text-sm text-muted-foreground">
-                    {produto.sku || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {produto.destaque && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                      <div>
-                        <div className="font-medium">{produto.nome_produto}</div>
-                        {produto.descricao_produto && (
-                          <div className="text-sm text-muted-foreground">{produto.descricao_produto}</div>
-                        )}
+                <Card key={produto.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+                  <div className="aspect-square relative bg-muted">
+                    {produto.imagem_url ? (
+                      <img 
+                        src={produto.imagem_url} 
+                        alt={produto.nome_produto}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-12 w-12 text-muted-foreground/40" />
                       </div>
+                    )}
+                    {produto.destaque && (
+                      <Star className="absolute top-2 right-2 h-5 w-5 text-yellow-500 fill-yellow-500 drop-shadow" />
+                    )}
+                    {produto.quantidade <= produto.estoque_minimo && (
+                      <Badge variant="destructive" className="absolute top-2 left-2 text-xs">
+                        Baixo estoque
+                      </Badge>
+                    )}
+                  </div>
+                  <CardContent className="p-3">
+                    <h3 className="font-medium text-sm truncate" title={produto.nome_produto}>
+                      {produto.nome_produto}
+                    </h3>
+                    <p className="text-lg font-bold text-primary mt-1">
+                      R$ {produto.preco_venda.toFixed(2)}
+                    </p>
+                    <div className="flex justify-between items-center mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        {produto.categoria}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {produto.quantidade} {produto.unidade}
+                      </span>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{produto.categoria}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className={produto.quantidade <= produto.estoque_minimo ? "text-red-600 font-semibold" : ""}>
-                      {produto.quantidade} {produto.unidade}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">R$ {produto.preco_venda.toFixed(2)}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    R$ {(produto.custo_produto || 0).toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Badge
-                      variant={
-                        calcularMargem(produto.preco_venda, produto.custo_produto || 0) > 30
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {calcularMargem(produto.preco_venda, produto.custo_produto || 0).toFixed(1)}%
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button size="sm" variant="outline" onClick={() => handleOpenEditar(produto)}>
-                        <Pencil className="h-4 w-4" />
+                    <div className="flex gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 h-8 text-xs"
+                        onClick={() => handleOpenEditar(produto)}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Editar
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleInativar(produto.id)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-8 px-2"
+                        onClick={() => handleInativar(produto.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </CardContent>
+                </Card>
               ))}
-              {produtos.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Nenhum produto no catálogo</p>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
