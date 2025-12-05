@@ -1,16 +1,14 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Calendar, User, AlertCircle, FilePlus, Upload } from "lucide-react";
+import { FileText, Download, Calendar, FilePlus, Upload, FileCheck, Clock, HardDrive, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GerarContratoModal } from "@/components/contratos/GerarContratoModal";
 import { UploadContratoModal } from "@/components/contratos/UploadContratoModal";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface ContratosVendaModalProps {
   open: boolean;
@@ -42,7 +40,6 @@ export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVe
 
   const handleDownload = async (contrato: any) => {
     try {
-      // Criar um link temporário para fazer o download
       const link = document.createElement('a');
       link.href = contrato.arquivo_url;
       link.download = contrato.nome_arquivo;
@@ -53,6 +50,10 @@ export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVe
     } catch (error) {
       console.error('Erro ao baixar contrato:', error);
     }
+  };
+
+  const handleView = (contrato: any) => {
+    window.open(contrato.arquivo_url, '_blank');
   };
 
   const formatDate = (dateString: string) => {
@@ -68,95 +69,140 @@ export function ContratosVendaModal({ open, onOpenChange, vendaId }: ContratosVe
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Contratos da Venda
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden p-0">
+          {/* Header com gradiente */}
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-3">
+                <div className="p-2.5 bg-primary/10 rounded-xl">
+                  <FileText className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <span>Contratos da Venda</span>
+                  {contratos && contratos.length > 0 && (
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      ({contratos.length} {contratos.length === 1 ? 'contrato' : 'contratos'})
+                    </span>
+                  )}
+                </div>
+              </DialogTitle>
+            </DialogHeader>
 
-          <div className="flex gap-2 mb-4">
-            <Button
-              onClick={() => setGerarModalOpen(true)}
-              variant="outline"
-              className="flex-1"
-            >
-              <FilePlus className="w-4 h-4 mr-2" />
-              Gerar Contrato
-            </Button>
-            <Button
-              onClick={() => setUploadModalOpen(true)}
-              variant="outline"
-              className="flex-1"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Contrato
-            </Button>
+            {/* Botões de ação */}
+            <div className="flex gap-3 mt-4">
+              <Button
+                onClick={() => setGerarModalOpen(true)}
+                variant="outline"
+                className="flex-1 h-11 bg-background/80 hover:bg-background border-dashed"
+              >
+                <FilePlus className="w-4 h-4 mr-2" />
+                Gerar Contrato
+              </Button>
+              <Button
+                onClick={() => setUploadModalOpen(true)}
+                variant="outline"
+                className="flex-1 h-11 bg-background/80 hover:bg-background border-dashed"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Vincular Contrato
+              </Button>
+            </div>
           </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : contratos && contratos.length > 0 ? (
-          <div className="space-y-4">
-            {contratos.map((contrato) => (
-              <Card key={contrato.id} className="border-2 hover:border-primary/50 transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-primary" />
-                        <h3 className="font-semibold">{contrato.nome_arquivo}</h3>
+          {/* Conteúdo */}
+          <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)]">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full border-4 border-muted"></div>
+                  <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin absolute top-0 left-0"></div>
+                </div>
+                <span className="text-sm text-muted-foreground">Carregando contratos...</span>
+              </div>
+            ) : contratos && contratos.length > 0 ? (
+              <div className="space-y-3">
+                {contratos.map((contrato, index) => (
+                  <div
+                    key={contrato.id}
+                    className={cn(
+                      "group relative bg-card border rounded-xl p-4 transition-all duration-200",
+                      "hover:shadow-md hover:border-primary/30 hover:bg-accent/30"
+                    )}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Ícone do arquivo */}
+                      <div className="flex-shrink-0 p-3 bg-primary/10 rounded-lg group-hover:bg-primary/15 transition-colors">
+                        <FileCheck className="w-6 h-6 text-primary" />
                       </div>
 
-                      {contrato.template && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <FileText className="w-4 h-4" />
-                          <span>Template: {contrato.template.nome}</span>
-                        </div>
-                      )}
+                      {/* Informações */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate pr-2" title={contrato.nome_arquivo}>
+                          {contrato.nome_arquivo}
+                        </h3>
 
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{formatDate(contrato.created_at)}</span>
+                        {contrato.template && (
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            Template: <span className="text-foreground/80">{contrato.template.nome}</span>
+                          </p>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{formatDate(contrato.created_at)}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <HardDrive className="w-3.5 h-3.5" />
+                            <span>{formatFileSize(contrato.tamanho_arquivo)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <FileText className="w-3 h-3" />
-                          <span>{formatFileSize(contrato.tamanho_arquivo)}</span>
-                        </div>
+
+                        {contrato.observacoes && (
+                          <p className="mt-2 text-xs text-muted-foreground bg-muted/50 rounded-md p-2 line-clamp-2">
+                            {contrato.observacoes}
+                          </p>
+                        )}
                       </div>
 
-                      {contrato.observacoes && (
-                        <div className="mt-2 p-2 bg-muted rounded-md">
-                          <p className="text-xs text-muted-foreground">{contrato.observacoes}</p>
-                        </div>
-                      )}
+                      {/* Ações */}
+                      <div className="flex-shrink-0 flex flex-col gap-2">
+                        <Button
+                          onClick={() => handleView(contrato)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-9 px-3"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1.5" />
+                          Abrir
+                        </Button>
+                        <Button
+                          onClick={() => handleDownload(contrato)}
+                          size="sm"
+                          variant="default"
+                          className="h-9 px-3"
+                        >
+                          <Download className="w-4 h-4 mr-1.5" />
+                          Baixar
+                        </Button>
+                      </div>
                     </div>
-
-                    <Button
-                      onClick={() => handleDownload(contrato)}
-                      size="sm"
-                      className="flex-shrink-0"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Baixar
-                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="p-4 bg-muted/50 rounded-full mb-4">
+                  <FileText className="w-10 h-10 text-muted-foreground/50" />
+                </div>
+                <h3 className="font-medium text-foreground mb-1">Nenhum contrato vinculado</h3>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  Esta venda ainda não possui contratos. Gere um novo contrato ou faça upload de um arquivo existente.
+                </p>
+              </div>
+            )}
           </div>
-        ) : (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Nenhum contrato encontrado para esta venda.
-            </AlertDescription>
-          </Alert>
-        )}
         </DialogContent>
       </Dialog>
 
