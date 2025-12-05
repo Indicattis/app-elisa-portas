@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip } from 'lucide-react';
+import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -248,6 +248,10 @@ export default function Vendas() {
           </div>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => navigate('/dashboard/vendas/tabela-precos')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <Receipt className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline ml-2">Preços</span>
+          </Button>
           <Button variant="outline" onClick={() => navigate('/dashboard/vendas/forca-vendas')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
             <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline ml-2">Força</span>

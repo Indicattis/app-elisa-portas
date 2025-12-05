@@ -481,7 +481,7 @@ const App = () => (
                 <Route
                   path="/dashboard/vendas/tabela-precos"
                   element={
-                    <ProtectedRoute routeKey="tabela_precos">
+                    <ProtectedRoute routeKey="vendas_home">
                       <DashboardLayout>
                         <TabelaPrecos />
                       </DashboardLayout>
