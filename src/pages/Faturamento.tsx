@@ -29,7 +29,6 @@ import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { RelatorioProdutos } from "@/components/vendas/RelatorioProdutos";
-import { ComprovanteUploadModal } from "@/components/vendas/ComprovanteUploadModal";
 
 interface Venda {
   id: string;
@@ -134,8 +133,6 @@ export default function Faturamento() {
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [selectedVenda, setSelectedVenda] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
-  const [vendaForComprovante, setVendaForComprovante] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { createPedidoFromVenda } = usePedidoCreation();
@@ -1108,19 +1105,20 @@ export default function Faturamento() {
                               </Button>
                             )}
 
-                            {/* Botão Comprovante */}
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setVendaForComprovante(venda);
-                                setComprovanteModalOpen(true);
-                              }}
-                              title={venda.comprovante_url ? "Ver/Alterar comprovante" : "Adicionar comprovante"}
-                            >
-                              <Upload className={cn("w-4 h-4", venda.comprovante_url ? "text-green-600" : "text-muted-foreground")} />
-                            </Button>
+                            {/* Botão Visualizar Comprovante */}
+                            {venda.comprovante_url && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(venda.comprovante_url!, '_blank');
+                                }}
+                                title="Visualizar comprovante"
+                              >
+                                <Upload className="w-4 h-4 text-green-600" />
+                              </Button>
+                            )}
 
                             {/* Botão Acessar Venda */}
                             <Button 
@@ -1196,17 +1194,6 @@ export default function Faturamento() {
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
         venda={selectedVenda}
-      />
-
-      <ComprovanteUploadModal
-        open={comprovanteModalOpen}
-        onOpenChange={(open) => {
-          setComprovanteModalOpen(open);
-          if (!open) {
-            fetchVendas();
-          }
-        }}
-        venda={vendaForComprovante}
       />
     </div>
   );
