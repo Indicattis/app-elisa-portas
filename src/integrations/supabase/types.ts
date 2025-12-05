@@ -692,6 +692,99 @@ export type Database = {
           },
         ]
       }
+      contas_pagar: {
+        Row: {
+          categoria: string
+          comprovante_nome: string | null
+          comprovante_url: string | null
+          created_at: string | null
+          created_by: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          empresa_pagadora_id: string | null
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          grupo_id: string | null
+          id: string
+          metodo_pagamento: string | null
+          nota_fiscal_nome: string | null
+          nota_fiscal_url: string | null
+          numero_parcela: number
+          observacoes: string | null
+          status: string
+          total_parcelas: number
+          updated_at: string | null
+          valor_pago: number | null
+          valor_parcela: number
+        }
+        Insert: {
+          categoria?: string
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          empresa_pagadora_id?: string | null
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          grupo_id?: string | null
+          id?: string
+          metodo_pagamento?: string | null
+          nota_fiscal_nome?: string | null
+          nota_fiscal_url?: string | null
+          numero_parcela?: number
+          observacoes?: string | null
+          status?: string
+          total_parcelas?: number
+          updated_at?: string | null
+          valor_pago?: number | null
+          valor_parcela: number
+        }
+        Update: {
+          categoria?: string
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          empresa_pagadora_id?: string | null
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          grupo_id?: string | null
+          id?: string
+          metodo_pagamento?: string | null
+          nota_fiscal_nome?: string | null
+          nota_fiscal_url?: string | null
+          numero_parcela?: number
+          observacoes?: string | null
+          status?: string
+          total_parcelas?: number
+          updated_at?: string | null
+          valor_pago?: number | null
+          valor_parcela?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_empresa_pagadora_id_fkey"
+            columns: ["empresa_pagadora_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_emissoras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_receber: {
         Row: {
           comprovante_nome: string | null

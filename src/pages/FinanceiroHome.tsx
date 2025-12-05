@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, TrendingUp, CreditCard, Wallet, FileText, HandCoins } from "lucide-react";
+import { Receipt, TrendingUp, CreditCard, Wallet, FileText, HandCoins, BadgeDollarSign } from "lucide-react";
 
 export default function FinanceiroHome() {
   const navigate = useNavigate();
@@ -26,6 +26,13 @@ export default function FinanceiroHome() {
       icon: HandCoins,
       path: "/dashboard/administrativo/financeiro/contas-a-receber",
       color: "text-emerald-600"
+    },
+    {
+      title: "Contas a Pagar",
+      description: "Gestão de pagamentos e despesas",
+      icon: BadgeDollarSign,
+      path: "/dashboard/administrativo/financeiro/contas-a-pagar",
+      color: "text-rose-600"
     },
     {
       title: "DRE",
