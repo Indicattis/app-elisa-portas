@@ -54,7 +54,7 @@ import Marketing from "./pages/Marketing";
 import CanaisAquisicao from "./pages/CanaisAquisicao";
 import CronogramaPostagens from "./pages/CronogramaPostagens";
 import Postagens from "./pages/Postagens";
-import VendasHome from "./pages/VendasHome";
+
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
 import AdministrativoHome from "./pages/AdministrativoHome";
@@ -472,16 +472,6 @@ const App = () => (
                   path="/dashboard/vendas"
                   element={
                     <ProtectedRoute routeKey="vendas_home">
-                      <DashboardLayout>
-                        <VendasHome />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/vendas/listagem"
-                  element={
-                    <ProtectedRoute routeKey="vendas_listagem">
                       <DashboardLayout>
                         <Vendas />
                       </DashboardLayout>
