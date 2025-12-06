@@ -35,8 +35,30 @@ export default function DirecaoChecklistProgramacao() {
   
   const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
   const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
+  const [filtroResponsavel, setFiltroResponsavel] = useState<string | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
+
+  // Extrair lista única de responsáveis
+  const responsaveis = useMemo(() => {
+    const map = new Map<string, { id: string; nome: string; foto_perfil_url?: string }>();
+    templates.forEach(template => {
+      if (template.responsavel_id && template.responsavel?.nome) {
+        map.set(template.responsavel_id, {
+          id: template.responsavel_id,
+          nome: template.responsavel.nome,
+          foto_perfil_url: template.responsavel.foto_perfil_url
+        });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [templates]);
+
+  // Filtrar templates por responsável
+  const templatesFiltrados = useMemo(() => {
+    if (!filtroResponsavel) return templates;
+    return templates.filter(t => t.responsavel_id === filtroResponsavel);
+  }, [templates, filtroResponsavel]);
 
   // Agrupar templates por dia da semana configurado
   const templatesPorDia = useMemo(() => {
@@ -45,7 +67,7 @@ export default function DirecaoChecklistProgramacao() {
       resultado[dia.key] = [];
     });
 
-    templates.forEach(template => {
+    templatesFiltrados.forEach(template => {
       if (!template.dias_semana || template.dias_semana.length === 0) return;
       
       template.dias_semana.forEach(diaSemana => {
@@ -56,7 +78,7 @@ export default function DirecaoChecklistProgramacao() {
     });
 
     return resultado;
-  }, [templates]);
+  }, [templatesFiltrados]);
 
   const hoje = new Date();
   const diaHoje = hoje.getDay();
@@ -103,9 +125,52 @@ export default function DirecaoChecklistProgramacao() {
         </div>
       </div>
 
+      {/* Filtro por Responsável */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-muted-foreground">Filtrar por responsável:</p>
+        <div className="flex gap-2 flex-wrap items-center">
+          <Button
+            variant={filtroResponsavel === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFiltroResponsavel(null)}
+            className="h-8"
+          >
+            Todos
+          </Button>
+          {responsaveis.map((resp) => (
+            <TooltipProvider key={resp.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={filtroResponsavel === resp.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFiltroResponsavel(resp.id)}
+                    className={cn(
+                      "h-8 px-2 gap-2",
+                      filtroResponsavel === resp.id && "ring-2 ring-primary ring-offset-2"
+                    )}
+                  >
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={resp.foto_perfil_url || undefined} />
+                      <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                        {resp.nome.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline max-w-[100px] truncate">{resp.nome.split(' ')[0]}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{resp.nome}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
+        </div>
+      </div>
+
       <div className="flex gap-2 flex-wrap">
         <Badge variant="secondary" className="text-xs md:text-sm px-2 md:px-3 py-1">
-          {templates.length} template(s) configurado(s)
+          {templatesFiltrados.length} template(s) {filtroResponsavel ? "filtrado(s)" : "configurado(s)"}
         </Badge>
       </div>
 
