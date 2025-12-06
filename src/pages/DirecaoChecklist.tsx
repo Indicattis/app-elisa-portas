@@ -12,8 +12,9 @@ import { TemplatesTabela } from "@/components/todo/TemplatesTabela";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, ArrowLeft, Trash, MoreVertical } from "lucide-react";
-import { isSameDay, parseISO } from "date-fns";
+import { Plus, CalendarDays, ArrowLeft, Trash, MoreVertical, Calendar } from "lucide-react";
+import { isSameDay, parseISO, startOfWeek, endOfWeek, isWithinInterval, format, addWeeks, subWeeks } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ export default function DirecaoChecklist() {
   const [statusSelecionado, setStatusSelecionado] = useState<string>("todos");
   const [dataSelecionada, setDataSelecionada] = useState<Date | undefined>(undefined);
   const [mostrarLixeira, setMostrarLixeira] = useState(false);
+  const [semanaOffset, setSemanaOffset] = useState(0); // 0 = semana atual, -1 = semana passada, +1 = próxima semana
   
   const userId = usuarioSelecionado === "todos" ? undefined : usuarioSelecionado;
   
@@ -55,8 +57,28 @@ export default function DirecaoChecklist() {
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
-  const tarefasFiltradas = useMemo(() => {
+  // Calcular intervalo da semana selecionada
+  const semanaAtual = useMemo(() => {
+    const hoje = new Date();
+    const semanaBase = semanaOffset === 0 ? hoje : 
+      semanaOffset > 0 ? addWeeks(hoje, semanaOffset) : subWeeks(hoje, Math.abs(semanaOffset));
+    const inicio = startOfWeek(semanaBase, { weekStartsOn: 0 });
+    const fim = endOfWeek(semanaBase, { weekStartsOn: 0 });
+    return { inicio, fim };
+  }, [semanaOffset]);
+
+  // Filtrar tarefas da semana
+  const tarefasDaSemana = useMemo(() => {
     return tarefas.filter(tarefa => {
+      const dataStr = (tarefa as any).data_referencia || tarefa.created_at;
+      if (!dataStr) return false;
+      const dataTarefa = parseISO(dataStr.split('T')[0]);
+      return isWithinInterval(dataTarefa, { start: semanaAtual.inicio, end: semanaAtual.fim });
+    });
+  }, [tarefas, semanaAtual]);
+
+  const tarefasFiltradas = useMemo(() => {
+    return tarefasDaSemana.filter(tarefa => {
       if (tipoSelecionado === "unica" && tarefa.recorrente) return false;
       if (tipoSelecionado === "recorrente" && !tarefa.recorrente) return false;
 
@@ -64,7 +86,8 @@ export default function DirecaoChecklist() {
       if (statusSelecionado === "concluida" && tarefa.status !== "concluida") return false;
 
       if (dataSelecionada) {
-        const dataTarefa = parseISO(tarefa.created_at);
+        const dataStr = (tarefa as any).data_referencia || tarefa.created_at;
+        const dataTarefa = parseISO(dataStr.split('T')[0]);
         if (!isSameDay(dataTarefa, dataSelecionada)) return false;
       }
 
@@ -73,14 +96,18 @@ export default function DirecaoChecklist() {
 
       return true;
     });
-  }, [tarefas, tipoSelecionado, statusSelecionado, dataSelecionada, mostrarLixeira]);
+  }, [tarefasDaSemana, tipoSelecionado, statusSelecionado, dataSelecionada, mostrarLixeira]);
 
   const tarefasAtivas = tarefasFiltradas.filter(t => t.status === 'em_andamento');
   const tarefasConcluidas = tarefasFiltradas.filter(t => t.status === 'concluida');
 
-  const totalEmAndamento = tarefas.filter(t => t.status === 'em_andamento').length;
-  const totalConcluidas = tarefas.filter(t => t.status === 'concluida').length;
+  const totalEmAndamento = tarefasDaSemana.filter(t => t.status === 'em_andamento').length;
+  const totalConcluidas = tarefasDaSemana.filter(t => t.status === 'concluida').length;
   const totalTemplates = templates.length;
+
+  const labelSemana = useMemo(() => {
+    return `${format(semanaAtual.inicio, "dd MMM", { locale: ptBR })} - ${format(semanaAtual.fim, "dd MMM", { locale: ptBR })}`;
+  }, [semanaAtual]);
 
   if (isLoading) {
     return (
@@ -190,24 +217,58 @@ export default function DirecaoChecklist() {
         </CardContent>
       </Card>
 
-      {/* Tabela de Tarefas Normais */}
+      {/* Tabela de Tarefas da Semana */}
       <Card>
         <CardHeader className="pb-3 px-4 md:px-6">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base md:text-lg">
-              {mostrarLixeira ? "Lixeira" : "Tarefas Ativas"}
-            </CardTitle>
-            <Button
-              variant={mostrarLixeira ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMostrarLixeira(!mostrarLixeira)}
-            >
-              <Trash className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">
-                {mostrarLixeira ? "Voltar para Ativas" : `Lixeira (${totalConcluidas})`}
-              </span>
-              <span className="md:hidden ml-1">{totalConcluidas}</span>
-            </Button>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {mostrarLixeira ? "Lixeira da Semana" : "Tarefas da Semana"}
+              </CardTitle>
+              <Button
+                variant={mostrarLixeira ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMostrarLixeira(!mostrarLixeira)}
+              >
+                <Trash className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">
+                  {mostrarLixeira ? "Voltar" : `Lixeira (${totalConcluidas})`}
+                </span>
+                <span className="md:hidden ml-1">{totalConcluidas}</span>
+              </Button>
+            </div>
+            
+            {/* Navegação de semana */}
+            <div className="flex items-center justify-between bg-muted/50 rounded-lg p-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSemanaOffset(prev => prev - 1)}
+              >
+                ← Anterior
+              </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{labelSemana}</span>
+                {semanaOffset !== 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSemanaOffset(0)}
+                    className="text-xs h-6 px-2"
+                  >
+                    Hoje
+                  </Button>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSemanaOffset(prev => prev + 1)}
+              >
+                Próxima →
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="pt-0 px-4 md:px-6">
