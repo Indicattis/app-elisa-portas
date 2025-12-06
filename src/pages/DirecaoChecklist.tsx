@@ -12,11 +12,8 @@ import { TemplatesTabela } from "@/components/todo/TemplatesTabela";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, ArrowLeft, Trash, CalendarPlus, MoreVertical } from "lucide-react";
-import { format, isSameDay, parseISO, addDays, startOfWeek } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { Plus, CalendarDays, ArrowLeft, Trash, MoreVertical } from "lucide-react";
+import { isSameDay, parseISO } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
@@ -55,72 +52,8 @@ export default function DirecaoChecklist() {
   const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
   const [templateParaEditar, setTemplateParaEditar] = useState<any>(null);
-  const [processandoProximaSemana, setProcessandoProximaSemana] = useState(false);
-  const queryClient = useQueryClient();
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
-
-  const criarTarefasProximaSemana = async () => {
-    setProcessandoProximaSemana(true);
-    try {
-      const hoje = new Date();
-      const inicioProximaSemana = startOfWeek(addDays(hoje, 7), { weekStartsOn: 0 });
-      const diasSemana = Array.from({ length: 7 }, (_, i) => addDays(inicioProximaSemana, i));
-      
-      let totalCriadas = 0;
-      
-      for (const template of templates) {
-        if (!template.dias_semana || template.dias_semana.length === 0) continue;
-        
-        for (const dia of diasSemana) {
-          const diaSemana = dia.getDay();
-          
-          if (!template.dias_semana.includes(diaSemana)) continue;
-          
-          const dataReferencia = format(dia, 'yyyy-MM-dd');
-          
-          const { data: tarefaExistente } = await supabase
-            .from('tarefas')
-            .select('id')
-            .eq('template_id', template.id)
-            .eq('data_referencia', dataReferencia)
-            .maybeSingle();
-          
-          if (tarefaExistente) continue;
-          
-          const horaCreated = template.hora_criacao || '00:00:00';
-          const dataHoraCreated = `${dataReferencia}T${horaCreated}`;
-          
-          const { error } = await supabase
-            .from('tarefas')
-            .insert({
-              descricao: template.descricao,
-              responsavel_id: template.responsavel_id,
-              setor: template.setor,
-              status: 'em_andamento',
-              recorrente: true,
-              tipo_recorrencia: template.tipo_recorrencia,
-              template_id: template.id,
-              data_referencia: dataReferencia,
-              created_by: template.created_by,
-              created_at: dataHoraCreated
-            });
-          
-          if (!error) {
-            totalCriadas++;
-          }
-        }
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ['tarefas'] });
-      toast.success(`${totalCriadas} tarefa(s) criada(s) para próxima semana`);
-    } catch (error) {
-      console.error('Erro ao criar tarefas:', error);
-      toast.error('Erro ao criar tarefas da próxima semana');
-    } finally {
-      setProcessandoProximaSemana(false);
-    }
-  };
 
   const tarefasFiltradas = useMemo(() => {
     return tarefas.filter(tarefa => {
@@ -208,10 +141,6 @@ export default function DirecaoChecklist() {
                   <CalendarDays className="h-4 w-4 mr-2" />
                   Nova Recorrente
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={criarTarefasProximaSemana} disabled={processandoProximaSemana}>
-                  <CalendarPlus className="h-4 w-4 mr-2" />
-                  {processandoProximaSemana ? 'Processando...' : 'Criar Próxima Semana'}
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -249,21 +178,7 @@ export default function DirecaoChecklist() {
       {/* Tabela de Templates Recorrentes */}
       <Card>
         <CardHeader className="pb-3 px-4 md:px-6">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base md:text-lg">Templates Recorrentes</CardTitle>
-            {podeGerenciar && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={criarTarefasProximaSemana}
-                disabled={processandoProximaSemana}
-                className="hidden md:flex"
-              >
-                <CalendarPlus className="h-4 w-4 mr-2" />
-                {processandoProximaSemana ? 'Processando...' : 'Criar Próxima Semana'}
-              </Button>
-            )}
-          </div>
+          <CardTitle className="text-base md:text-lg">Templates Recorrentes</CardTitle>
         </CardHeader>
         <CardContent className="pt-0 px-4 md:px-6">
           <TemplatesTabela
@@ -333,6 +248,7 @@ export default function DirecaoChecklist() {
         onSubmit={(template) => {
           criarTemplate.mutate(template);
         }}
+        isLoading={criarTemplate.isPending}
       />
 
       {/* Modal Editar Recorrente */}
