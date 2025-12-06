@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowLeft, CalendarDays, Clock, Trash2, User } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
@@ -107,10 +108,55 @@ export default function DirecaoChecklistProgramacao() {
         
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl md:text-3xl font-bold truncate flex items-center gap-2">
-              <CalendarDays className="h-6 w-6 md:h-8 md:w-8" />
-              Programação Semanal
-            </h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-xl md:text-3xl font-bold truncate flex items-center gap-2">
+                <CalendarDays className="h-6 w-6 md:h-8 md:w-8" />
+                Programação Semanal
+              </h1>
+              <Select
+                value={filtroResponsavel || "todos"}
+                onValueChange={(value) => setFiltroResponsavel(value === "todos" ? null : value)}
+              >
+                <SelectTrigger className="w-[200px] h-9">
+                  <SelectValue placeholder="Filtrar responsável">
+                    {filtroResponsavel ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={responsaveis.find(r => r.id === filtroResponsavel)?.foto_perfil_url || undefined} />
+                          <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                            {responsaveis.find(r => r.id === filtroResponsavel)?.nome?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">{responsaveis.find(r => r.id === filtroResponsavel)?.nome?.split(' ')[0]}</span>
+                      </div>
+                    ) : (
+                      "Todos os responsáveis"
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="todos">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>Todos os responsáveis</span>
+                    </div>
+                  </SelectItem>
+                  {responsaveis.map((resp) => (
+                    <SelectItem key={resp.id} value={resp.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={resp.foto_perfil_url || undefined} />
+                          <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                            {resp.nome.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{resp.nome}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <p className="text-sm text-muted-foreground mt-1 hidden md:block">
               Visualize tarefas recorrentes em formato de calendário
             </p>
@@ -122,49 +168,6 @@ export default function DirecaoChecklistProgramacao() {
               Nova Recorrente
             </Button>
           )}
-        </div>
-      </div>
-
-      {/* Filtro por Responsável */}
-      <div className="flex flex-col gap-2">
-        <p className="text-xs text-muted-foreground">Filtrar por responsável:</p>
-        <div className="flex gap-2 flex-wrap items-center">
-          <Button
-            variant={filtroResponsavel === null ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFiltroResponsavel(null)}
-            className="h-8"
-          >
-            Todos
-          </Button>
-          {responsaveis.map((resp) => (
-            <TooltipProvider key={resp.id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={filtroResponsavel === resp.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFiltroResponsavel(resp.id)}
-                    className={cn(
-                      "h-8 px-2 gap-2",
-                      filtroResponsavel === resp.id && "ring-2 ring-primary ring-offset-2"
-                    )}
-                  >
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={resp.foto_perfil_url || undefined} />
-                      <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                        {resp.nome.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden sm:inline max-w-[100px] truncate">{resp.nome.split(' ')[0]}</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{resp.nome}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
         </div>
       </div>
 
