@@ -138,6 +138,7 @@ import RHHome from "./pages/RHHome";
 import PaineisHome from "./pages/PaineisHome";
 import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
+import DirecaoChecklistProgramacao from "./pages/DirecaoChecklistProgramacao";
 import Caixa from "./pages/Caixa";
 import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
@@ -384,6 +385,16 @@ const App = () => (
                     <ProtectedRoute routeKey="direcao_checklist">
                       <DashboardLayout>
                         <DirecaoChecklist />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/direcao/checklist/programacao"
+                  element={
+                    <ProtectedRoute routeKey="direcao_checklist">
+                      <DashboardLayout>
+                        <DirecaoChecklistProgramacao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
