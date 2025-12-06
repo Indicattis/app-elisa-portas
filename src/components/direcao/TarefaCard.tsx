@@ -31,7 +31,7 @@ export const TarefaCard = ({
   
   const getStatusColor = () => {
     if (isConcluida) {
-      return 'bg-success/10 border-success/40 hover:bg-success/20';
+      return 'bg-green-500/20 border-green-500/50 hover:bg-green-500/30';
     }
     return 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/20';
   };
@@ -53,7 +53,7 @@ export const TarefaCard = ({
             </AvatarFallback>
           </Avatar>
           
-          <h4 className={`font-medium text-xs truncate ${isConcluida ? 'line-through opacity-60' : ''}`}>
+          <h4 className={`font-medium text-xs truncate ${isConcluida ? 'text-green-700 dark:text-green-400' : ''}`}>
             {tarefa.descricao}
           </h4>
           
@@ -65,7 +65,7 @@ export const TarefaCard = ({
         <div className="flex items-center gap-1 shrink-0">
           <Badge 
             variant={isConcluida ? "default" : "destructive"}
-            className="text-[9px] px-1 py-0 h-4"
+            className={`text-[9px] px-1 py-0 h-4 ${isConcluida ? 'bg-green-500 hover:bg-green-600' : ''}`}
           >
             {isConcluida ? (
               <CheckCircle2 className="h-2.5 w-2.5" />
