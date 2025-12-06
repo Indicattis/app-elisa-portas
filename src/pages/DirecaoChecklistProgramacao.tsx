@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas, TarefaTemplate } from "@/hooks/useTarefas";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
-import { EditarRecorrenteModal } from "@/components/todo/EditarRecorrenteModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowLeft, CalendarDays, Clock } from "lucide-react";
+import { Plus, ArrowLeft, CalendarDays, Clock, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
@@ -30,12 +29,10 @@ export default function DirecaoChecklistProgramacao() {
     isLoading,
     criarTemplate,
     deletarTemplate,
-    atualizarTemplate
   } = useTarefas();
   
   const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
-  const [templateParaEditar, setTemplateParaEditar] = useState<TarefaTemplate | null>(null);
-  const [templateParaDeletar, setTemplateParaDeletar] = useState<string | null>(null);
+  const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
@@ -145,8 +142,7 @@ export default function DirecaoChecklistProgramacao() {
                   templatesDoDia.map((template) => (
                     <div
                       key={template.id}
-                      className="p-2 rounded-md border bg-background border-border hover:border-primary/50 transition-colors cursor-pointer"
-                      onClick={() => podeGerenciar && setTemplateParaEditar(template)}
+                      className="p-2 rounded-md border bg-background border-border group"
                     >
                       <div className="flex items-start gap-2">
                         <div className="flex-shrink-0 mt-0.5 h-5 w-5 rounded-full flex items-center justify-center bg-primary/10 text-primary">
@@ -167,6 +163,16 @@ export default function DirecaoChecklistProgramacao() {
                             </p>
                           )}
                         </div>
+                        {podeGerenciar && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setTemplateParaDeletar(template)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))
@@ -198,19 +204,6 @@ export default function DirecaoChecklistProgramacao() {
         isLoading={criarTemplate.isPending}
       />
 
-      {/* Modal Editar Recorrente */}
-      {templateParaEditar && (
-        <EditarRecorrenteModal
-          open={!!templateParaEditar}
-          onOpenChange={(open) => !open && setTemplateParaEditar(null)}
-          template={templateParaEditar}
-          onSubmit={(id, updates) => {
-            atualizarTemplate.mutate({ id, ...updates });
-            setTemplateParaEditar(null);
-          }}
-        />
-      )}
-
       {/* Confirmação de Deleção */}
       <AlertDialog open={!!templateParaDeletar} onOpenChange={() => setTemplateParaDeletar(null)}>
         <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
@@ -225,7 +218,7 @@ export default function DirecaoChecklistProgramacao() {
             <AlertDialogAction
               onClick={() => {
                 if (templateParaDeletar) {
-                  deletarTemplate.mutate(templateParaDeletar);
+                  deletarTemplate.mutate(templateParaDeletar.id);
                   setTemplateParaDeletar(null);
                 }
               }}
