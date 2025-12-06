@@ -3,11 +3,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Repeat } from "lucide-react";
-import { format } from "date-fns";
+import { Trash2, Repeat, Clock } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tarefa } from "@/hooks/useTarefas";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMemo } from "react";
 
 interface TarefasTabelaProps {
   tarefas: Tarefa[];
@@ -26,6 +27,23 @@ export function TarefasTabela({
 }: TarefasTabelaProps) {
   const isMobile = useIsMobile();
 
+  // Ordenar tarefas por hora
+  const tarefasOrdenadas = useMemo(() => {
+    return [...tarefas].sort((a, b) => {
+      const horaA = (a as any).data_referencia 
+        ? a.created_at.split('T')[1]?.substring(0, 5) || '00:00'
+        : a.created_at.split('T')[1]?.substring(0, 5) || '00:00';
+      const horaB = (b as any).data_referencia 
+        ? b.created_at.split('T')[1]?.substring(0, 5) || '00:00'
+        : b.created_at.split('T')[1]?.substring(0, 5) || '00:00';
+      return horaA.localeCompare(horaB);
+    });
+  }, [tarefas]);
+
+  const getHoraTarefa = (tarefa: Tarefa) => {
+    const hora = tarefa.created_at.split('T')[1]?.substring(0, 5);
+    return hora || '--:--';
+  };
   if (tarefas.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -38,7 +56,7 @@ export function TarefasTabela({
   if (isMobile) {
     return (
       <div className="space-y-3">
-        {tarefas.map((tarefa) => (
+        {tarefasOrdenadas.map((tarefa) => (
           <div
             key={tarefa.id}
             className={`p-3 border rounded-lg space-y-2 ${
@@ -76,7 +94,7 @@ export function TarefasTabela({
               )}
             </div>
 
-            {/* Row 2: Avatar + Name + Date */}
+            {/* Row 2: Avatar + Name + Time */}
             <div className="flex items-center justify-between pl-7">
               <div className="flex items-center gap-2">
                 <Avatar className="h-5 w-5">
@@ -89,9 +107,10 @@ export function TarefasTabela({
                   {tarefa.responsavel?.nome}
                 </span>
               </div>
-              <span className="text-xs text-muted-foreground">
-                {format(new Date(tarefa.created_at), "dd/MM", { locale: ptBR })}
-              </span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                {getHoraTarefa(tarefa)}
+              </div>
             </div>
 
             {/* Row 3: Status + Type badges */}
@@ -124,17 +143,16 @@ export function TarefasTabela({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-10 h-8"></TableHead>
+            <TableHead className="w-[70px] h-8">Hora</TableHead>
             <TableHead className="h-8">Descrição</TableHead>
             <TableHead className="w-[180px] h-8">Responsável</TableHead>
-            <TableHead className="w-[180px] h-8">Criado por</TableHead>
             <TableHead className="w-[90px] h-8">Status</TableHead>
-            <TableHead className="w-[100px] h-8">Data</TableHead>
             <TableHead className="w-[90px] h-8">Tipo</TableHead>
             {podeGerenciar && <TableHead className="w-10 h-8"></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tarefas.map((tarefa) => (
+          {tarefasOrdenadas.map((tarefa) => (
             <TableRow
               key={tarefa.id}
               className={`h-10 ${
@@ -155,6 +173,12 @@ export function TarefasTabela({
                   className="h-4 w-4"
                 />
               </TableCell>
+              <TableCell className="py-1">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {getHoraTarefa(tarefa)}
+                </div>
+              </TableCell>
               <TableCell
                 className={`py-1 text-sm ${
                   tarefa.status === 'concluida' ? 'line-through' : 'font-medium'
@@ -174,26 +198,12 @@ export function TarefasTabela({
                 </div>
               </TableCell>
               <TableCell className="py-1">
-                <div className="flex items-center gap-1.5">
-                  <Avatar className="h-5 w-5">
-                    <AvatarImage src={tarefa.criador?.foto_perfil_url} />
-                    <AvatarFallback className="text-[10px]">
-                      {tarefa.criador?.nome?.substring(0, 2).toUpperCase() || '??'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs truncate">{tarefa.criador?.nome}</span>
-                </div>
-              </TableCell>
-              <TableCell className="py-1">
                 <Badge
                   variant={tarefa.status === 'em_andamento' ? 'destructive' : 'default'}
                   className="text-[10px] h-5 px-1.5"
                 >
                   {tarefa.status === 'em_andamento' ? 'Pendente' : 'Concluída'}
                 </Badge>
-              </TableCell>
-              <TableCell className="py-1 text-xs text-muted-foreground">
-                {format(new Date(tarefa.created_at), "dd/MM/yy", { locale: ptBR })}
               </TableCell>
               <TableCell className="py-1">
                 {tarefa.recorrente ? (
