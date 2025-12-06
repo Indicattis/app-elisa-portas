@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { format, addDays } from "date-fns";
 
 export interface Tarefa {
   id: string;
@@ -157,13 +158,12 @@ export function useTarefas(userId?: string, setor?: string) {
     },
   });
 
-  // Criar template de recorrência
+  // Criar template de recorrência + tarefas para 1 ano
   const criarTemplate = useMutation({
     mutationFn: async (input: TarefaInput) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Use provided data_proxima_criacao or default to tomorrow
       const dataProximaCriacao = input.data_proxima_criacao || (() => {
         const amanha = new Date();
         amanha.setDate(amanha.getDate() + 1);
@@ -174,7 +174,8 @@ export function useTarefas(userId?: string, setor?: string) {
         ? 'semanal' 
         : 'cada_7_dias';
 
-      const { data, error } = await supabase
+      // 1. Criar o template
+      const { data: templateData, error: templateError } = await supabase
         .from('tarefas_templates' as any)
         .insert({
           descricao: input.descricao,
@@ -190,14 +191,62 @@ export function useTarefas(userId?: string, setor?: string) {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (templateError) throw templateError;
+
+      // 2. Criar tarefas para os próximos 365 dias
+      const diasSemana = input.dias_semana || [];
+      if (diasSemana.length > 0) {
+        const hoje = new Date();
+        const umAnoDepois = addDays(hoje, 365);
+        const tarefasParaCriar: any[] = [];
+        
+        let dataAtual = new Date(hoje);
+        while (dataAtual <= umAnoDepois) {
+          const diaSemana = dataAtual.getDay();
+          
+          if (diasSemana.includes(diaSemana)) {
+            const dataReferencia = format(dataAtual, 'yyyy-MM-dd');
+            const horaCreated = input.hora_criacao || '00:00:00';
+            
+            tarefasParaCriar.push({
+              descricao: input.descricao,
+              responsavel_id: input.responsavel_id,
+              setor: input.setor || null,
+              status: 'em_andamento',
+              recorrente: true,
+              tipo_recorrencia: tipoRecorrencia,
+              template_id: (templateData as any).id,
+              data_referencia: dataReferencia,
+              created_by: user.id,
+              created_at: `${dataReferencia}T${horaCreated}`
+            });
+          }
+          
+          dataAtual = addDays(dataAtual, 1);
+        }
+
+        // Inserir em lotes de 100 para evitar timeout
+        const BATCH_SIZE = 100;
+        for (let i = 0; i < tarefasParaCriar.length; i += BATCH_SIZE) {
+          const batch = tarefasParaCriar.slice(i, i + BATCH_SIZE);
+          const { error: insertError } = await supabase
+            .from('tarefas')
+            .insert(batch);
+          
+          if (insertError) {
+            console.error('Erro ao inserir lote de tarefas:', insertError);
+          }
+        }
+      }
+
+      return { template: templateData, totalTarefas: diasSemana.length > 0 ? Math.ceil(365 / 7) * diasSemana.length : 0 };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tarefas-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['tarefas'] });
       toast({
         title: "Template criado",
-        description: "A tarefa recorrente foi configurada e será criada automaticamente.",
+        description: `Tarefa recorrente criada com ~${data.totalTarefas} tarefas agendadas para o próximo ano.`,
       });
     },
     onError: (error: any) => {
@@ -356,21 +405,39 @@ export function useTarefas(userId?: string, setor?: string) {
     },
   });
 
-  // Deletar template
+  // Deletar template + todas as tarefas associadas
   const deletarTemplate = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      // 1. Contar quantas tarefas serão deletadas
+      const { count } = await supabase
+        .from('tarefas')
+        .select('*', { count: 'exact', head: true })
+        .eq('template_id', id);
+
+      // 2. Deletar todas as tarefas associadas ao template
+      const { error: tarefasError } = await supabase
+        .from('tarefas')
+        .delete()
+        .eq('template_id', id);
+      
+      if (tarefasError) throw tarefasError;
+
+      // 3. Deletar o template
+      const { error: templateError } = await supabase
         .from('tarefas_templates' as any)
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (templateError) throw templateError;
+
+      return { deletedTasks: count || 0 };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tarefas-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['tarefas'] });
       toast({
         title: "Template deletado",
-        description: "A tarefa recorrente foi removida.",
+        description: `Template e ${data.deletedTasks} tarefa(s) associada(s) foram removidos.`,
       });
     },
   });

@@ -21,8 +21,9 @@ interface NovaRecorrenteModalProps {
     dias_semana: number[];
     hora_criacao?: string;
     data_proxima_criacao?: string;
-  }) => void;
+  }) => Promise<void> | void;
   setor?: string;
+  isLoading?: boolean;
 }
 
 const DIAS_SEMANA = [
@@ -37,7 +38,7 @@ const DIAS_SEMANA = [
 
 const DIAS_SEMANA_NOMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: NovaRecorrenteModalProps) {
+export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoading }: NovaRecorrenteModalProps) {
   const { userRole } = useAuth();
   const { data: todosUsuarios } = useAllUsers();
   
@@ -216,14 +217,21 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor }: Nov
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
             Cancelar
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={!descricao.trim() || diasSelecionados.length === 0 || (podeEscolherResponsavel && !responsavelId)}
+            disabled={!descricao.trim() || diasSelecionados.length === 0 || (podeEscolherResponsavel && !responsavelId) || isLoading}
           >
-            Criar Tarefa Recorrente
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Criando tarefas...
+              </>
+            ) : (
+              'Criar Tarefa Recorrente'
+            )}
           </Button>
         </div>
       </DialogContent>
