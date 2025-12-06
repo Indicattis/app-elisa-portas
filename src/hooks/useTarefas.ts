@@ -76,7 +76,7 @@ export function useTarefas(userId?: string, setor?: string) {
     queryFn: async () => {
       let query = supabase
         .from('tarefas')
-        .select('id, descricao, responsavel_id, status, recorrente, tipo_recorrencia, template_id, setor, created_by, created_at, updated_at');
+        .select('id, descricao, responsavel_id, status, recorrente, tipo_recorrencia, template_id, setor, created_by, created_at, updated_at, data_referencia');
 
       // Se setor foi especificado, buscar tarefas de todos os usuários do setor
       if (setor) {

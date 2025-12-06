@@ -7,13 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2, Calendar, Settings } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { NovaTarefaModal } from "./NovaTarefaModal";
 import { TarefasRecorrentesModal } from "./TarefasRecorrentesModal";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { startOfWeek, endOfWeek, parseISO, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface MinhasTarefasSheetProps {
@@ -43,8 +42,25 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
     atualizarTemplate,
   } = useTarefas(user?.id);
 
-  const tarefasEmAndamento = tarefas.filter((t) => t.status === "em_andamento");
-  const tarefasConcluidas = tarefas.filter((t) => t.status === "concluida");
+  // Filtrar apenas tarefas da semana atual
+  const tarefasDaSemana = useMemo(() => {
+    const hoje = new Date();
+    const inicioSemana = startOfWeek(hoje, { weekStartsOn: 0 });
+    const fimSemana = endOfWeek(hoje, { weekStartsOn: 0 });
+
+    return tarefas.filter((tarefa) => {
+      // Para tarefas recorrentes, usar data_referencia
+      // Para tarefas não recorrentes, usar created_at
+      const dataStr = (tarefa as any).data_referencia || tarefa.created_at;
+      if (!dataStr) return false;
+      
+      const dataTarefa = parseISO(dataStr.split('T')[0]);
+      return isWithinInterval(dataTarefa, { start: inicioSemana, end: fimSemana });
+    });
+  }, [tarefas]);
+
+  const tarefasEmAndamento = tarefasDaSemana.filter((t) => t.status === "em_andamento");
+  const tarefasConcluidas = tarefasDaSemana.filter((t) => t.status === "concluida");
 
   const handleCheckboxChange = (tarefaId: string, isCompleted: boolean) => {
     if (isCompleted) {
@@ -84,7 +100,7 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
           <SheetHeader className="px-6 py-4 border-b">
             <div className="flex items-center justify-between">
               <SheetTitle className="flex items-center gap-2">
-                Minhas Tarefas
+                Tarefas da Semana
                 {tarefasEmAndamento.length > 0 && (
                   <Badge variant="secondary" className="ml-2">
                     {tarefasEmAndamento.length}
