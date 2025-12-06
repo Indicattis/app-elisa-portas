@@ -6,7 +6,9 @@ import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowLeft, CalendarDays, Clock, Trash2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, ArrowLeft, CalendarDays, Clock, Trash2, User } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
@@ -140,41 +142,79 @@ export default function DirecaoChecklistProgramacao() {
                   </div>
                 ) : (
                   templatesDoDia.map((template) => (
-                    <div
-                      key={template.id}
-                      className="p-2 rounded-md border bg-background border-border group"
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="flex-shrink-0 mt-0.5 h-5 w-5 rounded-full flex items-center justify-center bg-primary/10 text-primary">
-                          <Clock className="h-3 w-3" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium leading-tight">
-                            {template.descricao || "Tarefa"}
-                          </p>
-                          {template.hora_criacao && (
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                              {template.hora_criacao.slice(0, 5)}
-                            </p>
-                          )}
-                          {template.responsavel?.nome && (
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {template.responsavel.nome}
-                            </p>
-                          )}
-                        </div>
-                        {podeGerenciar && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => setTemplateParaDeletar(template)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+                    <TooltipProvider key={template.id}>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <div className="p-2 rounded-md border bg-background border-border group cursor-pointer hover:border-primary/50 transition-colors">
+                            <div className="flex items-start gap-2">
+                              <Avatar className="h-6 w-6 flex-shrink-0">
+                                <AvatarImage src={template.responsavel?.foto_perfil_url || undefined} />
+                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                  {template.responsavel?.nome?.charAt(0)?.toUpperCase() || <User className="h-3 w-3" />}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium leading-tight line-clamp-2">
+                                  {template.descricao || "Tarefa"}
+                                </p>
+                                {template.hora_criacao && (
+                                  <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                    <Clock className="h-2.5 w-2.5" />
+                                    {template.hora_criacao.slice(0, 5)}
+                                  </p>
+                                )}
+                              </div>
+                              {podeGerenciar && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTemplateParaDeletar(template);
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={template.responsavel?.foto_perfil_url || undefined} />
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                {template.responsavel?.nome?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">{template.responsavel?.nome || "Sem responsável"}</p>
+                              <p className="text-xs text-muted-foreground">{template.responsavel?.email}</p>
+                            </div>
+                          </div>
+                          <div className="border-t pt-2 space-y-1">
+                            <p className="text-sm font-medium">{template.descricao}</p>
+                            {template.hora_criacao && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Horário: {template.hora_criacao.slice(0, 5)}
+                              </p>
+                            )}
+                            {template.setor && (
+                              <p className="text-xs text-muted-foreground">
+                                Setor: {template.setor}
+                              </p>
+                            )}
+                            {template.dias_semana && template.dias_semana.length > 0 && (
+                              <p className="text-xs text-muted-foreground">
+                                Dias: {template.dias_semana.map(d => DIAS_SEMANA.find(dia => dia.key === d)?.nome).filter(Boolean).join(", ")}
+                              </p>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   ))
                 )}
               </CardContent>
