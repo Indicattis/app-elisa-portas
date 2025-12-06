@@ -28,5 +28,5 @@ export function CalendarioSemanal({
   };
   const diaSelecionadoDate = diasSemana.find(d => format(d, "yyyy-MM-dd") === diaSelecionado) || hoje;
   const tarefasDoDiaSelecionado = getTarefasDoDia(diaSelecionadoDate);
-  return null;
+  return;
 }

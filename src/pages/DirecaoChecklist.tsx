@@ -13,8 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, CalendarDays, ArrowLeft, Trash, MoreVertical, Calendar } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAllUsers } from "@/hooks/useAllUsers";
 import { isSameDay, parseISO, startOfWeek, endOfWeek, isWithinInterval, format, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -28,7 +26,6 @@ import {
 export default function DirecaoChecklist() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
-  const { data: usuarios } = useAllUsers();
   
   // Filtros
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<string>("todos");
@@ -242,54 +239,35 @@ export default function DirecaoChecklist() {
               </Button>
             </div>
             
-            {/* Navegação de semana e filtro de responsável */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between bg-muted/50 rounded-lg p-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSemanaOffset(prev => prev - 1)}
-                >
-                  ← Anterior
-                </Button>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{labelSemana}</span>
-                  {semanaOffset !== 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSemanaOffset(0)}
-                      className="text-xs h-6 px-2"
-                    >
-                      Hoje
-                    </Button>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSemanaOffset(prev => prev + 1)}
-                >
-                  Próxima →
-                </Button>
-              </div>
-              
+            {/* Navegação de semana */}
+            <div className="flex items-center justify-between bg-muted/50 rounded-lg p-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSemanaOffset(prev => prev - 1)}
+              >
+                ← Anterior
+              </Button>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Responsável:</span>
-                <Select value={usuarioSelecionado} onValueChange={setUsuarioSelecionado}>
-                  <SelectTrigger className="w-[200px] h-8">
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    {usuarios?.map((usuario) => (
-                      <SelectItem key={usuario.user_id} value={usuario.user_id}>
-                        {usuario.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <span className="text-sm font-medium">{labelSemana}</span>
+                {semanaOffset !== 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSemanaOffset(0)}
+                    className="text-xs h-6 px-2"
+                  >
+                    Hoje
+                  </Button>
+                )}
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSemanaOffset(prev => prev + 1)}
+              >
+                Próxima →
+              </Button>
             </div>
           </div>
         </CardHeader>
