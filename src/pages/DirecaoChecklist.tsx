@@ -1,27 +1,18 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
-import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
-import { EditarRecorrenteModal } from "@/components/todo/EditarRecorrenteModal";
 import { ChecklistFiltros } from "@/components/todo/ChecklistFiltros";
 import { CalendarioSemanal } from "@/components/todo/CalendarioSemanal";
 import { TarefasTabela } from "@/components/todo/TarefasTabela";
-import { TemplatesTabela } from "@/components/todo/TemplatesTabela";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, ArrowLeft, Trash, MoreVertical, Calendar } from "lucide-react";
+import { Plus, CalendarDays, ArrowLeft, Trash, Calendar } from "lucide-react";
 import { isSameDay, parseISO, startOfWeek, endOfWeek, isWithinInterval, format, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export default function DirecaoChecklist() {
   const navigate = useNavigate();
@@ -33,7 +24,7 @@ export default function DirecaoChecklist() {
   const [statusSelecionado, setStatusSelecionado] = useState<string>("todos");
   const [dataSelecionada, setDataSelecionada] = useState<Date | undefined>(undefined);
   const [mostrarLixeira, setMostrarLixeira] = useState(false);
-  const [semanaOffset, setSemanaOffset] = useState(0); // 0 = semana atual, -1 = semana passada, +1 = próxima semana
+  const [semanaOffset, setSemanaOffset] = useState(0);
   
   const userId = usuarioSelecionado === "todos" ? undefined : usuarioSelecionado;
   
@@ -42,18 +33,13 @@ export default function DirecaoChecklist() {
     isLoading, 
     templates,
     criarTarefa, 
-    criarTemplate,
     marcarConcluida, 
     reabrirTarefa, 
     deletarTarefa,
-    deletarTemplate,
-    atualizarTemplate
   } = useTarefas(userId);
   
   const [modalAberto, setModalAberto] = useState(false);
-  const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
-  const [templateParaEditar, setTemplateParaEditar] = useState<any>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
@@ -103,7 +89,6 @@ export default function DirecaoChecklist() {
 
   const totalEmAndamento = tarefasDaSemana.filter(t => t.status === 'em_andamento').length;
   const totalConcluidas = tarefasDaSemana.filter(t => t.status === 'concluida').length;
-  const totalTemplates = templates.length;
 
   const labelSemana = useMemo(() => {
     return `${format(semanaAtual.inicio, "dd MMM", { locale: ptBR })} - ${format(semanaAtual.fim, "dd MMM", { locale: ptBR })}`;
@@ -144,9 +129,11 @@ export default function DirecaoChecklist() {
           {/* Desktop buttons */}
           {podeGerenciar && (
             <div className="hidden md:flex gap-2 shrink-0">
-              <Button variant="outline" onClick={() => setModalRecorrenteAberto(true)}>
-                <CalendarDays className="h-4 w-4 mr-2" />
-                Nova Recorrente
+              <Button variant="outline" asChild>
+                <Link to="/dashboard/direcao/checklist/programacao">
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Programação
+                </Link>
               </Button>
               <Button onClick={() => setModalAberto(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -155,30 +142,19 @@ export default function DirecaoChecklist() {
             </div>
           )}
 
-          {/* Mobile dropdown menu */}
+          {/* Mobile button */}
           {podeGerenciar && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild className="md:hidden">
-                <Button variant="outline" size="icon">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-popover">
-                <DropdownMenuItem onClick={() => setModalRecorrenteAberto(true)}>
-                  <CalendarDays className="h-4 w-4 mr-2" />
-                  Nova Recorrente
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="outline" size="sm" asChild className="md:hidden">
+              <Link to="/dashboard/direcao/checklist/programacao">
+                <CalendarDays className="h-4 w-4" />
+              </Link>
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Badges de resumo - scrollable no mobile */}
+      {/* Badges de resumo */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
-        <Badge variant="secondary" className="text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
-          {totalTemplates} template(s)
-        </Badge>
         <Badge variant="destructive" className="text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
           {totalEmAndamento} pendente(s)
         </Badge>
@@ -201,21 +177,6 @@ export default function DirecaoChecklist() {
         dataSelecionada={dataSelecionada}
         setDataSelecionada={setDataSelecionada}
       />
-
-      {/* Tabela de Templates Recorrentes */}
-      <Card>
-        <CardHeader className="pb-3 px-4 md:px-6">
-          <CardTitle className="text-base md:text-lg">Templates Recorrentes</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 px-4 md:px-6">
-          <TemplatesTabela
-            templates={templates}
-            podeGerenciar={podeGerenciar}
-            onEditar={setTemplateParaEditar}
-            onDeletar={(id) => deletarTemplate.mutate(id)}
-          />
-        </CardContent>
-      </Card>
 
       {/* Tabela de Tarefas da Semana */}
       <Card>
@@ -301,29 +262,6 @@ export default function DirecaoChecklist() {
           criarTarefa.mutate(tarefa);
         }}
       />
-
-      {/* Modal Nova Recorrente */}
-      <NovaRecorrenteModal
-        open={modalRecorrenteAberto}
-        onOpenChange={setModalRecorrenteAberto}
-        onSubmit={(template) => {
-          criarTemplate.mutate(template);
-        }}
-        isLoading={criarTemplate.isPending}
-      />
-
-      {/* Modal Editar Recorrente */}
-      {templateParaEditar && (
-        <EditarRecorrenteModal
-          open={!!templateParaEditar}
-          onOpenChange={(open) => !open && setTemplateParaEditar(null)}
-          template={templateParaEditar}
-          onSubmit={(id, updates) => {
-            atualizarTemplate.mutate({ id, ...updates });
-            setTemplateParaEditar(null);
-          }}
-        />
-      )}
 
       {/* Confirmação de Deleção */}
       <AlertDialog open={!!tarefaParaDeletar} onOpenChange={() => setTarefaParaDeletar(null)}>
