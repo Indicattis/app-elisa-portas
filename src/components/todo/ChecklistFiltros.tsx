@@ -39,5 +39,5 @@ export function ChecklistFiltros({
 
   // Count active filters
   const activeFilters = [usuarioSelecionado !== "todos", tipoSelecionado !== "todos", statusSelecionado !== "todos", dataSelecionada !== undefined].filter(Boolean).length;
-  return;
+  return null;
 }
