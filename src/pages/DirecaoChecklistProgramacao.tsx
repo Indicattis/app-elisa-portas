@@ -1,16 +1,14 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useTarefas, Tarefa, TarefaTemplate } from "@/hooks/useTarefas";
+import { useTarefas, TarefaTemplate } from "@/hooks/useTarefas";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { EditarRecorrenteModal } from "@/components/todo/EditarRecorrenteModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Check, Clock } from "lucide-react";
+import { Plus, ArrowLeft, CalendarDays, Clock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { startOfWeek, endOfWeek, addWeeks, addDays, format, parseISO, isSameDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 const DIAS_SEMANA = [
@@ -26,10 +24,8 @@ const DIAS_SEMANA = [
 export default function DirecaoChecklistProgramacao() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
-  const [semanaOffset, setSemanaOffset] = useState(0);
   
   const { 
-    tarefas,
     templates,
     isLoading,
     criarTemplate,
@@ -43,48 +39,28 @@ export default function DirecaoChecklistProgramacao() {
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
-  const hoje = new Date();
-  const inicioSemana = startOfWeek(addWeeks(hoje, semanaOffset), { weekStartsOn: 0 });
-  const fimSemana = endOfWeek(addWeeks(hoje, semanaOffset), { weekStartsOn: 0 });
-
-  const labelSemana = useMemo(() => {
-    return `${format(inicioSemana, "dd MMM", { locale: ptBR })} - ${format(fimSemana, "dd MMM yyyy", { locale: ptBR })}`;
-  }, [inicioSemana, fimSemana]);
-
-  // Filtrar tarefas recorrentes e agrupar por dia da semana
-  const tarefasPorDia = useMemo(() => {
-    const resultado: Record<number, Array<Tarefa & { template?: TarefaTemplate }>> = {};
+  // Agrupar templates por dia da semana configurado
+  const templatesPorDia = useMemo(() => {
+    const resultado: Record<number, TarefaTemplate[]> = {};
     DIAS_SEMANA.forEach(dia => {
       resultado[dia.key] = [];
     });
 
-    tarefas.forEach(tarefa => {
-      if (!tarefa.recorrente || !tarefa.template_id) return;
+    templates.forEach(template => {
+      if (!template.dias_semana || template.dias_semana.length === 0) return;
       
-      const dataStr = (tarefa as any).data_referencia || tarefa.created_at;
-      if (!dataStr) return;
-      
-      const dataTarefa = parseISO(dataStr.split('T')[0]);
-      
-      // Verifica se está na semana atual
-      if (dataTarefa >= inicioSemana && dataTarefa <= fimSemana) {
-        const diaSemana = dataTarefa.getDay();
-        const template = templates.find(t => t.id === tarefa.template_id);
-        resultado[diaSemana].push({ ...tarefa, template });
-      }
+      template.dias_semana.forEach(diaSemana => {
+        if (resultado[diaSemana]) {
+          resultado[diaSemana].push(template);
+        }
+      });
     });
 
     return resultado;
-  }, [tarefas, templates, inicioSemana, fimSemana]);
+  }, [templates]);
 
-  // Estatísticas
-  const stats = useMemo(() => {
-    const todasTarefas = Object.values(tarefasPorDia).flat();
-    const total = todasTarefas.length;
-    const concluidas = todasTarefas.filter(t => t.status === 'concluida').length;
-    const pendentes = total - concluidas;
-    return { total, concluidas, pendentes };
-  }, [tarefasPorDia]);
+  const hoje = new Date();
+  const diaHoje = hoje.getDay();
 
   if (isLoading) {
     return (
@@ -128,58 +104,17 @@ export default function DirecaoChecklistProgramacao() {
         </div>
       </div>
 
-      {/* Navegação de semana */}
-      <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSemanaOffset(prev => prev - 1)}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          <span className="hidden sm:inline">Anterior</span>
-        </Button>
-        <div className="flex items-center gap-2">
-          <span className="text-sm md:text-base font-medium">{labelSemana}</span>
-          {semanaOffset !== 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSemanaOffset(0)}
-              className="text-xs h-7 px-2"
-            >
-              Hoje
-            </Button>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSemanaOffset(prev => prev + 1)}
-        >
-          <span className="hidden sm:inline">Próxima</span>
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
-
-      {/* Badges de resumo */}
       <div className="flex gap-2 flex-wrap">
         <Badge variant="secondary" className="text-xs md:text-sm px-2 md:px-3 py-1">
-          {templates.length} template(s)
-        </Badge>
-        <Badge variant="destructive" className="text-xs md:text-sm px-2 md:px-3 py-1">
-          {stats.pendentes} pendente(s)
-        </Badge>
-        <Badge className="bg-success text-success-foreground text-xs md:text-sm px-2 md:px-3 py-1">
-          {stats.concluidas} concluída(s)
+          {templates.length} template(s) configurado(s)
         </Badge>
       </div>
 
       {/* Calendário Semanal em Colunas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
         {DIAS_SEMANA.map((dia) => {
-          const dataDia = addDays(inicioSemana, dia.key);
-          const isHoje = isSameDay(dataDia, hoje);
-          const tarefasDoDia = tarefasPorDia[dia.key] || [];
+          const isHoje = dia.key === diaHoje;
+          const templatesDoDia = templatesPorDia[dia.key] || [];
 
           return (
             <Card
@@ -192,69 +127,49 @@ export default function DirecaoChecklistProgramacao() {
               <CardHeader className="p-3 pb-2 border-b bg-muted/30">
                 <div className="text-center">
                   <p className={cn(
-                    "text-xs font-medium uppercase tracking-wide",
+                    "text-sm font-medium",
                     isHoje ? "text-primary" : "text-muted-foreground"
                   )}>
-                    {dia.nome}
-                  </p>
-                  <p className={cn(
-                    "text-xl font-bold",
-                    isHoje ? "text-primary" : "text-foreground"
-                  )}>
-                    {format(dataDia, "dd")}
+                    {dia.nomeCompleto}
                   </p>
                 </div>
               </CardHeader>
               <CardContent className="p-2 flex-1 overflow-y-auto space-y-2">
-                {tarefasDoDia.length === 0 ? (
+                {templatesDoDia.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-xs text-muted-foreground text-center py-4">
                       Sem tarefas
                     </p>
                   </div>
                 ) : (
-                  tarefasDoDia.map((tarefa) => {
-                    const isConcluida = tarefa.status === 'concluida';
-                    return (
-                      <div
-                        key={tarefa.id}
-                        className={cn(
-                          "p-2 rounded-md border transition-colors",
-                          isConcluida
-                            ? "bg-success/10 border-success/30"
-                            : "bg-background border-border hover:border-primary/50"
-                        )}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className={cn(
-                            "flex-shrink-0 mt-0.5 h-5 w-5 rounded-full flex items-center justify-center",
-                            isConcluida 
-                              ? "bg-success text-success-foreground" 
-                              : "bg-muted text-muted-foreground"
-                          )}>
-                            {isConcluida ? (
-                              <Check className="h-3 w-3" />
-                            ) : (
-                              <Clock className="h-3 w-3" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={cn(
-                              "text-xs font-medium leading-tight",
-                              isConcluida && "line-through text-muted-foreground"
-                            )}>
-                              {tarefa.template?.descricao || tarefa.descricao || "Tarefa"}
+                  templatesDoDia.map((template) => (
+                    <div
+                      key={template.id}
+                      className="p-2 rounded-md border bg-background border-border hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => podeGerenciar && setTemplateParaEditar(template)}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0 mt-0.5 h-5 w-5 rounded-full flex items-center justify-center bg-primary/10 text-primary">
+                          <Clock className="h-3 w-3" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium leading-tight">
+                            {template.descricao || "Tarefa"}
+                          </p>
+                          {template.hora_criacao && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {template.hora_criacao.slice(0, 5)}
                             </p>
-                            {tarefa.template?.hora_criacao && (
-                              <p className="text-[10px] text-muted-foreground mt-0.5">
-                                {tarefa.template.hora_criacao.slice(0, 5)}
-                              </p>
-                            )}
-                          </div>
+                          )}
+                          {template.responsavel?.nome && (
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {template.responsavel.nome}
+                            </p>
+                          )}
                         </div>
                       </div>
-                    );
-                  })
+                    </div>
+                  ))
                 )}
               </CardContent>
             </Card>
