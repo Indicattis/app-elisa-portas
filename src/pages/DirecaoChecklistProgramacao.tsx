@@ -5,16 +5,23 @@ import { useTarefas, Tarefa, TarefaTemplate } from "@/hooks/useTarefas";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { EditarRecorrenteModal } from "@/components/todo/EditarRecorrenteModal";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Check, Clock, User } from "lucide-react";
+import { Plus, ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Check, Clock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { startOfWeek, endOfWeek, addWeeks, format, parseISO, isWithinInterval } from "date-fns";
+import { startOfWeek, endOfWeek, addWeeks, addDays, format, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-const DIAS_SEMANA_NOMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const DIAS_SEMANA = [
+  { key: 0, nome: "Dom", nomeCompleto: "Domingo" },
+  { key: 1, nome: "Seg", nomeCompleto: "Segunda" },
+  { key: 2, nome: "Ter", nomeCompleto: "Terça" },
+  { key: 3, nome: "Qua", nomeCompleto: "Quarta" },
+  { key: 4, nome: "Qui", nomeCompleto: "Quinta" },
+  { key: 5, nome: "Sex", nomeCompleto: "Sexta" },
+  { key: 6, nome: "Sab", nomeCompleto: "Sábado" },
+];
 
 export default function DirecaoChecklistProgramacao() {
   const navigate = useNavigate();
@@ -36,56 +43,48 @@ export default function DirecaoChecklistProgramacao() {
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
-  // Calcular intervalo da semana selecionada
-  const semanaAtual = useMemo(() => {
-    const hoje = new Date();
-    const semanaBase = addWeeks(hoje, semanaOffset);
-    const inicio = startOfWeek(semanaBase, { weekStartsOn: 0 });
-    const fim = endOfWeek(semanaBase, { weekStartsOn: 0 });
-    return { inicio, fim };
-  }, [semanaOffset]);
+  const hoje = new Date();
+  const inicioSemana = startOfWeek(addWeeks(hoje, semanaOffset), { weekStartsOn: 0 });
+  const fimSemana = endOfWeek(addWeeks(hoje, semanaOffset), { weekStartsOn: 0 });
 
   const labelSemana = useMemo(() => {
-    return `${format(semanaAtual.inicio, "dd MMM", { locale: ptBR })} - ${format(semanaAtual.fim, "dd MMM yyyy", { locale: ptBR })}`;
-  }, [semanaAtual]);
+    return `${format(inicioSemana, "dd MMM", { locale: ptBR })} - ${format(fimSemana, "dd MMM yyyy", { locale: ptBR })}`;
+  }, [inicioSemana, fimSemana]);
 
-  // Filtrar tarefas recorrentes da semana selecionada
-  const tarefasRecorrentesDaSemana = useMemo(() => {
-    return tarefas.filter(tarefa => {
-      if (!tarefa.recorrente || !tarefa.template_id) return false;
+  // Filtrar tarefas recorrentes e agrupar por dia da semana
+  const tarefasPorDia = useMemo(() => {
+    const resultado: Record<number, Array<Tarefa & { template?: TarefaTemplate }>> = {};
+    DIAS_SEMANA.forEach(dia => {
+      resultado[dia.key] = [];
+    });
+
+    tarefas.forEach(tarefa => {
+      if (!tarefa.recorrente || !tarefa.template_id) return;
       
       const dataStr = (tarefa as any).data_referencia || tarefa.created_at;
-      if (!dataStr) return false;
+      if (!dataStr) return;
       
       const dataTarefa = parseISO(dataStr.split('T')[0]);
-      return isWithinInterval(dataTarefa, { start: semanaAtual.inicio, end: semanaAtual.fim });
-    });
-  }, [tarefas, semanaAtual]);
-
-  // Agrupar tarefas por template
-  const tarefasPorTemplate = useMemo(() => {
-    const grupos: Record<string, { template: TarefaTemplate; tarefas: Tarefa[] }> = {};
-    
-    templates.forEach(template => {
-      grupos[template.id] = { template, tarefas: [] };
-    });
-    
-    tarefasRecorrentesDaSemana.forEach(tarefa => {
-      if (tarefa.template_id && grupos[tarefa.template_id]) {
-        grupos[tarefa.template_id].tarefas.push(tarefa);
+      
+      // Verifica se está na semana atual
+      if (dataTarefa >= inicioSemana && dataTarefa <= fimSemana) {
+        const diaSemana = dataTarefa.getDay();
+        const template = templates.find(t => t.id === tarefa.template_id);
+        resultado[diaSemana].push({ ...tarefa, template });
       }
     });
-    
-    return Object.values(grupos);
-  }, [templates, tarefasRecorrentesDaSemana]);
+
+    return resultado;
+  }, [tarefas, templates, inicioSemana, fimSemana]);
 
   // Estatísticas
   const stats = useMemo(() => {
-    const total = tarefasRecorrentesDaSemana.length;
-    const concluidas = tarefasRecorrentesDaSemana.filter(t => t.status === 'concluida').length;
+    const todasTarefas = Object.values(tarefasPorDia).flat();
+    const total = todasTarefas.length;
+    const concluidas = todasTarefas.filter(t => t.status === 'concluida').length;
     const pendentes = total - concluidas;
     return { total, concluidas, pendentes };
-  }, [tarefasRecorrentesDaSemana]);
+  }, [tarefasPorDia]);
 
   if (isLoading) {
     return (
@@ -113,10 +112,10 @@ export default function DirecaoChecklistProgramacao() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl md:text-3xl font-bold truncate flex items-center gap-2">
               <CalendarDays className="h-6 w-6 md:h-8 md:w-8" />
-              Programação de Tarefas
+              Programação Semanal
             </h1>
             <p className="text-sm text-muted-foreground mt-1 hidden md:block">
-              Visualize e gerencie tarefas recorrentes por semana
+              Visualize tarefas recorrentes em formato de calendário
             </p>
           </div>
 
@@ -175,135 +174,92 @@ export default function DirecaoChecklistProgramacao() {
         </Badge>
       </div>
 
-      {/* Lista de tarefas por template */}
-      <div className="space-y-4">
-        {tarefasPorTemplate.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              Nenhum template de tarefa recorrente configurado.
-            </CardContent>
-          </Card>
-        ) : (
-          tarefasPorTemplate.map(({ template, tarefas: tarefasDoTemplate }) => (
-            <Card key={template.id}>
-              <CardHeader className="pb-3 px-4 md:px-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base md:text-lg truncate">
-                      {template.descricao}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <User className="h-3.5 w-3.5" />
-                        <span>{template.responsavel?.nome || 'Sem responsável'}</span>
-                      </div>
-                      <span className="text-muted-foreground">•</span>
-                      <div className="text-sm text-muted-foreground">
-                        {template.dias_semana?.map(d => DIAS_SEMANA_NOMES[d]).join(', ') || 'Sem dias'}
-                      </div>
-                      {template.hora_criacao && (
-                        <>
-                          <span className="text-muted-foreground">•</span>
-                          <div className="text-sm text-muted-foreground">
-                            {template.hora_criacao.slice(0, 5)}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {podeGerenciar && (
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setTemplateParaEditar(template)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setTemplateParaDeletar(template.id)}
-                      >
-                        Excluir
-                      </Button>
-                    </div>
-                  )}
+      {/* Calendário Semanal em Colunas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+        {DIAS_SEMANA.map((dia) => {
+          const dataDia = addDays(inicioSemana, dia.key);
+          const isHoje = isSameDay(dataDia, hoje);
+          const tarefasDoDia = tarefasPorDia[dia.key] || [];
+
+          return (
+            <Card
+              key={dia.key}
+              className={cn(
+                "min-h-[220px] flex flex-col",
+                isHoje && "border-primary ring-1 ring-primary/20 bg-primary/5"
+              )}
+            >
+              <CardHeader className="p-3 pb-2 border-b bg-muted/30">
+                <div className="text-center">
+                  <p className={cn(
+                    "text-xs font-medium uppercase tracking-wide",
+                    isHoje ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {dia.nome}
+                  </p>
+                  <p className={cn(
+                    "text-xl font-bold",
+                    isHoje ? "text-primary" : "text-foreground"
+                  )}>
+                    {format(dataDia, "dd")}
+                  </p>
                 </div>
               </CardHeader>
-              
-              <CardContent className="pt-0 px-4 md:px-6">
-                {tarefasDoTemplate.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-2">
-                    Nenhuma tarefa programada para esta semana.
-                  </p>
+              <CardContent className="p-2 flex-1 overflow-y-auto space-y-2">
+                {tarefasDoDia.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      Sem tarefas
+                    </p>
+                  </div>
                 ) : (
-                  <div className="grid gap-2">
-                    {tarefasDoTemplate
-                      .sort((a, b) => {
-                        const dateA = (a as any).data_referencia || a.created_at;
-                        const dateB = (b as any).data_referencia || b.created_at;
-                        return dateA.localeCompare(dateB);
-                      })
-                      .map(tarefa => {
-                        const dataStr = (tarefa as any).data_referencia || tarefa.created_at;
-                        const data = parseISO(dataStr.split('T')[0]);
-                        const diaSemana = DIAS_SEMANA_NOMES[data.getDay()];
-                        const dataFormatada = format(data, "dd/MM", { locale: ptBR });
-                        const isConcluida = tarefa.status === 'concluida';
-
-                        return (
-                          <div
-                            key={tarefa.id}
-                            className={cn(
-                              "flex items-center justify-between p-3 rounded-lg border",
-                              isConcluida 
-                                ? "bg-success/10 border-success/30" 
-                                : "bg-muted/30 border-border"
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={cn(
-                                "flex items-center justify-center h-8 w-8 rounded-full",
-                                isConcluida 
-                                  ? "bg-success text-success-foreground" 
-                                  : "bg-muted text-muted-foreground"
-                              )}>
-                                {isConcluida ? (
-                                  <Check className="h-4 w-4" />
-                                ) : (
-                                  <Clock className="h-4 w-4" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {diaSemana}, {dataFormatada}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {isConcluida ? 'Concluída' : 'Pendente'}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {tarefa.responsavel && (
-                              <Avatar className="h-7 w-7">
-                                <AvatarImage src={tarefa.responsavel.foto_perfil_url} />
-                                <AvatarFallback className="text-xs">
-                                  {tarefa.responsavel.nome?.slice(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
+                  tarefasDoDia.map((tarefa) => {
+                    const isConcluida = tarefa.status === 'concluida';
+                    return (
+                      <div
+                        key={tarefa.id}
+                        className={cn(
+                          "p-2 rounded-md border transition-colors",
+                          isConcluida
+                            ? "bg-success/10 border-success/30"
+                            : "bg-background border-border hover:border-primary/50"
+                        )}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className={cn(
+                            "flex-shrink-0 mt-0.5 h-5 w-5 rounded-full flex items-center justify-center",
+                            isConcluida 
+                              ? "bg-success text-success-foreground" 
+                              : "bg-muted text-muted-foreground"
+                          )}>
+                            {isConcluida ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Clock className="h-3 w-3" />
                             )}
                           </div>
-                        );
-                      })}
-                  </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              "text-xs font-medium leading-tight",
+                              isConcluida && "line-through text-muted-foreground"
+                            )}>
+                              {tarefa.template?.descricao || tarefa.descricao || "Tarefa"}
+                            </p>
+                            {tarefa.template?.hora_criacao && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {tarefa.template.hora_criacao.slice(0, 5)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </CardContent>
             </Card>
-          ))
-        )}
+          );
+        })}
       </div>
 
       {/* FAB Mobile */}
