@@ -2,12 +2,12 @@ import { useState } from "react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from "@dnd-kit/core";
 import { Instalacao } from "@/types/instalacao";
 import { Button } from "@/components/ui/button";
 import { DroppableDaySimple } from "./DroppableDaySimple";
 import { DraggableInstalacao } from "./DraggableInstalacao";
-import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -36,10 +36,9 @@ export const CalendarioSemanalDesktop = ({
   onInstalacaoCriada,
   onPedidoDropped,
 }: CalendarioSemanalDesktopProps) => {
+  const navigate = useNavigate();
   const [activeInstalacao, setActiveInstalacao] = useState<Instalacao | null>(null);
   const [activePedido, setActivePedido] = useState<any>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -127,8 +126,7 @@ export const CalendarioSemanalDesktop = ({
   };
 
   const handleDayClick = (date: Date) => {
-    setSelectedDate(date);
-    setModalOpen(true);
+    navigate(`/instalacoes/nova?data=${format(date, 'yyyy-MM-dd')}`);
   };
 
   return (
@@ -200,16 +198,6 @@ export const CalendarioSemanalDesktop = ({
         </DragOverlay>
       </div>
     </DndContext>
-
-    {/* Modal de seleção de pedido */}
-    {selectedDate && (
-      <SelecionarPedidoInstalacaoModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        dataSelecionada={selectedDate}
-        onPedidoSelecionado={onInstalacaoCriada}
-      />
-    )}
     </>
   );
 };

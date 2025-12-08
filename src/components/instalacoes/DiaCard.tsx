@@ -5,8 +5,7 @@ import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
+import { useNavigate } from "react-router-dom";
 
 interface DiaCardProps {
   date: Date;
@@ -17,7 +16,7 @@ interface DiaCardProps {
 }
 
 export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onRemoverDoCalendario }: DiaCardProps) => {
-  const [modalOpen, setModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   const diaInstalacoes = instalacoes.filter((inst) =>
     isSameDay(new Date(inst.data), date)
@@ -26,11 +25,10 @@ export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onRemoverDoCale
   const isToday = isSameDay(date, new Date());
 
   const handleAddClick = () => {
-    setModalOpen(true);
+    navigate(`/instalacoes/nova?data=${format(date, 'yyyy-MM-dd')}`);
   };
 
   return (
-    <>
     <Card className={`w-full ${isToday ? 'border-primary' : ''}`}>
       <CardHeader className="p-3 pb-2 border-b">
         <div className="flex items-center justify-between">
@@ -69,13 +67,6 @@ export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onRemoverDoCale
           </div>
         )}
       </CardContent>
-
-      <SelecionarPedidoInstalacaoModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        dataSelecionada={date}
-      />
     </Card>
-    </>
   );
 };
