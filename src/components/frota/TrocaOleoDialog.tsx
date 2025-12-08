@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { format } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Droplet } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,9 +46,6 @@ interface TrocaOleoDialogProps {
 interface TrocaOleoFormData {
   veiculo_id: string;
   data_troca_oleo: Date;
-  km_atual: number;
-  km_proxima_troca_oleo: number;
-  data_proxima_troca_oleo: Date;
 }
 
 export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialogProps) {
@@ -58,34 +55,41 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
   const form = useForm<TrocaOleoFormData>({
     defaultValues: {
       veiculo_id: "",
-      km_atual: 0,
-      km_proxima_troca_oleo: 0,
     },
   });
 
   const handleVeiculoChange = (veiculoId: string) => {
     const veiculo = veiculos.find(v => v.id === veiculoId);
     setSelectedVeiculo(veiculo || null);
-    if (veiculo) {
-      form.setValue("km_atual", veiculo.km_atual);
-      form.setValue("km_proxima_troca_oleo", veiculo.km_atual + 5000);
-    }
   };
+
+  // Valores calculados automaticamente
+  const kmAtual = selectedVeiculo?.km_atual || 0;
+  const kmProximaTroca = kmAtual + 5000;
+  const dataProximaTroca = addMonths(new Date(), 6);
 
   const onSubmit = async (data: TrocaOleoFormData) => {
     await updateVeiculo({
       id: data.veiculo_id,
       data: {
         data_troca_oleo: format(data.data_troca_oleo, "yyyy-MM-dd"),
-        km_atual: data.km_atual,
-        km_proxima_troca_oleo: data.km_proxima_troca_oleo,
-        data_proxima_troca_oleo: format(data.data_proxima_troca_oleo, "yyyy-MM-dd"),
+        km_atual: kmAtual,
+        km_proxima_troca_oleo: kmProximaTroca,
+        data_proxima_troca_oleo: format(dataProximaTroca, "yyyy-MM-dd"),
       },
     });
     form.reset();
     setSelectedVeiculo(null);
     onOpenChange(false);
   };
+
+  // Reset quando o dialog fecha
+  useEffect(() => {
+    if (!open) {
+      form.reset();
+      setSelectedVeiculo(null);
+    }
+  }, [open, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -176,93 +180,42 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="km_atual"
-              rules={{ required: "Informe o KM atual", min: { value: 1, message: "KM deve ser maior que 0" } }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>KM Atual</FormLabel>
-                  <FormControl>
+            {selectedVeiculo && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormItem>
+                    <FormLabel className="text-muted-foreground">KM Atual</FormLabel>
                     <Input
-                      type="number"
-                      placeholder="Ex: 45000"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={kmAtual.toLocaleString('pt-BR')}
+                      disabled
+                      className="bg-muted"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="km_proxima_troca_oleo"
-              rules={{ required: "Informe o KM da próxima troca", min: { value: 1, message: "KM deve ser maior que 0" } }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>KM Próxima Troca</FormLabel>
-                  <FormControl>
+                  </FormItem>
+                  <FormItem>
+                    <FormLabel className="text-muted-foreground">KM Próxima Troca</FormLabel>
                     <Input
-                      type="number"
-                      placeholder="Ex: 50000"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={kmProximaTroca.toLocaleString('pt-BR')}
+                      disabled
+                      className="bg-muted"
                     />
-                  </FormControl>
-                  <FormMessage />
+                  </FormItem>
+                </div>
+                <FormItem>
+                  <FormLabel className="text-muted-foreground">Data Próxima Troca</FormLabel>
+                  <Input
+                    value={format(dataProximaTroca, "dd/MM/yyyy", { locale: ptBR })}
+                    disabled
+                    className="bg-muted"
+                  />
                 </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="data_proxima_troca_oleo"
-              rules={{ required: "Informe a data da próxima troca" }}
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data Próxima Troca</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy", { locale: ptBR })
-                          ) : (
-                            <span>Selecione a data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              </div>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isUpdating}>
+              <Button type="submit" disabled={isUpdating || !selectedVeiculo}>
                 {isUpdating ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
