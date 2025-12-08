@@ -83,6 +83,7 @@ export default function FrotaEdit() {
             onSubmit={handleSubmit} 
             initialData={veiculo}
             isSubmitting={isUpdating || isUploading}
+            isEditing={true}
           />
         </CardContent>
       </Card>

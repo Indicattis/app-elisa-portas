@@ -11,9 +11,10 @@ interface VeiculoFormProps {
   onSubmit: (data: VeiculoFormData & { foto?: File }) => Promise<void>;
   initialData?: Partial<VeiculoFormData>;
   isSubmitting?: boolean;
+  isEditing?: boolean;
 }
 
-export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoFormProps) {
+export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = false }: VeiculoFormProps) {
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(initialData?.foto_url || null);
 
@@ -125,13 +126,15 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="km_atual">Km Atual *</Label>
+          <Label htmlFor="km_atual">Km Atual {!isEditing && '*'}</Label>
           <Input
             id="km_atual"
             type="number"
             step="0.1"
+            disabled={isEditing}
+            className={isEditing ? "bg-muted" : ""}
             {...register('km_atual', { 
-              required: 'Km atual é obrigatório',
+              required: !isEditing ? 'Km atual é obrigatório' : false,
               valueAsNumber: true,
               min: { value: 0, message: 'Km deve ser maior ou igual a 0' }
             })}
@@ -144,6 +147,8 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
           <Input
             id="data_troca_oleo"
             type="date"
+            disabled={isEditing}
+            className={isEditing ? "bg-muted" : ""}
             {...register('data_troca_oleo')}
           />
         </div>
@@ -154,6 +159,8 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
             id="km_proxima_troca_oleo"
             type="number"
             step="1"
+            disabled={isEditing}
+            className={isEditing ? "bg-muted" : ""}
             {...register('km_proxima_troca_oleo', { valueAsNumber: true })}
             placeholder="Ex: 150000"
           />
@@ -164,17 +171,20 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
           <Input
             id="data_proxima_troca_oleo"
             type="date"
+            disabled={isEditing}
+            className={isEditing ? "bg-muted" : ""}
             {...register('data_proxima_troca_oleo')}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Status *</Label>
+          <Label htmlFor="status">Status {!isEditing && '*'}</Label>
           <Select
             value={watch('status')}
             onValueChange={(value) => setValue('status', value as any)}
+            disabled={isEditing}
           >
-            <SelectTrigger>
+            <SelectTrigger className={isEditing ? "bg-muted" : ""}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
