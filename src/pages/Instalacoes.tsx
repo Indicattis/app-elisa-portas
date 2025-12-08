@@ -1,254 +1,294 @@
 import { useState } from "react";
-import { Download, Plus, RefreshCw, Upload } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Calendar, Download, ChevronLeft, ChevronRight, CalendarDays, Menu, Settings } from "lucide-react";
+import { CronogramaInstalacaoEquipes } from "@/components/cronograma/CronogramaInstalacaoEquipes";
+import { CronogramaInstalacaoEquipesMensal } from "@/components/cronograma/CronogramaInstalacaoEquipesMensal";
+import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
+import { useInstalacoesCronogramaEquipes } from "@/hooks/useInstalacoesCronogramaEquipes";
+import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
+import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { useOrdensInstalacaoCalendario, InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { addWeeks, subWeeks } from "date-fns";
-import { CriarInstalacaoModal } from "@/components/instalacoes/CriarInstalacaoModal";
-import { CalendarioInstalacoesSemanal } from "@/components/instalacoes/CalendarioInstalacoesSemanal";
-import { CalendarioInstalacoesMensal } from "@/components/instalacoes/CalendarioInstalacoesMensal";
-import { CalendarioInstalacoesMobile } from "@/components/instalacoes/CalendarioInstalacoesMobile";
-import { InstalacaoDetailsSheet } from "@/components/instalacoes/InstalacaoDetailsSheet";
-import { ListaInstalacoesEquipe } from "@/components/instalacoes/ListaInstalacoesEquipe";
-import { ImportarICSModal } from "@/components/instalacoes/ImportarICSModal";
-import { useInstalacoesPDFData } from "@/hooks/useInstalacoesPDFData";
-import { baixarCronogramaInstalacoesPDF } from "@/utils/instalacoesCronogramaPDF";
-import { Instalacao } from "@/types/instalacao";
-export default function Instalacoes() {
-  const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
-  const [modalNovaInstalacaoOpen, setModalNovaInstalacaoOpen] = useState(false);
-  const [importarICSOpen, setImportarICSOpen] = useState(false);
-  const [selectedInstalacao, setSelectedInstalacao] = useState<InstalacaoCalendario | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
-  const { 
-    instalacoes, 
-    isLoading, 
-    updateInstalacao, 
-    concluirInstalacao,
-    isConcluindo 
-  } = useOrdensInstalacaoCalendario(
-    currentDate, 
-    tipoVisualizacao === 'mensal' ? 'month' : 'week'
-  );
+export default function Instalacoes() {
+  const [equipesModalOpen, setEquipesModalOpen] = useState(false);
+  const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [equipesSelecionadas, setEquipesSelecionadas] = useState<string[]>([]);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const { instalacoes, loading } = useInstalacoesCronogramaEquipes(weekStartDate);
+  const { equipes, loading: equipesLoading } = useEquipesInstalacao();
+
+  const equipesFiltradas = equipesSelecionadas.length > 0 
+    ? equipes.filter(eq => equipesSelecionadas.includes(eq.id))
+    : equipes;
+
+  const toggleEquipe = (equipeId: string) => {
+    setEquipesSelecionadas(prev =>
+      prev.includes(equipeId)
+        ? prev.filter(id => id !== equipeId)
+        : [...prev, equipeId]
+    );
+  };
+
+  const limparFiltros = () => {
+    setEquipesSelecionadas([]);
+  };
+
+  const handleDownloadPDF = () => {
+    try {
+      toast.loading("Gerando PDF do cronograma...");
+      
+      baixarCronogramaPDF({
+        instalacoes: instalacoes as any,
+        equipes: equipesFiltradas,
+        weekStart: weekStartDate
+      });
+      
+      toast.success("PDF gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF do cronograma");
+    }
+  };
 
   const handlePreviousWeek = () => {
-    setCurrentDate(subWeeks(currentDate, 1));
+    setSlideDirection('left');
+    if (viewMode === 'month') {
+      setWeekStartDate(prev => addMonths(prev, -1));
+    } else {
+      setWeekStartDate(prev => addDays(prev, -7));
+    }
   };
 
   const handleNextWeek = () => {
-    setCurrentDate(addWeeks(currentDate, 1));
+    setSlideDirection('right');
+    if (viewMode === 'month') {
+      setWeekStartDate(prev => addMonths(prev, 1));
+    } else {
+      setWeekStartDate(prev => addDays(prev, 7));
+    }
   };
 
   const handleToday = () => {
-    setCurrentDate(new Date());
-  };
-
-  const handleUpdateInstalacao = async (params: { id: string; data: Partial<InstalacaoCalendario> }) => {
-    await updateInstalacao(params);
-  };
-
-  const handleRemoverDoCalendario = async (id: string) => {
-    try {
-      await updateInstalacao({
-        id,
-        data: { data_instalacao: null, status: 'pendente' },
-      });
-      toast.success("Instalação removida do calendário");
-    } catch (error) {
-      console.error("Erro ao remover:", error);
-      toast.error("Erro ao remover instalação do calendário");
+    if (viewMode === 'month') {
+      setWeekStartDate(startOfMonth(new Date()));
+    } else {
+      setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
     }
   };
 
-  const handleConcluirInstalacao = async (instalacaoId: string) => {
-    try {
-      await concluirInstalacao(instalacaoId);
-      setDetailsOpen(false);
-    } catch (error) {
-      console.error("Erro ao concluir instalação:", error);
-    }
-  };
-
-  const { prepararDadosPDF } = useInstalacoesPDFData();
-
-  const mapearParaInstalacao = (inst: InstalacaoCalendario): Instalacao => ({
-    id: inst.id,
-    id_venda: inst.venda_id || null,
-    nome_cliente: inst.nome_cliente,
-    data: inst.data_instalacao,
-    hora: inst.hora,
-    equipe_id: inst.responsavel_instalacao_id,
-    created_at: '',
-    updated_at: '',
-    cidade: inst.venda?.cidade || null,
-    estado: inst.venda?.estado || null,
-    endereco: inst.venda?.bairro || null,
-    telefone_cliente: inst.venda?.cliente_telefone || null,
-    venda: inst.venda ? {
-      id: inst.venda.id,
-      cliente_nome: inst.venda.cliente_nome,
-      cliente_telefone: inst.venda.cliente_telefone,
-      estado: inst.venda.estado,
-      cidade: inst.venda.cidade,
-      data_venda: '',
-    } : undefined,
-    equipe: inst.equipe ? {
-      id: inst.equipe.id,
-      nome: inst.equipe.nome,
-      cor: inst.equipe.cor,
-      ativa: true,
-    } : undefined,
-  });
-
-  const handleBaixarPDF = () => {
-    if (instalacoes.length === 0) {
-      toast.warning("Não há instalações para gerar o PDF");
-      return;
-    }
-
-    const instalacoesConvertidas = instalacoes.map(mapearParaInstalacao);
-    
-    const dadosPDF = prepararDadosPDF(
-      instalacoesConvertidas,
-      null,
-      currentDate,
-      tipoVisualizacao
+  if (loading || equipesLoading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
     );
-
-    baixarCronogramaInstalacoesPDF(dadosPDF);
-    toast.success("PDF gerado com sucesso!");
-  };
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["instalacoes_calendario"] });
-    toast.success("Calendário atualizado");
-  };
-
-  const handleInstalacaoClick = (instalacao: InstalacaoCalendario) => {
-    setSelectedInstalacao(instalacao);
-    setDetailsOpen(true);
-  };
+  }
 
   return (
     <div className="space-y-6">
-      {/* Listagem de Instalações da Equipe do Usuário */}
-      <ListaInstalacoesEquipe />
-
-      {/* Controles de Visualização */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {!isMobile && (
-            <div className="flex gap-1 border rounded-md p-1">
-              <Button 
-                variant={tipoVisualizacao === 'semanal' ? 'default' : 'ghost'} 
-                size="sm"
-                onClick={() => setTipoVisualizacao('semanal')}
-                className="h-8 px-3 text-xs"
-              >
-                Semana
-              </Button>
-              <Button 
-                variant={tipoVisualizacao === 'mensal' ? 'default' : 'ghost'} 
-                size="sm"
-                onClick={() => setTipoVisualizacao('mensal')}
-                className="h-8 px-3 text-xs"
-              >
-                Mês
-              </Button>
-            </div>
-          )}
+        <div className="flex items-center gap-3">
+          <Calendar className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">Cronograma de Instalações</h1>
+            <p className="text-muted-foreground text-sm">
+              {viewMode === 'week' ? (
+                <>Semana de {format(weekStartDate, "dd/MM/yyyy", { locale: ptBR })} a {format(addDays(weekStartDate, 6), "dd/MM/yyyy", { locale: ptBR })}</>
+              ) : (
+                <>{format(weekStartDate, "MMMM 'de' yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}</>
+              )}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => setModalNovaInstalacaoOpen(true)}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Nova</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportarICSOpen(true)}>
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Importar</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Atualizar</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleBaixarPDF}>
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">PDF</span>
+
+        <div className="flex gap-2 flex-wrap items-center">
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <SheetHeader>
+                <SheetTitle>Menu de Opções</SheetTitle>
+                <SheetDescription>
+                  Filtros e configurações do cronograma
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-6 mt-6">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Visualização</Label>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant={viewMode === 'week' ? 'default' : 'outline'} 
+                      className="flex-1"
+                      onClick={() => {
+                        setViewMode('week');
+                        setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
+                      }}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Semana
+                    </Button>
+                    <Button 
+                      variant={viewMode === 'month' ? 'default' : 'outline'} 
+                      className="flex-1"
+                      onClick={() => {
+                        setViewMode('month');
+                        setWeekStartDate(startOfMonth(new Date()));
+                      }}
+                    >
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      Mês
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold">Filtrar por Equipes</Label>
+                    {equipesSelecionadas.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={limparFiltros}
+                        className="h-auto p-1 text-xs"
+                      >
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {equipes.map((equipe) => (
+                      <div key={equipe.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={equipe.id}
+                          checked={equipesSelecionadas.includes(equipe.id)}
+                          onCheckedChange={() => toggleEquipe(equipe.id)}
+                        />
+                        <Label
+                          htmlFor={equipe.id}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: equipe.cor || '#888' }}
+                          />
+                          {equipe.nome}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Ações</Label>
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start" 
+                      onClick={() => {
+                        setEquipesModalOpen(true);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Gerenciar Equipes
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        handleDownloadPDF();
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Button variant="outline" onClick={handleToday}>
+            Hoje
           </Button>
         </div>
       </div>
 
-      {/* Calendários */}
-      {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Carregando calendário...</p>
-        </div>
-      ) : (
-        <>
-          {isMobile ? (
-            <CalendarioInstalacoesMobile
-              startDate={currentDate}
-              instalacoes={instalacoes}
-              onPreviousWeek={handlePreviousWeek}
-              onNextWeek={handleNextWeek}
-              onToday={handleToday}
-              onInstalacaoClick={handleInstalacaoClick}
-              onRefresh={handleRefresh}
-            />
-          ) : tipoVisualizacao === 'semanal' ? (
-            <CalendarioInstalacoesSemanal
-              startDate={currentDate}
-              instalacoes={instalacoes}
-              onPreviousWeek={handlePreviousWeek}
-              onNextWeek={handleNextWeek}
-              onToday={handleToday}
-              onUpdateInstalacao={handleUpdateInstalacao}
-              onRemoverDoCalendario={handleRemoverDoCalendario}
-              onInstalacaoClick={handleInstalacaoClick}
-              onRefresh={handleRefresh}
-            />
-          ) : (
-            <CalendarioInstalacoesMensal
-              currentMonth={currentDate}
-              instalacoes={instalacoes}
-              onMonthChange={setCurrentDate}
-              onUpdateInstalacao={handleUpdateInstalacao}
-              onRemoverDoCalendario={handleRemoverDoCalendario}
-              onInstalacaoClick={handleInstalacaoClick}
-              onRefresh={handleRefresh}
-            />
-          )}
-        </>
-      )}
+      <Card className="relative">
+        <CardHeader>
+          <CardTitle>{viewMode === 'week' ? 'Visualização Semanal' : 'Visualização Mensal'}</CardTitle>
+        </CardHeader>
+        <CardContent className="relative px-16">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handlePreviousWeek}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background hover:scale-110 shadow-lg transition-all"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          
+          <div 
+            key={weekStartDate.toISOString()}
+            className="animate-fade-in"
+          >
+            {viewMode === 'week' ? (
+              <CronogramaInstalacaoEquipes
+                currentWeek={weekStartDate}
+                onEditPonto={() => {}}
+                equipesFiltradas={equipesFiltradas}
+                instalacoes={instalacoes}
+              />
+            ) : (
+              <CronogramaInstalacaoEquipesMensal
+                currentMonth={weekStartDate}
+                onEditPonto={() => {}}
+                equipesFiltradas={equipesFiltradas}
+                instalacoes={instalacoes}
+              />
+            )}
+          </div>
 
-      {/* Sidebar de Detalhes */}
-      <InstalacaoDetailsSheet
-        instalacao={selectedInstalacao}
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        onConcluirInstalacao={handleConcluirInstalacao}
-        isConcluindo={isConcluindo}
-        onInstalacaoUpdated={handleRefresh}
-      />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleNextWeek}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background hover:scale-110 shadow-lg transition-all"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </CardContent>
+      </Card>
 
-      {/* Modal para criar nova instalação */}
-      <CriarInstalacaoModal
-        open={modalNovaInstalacaoOpen}
-        onOpenChange={setModalNovaInstalacaoOpen}
-        onSuccess={handleRefresh}
-      />
-
-      {/* Modal para importar do Google Calendar */}
-      <ImportarICSModal
-        open={importarICSOpen}
-        onOpenChange={setImportarICSOpen}
-        onSuccess={handleRefresh}
+      <GerenciarEquipes 
+        open={equipesModalOpen}
+        onOpenChange={setEquipesModalOpen}
       />
     </div>
   );
