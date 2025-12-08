@@ -11,6 +11,7 @@ import { CalendarioInstalacoesSemanal } from "@/components/instalacoes/Calendari
 import { CalendarioInstalacoesMensal } from "@/components/instalacoes/CalendarioInstalacoesMensal";
 import { CalendarioInstalacoesMobile } from "@/components/instalacoes/CalendarioInstalacoesMobile";
 import { InstalacaoDetailsSheet } from "@/components/instalacoes/InstalacaoDetailsSheet";
+import { ListaInstalacoesEquipe } from "@/components/instalacoes/ListaInstalacoesEquipe";
 
 export default function Instalacoes() {
   const isMobile = useIsMobile();
@@ -85,7 +86,10 @@ export default function Instalacoes() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Listagem de Instalações da Equipe do Usuário */}
+      <ListaInstalacoesEquipe />
+
       {/* Controles de Visualização */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
