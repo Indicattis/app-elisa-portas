@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InstalacaoForm } from "./InstalacaoForm";
 import { InstalacaoFormData } from "@/types/instalacao";
@@ -9,12 +9,14 @@ interface CriarInstalacaoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  defaultDate?: string;
 }
 
 export const CriarInstalacaoModal = ({ 
   open, 
   onOpenChange, 
-  onSuccess 
+  onSuccess,
+  defaultDate
 }: CriarInstalacaoModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,13 +53,24 @@ export const CriarInstalacaoModal = ({
     }
   };
 
+  // Dados iniciais com a data selecionada
+  const initialData = defaultDate ? {
+    data: defaultDate,
+    hora: "08:00",
+  } : undefined;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Nova Instalação</DialogTitle>
         </DialogHeader>
-        <InstalacaoForm onSubmit={handleSubmit} isLoading={isLoading} />
+        <InstalacaoForm 
+          onSubmit={handleSubmit} 
+          isLoading={isLoading} 
+          initialData={initialData}
+          key={defaultDate} // Force re-render when date changes
+        />
       </DialogContent>
     </Dialog>
   );
