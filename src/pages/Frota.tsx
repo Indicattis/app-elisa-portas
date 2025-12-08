@@ -26,7 +26,7 @@ export default function Frota() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleRowDoubleClick = (veiculoId: string) => {
-    navigate(`/dashboard/instalacoes/frota/${veiculoId}/conferencias`);
+    navigate(`/dashboard/logistica/frota/${veiculoId}/conferencias`);
   };
 
   const handleDelete = async () => {
@@ -55,10 +55,10 @@ export default function Frota() {
         </div>
         
         <div className="flex gap-2">
-          <Button onClick={() => navigate('/dashboard/instalacoes/frota/conferencia')}>
+          <Button onClick={() => navigate('/dashboard/logistica/frota/conferencia')}>
             Conferir Veículo
           </Button>
-          <Button onClick={() => navigate('/dashboard/instalacoes/frota/novo')}>
+          <Button onClick={() => navigate('/dashboard/logistica/frota/novo')}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Veículo
           </Button>
@@ -131,7 +131,7 @@ export default function Frota() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/dashboard/instalacoes/frota/${veiculo.id}/editar`);
+                            navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
                           }}
                         >
                           <Edit className="h-4 w-4" />
