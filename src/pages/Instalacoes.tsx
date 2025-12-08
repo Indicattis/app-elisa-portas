@@ -5,10 +5,11 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrdensInstalacaoCalendario, InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
+import { addWeeks, subWeeks } from "date-fns";
 import { CriarInstalacaoModal } from "@/components/instalacoes/CriarInstalacaoModal";
 import { CalendarioInstalacoesSemanal } from "@/components/instalacoes/CalendarioInstalacoesSemanal";
 import { CalendarioInstalacoesMensal } from "@/components/instalacoes/CalendarioInstalacoesMensal";
+import { CalendarioInstalacoesMobile } from "@/components/instalacoes/CalendarioInstalacoesMobile";
 import { InstalacaoDetailsSheet } from "@/components/instalacoes/InstalacaoDetailsSheet";
 
 export default function Instalacoes() {
@@ -132,7 +133,17 @@ export default function Instalacoes() {
         </div>
       ) : (
         <>
-          {tipoVisualizacao === 'semanal' || isMobile ? (
+          {isMobile ? (
+            <CalendarioInstalacoesMobile
+              startDate={currentDate}
+              instalacoes={instalacoes}
+              onPreviousWeek={handlePreviousWeek}
+              onNextWeek={handleNextWeek}
+              onToday={handleToday}
+              onInstalacaoClick={handleInstalacaoClick}
+              onRefresh={handleRefresh}
+            />
+          ) : tipoVisualizacao === 'semanal' ? (
             <CalendarioInstalacoesSemanal
               startDate={currentDate}
               instalacoes={instalacoes}
