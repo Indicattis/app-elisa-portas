@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { format, startOfWeek, addDays, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { InstalacaoCard } from "./InstalacaoCard";
-import { CriarInstalacaoModal } from "./CriarInstalacaoModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CalendarioInstalacoesMobileProps {
@@ -25,10 +25,8 @@ export const CalendarioInstalacoesMobile = ({
   onNextWeek,
   onToday,
   onInstalacaoClick,
-  onRefresh,
 }: CalendarioInstalacoesMobileProps) => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   
@@ -44,12 +42,7 @@ export const CalendarioInstalacoesMobile = ({
   };
 
   const handleAddClick = (date: Date) => {
-    setSelectedDate(format(date, "yyyy-MM-dd"));
-    setModalOpen(true);
-  };
-
-  const handleModalSuccess = () => {
-    onRefresh?.();
+    navigate(`/instalacoes/nova?data=${format(date, 'yyyy-MM-dd')}`);
   };
 
   return (
@@ -127,14 +120,6 @@ export const CalendarioInstalacoesMobile = ({
           })}
         </div>
       </ScrollArea>
-
-      {/* Modal de Criar Instalação */}
-      <CriarInstalacaoModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSuccess={handleModalSuccess}
-        defaultDate={selectedDate || undefined}
-      />
     </div>
   );
 };

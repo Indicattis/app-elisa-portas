@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Download, Plus, RefreshCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -6,7 +7,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useOrdensInstalacaoCalendario, InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { addWeeks, subWeeks } from "date-fns";
-import { CriarInstalacaoModal } from "@/components/instalacoes/CriarInstalacaoModal";
 import { CalendarioInstalacoesSemanal } from "@/components/instalacoes/CalendarioInstalacoesSemanal";
 import { CalendarioInstalacoesMensal } from "@/components/instalacoes/CalendarioInstalacoesMensal";
 import { CalendarioInstalacoesMobile } from "@/components/instalacoes/CalendarioInstalacoesMobile";
@@ -16,12 +16,13 @@ import { ImportarICSModal } from "@/components/instalacoes/ImportarICSModal";
 import { useInstalacoesPDFData } from "@/hooks/useInstalacoesPDFData";
 import { baixarCronogramaInstalacoesPDF } from "@/utils/instalacoesCronogramaPDF";
 import { Instalacao } from "@/types/instalacao";
+
 export default function Instalacoes() {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
-  const [modalNovaInstalacaoOpen, setModalNovaInstalacaoOpen] = useState(false);
   const [importarICSOpen, setImportarICSOpen] = useState(false);
   const [selectedInstalacao, setSelectedInstalacao] = useState<InstalacaoCalendario | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -165,7 +166,7 @@ export default function Instalacoes() {
           )}
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => setModalNovaInstalacaoOpen(true)}>
+          <Button size="sm" onClick={() => navigate('/instalacoes/nova')}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Nova</span>
           </Button>
@@ -237,12 +238,6 @@ export default function Instalacoes() {
         onInstalacaoUpdated={handleRefresh}
       />
 
-      {/* Modal para criar nova instalação */}
-      <CriarInstalacaoModal
-        open={modalNovaInstalacaoOpen}
-        onOpenChange={setModalNovaInstalacaoOpen}
-        onSuccess={handleRefresh}
-      />
 
       {/* Modal para importar do Google Calendar */}
       <ImportarICSModal
