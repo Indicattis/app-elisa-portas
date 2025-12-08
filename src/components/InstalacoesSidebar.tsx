@@ -39,17 +39,25 @@ export function InstalacoesSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-3 px-2 py-4">
-          <img 
-            src={instalacoesLogo} 
-            alt="Instalações" 
-            className="h-10 w-10 rounded-full object-cover flex-shrink-0"
-          />
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex items-center gap-3 px-3 py-4">
+          <div className="relative flex-shrink-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-sky-500/30 rounded-full blur-md" />
+            <img 
+              src={instalacoesLogo} 
+              alt="Instalações" 
+              className="relative h-11 w-11 rounded-full object-cover ring-2 ring-sidebar-border shadow-lg"
+            />
+          </div>
           {open && (
-            <span className="text-xs font-semibold text-foreground leading-tight">
-              Missão dada é missão cumprida
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                Elite Team
+              </span>
+              <span className="text-sm font-bold text-foreground leading-tight">
+                Missão dada é<br />missão cumprida
+              </span>
+            </div>
           )}
         </div>
       </SidebarHeader>
