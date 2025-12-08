@@ -180,6 +180,7 @@ export default function InstalacoesControle() {
                   <TableHead className="h-[25px] py-0 text-xs">Status</TableHead>
                   <TableHead className="h-[25px] py-0 text-xs">Cliente</TableHead>
                   <TableHead className="h-[25px] py-0 text-xs">Equipe</TableHead>
+                  <TableHead className="h-[25px] py-0 text-xs">Tipo</TableHead>
                   <TableHead className="h-[25px] py-0 text-xs">Data</TableHead>
                   <TableHead className="h-[25px] py-0 text-xs">Hora</TableHead>
                   <TableHead className="h-[25px] py-0 text-xs">Local</TableHead>
@@ -214,6 +215,9 @@ export default function InstalacoesControle() {
                           </span>
                         </div>
                       )}
+                    </TableCell>
+                    <TableCell className="h-[25px] py-0 text-xs text-muted-foreground">
+                      {inst.tipo_instalacao || "-"}
                     </TableCell>
                     <TableCell className="h-[25px] py-0 text-xs text-muted-foreground">
                       {formatDate(inst.data_instalacao)}
