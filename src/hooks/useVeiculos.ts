@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { startOfWeek, isBefore } from 'date-fns';
+import { startOfWeek, isBefore, isAfter, parseISO } from 'date-fns';
 
 export interface Veiculo {
   id: string;
@@ -43,6 +43,36 @@ export function precisaConferenciaSemanal(veiculo: Veiculo): boolean {
   const inicioSemana = startOfWeek(hoje);
   
   return isBefore(ultimaConferencia, inicioSemana);
+}
+
+export type StatusCalculado = 'pronto' | 'pendente_conferencia' | 'pendente_oleo';
+
+export function calcularStatusVeiculo(veiculo: Veiculo): StatusCalculado {
+  const hoje = new Date();
+  
+  // 1. Verificar se precisa conferência semanal
+  const precisaConferencia = precisaConferenciaSemanal(veiculo);
+  
+  // 2. Verificar se data do óleo está vencida
+  const dataOleoVencida = veiculo.data_proxima_troca_oleo 
+    ? isAfter(hoje, parseISO(veiculo.data_proxima_troca_oleo))
+    : false;
+  
+  // 3. Verificar se KM do óleo está ultrapassado
+  const kmOleoUltrapassado = veiculo.km_proxima_troca_oleo 
+    ? veiculo.km_atual >= veiculo.km_proxima_troca_oleo
+    : false;
+  
+  // Prioridade: Pendente óleo > Pendente conferência > Pronto
+  if (dataOleoVencida || kmOleoUltrapassado) {
+    return 'pendente_oleo';
+  }
+  
+  if (precisaConferencia) {
+    return 'pendente_conferencia';
+  }
+  
+  return 'pronto';
 }
 
 export function useVeiculos() {
