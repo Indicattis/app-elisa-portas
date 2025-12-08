@@ -1,7 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Instalacao } from "@/types/instalacao";
-import { InstalacaoCard } from "./InstalacaoCard";
+import { InstalacaoCardLegacy } from "./InstalacaoCardLegacy";
 
 interface DraggableInstalacaoProps {
   instalacao: Instalacao;
@@ -29,7 +29,7 @@ export const DraggableInstalacao = ({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <InstalacaoCard
+      <InstalacaoCardLegacy
         instalacao={instalacao}
         onEdit={onEdit}
         onRemoverDoCalendario={onRemoverDoCalendario}

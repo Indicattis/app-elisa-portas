@@ -1,6 +1,6 @@
 import { Instalacao } from "@/types/instalacao";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { InstalacaoCard } from "./InstalacaoCard";
+import { InstalacaoCardLegacy } from "./InstalacaoCardLegacy";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
@@ -56,7 +56,7 @@ export const DiaCard = ({ date, instalacoes, onDayClick, onEdit, onRemoverDoCale
       <CardContent className="p-3 space-y-2 min-h-[80px]">
         {diaInstalacoes.length > 0 ? (
           diaInstalacoes.map((instalacao) => (
-            <InstalacaoCard
+            <InstalacaoCardLegacy
               key={instalacao.id}
               instalacao={instalacao}
               onEdit={onEdit}
