@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VeiculoForm } from "@/components/frota/VeiculoForm";
+import { ConferenciasListagem } from "@/components/frota/ConferenciasListagem";
 import { useVeiculos, VeiculoFormData } from "@/hooks/useVeiculos";
+import { useConferencias } from "@/hooks/useConferencias";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +12,7 @@ export default function FrotaEdit() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { veiculos, updateVeiculo, uploadFoto, isUpdating, isUploading } = useVeiculos();
+  const { conferencias, isLoading: isLoadingConferencias } = useConferencias(id);
 
   const veiculo = veiculos?.find(v => v.id === id);
 
@@ -80,6 +83,21 @@ export default function FrotaEdit() {
             onSubmit={handleSubmit} 
             initialData={veiculo}
             isSubmitting={isUpdating || isUploading}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de Conferências</CardTitle>
+          <CardDescription>
+            {conferencias?.length || 0} conferência(s) registrada(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ConferenciasListagem 
+            conferencias={conferencias || []} 
+            isLoading={isLoadingConferencias} 
           />
         </CardContent>
       </Card>
