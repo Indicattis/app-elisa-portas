@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { InstalacaoCard } from "./InstalacaoCard";
-import { CriarInstalacaoModal } from "./CriarInstalacaoModal";
 
 interface CalendarioInstalacoesMensalProps {
   currentMonth: Date;
@@ -22,10 +22,8 @@ export const CalendarioInstalacoesMensal = ({
   instalacoes,
   onMonthChange,
   onInstalacaoClick,
-  onRefresh,
 }: CalendarioInstalacoesMensalProps) => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -62,12 +60,7 @@ export const CalendarioInstalacoesMensal = ({
   };
 
   const handleAddClick = (date: Date) => {
-    setSelectedDate(format(date, "yyyy-MM-dd"));
-    setModalOpen(true);
-  };
-
-  const handleModalSuccess = () => {
-    onRefresh?.();
+    navigate(`/instalacoes/nova?data=${format(date, 'yyyy-MM-dd')}`);
   };
 
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -150,14 +143,6 @@ export const CalendarioInstalacoesMensal = ({
           );
         })}
       </div>
-
-      {/* Modal de Criar Instalação */}
-      <CriarInstalacaoModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSuccess={handleModalSuccess}
-        defaultDate={selectedDate || undefined}
-      />
     </div>
   );
 };
