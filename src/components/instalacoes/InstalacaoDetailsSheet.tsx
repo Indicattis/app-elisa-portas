@@ -31,12 +31,21 @@ interface Equipe {
   cor: string | null;
 }
 
+interface Autorizado {
+  id: string;
+  nome: string;
+  cidade: string | null;
+  estado: string | null;
+}
+
 interface InstalacaoCompleta {
   id: string;
   nome_cliente: string;
   data_instalacao: string | null;
   hora: string;
   responsavel_instalacao_id: string | null;
+  responsavel_instalacao_nome: string | null;
+  tipo_instalacao: 'elisa' | 'autorizados' | null;
   telefone_cliente: string | null;
   cidade: string | null;
   estado: string | null;
@@ -57,13 +66,15 @@ export const InstalacaoDetailsSheet = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [equipes, setEquipes] = useState<Equipe[]>([]);
+  const [autorizados, setAutorizados] = useState<Autorizado[]>([]);
   const [instalacaoCompleta, setInstalacaoCompleta] = useState<InstalacaoCompleta | null>(null);
   
   // Campos editáveis
   const [nomeCliente, setNomeCliente] = useState("");
   const [dataInstalacao, setDataInstalacao] = useState("");
   const [hora, setHora] = useState("");
-  const [equipeId, setEquipeId] = useState("");
+  const [tipoInstalacao, setTipoInstalacao] = useState<'elisa' | 'autorizados'>('elisa');
+  const [responsavelId, setResponsavelId] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
@@ -75,6 +86,7 @@ export const InstalacaoDetailsSheet = ({
     if (instalacao && open) {
       loadInstalacaoCompleta(instalacao.id);
       loadEquipes();
+      loadAutorizados();
     }
     setIsEditing(false);
   }, [instalacao, open]);
@@ -91,11 +103,13 @@ export const InstalacaoDetailsSheet = ({
       if (error) throw error;
 
       if (data) {
-        setInstalacaoCompleta(data);
+        setInstalacaoCompleta(data as InstalacaoCompleta);
         setNomeCliente(data.nome_cliente || "");
         setDataInstalacao(data.data_instalacao || "");
         setHora(data.hora || "08:00");
-        setEquipeId(data.responsavel_instalacao_id || "");
+        const tipo = data.tipo_instalacao as 'elisa' | 'autorizados' | null;
+        setTipoInstalacao(tipo || 'elisa');
+        setResponsavelId(data.responsavel_instalacao_id || "");
         setTelefone(data.telefone_cliente || "");
         setCidade(data.cidade || "");
         setEstado(data.estado || "");
@@ -122,18 +136,52 @@ export const InstalacaoDetailsSheet = ({
     }
   };
 
+  const loadAutorizados = async () => {
+    const { data, error } = await supabase
+      .from("autorizados")
+      .select("id, nome, cidade, estado")
+      .eq("ativo", true)
+      .eq("tipo_parceiro", "autorizado")
+      .order("nome");
+
+    if (!error && data) {
+      setAutorizados(data);
+    }
+  };
+
+  const handleTipoInstalacaoChange = (novoTipo: 'elisa' | 'autorizados') => {
+    setTipoInstalacao(novoTipo);
+    setResponsavelId(""); // Limpa responsável ao trocar tipo
+  };
+
+  const getResponsavelNome = (): string => {
+    if (!responsavelId) return "";
+    
+    if (tipoInstalacao === 'elisa') {
+      const equipe = equipes.find(e => e.id === responsavelId);
+      return equipe?.nome || "";
+    } else {
+      const autorizado = autorizados.find(a => a.id === responsavelId);
+      return autorizado?.nome || "";
+    }
+  };
+
   const handleSave = async () => {
     if (!instalacao) return;
 
     setIsSaving(true);
     try {
+      const responsavelNome = getResponsavelNome();
+      
       const { error } = await supabase
         .from("instalacoes")
         .update({
           nome_cliente: nomeCliente,
           data_instalacao: dataInstalacao || null,
           hora: hora,
-          responsavel_instalacao_id: equipeId || null,
+          tipo_instalacao: tipoInstalacao,
+          responsavel_instalacao_id: responsavelId || null,
+          responsavel_instalacao_nome: responsavelNome || null,
           telefone_cliente: telefone || null,
           cidade: cidade || null,
           estado: estado || null,
@@ -161,7 +209,8 @@ export const InstalacaoDetailsSheet = ({
       setNomeCliente(instalacaoCompleta.nome_cliente || "");
       setDataInstalacao(instalacaoCompleta.data_instalacao || "");
       setHora(instalacaoCompleta.hora || "08:00");
-      setEquipeId(instalacaoCompleta.responsavel_instalacao_id || "");
+      setTipoInstalacao(instalacaoCompleta.tipo_instalacao || 'elisa');
+      setResponsavelId(instalacaoCompleta.responsavel_instalacao_id || "");
       setTelefone(instalacaoCompleta.telefone_cliente || "");
       setCidade(instalacaoCompleta.cidade || "");
       setEstado(instalacaoCompleta.estado || "");
@@ -238,25 +287,55 @@ export const InstalacaoDetailsSheet = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="equipe">Equipe</Label>
-                    <Select value={equipeId} onValueChange={setEquipeId}>
+                    <Label htmlFor="tipo_instalacao">Tipo de Instalação</Label>
+                    <Select value={tipoInstalacao} onValueChange={(v) => handleTipoInstalacaoChange(v as 'elisa' | 'autorizados')}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma equipe" />
+                        <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {equipes.map((equipe) => (
-                          <SelectItem key={equipe.id} value={equipe.id}>
-                            <div className="flex items-center gap-2">
-                              {equipe.cor && (
-                                <span
-                                  className="h-3 w-3 rounded-full shrink-0"
-                                  style={{ backgroundColor: equipe.cor }}
-                                />
-                              )}
-                              {equipe.nome}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="elisa">Instalação Elisa</SelectItem>
+                        <SelectItem value="autorizados">Autorizado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="responsavel">
+                      {tipoInstalacao === 'elisa' ? 'Equipe' : 'Autorizado'}
+                    </Label>
+                    <Select value={responsavelId} onValueChange={setResponsavelId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={`Selecione ${tipoInstalacao === 'elisa' ? 'a equipe' : 'o autorizado'}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tipoInstalacao === 'elisa' ? (
+                          equipes.map((equipe) => (
+                            <SelectItem key={equipe.id} value={equipe.id}>
+                              <div className="flex items-center gap-2">
+                                {equipe.cor && (
+                                  <span
+                                    className="h-3 w-3 rounded-full shrink-0"
+                                    style={{ backgroundColor: equipe.cor }}
+                                  />
+                                )}
+                                {equipe.nome}
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          autorizados.map((autorizado) => (
+                            <SelectItem key={autorizado.id} value={autorizado.id}>
+                              <div className="flex flex-col">
+                                <span>{autorizado.nome}</span>
+                                {(autorizado.cidade || autorizado.estado) && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {[autorizado.cidade, autorizado.estado].filter(Boolean).join(" - ")}
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -412,12 +491,21 @@ export const InstalacaoDetailsSheet = ({
                   )}
 
                   {/* Responsável */}
-                  {instalacao.responsavel_instalacao_nome && (
+                  {(instalacaoCompleta?.tipo_instalacao || instalacao.responsavel_instalacao_nome) && (
                     <>
                       <Separator />
-                      <div className="flex items-center gap-3">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{instalacao.responsavel_instalacao_nome}</span>
+                      <div className="space-y-2">
+                        {instalacaoCompleta?.tipo_instalacao && (
+                          <Badge variant="outline" className="mb-2">
+                            {instalacaoCompleta.tipo_instalacao === 'elisa' ? 'Instalação Elisa' : 'Autorizado'}
+                          </Badge>
+                        )}
+                        {instalacao.responsavel_instalacao_nome && (
+                          <div className="flex items-center gap-3">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{instalacao.responsavel_instalacao_nome}</span>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
