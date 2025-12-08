@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { format, startOfWeek, addDays, isSameDay } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -39,7 +39,7 @@ export const CalendarioInstalacoesMobile = ({
   const getInstalacoesDoDia = (date: Date) => {
     return instalacoes.filter(inst => {
       if (!inst.data_instalacao) return false;
-      return isSameDay(new Date(inst.data_instalacao), date);
+      return isSameDay(parseISO(inst.data_instalacao), date);
     });
   };
 

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ export const CalendarioInstalacoesMensal = ({
   const getInstalacoesDoDia = (date: Date) => {
     return instalacoes.filter(inst => {
       if (!inst.data_instalacao) return false;
-      return isSameDay(new Date(inst.data_instalacao), date);
+      return isSameDay(parseISO(inst.data_instalacao), date);
     });
   };
 
