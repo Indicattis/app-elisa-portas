@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useInstalacoesListagem } from "@/hooks/useInstalacoesListagem";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle2, MapPin, Calendar, User, Clock, Trash2, Plus, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CriarInstalacaoModal } from "@/components/instalacoes/CriarInstalacaoModal";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
@@ -22,10 +22,10 @@ import {
 type FilterType = "pendentes" | "todos" | "concluidas";
 
 export default function InstalacoesControle() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { instalacoes, isLoading, concluirInstalacao, deleteInstalacao, isConcluindo, isDeleting } = useInstalacoesListagem();
   const [filter, setFilter] = useState<FilterType>("pendentes");
-  const [modalOpen, setModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -83,7 +83,7 @@ export default function InstalacoesControle() {
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold truncate">Controle</h2>
         <div className="flex gap-2 shrink-0">
-          <Button size="sm" onClick={() => setModalOpen(true)} className="h-8 px-2">
+          <Button size="sm" onClick={() => navigate('/instalacoes/nova')} className="h-8 px-2">
             <Plus className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only sm:ml-1">Nova</span>
           </Button>
@@ -215,12 +215,6 @@ export default function InstalacoesControle() {
         )}
       </div>
 
-      {/* Modal Nova Instalação */}
-      <CriarInstalacaoModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSuccess={handleRefresh}
-      />
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
