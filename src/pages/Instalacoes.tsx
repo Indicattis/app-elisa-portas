@@ -13,7 +13,9 @@ import { CalendarioInstalacoesMobile } from "@/components/instalacoes/Calendario
 import { InstalacaoDetailsSheet } from "@/components/instalacoes/InstalacaoDetailsSheet";
 import { ListaInstalacoesEquipe } from "@/components/instalacoes/ListaInstalacoesEquipe";
 import { ImportarICSModal } from "@/components/instalacoes/ImportarICSModal";
-
+import { useInstalacoesPDFData } from "@/hooks/useInstalacoesPDFData";
+import { baixarCronogramaInstalacoesPDF } from "@/utils/instalacoesCronogramaPDF";
+import { Instalacao } from "@/types/instalacao";
 export default function Instalacoes() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -73,8 +75,54 @@ export default function Instalacoes() {
     }
   };
 
+  const { prepararDadosPDF } = useInstalacoesPDFData();
+
+  const mapearParaInstalacao = (inst: InstalacaoCalendario): Instalacao => ({
+    id: inst.id,
+    id_venda: inst.venda_id || null,
+    nome_cliente: inst.nome_cliente,
+    data: inst.data_instalacao,
+    hora: inst.hora,
+    equipe_id: inst.responsavel_instalacao_id,
+    created_at: '',
+    updated_at: '',
+    cidade: inst.venda?.cidade || null,
+    estado: inst.venda?.estado || null,
+    endereco: inst.venda?.bairro || null,
+    telefone_cliente: inst.venda?.cliente_telefone || null,
+    venda: inst.venda ? {
+      id: inst.venda.id,
+      cliente_nome: inst.venda.cliente_nome,
+      cliente_telefone: inst.venda.cliente_telefone,
+      estado: inst.venda.estado,
+      cidade: inst.venda.cidade,
+      data_venda: '',
+    } : undefined,
+    equipe: inst.equipe ? {
+      id: inst.equipe.id,
+      nome: inst.equipe.nome,
+      cor: inst.equipe.cor,
+      ativa: true,
+    } : undefined,
+  });
+
   const handleBaixarPDF = () => {
-    toast.info("Funcionalidade de PDF em desenvolvimento");
+    if (instalacoes.length === 0) {
+      toast.warning("Não há instalações para gerar o PDF");
+      return;
+    }
+
+    const instalacoesConvertidas = instalacoes.map(mapearParaInstalacao);
+    
+    const dadosPDF = prepararDadosPDF(
+      instalacoesConvertidas,
+      null,
+      currentDate,
+      tipoVisualizacao
+    );
+
+    baixarCronogramaInstalacoesPDF(dadosPDF);
+    toast.success("PDF gerado com sucesso!");
   };
 
   const handleRefresh = () => {
