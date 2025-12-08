@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useInstalacoesListagem } from "@/hooks/useInstalacoesListagem";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, MapPin, Calendar, User, Clock, Trash2, Plus, RefreshCw } from "lucide-react";
+import { CheckCircle2, MapPin, Calendar, Clock, Trash2, Plus, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
+import { FiltrosInstalacoes } from "@/components/instalacoes/FiltrosInstalacoes";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,10 +25,35 @@ type FilterType = "pendentes" | "todos" | "concluidas";
 export default function InstalacoesControle() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { instalacoes, isLoading, concluirInstalacao, deleteInstalacao, isConcluindo, isDeleting } = useInstalacoesListagem();
+  const { instalacoes: instalacoesBrutas, isLoading, concluirInstalacao, deleteInstalacao, isConcluindo, isDeleting } = useInstalacoesListagem();
   const [filter, setFilter] = useState<FilterType>("pendentes");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  
+  // Filtros
+  const [filtroEquipeId, setFiltroEquipeId] = useState("all");
+  const [filtroTipoInstalacao, setFiltroTipoInstalacao] = useState("all");
+
+  // Aplicar filtros
+  const instalacoes = useMemo(() => {
+    return instalacoesBrutas.filter((inst) => {
+      // Filtro de equipe
+      if (filtroEquipeId !== "all") {
+        if (filtroEquipeId === "sem_equipe") {
+          if (inst.responsavel_instalacao_id) return false;
+        } else {
+          if (inst.responsavel_instalacao_id !== filtroEquipeId) return false;
+        }
+      }
+
+      // Filtro de tipo de instalação
+      if (filtroTipoInstalacao !== "all") {
+        if (inst.tipo_instalacao !== filtroTipoInstalacao) return false;
+      }
+
+      return true;
+    });
+  }, [instalacoesBrutas, filtroEquipeId, filtroTipoInstalacao]);
 
   const filteredInstalacoes = instalacoes.filter((inst) => {
     if (filter === "pendentes") {
@@ -80,8 +106,19 @@ export default function InstalacoesControle() {
   return (
     <div className="space-y-4 overflow-hidden">
       {/* Header com ações */}
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold truncate">Controle</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-base font-semibold">Controle</h2>
+          
+          {/* Filtros */}
+          <FiltrosInstalacoes
+            equipeId={filtroEquipeId}
+            tipoInstalacao={filtroTipoInstalacao}
+            onEquipeChange={setFiltroEquipeId}
+            onTipoInstalacaoChange={setFiltroTipoInstalacao}
+          />
+        </div>
+        
         <div className="flex gap-2 shrink-0">
           <Button size="sm" onClick={() => navigate('/instalacoes/nova')} className="h-8 px-2">
             <Plus className="h-4 w-4" />

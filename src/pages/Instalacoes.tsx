@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Download, Plus, RefreshCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { CalendarioInstalacoesMobile } from "@/components/instalacoes/Calendario
 import { InstalacaoDetailsSheet } from "@/components/instalacoes/InstalacaoDetailsSheet";
 import { ListaInstalacoesEquipe } from "@/components/instalacoes/ListaInstalacoesEquipe";
 import { ImportarICSModal } from "@/components/instalacoes/ImportarICSModal";
+import { FiltrosInstalacoes } from "@/components/instalacoes/FiltrosInstalacoes";
 import { useInstalacoesPDFData } from "@/hooks/useInstalacoesPDFData";
 import { baixarCronogramaInstalacoesPDF } from "@/utils/instalacoesCronogramaPDF";
 import { Instalacao } from "@/types/instalacao";
@@ -26,9 +27,13 @@ export default function Instalacoes() {
   const [importarICSOpen, setImportarICSOpen] = useState(false);
   const [selectedInstalacao, setSelectedInstalacao] = useState<InstalacaoCalendario | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  
+  // Filtros
+  const [filtroEquipeId, setFiltroEquipeId] = useState("all");
+  const [filtroTipoInstalacao, setFiltroTipoInstalacao] = useState("all");
 
   const { 
-    instalacoes, 
+    instalacoes: instalacoesBrutas, 
     isLoading, 
     updateInstalacao, 
     concluirInstalacao,
@@ -37,6 +42,27 @@ export default function Instalacoes() {
     currentDate, 
     tipoVisualizacao === 'mensal' ? 'month' : 'week'
   );
+
+  // Aplicar filtros
+  const instalacoes = useMemo(() => {
+    return instalacoesBrutas.filter((inst) => {
+      // Filtro de equipe
+      if (filtroEquipeId !== "all") {
+        if (filtroEquipeId === "sem_equipe") {
+          if (inst.responsavel_instalacao_id) return false;
+        } else {
+          if (inst.responsavel_instalacao_id !== filtroEquipeId) return false;
+        }
+      }
+
+      // Filtro de tipo de instalação
+      if (filtroTipoInstalacao !== "all") {
+        if (inst.tipo_instalacao !== filtroTipoInstalacao) return false;
+      }
+
+      return true;
+    });
+  }, [instalacoesBrutas, filtroEquipeId, filtroTipoInstalacao]);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -142,8 +168,8 @@ export default function Instalacoes() {
       <ListaInstalacoesEquipe />
 
       {/* Controles de Visualização */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           {!isMobile && (
             <div className="flex gap-1 border rounded-md p-1">
               <Button 
@@ -164,7 +190,16 @@ export default function Instalacoes() {
               </Button>
             </div>
           )}
+          
+          {/* Filtros */}
+          <FiltrosInstalacoes
+            equipeId={filtroEquipeId}
+            tipoInstalacao={filtroTipoInstalacao}
+            onEquipeChange={setFiltroEquipeId}
+            onTipoInstalacaoChange={setFiltroTipoInstalacao}
+          />
         </div>
+        
         <div className="flex gap-2">
           <Button size="sm" onClick={() => navigate('/instalacoes/nova')}>
             <Plus className="h-4 w-4" />
