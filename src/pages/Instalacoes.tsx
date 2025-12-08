@@ -234,6 +234,7 @@ export default function Instalacoes() {
         onOpenChange={setDetailsOpen}
         onConcluirInstalacao={handleConcluirInstalacao}
         isConcluindo={isConcluindo}
+        onInstalacaoUpdated={handleRefresh}
       />
 
       {/* Modal para criar nova instalação */}
