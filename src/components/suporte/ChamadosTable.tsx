@@ -83,6 +83,7 @@ export function ChamadosTable({
         <Table>
           <TableHeader>
             <TableRow className="h-10">
+              <TableHead className="w-16">Foto</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>CPF</TableHead>
               <TableHead>Telefone</TableHead>
@@ -96,6 +97,20 @@ export function ChamadosTable({
           <TableBody>
             {chamados.map((chamado) => (
               <TableRow key={chamado.id} className="h-12">
+                <TableCell>
+                  {chamado.foto_url ? (
+                    <img 
+                      src={chamado.foto_url} 
+                      alt="Anexo"
+                      className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80"
+                      onClick={() => window.open(chamado.foto_url, '_blank')}
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                      -
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="font-medium">{chamado.nome}</TableCell>
                 <TableCell>{chamado.cpf}</TableCell>
                 <TableCell>{chamado.telefone}</TableCell>
