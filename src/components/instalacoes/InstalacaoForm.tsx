@@ -224,57 +224,49 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Buscar Venda */}
+      {/* Nome do Cliente com busca de venda */}
       <div className="space-y-2">
-        <Label>Venda (opcional)</Label>
-        
-        {vendaSelecionada ? (
-          <div className="flex items-center gap-2 p-3 border rounded-lg bg-accent/50">
-            <div className="flex-1">
-              <p className="font-medium">{vendaSelecionada.cliente_nome}</p>
-              <p className="text-sm text-muted-foreground">
-                {new Date(vendaSelecionada.data_venda).toLocaleDateString("pt-BR")}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleRemoverVenda}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <Label htmlFor="nome_cliente">Nome do Cliente *</Label>
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Input
+              id="nome_cliente"
+              {...register("nome_cliente")}
+              placeholder="Nome completo"
+              className="text-base"
+            />
+            {vendaSelecionada && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleRemoverVenda}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-        ) : (
           <Button
             type="button"
             variant="outline"
+            size="icon"
             onClick={() => setModalVendaOpen(true)}
-            className="w-full justify-start gap-2"
+            disabled={loadingVendaData}
+            title="Buscar venda"
           >
-            <Search className="h-4 w-4" />
-            Buscar venda
+            {loadingVendaData ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
           </Button>
-        )}
-        
-        {loadingVendaData && (
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Carregando dados da venda...
+        </div>
+        {vendaSelecionada && (
+          <p className="text-xs text-muted-foreground">
+            Venda de {new Date(vendaSelecionada.data_venda).toLocaleDateString("pt-BR")}
           </p>
         )}
-      </div>
-
-      {/* Nome do Cliente */}
-      <div className="space-y-2">
-        <Label htmlFor="nome_cliente">Nome do Cliente *</Label>
-        <Input
-          id="nome_cliente"
-          {...register("nome_cliente")}
-          placeholder="Nome completo"
-          className="text-base"
-        />
         {errors.nome_cliente && (
           <p className="text-sm text-destructive">{errors.nome_cliente.message}</p>
         )}
