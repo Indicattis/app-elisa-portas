@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
@@ -29,6 +29,21 @@ export const CalendarioInstalacoesMensal = ({
 }: CalendarioInstalacoesMensalProps) => {
   const navigate = useNavigate();
   const [activeInstalacao, setActiveInstalacao] = useState<InstalacaoCalendario | null>(null);
+
+  // Sensors com delay de 1 segundo para ativar o drag
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      delay: 1000,
+      tolerance: 5,
+    },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 1000,
+      tolerance: 5,
+    },
+  });
+  const sensors = useSensors(pointerSensor, touchSensor);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -109,6 +124,7 @@ export const CalendarioInstalacoesMensal = ({
 
   return (
     <DndContext
+      sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
