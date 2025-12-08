@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,10 +11,9 @@ import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
-import logoInstalacoes from "@/assets/logo-instalacoes.png";
 import { OrdemInstalacaoDetails } from "@/components/instalacoes/OrdemInstalacaoDetails";
 import { OrdensSemData } from "@/components/instalacoes/OrdensSemData";
-
+import { CriarInstalacaoModal } from "@/components/instalacoes/CriarInstalacaoModal";
 export default function Instalacoes() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -71,6 +70,7 @@ export default function Instalacoes() {
   
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [modalNovaInstalacaoOpen, setModalNovaInstalacaoOpen] = useState(false);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -163,6 +163,10 @@ export default function Instalacoes() {
           )}
         </div>
         <div className="flex gap-2">
+          <Button size="sm" onClick={() => setModalNovaInstalacaoOpen(true)}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2">Nova</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Atualizar</span>
@@ -234,6 +238,13 @@ export default function Instalacoes() {
         onOpenChange={setDetailsOpen}
         onConcluirInstalacao={handleConcluirInstalacao}
         isConcluindo={isConcluindo}
+      />
+
+      {/* Modal para criar nova instalação */}
+      <CriarInstalacaoModal
+        open={modalNovaInstalacaoOpen}
+        onOpenChange={setModalNovaInstalacaoOpen}
+        onSuccess={handleRefresh}
       />
     </div>
   );
