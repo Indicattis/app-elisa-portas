@@ -1,7 +1,7 @@
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
-import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
+import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +17,7 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   
-  const { instalacoes } = useInstalacoesCronograma(monthStart);
+  const { instalacoes } = useOrdensInstalacaoCalendario(currentMonth, 'month');
   const { equipes } = useEquipesInstalacao();
   const [selectedInstalacao, setSelectedInstalacao] = useState<any>(null);
   const { toast } = useToast();

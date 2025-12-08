@@ -2,10 +2,10 @@ import { Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { InstalacaoCronograma } from "@/hooks/useInstalacoesCronograma";
+import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 
 interface PontoInstalacaoProps {
-  instalacao: InstalacaoCronograma;
+  instalacao: InstalacaoCalendario;
   cor: string;
   onDragStart: (item: { id: string; equipId: string; cidade: string }) => void;
   onDragEnd: () => void;
@@ -116,9 +116,9 @@ export function PontoInstalacao({
                       </div>
                     )}
 
-                    {instalacao.pedido && (
+                    {instalacao.venda?.cidade && (
                       <div className="text-[10px] text-muted-foreground">
-                        Pedido: {instalacao.pedido.numero_pedido}
+                        Cidade: {instalacao.venda.cidade}/{instalacao.venda.estado}
                       </div>
                     )}
                   </div>

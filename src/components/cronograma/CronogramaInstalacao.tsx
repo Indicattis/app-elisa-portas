@@ -1,9 +1,9 @@
-import { format, addDays, startOfWeek } from "date-fns";
+import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
-import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
+import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useEquipesMembros } from "@/hooks/useEquipesMembros";
 import { PontoInstalacao } from "./PontoInstalacao";
 import { CelulaDia } from "./CelulaDia";
@@ -30,7 +30,7 @@ const DIAS_SEMANA = [
 
 export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltradas }: CronogramaInstalacaoProps) {
   const { equipes } = useEquipesInstalacao();
-  const { instalacoes, updateInstalacaoData } = useInstalacoesCronograma(currentWeek);
+  const { instalacoes, updateInstalacao } = useOrdensInstalacaoCalendario(currentWeek, 'week');
   const { draggedItem, handleDragStart, handleDragEnd } = useDragAndDrop();
   const [selectedInstalacao, setSelectedInstalacao] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -58,11 +58,13 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
       const index = DIAS_SEMANA.findIndex(d => d.value === diaSemana);
       const novaData = addDays(currentWeek, index);
       
-      await updateInstalacaoData(
-        draggedItem.id,
-        equipId,
-        novaData
-      );
+      await updateInstalacao({
+        id: draggedItem.id,
+        data: {
+          responsavel_instalacao_id: equipId,
+          data_instalacao: format(novaData, 'yyyy-MM-dd')
+        }
+      });
     }
   };
 
@@ -134,7 +136,9 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
               {DIAS_SEMANA.map((dia, index) => {
                 const dataAtual = addDays(currentWeek, index);
                 const instalacoesNoDia = instalacoes.filter(
-                  i => i.responsavel_instalacao_id === equipe.id && i.dia_semana === dia.value
+                  i => i.responsavel_instalacao_id === equipe.id && 
+                       i.data_instalacao && 
+                       isSameDay(new Date(i.data_instalacao), dataAtual)
                 );
 
                 return (
