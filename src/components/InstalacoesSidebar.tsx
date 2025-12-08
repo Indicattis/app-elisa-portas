@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { CalendarCheck, ClipboardList } from "lucide-react";
+import { CalendarCheck, ClipboardList, Calendar } from "lucide-react";
 import instalacoesLogo from "@/assets/instalacoes-logo.png";
 import { 
   Sidebar, 
@@ -16,10 +16,16 @@ import {
 
 const menuItems = [
   {
-    key: 'calendario',
+    key: 'cronograma',
     path: '/instalacoes',
-    label: 'Calendário',
+    label: 'Cronograma',
     icon: CalendarCheck,
+  },
+  {
+    key: 'calendario',
+    path: '/instalacoes/calendario',
+    label: 'Calendário',
+    icon: Calendar,
   },
   {
     key: 'controle',
