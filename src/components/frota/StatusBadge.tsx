@@ -6,6 +6,16 @@ const statusConfig = {
     variant: 'default' as const,
     className: 'bg-green-500 hover:bg-green-600'
   },
+  pendente_conferencia: {
+    label: 'Pendente Conferência',
+    variant: 'default' as const,
+    className: 'bg-yellow-500 hover:bg-yellow-600 text-black'
+  },
+  pendente_oleo: {
+    label: 'Pendente Óleo',
+    variant: 'default' as const,
+    className: 'bg-orange-500 hover:bg-orange-600'
+  },
   atencao: {
     label: 'Atenção',
     variant: 'default' as const,
@@ -28,13 +38,15 @@ const statusConfig = {
   }
 };
 
+export type StatusVeiculo = 'pronto' | 'pendente_conferencia' | 'pendente_oleo' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
+
 interface StatusBadgeProps {
-  status: 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
+  status: StatusVeiculo;
   className?: string;
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const config = statusConfig[status] || statusConfig.pronto;
   
   return (
     <Badge 

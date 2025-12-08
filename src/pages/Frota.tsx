@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Droplet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useVeiculos, precisaConferenciaSemanal } from "@/hooks/useVeiculos";
+import { useVeiculos, calcularStatusVeiculo } from "@/hooks/useVeiculos";
 import { StatusBadge } from "@/components/frota/StatusBadge";
-import { AlertaConferenciaSemanal } from "@/components/frota/AlertaConferenciaSemanal";
+import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -24,6 +24,7 @@ export default function Frota() {
   const navigate = useNavigate();
   const { veiculos, isLoading, deleteVeiculo } = useVeiculos();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
 
   const handleRowDoubleClick = (veiculoId: string) => {
     navigate(`/dashboard/logistica/frota/${veiculoId}/conferencias`);
@@ -55,6 +56,10 @@ export default function Frota() {
         </div>
         
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setTrocaOleoOpen(true)}>
+            <Droplet className="h-4 w-4 mr-2" />
+            Marcar Troca de Óleo
+          </Button>
           <Button onClick={() => navigate('/dashboard/logistica/frota/conferencia')}>
             Conferir Veículo
           </Button>
@@ -81,87 +86,94 @@ export default function Frota() {
                   <TableHead className="text-xs">Próx. Troca Óleo</TableHead>
                   <TableHead className="text-xs">KM Próx. Troca</TableHead>
                   <TableHead className="text-xs">Status</TableHead>
-                  <TableHead className="text-xs">Conferência</TableHead>
+                  <TableHead className="text-xs">Última Conferência</TableHead>
                   <TableHead className="text-right text-xs">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {veiculos?.map((veiculo) => (
-                  <TableRow 
-                    key={veiculo.id}
-                    onDoubleClick={() => handleRowDoubleClick(veiculo.id)}
-                    className="cursor-pointer hover:bg-muted/50"
-                  >
-                    <TableCell>
-                      {veiculo.foto_url ? (
-                        <img 
-                          src={veiculo.foto_url} 
-                          alt={veiculo.nome}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground">
-                          -
+                {veiculos?.map((veiculo) => {
+                  const statusCalculado = calcularStatusVeiculo(veiculo);
+                  
+                  return (
+                    <TableRow 
+                      key={veiculo.id}
+                      onDoubleClick={() => handleRowDoubleClick(veiculo.id)}
+                      className="cursor-pointer hover:bg-muted/50"
+                    >
+                      <TableCell>
+                        {veiculo.foto_url ? (
+                          <img 
+                            src={veiculo.foto_url} 
+                            alt={veiculo.nome}
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground">
+                            -
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{veiculo.nome}</TableCell>
+                      <TableCell>{(veiculo as any).placa || '-'}</TableCell>
+                      <TableCell>{veiculo.modelo}</TableCell>
+                      <TableCell>{veiculo.ano}</TableCell>
+                      <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
+                      <TableCell>
+                        {veiculo.data_troca_oleo 
+                          ? format(new Date(veiculo.data_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                          : '-'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {veiculo.data_proxima_troca_oleo 
+                          ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                          : '-'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {veiculo.km_proxima_troca_oleo 
+                          ? `${veiculo.km_proxima_troca_oleo.toLocaleString('pt-BR')} km`
+                          : '-'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={statusCalculado} />
+                      </TableCell>
+                      <TableCell>
+                        {veiculo.ultima_conferencia_data 
+                          ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
+                          : <span className="text-muted-foreground">Nunca</span>
+                        }
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
+                            }}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(veiculo.id);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">{veiculo.nome}</TableCell>
-                    <TableCell>{(veiculo as any).placa || '-'}</TableCell>
-                    <TableCell>{veiculo.modelo}</TableCell>
-                    <TableCell>{veiculo.ano}</TableCell>
-                    <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
-                    <TableCell>
-                      {veiculo.data_troca_oleo 
-                        ? format(new Date(veiculo.data_troca_oleo), "dd/MM/yy", { locale: ptBR })
-                        : '-'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {veiculo.data_proxima_troca_oleo 
-                        ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
-                        : '-'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {veiculo.km_proxima_troca_oleo 
-                        ? `${veiculo.km_proxima_troca_oleo.toLocaleString('pt-BR')} km`
-                        : '-'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={veiculo.status} />
-                    </TableCell>
-                    <TableCell>
-                      <AlertaConferenciaSemanal precisaConferencia={precisaConferenciaSemanal(veiculo)} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
-                          }}
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(veiculo.id);
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {veiculos?.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
@@ -174,6 +186,12 @@ export default function Frota() {
           </div>
         </CardContent>
       </Card>
+
+      <TrocaOleoDialog 
+        open={trocaOleoOpen} 
+        onOpenChange={setTrocaOleoOpen} 
+        veiculos={veiculos || []} 
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
