@@ -1,76 +1,35 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Download, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
-import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
-import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
-import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
-import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
+import { useOrdensInstalacaoCalendario, InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
-import { OrdemInstalacaoDetails } from "@/components/instalacoes/OrdemInstalacaoDetails";
-import { OrdensSemData } from "@/components/instalacoes/OrdensSemData";
 import { CriarInstalacaoModal } from "@/components/instalacoes/CriarInstalacaoModal";
+import { CalendarioInstalacoesSemanal } from "@/components/instalacoes/CalendarioInstalacoesSemanal";
+import { CalendarioInstalacoesMensal } from "@/components/instalacoes/CalendarioInstalacoesMensal";
+import { InstalacaoDetailsSheet } from "@/components/instalacoes/InstalacaoDetailsSheet";
+
 export default function Instalacoes() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
-  const { equipes } = useEquipesInstalacao();
+  const [modalNovaInstalacaoOpen, setModalNovaInstalacaoOpen] = useState(false);
+  const [selectedInstalacao, setSelectedInstalacao] = useState<InstalacaoCalendario | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
   const { 
-    ordens, 
+    instalacoes, 
     isLoading, 
-    updateOrdem, 
+    updateInstalacao, 
     concluirInstalacao,
     isConcluindo 
   } = useOrdensInstalacaoCalendario(
     currentDate, 
     tipoVisualizacao === 'mensal' ? 'month' : 'week'
   );
-
-  // Mapear responsável para cor da equipe
-  const getEquipeCorByResponsavel = useMemo(() => {
-    const map = new Map<string, string>();
-    
-    equipes.forEach(equipe => {
-      // Adicionar responsável
-      if (equipe.responsavel_id) {
-        map.set(equipe.responsavel_id, equipe.cor);
-      }
-      // Adicionar membros
-      equipe.membros?.forEach(membro => {
-        map.set(membro.id, equipe.cor);
-      });
-    });
-    
-    return (responsavelId: string | null) => {
-      if (!responsavelId) return null;
-      return map.get(responsavelId) || null;
-    };
-  }, [equipes]);
-
-  // Enriquecer ordens com cor da equipe
-  const ordensComCores = useMemo(() => {
-    return ordens.map(ordem => {
-      const instalacao = Array.isArray(ordem.pedido?.instalacao) 
-        ? ordem.pedido?.instalacao[0] 
-        : ordem.pedido?.instalacao;
-      
-      const corEquipe = getEquipeCorByResponsavel(instalacao?.responsavel_instalacao_id || null);
-      
-      return {
-        ...ordem,
-        _corEquipe: corEquipe
-      };
-    });
-  }, [ordens, getEquipeCorByResponsavel]);
-  
-  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [modalNovaInstalacaoOpen, setModalNovaInstalacaoOpen] = useState(false);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -80,42 +39,30 @@ export default function Instalacoes() {
     setCurrentDate(addWeeks(currentDate, 1));
   };
 
-  const handlePreviousMonth = () => {
-    setCurrentDate(subMonths(currentDate, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentDate(addMonths(currentDate, 1));
-  };
-
   const handleToday = () => {
     setCurrentDate(new Date());
   };
 
-  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento> }) => {
-    await updateOrdem(params);
-  };
-
-  const handleDayClick = (date: Date) => {
-    // Implementar navegação para criar nova ordem se necessário
+  const handleUpdateInstalacao = async (params: { id: string; data: Partial<InstalacaoCalendario> }) => {
+    await updateInstalacao(params);
   };
 
   const handleRemoverDoCalendario = async (id: string) => {
     try {
-      await updateOrdem({
+      await updateInstalacao({
         id,
-        data: { data_carregamento: null, status: 'pendente' },
+        data: { data_instalacao: null, status: 'pendente' },
       });
-      toast.success("Ordem removida do calendário");
+      toast.success("Instalação removida do calendário");
     } catch (error) {
       console.error("Erro ao remover:", error);
-      toast.error("Erro ao remover ordem do calendário");
+      toast.error("Erro ao remover instalação do calendário");
     }
   };
 
-  const handleConcluirInstalacao = async (pedidoId: string) => {
+  const handleConcluirInstalacao = async (instalacaoId: string) => {
     try {
-      await concluirInstalacao(pedidoId);
+      await concluirInstalacao(instalacaoId);
       setDetailsOpen(false);
     } catch (error) {
       console.error("Erro ao concluir instalação:", error);
@@ -127,12 +74,12 @@ export default function Instalacoes() {
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["ordens_instalacao_calendario"] });
+    queryClient.invalidateQueries({ queryKey: ["instalacoes_calendario"] });
     toast.success("Calendário atualizado");
   };
 
-  const handleOrdemClick = (ordem: OrdemCarregamento) => {
-    setSelectedOrdem(ordem);
+  const handleInstalacaoClick = (instalacao: InstalacaoCalendario) => {
+    setSelectedInstalacao(instalacao);
     setDetailsOpen(true);
   };
 
@@ -177,63 +124,41 @@ export default function Instalacoes() {
           </Button>
         </div>
       </div>
+
       {/* Calendários */}
       {isLoading ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Carregando calendário...</p>
         </div>
       ) : (
-          <>
-            {/* Calendários */}
-            {isMobile ? (
-              <CalendarioSemanalExpedicaoMobile
-                startDate={currentDate}
-                ordens={ordensComCores}
-                onPreviousWeek={handlePreviousWeek}
-                onNextWeek={handleNextWeek}
-                onToday={handleToday}
-                onDayClick={handleDayClick}
-                onEdit={() => {}}
-                onRemoverDoCalendario={handleRemoverDoCalendario}
-              />
-            ) : (
-              tipoVisualizacao === 'semanal' ? (
-                <CalendarioSemanalExpedicaoDesktop
-                  startDate={currentDate}
-                  ordens={ordensComCores}
-                  onPreviousWeek={handlePreviousWeek}
-                  onNextWeek={handleNextWeek}
-                  onToday={handleToday}
-                  onUpdateOrdem={handleUpdateOrdem}
-                  onEdit={() => {}}
-                  onRemoverDoCalendario={handleRemoverDoCalendario}
-                  onOrdemDropped={() => {}}
-                  onOrdemClick={handleOrdemClick}
-                />
-              ) : (
-                <CalendarioMensalExpedicaoDesktop
-                  currentMonth={currentDate}
-                  ordens={ordensComCores}
-                  onMonthChange={setCurrentDate}
-                  onUpdateOrdem={handleUpdateOrdem}
-                  onEdit={() => {}}
-                  onRemoverDoCalendario={handleRemoverDoCalendario}
-                  onOrdemDropped={() => {}}
-                  onOrdemClick={handleOrdemClick}
-                />
-              )
-            )}
+        <>
+          {tipoVisualizacao === 'semanal' || isMobile ? (
+            <CalendarioInstalacoesSemanal
+              startDate={currentDate}
+              instalacoes={instalacoes}
+              onPreviousWeek={handlePreviousWeek}
+              onNextWeek={handleNextWeek}
+              onToday={handleToday}
+              onUpdateInstalacao={handleUpdateInstalacao}
+              onRemoverDoCalendario={handleRemoverDoCalendario}
+              onInstalacaoClick={handleInstalacaoClick}
+            />
+          ) : (
+            <CalendarioInstalacoesMensal
+              currentMonth={currentDate}
+              instalacoes={instalacoes}
+              onMonthChange={setCurrentDate}
+              onUpdateInstalacao={handleUpdateInstalacao}
+              onRemoverDoCalendario={handleRemoverDoCalendario}
+              onInstalacaoClick={handleInstalacaoClick}
+            />
+          )}
         </>
       )}
 
-      {/* Listagem de Ordens Sem Data de Carregamento */}
-      <div className="mt-8">
-        <OrdensSemData />
-      </div>
-
-      {/* Sidebar de Detalhes com botão de Concluir Instalação */}
-      <OrdemInstalacaoDetails
-        ordem={selectedOrdem}
+      {/* Sidebar de Detalhes */}
+      <InstalacaoDetailsSheet
+        instalacao={selectedInstalacao}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onConcluirInstalacao={handleConcluirInstalacao}

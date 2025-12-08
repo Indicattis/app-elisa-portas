@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Instalacao } from "@/types/instalacao";
 import { DroppableDay } from "./DroppableDay";
-import { InstalacaoCard } from "./InstalacaoCard";
+import { InstalacaoCardLegacy } from "./InstalacaoCardLegacy";
 import { toast } from "sonner";
 import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -217,7 +217,7 @@ export const CalendarioMensalDesktop = ({
       <DragOverlay>
         {activeInstalacao && (
           <div className="opacity-80">
-            <InstalacaoCard
+            <InstalacaoCardLegacy
               instalacao={activeInstalacao}
               onEdit={() => {}}
               onRemoverDoCalendario={() => {}}
