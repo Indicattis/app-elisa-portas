@@ -870,7 +870,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       const { error } = await supabase.rpc('retroceder_pedido_para_etapa', {
         p_pedido_id: pedidoId,
         p_etapa_destino: etapaDestino,
-        p_motivo_backlog: motivo
+        p_motivo_backlog: motivo,
+        p_user_id: user.id
       });
 
       if (error) throw error;
