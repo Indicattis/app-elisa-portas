@@ -8,8 +8,6 @@ import { Loader2 } from "lucide-react";
 export interface ConferenciaFormData {
   km_atual: number;
   data_troca_oleo?: string;
-  km_proxima_troca_oleo?: number;
-  data_proxima_troca_oleo?: string;
   agua_conferida: boolean;
   nivel_oleo_conferido: boolean;
   observacoes?: string;
@@ -71,28 +69,6 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
             type="date"
             {...register('data_troca_oleo')}
           />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="km_proxima_troca_oleo">KM Próxima Troca de Óleo</Label>
-            <Input
-              id="km_proxima_troca_oleo"
-              type="number"
-              step="1"
-              {...register('km_proxima_troca_oleo', { valueAsNumber: true })}
-              placeholder="Ex: 150000"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="data_proxima_troca_oleo">Data Próxima Troca de Óleo</Label>
-            <Input
-              id="data_proxima_troca_oleo"
-              type="date"
-              {...register('data_proxima_troca_oleo')}
-            />
-          </div>
         </div>
 
         <div className="flex items-center space-x-2">

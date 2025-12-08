@@ -11,6 +11,8 @@ export interface Veiculo {
   ano: number;
   km_atual: number;
   data_troca_oleo: string | null;
+  km_proxima_troca_oleo: number | null;
+  data_proxima_troca_oleo: string | null;
   status: 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
   foto_url: string | null;
   ativo: boolean;
@@ -27,6 +29,8 @@ export interface VeiculoFormData {
   ano: number;
   km_atual: number;
   data_troca_oleo?: string;
+  km_proxima_troca_oleo?: number;
+  data_proxima_troca_oleo?: string;
   status: 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
   foto_url?: string;
 }

@@ -25,6 +25,8 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
       ano: initialData?.ano || new Date().getFullYear(),
       km_atual: initialData?.km_atual || 0,
       data_troca_oleo: initialData?.data_troca_oleo || '',
+      km_proxima_troca_oleo: (initialData as any)?.km_proxima_troca_oleo || undefined,
+      data_proxima_troca_oleo: (initialData as any)?.data_proxima_troca_oleo || '',
       status: initialData?.status || 'pronto'
     }
   });
@@ -143,6 +145,26 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting }: VeiculoForm
             id="data_troca_oleo"
             type="date"
             {...register('data_troca_oleo')}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="km_proxima_troca_oleo">KM Próxima Troca de Óleo</Label>
+          <Input
+            id="km_proxima_troca_oleo"
+            type="number"
+            step="1"
+            {...register('km_proxima_troca_oleo', { valueAsNumber: true })}
+            placeholder="Ex: 150000"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="data_proxima_troca_oleo">Data Próxima Troca de Óleo</Label>
+          <Input
+            id="data_proxima_troca_oleo"
+            type="date"
+            {...register('data_proxima_troca_oleo')}
           />
         </div>
 
