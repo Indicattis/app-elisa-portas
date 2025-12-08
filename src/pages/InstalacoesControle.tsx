@@ -10,6 +10,14 @@ import { ptBR } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { FiltrosInstalacoes } from "@/components/instalacoes/FiltrosInstalacoes";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -158,100 +166,95 @@ export default function InstalacoesControle() {
         </Button>
       </div>
 
-      {/* Lista de Instalações */}
-      <div className="space-y-2">
+      {/* Tabela de Instalações */}
+      <Card className="overflow-hidden">
         {filteredInstalacoes.length === 0 ? (
-          <Card className="p-6 text-center text-muted-foreground">
+          <div className="p-6 text-center text-muted-foreground">
             Nenhuma instalação encontrada
-          </Card>
+          </div>
         ) : (
-          filteredInstalacoes.map((inst) => (
-            <Card key={inst.id} className="p-3">
-              <div className="flex items-start gap-3">
-                {/* Indicador de status */}
-                <div className={`shrink-0 w-1 h-full min-h-[60px] rounded-full ${
-                  inst.instalacao_concluida ? 'bg-green-500' : 'bg-amber-500'
-                }`} />
-
-                {/* Conteúdo principal */}
-                <div className="flex-1 min-w-0 space-y-2">
-                  {/* Nome do cliente e status */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{inst.nome_cliente}</p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="h-[25px]">
+                  <TableHead className="h-[25px] py-0 text-xs">Status</TableHead>
+                  <TableHead className="h-[25px] py-0 text-xs">Cliente</TableHead>
+                  <TableHead className="h-[25px] py-0 text-xs">Equipe</TableHead>
+                  <TableHead className="h-[25px] py-0 text-xs">Data</TableHead>
+                  <TableHead className="h-[25px] py-0 text-xs">Hora</TableHead>
+                  <TableHead className="h-[25px] py-0 text-xs">Local</TableHead>
+                  <TableHead className="h-[25px] py-0 text-xs text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInstalacoes.map((inst) => (
+                  <TableRow key={inst.id} className="h-[25px]">
+                    <TableCell className="h-[25px] py-0">
+                      {inst.instalacao_concluida ? (
+                        <Badge variant="default" className="bg-green-500 text-[10px] h-5 px-1">
+                          <CheckCircle2 className="h-3 w-3 mr-0.5" />
+                          OK
+                        </Badge>
+                      ) : (
+                        <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                      )}
+                    </TableCell>
+                    <TableCell className="h-[25px] py-0 text-xs font-medium max-w-[150px] truncate">
+                      {inst.nome_cliente}
+                    </TableCell>
+                    <TableCell className="h-[25px] py-0">
                       {inst.equipe && (
-                        <div className="flex items-center gap-1 mt-0.5">
+                        <div className="flex items-center gap-1">
                           <span 
                             className="w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: inst.equipe.cor || '#888' }}
                           />
-                          <span className="text-xs text-muted-foreground truncate">
+                          <span className="text-xs text-muted-foreground truncate max-w-[80px]">
                             {inst.equipe.nome}
                           </span>
                         </div>
                       )}
-                    </div>
-                    {inst.instalacao_concluida && (
-                      <Badge variant="default" className="bg-green-500 text-xs shrink-0">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        OK
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Info row - data, hora, local */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(inst.data_instalacao)}</span>
-                    </div>
-                    {inst.hora && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{inst.hora.slice(0, 5)}</span>
+                    </TableCell>
+                    <TableCell className="h-[25px] py-0 text-xs text-muted-foreground">
+                      {formatDate(inst.data_instalacao)}
+                    </TableCell>
+                    <TableCell className="h-[25px] py-0 text-xs text-muted-foreground">
+                      {inst.hora?.slice(0, 5) || "-"}
+                    </TableCell>
+                    <TableCell className="h-[25px] py-0 text-xs text-muted-foreground max-w-[100px] truncate">
+                      {inst.venda?.cidade ? `${inst.venda.cidade}${inst.venda.estado ? `/${inst.venda.estado}` : ''}` : '-'}
+                    </TableCell>
+                    <TableCell className="h-[25px] py-0 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {!inst.instalacao_concluida && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleConcluir(inst.id)}
+                            disabled={isConcluindo}
+                            className="h-5 text-[10px] px-1.5"
+                          >
+                            <CheckCircle2 className="h-3 w-3 mr-0.5" />
+                            Concluir
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openDeleteDialog(inst.id)}
+                          disabled={isDeleting}
+                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
-                    )}
-                    {inst.venda?.cidade && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        <span className="truncate max-w-[120px]">
-                          {inst.venda.cidade}
-                          {inst.venda.estado && `/${inst.venda.estado}`}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Ações */}
-                  <div className="flex items-center gap-2 pt-1">
-                    {!inst.instalacao_concluida && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleConcluir(inst.id)}
-                        disabled={isConcluindo}
-                        className="h-7 text-xs"
-                      >
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Concluir
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => openDeleteDialog(inst.id)}
-                      disabled={isDeleting}
-                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
-      </div>
-
+      </Card>
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
