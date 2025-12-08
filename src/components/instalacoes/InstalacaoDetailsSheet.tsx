@@ -123,20 +123,10 @@ export const InstalacaoDetailsSheet = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="flex flex-row items-center justify-between">
+        <SheetHeader>
           <SheetTitle className="text-left">
             {isEditing ? "Editar Instalação" : "Detalhes da Instalação"}
           </SheetTitle>
-          {!isEditing && !instalacao.instalacao_concluida && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsEditing(true)}
-              className="h-8 w-8"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
@@ -311,9 +301,17 @@ export const InstalacaoDetailsSheet = ({
 
               {/* Ações */}
               {!instalacao.instalacao_concluida && (
-                <div className="pt-4">
+                <div className="pt-4 flex gap-2">
                   <Button 
-                    className="w-full" 
+                    variant="outline"
+                    className="flex-1" 
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button 
+                    className="flex-1" 
                     onClick={handleConcluir}
                     disabled={isConcluindo}
                   >
@@ -325,7 +323,7 @@ export const InstalacaoDetailsSheet = ({
                     ) : (
                       <>
                         <CheckCircle className="mr-2 h-4 w-4" />
-                        Concluir Instalação
+                        Concluir
                       </>
                     )}
                   </Button>
