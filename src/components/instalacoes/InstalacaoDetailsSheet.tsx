@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { CheckCircle, Calendar, Clock, MapPin, Phone, User, Loader2, Pencil, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 
 interface InstalacaoDetailsSheetProps {
   instalacao: InstalacaoCalendario | null;
@@ -284,22 +285,37 @@ export const InstalacaoDetailsSheet = ({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="cidade">Cidade</Label>
-                      <Input
-                        id="cidade"
-                        value={cidade}
-                        onChange={(e) => setCidade(e.target.value)}
-                      />
+                      <Label htmlFor="estado">Estado</Label>
+                      <Select value={estado} onValueChange={(value) => {
+                        setEstado(value);
+                        setCidade(""); // Limpa cidade ao trocar estado
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="UF" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ESTADOS_BRASIL.map((est) => (
+                            <SelectItem key={est.sigla} value={est.sigla}>
+                              {est.sigla}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="estado">Estado</Label>
-                      <Input
-                        id="estado"
-                        value={estado}
-                        onChange={(e) => setEstado(e.target.value)}
-                        maxLength={2}
-                        placeholder="UF"
-                      />
+                      <Label htmlFor="cidade">Cidade</Label>
+                      <Select value={cidade} onValueChange={setCidade} disabled={!estado}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getCidadesPorEstado(estado).map((cid) => (
+                            <SelectItem key={cid} value={cid}>
+                              {cid}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
