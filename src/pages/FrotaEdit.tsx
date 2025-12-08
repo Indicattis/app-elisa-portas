@@ -15,7 +15,7 @@ export default function FrotaEdit() {
 
   useEffect(() => {
     if (!id || (veiculos && !veiculo)) {
-      navigate('/dashboard/instalacoes/frota');
+      navigate('/dashboard/logistica/frota');
     }
   }, [id, veiculo, veiculos, navigate]);
 
@@ -38,7 +38,7 @@ export default function FrotaEdit() {
       }
     });
 
-    navigate('/dashboard/instalacoes/frota');
+    navigate('/dashboard/logistica/frota');
   };
 
   if (!veiculo) {
@@ -55,7 +55,7 @@ export default function FrotaEdit() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/dashboard/instalacoes/frota')}
+          onClick={() => navigate('/dashboard/logistica/frota')}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar

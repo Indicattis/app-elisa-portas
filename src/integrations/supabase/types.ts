@@ -4735,10 +4735,12 @@ export type Database = {
           ativo: boolean
           created_at: string
           created_by: string | null
+          data_proxima_troca_oleo: string | null
           data_troca_oleo: string | null
           foto_url: string | null
           id: string
           km_atual: number
+          km_proxima_troca_oleo: number | null
           modelo: string
           nome: string
           placa: string | null
@@ -4750,10 +4752,12 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           created_by?: string | null
+          data_proxima_troca_oleo?: string | null
           data_troca_oleo?: string | null
           foto_url?: string | null
           id?: string
           km_atual?: number
+          km_proxima_troca_oleo?: number | null
           modelo: string
           nome: string
           placa?: string | null
@@ -4765,10 +4769,12 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           created_by?: string | null
+          data_proxima_troca_oleo?: string | null
           data_troca_oleo?: string | null
           foto_url?: string | null
           id?: string
           km_atual?: number
+          km_proxima_troca_oleo?: number | null
           modelo?: string
           nome?: string
           placa?: string | null
