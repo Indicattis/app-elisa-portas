@@ -361,6 +361,51 @@ export type Database = {
           },
         ]
       }
+      avaliacoes: {
+        Row: {
+          aprovado: boolean | null
+          cidade: string | null
+          comentario: string
+          created_at: string | null
+          email: string
+          estado: string | null
+          id: string
+          nome: string
+          nota: number
+          recomendaria: boolean | null
+          telefone: string | null
+          tipo_avaliacao: string
+        }
+        Insert: {
+          aprovado?: boolean | null
+          cidade?: string | null
+          comentario: string
+          created_at?: string | null
+          email: string
+          estado?: string | null
+          id?: string
+          nome: string
+          nota: number
+          recomendaria?: boolean | null
+          telefone?: string | null
+          tipo_avaliacao: string
+        }
+        Update: {
+          aprovado?: boolean | null
+          cidade?: string | null
+          comentario?: string
+          created_at?: string | null
+          email?: string
+          estado?: string | null
+          id?: string
+          nome?: string
+          nota?: number
+          recomendaria?: boolean | null
+          telefone?: string | null
+          tipo_avaliacao?: string
+        }
+        Relationships: []
+      }
       calendario_cores: {
         Row: {
           ativa: boolean

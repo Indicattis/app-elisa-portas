@@ -46,6 +46,7 @@ import ProducaoPintura from "./pages/ProducaoPintura";
 import InstalacoesAdmin from "./pages/InstalacoesAdmin";
 import Instalacoes from "./pages/Instalacoes";
 import InstalacoesControle from "./pages/InstalacoesControle";
+import InstalacoesCronograma from "./pages/InstalacoesCronograma";
 import InstalacoesNovas from "./pages/InstalacoesNovas";
 import InstalacoesEditar from "./pages/InstalacoesEditar";
 import { InstalacoesLayout } from "./components/InstalacoesLayout";
@@ -701,6 +702,16 @@ const App = () => (
                     <ProtectedRoute routeKey="instalacoes_controle">
                       <InstalacoesLayout title="Controle de Instalações">
                         <InstalacoesControle />
+                      </InstalacoesLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instalacoes/cronograma"
+                  element={
+                    <ProtectedRoute routeKey="instalacoes_cronograma">
+                      <InstalacoesLayout title="Cronograma">
+                        <InstalacoesCronograma />
                       </InstalacoesLayout>
                     </ProtectedRoute>
                   }
