@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { InstalacaoCard } from "./InstalacaoCard";
+import { CriarInstalacaoModal } from "./CriarInstalacaoModal";
 
 interface CalendarioInstalacoesSemanalProps {
   startDate: Date;
@@ -15,6 +16,7 @@ interface CalendarioInstalacoesSemanalProps {
   onUpdateInstalacao: (params: { id: string; data: Partial<InstalacaoCalendario> }) => Promise<void>;
   onRemoverDoCalendario: (id: string) => Promise<void>;
   onInstalacaoClick: (instalacao: InstalacaoCalendario) => void;
+  onRefresh?: () => void;
 }
 
 export const CalendarioInstalacoesSemanal = ({
@@ -24,7 +26,11 @@ export const CalendarioInstalacoesSemanal = ({
   onNextWeek,
   onToday,
   onInstalacaoClick,
+  onRefresh,
 }: CalendarioInstalacoesSemanalProps) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   
   const days = useMemo(() => {
@@ -36,6 +42,15 @@ export const CalendarioInstalacoesSemanal = ({
       if (!inst.data_instalacao) return false;
       return isSameDay(new Date(inst.data_instalacao), date);
     });
+  };
+
+  const handleAddClick = (date: Date) => {
+    setSelectedDate(format(date, "yyyy-MM-dd"));
+    setModalOpen(true);
+  };
+
+  const handleModalSuccess = () => {
+    onRefresh?.();
   };
 
   return (
@@ -71,13 +86,23 @@ export const CalendarioInstalacoesSemanal = ({
                 isToday ? "border-primary bg-primary/5" : "border-border"
               }`}
             >
-              <div className={`text-center mb-2 pb-2 border-b ${isToday ? "text-primary font-bold" : ""}`}>
-                <div className="text-xs text-muted-foreground">
-                  {format(day, "EEE", { locale: ptBR })}
+              <div className={`flex items-center justify-between mb-2 pb-2 border-b`}>
+                <div className={`text-center flex-1 ${isToday ? "text-primary font-bold" : ""}`}>
+                  <div className="text-xs text-muted-foreground">
+                    {format(day, "EEE", { locale: ptBR })}
+                  </div>
+                  <div className="text-lg font-semibold">
+                    {format(day, "dd")}
+                  </div>
                 </div>
-                <div className="text-lg font-semibold">
-                  {format(day, "dd")}
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => handleAddClick(day)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
 
               <div className="space-y-1">
@@ -93,6 +118,14 @@ export const CalendarioInstalacoesSemanal = ({
           );
         })}
       </div>
+
+      {/* Modal de Criar Instalação */}
+      <CriarInstalacaoModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onSuccess={handleModalSuccess}
+        defaultDate={selectedDate || undefined}
+      />
     </div>
   );
 };

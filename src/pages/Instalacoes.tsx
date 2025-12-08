@@ -142,6 +142,7 @@ export default function Instalacoes() {
               onUpdateInstalacao={handleUpdateInstalacao}
               onRemoverDoCalendario={handleRemoverDoCalendario}
               onInstalacaoClick={handleInstalacaoClick}
+              onRefresh={handleRefresh}
             />
           ) : (
             <CalendarioInstalacoesMensal
@@ -151,6 +152,7 @@ export default function Instalacoes() {
               onUpdateInstalacao={handleUpdateInstalacao}
               onRemoverDoCalendario={handleRemoverDoCalendario}
               onInstalacaoClick={handleInstalacaoClick}
+              onRefresh={handleRefresh}
             />
           )}
         </>

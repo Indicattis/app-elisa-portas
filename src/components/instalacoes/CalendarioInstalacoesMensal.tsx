@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { InstalacaoCard } from "./InstalacaoCard";
+import { CriarInstalacaoModal } from "./CriarInstalacaoModal";
 
 interface CalendarioInstalacoesMensalProps {
   currentMonth: Date;
@@ -13,6 +14,7 @@ interface CalendarioInstalacoesMensalProps {
   onUpdateInstalacao: (params: { id: string; data: Partial<InstalacaoCalendario> }) => Promise<void>;
   onRemoverDoCalendario: (id: string) => Promise<void>;
   onInstalacaoClick: (instalacao: InstalacaoCalendario) => void;
+  onRefresh?: () => void;
 }
 
 export const CalendarioInstalacoesMensal = ({
@@ -20,7 +22,11 @@ export const CalendarioInstalacoesMensal = ({
   instalacoes,
   onMonthChange,
   onInstalacaoClick,
+  onRefresh,
 }: CalendarioInstalacoesMensalProps) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -53,6 +59,15 @@ export const CalendarioInstalacoesMensal = ({
 
   const handleToday = () => {
     onMonthChange(new Date());
+  };
+
+  const handleAddClick = (date: Date) => {
+    setSelectedDate(format(date, "yyyy-MM-dd"));
+    setModalOpen(true);
+  };
+
+  const handleModalSuccess = () => {
+    onRefresh?.();
   };
 
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -96,15 +111,27 @@ export const CalendarioInstalacoesMensal = ({
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[120px] border rounded-lg p-1 ${
+              className={`min-h-[120px] border rounded-lg p-1 group ${
                 isToday ? "border-primary bg-primary/5" : "border-border"
               } ${!isCurrentMonth ? "opacity-40" : ""}`}
             >
-              <div className={`text-right text-sm mb-1 ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>
-                {format(day, "d")}
+              <div className="flex items-center justify-between">
+                <div className={`text-sm ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                  {format(day, "d")}
+                </div>
+                {isCurrentMonth && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleAddClick(day)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 mt-1">
                 {instalacoesDoDia.slice(0, 3).map((instalacao) => (
                   <InstalacaoCard
                     key={instalacao.id}
@@ -123,6 +150,14 @@ export const CalendarioInstalacoesMensal = ({
           );
         })}
       </div>
+
+      {/* Modal de Criar Instalação */}
+      <CriarInstalacaoModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onSuccess={handleModalSuccess}
+        defaultDate={selectedDate || undefined}
+      />
     </div>
   );
 };
