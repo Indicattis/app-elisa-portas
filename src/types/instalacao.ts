@@ -29,6 +29,14 @@ export interface Instalacao {
   longitude?: number | null;
   last_geocoded_at?: string | null;
   geocode_precision?: string | null;
+  // Novos campos de localização e cliente
+  cep?: string | null;
+  endereco?: string | null;
+  estado?: string | null;
+  cidade?: string | null;
+  telefone_cliente?: string | null;
+  cor_id?: string | null;
+  observacoes?: string | null;
 }
 
 export interface EquipeInstalacao {
@@ -63,6 +71,14 @@ export interface InstalacaoFormData {
   data: string;
   hora: string;
   equipe_id: string;
+  // Novos campos
+  cep?: string;
+  endereco?: string;
+  estado?: string;
+  cidade?: string;
+  telefone_cliente?: string;
+  cor_id?: string;
+  observacoes?: string;
 }
 
 export type ResponsavelInstalacaoTipo = 'equipe_interna' | 'autorizado';

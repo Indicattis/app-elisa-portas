@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InstalacaoForm } from "./InstalacaoForm";
 import { InstalacaoFormData } from "@/types/instalacao";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CriarInstalacaoModalProps {
   open: boolean;
@@ -38,6 +39,14 @@ export const CriarInstalacaoModal = ({
           status: "pendente_producao",
           tipo_instalacao: "elisa",
           created_by: user.user?.id,
+          // Novos campos
+          cep: data.cep || null,
+          endereco: data.endereco || null,
+          estado: data.estado || null,
+          cidade: data.cidade || null,
+          telefone_cliente: data.telefone_cliente || null,
+          cor_id: data.cor_id || null,
+          observacoes: data.observacoes || null,
         });
 
       if (error) throw error;
@@ -61,16 +70,18 @@ export const CriarInstalacaoModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[90vh] p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>Nova Instalação</DialogTitle>
         </DialogHeader>
-        <InstalacaoForm 
-          onSubmit={handleSubmit} 
-          isLoading={isLoading} 
-          initialData={initialData}
-          key={defaultDate} // Force re-render when date changes
-        />
+        <ScrollArea className="max-h-[calc(90vh-80px)] px-6 pb-6">
+          <InstalacaoForm 
+            onSubmit={handleSubmit} 
+            isLoading={isLoading} 
+            initialData={initialData}
+            key={defaultDate} // Force re-render when date changes
+          />
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

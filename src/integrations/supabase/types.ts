@@ -1732,10 +1732,15 @@ export type Database = {
           carregamento_concluido: boolean | null
           carregamento_concluido_em: string | null
           carregamento_concluido_por: string | null
+          cep: string | null
+          cidade: string | null
+          cor_id: string | null
           created_at: string
           created_by: string | null
           data_carregamento: string | null
           data_instalacao: string | null
+          endereco: string | null
+          estado: string | null
           geocode_precision: string | null
           hora: string
           hora_carregamento: string | null
@@ -1754,6 +1759,7 @@ export type Database = {
           responsavel_instalacao_id: string | null
           responsavel_instalacao_nome: string | null
           status: string
+          telefone_cliente: string | null
           tipo_carregamento:
             | Database["public"]["Enums"]["tipo_carregamento"]
             | null
@@ -1765,10 +1771,15 @@ export type Database = {
           carregamento_concluido?: boolean | null
           carregamento_concluido_em?: string | null
           carregamento_concluido_por?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cor_id?: string | null
           created_at?: string
           created_by?: string | null
           data_carregamento?: string | null
           data_instalacao?: string | null
+          endereco?: string | null
+          estado?: string | null
           geocode_precision?: string | null
           hora?: string
           hora_carregamento?: string | null
@@ -1787,6 +1798,7 @@ export type Database = {
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
+          telefone_cliente?: string | null
           tipo_carregamento?:
             | Database["public"]["Enums"]["tipo_carregamento"]
             | null
@@ -1798,10 +1810,15 @@ export type Database = {
           carregamento_concluido?: boolean | null
           carregamento_concluido_em?: string | null
           carregamento_concluido_por?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cor_id?: string | null
           created_at?: string
           created_by?: string | null
           data_carregamento?: string | null
           data_instalacao?: string | null
+          endereco?: string | null
+          estado?: string | null
           geocode_precision?: string | null
           hora?: string
           hora_carregamento?: string | null
@@ -1820,6 +1837,7 @@ export type Database = {
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
+          telefone_cliente?: string | null
           tipo_carregamento?:
             | Database["public"]["Enums"]["tipo_carregamento"]
             | null
@@ -1828,6 +1846,13 @@ export type Database = {
           venda_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "instalacoes_cor_id_fkey"
+            columns: ["cor_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_cores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "instalacoes_pedido_id_fkey"
             columns: ["pedido_id"]
