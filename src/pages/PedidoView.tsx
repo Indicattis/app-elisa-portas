@@ -286,10 +286,7 @@ export default function PedidoView() {
         `)
         .eq("pedido_id", id);
       
-      const { data: ordensInstalacao } = await supabase
-        .from("ordens_instalacao")
-        .select("id")
-        .eq("pedido_id", id);
+      // Ordens instalacao removidas - agora usa tabela instalacoes diretamente
 
       if (ordensPerfiladeira) {
         ordensPerfiladeira.forEach((o: any) => ordens.push({ 
@@ -356,19 +353,7 @@ export default function PedidoView() {
           tempo_conclusao_segundos: o.tempo_conclusao_segundos
         }));
       }
-      if (ordensInstalacao) {
-        ordensInstalacao.forEach((o: any) => ordens.push({ 
-          id: o.id,
-          tipo: "Instalação", 
-          numero_ordem: "N/A", 
-          status: "N/A",
-          capturado_por: null,
-          concluido_por: null,
-          capturada_em: null,
-          data_conclusao: null,
-          tempo_conclusao_segundos: null
-        }));
-      }
+      // Instalações agora são buscadas diretamente da tabela instalacoes, não mais de ordens_instalacao
 
       setPedido({
         ...pedidoData as any,

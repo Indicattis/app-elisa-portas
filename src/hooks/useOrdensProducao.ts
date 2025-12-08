@@ -79,7 +79,6 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         { data: ordensSeparacao },
         { data: ordensPintura },
         { data: ordensQualidade },
-        { data: ordensInstalacao },
         { data: ordensCarregamento }
       ] = await Promise.all([
         supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
@@ -87,13 +86,12 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
         supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
         supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
-        supabase.from('ordens_instalacao').select('id, numero_ordem, pedido_id, status, created_at, responsavel_id').in('pedido_id', pedidoIds),
         supabase.from('ordens_carregamento').select('id, pedido_id, status, created_at, carregamento_concluido, responsavel_carregamento_id').in('pedido_id', pedidoIds)
       ]);
 
       // Buscar nomes dos responsáveis
       const responsavelIds = new Set<string>();
-      [ordensSoldagem, ordensPerfiladeira, ordensSeparacao, ordensPintura, ordensQualidade, ordensInstalacao].forEach(ordens => {
+      [ordensSoldagem, ordensPerfiladeira, ordensSeparacao, ordensPintura, ordensQualidade].forEach(ordens => {
         ordens?.forEach((o: any) => {
           if (o.responsavel_id) responsavelIds.add(o.responsavel_id);
         });
@@ -172,18 +170,7 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
             responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined,
             tempo_conclusao_segundos: o.tempo_conclusao_segundos || undefined
           })) || []),
-          ...(ordensInstalacao?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
-            id: o.id,
-            numero_ordem: o.numero_ordem,
-            pedido_id: o.pedido_id,
-            status: o.status,
-            created_at: o.created_at,
-            historico: false,
-            tipo: 'instalacao' as const,
-            responsavel_id: o.responsavel_id || undefined,
-            responsavel_nome: o.responsavel_id ? usuariosMap.get(o.responsavel_id) : undefined
-          })) || []),
-          ...(ordensCarregamento?.filter(o => o.pedido_id === pedido.id).map(o => ({ 
+          ...(ordensCarregamento?.filter(o => o.pedido_id === pedido.id).map(o => ({
             id: o.id,
             numero_ordem: `CARG-${o.id.substring(0, 8)}`,
             pedido_id: o.pedido_id,

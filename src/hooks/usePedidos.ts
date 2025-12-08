@@ -288,22 +288,6 @@ export function usePedidos() {
               .single();
             ordem = data;
             ordemError = error;
-          } else if (tipoOrdem === 'instalacao') {
-            const { data, error } = await supabase
-              .from("ordens_instalacao")
-              .insert({
-                pedido_id: pedidoId,
-                numero_ordem: numeroOrdem,
-                status: 'pendente_preenchimento',
-                produtos: [produtoIndividual],
-                endereco_instalacao: '',
-                equipe_instalacao: '',
-                created_by: user.user.id
-              })
-              .select()
-              .single();
-            ordem = data;
-            ordemError = error;
           }
 
           if (ordemError) throw ordemError;

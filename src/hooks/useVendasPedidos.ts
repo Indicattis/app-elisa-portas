@@ -123,12 +123,11 @@ export const useVendasPedidos = () => {
     queryFn: async () => {
       if (!pedidoAtual?.id) return [];
 
-      const [perfiladeira, separacao, soldagem, pintura, instalacao] = await Promise.all([
+      const [perfiladeira, separacao, soldagem, pintura] = await Promise.all([
         supabase.from("ordens_perfiladeira").select("*").eq("pedido_id", pedidoAtual.id),
         supabase.from("ordens_separacao").select("*").eq("pedido_id", pedidoAtual.id),
         supabase.from("ordens_soldagem").select("*").eq("pedido_id", pedidoAtual.id),
         supabase.from("ordens_pintura").select("*").eq("pedido_id", pedidoAtual.id),
-        supabase.from("ordens_instalacao").select("*").eq("pedido_id", pedidoAtual.id),
       ]);
 
       const todasOrdens = [
@@ -136,7 +135,6 @@ export const useVendasPedidos = () => {
         ...(separacao.data || []).map(o => ({ ...o, tipo: "separacao" })),
         ...(soldagem.data || []).map(o => ({ ...o, tipo: "soldagem" })),
         ...(pintura.data || []).map(o => ({ ...o, tipo: "pintura" })),
-        ...(instalacao.data || []).map(o => ({ ...o, tipo: "instalacao" })),
       ];
 
       return todasOrdens;
@@ -324,7 +322,6 @@ export const useVendasPedidos = () => {
         else if (tipo === "separacao") tableName = "ordens_separacao";
         else if (tipo === "soldagem") tableName = "ordens_soldagem";
         else if (tipo === "pintura") tableName = "ordens_pintura";
-        else if (tipo === "instalacao") tableName = "ordens_instalacao";
 
         const { error } = await supabase
           .from(tableName as any)
@@ -364,7 +361,6 @@ export const useVendasPedidos = () => {
       else if (tipo === "separacao") tableName = "ordens_separacao";
       else if (tipo === "soldagem") tableName = "ordens_soldagem";
       else if (tipo === "pintura") tableName = "ordens_pintura";
-      else if (tipo === "instalacao") tableName = "ordens_instalacao";
 
       const { error } = await supabase
         .from(tableName as any)
