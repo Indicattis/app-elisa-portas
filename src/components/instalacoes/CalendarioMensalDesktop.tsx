@@ -2,13 +2,13 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Instalacao } from "@/types/instalacao";
 import { DroppableDay } from "./DroppableDay";
 import { InstalacaoCardLegacy } from "./InstalacaoCardLegacy";
 import { toast } from "sonner";
-import { SelecionarPedidoInstalacaoModal } from "./SelecionarPedidoInstalacaoModal";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CalendarioMensalDesktopProps {
@@ -32,10 +32,9 @@ export const CalendarioMensalDesktop = ({
   onInstalacaoCriada,
   onPedidoDropped,
 }: CalendarioMensalDesktopProps) => {
+  const navigate = useNavigate();
   const [activeInstalacao, setActiveInstalacao] = useState<Instalacao | null>(null);
   const [activePedido, setActivePedido] = useState<any>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -136,8 +135,7 @@ export const CalendarioMensalDesktop = ({
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
   const handleDayClick = (date: Date) => {
-    setSelectedDate(date);
-    setModalOpen(true);
+    navigate(`/instalacoes/nova?data=${format(date, 'yyyy-MM-dd')}`);
   };
 
   return (
@@ -226,16 +224,6 @@ export const CalendarioMensalDesktop = ({
         )}
       </DragOverlay>
     </DndContext>
-
-    {/* Modal de seleção de pedido */}
-    {selectedDate && (
-      <SelecionarPedidoInstalacaoModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        dataSelecionada={selectedDate}
-        onPedidoSelecionado={onInstalacaoCriada}
-      />
-    )}
     </>
   );
 };
