@@ -68,20 +68,21 @@ export default function Frota() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="text-xs">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Foto</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Placa</TableHead>
-                  <TableHead>Modelo</TableHead>
-                  <TableHead>Ano</TableHead>
-                  <TableHead>Km Atual</TableHead>
-                  <TableHead>Última Atualização</TableHead>
-                  <TableHead>Troca de Óleo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Conferência</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-xs">Foto</TableHead>
+                  <TableHead className="text-xs">Nome</TableHead>
+                  <TableHead className="text-xs">Placa</TableHead>
+                  <TableHead className="text-xs">Modelo</TableHead>
+                  <TableHead className="text-xs">Ano</TableHead>
+                  <TableHead className="text-xs">Km Atual</TableHead>
+                  <TableHead className="text-xs">Última Troca Óleo</TableHead>
+                  <TableHead className="text-xs">Próx. Troca Óleo</TableHead>
+                  <TableHead className="text-xs">KM Próx. Troca</TableHead>
+                  <TableHead className="text-xs">Status</TableHead>
+                  <TableHead className="text-xs">Conferência</TableHead>
+                  <TableHead className="text-right text-xs">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,11 +97,11 @@ export default function Frota() {
                         <img 
                           src={veiculo.foto_url} 
                           alt={veiculo.nome}
-                          className="w-12 h-12 object-cover rounded"
+                          className="w-10 h-10 object-cover rounded"
                         />
                       ) : (
-                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
-                          Sem foto
+                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground">
+                          -
                         </div>
                       )}
                     </TableCell>
@@ -110,12 +111,21 @@ export default function Frota() {
                     <TableCell>{veiculo.ano}</TableCell>
                     <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
                     <TableCell>
-                      {format(new Date(veiculo.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      {veiculo.data_troca_oleo 
+                        ? format(new Date(veiculo.data_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                        : '-'
+                      }
                     </TableCell>
                     <TableCell>
-                      {veiculo.data_troca_oleo 
-                        ? format(new Date(veiculo.data_troca_oleo), "dd/MM/yyyy", { locale: ptBR })
-                        : 'Não informado'
+                      {veiculo.data_proxima_troca_oleo 
+                        ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                        : '-'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      {veiculo.km_proxima_troca_oleo 
+                        ? `${veiculo.km_proxima_troca_oleo.toLocaleString('pt-BR')} km`
+                        : '-'
                       }
                     </TableCell>
                     <TableCell>
@@ -125,26 +135,28 @@ export default function Frota() {
                       <AlertaConferenciaSemanal precisaConferencia={precisaConferenciaSemanal(veiculo)} />
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-7 w-7 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
                           }}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-7 w-7 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             setDeleteId(veiculo.id);
                           }}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>
@@ -152,7 +164,7 @@ export default function Frota() {
                 ))}
                 {veiculos?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                       Nenhum veículo cadastrado
                     </TableCell>
                   </TableRow>
