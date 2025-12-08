@@ -8,6 +8,7 @@ export interface ChamadoSuporte {
   descricao_problema: string;
   status: 'pendente' | 'cancelado' | 'resolvido';
   notas?: string;
+  foto_url?: string;
   created_at: string;
   updated_at: string;
 }
