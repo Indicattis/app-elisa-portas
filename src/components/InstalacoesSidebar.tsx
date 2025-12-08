@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { CalendarCheck, ClipboardList, LayoutDashboard } from "lucide-react";
+import { CalendarCheck, ClipboardList } from "lucide-react";
 import instalacoesLogo from "@/assets/instalacoes-logo.png";
 import { 
   Sidebar, 
@@ -40,13 +40,19 @@ export function InstalacoesSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-3 px-3 py-4">
-          <div className="relative flex-shrink-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-sky-500/30 rounded-full blur-md" />
+        <div className={`flex items-center justify-center ${open ? 'gap-3 px-3' : 'px-0'} py-4`}>
+          <div className="relative flex-shrink-0 flex items-center justify-center">
+            {open && (
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-sky-500/30 rounded-full blur-md" />
+            )}
             <img 
               src={instalacoesLogo} 
               alt="Instalações" 
-              className="relative h-11 w-11 rounded-full object-cover ring-2 ring-sidebar-border shadow-lg"
+              className={`relative rounded-full object-cover transition-all duration-200 ${
+                open 
+                  ? 'h-11 w-11 ring-2 ring-sidebar-border shadow-lg' 
+                  : 'h-5 w-5'
+              }`}
             />
           </div>
           {open && (
@@ -90,18 +96,7 @@ export function InstalacoesSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Voltar ao Dashboard">
-              <NavLink to="/dashboard">
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      <SidebarFooter />
     </Sidebar>
   );
 }
