@@ -124,6 +124,14 @@ export const useInstalacoes = (startDate?: Date, viewMode: 'week' | 'month' = 'w
       if (data.tipo_instalacao !== undefined) updateData.tipo_instalacao = data.tipo_instalacao;
       if (data.responsavel_instalacao_nome !== undefined) updateData.responsavel_instalacao_nome = data.responsavel_instalacao_nome;
       if (data.responsavel_instalacao_id !== undefined) updateData.responsavel_instalacao_id = data.responsavel_instalacao_id;
+      if (data.id_venda !== undefined) updateData.venda_id = data.id_venda;
+      if (data.cep !== undefined) updateData.cep = data.cep;
+      if (data.endereco !== undefined) updateData.endereco = data.endereco;
+      if (data.estado !== undefined) updateData.estado = data.estado;
+      if (data.cidade !== undefined) updateData.cidade = data.cidade;
+      if (data.telefone_cliente !== undefined) updateData.telefone_cliente = data.telefone_cliente;
+      if (data.cor_id !== undefined) updateData.cor_id = data.cor_id;
+      if (data.observacoes !== undefined) updateData.observacoes = data.observacoes;
 
       const { data: updated, error } = await supabase
         .from("instalacoes")

@@ -47,6 +47,7 @@ import InstalacoesAdmin from "./pages/InstalacoesAdmin";
 import Instalacoes from "./pages/Instalacoes";
 import InstalacoesControle from "./pages/InstalacoesControle";
 import InstalacoesNovas from "./pages/InstalacoesNovas";
+import InstalacoesEditar from "./pages/InstalacoesEditar";
 import { InstalacoesLayout } from "./components/InstalacoesLayout";
 import PedidoEdit from "./pages/PedidoEdit";
 import NovoPedido from "./pages/NovoPedido";
@@ -709,6 +710,14 @@ const App = () => (
                   element={
                     <ProtectedRoute routeKey="instalacoes_nova">
                       <InstalacoesNovas />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instalacoes/:id/editar"
+                  element={
+                    <ProtectedRoute routeKey="instalacoes_nova">
+                      <InstalacoesEditar />
                     </ProtectedRoute>
                   }
                 />
