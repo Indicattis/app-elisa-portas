@@ -5,7 +5,7 @@ import { Calendar, Download, ChevronLeft, ChevronRight, CalendarDays, Menu, Sett
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { CronogramaInstalacaoMensal } from "@/components/cronograma/CronogramaInstalacaoMensal";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
-import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
+import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,7 +30,7 @@ export default function InstalacoesCronograma() {
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { instalacoes, loading } = useInstalacoesCronograma(weekStartDate);
+  const { instalacoes, isLoading } = useOrdensInstalacaoCalendario(weekStartDate, viewMode);
   const { equipes, loading: equipesLoading } = useEquipesInstalacao();
 
   const equipesFiltradas = equipesSelecionadas.length > 0 
@@ -90,7 +90,7 @@ export default function InstalacoesCronograma() {
     }
   };
 
-  if (loading || equipesLoading) {
+  if (isLoading || equipesLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

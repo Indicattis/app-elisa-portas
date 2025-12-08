@@ -5,7 +5,7 @@ import { Calendar, Download, Plus, Filter, ChevronLeft, ChevronRight, CalendarDa
 import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
 import { CronogramaInstalacaoMensal } from "@/components/cronograma/CronogramaInstalacaoMensal";
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
-import { useInstalacoesCronograma } from "@/hooks/useInstalacoesCronograma";
+import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,7 +32,7 @@ export default function CronogramaInstalacoes() {
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { instalacoes, loading } = useInstalacoesCronograma(weekStartDate);
+  const { instalacoes, isLoading } = useOrdensInstalacaoCalendario(weekStartDate, viewMode);
   const { equipes, loading: equipesLoading } = useEquipesInstalacao();
 
   const equipesFiltradas = equipesSelecionadas.length > 0 
@@ -94,7 +94,7 @@ export default function CronogramaInstalacoes() {
     }
   };
 
-  if (loading || equipesLoading) {
+  if (isLoading || equipesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>

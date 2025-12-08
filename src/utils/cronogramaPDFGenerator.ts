@@ -1,8 +1,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format, addDays } from 'date-fns';
+import { format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { InstalacaoCronograma } from '@/hooks/useInstalacoesCronograma';
+import { InstalacaoCalendario } from '@/hooks/useOrdensInstalacaoCalendario';
 
 interface EquipeInstalacao {
   id: string;
@@ -13,7 +13,7 @@ interface EquipeInstalacao {
 
 interface CronogramaPDFData {
   equipes: EquipeInstalacao[];
-  instalacoes: InstalacaoCronograma[];
+  instalacoes: InstalacaoCalendario[];
   weekStart: Date;
 }
 
@@ -125,9 +125,12 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
   const tableData = data.equipes.map(equipe => {
     const row = [equipe.nome];
     
-    DIAS_SEMANA.forEach(dia => {
+    DIAS_SEMANA.forEach((dia, index) => {
+      const dataAtual = addDays(data.weekStart, index);
       const instalacoesNoDia = data.instalacoes.filter(
-        i => i.responsavel_instalacao_id === equipe.id && i.dia_semana === dia.value
+        i => i.responsavel_instalacao_id === equipe.id && 
+             i.data_instalacao && 
+             isSameDay(new Date(i.data_instalacao), dataAtual)
       );
       
       if (instalacoesNoDia.length === 0) {
@@ -224,9 +227,10 @@ export const gerarCronogramaPDF = (data: CronogramaPDFData) => {
 
   const totalInstalacoes = data.instalacoes.length;
   const equipesAtivas = data.equipes.length;
-  const instalacoesPorDia = DIAS_SEMANA.map(dia => 
-    data.instalacoes.filter(i => i.dia_semana === dia.value).length
-  );
+  const instalacoesPorDia = DIAS_SEMANA.map((dia, index) => {
+    const dataAtual = addDays(data.weekStart, index);
+    return data.instalacoes.filter(i => i.data_instalacao && isSameDay(new Date(i.data_instalacao), dataAtual)).length;
+  });
   const diaMaisMovimentado = DIAS_SEMANA[instalacoesPorDia.indexOf(Math.max(...instalacoesPorDia))];
 
   // Estatísticas por categoria removidas - coluna não existe mais
