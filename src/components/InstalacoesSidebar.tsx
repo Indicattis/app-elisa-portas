@@ -1,8 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { CalendarCheck, ClipboardList, LayoutDashboard } from "lucide-react";
-import { useTheme } from "@/components/ThemeProvider";
-import logoLight from "@/assets/logo-light.png";
-import logoDark from "@/assets/logo-dark.png";
+import instalacoesLogo from "@/assets/instalacoes-logo.png";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -33,30 +31,25 @@ const menuItems = [
 
 export function InstalacoesSidebar() {
   const location = useLocation();
-  const { theme } = useTheme();
   const { open } = useSidebar();
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  const logo = theme === 'dark' ? logoDark : logoLight;
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-4">
+        <div className="flex items-center gap-3 px-2 py-4">
           <img 
-            src={logo} 
-            alt="Elisa Portas" 
-            className="h-8 w-auto transition-all duration-300"
+            src={instalacoesLogo} 
+            alt="Instalações" 
+            className="h-10 w-10 rounded-full object-cover flex-shrink-0"
           />
           {open && (
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground font-medium">
-                Instalações
-              </span>
-            </div>
+            <span className="text-xs font-semibold text-foreground leading-tight">
+              Missão dada é missão cumprida
+            </span>
           )}
         </div>
       </SidebarHeader>
