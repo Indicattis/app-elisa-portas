@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Video, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { Video, Plus, Pencil, Trash2, ExternalLink, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -26,7 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -48,6 +48,7 @@ export default function Postagens() {
   const anoAtual = new Date().getFullYear();
   const [anoFiltro, setAnoFiltro] = useState(anoAtual);
   const [plataformaFiltro, setPlataformaFiltro] = useState<string>("todas");
+  const [statusFiltro, setStatusFiltro] = useState<string>("todos");
   const [modalAberto, setModalAberto] = useState(false);
   const [postagemEditando, setPostagemEditando] = useState<Postagem | null>(null);
   const [deleteDialogAberto, setDeleteDialogAberto] = useState(false);
@@ -59,8 +60,16 @@ export default function Postagens() {
   const deleteMutation = useDeletePostagem();
 
   const postagensFiltradas = postagens.filter((post) => {
-    if (plataformaFiltro === "todas") return true;
-    return post.plataforma === plataformaFiltro;
+    if (plataformaFiltro !== "todas" && post.plataforma !== plataformaFiltro) {
+      return false;
+    }
+    if (statusFiltro === "agendadas" && (!post.agendada || post.postada)) {
+      return false;
+    }
+    if (statusFiltro === "postadas" && !post.postada) {
+      return false;
+    }
+    return true;
   });
 
   const handleNovaPostagem = () => {
@@ -98,6 +107,23 @@ export default function Postagens() {
       setDeleteDialogAberto(false);
       setPostagemDeletar(null);
     }
+  };
+
+  const getStatusBadge = (postagem: Postagem) => {
+    if (postagem.agendada && !postagem.postada) {
+      return (
+        <Badge variant="outline" className="gap-1 text-orange-600 border-orange-300 bg-orange-50">
+          <Clock className="h-3 w-3" />
+          Agendada
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="gap-1 text-green-600 border-green-300 bg-green-50">
+        <CheckCircle2 className="h-3 w-3" />
+        Postada
+      </Badge>
+    );
   };
 
   return (
@@ -162,6 +188,20 @@ export default function Postagens() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="flex-1 space-y-2">
+            <Label>Status</Label>
+            <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="postadas">Postadas</SelectItem>
+                <SelectItem value="agendadas">Agendadas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </Card>
 
@@ -173,7 +213,9 @@ export default function Postagens() {
               <TableRow>
                 <TableHead>Título</TableHead>
                 <TableHead>Data</TableHead>
+                <TableHead>Horário</TableHead>
                 <TableHead>Plataforma</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Curtidas</TableHead>
                 <TableHead className="text-right">Visualizações</TableHead>
                 <TableHead className="text-right">Comentários</TableHead>
@@ -183,13 +225,13 @@ export default function Postagens() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : postagensFiltradas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Nenhuma postagem encontrada
                   </TableCell>
                 </TableRow>
@@ -202,7 +244,13 @@ export default function Postagens() {
                     <TableCell>
                       {new Date(postagem.data_postagem + "T00:00:00").toLocaleDateString("pt-BR")}
                     </TableCell>
+                    <TableCell>
+                      {postagem.hora_agendamento 
+                        ? postagem.hora_agendamento.slice(0, 5) 
+                        : "-"}
+                    </TableCell>
                     <TableCell className="capitalize">{postagem.plataforma}</TableCell>
+                    <TableCell>{getStatusBadge(postagem)}</TableCell>
                     <TableCell className="text-right">{postagem.curtidas}</TableCell>
                     <TableCell className="text-right">{postagem.visualizacoes}</TableCell>
                     <TableCell className="text-right">{postagem.comentarios}</TableCell>

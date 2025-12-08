@@ -4012,45 +4012,54 @@ export type Database = {
       }
       postagens: {
         Row: {
+          agendada: boolean | null
           comentarios: number | null
           created_at: string | null
           created_by: string | null
           curtidas: number | null
           data_postagem: string
           descricao: string | null
+          hora_agendamento: string | null
           id: string
           link_post: string | null
           plataforma: string | null
+          postada: boolean | null
           thumbnail_url: string | null
           titulo: string
           updated_at: string | null
           visualizacoes: number | null
         }
         Insert: {
+          agendada?: boolean | null
           comentarios?: number | null
           created_at?: string | null
           created_by?: string | null
           curtidas?: number | null
           data_postagem: string
           descricao?: string | null
+          hora_agendamento?: string | null
           id?: string
           link_post?: string | null
           plataforma?: string | null
+          postada?: boolean | null
           thumbnail_url?: string | null
           titulo: string
           updated_at?: string | null
           visualizacoes?: number | null
         }
         Update: {
+          agendada?: boolean | null
           comentarios?: number | null
           created_at?: string | null
           created_by?: string | null
           curtidas?: number | null
           data_postagem?: string
           descricao?: string | null
+          hora_agendamento?: string | null
           id?: string
           link_post?: string | null
           plataforma?: string | null
+          postada?: boolean | null
           thumbnail_url?: string | null
           titulo?: string
           updated_at?: string | null
@@ -5551,6 +5560,7 @@ export type Database = {
         Args: { p_ordem_id: string; p_tipo_ordem: string }
         Returns: boolean
       }
+      processar_postagens_agendadas: { Args: never; Returns: number }
       recalcular_pontuacao_linhas_concluidas: {
         Args: never
         Returns: {
