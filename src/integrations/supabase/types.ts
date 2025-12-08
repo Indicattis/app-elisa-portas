@@ -455,6 +455,7 @@ export type Database = {
           data_compra: string
           descricao_problema: string
           email: string
+          foto_url: string | null
           id: string
           nome: string
           notas: string | null
@@ -468,6 +469,7 @@ export type Database = {
           data_compra: string
           descricao_problema: string
           email: string
+          foto_url?: string | null
           id?: string
           nome: string
           notas?: string | null
@@ -481,6 +483,7 @@ export type Database = {
           data_compra?: string
           descricao_problema?: string
           email?: string
+          foto_url?: string | null
           id?: string
           nome?: string
           notas?: string | null
