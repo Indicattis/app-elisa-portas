@@ -1329,109 +1329,6 @@ export type Database = {
         }
         Relationships: []
       }
-      entregas: {
-        Row: {
-          cidade: string
-          created_at: string
-          created_by: string | null
-          data_entrega: string | null
-          data_producao: string | null
-          entrega_concluida: boolean | null
-          entrega_concluida_em: string | null
-          entrega_concluida_por: string | null
-          estado: string
-          geocode_precision: string | null
-          id: string
-          last_geocoded_at: string | null
-          latitude: number | null
-          longitude: number | null
-          nome_cliente: string
-          observacoes: string | null
-          pedido_id: string | null
-          responsavel_entrega_id: string | null
-          responsavel_entrega_nome: string | null
-          status: string
-          tamanho: string | null
-          telefone_cliente: string | null
-          updated_at: string
-          venda_id: string | null
-        }
-        Insert: {
-          cidade: string
-          created_at?: string
-          created_by?: string | null
-          data_entrega?: string | null
-          data_producao?: string | null
-          entrega_concluida?: boolean | null
-          entrega_concluida_em?: string | null
-          entrega_concluida_por?: string | null
-          estado: string
-          geocode_precision?: string | null
-          id?: string
-          last_geocoded_at?: string | null
-          latitude?: number | null
-          longitude?: number | null
-          nome_cliente: string
-          observacoes?: string | null
-          pedido_id?: string | null
-          responsavel_entrega_id?: string | null
-          responsavel_entrega_nome?: string | null
-          status?: string
-          tamanho?: string | null
-          telefone_cliente?: string | null
-          updated_at?: string
-          venda_id?: string | null
-        }
-        Update: {
-          cidade?: string
-          created_at?: string
-          created_by?: string | null
-          data_entrega?: string | null
-          data_producao?: string | null
-          entrega_concluida?: boolean | null
-          entrega_concluida_em?: string | null
-          entrega_concluida_por?: string | null
-          estado?: string
-          geocode_precision?: string | null
-          id?: string
-          last_geocoded_at?: string | null
-          latitude?: number | null
-          longitude?: number | null
-          nome_cliente?: string
-          observacoes?: string | null
-          pedido_id?: string | null
-          responsavel_entrega_id?: string | null
-          responsavel_entrega_nome?: string | null
-          status?: string
-          tamanho?: string | null
-          telefone_cliente?: string | null
-          updated_at?: string
-          venda_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "entregas_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_backlog_ativo"
-            referencedColumns: ["pedido_id"]
-          },
-          {
-            foreignKeyName: "entregas_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_producao"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "entregas_venda_id_fkey"
-            columns: ["venda_id"]
-            isOneToOne: false
-            referencedRelation: "vendas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       equipes_instalacao: {
         Row: {
           ativa: boolean
@@ -1832,11 +1729,16 @@ export type Database = {
       }
       instalacoes: {
         Row: {
+          carregamento_concluido: boolean | null
+          carregamento_concluido_em: string | null
+          carregamento_concluido_por: string | null
           created_at: string
           created_by: string | null
+          data_carregamento: string | null
           data_instalacao: string | null
           geocode_precision: string | null
           hora: string
+          hora_carregamento: string | null
           id: string
           instalacao_concluida: boolean
           instalacao_concluida_em: string | null
@@ -1847,19 +1749,29 @@ export type Database = {
           nome_cliente: string
           observacoes: string | null
           pedido_id: string | null
+          responsavel_carregamento_id: string | null
+          responsavel_carregamento_nome: string | null
           responsavel_instalacao_id: string | null
           responsavel_instalacao_nome: string | null
           status: string
+          tipo_carregamento:
+            | Database["public"]["Enums"]["tipo_carregamento"]
+            | null
           tipo_instalacao: string | null
           updated_at: string
           venda_id: string | null
         }
         Insert: {
+          carregamento_concluido?: boolean | null
+          carregamento_concluido_em?: string | null
+          carregamento_concluido_por?: string | null
           created_at?: string
           created_by?: string | null
+          data_carregamento?: string | null
           data_instalacao?: string | null
           geocode_precision?: string | null
           hora?: string
+          hora_carregamento?: string | null
           id?: string
           instalacao_concluida?: boolean
           instalacao_concluida_em?: string | null
@@ -1870,19 +1782,29 @@ export type Database = {
           nome_cliente: string
           observacoes?: string | null
           pedido_id?: string | null
+          responsavel_carregamento_id?: string | null
+          responsavel_carregamento_nome?: string | null
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
+          tipo_carregamento?:
+            | Database["public"]["Enums"]["tipo_carregamento"]
+            | null
           tipo_instalacao?: string | null
           updated_at?: string
           venda_id?: string | null
         }
         Update: {
+          carregamento_concluido?: boolean | null
+          carregamento_concluido_em?: string | null
+          carregamento_concluido_por?: string | null
           created_at?: string
           created_by?: string | null
+          data_carregamento?: string | null
           data_instalacao?: string | null
           geocode_precision?: string | null
           hora?: string
+          hora_carregamento?: string | null
           id?: string
           instalacao_concluida?: boolean
           instalacao_concluida_em?: string | null
@@ -1893,9 +1815,14 @@ export type Database = {
           nome_cliente?: string
           observacoes?: string | null
           pedido_id?: string | null
+          responsavel_carregamento_id?: string | null
+          responsavel_carregamento_nome?: string | null
           responsavel_instalacao_id?: string | null
           responsavel_instalacao_nome?: string | null
           status?: string
+          tipo_carregamento?:
+            | Database["public"]["Enums"]["tipo_carregamento"]
+            | null
           tipo_instalacao?: string | null
           updated_at?: string
           venda_id?: string | null
@@ -2782,75 +2709,6 @@ export type Database = {
           },
           {
             foreignKeyName: "ordens_carregamento_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_producao"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ordens_instalacao: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          data_agendada: string | null
-          data_conclusao: string | null
-          data_inicio: string | null
-          endereco_instalacao: string | null
-          equipe_instalacao: string | null
-          id: string
-          numero_ordem: string
-          observacoes: string | null
-          pedido_id: string
-          produtos: Json | null
-          responsavel_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          data_agendada?: string | null
-          data_conclusao?: string | null
-          data_inicio?: string | null
-          endereco_instalacao?: string | null
-          equipe_instalacao?: string | null
-          id?: string
-          numero_ordem: string
-          observacoes?: string | null
-          pedido_id: string
-          produtos?: Json | null
-          responsavel_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          data_agendada?: string | null
-          data_conclusao?: string | null
-          data_inicio?: string | null
-          endereco_instalacao?: string | null
-          equipe_instalacao?: string | null
-          id?: string
-          numero_ordem?: string
-          observacoes?: string | null
-          pedido_id?: string
-          produtos?: Json | null
-          responsavel_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ordens_instalacao_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_backlog_ativo"
-            referencedColumns: ["pedido_id"]
-          },
-          {
-            foreignKeyName: "ordens_instalacao_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
@@ -5659,7 +5517,7 @@ export type Database = {
       status_visita: "agendada" | "concluida" | "cancelada"
       tarefa_status: "em_andamento" | "concluida"
       tipo_autorizacao_desconto: "responsavel_setor" | "master"
-      tipo_carregamento: "elisa" | "autorizados" | "terceiro"
+      tipo_carregamento: "elisa" | "autorizados" | "terceiro" | "instalacao"
       tipo_instalacao_enum: "elisa" | "autorizados"
       tipo_parceiro: "autorizado" | "representante" | "franqueado"
       tipo_parceria: "autorizado" | "representante" | "licenciado"
@@ -5864,7 +5722,7 @@ export const Constants = {
       status_visita: ["agendada", "concluida", "cancelada"],
       tarefa_status: ["em_andamento", "concluida"],
       tipo_autorizacao_desconto: ["responsavel_setor", "master"],
-      tipo_carregamento: ["elisa", "autorizados", "terceiro"],
+      tipo_carregamento: ["elisa", "autorizados", "terceiro", "instalacao"],
       tipo_instalacao_enum: ["elisa", "autorizados"],
       tipo_parceiro: ["autorizado", "representante", "franqueado"],
       tipo_parceria: ["autorizado", "representante", "licenciado"],

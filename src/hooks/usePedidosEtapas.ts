@@ -440,29 +440,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           console.log('[moverParaProximaEtapa] Status da instalação atualizado:', instalacaoData);
         }
 
-        // Sincronizar status da entrega com a etapa do pedido (se existir)
-        // Mapeamento de etapas para status válidos de entrega
-        const statusEntrega = 
-          etapaDestino === 'aberto' ? 'pendente_producao' :
-          etapaDestino === 'em_producao' ? 'em_producao' :
-          etapaDestino === 'inspecao_qualidade' ? 'em_qualidade' :
-          etapaDestino === 'aguardando_pintura' ? 'aguardando_pintura' :
-          etapaDestino === 'aguardando_coleta' ? 'pronta_fabrica' :
-          etapaDestino === 'finalizado' ? 'finalizada' :
-          'pendente_producao';
-        
-        console.log('[moverParaProximaEtapa] Sincronizando entrega:', { etapaDestino, statusEntrega });
-        const { data: entregaData, error: entregaError } = await supabase
-          .from('entregas')
-          .update({ status: statusEntrega })
-          .eq('pedido_id', pedidoId)
-          .select('id, status');
-
-        if (entregaError) {
-          console.error('[moverParaProximaEtapa] Erro ao atualizar status da entrega:', entregaError);
-        } else if (entregaData && entregaData.length > 0) {
-          console.log('[moverParaProximaEtapa] Status da entrega atualizado:', entregaData);
-        }
+        // Tabela entregas foi removida - sincronização não é mais necessária
 
         // Criar ordem de carregamento se avançar para aguardando_coleta ou aguardando_instalacao
         if (etapaDestino === 'aguardando_coleta' || etapaDestino === 'aguardando_instalacao') {
@@ -615,41 +593,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               }
             });
             onProgress('criar_instalacao', 'completed');
-          } else if (venda?.tipo_entrega === 'entrega' && onProgress) {
-            onProgress('criar_entrega', 'in_progress');
-            await executarComDelay(async () => {
-              console.log('[moverParaProximaEtapa] Criando entrega para pedido:', pedidoId);
-              
-              // Buscar dados da venda para criar a entrega
-              const { data: vendaCompleta } = await supabase
-                .from('vendas')
-                .select('cliente_nome, cliente_telefone, cidade, estado')
-                .eq('id', pedidoData.venda_id)
-                .single();
-              
-              if (vendaCompleta) {
-                const { error: entregaError } = await supabase
-                  .from('entregas')
-                  .insert({
-                    pedido_id: pedidoId,
-                    venda_id: pedidoData.venda_id,
-                    nome_cliente: vendaCompleta.cliente_nome || 'Cliente',
-                    telefone_cliente: vendaCompleta.cliente_telefone || '',
-                    cidade: vendaCompleta.cidade || '',
-                    estado: vendaCompleta.estado || '',
-                    status: 'em_producao',
-                    created_by: user.id
-                  });
-                
-                if (entregaError) {
-                  console.error('[moverParaProximaEtapa] Erro ao criar entrega:', entregaError);
-                } else {
-                  console.log('[moverParaProximaEtapa] ✓ Entrega criada com sucesso');
-                }
-              }
-            });
-            onProgress('criar_entrega', 'completed');
           }
+          // Tabela entregas foi removida - lógica de entrega não é mais necessária
         }
       }
 
