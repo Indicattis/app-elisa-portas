@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, X, MapPin } from "lucide-react";
 import { SelecionarVendaModal } from "./SelecionarVendaModal";
+import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 
 const instalacaoSchema = z.object({
   id_venda: z.string().nullable(),
@@ -19,6 +20,14 @@ const instalacaoSchema = z.object({
   data: z.string().min(1, "Data é obrigatória"),
   hora: z.string().min(1, "Hora é obrigatória"),
   equipe_id: z.string().min(1, "Selecione uma equipe"),
+  // Novos campos opcionais
+  cep: z.string().optional(),
+  endereco: z.string().optional(),
+  estado: z.string().optional(),
+  cidade: z.string().optional(),
+  telefone_cliente: z.string().optional(),
+  cor_id: z.string().optional(),
+  observacoes: z.string().optional(),
 });
 
 interface InstalacaoFormProps {
@@ -27,12 +36,22 @@ interface InstalacaoFormProps {
   isLoading?: boolean;
 }
 
+interface Cor {
+  id: string;
+  nome: string;
+  codigo_hex: string;
+}
+
 export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoFormProps) => {
   const [equipes, setEquipes] = useState<any[]>([]);
+  const [cores, setCores] = useState<Cor[]>([]);
   const [loadingVendaData, setLoadingVendaData] = useState(false);
   const [loadingEquipes, setLoadingEquipes] = useState(false);
+  const [loadingCores, setLoadingCores] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
   const [modalVendaOpen, setModalVendaOpen] = useState(false);
   const [vendaSelecionada, setVendaSelecionada] = useState<any>(null);
+  const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
 
   const {
     register,
@@ -47,9 +66,11 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
   });
 
   const vendaId = watch("id_venda");
+  const estadoSelecionado = watch("estado");
 
   useEffect(() => {
     loadEquipes();
+    loadCores();
   }, []);
 
   // Atualizar valores do formulário quando initialData mudar
@@ -59,6 +80,15 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
     }
   }, [initialData, reset]);
 
+  // Atualizar cidades quando estado mudar
+  useEffect(() => {
+    if (estadoSelecionado) {
+      const cidades = getCidadesPorEstado(estadoSelecionado);
+      setCidadesDisponiveis(cidades);
+    } else {
+      setCidadesDisponiveis([]);
+    }
+  }, [estadoSelecionado]);
 
   const loadEquipes = async () => {
     setLoadingEquipes(true);
@@ -77,6 +107,69 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
     } finally {
       setLoadingEquipes(false);
     }
+  };
+
+  const loadCores = async () => {
+    setLoadingCores(true);
+    try {
+      const { data, error } = await supabase
+        .from("catalogo_cores")
+        .select("id, nome, codigo_hex")
+        .eq("ativa", true)
+        .order("nome");
+
+      if (error) throw error;
+      setCores(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar cores:", error);
+    } finally {
+      setLoadingCores(false);
+    }
+  };
+
+  const buscarCep = async () => {
+    const cep = watch("cep")?.replace(/\D/g, "");
+    if (!cep || cep.length !== 8) {
+      toast.error("CEP inválido. Digite 8 números.");
+      return;
+    }
+
+    setLoadingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await response.json();
+
+      if (data.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+
+      // Preencher campos
+      setValue("endereco", `${data.logradouro}${data.bairro ? `, ${data.bairro}` : ""}`);
+      setValue("estado", data.uf);
+      setValue("cidade", data.localidade);
+
+      toast.success("Endereço encontrado!");
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      toast.error("Erro ao buscar CEP");
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  const formatCep = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 5) return numbers;
+    return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
+  };
+
+  const formatTelefone = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
   };
 
   const handleVendaSelect = async (venda: any) => {
@@ -98,6 +191,22 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
 
       // Preencher dados do cliente
       setValue("nome_cliente", vendaCompleta.cliente_nome || "");
+      if (vendaCompleta.cliente_telefone) {
+        setValue("telefone_cliente", formatTelefone(vendaCompleta.cliente_telefone));
+      }
+      if (vendaCompleta.cep) {
+        setValue("cep", formatCep(vendaCompleta.cep));
+      }
+      // Usar bairro como parte do endereço se disponível
+      if (vendaCompleta.bairro) {
+        setValue("endereco", vendaCompleta.bairro);
+      }
+      if (vendaCompleta.estado) {
+        setValue("estado", vendaCompleta.estado);
+      }
+      if (vendaCompleta.cidade) {
+        setValue("cidade", vendaCompleta.cidade);
+      }
 
       toast.success("Dados da venda carregados");
     } catch (error) {
@@ -171,6 +280,103 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
         )}
       </div>
 
+      {/* Telefone do Cliente */}
+      <div className="space-y-2">
+        <Label htmlFor="telefone_cliente">Telefone do Cliente</Label>
+        <Input
+          id="telefone_cliente"
+          {...register("telefone_cliente")}
+          placeholder="(00) 00000-0000"
+          className="text-base"
+          onChange={(e) => setValue("telefone_cliente", formatTelefone(e.target.value))}
+          maxLength={16}
+        />
+      </div>
+
+      {/* CEP e Buscar */}
+      <div className="space-y-2">
+        <Label htmlFor="cep">CEP</Label>
+        <div className="flex gap-2">
+          <Input
+            id="cep"
+            {...register("cep")}
+            placeholder="00000-000"
+            className="text-base flex-1"
+            onChange={(e) => setValue("cep", formatCep(e.target.value))}
+            maxLength={9}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={buscarCep}
+            disabled={loadingCep}
+            className="shrink-0"
+          >
+            {loadingCep ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MapPin className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Endereço */}
+      <div className="space-y-2">
+        <Label htmlFor="endereco">Endereço</Label>
+        <Input
+          id="endereco"
+          {...register("endereco")}
+          placeholder="Rua, número, bairro"
+          className="text-base"
+        />
+      </div>
+
+      {/* Estado e Cidade */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="estado">Estado</Label>
+          <Select
+            value={watch("estado") || ""}
+            onValueChange={(value) => {
+              setValue("estado", value);
+              setValue("cidade", ""); // Reset cidade when estado changes
+            }}
+          >
+            <SelectTrigger className="text-base">
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              {ESTADOS_BRASIL.map((estado) => (
+                <SelectItem key={estado.sigla} value={estado.sigla}>
+                  {estado.sigla} - {estado.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="cidade">Cidade</Label>
+          <Select
+            value={watch("cidade") || ""}
+            onValueChange={(value) => setValue("cidade", value)}
+            disabled={!estadoSelecionado}
+          >
+            <SelectTrigger className="text-base">
+              <SelectValue placeholder={estadoSelecionado ? "Selecione" : "Selecione o estado"} />
+            </SelectTrigger>
+            <SelectContent>
+              {cidadesDisponiveis.map((cidade) => (
+                <SelectItem key={cidade} value={cidade}>
+                  {cidade}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Data e Hora */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -229,6 +435,44 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
         {errors.equipe_id && (
           <p className="text-sm text-destructive">{errors.equipe_id.message}</p>
         )}
+      </div>
+
+      {/* Cor da Porta */}
+      <div className="space-y-2">
+        <Label htmlFor="cor_id">Cor da Porta</Label>
+        <Select
+          value={watch("cor_id") || ""}
+          onValueChange={(value) => setValue("cor_id", value)}
+        >
+          <SelectTrigger className="text-base">
+            <SelectValue placeholder={loadingCores ? "Carregando..." : "Selecione uma cor"} />
+          </SelectTrigger>
+          <SelectContent>
+            {cores.map((cor) => (
+              <SelectItem key={cor.id} value={cor.id}>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-4 w-4 rounded border border-border flex-shrink-0"
+                    style={{ backgroundColor: cor.codigo_hex }}
+                  />
+                  {cor.nome}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Observações */}
+      <div className="space-y-2">
+        <Label htmlFor="observacoes">Descrição / Observações</Label>
+        <Textarea
+          id="observacoes"
+          {...register("observacoes")}
+          placeholder="Informações adicionais sobre a instalação..."
+          rows={3}
+          className="text-base resize-none"
+        />
       </div>
 
       <Button
