@@ -697,7 +697,7 @@ const App = () => (
                 <Route
                   path="/instalacoes/controle"
                   element={
-                    <ProtectedRoute routeKey="instalacoes_calendario">
+                    <ProtectedRoute routeKey="instalacoes_controle">
                       <InstalacoesLayout title="Controle de Instalações">
                         <InstalacoesControle />
                       </InstalacoesLayout>
