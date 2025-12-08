@@ -6,14 +6,6 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle2, MapPin, Calendar, User, Clock, Trash2, Plus, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { CriarInstalacaoModal } from "@/components/instalacoes/CriarInstalacaoModal";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -71,8 +63,11 @@ export default function InstalacoesControle() {
 
   const formatDate = (date: string | null) => {
     if (!date) return "-";
-    return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+    return format(new Date(date), "dd/MM", { locale: ptBR });
   };
+
+  const pendentesCount = instalacoes.filter((i) => !i.instalacao_concluida).length;
+  const concluidasCount = instalacoes.filter((i) => i.instalacao_concluida).length;
 
   if (isLoading) {
     return (
@@ -82,162 +77,143 @@ export default function InstalacoesControle() {
     );
   }
 
-  const pendentesCount = instalacoes.filter((i) => !i.instalacao_concluida).length;
-  const concluidasCount = instalacoes.filter((i) => i.instalacao_concluida).length;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 overflow-hidden">
       {/* Header com ações */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Controle de Instalações</h2>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Instalação
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold truncate">Controle</h2>
+        <div className="flex gap-2 shrink-0">
+          <Button size="sm" onClick={() => setModalOpen(true)} className="h-8 px-2">
+            <Plus className="h-4 w-4" />
+            <span className="sr-only sm:not-sr-only sm:ml-1">Nova</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="h-8 w-8 p-0">
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Filtros */}
-      <Card className="p-4">
-        <div className="flex gap-2">
-          <Button
-            variant={filter === "pendentes" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("pendentes")}
-          >
-            Pendentes ({pendentesCount})
-          </Button>
-          <Button
-            variant={filter === "todos" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("todos")}
-          >
-            Todos ({instalacoes.length})
-          </Button>
-          <Button
-            variant={filter === "concluidas" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("concluidas")}
-          >
-            Concluídas ({concluidasCount})
-          </Button>
-        </div>
-      </Card>
+      {/* Filtros - scroll horizontal se necessário */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <Button
+          variant={filter === "pendentes" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("pendentes")}
+          className="h-8 text-xs shrink-0"
+        >
+          Pendentes ({pendentesCount})
+        </Button>
+        <Button
+          variant={filter === "todos" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("todos")}
+          className="h-8 text-xs shrink-0"
+        >
+          Todos ({instalacoes.length})
+        </Button>
+        <Button
+          variant={filter === "concluidas" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("concluidas")}
+          className="h-8 text-xs shrink-0"
+        >
+          Concluídas ({concluidasCount})
+        </Button>
+      </div>
 
-      {/* Tabela */}
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Localização</TableHead>
-              <TableHead>Data Instalação</TableHead>
-              <TableHead>Equipe</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredInstalacoes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  Nenhuma instalação encontrada
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredInstalacoes.map((inst) => (
-                <TableRow key={inst.id}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{inst.nome_cliente}</span>
-                      {inst.venda && (
-                        <span className="text-xs text-muted-foreground">
-                          Venda vinculada
-                        </span>
+      {/* Lista de Instalações */}
+      <div className="space-y-2">
+        {filteredInstalacoes.length === 0 ? (
+          <Card className="p-6 text-center text-muted-foreground">
+            Nenhuma instalação encontrada
+          </Card>
+        ) : (
+          filteredInstalacoes.map((inst) => (
+            <Card key={inst.id} className="p-3">
+              <div className="flex items-start gap-3">
+                {/* Indicador de status */}
+                <div className={`shrink-0 w-1 h-full min-h-[60px] rounded-full ${
+                  inst.instalacao_concluida ? 'bg-green-500' : 'bg-amber-500'
+                }`} />
+
+                {/* Conteúdo principal */}
+                <div className="flex-1 min-w-0 space-y-2">
+                  {/* Nome do cliente e status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{inst.nome_cliente}</p>
+                      {inst.equipe && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span 
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: inst.equipe.cor || '#888' }}
+                          />
+                          <span className="text-xs text-muted-foreground truncate">
+                            {inst.equipe.nome}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span>
-                        {inst.venda?.cidade && inst.venda?.estado
-                          ? `${inst.venda.cidade}/${inst.venda.estado}`
-                          : "-"}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Calendar className="h-3 w-3 text-muted-foreground" />
+                    {inst.instalacao_concluida && (
+                      <Badge variant="default" className="bg-green-500 text-xs shrink-0">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        OK
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Info row - data, hora, local */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
                       <span>{formatDate(inst.data_instalacao)}</span>
                     </div>
                     {inst.hora && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                      <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         <span>{inst.hora.slice(0, 5)}</span>
                       </div>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {inst.equipe ? (
-                      <Badge 
-                        variant="outline"
-                        style={{ 
-                          borderColor: inst.equipe.cor || undefined,
-                          color: inst.equipe.cor || undefined
-                        }}
-                      >
-                        <User className="h-3 w-3 mr-1" />
-                        {inst.equipe.nome}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
+                    {inst.venda?.cidade && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate max-w-[120px]">
+                          {inst.venda.cidade}
+                          {inst.venda.estado && `/${inst.venda.estado}`}
+                        </span>
+                      </div>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {inst.instalacao_concluida ? (
-                      <Badge variant="default" className="bg-green-500">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Concluída
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Pendente</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {!inst.instalacao_concluida && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => handleConcluir(inst.id)}
-                          disabled={isConcluindo}
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                          Concluir
-                        </Button>
-                      )}
+                  </div>
+
+                  {/* Ações */}
+                  <div className="flex items-center gap-2 pt-1">
+                    {!inst.instalacao_concluida && (
                       <Button
                         size="sm"
-                        variant="ghost"
-                        onClick={() => openDeleteDialog(inst.id)}
-                        disabled={isDeleting}
+                        onClick={() => handleConcluir(inst.id)}
+                        disabled={isConcluindo}
+                        className="h-7 text-xs"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Concluir
                       </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openDeleteDialog(inst.id)}
+                      disabled={isDeleting}
+                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Modal Nova Instalação */}
       <CriarInstalacaoModal
@@ -248,7 +224,7 @@ export default function InstalacoesControle() {
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Instalação</AlertDialogTitle>
             <AlertDialogDescription>
