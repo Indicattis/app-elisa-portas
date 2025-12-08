@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from "date-fns";
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Instalacao, EquipeInstalacao } from "@/types/instalacao";
 
@@ -85,7 +85,7 @@ export const gerarCronogramaInstalacoesPDF = (data: CronogramaInstalacoesPDFData
 
     // Buscar instalações do dia
     const instalacoesNoDia = data.instalacoes.filter((inst) =>
-      isSameDay(new Date(inst.data), dia)
+      inst.data ? isSameDay(parseISO(inst.data), dia) : false
     );
 
     // Filtrar por equipe se selecionada
@@ -162,7 +162,7 @@ export const gerarCronogramaInstalacoesPDF = (data: CronogramaInstalacoesPDFData
 
   const instalacooesPorDia = periodoDias.map((dia) => ({
     dia,
-    quantidade: data.instalacoes.filter((inst) => isSameDay(new Date(inst.data), dia)).length,
+    quantidade: data.instalacoes.filter((inst) => inst.data ? isSameDay(parseISO(inst.data), dia) : false).length,
   }));
 
   const diaMovimentado = instalacooesPorDia.reduce(
