@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useSetorInfo } from "@/hooks/useSetorInfo";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
+import { CalendarioSemanal } from "@/components/todo/CalendarioSemanal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Calendar, Repeat, Trash2, List } from "lucide-react";
-import { format } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { SETOR_LABELS } from "@/utils/setorMapping";
@@ -63,6 +64,7 @@ export default function Todo() {
   const [modalAberto, setModalAberto] = useState(false);
   const [modalRecorrentes, setModalRecorrentes] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
+  const [diaSelecionado, setDiaSelecionado] = useState<Date>(new Date());
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
   const setorLabel = setor ? SETOR_LABELS[setor as keyof typeof SETOR_LABELS] : 'Geral';
@@ -71,8 +73,18 @@ export default function Todo() {
   const isResponsavelSetor = responsavelSetor?.user_id === user?.id;
   const podeMarcarConcluida = podeGerenciar || isResponsavelSetor;
 
-  const tarefasEmAndamento = tarefas.filter(t => t.status === 'em_andamento');
-  const tarefasConcluidas = tarefas.filter(t => t.status === 'concluida');
+  // Filtrar tarefas pelo dia selecionado
+  const tarefasDoDia = useMemo(() => {
+    return tarefas.filter(tarefa => {
+      const dataTarefa = parseISO(tarefa.created_at);
+      return isSameDay(dataTarefa, diaSelecionado);
+    });
+  }, [tarefas, diaSelecionado]);
+
+  const tarefasEmAndamento = tarefasDoDia.filter(t => t.status === 'em_andamento');
+  const tarefasConcluidas = tarefasDoDia.filter(t => t.status === 'concluida');
+
+  const isHoje = isSameDay(diaSelecionado, new Date());
 
   if (isLoading) {
     return (
@@ -84,13 +96,16 @@ export default function Todo() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold">
             Checklist Liderança - {setorLabel}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {setor ? `Gerencie tarefas do setor ${setorLabel.toLowerCase()}` : 'Gerencie suas tarefas e responsabilidades'}
+            {isHoje 
+              ? 'Tarefas de hoje' 
+              : `Tarefas de ${format(diaSelecionado, "dd 'de' MMMM", { locale: ptBR })}`
+            }
           </p>
         </div>
 
@@ -137,6 +152,13 @@ export default function Todo() {
           </div>
         )}
       </div>
+
+      {/* Calendário Semanal */}
+      <CalendarioSemanal 
+        tarefas={tarefas} 
+        diaSelecionado={diaSelecionado}
+        onDiaChange={setDiaSelecionado}
+      />
 
       {/* Tarefas em Andamento */}
       <Card>

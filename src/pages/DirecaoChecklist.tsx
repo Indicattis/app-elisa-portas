@@ -25,6 +25,7 @@ export default function DirecaoChecklist() {
   const [dataSelecionada, setDataSelecionada] = useState<Date | undefined>(undefined);
   const [mostrarLixeira, setMostrarLixeira] = useState(false);
   const [semanaOffset, setSemanaOffset] = useState(0);
+  const [diaCalendario, setDiaCalendario] = useState<Date>(new Date());
   
   const userId = usuarioSelecionado === "todos" ? undefined : usuarioSelecionado;
   
@@ -164,7 +165,11 @@ export default function DirecaoChecklist() {
       </div>
 
       {/* Calendário Semanal */}
-      <CalendarioSemanal tarefas={tarefas} />
+      <CalendarioSemanal 
+        tarefas={tarefas} 
+        diaSelecionado={diaCalendario}
+        onDiaChange={setDiaCalendario}
+      />
 
       {/* Filtros */}
       <ChecklistFiltros
