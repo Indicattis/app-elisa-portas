@@ -30,16 +30,16 @@ export const CalendarioInstalacoesMensal = ({
   const navigate = useNavigate();
   const [activeInstalacao, setActiveInstalacao] = useState<InstalacaoCalendario | null>(null);
 
-  // Sensors com delay de 1 segundo para ativar o drag
+  // Sensors com delay de 0.5 segundo para ativar o drag
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: {
-      delay: 1000,
+      delay: 500,
       tolerance: 5,
     },
   });
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 1000,
+      delay: 500,
       tolerance: 5,
     },
   });
