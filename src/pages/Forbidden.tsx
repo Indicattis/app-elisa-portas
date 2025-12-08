@@ -23,11 +23,8 @@ export default function Forbidden() {
             Entre em contato com o administrador do sistema para solicitar acesso a esta funcionalidade.
           </p>
           <div className="space-y-2">
-            <Button onClick={() => navigate('/dashboard')} className="w-full">
-              Voltar ao Dashboard
-            </Button>
-            <Button variant="outline" onClick={() => navigate(-1)} className="w-full">
-              Voltar à Página Anterior
+            <Button onClick={() => navigate('/instalacoes')} className="w-full">
+              Voltar às Instalações
             </Button>
             <Button variant="ghost" onClick={() => navigate('/auth')} className="w-full">
               <LogIn className="h-4 w-4 mr-2" />
