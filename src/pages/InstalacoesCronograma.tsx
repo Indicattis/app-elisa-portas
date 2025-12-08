@@ -50,19 +50,19 @@ export default function InstalacoesCronograma() {
   };
 
   const handleDownloadPDF = () => {
+    const toastId = toast.loading("Gerando PDF do cronograma...");
+    
     try {
-      toast.loading("Gerando PDF do cronograma...");
-      
       baixarCronogramaPDF({
         instalacoes,
         equipes: equipesFiltradas,
         weekStart: weekStartDate
       });
       
-      toast.success("PDF gerado com sucesso!");
+      toast.success("PDF gerado com sucesso!", { id: toastId });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar PDF do cronograma");
+      toast.error("Erro ao gerar PDF do cronograma", { id: toastId });
     }
   };
 
