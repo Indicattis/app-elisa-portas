@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Plus, RefreshCw } from "lucide-react";
+import { Download, Plus, RefreshCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { CalendarioInstalacoesMensal } from "@/components/instalacoes/Calendario
 import { CalendarioInstalacoesMobile } from "@/components/instalacoes/CalendarioInstalacoesMobile";
 import { InstalacaoDetailsSheet } from "@/components/instalacoes/InstalacaoDetailsSheet";
 import { ListaInstalacoesEquipe } from "@/components/instalacoes/ListaInstalacoesEquipe";
+import { ImportarICSModal } from "@/components/instalacoes/ImportarICSModal";
 
 export default function Instalacoes() {
   const isMobile = useIsMobile();
@@ -19,6 +20,7 @@ export default function Instalacoes() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
   const [modalNovaInstalacaoOpen, setModalNovaInstalacaoOpen] = useState(false);
+  const [importarICSOpen, setImportarICSOpen] = useState(false);
   const [selectedInstalacao, setSelectedInstalacao] = useState<InstalacaoCalendario | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -119,6 +121,10 @@ export default function Instalacoes() {
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Nova</span>
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setImportarICSOpen(true)}>
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2">Importar</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Atualizar</span>
@@ -186,6 +192,13 @@ export default function Instalacoes() {
       <CriarInstalacaoModal
         open={modalNovaInstalacaoOpen}
         onOpenChange={setModalNovaInstalacaoOpen}
+        onSuccess={handleRefresh}
+      />
+
+      {/* Modal para importar do Google Calendar */}
+      <ImportarICSModal
+        open={importarICSOpen}
+        onOpenChange={setImportarICSOpen}
         onSuccess={handleRefresh}
       />
     </div>
