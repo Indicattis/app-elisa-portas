@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Postagem } from "@/hooks/usePostagens";
+import { Clock } from "lucide-react";
 
 interface PostagemFormProps {
   postagem?: Postagem;
@@ -34,11 +36,37 @@ export function PostagemForm({
     curtidas: postagem?.curtidas || 0,
     visualizacoes: postagem?.visualizacoes || 0,
     comentarios: postagem?.comentarios || 0,
+    agendada: postagem?.agendada ?? false,
+    postada: postagem?.postada ?? true,
+    hora_agendamento: postagem?.hora_agendamento || "",
   });
+
+  const handleAgendadaChange = (checked: boolean) => {
+    if (checked) {
+      // Se está agendando, marca como não postada ainda
+      setFormData({ 
+        ...formData, 
+        agendada: true, 
+        postada: false,
+        hora_agendamento: formData.hora_agendamento || "09:00"
+      });
+    } else {
+      // Se não está agendando, marca como já postada
+      setFormData({ 
+        ...formData, 
+        agendada: false, 
+        postada: true,
+        hora_agendamento: ""
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      hora_agendamento: formData.agendada ? formData.hora_agendamento : null,
+    });
   };
 
   return (
@@ -104,6 +132,38 @@ export function PostagemForm({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Seção de Agendamento */}
+      <div className="rounded-lg border p-4 space-y-4 bg-muted/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="agendada" className="font-medium">Agendar postagem</Label>
+          </div>
+          <Switch
+            id="agendada"
+            checked={formData.agendada}
+            onCheckedChange={handleAgendadaChange}
+          />
+        </div>
+        
+        {formData.agendada && (
+          <div className="space-y-2">
+            <Label htmlFor="hora_agendamento">Horário do agendamento</Label>
+            <Input
+              id="hora_agendamento"
+              type="time"
+              value={formData.hora_agendamento}
+              onChange={(e) =>
+                setFormData({ ...formData, hora_agendamento: e.target.value })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              O post será marcado como postado automaticamente quando a data e hora chegarem.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

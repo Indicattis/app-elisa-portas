@@ -16,6 +16,9 @@ export interface Postagem {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  agendada: boolean;
+  postada: boolean;
+  hora_agendamento: string | null;
 }
 
 export interface PostagensStats {

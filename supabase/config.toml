@@ -61,3 +61,6 @@ verify_jwt = true
 
 [functions.cancelar-nota-por-referencia]
 verify_jwt = true
+
+[functions.processar-postagens-agendadas]
+verify_jwt = false
