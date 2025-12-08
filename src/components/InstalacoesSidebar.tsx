@@ -34,6 +34,11 @@ export function InstalacoesSidebar() {
   const { open } = useSidebar();
 
   const isActive = (path: string) => {
+    // Para a rota raiz /instalacoes, só ativa se for exatamente essa rota
+    if (path === '/instalacoes') {
+      return location.pathname === '/instalacoes';
+    }
+    // Para outras rotas, verifica match exato ou subrotas
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
