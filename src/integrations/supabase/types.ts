@@ -3467,6 +3467,7 @@ export type Database = {
           created_at: string
           id: string
           interna_externa: string
+          lado_motor: string | null
           opcao_guia: string
           opcao_rolo: string
           opcao_tubo: string
@@ -3482,6 +3483,7 @@ export type Database = {
           created_at?: string
           id?: string
           interna_externa?: string
+          lado_motor?: string | null
           opcao_guia?: string
           opcao_rolo?: string
           opcao_tubo?: string
@@ -3497,6 +3499,7 @@ export type Database = {
           created_at?: string
           id?: string
           interna_externa?: string
+          lado_motor?: string | null
           opcao_guia?: string
           opcao_rolo?: string
           opcao_tubo?: string

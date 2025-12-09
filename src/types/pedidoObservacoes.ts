@@ -34,6 +34,11 @@ export const OPCOES_TUBO_TIRAS_FRONTAIS = {
   sem_tubo_tiras_frontais: 'Sem tubo para tiras frontais',
 } as const;
 
+export const OPCOES_LADO_MOTOR = {
+  esquerdo: 'Esquerdo',
+  direito: 'Direito',
+} as const;
+
 export interface PedidoPortaObservacoes {
   id: string;
   pedido_id: string;
@@ -46,6 +51,7 @@ export interface PedidoPortaObservacoes {
   opcao_guia: keyof typeof OPCOES_GUIA;
   opcao_rolo: keyof typeof OPCOES_ROLO;
   tubo_tiras_frontais: keyof typeof OPCOES_TUBO_TIRAS_FRONTAIS;
+  lado_motor: keyof typeof OPCOES_LADO_MOTOR;
   created_at: string;
   updated_at: string;
 }
