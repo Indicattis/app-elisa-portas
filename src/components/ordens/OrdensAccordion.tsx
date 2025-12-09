@@ -10,10 +10,24 @@ import { Button } from "@/components/ui/button";
 import { PedidoComOrdens, OrdemBase } from "@/hooks/useOrdensProducao";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck, Printer, Calendar, MapPin } from "lucide-react";
+import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck, Printer, Calendar, MapPin, Trash2, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImprimirEtiquetasModal } from "./ImprimirEtiquetasModal";
 import { formatDuration } from "@/utils/timeFormat";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ORDEM_ICONS = {
   soldagem: Hammer,
@@ -56,6 +70,11 @@ interface EtiquetaModalState {
 }
 
 export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
+  const { isAdmin } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deletingOrdemId, setDeletingOrdemId] = useState<string | null>(null);
+  const [ordemToDelete, setOrdemToDelete] = useState<{ id: string; tipo: string; numero: string } | null>(null);
   const [etiquetaModal, setEtiquetaModal] = useState<EtiquetaModalState>({
     open: false,
     pedidoId: '',
@@ -73,6 +92,77 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
       tipoOrdem: ordem.tipo,
       responsavelNome: ordem.responsavel_nome
     });
+  };
+
+  const handleDeleteOrdem = async () => {
+    if (!ordemToDelete) return;
+    
+    setDeletingOrdemId(ordemToDelete.id);
+    
+    try {
+      // Determinar tabela baseado no tipo
+      const tableMap: Record<string, string> = {
+        soldagem: 'ordens_soldagem',
+        perfiladeira: 'ordens_perfiladeira',
+        separacao: 'ordens_separacao',
+        pintura: 'ordens_pintura',
+        qualidade: 'ordens_qualidade',
+        instalacao: 'ordens_instalacao',
+        carregamento: 'ordens_carregamento',
+      };
+      
+      const tableName = tableMap[ordemToDelete.tipo];
+      if (!tableName) {
+        throw new Error('Tipo de ordem inválido');
+      }
+      
+      // Primeiro deletar linhas de ordens associadas
+      const { error: linhasError } = await supabase
+        .from('linhas_ordens')
+        .delete()
+        .eq('ordem_id', ordemToDelete.id);
+      
+      if (linhasError) {
+        console.warn('Erro ao deletar linhas:', linhasError);
+      }
+      
+      // Deletar pontuações associadas
+      const { error: pontuacaoError } = await supabase
+        .from('pontuacao_colaboradores')
+        .delete()
+        .eq('ordem_id', ordemToDelete.id);
+      
+      if (pontuacaoError) {
+        console.warn('Erro ao deletar pontuações:', pontuacaoError);
+      }
+      
+      // Deletar a ordem
+      const { error } = await supabase
+        .from(tableName as any)
+        .delete()
+        .eq('id', ordemToDelete.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Ordem excluída",
+        description: `Ordem ${ordemToDelete.numero} foi excluída com sucesso.`,
+      });
+      
+      // Invalidar queries para atualizar a lista
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      
+    } catch (error: any) {
+      console.error('Erro ao excluir ordem:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Não foi possível excluir a ordem.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingOrdemId(null);
+      setOrdemToDelete(null);
+    }
   };
 
   if (pedidos.length === 0) {
@@ -145,7 +235,7 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
                       <TableHead className="text-xs">Responsável</TableHead>
                       <TableHead className="text-xs">Data</TableHead>
                       <TableHead className="text-xs">Tempo</TableHead>
-                      <TableHead className="text-xs w-[60px]">Ações</TableHead>
+                      <TableHead className="text-xs w-[80px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -190,18 +280,43 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
                             )}
                           </TableCell>
                           <TableCell className="py-0">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleImprimirEtiquetas(pedido, ordem);
-                              }}
-                              title="Imprimir etiquetas"
-                            >
-                              <Printer className="h-3.5 w-3.5" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleImprimirEtiquetas(pedido, ordem);
+                                }}
+                                title="Imprimir etiquetas"
+                              >
+                                <Printer className="h-3.5 w-3.5" />
+                              </Button>
+                              {isAdmin && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOrdemToDelete({ 
+                                      id: ordem.id, 
+                                      tipo: ordem.tipo, 
+                                      numero: ordem.numero_ordem 
+                                    });
+                                  }}
+                                  disabled={deletingOrdemId === ordem.id}
+                                  title="Excluir ordem"
+                                >
+                                  {deletingOrdemId === ordem.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -223,6 +338,27 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
         tipoOrdem={etiquetaModal.tipoOrdem}
         responsavelNome={etiquetaModal.responsavelNome}
       />
+
+      <AlertDialog open={!!ordemToDelete} onOpenChange={(open) => !open && setOrdemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir ordem de produção</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a ordem <strong>{ordemToDelete?.numero}</strong>?
+              Esta ação não pode ser desfeita e irá remover também as linhas e pontuações associadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOrdem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
