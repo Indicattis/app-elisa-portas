@@ -71,7 +71,11 @@ export default function Todo() {
   
   // Verificar se o usuário é o responsável pelo setor
   const isResponsavelSetor = responsavelSetor?.user_id === user?.id;
-  const podeMarcarConcluida = podeGerenciar || isResponsavelSetor;
+  
+  // Função para verificar se pode marcar uma tarefa específica como concluída
+  const podeMarcarConcluida = (responsavelId?: string | null) => {
+    return podeGerenciar || isResponsavelSetor || responsavelId === user?.id;
+  };
 
   // Filtrar tarefas pelo dia selecionado
   const tarefasDoDia = useMemo(() => {
@@ -180,7 +184,7 @@ export default function Todo() {
                 <Checkbox
                   checked={false}
                   onCheckedChange={() => marcarConcluida.mutate(tarefa.id)}
-                  disabled={!podeMarcarConcluida}
+                  disabled={!podeMarcarConcluida(tarefa.responsavel_id)}
                   className="shrink-0"
                 />
 
@@ -248,7 +252,7 @@ export default function Todo() {
                 <Checkbox
                   checked={true}
                   onCheckedChange={() => reabrirTarefa.mutate(tarefa.id)}
-                  disabled={!podeMarcarConcluida}
+                  disabled={!podeMarcarConcluida(tarefa.responsavel_id)}
                   className="shrink-0"
                 />
 
