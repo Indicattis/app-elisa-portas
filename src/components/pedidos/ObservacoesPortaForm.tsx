@@ -90,6 +90,18 @@ export function ObservacoesPortaForm({
     OPCOES_INTERNA_EXTERNA[form.watch('interna_externa') || 'porta_interna'],
   ].filter(Boolean).join(' • ');
 
+  // Extrair medidas do campo tamanho se largura/altura estiverem vazios
+  const getMedidas = () => {
+    if (porta.largura && porta.altura) {
+      return `${porta.largura}m × ${porta.altura}m`;
+    }
+    if (porta.tamanho && porta.tamanho.includes('x')) {
+      const [largura, altura] = porta.tamanho.split('x');
+      return `${largura}m × ${altura}m`;
+    }
+    return porta.tamanho || 'Medidas não informadas';
+  };
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg">
       <CollapsibleTrigger className="w-full">
@@ -99,7 +111,7 @@ export function ObservacoesPortaForm({
             Porta #{portaIndex + 1}
           </Badge>
           <span className="text-sm font-medium">
-            {porta.largura}m × {porta.altura}m
+            {getMedidas()}
           </span>
           <span className="text-xs text-muted-foreground ml-2">
             {resumo}
