@@ -5340,11 +5340,11 @@ export type Database = {
         Returns: undefined
       }
       criar_ordens_producao_automaticas:
+        | { Args: { p_pedido_id: string }; Returns: undefined }
         | {
             Args: { p_pedido_id: string; p_pedido_numero: string }
             Returns: undefined
           }
-        | { Args: { p_pedido_id: string }; Returns: undefined }
       criar_requisicao_venda: {
         Args: { orcamento_uuid: string }
         Returns: string
@@ -5514,9 +5514,8 @@ export type Database = {
         | {
             Args: {
               p_etapa_destino: string
-              p_motivo_backlog: string
+              p_motivo?: string
               p_pedido_id: string
-              p_user_id: string
             }
             Returns: undefined
           }
@@ -5525,6 +5524,7 @@ export type Database = {
               p_etapa_destino: string
               p_motivo_backlog: string
               p_pedido_id: string
+              p_user_id: string
             }
             Returns: undefined
           }
