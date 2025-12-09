@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrdensInstalacaoCalendario, InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
+import { useInstalacoesMinhaEquipe } from "@/hooks/useInstalacoesMinhaEquipe";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { addWeeks, subWeeks } from "date-fns";
 import { CalendarioInstalacoesSemanal } from "@/components/instalacoes/CalendarioInstalacoesSemanal";
@@ -32,6 +33,11 @@ export default function Instalacoes() {
   const [filtroEquipeId, setFiltroEquipeId] = useState("all");
   const [filtroTipoInstalacao, setFiltroTipoInstalacao] = useState("all");
 
+  // Verificar se usuário pertence a uma equipe
+  const { data: minhaEquipeData } = useInstalacoesMinhaEquipe();
+  const pertenceAEquipe = !!minhaEquipeData?.equipe;
+  const minhaEquipeId = minhaEquipeData?.equipe?.id;
+
   const { 
     instalacoes: instalacoesBrutas, 
     isLoading, 
@@ -46,12 +52,17 @@ export default function Instalacoes() {
   // Aplicar filtros
   const instalacoes = useMemo(() => {
     return instalacoesBrutas.filter((inst) => {
-      // Filtro de equipe
-      if (filtroEquipeId !== "all") {
-        if (filtroEquipeId === "sem_equipe") {
-          if (inst.responsavel_instalacao_id) return false;
-        } else {
-          if (inst.responsavel_instalacao_id !== filtroEquipeId) return false;
+      // Se usuário pertence a uma equipe, mostrar apenas instalações da sua equipe
+      if (pertenceAEquipe && minhaEquipeId) {
+        if (inst.responsavel_instalacao_id !== minhaEquipeId) return false;
+      } else {
+        // Filtro de equipe (apenas para usuários que não pertencem a equipes)
+        if (filtroEquipeId !== "all") {
+          if (filtroEquipeId === "sem_equipe") {
+            if (inst.responsavel_instalacao_id) return false;
+          } else {
+            if (inst.responsavel_instalacao_id !== filtroEquipeId) return false;
+          }
         }
       }
 
@@ -62,7 +73,7 @@ export default function Instalacoes() {
 
       return true;
     });
-  }, [instalacoesBrutas, filtroEquipeId, filtroTipoInstalacao]);
+  }, [instalacoesBrutas, filtroEquipeId, filtroTipoInstalacao, pertenceAEquipe, minhaEquipeId]);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -191,24 +202,31 @@ export default function Instalacoes() {
             </div>
           )}
           
-          {/* Filtros */}
-          <FiltrosInstalacoes
-            equipeId={filtroEquipeId}
-            tipoInstalacao={filtroTipoInstalacao}
-            onEquipeChange={setFiltroEquipeId}
-            onTipoInstalacaoChange={setFiltroTipoInstalacao}
-          />
+          {/* Filtros - apenas para usuários que não pertencem a equipes */}
+          {!pertenceAEquipe && (
+            <FiltrosInstalacoes
+              equipeId={filtroEquipeId}
+              tipoInstalacao={filtroTipoInstalacao}
+              onEquipeChange={setFiltroEquipeId}
+              onTipoInstalacaoChange={setFiltroTipoInstalacao}
+            />
+          )}
         </div>
         
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => navigate('/instalacoes/nova')}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Nova</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportarICSOpen(true)}>
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Importar</span>
-          </Button>
+          {/* Botões de adicionar/importar apenas para usuários que não pertencem a equipes */}
+          {!pertenceAEquipe && (
+            <>
+              <Button size="sm" onClick={() => navigate('/instalacoes/nova')}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Nova</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setImportarICSOpen(true)}>
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Importar</span>
+              </Button>
+            </>
+          )}
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Atualizar</span>
