@@ -473,7 +473,7 @@ export function OrdemDetalhesSheet({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Itens de Produção</span>
-                {linhas.length > 0 && (
+                {linhas.length > 0 && isResponsavel && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -582,18 +582,20 @@ export function OrdemDetalhesSheet({
                                 </div>
                               </div>
                               
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 w-10 p-0 flex-shrink-0"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleImprimirEtiqueta(linha);
-                                }}
-                                title="Imprimir etiqueta"
-                              >
-                                <Printer className="h-5 w-5" />
-                              </Button>
+                              {isResponsavel && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-10 w-10 p-0 flex-shrink-0"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleImprimirEtiqueta(linha);
+                                  }}
+                                  title="Imprimir etiqueta"
+                                >
+                                  <Printer className="h-5 w-5" />
+                                </Button>
+                              )}
                             </Label>
                           ))}
                         </div>
@@ -641,18 +643,20 @@ export function OrdemDetalhesSheet({
                       </div>
                     </div>
                     
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-11 w-11 p-0 flex-shrink-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleImprimirEtiqueta(linha);
-                      }}
-                      title="Imprimir etiqueta"
-                    >
-                      <Printer className="h-5 w-5" />
-                    </Button>
+                    {isResponsavel && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-11 w-11 p-0 flex-shrink-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleImprimirEtiqueta(linha);
+                        }}
+                        title="Imprimir etiqueta"
+                      >
+                        <Printer className="h-5 w-5" />
+                      </Button>
+                    )}
                   </Label>
                 ))
               )}
