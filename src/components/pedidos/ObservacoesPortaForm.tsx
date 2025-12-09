@@ -23,6 +23,7 @@ interface ObservacoesPortaFormProps {
   valoresIniciais?: Partial<PedidoPortaObservacoesInsert>;
   onSalvar: (dados: PedidoPortaObservacoesInsert) => Promise<any>;
   pedidoId: string;
+  defaultOpen?: boolean;
 }
 
 export function ObservacoesPortaForm({
@@ -32,6 +33,7 @@ export function ObservacoesPortaForm({
   valoresIniciais,
   onSalvar,
   pedidoId,
+  defaultOpen = false,
 }: ObservacoesPortaFormProps) {
   const form = useForm<PedidoPortaObservacoesInsert>({
     defaultValues: {
@@ -60,7 +62,7 @@ export function ObservacoesPortaForm({
     return () => subscription.unsubscribe();
   }, [form, onSalvar]);
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border-l-4 border-amber-500 pl-3">

@@ -615,14 +615,16 @@ export default function PedidoView() {
         </Card>
       )}
 
-      {/* Observações por Porta */}
+      {/* Observações da Visita Técnica */}
       {portasEnrolar.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Observações
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Observações da visita técnica ({portasEnrolar.length})
+              </CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -635,6 +637,7 @@ export default function PedidoView() {
                   valoresIniciais={getObservacoesPorPorta(porta.id)}
                   onSalvar={salvarObservacao}
                   pedidoId={id || ''}
+                  defaultOpen={idx === 0}
                 />
               ))}
             </div>
