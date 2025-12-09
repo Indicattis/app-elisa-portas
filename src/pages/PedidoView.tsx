@@ -615,7 +615,32 @@ export default function PedidoView() {
         </Card>
       )}
 
-      {/* Seção de Preparação do Pedido - REMOVIDA, edição agora é inline na tabela */}
+      {/* Observações por Porta */}
+      {portasEnrolar.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Observações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {portasEnrolar.map((porta: any, idx: number) => (
+                <ObservacoesPortaForm
+                  key={porta.id}
+                  porta={porta}
+                  portaIndex={idx}
+                  usuarios={usuarios}
+                  valoresIniciais={getObservacoesPorPorta(porta.id)}
+                  onSalvar={salvarObservacao}
+                  pedidoId={id || ''}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Itens do Pedido */}
       {isAberto && (
