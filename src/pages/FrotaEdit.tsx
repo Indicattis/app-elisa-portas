@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 export default function FrotaEdit() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { veiculos, updateVeiculo, uploadFoto, isUpdating, isUploading } = useVeiculos();
+  const { veiculos, updateVeiculo, uploadFoto, uploadDocumento, isUpdating, isUploading, isUploadingDocumento } = useVeiculos();
   const { conferencias, isLoading: isLoadingConferencias } = useConferencias(id);
 
   const veiculo = veiculos?.find(v => v.id === id);
@@ -22,22 +22,32 @@ export default function FrotaEdit() {
     }
   }, [id, veiculo, veiculos, navigate]);
 
-  const handleSubmit = async (data: VeiculoFormData & { foto?: File }) => {
+  const handleSubmit = async (data: VeiculoFormData & { foto?: File; documento?: File }) => {
     if (!id) return;
 
     let foto_url = data.foto_url;
+    let documento_url = data.documento_url;
+    let documento_nome = data.documento_nome;
     
     if (data.foto) {
       foto_url = await uploadFoto({ file: data.foto, veiculo_id: id });
     }
 
-    const { foto, ...veiculoData } = data;
+    if (data.documento) {
+      const result = await uploadDocumento({ file: data.documento, veiculo_id: id });
+      documento_url = result.url;
+      documento_nome = result.nome;
+    }
+
+    const { foto, documento, ...veiculoData } = data;
 
     await updateVeiculo({
       id,
       data: {
         ...veiculoData,
-        foto_url
+        foto_url,
+        documento_url,
+        documento_nome
       }
     });
 
@@ -82,7 +92,7 @@ export default function FrotaEdit() {
           <VeiculoForm 
             onSubmit={handleSubmit} 
             initialData={veiculo}
-            isSubmitting={isUpdating || isUploading}
+            isSubmitting={isUpdating || isUploading || isUploadingDocumento}
             isEditing={true}
           />
         </CardContent>

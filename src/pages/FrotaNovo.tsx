@@ -7,20 +7,30 @@ import { Button } from "@/components/ui/button";
 
 export default function FrotaNovo() {
   const navigate = useNavigate();
-  const { createVeiculo, uploadFoto, isCreating, isUploading } = useVeiculos();
+  const { createVeiculo, uploadFoto, uploadDocumento, isCreating, isUploading, isUploadingDocumento } = useVeiculos();
 
-  const handleSubmit = async (data: VeiculoFormData & { foto?: File }) => {
+  const handleSubmit = async (data: VeiculoFormData & { foto?: File; documento?: File }) => {
     let foto_url = data.foto_url;
+    let documento_url = data.documento_url;
+    let documento_nome = data.documento_nome;
     
     if (data.foto) {
       foto_url = await uploadFoto({ file: data.foto });
     }
 
-    const { foto, ...veiculoData } = data;
+    if (data.documento) {
+      const result = await uploadDocumento({ file: data.documento });
+      documento_url = result.url;
+      documento_nome = result.nome;
+    }
+
+    const { foto, documento, ...veiculoData } = data;
 
     await createVeiculo({
       ...veiculoData,
-      foto_url
+      foto_url,
+      documento_url,
+      documento_nome
     });
 
     navigate('/dashboard/instalacoes/frota');
@@ -55,7 +65,7 @@ export default function FrotaNovo() {
         <CardContent>
           <VeiculoForm 
             onSubmit={handleSubmit} 
-            isSubmitting={isCreating || isUploading}
+            isSubmitting={isCreating || isUploading || isUploadingDocumento}
           />
         </CardContent>
       </Card>

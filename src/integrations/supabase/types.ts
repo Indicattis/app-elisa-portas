@@ -4680,6 +4680,8 @@ export type Database = {
           created_by: string | null
           data_proxima_troca_oleo: string | null
           data_troca_oleo: string | null
+          documento_nome: string | null
+          documento_url: string | null
           foto_url: string | null
           id: string
           km_atual: number
@@ -4697,6 +4699,8 @@ export type Database = {
           created_by?: string | null
           data_proxima_troca_oleo?: string | null
           data_troca_oleo?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
           foto_url?: string | null
           id?: string
           km_atual?: number
@@ -4714,6 +4718,8 @@ export type Database = {
           created_by?: string | null
           data_proxima_troca_oleo?: string | null
           data_troca_oleo?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
           foto_url?: string | null
           id?: string
           km_atual?: number
