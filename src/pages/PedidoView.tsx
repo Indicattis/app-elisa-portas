@@ -615,36 +615,6 @@ export default function PedidoView() {
         </Card>
       )}
 
-      {/* Observações da Visita Técnica */}
-      {portasEnrolar.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Observações da visita técnica ({portasEnrolar.length})
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {portasEnrolar.map((porta: any, idx: number) => (
-                <ObservacoesPortaForm
-                  key={porta.id}
-                  porta={porta}
-                  portaIndex={idx}
-                  usuarios={usuarios}
-                  valoresIniciais={getObservacoesPorPorta(porta.id)}
-                  onSalvar={salvarObservacao}
-                  pedidoId={id || ''}
-                  defaultOpen={idx === 0}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Itens do Pedido */}
       {isAberto && (
         <Card>
@@ -725,6 +695,36 @@ export default function PedidoView() {
                 });
               }}
             />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Observações da Visita Técnica */}
+      {portasEnrolar.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Observações da visita técnica ({portasEnrolar.length})
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {portasEnrolar.map((porta: any, idx: number) => (
+                <ObservacoesPortaForm
+                  key={porta.id}
+                  porta={porta}
+                  portaIndex={idx}
+                  usuarios={usuarios}
+                  valoresIniciais={getObservacoesPorPorta(porta.id)}
+                  onSalvar={salvarObservacao}
+                  pedidoId={id || ''}
+                  defaultOpen={idx === 0}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
