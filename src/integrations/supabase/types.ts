@@ -5526,7 +5526,7 @@ export type Database = {
               p_pedido_id: string
               p_user_id: string
             }
-            Returns: undefined
+            Returns: Json
           }
       verificar_ordem_pintura_concluida: {
         Args: { p_pedido_id: string }
