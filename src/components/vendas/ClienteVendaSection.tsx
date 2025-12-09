@@ -260,18 +260,23 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
         {/* Modo Cadastrar */}
         {modo === 'cadastrar' && (
           <>
-            {/* Alerta de CPF/CNPJ duplicado */}
+            {/* Alerta de CPF/CNPJ duplicado - BLOQUEIA CADASTRO */}
             {clienteDuplicado && (
-              <Alert variant="destructive" className="bg-amber-50 border-amber-200 text-amber-900">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <AlertTitle className="text-amber-800">CPF/CNPJ já cadastrado</AlertTitle>
-                <AlertDescription className="text-amber-700">
-                  <p>Já existe um cliente com este documento: <strong>{clienteDuplicado.nome}</strong></p>
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>CPF/CNPJ já cadastrado!</AlertTitle>
+                <AlertDescription>
+                  <p className="mb-2">
+                    Já existe um cliente com este documento: <strong>{clienteDuplicado.nome}</strong>
+                    {clienteDuplicado.telefone && ` - Tel: ${clienteDuplicado.telefone}`}
+                  </p>
+                  <p className="text-sm mb-3">
+                    Não é possível cadastrar clientes com CPF/CNPJ duplicado. Use o cliente existente.
+                  </p>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
-                    className="mt-2 border-amber-300 hover:bg-amber-100"
                     onClick={handleUsarClienteExistente}
                   >
                     <Check className="h-3 w-3 mr-1" />
@@ -281,7 +286,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
               </Alert>
             )}
 
-            {/* Dados do Cliente */}
+            {/* Dados do Cliente - desabilitados se houver duplicado */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="cliente_nome" className="text-xs font-medium">Nome *</Label>
@@ -292,6 +297,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                   placeholder="Nome completo"
                   className="h-9"
                   required
+                  disabled={!!clienteDuplicado}
                 />
               </div>
 
@@ -305,6 +311,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                   className="h-9"
                   maxLength={15}
                   required
+                  disabled={!!clienteDuplicado}
                 />
               </div>
 
@@ -317,6 +324,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                   onChange={(e) => onChange({ cliente_email: e.target.value })}
                   placeholder="email@exemplo.com"
                   className="h-9"
+                  disabled={!!clienteDuplicado}
                 />
               </div>
 
@@ -327,14 +335,14 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                   value={dados.cpf_cliente}
                   onChange={(e) => onChange({ cpf_cliente: formatarCpfCnpj(e.target.value) })}
                   placeholder="CPF ou CNPJ"
-                  className={cn("h-9", clienteDuplicado && "border-amber-500 focus-visible:ring-amber-500")}
+                  className={cn("h-9", clienteDuplicado && "border-destructive focus-visible:ring-destructive")}
                   maxLength={18}
                   required
                 />
               </div>
             </div>
 
-            {/* Localização */}
+            {/* Localização - desabilitados se houver duplicado */}
             <div className="pt-2 border-t">
               <Label className="text-xs font-medium text-muted-foreground mb-2 block">Localização (obrigatório para NF-e)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -343,6 +351,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                   <Select
                     value={dados.estado}
                     onValueChange={(value) => onChange({ estado: value, cidade: '' })}
+                    disabled={!!clienteDuplicado}
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="UF" />
@@ -362,7 +371,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                   <Select
                     value={dados.cidade}
                     onValueChange={(value) => onChange({ cidade: value })}
-                    disabled={!dados.estado}
+                    disabled={!dados.estado || !!clienteDuplicado}
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Selecione a cidade" />
@@ -387,6 +396,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                     className="h-9"
                     maxLength={9}
                     required
+                    disabled={!!clienteDuplicado}
                   />
                 </div>
 
@@ -399,6 +409,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                     placeholder="Ex: Rua das Flores, 123"
                     className="h-9"
                     required
+                    disabled={!!clienteDuplicado}
                   />
                 </div>
 
@@ -411,6 +422,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
                     placeholder="Nome do bairro"
                     className="h-9"
                     required
+                    disabled={!!clienteDuplicado}
                   />
                 </div>
               </div>

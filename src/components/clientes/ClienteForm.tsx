@@ -1,9 +1,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Form,
   FormControl,
@@ -20,8 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
-import { Cliente, ClienteFormData } from "@/hooks/useClientes";
-import { Loader2 } from "lucide-react";
+import { Cliente, ClienteFormData, useCheckClienteDuplicado } from "@/hooks/useClientes";
+import { Loader2, AlertTriangle } from "lucide-react";
 
 const ESTADOS_BR = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -51,6 +53,7 @@ interface ClienteFormProps {
 
 export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) {
   const { canais } = useCanaisAquisicao();
+  const [cpfParaVerificar, setCpfParaVerificar] = useState("");
 
   const form = useForm<ClienteFormData>({
     resolver: zodResolver(formSchema),
@@ -69,7 +72,31 @@ export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) 
     },
   });
 
+  const cpfCnpjValue = form.watch("cpf_cnpj");
+  
+  // Debounce para verificação de duplicação
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (cpfCnpjValue && cpfCnpjValue.replace(/\D/g, '').length >= 11) {
+        setCpfParaVerificar(cpfCnpjValue);
+      } else {
+        setCpfParaVerificar("");
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [cpfCnpjValue]);
+
+  const { data: clienteDuplicado, isLoading: verificandoDuplicado } = useCheckClienteDuplicado(cpfParaVerificar);
+  
+  // Verificar se o duplicado encontrado é o próprio cliente sendo editado
+  const isDuplicadoReal = clienteDuplicado && clienteDuplicado.id !== cliente?.id;
+
   const handleSubmit = (data: ClienteFormData) => {
+    // Bloquear submit se houver duplicação
+    if (isDuplicadoReal) {
+      return;
+    }
+    
     // Remove campos vazios
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== "" && v !== undefined)
@@ -131,12 +158,40 @@ export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) 
             <FormItem>
               <FormLabel>CPF/CNPJ</FormLabel>
               <FormControl>
-                <Input placeholder="000.000.000-00 ou 00.000.000/0001-00" {...field} />
+                <Input 
+                  placeholder="000.000.000-00 ou 00.000.000/0001-00" 
+                  {...field} 
+                  className={isDuplicadoReal ? "border-destructive" : ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {/* Alerta de duplicação */}
+        {isDuplicadoReal && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>CPF/CNPJ já cadastrado!</strong>
+              <br />
+              Cliente existente: <strong>{clienteDuplicado.nome}</strong>
+              {clienteDuplicado.telefone && ` - Tel: ${clienteDuplicado.telefone}`}
+              <br />
+              <span className="text-sm">
+                Não é possível cadastrar dois clientes com o mesmo CPF/CNPJ.
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {verificandoDuplicado && cpfParaVerificar && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Verificando CPF/CNPJ...
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
@@ -268,7 +323,7 @@ export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) 
         />
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading || isDuplicadoReal || verificandoDuplicado}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {cliente ? "Salvar Alterações" : "Criar Cliente"}
           </Button>
