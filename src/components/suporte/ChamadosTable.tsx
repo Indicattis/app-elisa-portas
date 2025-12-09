@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Edit } from "lucide-react";
+import { FileText, Edit, Trash2 } from "lucide-react";
 import { ChamadoSuporte } from "@/types/suporte";
 import { AdicionarNotaModal } from "./AdicionarNotaModal";
 import { AlterarStatusModal } from "./AlterarStatusModal";
@@ -13,6 +13,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 interface ChamadosTableProps {
@@ -22,16 +24,19 @@ interface ChamadosTableProps {
     id: string;
     status: "pendente" | "cancelado" | "resolvido";
   }) => void;
+  onDeleteChamado?: (id: string) => void;
 }
 
 export function ChamadosTable({
   chamados,
   onUpdateNotas,
   onUpdateStatus,
+  onDeleteChamado,
 }: ChamadosTableProps) {
   const [notaModalOpen, setNotaModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [notaViewOpen, setNotaViewOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedChamado, setSelectedChamado] = useState<ChamadoSuporte | null>(
     null
   );
@@ -76,6 +81,19 @@ export function ChamadosTable({
   const handleViewNota = (chamado: ChamadoSuporte) => {
     setSelectedChamado(chamado);
     setNotaViewOpen(true);
+  };
+
+  const handleOpenDeleteModal = (chamado: ChamadoSuporte) => {
+    setSelectedChamado(chamado);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedChamado && onDeleteChamado) {
+      onDeleteChamado(selectedChamado.id);
+      setDeleteModalOpen(false);
+      setSelectedChamado(null);
+    }
   };
 
   return (
@@ -162,6 +180,16 @@ export function ChamadosTable({
                       <Edit className="h-3.5 w-3.5 mr-1" />
                       Status
                     </Button>
+                    {onDeleteChamado && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenDeleteModal(chamado)}
+                        className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -206,6 +234,25 @@ export function ChamadosTable({
                   </div>
                 </div>
               </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Excluir Chamado</DialogTitle>
+                <DialogDescription>
+                  Tem certeza que deseja excluir o chamado de <strong>{selectedChamado.nome}</strong>? Esta ação não pode ser desfeita.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={handleConfirmDelete}>
+                  Excluir
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </>

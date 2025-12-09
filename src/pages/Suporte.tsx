@@ -7,7 +7,7 @@ import { ChamadosTable } from "@/components/suporte/ChamadosTable";
 
 export default function Suporte() {
   const [filters, setFilters] = useState<ChamadosFilters>({});
-  const { chamados, isLoading, updateNotas, updateStatus, contadores } =
+  const { chamados, isLoading, updateNotas, updateStatus, deleteChamado, contadores } =
     useChamadosSuporte(filters);
 
   if (isLoading) {
@@ -43,6 +43,7 @@ export default function Suporte() {
           chamados={chamados}
           onUpdateNotas={(data) => updateNotas.mutate(data)}
           onUpdateStatus={(data) => updateStatus.mutate(data)}
+          onDeleteChamado={(id) => deleteChamado.mutate(id)}
         />
       )}
     </div>

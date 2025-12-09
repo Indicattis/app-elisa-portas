@@ -82,6 +82,24 @@ export function useChamadosSuporte(filters: ChamadosFilters = {}) {
     },
   });
 
+  const deleteChamado = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("chamados_suporte")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chamados-suporte"] });
+      toast.success("Chamado excluído com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir chamado. Verifique se você tem permissão.");
+    },
+  });
+
   const contadores = {
     total: chamados?.length || 0,
     pendentes: chamados?.filter((c) => c.status === "pendente").length || 0,
@@ -94,6 +112,7 @@ export function useChamadosSuporte(filters: ChamadosFilters = {}) {
     isLoading,
     updateNotas,
     updateStatus,
+    deleteChamado,
     contadores,
   };
 }
