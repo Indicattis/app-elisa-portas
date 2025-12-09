@@ -184,11 +184,14 @@ export default function PedidoView() {
           .maybeSingle();
         vendaData = data;
 
-        // Buscar produtos da venda
+        // Buscar produtos da venda com cor
         if (data) {
           const { data: produtos } = await supabase
             .from("produtos_vendas")
-            .select("*")
+            .select(`
+              *,
+              cor:catalogo_cores(nome)
+            `)
             .eq("venda_id", data.id)
             .order("created_at");
           produtosVenda = produtos || [];
@@ -599,7 +602,7 @@ export default function PedidoView() {
                         <td className="p-2 text-xs">{produto.tipo_produto || '-'}</td>
                         <td className="p-2 text-xs">{produto.descricao || '-'}</td>
                         <td className="p-2 text-xs">{produto.tamanho || '-'}</td>
-                        <td className="p-2 text-xs">{produto.cor || '-'}</td>
+                        <td className="p-2 text-xs">{produto.cor?.nome || '-'}</td>
                         <td className="p-2 text-xs text-right">{peso || '-'}</td>
                         <td className="p-2 text-xs text-right">{meiaCanas || '-'}</td>
                         <td className="p-2 text-center">
