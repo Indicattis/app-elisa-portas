@@ -724,6 +724,7 @@ export default function PedidoView() {
                   valoresIniciais={getObservacoesPorPorta(porta.id)}
                   onSalvar={salvarObservacao}
                   pedidoId={id || ''}
+                  isReadOnly={!isAberto}
                 />
               ))}
             </div>
