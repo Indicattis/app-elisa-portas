@@ -6,6 +6,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive } from "lucide-react";
+import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
@@ -268,6 +269,11 @@ export function PedidoCard({
   const config = etapaAtual ? ETAPAS_CONFIG[etapaAtual] : null;
   const proximaEtapa = etapaAtual ? getProximaEtapa(etapaAtual) : null;
   const etapaAnterior = etapaAtual ? getEtapaAnterior(etapaAtual) : null;
+
+  // Extrair data de entrada da etapa atual (onde data_saida é null)
+  const etapasData = pedido.pedidos_etapas || [];
+  const etapaAtualData = etapasData.find((e: any) => e.data_saida === null);
+  const dataEntradaEtapaAtual = etapaAtualData?.data_entrada || null;
   const produtos = venda?.produtos_vendas || [];
   const temLinhas = linhasCount > 0;
   const todasOrdensConcluidasEmProducao = ordensStatus === true;
@@ -730,13 +736,10 @@ export function PedidoCard({
                 )}
               </div>
               
-              {/* Tempo */}
-              <span className="text-[10px] text-muted-foreground text-center" title="Tempo desde criação">
-                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), {
-                  addSuffix: true,
-                  locale: ptBR
-                })}
-              </span>
+              {/* Tempo na Etapa */}
+              <div className="text-center">
+                <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
+              </div>
               
               {/* Botões de ação */}
               <TooltipProvider>
@@ -917,13 +920,8 @@ export function PedidoCard({
               </span>
             </div>
             
-            <div className="flex items-center gap-0.5">
-              <span className="text-[10px] text-muted-foreground">
-                {formatDistanceToNow(new Date(venda?.created_at || Date.now()), {
-                addSuffix: true,
-                locale: ptBR
-              })}
-              </span>
+            <div className="flex items-center gap-1.5">
+              <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
               
               {onMoverPrioridade && posicao && total && <>
                   <Button 
