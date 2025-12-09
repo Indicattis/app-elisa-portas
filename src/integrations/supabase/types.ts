@@ -1452,8 +1452,11 @@ export type Database = {
           created_by: string | null
           custo_unitario: number
           descricao_produto: string | null
+          eixo_calculo: string | null
           fornecedor_id: string | null
           id: string
+          item_padrao_porta_enrolar: boolean | null
+          modulo_calculo: string | null
           nome_produto: string
           peso_porta: number | null
           pontuacao_producao: number | null
@@ -1467,6 +1470,7 @@ export type Database = {
           subcategoria_id: string | null
           unidade: string | null
           updated_at: string | null
+          valor_calculo: number | null
         }
         Insert: {
           ativo?: boolean | null
@@ -1475,8 +1479,11 @@ export type Database = {
           created_by?: string | null
           custo_unitario?: number
           descricao_produto?: string | null
+          eixo_calculo?: string | null
           fornecedor_id?: string | null
           id?: string
+          item_padrao_porta_enrolar?: boolean | null
+          modulo_calculo?: string | null
           nome_produto: string
           peso_porta?: number | null
           pontuacao_producao?: number | null
@@ -1490,6 +1497,7 @@ export type Database = {
           subcategoria_id?: string | null
           unidade?: string | null
           updated_at?: string | null
+          valor_calculo?: number | null
         }
         Update: {
           ativo?: boolean | null
@@ -1498,8 +1506,11 @@ export type Database = {
           created_by?: string | null
           custo_unitario?: number
           descricao_produto?: string | null
+          eixo_calculo?: string | null
           fornecedor_id?: string | null
           id?: string
+          item_padrao_porta_enrolar?: boolean | null
+          modulo_calculo?: string | null
           nome_produto?: string
           peso_porta?: number | null
           pontuacao_producao?: number | null
@@ -1513,6 +1524,7 @@ export type Database = {
           subcategoria_id?: string | null
           unidade?: string | null
           updated_at?: string | null
+          valor_calculo?: number | null
         }
         Relationships: [
           {
