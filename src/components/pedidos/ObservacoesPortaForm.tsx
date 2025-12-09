@@ -111,7 +111,7 @@ export function ObservacoesPortaForm({
       <CollapsibleContent>
         <div className="p-4 pt-0 border-t">
           {/* Header com botões */}
-          <div className="flex justify-end gap-2 mb-4">
+          <div className="flex justify-end gap-2 mt-4 mb-4">
             {!modoEdicao ? (
               <Button
                 variant="outline"
