@@ -94,6 +94,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         `)
         .eq('etapa_atual', etapa)
         .eq('arquivado', false)
+        .order('em_backlog', { ascending: false, nullsFirst: false })
         .order('prioridade_etapa', { ascending: false })
         .order('created_at', { ascending: false });
 
