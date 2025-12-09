@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Plus, Package, Check, X, Search, Zap } from "lucide-react";
+import { Trash2, Plus, Package, Check, X, Search, Zap, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { PedidoLinha, PedidoLinhaNova, CategoriaLinha } from "@/hooks/usePedidoLinhas";
@@ -136,6 +136,7 @@ export const PedidoLinhasEditor = ({
   const [novaLinha, setNovaLinha] = useState(false);
   const [buscaSku, setBuscaSku] = useState("");
   const [popoverAberto, setPopoverAberto] = useState(false);
+  const [avisoCalculo, setAvisoCalculo] = useState<string | null>(null);
   const [rascunhoLinha, setRascunhoLinha] = useState({
     produto_venda_id: "",
     estoque_id: "",
@@ -226,6 +227,8 @@ export const PedidoLinhasEditor = ({
 
   // Calcular tamanho automaticamente ao selecionar produto e porta
   useEffect(() => {
+    setAvisoCalculo(null); // Limpar aviso anterior
+    
     if (!rascunhoLinha.estoque_id) return;
     
     const produto = produtos.find(p => p.id === rascunhoLinha.estoque_id);
@@ -233,12 +236,23 @@ export const PedidoLinhasEditor = ({
     
     // Verificar se o produto tem configuração de cálculo
     if (!produto.modulo_calculo || !produto.valor_calculo || !produto.eixo_calculo) {
-      return;
+      return; // Produto não tem cálculo automático - OK
     }
     
     // Buscar a porta selecionada para obter dimensões
     const porta = portas.find(p => p.id === rascunhoLinha.produto_venda_id);
-    if (!porta) return;
+    if (!porta) {
+      setAvisoCalculo(`Selecione uma porta para calcular o tamanho automaticamente.`);
+      return;
+    }
+    
+    // Verificar se a porta tem as dimensões necessárias
+    const eixoValor = produto.eixo_calculo === 'largura' ? porta.largura : porta.altura;
+    
+    if (!eixoValor) {
+      setAvisoCalculo(`Esta porta não tem ${produto.eixo_calculo} cadastrada. Preencha manualmente.`);
+      return;
+    }
     
     // Calcular tamanho automaticamente
     const tamanhoAuto = calcularTamanhoAutomatico(
@@ -626,15 +640,23 @@ export const PedidoLinhasEditor = ({
                     />
                   </td>
                   <td className="p-2">
-                    <Input
-                      type="text"
-                      placeholder="Ex: 100"
-                      value={rascunhoLinha.tamanho}
-                      onChange={(e) => 
-                        setRascunhoLinha({...rascunhoLinha, tamanho: e.target.value})
-                      }
-                      className="h-8 text-xs"
-                    />
+                    <div className="space-y-1">
+                      <Input
+                        type="text"
+                        placeholder="Ex: 100"
+                        value={rascunhoLinha.tamanho}
+                        onChange={(e) => 
+                          setRascunhoLinha({...rascunhoLinha, tamanho: e.target.value})
+                        }
+                        className="h-8 text-xs"
+                      />
+                      {avisoCalculo && (
+                        <div className="flex items-center gap-1 text-[10px] text-amber-600">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          <span>{avisoCalculo}</span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   {todasOrdensConcluidas && onAtualizarCheckbox && (
                     <td className="p-2"></td>
