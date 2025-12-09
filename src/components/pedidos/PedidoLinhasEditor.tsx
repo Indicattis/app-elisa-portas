@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Plus, Package, Check, X, Search } from "lucide-react";
+import { Trash2, Plus, Package, Check, X, Search, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { PedidoLinha, PedidoLinhaNova, CategoriaLinha } from "@/hooks/usePedidoLinhas";
 import {
@@ -34,6 +35,40 @@ interface PedidoLinhasEditorProps {
   onRemoverLinha: (linhaId: string) => Promise<void>;
   onAtualizarCheckbox?: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
   onAtualizarLinha?: (linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => void;
+}
+
+interface ItemPadraoPortaEnrolar {
+  id: string;
+  nome_produto: string;
+  descricao_produto: string | null;
+  modulo_calculo: string | null;
+  valor_calculo: number | null;
+  eixo_calculo: string | null;
+  setor_responsavel_producao: string | null;
+}
+
+// Função para calcular o tamanho automático
+function calcularTamanhoAutomatico(
+  item: ItemPadraoPortaEnrolar,
+  portaLargura?: number,
+  portaAltura?: number
+): string | null {
+  if (!item.modulo_calculo || !item.valor_calculo || !item.eixo_calculo) {
+    return null;
+  }
+
+  const eixoValor = item.eixo_calculo === 'largura' ? portaLargura : portaAltura;
+  
+  if (!eixoValor) return null;
+
+  let tamanhoCalculado: number;
+  if (item.modulo_calculo === 'acrescimo') {
+    tamanhoCalculado = eixoValor + item.valor_calculo;
+  } else {
+    tamanhoCalculado = eixoValor - item.valor_calculo;
+  }
+
+  return tamanhoCalculado.toFixed(2);
 }
 
 // Mapeamento de setor para categoria
@@ -129,6 +164,60 @@ export const PedidoLinhasEditor = ({
     enabled: !!vendaId && !isReadOnly,
   });
 
+  // Estado para itens padrão de porta de enrolar
+  const [itensPadrao, setItensPadrao] = useState<ItemPadraoPortaEnrolar[]>([]);
+
+  // Buscar itens padrão de porta de enrolar
+  useEffect(() => {
+    const fetchItensPadrao = async () => {
+      if (!temPortasEnrolar || isReadOnly) {
+        setItensPadrao([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('estoque')
+          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao')
+          .eq('item_padrao_porta_enrolar', true)
+          .eq('ativo', true);
+
+        if (error) throw error;
+        setItensPadrao(data || []);
+      } catch (error) {
+        console.error('Erro ao buscar itens padrão:', error);
+      }
+    };
+
+    fetchItensPadrao();
+  }, [temPortasEnrolar, isReadOnly]);
+
+  // Verificar se um item padrão já foi adicionado para uma porta
+  const itemJaAdicionado = (portaId: string, estoqueId: string) => {
+    return linhas.some(l => l.produto_venda_id === portaId && l.estoque_id === estoqueId);
+  };
+
+  // Função para adicionar item padrão rapidamente
+  const handleAdicionarItemPadrao = async (porta: any, item: ItemPadraoPortaEnrolar) => {
+    const tamanhoAuto = calcularTamanhoAutomatico(item, porta.largura, porta.altura);
+    const categoria = mapearSetorParaCategoria(item.setor_responsavel_producao);
+    
+    try {
+      await onAdicionarLinha({
+        produto_venda_id: porta.id,
+        nome_produto: item.nome_produto,
+        descricao_produto: item.descricao_produto || "",
+        quantidade: 1,
+        tamanho: tamanhoAuto || "",
+        estoque_id: item.id,
+        categoria_linha: categoria,
+      });
+      toast.success(`${item.nome_produto} adicionado`);
+    } catch (error) {
+      toast.error('Erro ao adicionar item');
+    }
+  };
+
   // Calcular categoria automaticamente baseada no produto selecionado
   const produtoSelecionado = produtos.find(p => p.id === rascunhoLinha.estoque_id);
   const categoriaAutomatica = produtoSelecionado 
@@ -198,6 +287,56 @@ export const PedidoLinhasEditor = ({
 
   return (
     <div className="space-y-3">
+      {/* Sugestões de itens padrão para porta de enrolar */}
+      {!isReadOnly && temPortasEnrolar && portas.length > 0 && itensPadrao.length > 0 && (
+        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg space-y-3">
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Itens sugeridos (porta de enrolar)</span>
+          </div>
+          {portas.map((porta, idx) => {
+            const itensPadraoDisponiveis = itensPadrao.filter(
+              item => !itemJaAdicionado(porta.id, item.id)
+            );
+            
+            if (itensPadraoDisponiveis.length === 0) return null;
+            
+            return (
+              <div key={porta.id} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    Porta #{idx + 1}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {porta.largura}m × {porta.altura}m
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {itensPadraoDisponiveis.map((item) => {
+                    const tamanhoPreview = calcularTamanhoAutomatico(item, porta.largura, porta.altura);
+                    return (
+                      <Button
+                        key={item.id}
+                        size="sm"
+                        variant="outline"
+                        className="h-6 text-xs"
+                        onClick={() => handleAdicionarItemPadrao(porta, item)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        {item.nome_produto}
+                        {tamanhoPreview && (
+                          <span className="ml-1 text-muted-foreground">({tamanhoPreview}m)</span>
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {(linhas.length > 0 || novaLinha) ? (
         <div className="overflow-x-auto">
           <table className="w-full">
