@@ -224,6 +224,42 @@ export const PedidoLinhasEditor = ({
     ? mapearSetorParaCategoria(produtoSelecionado.setor_responsavel_producao)
     : null;
 
+  // Calcular tamanho automaticamente ao selecionar produto e porta
+  useEffect(() => {
+    if (!rascunhoLinha.estoque_id) return;
+    
+    const produto = produtos.find(p => p.id === rascunhoLinha.estoque_id);
+    if (!produto) return;
+    
+    // Verificar se o produto tem configuração de cálculo
+    if (!produto.modulo_calculo || !produto.valor_calculo || !produto.eixo_calculo) {
+      return;
+    }
+    
+    // Buscar a porta selecionada para obter dimensões
+    const porta = portas.find(p => p.id === rascunhoLinha.produto_venda_id);
+    if (!porta) return;
+    
+    // Calcular tamanho automaticamente
+    const tamanhoAuto = calcularTamanhoAutomatico(
+      {
+        id: produto.id,
+        nome_produto: produto.nome_produto,
+        descricao_produto: produto.descricao_produto,
+        modulo_calculo: produto.modulo_calculo,
+        valor_calculo: produto.valor_calculo,
+        eixo_calculo: produto.eixo_calculo,
+        setor_responsavel_producao: produto.setor_responsavel_producao,
+      },
+      porta.largura,
+      porta.altura
+    );
+    
+    if (tamanhoAuto) {
+      setRascunhoLinha(prev => ({ ...prev, tamanho: tamanhoAuto }));
+    }
+  }, [rascunhoLinha.estoque_id, rascunhoLinha.produto_venda_id, produtos, portas]);
+
   const handleSalvarNovaLinha = async () => {
     // Validações
     // produto_venda_id só é obrigatório se há portas enrolar
