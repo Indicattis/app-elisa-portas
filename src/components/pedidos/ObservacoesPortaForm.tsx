@@ -26,6 +26,7 @@ interface ObservacoesPortaFormProps {
   onSalvar: (dados: PedidoPortaObservacoesInsert) => Promise<any>;
   pedidoId: string;
   defaultOpen?: boolean;
+  isReadOnly?: boolean;
 }
 
 export function ObservacoesPortaForm({
@@ -36,6 +37,7 @@ export function ObservacoesPortaForm({
   onSalvar,
   pedidoId,
   defaultOpen = false,
+  isReadOnly = false,
 }: ObservacoesPortaFormProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [modoEdicao, setModoEdicao] = useState(false);
@@ -124,7 +126,11 @@ export function ObservacoesPortaForm({
         <div className="p-4 pt-0 border-t">
           {/* Header com botões */}
           <div className="flex justify-end gap-2 mt-4 mb-4">
-            {!modoEdicao ? (
+            {isReadOnly ? (
+              <Badge variant="secondary" className="text-xs">
+                Somente leitura
+              </Badge>
+            ) : !modoEdicao ? (
               <Button
                 variant="outline"
                 size="sm"
