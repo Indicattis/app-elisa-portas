@@ -812,7 +812,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       }
 
       // Chamar função RPC que faz o retrocesso
-      const { error } = await supabase.rpc('retroceder_pedido_para_etapa', {
+      const { data, error } = await supabase.rpc('retroceder_pedido_para_etapa', {
         p_pedido_id: pedidoId,
         p_etapa_destino: etapaDestino,
         p_motivo_backlog: motivo,
@@ -820,6 +820,11 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       });
 
       if (error) throw error;
+      
+      // Verificar retorno da função RPC (pode retornar success: false)
+      if (data && typeof data === 'object' && 'success' in data && data.success === false) {
+        throw new Error((data as any).error || 'Erro ao retroceder pedido');
+      }
 
       return { etapaDestino };
     },
