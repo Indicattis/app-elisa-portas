@@ -15,6 +15,8 @@ export interface Veiculo {
   data_proxima_troca_oleo: string | null;
   status: 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
   foto_url: string | null;
+  documento_url: string | null;
+  documento_nome: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -33,6 +35,8 @@ export interface VeiculoFormData {
   data_proxima_troca_oleo?: string;
   status: 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
   foto_url?: string;
+  documento_url?: string;
+  documento_nome?: string;
 }
 
 export function precisaConferenciaSemanal(veiculo: Veiculo): boolean {
@@ -209,6 +213,33 @@ export function useVeiculos() {
     }
   });
 
+  const uploadDocumentoMutation = useMutation({
+    mutationFn: async ({ file, veiculo_id }: { file: File; veiculo_id?: string }) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${veiculo_id || Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `documentos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documentos-publicos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documentos-publicos')
+        .getPublicUrl(filePath);
+
+      return { url: publicUrl, nome: file.name };
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao fazer upload do documento',
+        description: error.message,
+      });
+    }
+  });
+
   return {
     veiculos,
     isLoading,
@@ -216,9 +247,11 @@ export function useVeiculos() {
     updateVeiculo: updateVeiculoMutation.mutateAsync,
     deleteVeiculo: deleteVeiculoMutation.mutateAsync,
     uploadFoto: uploadFotoMutation.mutateAsync,
+    uploadDocumento: uploadDocumentoMutation.mutateAsync,
     isCreating: createVeiculoMutation.isPending,
     isUpdating: updateVeiculoMutation.isPending,
     isDeleting: deleteVeiculoMutation.isPending,
     isUploading: uploadFotoMutation.isPending,
+    isUploadingDocumento: uploadDocumentoMutation.isPending,
   };
 }

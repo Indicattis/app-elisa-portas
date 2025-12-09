@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, FileText, X, ExternalLink } from "lucide-react";
 import { VeiculoFormData } from "@/hooks/useVeiculos";
 
 interface VeiculoFormProps {
-  onSubmit: (data: VeiculoFormData & { foto?: File }) => Promise<void>;
-  initialData?: Partial<VeiculoFormData>;
+  onSubmit: (data: VeiculoFormData & { foto?: File; documento?: File }) => Promise<void>;
+  initialData?: Partial<VeiculoFormData & { documento_url?: string; documento_nome?: string }>;
   isSubmitting?: boolean;
   isEditing?: boolean;
 }
@@ -17,6 +17,10 @@ interface VeiculoFormProps {
 export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = false }: VeiculoFormProps) {
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(initialData?.foto_url || null);
+  
+  const [documentoFile, setDocumentoFile] = useState<File | null>(null);
+  const [documentoNome, setDocumentoNome] = useState<string | null>(initialData?.documento_nome || null);
+  const [documentoUrl, setDocumentoUrl] = useState<string | null>(initialData?.documento_url || null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<VeiculoFormData>({
     defaultValues: {
@@ -44,6 +48,29 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
     }
   };
 
+  const handleDocumentoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        alert('Apenas arquivos PDF são permitidos');
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        alert('O arquivo deve ter no máximo 20MB');
+        return;
+      }
+      setDocumentoFile(file);
+      setDocumentoNome(file.name);
+      setDocumentoUrl(null); // Remove URL antiga quando seleciona novo arquivo
+    }
+  };
+
+  const handleRemoverDocumento = () => {
+    setDocumentoFile(null);
+    setDocumentoNome(null);
+    setDocumentoUrl(null);
+  };
+
   const onFormSubmit = async (data: VeiculoFormData) => {
     // Sanitizar campos de data vazios (converter '' para null/undefined)
     const sanitizedData = {
@@ -51,39 +78,99 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
       data_troca_oleo: data.data_troca_oleo || undefined,
       data_proxima_troca_oleo: (data as any).data_proxima_troca_oleo || undefined,
       km_proxima_troca_oleo: (data as any).km_proxima_troca_oleo || undefined,
+      // Se documento foi removido, enviar null
+      documento_url: documentoUrl === null && !documentoFile ? null : undefined,
+      documento_nome: documentoNome === null && !documentoFile ? null : undefined,
     };
-    await onSubmit({ ...sanitizedData, foto: fotoFile || undefined });
+    await onSubmit({ 
+      ...sanitizedData, 
+      foto: fotoFile || undefined,
+      documento: documentoFile || undefined
+    });
   };
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Foto do Veículo</Label>
-        <div className="flex items-center gap-4">
-          {fotoPreview && (
-            <img 
-              src={fotoPreview} 
-              alt="Preview" 
-              className="w-24 h-24 object-cover rounded-lg border"
-            />
-          )}
-          <div>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleFotoChange}
-              className="hidden"
-              id="foto-upload"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById('foto-upload')?.click()}
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              {fotoPreview ? 'Trocar Foto' : 'Adicionar Foto'}
-            </Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Foto do Veículo */}
+        <div className="space-y-2">
+          <Label>Foto do Veículo</Label>
+          <div className="flex items-center gap-4">
+            {fotoPreview && (
+              <img 
+                src={fotoPreview} 
+                alt="Preview" 
+                className="w-24 h-24 object-cover rounded-lg border"
+              />
+            )}
+            <div>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFotoChange}
+                className="hidden"
+                id="foto-upload"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('foto-upload')?.click()}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                {fotoPreview ? 'Trocar Foto' : 'Adicionar Foto'}
+              </Button>
+            </div>
           </div>
+        </div>
+
+        {/* Documento do Veículo */}
+        <div className="space-y-2">
+          <Label>Documento do Veículo (PDF)</Label>
+          {(documentoNome || documentoUrl) ? (
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border">
+              <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+              <span className="text-sm truncate flex-1">{documentoNome || 'Documento'}</span>
+              {documentoUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                >
+                  <a href={documentoUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoverDocumento}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <Input
+                type="file"
+                accept="application/pdf"
+                onChange={handleDocumentoChange}
+                className="hidden"
+                id="documento-upload"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('documento-upload')?.click()}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Anexar Documento (PDF)
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1">Máximo 20MB</p>
+            </div>
+          )}
         </div>
       </div>
 
