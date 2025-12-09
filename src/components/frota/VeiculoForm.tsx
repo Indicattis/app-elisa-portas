@@ -45,7 +45,14 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
   };
 
   const onFormSubmit = async (data: VeiculoFormData) => {
-    await onSubmit({ ...data, foto: fotoFile || undefined });
+    // Sanitizar campos de data vazios (converter '' para null/undefined)
+    const sanitizedData = {
+      ...data,
+      data_troca_oleo: data.data_troca_oleo || undefined,
+      data_proxima_troca_oleo: (data as any).data_proxima_troca_oleo || undefined,
+      km_proxima_troca_oleo: (data as any).km_proxima_troca_oleo || undefined,
+    };
+    await onSubmit({ ...sanitizedData, foto: fotoFile || undefined });
   };
 
   return (
