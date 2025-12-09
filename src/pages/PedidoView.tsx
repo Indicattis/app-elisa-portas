@@ -6,7 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer } from "lucide-react";
+import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -468,6 +469,75 @@ export default function PedidoView() {
     }
   };
 
+  const prepararDadosPDF = (): PedidoProducaoPDFData | null => {
+    if (!pedido) return null;
+    
+    const observacoesData = portasEnrolar.map((porta: any) => {
+      const obs = getObservacoesPorPorta(porta.id);
+      const responsavel = usuarios.find((u: any) => u.id === obs?.responsavel_medidas_id);
+      
+      // Construir descrição das observações baseado nos campos disponíveis
+      const detalhes: string[] = [];
+      if (obs) {
+        if (obs.interna_externa) detalhes.push(obs.interna_externa === 'porta_interna' ? 'Interna' : 'Externa');
+        if (obs.opcao_tubo && obs.opcao_tubo !== 'sem_tubo') detalhes.push('Com tubo');
+        if (obs.posicao_guia) detalhes.push(obs.posicao_guia === 'guia_dentro_vao' ? 'Guia dentro' : 'Guia fora');
+        if (obs.opcao_guia) detalhes.push(obs.opcao_guia === 'guia_aparente' ? 'Aparente' : obs.opcao_guia);
+        if (obs.lado_motor) detalhes.push(`Motor ${obs.lado_motor}`);
+      }
+      
+      return {
+        porta_descricao: porta.descricao || `Porta ${porta.tamanho}`,
+        local_instalacao: obs?.interna_externa === 'porta_interna' ? 'Interna' : obs?.interna_externa === 'porta_externa' ? 'Externa' : '',
+        observacoes: detalhes.join(' | '),
+        responsavel_nome: responsavel?.nome || '',
+      };
+    }).filter((o: any) => o.observacoes || o.responsavel_nome);
+    
+    return {
+      pedido: {
+        id: pedido.id,
+        numero_pedido: pedido.numero_pedido,
+        etapa_atual: pedido.etapa_atual,
+        status: pedido.status,
+        created_at: pedido.created_at,
+      },
+      cliente: pedido.venda ? {
+        nome: pedido.venda.cliente_nome,
+        cidade: pedido.venda.cidade,
+        estado: pedido.venda.estado,
+        valor_venda: pedido.venda.valor_venda,
+        forma_pagamento: pedido.venda.forma_pagamento,
+        tipo_entrega: pedido.venda.tipo_entrega,
+        data_prevista_entrega: pedido.venda.data_prevista_entrega,
+      } : undefined,
+      produtos: (pedido.venda?.produtos || []).map((p: any) => ({
+        tipo_produto: p.tipo_produto,
+        descricao: p.descricao,
+        tamanho: p.tamanho,
+        cor: p.cor?.nome,
+        quantidade: p.quantidade || 1,
+        peso: calcularPeso(p),
+        meiaCanas: calcularMeiaCanas(p),
+      })),
+      linhas: pedido.linhas.map((l: any) => ({
+        nome_produto: l.nome_produto,
+        descricao_produto: l.descricao_produto,
+        quantidade: l.quantidade,
+        tamanho: l.tamanho,
+        check_separacao: l.check_separacao,
+        check_qualidade: l.check_qualidade,
+        check_coleta: l.check_coleta,
+      })),
+      observacoes: observacoesData,
+      ordens: pedido.ordens.map((o: any) => ({
+        tipo: o.tipo,
+        numero_ordem: o.numero_ordem,
+        status: o.status,
+      })),
+    };
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
   if (!pedido) return <div className="text-center py-8"><p>Pedido não encontrado</p></div>;
 
@@ -611,6 +681,28 @@ export default function PedidoView() {
                 Ver Venda
               </Button>
             )}
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-sm h-9" 
+              onClick={() => {
+                const pdfData = prepararDadosPDF();
+                if (pdfData) baixarPedidoProducaoPDF(pdfData);
+              }}
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              Baixar PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-sm h-9" 
+              onClick={() => {
+                const pdfData = prepararDadosPDF();
+                if (pdfData) imprimirPedidoProducaoPDF(pdfData);
+              }}
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimir PDF
+            </Button>
           </CardContent>
         </Card>
       </div>
