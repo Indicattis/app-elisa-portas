@@ -7,6 +7,7 @@ import { FileText, Edit } from "lucide-react";
 import { ChamadoSuporte } from "@/types/suporte";
 import { AdicionarNotaModal } from "./AdicionarNotaModal";
 import { AlterarStatusModal } from "./AlterarStatusModal";
+import { CronometroChamado } from "./CronometroChamado";
 import {
   Dialog,
   DialogContent,
@@ -89,6 +90,7 @@ export function ChamadosTable({
               <TableHead>Telefone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Data Cadastro</TableHead>
+              <TableHead>Tempo Espera</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Nota</TableHead>
               <TableHead className="w-[150px]">Ações</TableHead>
@@ -117,6 +119,13 @@ export function ChamadosTable({
                 <TableCell>{chamado.email}</TableCell>
                 <TableCell>
                   {format(new Date(chamado.created_at), "dd/MM/yyyy")}
+                </TableCell>
+                <TableCell>
+                  <CronometroChamado 
+                    createdAt={chamado.created_at}
+                    updatedAt={chamado.updated_at}
+                    status={chamado.status}
+                  />
                 </TableCell>
                 <TableCell>{getStatusBadge(chamado.status)}</TableCell>
                 <TableCell>
