@@ -34,6 +34,11 @@ export interface ProdutoEstoque {
   quantidade_ideal: number;
   requer_pintura: boolean;
   pontuacao_producao: number;
+  // Novos campos de cálculo automático
+  modulo_calculo: 'acrescimo' | 'desconto' | null;
+  valor_calculo: number | null;
+  eixo_calculo: 'largura' | 'altura' | null;
+  item_padrao_porta_enrolar: boolean;
   subcategoria?: {
     id: string;
     nome: string;
@@ -58,6 +63,11 @@ export interface ProdutoEstoqueInput {
   quantidade_ideal?: number;
   requer_pintura?: boolean;
   pontuacao_producao?: number;
+  // Novos campos de cálculo automático
+  modulo_calculo?: 'acrescimo' | 'desconto' | null;
+  valor_calculo?: number | null;
+  eixo_calculo?: 'largura' | 'altura' | null;
+  item_padrao_porta_enrolar?: boolean;
 }
 
 export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null = null) => {

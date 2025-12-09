@@ -53,6 +53,10 @@ export default function EstoqueEdit() {
     fornecedor_id: string;
     requer_pintura: boolean;
     pontuacao_producao: number;
+    modulo_calculo: string;
+    valor_calculo: number;
+    eixo_calculo: string;
+    item_padrao_porta_enrolar: boolean;
   }>({
     nome_produto: "",
     descricao_produto: "",
@@ -67,6 +71,10 @@ export default function EstoqueEdit() {
     fornecedor_id: "",
     requer_pintura: false,
     pontuacao_producao: 0,
+    modulo_calculo: "",
+    valor_calculo: 0,
+    eixo_calculo: "",
+    item_padrao_porta_enrolar: false,
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -116,6 +124,10 @@ export default function EstoqueEdit() {
         fornecedor_id: produto.fornecedor_id || "",
         requer_pintura: produto.requer_pintura === true,
         pontuacao_producao: Number(produto.pontuacao_producao) || 0,
+        modulo_calculo: produto.modulo_calculo || "",
+        valor_calculo: Number(produto.valor_calculo) || 0,
+        eixo_calculo: produto.eixo_calculo || "",
+        item_padrao_porta_enrolar: produto.item_padrao_porta_enrolar === true,
       };
       
       console.log('[EstoqueEdit] Novo formData:', newFormData);
@@ -151,6 +163,10 @@ export default function EstoqueEdit() {
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
         pontuacao_producao: formData.pontuacao_producao,
+        modulo_calculo: (formData.modulo_calculo || null) as 'acrescimo' | 'desconto' | null,
+        valor_calculo: formData.valor_calculo || null,
+        eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
+        item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
       };
       
       console.log('[EstoqueEdit] handleSubmit - dados que serão salvos:', dadosParaSalvar);
@@ -420,6 +436,73 @@ export default function EstoqueEdit() {
               <Label htmlFor="requer_pintura" className="cursor-pointer font-medium">
                 Este item requer pintura na produção
               </Label>
+            </div>
+
+            {/* Seção de Cálculo Automático */}
+            <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+              <h4 className="font-medium">Configurações de Cálculo Automático</h4>
+              <p className="text-sm text-muted-foreground">
+                Configure o cálculo automático do tamanho do item em relação às dimensões da porta.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="modulo_calculo">Módulo de Cálculo</Label>
+                  <Select
+                    value={formData.modulo_calculo || undefined}
+                    onValueChange={(value) => setFormData({ ...formData, modulo_calculo: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="acrescimo">Acréscimo</SelectItem>
+                      <SelectItem value="desconto">Desconto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="valor_calculo">Valor de Cálculo (m)</Label>
+                  <Input
+                    id="valor_calculo"
+                    type="number"
+                    step="0.01"
+                    value={formData.valor_calculo}
+                    onChange={(e) => setFormData({ ...formData, valor_calculo: parseFloat(e.target.value) || 0 })}
+                    placeholder="Ex: 0.14"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="eixo_calculo">Eixo de Cálculo</Label>
+                  <Select
+                    value={formData.eixo_calculo || undefined}
+                    onValueChange={(value) => setFormData({ ...formData, eixo_calculo: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="largura">Largura</SelectItem>
+                      <SelectItem value="altura">Altura</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 pt-3 border-t">
+                <input
+                  type="checkbox"
+                  id="item_padrao_porta_enrolar"
+                  checked={formData.item_padrao_porta_enrolar}
+                  onChange={(e) => setFormData({ ...formData, item_padrao_porta_enrolar: e.target.checked })}
+                  className="h-4 w-4 rounded border-input"
+                />
+                <Label htmlFor="item_padrao_porta_enrolar" className="cursor-pointer font-medium">
+                  Item padrão para porta de enrolar (será sugerido automaticamente nos pedidos)
+                </Label>
+              </div>
             </div>
 
             <div className="space-y-2">

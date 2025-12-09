@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { useEstoque } from "@/hooks/useEstoque";
-import { Search, Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
+import { Search, Package, Calculator, Zap } from "lucide-react";
 import type { CategoriaLinha, PedidoLinhaNova } from "@/hooks/usePedidoLinhas";
 
 interface AdicionarLinhaModalProps {
@@ -15,6 +16,8 @@ interface AdicionarLinhaModalProps {
   categoria: CategoriaLinha;
   portaId: string;
   onAdicionar: (linha: PedidoLinhaNova) => Promise<any>;
+  portaLargura?: number;
+  portaAltura?: number;
 }
 
 // Mapeamento de categoria para setor de produção
@@ -30,9 +33,42 @@ const CATEGORIA_LABELS = {
   perfiladeira: "Perfiladeira",
 };
 
-export function AdicionarLinhaModal({ open, onOpenChange, categoria, portaId, onAdicionar }: AdicionarLinhaModalProps) {
+// Função para calcular o tamanho automático
+function calcularTamanhoAutomatico(
+  produto: ProdutoEstoque,
+  portaLargura?: number,
+  portaAltura?: number
+): string | null {
+  if (!produto.modulo_calculo || !produto.valor_calculo || !produto.eixo_calculo) {
+    return null;
+  }
+
+  const eixoValor = produto.eixo_calculo === 'largura' ? portaLargura : portaAltura;
+  
+  if (!eixoValor) return null;
+
+  let tamanhoCalculado: number;
+  if (produto.modulo_calculo === 'acrescimo') {
+    tamanhoCalculado = eixoValor + produto.valor_calculo;
+  } else {
+    tamanhoCalculado = eixoValor - produto.valor_calculo;
+  }
+
+  return tamanhoCalculado.toFixed(2);
+}
+
+export function AdicionarLinhaModal({ 
+  open, 
+  onOpenChange, 
+  categoria, 
+  portaId, 
+  onAdicionar,
+  portaLargura,
+  portaAltura 
+}: AdicionarLinhaModalProps) {
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
+  const [tamanhoCalculado, setTamanhoCalculado] = useState<string | null>(null);
   const [formData, setFormData] = useState<PedidoLinhaNova>({
     produto_venda_id: portaId,
     nome_produto: "",
@@ -51,13 +87,17 @@ export function AdicionarLinhaModal({ open, onOpenChange, categoria, portaId, on
     buscarProdutos(termo);
   };
 
-  const handleSelecionarProduto = (produto: any) => {
+  const handleSelecionarProduto = (produto: ProdutoEstoque) => {
+    // Calcular tamanho automático se o produto tiver configuração
+    const tamanhoAuto = calcularTamanhoAutomatico(produto, portaLargura, portaAltura);
+    setTamanhoCalculado(tamanhoAuto);
+    
     setFormData({
       produto_venda_id: portaId,
       nome_produto: produto.nome_produto,
       descricao_produto: produto.descricao_produto || "",
       quantidade: 1,
-      tamanho: "",
+      tamanho: tamanhoAuto || "",
       estoque_id: produto.id,
       categoria_linha: categoria,
     });
@@ -81,8 +121,26 @@ export function AdicionarLinhaModal({ open, onOpenChange, categoria, portaId, on
     });
     setModoManual(false);
     setBusca("");
+    setTamanhoCalculado(null);
     onOpenChange(false);
   };
+
+  // Resetar estado quando fechar o modal
+  useEffect(() => {
+    if (!open) {
+      setModoManual(false);
+      setBusca("");
+      setTamanhoCalculado(null);
+      setFormData({
+        produto_venda_id: portaId,
+        nome_produto: "",
+        descricao_produto: "",
+        quantidade: 1,
+        tamanho: "",
+        categoria_linha: categoria,
+      });
+    }
+  }, [open, portaId, categoria]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -105,26 +163,54 @@ export function AdicionarLinhaModal({ open, onOpenChange, categoria, portaId, on
 
             <ScrollArea className="h-[300px]">
               <div className="space-y-2">
-                {produtos.map((produto) => (
-                  <Card
-                    key={produto.id}
-                    className="p-2 cursor-pointer hover:bg-accent transition-colors"
-                    onClick={() => handleSelecionarProduto(produto)}
-                  >
-                    <div className="flex items-start gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{produto.nome_produto}</p>
-                        {produto.descricao_produto && (
-                          <p className="text-xs text-muted-foreground truncate">{produto.descricao_produto}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Disponível: {produto.quantidade} {produto.unidade || 'UN'}
-                        </p>
+                {produtos.map((produto) => {
+                  const temCalculoAuto = produto.modulo_calculo && produto.valor_calculo && produto.eixo_calculo;
+                  const tamanhoPreview = temCalculoAuto 
+                    ? calcularTamanhoAutomatico(produto, portaLargura, portaAltura)
+                    : null;
+                    
+                  return (
+                    <Card
+                      key={produto.id}
+                      className="p-2 cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => handleSelecionarProduto(produto)}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Package className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm truncate">{produto.nome_produto}</p>
+                            {temCalculoAuto && (
+                              <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                <Calculator className="h-3 w-3" />
+                                Auto
+                              </Badge>
+                            )}
+                            {produto.item_padrao_porta_enrolar && (
+                              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                <Zap className="h-3 w-3" />
+                                Padrão
+                              </Badge>
+                            )}
+                          </div>
+                          {produto.descricao_produto && (
+                            <p className="text-xs text-muted-foreground truncate">{produto.descricao_produto}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-xs text-muted-foreground">
+                              Disponível: {produto.quantidade} {produto.unidade || 'UN'}
+                            </p>
+                            {tamanhoPreview && (
+                              <p className="text-xs text-primary font-medium">
+                                → Tamanho: {tamanhoPreview}m
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             </ScrollArea>
 
@@ -175,12 +261,21 @@ export function AdicionarLinhaModal({ open, onOpenChange, categoria, portaId, on
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="tamanho" className="text-xs">Tamanho (opcional)</Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="tamanho" className="text-xs">Tamanho (opcional)</Label>
+                  {tamanhoCalculado && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Calculator className="h-3 w-3 mr-1" />
+                      Calculado
+                    </Badge>
+                  )}
+                </div>
                 <Input
                   id="tamanho"
                   value={formData.tamanho}
                   onChange={(e) => setFormData({ ...formData, tamanho: e.target.value })}
                   className="h-8 text-sm"
+                  placeholder={tamanhoCalculado ? `Sugerido: ${tamanhoCalculado}m` : ""}
                 />
               </div>
             </div>

@@ -41,6 +41,11 @@ export default function Estoque() {
     fornecedor_id: "",
     requer_pintura: false,
     pontuacao_producao: 0,
+    // Novos campos de cálculo automático
+    modulo_calculo: "",
+    valor_calculo: 0,
+    eixo_calculo: "",
+    item_padrao_porta_enrolar: false,
   });
 
   const getCategoriaColor = (categoriaId: string) => {
@@ -70,6 +75,11 @@ export default function Estoque() {
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
         pontuacao_producao: formData.pontuacao_producao,
+        // Novos campos de cálculo automático
+        modulo_calculo: formData.modulo_calculo as any || null,
+        valor_calculo: formData.valor_calculo || null,
+        eixo_calculo: formData.eixo_calculo as any || null,
+        item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
       });
       
       setFormData({
@@ -85,6 +95,10 @@ export default function Estoque() {
         fornecedor_id: "",
         requer_pintura: false,
         pontuacao_producao: 0,
+        modulo_calculo: "",
+        valor_calculo: 0,
+        eixo_calculo: "",
+        item_padrao_porta_enrolar: false,
       });
       setNovoModal(false);
       toast.success("Produto adicionado com sucesso");
@@ -391,6 +405,73 @@ export default function Estoque() {
                       value={formData.pontuacao_producao}
                       onChange={(e) => setFormData({ ...formData, pontuacao_producao: Number(e.target.value) })}
                     />
+                  </div>
+                </div>
+
+                {/* Seção de Cálculo Automático */}
+                <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                  <h4 className="font-medium text-sm">Configurações de Cálculo Automático</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Configure o cálculo automático do tamanho do item em relação às dimensões da porta.
+                  </p>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="modulo_calculo">Módulo</Label>
+                      <Select
+                        value={formData.modulo_calculo}
+                        onValueChange={(value) => setFormData({ ...formData, modulo_calculo: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="acrescimo">Acréscimo</SelectItem>
+                          <SelectItem value="desconto">Desconto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="valor_calculo">Valor (m)</Label>
+                      <Input
+                        id="valor_calculo"
+                        type="number"
+                        step="0.01"
+                        value={formData.valor_calculo}
+                        onChange={(e) => setFormData({ ...formData, valor_calculo: Number(e.target.value) })}
+                        placeholder="Ex: 0.14"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="eixo_calculo">Eixo</Label>
+                      <Select
+                        value={formData.eixo_calculo}
+                        onValueChange={(value) => setFormData({ ...formData, eixo_calculo: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="largura">Largura</SelectItem>
+                          <SelectItem value="altura">Altura</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 pt-2 border-t">
+                    <input
+                      type="checkbox"
+                      id="item_padrao_porta_enrolar"
+                      checked={formData.item_padrao_porta_enrolar}
+                      onChange={(e) => setFormData({ ...formData, item_padrao_porta_enrolar: e.target.checked })}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    <Label htmlFor="item_padrao_porta_enrolar" className="cursor-pointer text-sm">
+                      Item padrão para porta de enrolar (será sugerido automaticamente)
+                    </Label>
                   </div>
                 </div>
 
