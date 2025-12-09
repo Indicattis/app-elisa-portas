@@ -117,24 +117,22 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
       }
       
       // Primeiro deletar linhas de ordens associadas
-      const { error: linhasError } = await supabase
+      await supabase
         .from('linhas_ordens')
         .delete()
         .eq('ordem_id', ordemToDelete.id);
       
-      if (linhasError) {
-        console.warn('Erro ao deletar linhas:', linhasError);
-      }
-      
       // Deletar pontuações associadas
-      const { error: pontuacaoError } = await supabase
+      await supabase
         .from('pontuacao_colaboradores')
         .delete()
         .eq('ordem_id', ordemToDelete.id);
       
-      if (pontuacaoError) {
-        console.warn('Erro ao deletar pontuações:', pontuacaoError);
-      }
+      // Remover referência do responsável antes de deletar (set to null)
+      await supabase
+        .from(tableName as any)
+        .update({ responsavel_id: null })
+        .eq('id', ordemToDelete.id);
       
       // Deletar a ordem
       const { error } = await supabase
