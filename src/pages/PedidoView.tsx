@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -7,6 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PedidoFluxogramaMap } from "@/components/pedidos/PedidoFluxogramaMap";
@@ -468,10 +476,47 @@ export default function PedidoView() {
 
   return (
     <div className="container mx-auto p-4 space-y-4 max-w-7xl">
+      {/* Breadcrumbs */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/dashboard">Dashboard</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/dashboard/fabrica">Fábrica</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/dashboard/fabrica/pedidos">Pedidos</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>#{pedido.numero_pedido}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else {
+                navigate('/dashboard/fabrica/pedidos');
+              }
+            }}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />Voltar
           </Button>
           <div>
