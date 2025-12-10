@@ -2,8 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Factory, Package, Calendar, User } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import { Factory, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -36,6 +42,14 @@ const etapaColors: Record<string, string> = {
   finalizado: 'bg-green-500',
 };
 
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 export function PedidosEmProducao() {
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ['pedidos-em-producao-dashboard'],
@@ -52,6 +66,8 @@ export function PedidosEmProducao() {
     },
     staleTime: 1000 * 60 * 2,
   });
+
+  const pedidosChunks = chunkArray(pedidos, 3);
 
   if (isLoading) {
     return (
@@ -99,44 +115,55 @@ export function PedidosEmProducao() {
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-4">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex gap-3 pb-2">
-            {pedidos.map((pedido) => (
-              <Card 
-                key={pedido.id} 
-                className="flex-shrink-0 w-[220px] border bg-card hover:bg-accent/50 transition-colors"
-              >
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm">
-                      #{pedido.numero_pedido}
-                    </span>
-                    <Badge 
-                      className={`${etapaColors[pedido.etapa_atual] || 'bg-slate-500'} text-white text-[10px] px-1.5`}
+        <Carousel opts={{ align: 'start' }} className="w-full">
+          <CarouselContent className="-ml-2 md:-ml-4">
+            {pedidosChunks.map((chunk, slideIndex) => (
+              <CarouselItem key={slideIndex} className="pl-2 md:pl-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {chunk.map((pedido) => (
+                    <Card 
+                      key={pedido.id} 
+                      className="border bg-card hover:bg-accent/50 transition-colors"
                     >
-                      {etapaLabels[pedido.etapa_atual] || pedido.etapa_atual}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <User className="h-3 w-3" />
-                    <span className="truncate">{pedido.cliente_nome}</span>
-                  </div>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-sm">
+                            #{pedido.numero_pedido}
+                          </span>
+                          <Badge 
+                            className={`${etapaColors[pedido.etapa_atual] || 'bg-slate-500'} text-white text-[10px] px-1.5`}
+                          >
+                            {etapaLabels[pedido.etapa_atual] || pedido.etapa_atual}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <User className="h-3 w-3" />
+                          <span className="truncate">{pedido.cliente_nome}</span>
+                        </div>
 
-                  {pedido.data_carregamento && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        {format(new Date(pedido.data_carregamento), "dd/MM", { locale: ptBR })}
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        {pedido.data_carregamento && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              {format(new Date(pedido.data_carregamento), "dd/MM", { locale: ptBR })}
+                            </span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CarouselItem>
             ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+          </CarouselContent>
+          {pedidosChunks.length > 1 && (
+            <>
+              <CarouselPrevious className="left-0 -translate-x-1/2" />
+              <CarouselNext className="right-0 translate-x-1/2" />
+            </>
+          )}
+        </Carousel>
       </CardContent>
     </Card>
   );
