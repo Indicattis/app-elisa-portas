@@ -25,104 +25,115 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
         !podeIniciar && "opacity-60"
       )}
     >
-      {/* HEADER */}
-      <CardHeader className="h-[40px] py-0 px-4 border-b bg-muted/30 flex items-center justify-center">
-        <div className="flex items-center justify-between w-full gap-4 h-full">
-          <div className="flex items-center gap-3 text-xs">
+      {/* HEADER - Mobile First */}
+      <CardHeader className="min-h-[40px] py-2 px-3 sm:px-4 border-b bg-muted/30">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-1 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
             {ordem.pedido?.numero_pedido && (
               <span className="font-medium text-muted-foreground">
-                Pedido #{ordem.pedido.numero_pedido}
+                #{ordem.pedido.numero_pedido}
               </span>
             )}
-            <span className="font-bold">
+            <span className="font-bold truncate max-w-[120px] sm:max-w-none">
               {ordem.nome_cliente}
             </span>
             {ordem.venda?.cidade && ordem.venda?.estado && (
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground hidden sm:inline">
                 {ordem.venda.cidade} - {ordem.venda.estado}
               </span>
             )}
-            <span className="text-muted-foreground">•</span>
             {ordem.responsavel_carregamento_nome ? (
-              <span className="font-medium text-foreground">
-                {ordem.responsavel_carregamento_nome}
+              <span className="font-medium text-foreground hidden sm:inline">
+                • {ordem.responsavel_carregamento_nome}
               </span>
             ) : (
-              <span className="text-muted-foreground italic">
-                Sem responsável definido
+              <span className="text-muted-foreground italic hidden sm:inline">
+                • Sem responsável
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-0">
             <Badge 
               variant={ordem.tipo_carregamento === 'elisa' ? 'default' : 'outline'} 
-              className="flex items-center gap-1 text-xs h-5"
+              className="flex items-center gap-1 text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2"
             >
-              <Icon className="h-3 w-3" />
-              {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : ordem.tipo_carregamento === 'autorizados' ? 'Autorizado' : ordem.tipo_carregamento || 'Sem Responsável'}
+              <Icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+              {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : ordem.tipo_carregamento === 'autorizados' ? 'Autorizado' : ordem.tipo_carregamento || 'N/A'}
             </Badge>
-            <Badge variant={podeIniciar ? 'default' : 'secondary'} className="text-xs h-5">
+            <Badge variant={podeIniciar ? 'default' : 'secondary'} className="text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2">
               {ordem.status === 'agendada' ? 'Agendada' : ordem.status}
             </Badge>
           </div>
         </div>
       </CardHeader>
       
-      {/* BODY */}
-      <CardContent className="p-4">
-        <div className="flex items-start gap-4">
-          {/* LATERAL ESQUERDA - Ícone */}
+      {/* BODY - Mobile First */}
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
+          {/* LATERAL ESQUERDA - Ícone (oculto em mobile pequeno) */}
           <div 
-            className="flex-shrink-0 cursor-pointer"
+            className="hidden sm:flex flex-shrink-0 cursor-pointer"
             onClick={() => podeIniciar && onIniciarColeta(ordem)}
           >
-            <div className="h-[100px] w-[100px] rounded-full bg-muted/50 flex items-center justify-center">
-              <Icon className="h-12 w-12 text-muted-foreground/70" />
+            <div className="h-16 w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] rounded-full bg-muted/50 flex items-center justify-center">
+              <Icon className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-muted-foreground/70" />
             </div>
           </div>
 
           {/* CENTRO - Informações */}
           <div 
-            className="flex-1 grid grid-cols-2 gap-3 cursor-pointer min-w-0"
+            className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 cursor-pointer min-w-0 w-full"
             onClick={() => podeIniciar && onIniciarColeta(ordem)}
           >
+            {/* Info mobile only */}
+            <div className="sm:hidden">
+              {ordem.venda?.cidade && ordem.venda?.estado && (
+                <p className="text-[10px] text-muted-foreground">
+                  {ordem.venda.cidade} - {ordem.venda.estado}
+                </p>
+              )}
+              {ordem.responsavel_carregamento_nome && (
+                <p className="text-xs font-medium">{ordem.responsavel_carregamento_nome}</p>
+              )}
+            </div>
+
             {ordem.data_carregamento ? (
               <div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   Data Agendada
                 </p>
-                <p className="text-sm font-semibold">
+                <p className="text-xs sm:text-sm font-semibold">
                   {format(new Date(ordem.data_carregamento), "dd/MM/yyyy", { locale: ptBR })}
                   {ordem.hora && ` às ${ordem.hora}`}
                 </p>
               </div>
             ) : (
               <div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   Data de Carregamento
                 </p>
-                <p className="text-sm font-semibold text-orange-500">
+                <p className="text-xs sm:text-sm font-semibold text-orange-500">
                   Aguardando agendamento
                 </p>
               </div>
             )}
             
             {ordem.responsavel_carregamento_nome && (
-              <div>
-                <p className="text-xs text-muted-foreground">Responsável</p>
-                <p className="text-sm font-semibold truncate">{ordem.responsavel_carregamento_nome}</p>
+              <div className="hidden sm:block">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Responsável</p>
+                <p className="text-xs sm:text-sm font-semibold truncate">{ordem.responsavel_carregamento_nome}</p>
               </div>
             )}
 
             {ordem.venda?.cidade && ordem.venda?.estado && (
-              <div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
+              <div className="hidden sm:block">
+                <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   Localização
                 </p>
-                <p className="text-sm truncate">
+                <p className="text-xs sm:text-sm truncate">
                   {ordem.venda.cidade} - {ordem.venda.estado}
                 </p>
               </div>
@@ -130,29 +141,29 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
 
             {ordem.venda?.cliente_telefone && (
               <div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
+                <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                  <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   Telefone
                 </p>
-                <p className="text-sm">{ordem.venda.cliente_telefone}</p>
+                <p className="text-xs sm:text-sm">{ordem.venda.cliente_telefone}</p>
               </div>
             )}
 
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Cores das Portas</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Cores das Portas</p>
               <CoresPortasEnrolar produtos={ordem.venda?.produtos} />
             </div>
 
             {ordem.observacoes && (
-              <div>
-                <p className="text-xs text-muted-foreground">Observações</p>
-                <p className="text-xs line-clamp-2">{ordem.observacoes}</p>
+              <div className="col-span-1 sm:col-span-2">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Observações</p>
+                <p className="text-[10px] sm:text-xs line-clamp-2">{ordem.observacoes}</p>
               </div>
             )}
           </div>
 
           {/* LATERAL DIREITA - Botão Iniciar */}
-          <div className="flex-shrink-0">
+          <div className="w-full sm:w-auto flex-shrink-0">
             <Button
               size="lg"
               variant="default"
@@ -161,10 +172,10 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                 onIniciarColeta(ordem);
               }}
               disabled={!podeIniciar}
-              className="h-[100px] w-[100px] rounded-full flex flex-col gap-2 p-2"
+              className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg flex flex-row sm:flex-col gap-2 p-2"
             >
-              <PackageCheck className="h-8 w-8" />
-              <span className="text-xs font-semibold text-center">
+              <PackageCheck className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8" />
+              <span className="text-[10px] sm:text-xs font-semibold text-center">
                 {!ordem.data_carregamento 
                   ? 'Sem Data' 
                   : !ordem.responsavel_carregamento_nome 
@@ -217,26 +228,26 @@ export function CarregamentoKanban({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Clock className="h-5 w-5 text-orange-500" />
+          <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
             Ordens Pendentes
           </h2>
-          <Badge variant="secondary">{isLoading ? '...' : ordens.length}</Badge>
+          <Badge variant="secondary" className="text-xs">{isLoading ? '...' : ordens.length}</Badge>
         </div>
         {onRefresh && (
-          <Button onClick={onRefresh} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
+          <Button onClick={onRefresh} variant="outline" size="sm" className="h-8 text-xs sm:text-sm">
+            <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Atualizar</span>
           </Button>
         )}
       </div>
 
       {/* Lista de Ordens */}
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {isLoading ? (
           renderSkeletons()
         ) : ordens.length > 0 ? (
@@ -250,9 +261,9 @@ export function CarregamentoKanban({
           ))
         ) : (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <Truck className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+              <Truck className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/50 mb-3 sm:mb-4" />
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Nenhuma ordem de carregamento pendente
               </p>
             </CardContent>
