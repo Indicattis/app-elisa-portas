@@ -1,20 +1,16 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useSetorInfo } from "@/hooks/useSetorInfo";
-import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
-import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { CalendarioSemanal } from "@/components/todo/CalendarioSemanal";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Calendar, Repeat, Trash2, List } from "lucide-react";
+import { Calendar, Repeat } from "lucide-react";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { SETOR_LABELS } from "@/utils/setorMapping";
 import { UserRole } from "@/types/permissions";
 
@@ -50,20 +46,10 @@ export default function Todo() {
   const { 
     tarefas, 
     isLoading, 
-    templates,
-    criarTarefa, 
-    criarTemplate,
     marcarConcluida, 
     reabrirTarefa, 
-    deletarTarefa,
-    toggleTemplate,
-    deletarTemplate,
-    atualizarTemplate
   } = useTarefas(user?.id, setor);
   const { data: responsavelSetor } = useSetorInfo(setor);
-  const [modalAberto, setModalAberto] = useState(false);
-  const [modalRecorrentes, setModalRecorrentes] = useState(false);
-  const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
   const [diaSelecionado, setDiaSelecionado] = useState<Date>(new Date());
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
@@ -142,19 +128,6 @@ export default function Todo() {
             </CardContent>
           </Card>
         )}
-
-        {podeGerenciar && (
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
-              <List className="h-4 w-4 mr-2" />
-              Recorrentes ({templates.length})
-            </Button>
-            <Button onClick={() => setModalAberto(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Tarefa
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Calendário Semanal */}
@@ -215,17 +188,6 @@ export default function Todo() {
                     )}
                   </div>
                 </div>
-
-                {podeGerenciar && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => setTarefaParaDeletar(tarefa.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
-                )}
               </div>
             ))
           )}
@@ -277,68 +239,11 @@ export default function Todo() {
                     )}
                   </div>
                 </div>
-
-                {podeGerenciar && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => setTarefaParaDeletar(tarefa.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
-                )}
               </div>
             ))
           )}
         </CardContent>
       </Card>
-
-      {/* Modal Nova Tarefa */}
-      <NovaTarefaModal
-        open={modalAberto}
-        onOpenChange={setModalAberto}
-        onSubmit={(tarefa) => {
-          criarTarefa.mutate(tarefa);
-        }}
-        setor={setor}
-      />
-
-      {/* Modal Tarefas Recorrentes */}
-      <TarefasRecorrentesModal
-        open={modalRecorrentes}
-        onOpenChange={setModalRecorrentes}
-        templates={templates}
-        onToggle={(id, ativa) => toggleTemplate.mutate({ id, ativa })}
-        onDelete={(id) => deletarTemplate.mutate(id)}
-        onEdit={(id, updates) => atualizarTemplate.mutate({ id, ...updates })}
-        podeGerenciar={podeGerenciar}
-      />
-
-      {/* Confirmação de Deleção */}
-      <AlertDialog open={!!tarefaParaDeletar} onOpenChange={() => setTarefaParaDeletar(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja deletar esta tarefa? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (tarefaParaDeletar) {
-                  deletarTarefa.mutate(tarefaParaDeletar);
-                  setTarefaParaDeletar(null);
-                }
-              }}
-            >
-              Deletar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
