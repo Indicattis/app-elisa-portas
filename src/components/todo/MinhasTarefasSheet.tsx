@@ -4,13 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, Clock } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useTarefas } from "@/hooks/useTarefas";
-import { startOfWeek, endOfWeek, addWeeks, parseISO, isWithinInterval, format } from "date-fns";
+import { useTarefas, Tarefa } from "@/hooks/useTarefas";
+import { startOfWeek, endOfWeek, addWeeks, parseISO, isWithinInterval, format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface MinhasTarefasSheetProps {
   open: boolean;
@@ -20,13 +21,22 @@ interface MinhasTarefasSheetProps {
 export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetProps) {
   const { user } = useAuth();
 
-  const { tarefas = [], isLoading } = useTarefas(user?.id);
+  const { tarefas = [], isLoading, marcarConcluida } = useTarefas(user?.id);
 
-  const hoje = new Date();
+  const hoje = startOfDay(new Date());
   const inicioSemanaAtual = startOfWeek(hoje, { weekStartsOn: 0 });
   const fimSemanaAtual = endOfWeek(hoje, { weekStartsOn: 0 });
   const inicioProximaSemana = addWeeks(inicioSemanaAtual, 1);
   const fimProximaSemana = addWeeks(fimSemanaAtual, 1);
+
+  // Verificar se tarefa está atrasada
+  const isAtrasada = (tarefa: Tarefa) => {
+    if (tarefa.status === "concluida") return false;
+    const dataStr = (tarefa as any).data_referencia || tarefa.created_at;
+    if (!dataStr) return false;
+    const dataTarefa = parseISO(dataStr.split('T')[0]);
+    return isBefore(dataTarefa, hoje);
+  };
 
   // Filtrar tarefas da semana atual
   const tarefasSemanaAtual = useMemo(() => {
@@ -50,6 +60,14 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
 
   const labelSemanaAtual = `${format(inicioSemanaAtual, "dd/MM", { locale: ptBR })} - ${format(fimSemanaAtual, "dd/MM", { locale: ptBR })}`;
   const labelProximaSemana = `${format(inicioProximaSemana, "dd/MM", { locale: ptBR })} - ${format(fimProximaSemana, "dd/MM", { locale: ptBR })}`;
+
+  const handleMarcarConcluida = async (tarefaId: string) => {
+    try {
+      await marcarConcluida.mutateAsync(tarefaId);
+    } catch (error) {
+      toast.error("Erro ao marcar tarefa como concluída");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -83,30 +101,46 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
                 Nenhuma tarefa pendente
               </p>
             ) : (
-              emAndamento.map((tarefa) => (
-                <div
-                  key={tarefa.id}
-                  className={cn(
-                    "flex items-center gap-2 h-[30px] px-2 rounded-md",
-                    "border-b border-border/30 last:border-0"
-                  )}
-                >
-                  <div className="h-4 w-4 rounded border border-muted-foreground/30" />
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={undefined} />
-                    <AvatarFallback className="text-[10px]">
-                      {tarefa.responsavel?.nome?.substring(0, 2).toUpperCase() || "??"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="flex-1 text-sm truncate">{tarefa.descricao}</span>
-                  {tarefa.recorrente && (
-                    <Badge variant="secondary" className="h-4 text-[10px] px-1.5">
-                      <Calendar className="h-2.5 w-2.5 mr-0.5" />
-                      Recorrente
-                    </Badge>
-                  )}
-                </div>
-              ))
+              emAndamento.map((tarefa) => {
+                const atrasada = isAtrasada(tarefa);
+                return (
+                  <div
+                    key={tarefa.id}
+                    className={cn(
+                      "flex items-center gap-2 h-[36px] px-2 rounded-md group",
+                      "border-b border-border/30 last:border-0",
+                      atrasada && "bg-destructive/5"
+                    )}
+                  >
+                    <button
+                      onClick={() => handleMarcarConcluida(tarefa.id)}
+                      className="h-4 w-4 rounded border border-muted-foreground/30 hover:border-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+                      title="Marcar como concluída"
+                    />
+                    <Avatar className="h-6 w-6 flex-shrink-0">
+                      <AvatarImage src={undefined} />
+                      <AvatarFallback className="text-[10px]">
+                        {tarefa.responsavel?.nome?.substring(0, 2).toUpperCase() || "??"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="flex-1 text-sm truncate">{tarefa.descricao}</span>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {atrasada && (
+                        <Badge variant="destructive" className="h-4 text-[10px] px-1.5">
+                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                          Atrasada
+                        </Badge>
+                      )}
+                      {tarefa.recorrente && (
+                        <Badge variant="secondary" className="h-4 text-[10px] px-1.5">
+                          <Calendar className="h-2.5 w-2.5 mr-0.5" />
+                          Recorrente
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </CardContent>
         </Card>
@@ -129,12 +163,12 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
                 <div
                   key={tarefa.id}
                   className={cn(
-                    "flex items-center gap-2 h-[30px] px-2 rounded-md",
+                    "flex items-center gap-2 h-[36px] px-2 rounded-md",
                     "border-b border-border/30 last:border-0 opacity-60"
                   )}
                 >
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <Avatar className="h-6 w-6">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <Avatar className="h-6 w-6 flex-shrink-0">
                     <AvatarImage src={undefined} />
                     <AvatarFallback className="text-[10px]">
                       {tarefa.responsavel?.nome?.substring(0, 2).toUpperCase() || "??"}
@@ -144,7 +178,7 @@ export function MinhasTarefasSheet({ open, onOpenChange }: MinhasTarefasSheetPro
                     {tarefa.descricao}
                   </span>
                   {tarefa.recorrente && (
-                    <Badge variant="secondary" className="h-4 text-[10px] px-1.5">
+                    <Badge variant="secondary" className="h-4 text-[10px] px-1.5 flex-shrink-0">
                       <Calendar className="h-2.5 w-2.5 mr-0.5" />
                       Recorrente
                     </Badge>
