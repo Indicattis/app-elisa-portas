@@ -13,6 +13,7 @@ export interface Tarefa {
   tipo_recorrencia: string | null;
   template_id: string | null;
   setor: string | null;
+  data_referencia: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
