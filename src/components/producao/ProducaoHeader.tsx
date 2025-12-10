@@ -50,14 +50,14 @@ export function ProducaoHeader() {
   };
 
   return (
-    <header className="h-16 bg-card border-b border-border px-6 flex items-center justify-between">
-      <div className="flex items-center gap-4">
+    <header className="min-h-14 sm:min-h-16 bg-card border-b border-border px-3 sm:px-6 py-2 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 sm:gap-4">
         {!isProducaoHome && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/producao')}
-            className="gap-2"
+            className="gap-1 sm:gap-2 h-8 px-2 sm:px-3"
           >
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">Voltar</span>
@@ -65,26 +65,26 @@ export function ProducaoHeader() {
         )}
         
         <div className="flex flex-col">
-          <span className="text-2xl font-bold text-foreground tabular-nums">
+          <span className="text-lg sm:text-2xl font-bold text-foreground tabular-nums">
             {formatTime(currentTime)}
           </span>
-          <span className="text-sm text-muted-foreground capitalize">
+          <span className="text-[10px] sm:text-sm text-muted-foreground capitalize hidden xs:block">
             {formatDate(currentTime)}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
             <AvatarImage src={user.foto_perfil_url} alt={user.nome} />
-            <AvatarFallback className="text-sm font-medium">
+            <AvatarFallback className="text-xs sm:text-sm font-medium">
               {getUserInitials(user.nome)}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:flex flex-col">
-            <span className="font-medium text-foreground leading-none">{user.nome}</span>
-            <span className="text-sm text-muted-foreground capitalize leading-none mt-1">
+            <span className="font-medium text-foreground leading-none text-sm">{user.nome}</span>
+            <span className="text-xs text-muted-foreground capitalize leading-none mt-1">
               {user.role.replace("_", " ")}
             </span>
           </div>
@@ -94,7 +94,7 @@ export function ProducaoHeader() {
           variant="outline"
           size="sm"
           onClick={() => signOut()}
-          className="gap-2"
+          className="gap-1 sm:gap-2 h-8 px-2 sm:px-3"
         >
           <LogOut className="h-4 w-4" />
           <span className="hidden sm:inline">Sair</span>
