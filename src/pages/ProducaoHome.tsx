@@ -113,7 +113,7 @@ export default function ProducaoHome() {
       {/* Acesso aos Painéis */}
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Acesso aos Painéis</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {routes.map((route) => {
             const Icon = getIcon(route.icon);
             const count = getRouteCount(route.key);
