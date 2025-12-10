@@ -13,11 +13,16 @@ import { Factory, Calendar, User, Package, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-interface ProdutoPedido {
-  tipo: string;
+interface ProdutoVenda {
+  tipo_produto: string;
+  descricao: string;
   quantidade: number;
-  largura?: number;
-  altura?: number;
+  tamanho: string | null;
+}
+
+interface VendaRelacionada {
+  valor_venda: number | null;
+  produtos_vendas: ProdutoVenda[];
 }
 
 interface PedidoProducao {
@@ -27,8 +32,7 @@ interface PedidoProducao {
   etapa_atual: string;
   data_carregamento: string | null;
   created_at: string;
-  valor_venda: number | null;
-  produtos: ProdutoPedido[] | null;
+  vendas: VendaRelacionada | null;
 }
 
 const etapaLabels: Record<string, string> = {
@@ -65,7 +69,7 @@ export function PedidosEmProducao() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, etapa_atual, data_carregamento, created_at, valor_venda, produtos')
+        .select('id, numero_pedido, cliente_nome, etapa_atual, data_carregamento, created_at, vendas(valor_venda, produtos_vendas(tipo_produto, descricao, quantidade, tamanho))')
         .in('status', ['pendente', 'em_andamento'])
         .order('created_at', { ascending: false })
         .limit(20);
@@ -151,23 +155,23 @@ export function PedidosEmProducao() {
                           <span className="truncate">{pedido.cliente_nome}</span>
                         </div>
 
-                        {pedido.produtos && pedido.produtos.length > 0 && (
+                        {pedido.vendas?.produtos_vendas && pedido.vendas.produtos_vendas.length > 0 && (
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Package className="h-3 w-3" />
                             <span className="truncate">
-                              {pedido.produtos.length} {pedido.produtos.length === 1 ? 'produto' : 'produtos'}
+                              {pedido.vendas.produtos_vendas.length} {pedido.vendas.produtos_vendas.length === 1 ? 'produto' : 'produtos'}
                               {' · '}
-                              {pedido.produtos.reduce((acc, p) => acc + (p.quantidade || 1), 0)} un
+                              {pedido.vendas.produtos_vendas.reduce((acc, p) => acc + (p.quantidade || 1), 0)} un
                             </span>
                           </div>
                         )}
 
                         <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
-                          {pedido.valor_venda ? (
+                          {pedido.vendas?.valor_venda ? (
                             <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                               <DollarSign className="h-3 w-3" />
                               <span>
-                                {pedido.valor_venda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                {pedido.vendas.valor_venda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                               </span>
                             </div>
                           ) : (
