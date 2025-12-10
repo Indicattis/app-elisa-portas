@@ -9,9 +9,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { Factory, Calendar, User } from 'lucide-react';
+import { Factory, Calendar, User, Package, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+interface ProdutoPedido {
+  tipo: string;
+  quantidade: number;
+  largura?: number;
+  altura?: number;
+}
 
 interface PedidoProducao {
   id: string;
@@ -20,6 +27,8 @@ interface PedidoProducao {
   etapa_atual: string;
   data_carregamento: string | null;
   created_at: string;
+  valor_venda: number | null;
+  produtos: ProdutoPedido[] | null;
 }
 
 const etapaLabels: Record<string, string> = {
@@ -56,13 +65,13 @@ export function PedidosEmProducao() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, etapa_atual, data_carregamento, created_at')
+        .select('id, numero_pedido, cliente_nome, etapa_atual, data_carregamento, created_at, valor_venda, produtos')
         .in('status', ['pendente', 'em_andamento'])
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      return data as PedidoProducao[];
+      return (data || []) as unknown as PedidoProducao[];
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -142,14 +151,36 @@ export function PedidosEmProducao() {
                           <span className="truncate">{pedido.cliente_nome}</span>
                         </div>
 
-                        {pedido.data_carregamento && (
+                        {pedido.produtos && pedido.produtos.length > 0 && (
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              {format(new Date(pedido.data_carregamento), "dd/MM", { locale: ptBR })}
+                            <Package className="h-3 w-3" />
+                            <span className="truncate">
+                              {pedido.produtos.length} {pedido.produtos.length === 1 ? 'produto' : 'produtos'}
+                              {' · '}
+                              {pedido.produtos.reduce((acc, p) => acc + (p.quantidade || 1), 0)} un
                             </span>
                           </div>
                         )}
+
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+                          {pedido.valor_venda ? (
+                            <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                              <DollarSign className="h-3 w-3" />
+                              <span>
+                                {pedido.valor_venda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                          
+                          {pedido.data_carregamento && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              <span>{format(new Date(pedido.data_carregamento), "dd/MM", { locale: ptBR })}</span>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
