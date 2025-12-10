@@ -66,7 +66,9 @@ export default function Todo() {
   // Filtrar tarefas pelo dia selecionado
   const tarefasDoDia = useMemo(() => {
     return tarefas.filter(tarefa => {
-      const dataTarefa = parseISO(tarefa.created_at);
+      // Usar data_referencia se disponível (tarefas recorrentes), senão usar created_at
+      const dataStr = tarefa.data_referencia || tarefa.created_at;
+      const dataTarefa = parseISO(dataStr);
       return isSameDay(dataTarefa, diaSelecionado);
     });
   }, [tarefas, diaSelecionado]);
