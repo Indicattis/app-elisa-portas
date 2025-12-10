@@ -11,6 +11,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineCh
 import { TrendingUp, Target, DollarSign, Trophy, Medal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PedidosEmProducao } from "@/components/dashboard/PedidosEmProducao";
+
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -258,6 +260,9 @@ export default function Dashboard() {
             </div>}
         </CardContent>
       </Card>
+
+      {/* Pedidos em Produção */}
+      <PedidosEmProducao />
 
       {/* Gráfico de vendas */}
       
