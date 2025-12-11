@@ -42,6 +42,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
               venda_id,
               vendas(
                 id,
+                observacoes_venda,
                 produtos:produtos_vendas(
                   id,
                   tipo_produto,
@@ -80,8 +81,9 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             ...ordem,
             pedido: pedido ? {
               ...pedido,
+              vendas: primeiraVenda ? { observacoes_venda: primeiraVenda.observacoes_venda } : undefined,
               produtos,
-            } : { id: '', numero_pedido: '', cliente_nome: 'Cliente não encontrado', venda_id: undefined, produtos: [] },
+            } : { id: '', numero_pedido: '', cliente_nome: 'Cliente não encontrado', venda_id: undefined, produtos: [], vendas: undefined },
             admin_users: responsavel,
             linhas: linhas || [],
           };

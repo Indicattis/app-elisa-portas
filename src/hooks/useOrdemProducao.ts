@@ -38,6 +38,7 @@ interface Ordem {
     venda_id?: string;
     vendas?: {
       data_prevista_entrega?: string;
+      observacoes_venda?: string;
     };
   };
   admin_users?: {
@@ -79,6 +80,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             venda_id,
             vendas(
               data_prevista_entrega,
+              observacoes_venda,
               produtos:produtos_vendas(
                 id,
                 tipo_produto,

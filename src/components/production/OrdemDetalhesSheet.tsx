@@ -50,6 +50,9 @@ interface Ordem {
     numero_pedido: string;
     cliente_nome: string;
     venda_id?: string;
+    vendas?: {
+      observacoes_venda?: string;
+    };
     produtos?: Array<{
       tipo_produto?: string;
       catalogo_cores?: { nome: string; codigo_hex: string } | null;
@@ -456,11 +459,26 @@ export function OrdemDetalhesSheet({
             </>
           )}
 
+          {ordem.pedido?.vendas?.observacoes_venda && (
+            <>
+              <Separator />
+              <div className="space-y-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                  <Package className="h-4 w-4" />
+                  Observações da Visita
+                </span>
+                <p className="text-sm text-amber-800 dark:text-amber-200 whitespace-pre-line">
+                  {ordem.pedido.vendas.observacoes_venda}
+                </p>
+              </div>
+            </>
+          )}
+
           {ordem.observacoes && (
             <>
               <Separator />
               <div className="space-y-2">
-                <span className="text-sm font-medium">Observações</span>
+                <span className="text-sm font-medium">Observações da Ordem</span>
                 <p className="text-sm text-muted-foreground">{ordem.observacoes}</p>
               </div>
             </>

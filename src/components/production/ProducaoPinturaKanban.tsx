@@ -24,6 +24,9 @@ interface Ordem {
   prioridade?: number;
   pedido?: {
     cliente_nome: string;
+    vendas?: {
+      observacoes_venda?: string;
+    };
     produtos?: Array<{
       tipo_produto?: string;
       catalogo_cores?: { nome: string; codigo_hex: string } | null;
@@ -174,6 +177,16 @@ function OrdemCard({
                   {ordem.status === 'pintando' && 'Pintando'}
                   {ordem.status === 'pronta' && 'Pronta'}
                 </Badge>
+              </div>
+            )}
+
+            {ordem.pedido?.vendas?.observacoes_venda && (
+              <div className="col-span-1 sm:col-span-2">
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                  <FileText className="h-3 w-3" />
+                  Observações da Visita
+                </p>
+                <p className="text-[10px] sm:text-xs line-clamp-2 text-amber-700 dark:text-amber-300">{ordem.pedido.vendas.observacoes_venda}</p>
               </div>
             )}
           </div>
