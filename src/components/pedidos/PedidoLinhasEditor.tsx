@@ -592,18 +592,11 @@ export const PedidoLinhasEditor = ({
                                         rascunhoLinha.estoque_id === produto.id ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    <div className="flex flex-col">
-                                      <div className="flex items-center gap-2">
-                                        <Badge variant="outline" className="font-mono text-[10px]">
-                                          {produto.sku || '-'}
-                                        </Badge>
-                                        <span className="truncate">{produto.nome_produto}</span>
-                                      </div>
-                                      {produto.descricao_produto && (
-                                        <p className="text-muted-foreground text-[10px] truncate">
-                                          {produto.descricao_produto}
-                                        </p>
-                                      )}
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="font-mono text-[10px]">
+                                        {produto.sku || '-'}
+                                      </Badge>
+                                      <span className="truncate">{produto.nome_produto}</span>
                                     </div>
                                   </CommandItem>
                                 ))}
