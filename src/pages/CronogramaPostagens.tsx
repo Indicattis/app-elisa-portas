@@ -45,24 +45,32 @@ export default function CronogramaPostagens() {
   const getEstiloIntervalo = (data: Date, numPostagens: number, inMonth: boolean) => {
     const hojeLimpo = new Date();
     hojeLimpo.setHours(0, 0, 0, 0);
-    const ehPassado = data < hojeLimpo && !isSameDay(data, hojeLimpo);
+    const dataLimpa = new Date(data);
+    dataLimpa.setHours(0, 0, 0, 0);
+    const ehPassado = dataLimpa < hojeLimpo;
+    const ehFuturo = dataLimpa > hojeLimpo;
     const ehFimDeSemana = isWeekend(data);
 
     if (!inMonth) {
       return "bg-muted text-muted-foreground opacity-40";
     }
 
-    // Verde: 1+ postagens (meta atingida)
-    if (numPostagens >= 1) {
+    // Verde: Dia passado com 1+ postagens (meta atingida)
+    if (ehPassado && numPostagens >= 1) {
       return "bg-success text-success-foreground";
     }
 
-    // Vermelho: Dia passado sem postagem
+    // Azul: Dia futuro com postagens agendadas
+    if (ehFuturo && numPostagens >= 1) {
+      return "bg-primary text-primary-foreground";
+    }
+
+    // Vermelho: Dia passado sem postagem (exceto fim de semana)
     if (ehPassado && !ehFimDeSemana) {
       return "bg-destructive text-destructive-foreground";
     }
 
-    // Cinza: Fim de semana ou futuro
+    // Cinza: Fim de semana ou futuro sem agendamento
     return "bg-muted text-muted-foreground";
   };
 
@@ -186,7 +194,11 @@ export default function CronogramaPostagens() {
           <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-success" />
-              <span className="text-muted-foreground">Meta atingida (1+ posts)</span>
+              <span className="text-muted-foreground">Postado</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-primary" />
+              <span className="text-muted-foreground">Agendado</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-destructive" />
