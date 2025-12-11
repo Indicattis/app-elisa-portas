@@ -12,6 +12,7 @@ interface DroppableDayMensalProps {
   instalacoes: InstalacaoCalendario[];
   onAddClick: (date: Date) => void;
   onInstalacaoClick: (instalacao: InstalacaoCalendario) => void;
+  onShowMore?: (date: Date, instalacoes: InstalacaoCalendario[]) => void;
 }
 
 export const DroppableDayMensal = ({
@@ -20,6 +21,7 @@ export const DroppableDayMensal = ({
   instalacoes,
   onAddClick,
   onInstalacaoClick,
+  onShowMore,
 }: DroppableDayMensalProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: format(date, "yyyy-MM-dd"),
@@ -71,9 +73,15 @@ export const DroppableDayMensal = ({
           />
         ))}
         {instalacoes.length > 3 && (
-          <div className="text-xs text-muted-foreground text-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onShowMore?.(date, instalacoes);
+            }}
+            className="text-xs text-primary hover:text-primary/80 text-center w-full cursor-pointer hover:underline transition-colors"
+          >
             +{instalacoes.length - 3} mais
-          </div>
+          </button>
         )}
       </div>
     </div>

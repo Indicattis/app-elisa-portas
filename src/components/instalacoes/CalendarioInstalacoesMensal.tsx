@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { InstalacaoCard } from "./InstalacaoCard";
 import { DroppableDayMensal } from "./DroppableDayMensal";
+import { InstalacoesDoDiaDialog } from "./InstalacoesDoDiaDialog";
 import { toast } from "sonner";
 
 interface CalendarioInstalacoesMensalProps {
@@ -29,6 +30,9 @@ export const CalendarioInstalacoesMensal = ({
 }: CalendarioInstalacoesMensalProps) => {
   const navigate = useNavigate();
   const [activeInstalacao, setActiveInstalacao] = useState<InstalacaoCalendario | null>(null);
+  const [showMoreOpen, setShowMoreOpen] = useState(false);
+  const [showMoreDate, setShowMoreDate] = useState<Date | null>(null);
+  const [showMoreInstalacoes, setShowMoreInstalacoes] = useState<InstalacaoCalendario[]>([]);
 
   // Sensors com delay de 0.5 segundo para ativar o drag
   const pointerSensor = useSensor(PointerSensor, {
@@ -81,6 +85,12 @@ export const CalendarioInstalacoesMensal = ({
 
   const handleAddClick = (date: Date) => {
     navigate(`/instalacoes/nova?data=${format(date, 'yyyy-MM-dd')}`);
+  };
+
+  const handleShowMore = (date: Date, instalacoes: InstalacaoCalendario[]) => {
+    setShowMoreDate(date);
+    setShowMoreInstalacoes(instalacoes);
+    setShowMoreOpen(true);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -170,6 +180,7 @@ export const CalendarioInstalacoesMensal = ({
                 instalacoes={instalacoesDoDia}
                 onAddClick={handleAddClick}
                 onInstalacaoClick={onInstalacaoClick}
+                onShowMore={handleShowMore}
               />
             );
           })}
@@ -187,6 +198,14 @@ export const CalendarioInstalacoesMensal = ({
             </div>
           ) : null}
         </DragOverlay>
+
+        <InstalacoesDoDiaDialog
+          open={showMoreOpen}
+          onOpenChange={setShowMoreOpen}
+          date={showMoreDate}
+          instalacoes={showMoreInstalacoes}
+          onInstalacaoClick={onInstalacaoClick}
+        />
       </div>
     </DndContext>
   );
