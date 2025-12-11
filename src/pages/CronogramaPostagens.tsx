@@ -45,9 +45,23 @@ export default function CronogramaPostagens() {
   const getEstiloIntervalo = (data: Date, numPostagens: number, inMonth: boolean) => {
     const hoje = new Date();
     const ehHoje = isSameDay(data, hoje);
-    const ehPassado = data.getTime() < new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
-    const ehFuturo = data.getTime() > new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
     const ehFimDeSemana = isWeekend(data);
+    
+    // Comparar apenas ano, mês e dia (sem horas)
+    const dataAno = data.getFullYear();
+    const dataMes = data.getMonth();
+    const dataDia = data.getDate();
+    
+    const hojeAno = hoje.getFullYear();
+    const hojeMes = hoje.getMonth();
+    const hojeDia = hoje.getDate();
+    
+    // Criar datas limpas para comparação
+    const dataLimpa = new Date(dataAno, dataMes, dataDia);
+    const hojeLimpo = new Date(hojeAno, hojeMes, hojeDia);
+    
+    const ehPassado = dataLimpa.getTime() < hojeLimpo.getTime();
+    const ehFuturo = dataLimpa.getTime() > hojeLimpo.getTime();
 
     if (!inMonth) {
       return "bg-muted text-muted-foreground opacity-40";
