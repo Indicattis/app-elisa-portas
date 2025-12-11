@@ -43,16 +43,19 @@ export default function CronogramaPostagens() {
   const handleNextYear = () => setAnoSelecionado((prev) => prev + 1);
 
   const getEstiloIntervalo = (data: Date, numPostagens: number, inMonth: boolean) => {
-    const hojeLimpo = new Date();
-    hojeLimpo.setHours(0, 0, 0, 0);
-    const dataLimpa = new Date(data);
-    dataLimpa.setHours(0, 0, 0, 0);
-    const ehPassado = dataLimpa < hojeLimpo;
-    const ehFuturo = dataLimpa > hojeLimpo;
+    const hoje = new Date();
+    const ehHoje = isSameDay(data, hoje);
+    const ehPassado = data.getTime() < new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
+    const ehFuturo = data.getTime() > new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
     const ehFimDeSemana = isWeekend(data);
 
     if (!inMonth) {
       return "bg-muted text-muted-foreground opacity-40";
+    }
+
+    // Hoje com postagens: verde
+    if (ehHoje && numPostagens >= 1) {
+      return "bg-success text-success-foreground";
     }
 
     // Verde: Dia passado com 1+ postagens (meta atingida)
@@ -66,11 +69,11 @@ export default function CronogramaPostagens() {
     }
 
     // Vermelho: Dia passado sem postagem (exceto fim de semana)
-    if (ehPassado && !ehFimDeSemana) {
+    if (ehPassado && numPostagens === 0 && !ehFimDeSemana) {
       return "bg-destructive text-destructive-foreground";
     }
 
-    // Cinza: Fim de semana ou futuro sem agendamento
+    // Cinza: Fim de semana, hoje sem postagem, ou futuro sem agendamento
     return "bg-muted text-muted-foreground";
   };
 
