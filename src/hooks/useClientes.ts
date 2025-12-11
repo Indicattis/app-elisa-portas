@@ -20,6 +20,7 @@ export interface Cliente {
   created_at: string;
   updated_at: string;
   total_vendas?: number;
+  numero_vendas?: number;
 }
 
 export interface ClienteFormData {
@@ -57,12 +58,15 @@ export function useClientes() {
         .from("vendas")
         .select("cliente_id, valor_venda");
       
-      // Calcular total de vendas por cliente
+      // Calcular total de vendas e número de vendas por cliente
       const totaisVendas = new Map<string, number>();
+      const numeroVendas = new Map<string, number>();
       (vendasData || []).forEach((venda: any) => {
         if (venda.cliente_id) {
-          const atual = totaisVendas.get(venda.cliente_id) || 0;
-          totaisVendas.set(venda.cliente_id, atual + (venda.valor_venda || 0));
+          const atualTotal = totaisVendas.get(venda.cliente_id) || 0;
+          totaisVendas.set(venda.cliente_id, atualTotal + (venda.valor_venda || 0));
+          const atualNumero = numeroVendas.get(venda.cliente_id) || 0;
+          numeroVendas.set(venda.cliente_id, atualNumero + 1);
         }
       });
       
@@ -73,7 +77,8 @@ export function useClientes() {
         canal_aquisicao: cliente.canal_aquisicao_id 
           ? canaisMap.get(cliente.canal_aquisicao_id) || null 
           : null,
-        total_vendas: totaisVendas.get(cliente.id) || 0
+        total_vendas: totaisVendas.get(cliente.id) || 0,
+        numero_vendas: numeroVendas.get(cliente.id) || 0
       }));
 
       return clientes as Cliente[];
