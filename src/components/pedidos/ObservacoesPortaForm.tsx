@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ChevronDown, Edit, Save, X } from "lucide-react";
+import { FileText, ChevronDown, Edit, Save, X, User, Building2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { PedidoPortaObservacoesInsert } from "@/types/pedidoObservacoes";
 import {
@@ -22,6 +22,7 @@ interface ObservacoesPortaFormProps {
   porta: any;
   portaIndex: number;
   usuarios: Array<{ id: string; nome: string }>;
+  autorizados: Array<{ id: string; nome: string }>;
   valoresIniciais?: Partial<PedidoPortaObservacoesInsert>;
   onSalvar: (dados: PedidoPortaObservacoesInsert) => Promise<any>;
   pedidoId: string;
@@ -33,6 +34,7 @@ export function ObservacoesPortaForm({
   porta,
   portaIndex,
   usuarios,
+  autorizados,
   valoresIniciais,
   onSalvar,
   pedidoId,
@@ -48,6 +50,7 @@ export function ObservacoesPortaForm({
       pedido_id: pedidoId,
       produto_venda_id: porta.id,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
+      tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
       interna_externa: valoresIniciais?.interna_externa || 'porta_interna',
       retirada_porta: valoresIniciais?.retirada_porta || false,
@@ -74,6 +77,7 @@ export function ObservacoesPortaForm({
       pedido_id: pedidoId,
       produto_venda_id: porta.id,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
+      tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
       interna_externa: valoresIniciais?.interna_externa || 'porta_interna',
       retirada_porta: valoresIniciais?.retirada_porta || false,
@@ -190,7 +194,12 @@ export function ObservacoesPortaForm({
                       <span className="text-destructive ml-1">*</span>
                     </FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
+                      onValueChange={(value) => {
+                        // Verificar se é admin ou autorizado
+                        const isAutorizado = autorizados.some(a => a.id === value);
+                        form.setValue('tipo_responsavel', isAutorizado ? 'autorizado' : 'admin');
+                        field.onChange(value);
+                      }} 
                       value={field.value || undefined}
                       disabled={!modoEdicao}
                     >
@@ -200,11 +209,33 @@ export function ObservacoesPortaForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {usuarios.map(user => (
-                          <SelectItem key={user.id} value={user.id} className="text-xs">
-                            {user.nome}
-                          </SelectItem>
-                        ))}
+                        <SelectGroup>
+                          <SelectLabel className="text-xs font-semibold text-primary flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            Equipe Interna
+                          </SelectLabel>
+                          {usuarios.map(user => (
+                            <SelectItem key={user.id} value={user.id} className="text-xs">
+                              {user.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                        {autorizados.length > 0 && (
+                          <>
+                            <SelectSeparator />
+                            <SelectGroup>
+                              <SelectLabel className="text-xs font-semibold text-amber-600 flex items-center gap-1">
+                                <Building2 className="h-3 w-3" />
+                                Autorizados
+                              </SelectLabel>
+                              {autorizados.map(aut => (
+                                <SelectItem key={aut.id} value={aut.id} className="text-xs">
+                                  {aut.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     {!field.value && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
