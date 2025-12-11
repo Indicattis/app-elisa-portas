@@ -18,6 +18,12 @@ export interface InstalacaoCalendario {
   instalacao_concluida: boolean;
   instalacao_concluida_em: string | null;
   venda_id: string | null;
+  observacoes: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  estado: string | null;
+  cep: string | null;
+  telefone_cliente: string | null;
   venda?: {
     id: string;
     cliente_nome: string;
