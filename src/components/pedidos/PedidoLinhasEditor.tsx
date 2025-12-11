@@ -568,7 +568,7 @@ export const PedidoLinhasEditor = ({
                           <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0" align="start">
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                         <Command>
                           <CommandInput placeholder="Buscar por SKU ou nome..." className="h-9" />
                           <CommandList>
@@ -584,7 +584,7 @@ export const PedidoLinhasEditor = ({
                                       setRascunhoLinha({...rascunhoLinha, estoque_id: produto.id});
                                       setProdutoSelectOpen(false);
                                     }}
-                                    className="text-xs"
+                                    className="text-xs justify-start"
                                   >
                                     <Check
                                       className={cn(
