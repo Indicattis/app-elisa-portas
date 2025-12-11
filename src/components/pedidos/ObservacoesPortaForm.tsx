@@ -104,11 +104,13 @@ export function ObservacoesPortaForm({
     return porta.tamanho || 'Medidas não informadas';
   };
 
+  const responsavelPreenchido = !!form.watch('responsavel_medidas_id');
+
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className={`border rounded-lg ${!responsavelPreenchido ? 'border-destructive/50 bg-destructive/5' : ''}`}>
       <CollapsibleTrigger className="w-full">
         <div className="flex items-center gap-2 p-3 hover:bg-muted/50 transition-colors">
-          <Badge variant="outline">
+          <Badge variant={responsavelPreenchido ? "outline" : "destructive"}>
             <FileText className="h-3 w-3 mr-1" />
             Porta #{portaIndex + 1}
           </Badge>
@@ -118,6 +120,11 @@ export function ObservacoesPortaForm({
           <span className="text-xs text-muted-foreground ml-2">
             {resumo}
           </span>
+          {!responsavelPreenchido && (
+            <Badge variant="outline" className="ml-2 text-[10px] border-destructive text-destructive">
+              Pendente
+            </Badge>
+          )}
           <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </CollapsibleTrigger>
@@ -178,14 +185,17 @@ export function ObservacoesPortaForm({
                 name="responsavel_medidas_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Responsável pelas medidas</FormLabel>
+                    <FormLabel className="text-xs">
+                      Responsável pelas medidas
+                      <span className="text-destructive ml-1">*</span>
+                    </FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       value={field.value || undefined}
                       disabled={!modoEdicao}
                     >
                       <FormControl>
-                        <SelectTrigger className="h-9 text-xs">
+                        <SelectTrigger className={`h-9 text-xs ${!field.value && modoEdicao ? 'border-destructive' : ''}`}>
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                       </FormControl>
@@ -197,6 +207,7 @@ export function ObservacoesPortaForm({
                         ))}
                       </SelectContent>
                     </Select>
+                    {!field.value && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
                     <FormMessage />
                   </FormItem>
                 )}

@@ -232,7 +232,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         throw new Error('Pedido já está na última etapa');
       }
 
-      // Se está na etapa "aberto", validar se tem linhas cadastradas
+      // Se está na etapa "aberto", validar se tem linhas cadastradas e observações da visita
       if (etapaAtualNome === 'aberto') {
         const { data: linhas, error: linhasError } = await supabase
           .from('pedido_linhas')
@@ -243,6 +243,37 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         
         if (!linhas || linhas.length === 0) {
           throw new Error('O pedido precisa ter ao menos uma linha cadastrada antes de iniciar a produção');
+        }
+
+        // Validar observações da visita técnica para todas as portas de enrolar
+        const { data: pedidoData } = await supabase
+          .from('pedidos_producao')
+          .select('venda_id')
+          .eq('id', pedidoId)
+          .single();
+
+        if (pedidoData?.venda_id) {
+          // Buscar portas de enrolar
+          const { data: portasEnrolar } = await supabase
+            .from('produtos_vendas')
+            .select('id')
+            .eq('venda_id', pedidoData.venda_id)
+            .eq('tipo_produto', 'porta_enrolar');
+
+          if (portasEnrolar && portasEnrolar.length > 0) {
+            // Verificar se todas as portas têm observações com responsável preenchido
+            const { data: observacoes } = await supabase
+              .from('pedido_porta_observacoes')
+              .select('produto_venda_id, responsavel_medidas_id')
+              .eq('pedido_id', pedidoId);
+
+            for (const porta of portasEnrolar) {
+              const obs = observacoes?.find(o => o.produto_venda_id === porta.id);
+              if (!obs || !obs.responsavel_medidas_id) {
+                throw new Error('Preencha o responsável pelas medidas em todas as portas antes de iniciar a produção');
+              }
+            }
+          }
         }
       }
 
