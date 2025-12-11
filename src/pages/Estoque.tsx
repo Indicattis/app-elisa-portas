@@ -64,21 +64,20 @@ export default function Estoque() {
     try {
       await adicionarProduto({
         nome_produto: formData.nome_produto,
-        descricao_produto: formData.descricao_produto,
+        descricao_produto: formData.descricao_produto || null,
         quantidade: formData.quantidade,
         quantidade_ideal: formData.quantidade_ideal,
         custo_unitario: formData.custo_unitario,
         unidade: formData.unidade,
-        categoria: formData.categoria,
+        categoria: formData.categoria || null,
         subcategoria_id: formData.subcategoria_id || null,
-        setor_responsavel_producao: formData.setor_responsavel_producao as any,
+        setor_responsavel_producao: formData.setor_responsavel_producao ? formData.setor_responsavel_producao as any : null,
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
         pontuacao_producao: formData.pontuacao_producao,
-        // Novos campos de cálculo automático
-        modulo_calculo: formData.modulo_calculo as any || null,
+        modulo_calculo: formData.modulo_calculo ? formData.modulo_calculo as any : null,
         valor_calculo: formData.valor_calculo || null,
-        eixo_calculo: formData.eixo_calculo as any || null,
+        eixo_calculo: formData.eixo_calculo ? formData.eixo_calculo as any : null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
       });
       
