@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ChevronDown, Edit, Save, X, User, Building2 } from "lucide-react";
+import { FileText, ChevronDown, Edit, Save, X, User, Building2, Check, ChevronsUpDown, Search } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import type { PedidoPortaObservacoesInsert } from "@/types/pedidoObservacoes";
 import {
   OPCOES_TUBO,
@@ -187,61 +190,124 @@ export function ObservacoesPortaForm({
               <FormField
                 control={form.control}
                 name="responsavel_medidas_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">
-                      Responsável pelas medidas
-                      <span className="text-destructive ml-1">*</span>
-                    </FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        // Verificar se é admin ou autorizado
-                        const isAutorizado = autorizados.some(a => a.id === value);
-                        form.setValue('tipo_responsavel', isAutorizado ? 'autorizado' : 'admin');
-                        field.onChange(value);
-                      }} 
-                      value={field.value || undefined}
-                      disabled={!modoEdicao}
-                    >
-                      <FormControl>
-                        <SelectTrigger className={`h-9 text-xs ${!field.value && modoEdicao ? 'border-destructive' : ''}`}>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel className="text-xs font-semibold text-primary flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            Equipe Interna
-                          </SelectLabel>
-                          {usuarios.map(user => (
-                            <SelectItem key={user.id} value={user.id} className="text-xs">
-                              {user.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                        {autorizados.length > 0 && (
-                          <>
-                            <SelectSeparator />
-                            <SelectGroup>
-                              <SelectLabel className="text-xs font-semibold text-amber-600 flex items-center gap-1">
-                                <Building2 className="h-3 w-3" />
-                                Autorizados
-                              </SelectLabel>
-                              {autorizados.map(aut => (
-                                <SelectItem key={aut.id} value={aut.id} className="text-xs">
-                                  {aut.nome}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {!field.value && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const [open, setOpen] = useState(false);
+                  
+                  // Encontrar o nome do selecionado
+                  const selectedUser = usuarios.find(u => u.id === field.value);
+                  const selectedAutorizado = autorizados.find(a => a.id === field.value);
+                  const selectedName = selectedUser?.nome || selectedAutorizado?.nome;
+                  const selectedType = selectedUser ? 'admin' : selectedAutorizado ? 'autorizado' : null;
+                  
+                  return (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-xs">
+                        Responsável pelas medidas
+                        <span className="text-destructive ml-1">*</span>
+                      </FormLabel>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={open}
+                              disabled={!modoEdicao}
+                              className={cn(
+                                "h-9 w-full justify-between text-xs font-normal",
+                                !field.value && modoEdicao && "border-destructive",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {selectedName ? (
+                                <span className="flex items-center gap-1.5 truncate">
+                                  {selectedType === 'admin' ? (
+                                    <User className="h-3 w-3 text-primary shrink-0" />
+                                  ) : (
+                                    <Building2 className="h-3 w-3 text-amber-600 shrink-0" />
+                                  )}
+                                  {selectedName}
+                                </span>
+                              ) : (
+                                "Selecione..."
+                              )}
+                              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar responsável..." className="h-9" />
+                            <CommandList>
+                              <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+                              <CommandGroup heading={
+                                <span className="flex items-center gap-1 text-primary">
+                                  <User className="h-3 w-3" />
+                                  Equipe Interna
+                                </span>
+                              }>
+                                {usuarios.map(user => (
+                                  <CommandItem
+                                    key={user.id}
+                                    value={user.nome}
+                                    onSelect={() => {
+                                      field.onChange(user.id);
+                                      form.setValue('tipo_responsavel', 'admin');
+                                      setOpen(false);
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-3 w-3",
+                                        field.value === user.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {user.nome}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                              {autorizados.length > 0 && (
+                                <>
+                                  <CommandSeparator />
+                                  <CommandGroup heading={
+                                    <span className="flex items-center gap-1 text-amber-600">
+                                      <Building2 className="h-3 w-3" />
+                                      Autorizados
+                                    </span>
+                                  }>
+                                    {autorizados.map(aut => (
+                                      <CommandItem
+                                        key={aut.id}
+                                        value={aut.nome}
+                                        onSelect={() => {
+                                          field.onChange(aut.id);
+                                          form.setValue('tipo_responsavel', 'autorizado');
+                                          setOpen(false);
+                                        }}
+                                        className="text-xs"
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-3 w-3",
+                                            field.value === aut.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {aut.nome}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      {!field.value && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
