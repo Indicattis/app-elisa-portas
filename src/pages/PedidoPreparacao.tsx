@@ -91,6 +91,20 @@ export default function PedidoPreparacao() {
     },
   });
 
+  const { data: autorizados = [] } = useQuery({
+    queryKey: ['autorizados-ativos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autorizados')
+        .select('id, nome')
+        .eq('ativo', true)
+        .order('nome');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   if (pedidoLoading || linhasLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -558,6 +572,7 @@ export default function PedidoPreparacao() {
                     porta={porta}
                     portaIndex={idx}
                     usuarios={usuarios}
+                    autorizados={autorizados}
                     valoresIniciais={getObservacoesPorPorta(porta.id)}
                     onSalvar={salvarObservacao}
                     pedidoId={id || ''}

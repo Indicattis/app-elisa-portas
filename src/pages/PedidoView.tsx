@@ -137,6 +137,20 @@ export default function PedidoView() {
     },
   });
 
+  // Buscar autorizados ativos para select de observações
+  const { data: autorizados = [] } = useQuery({
+    queryKey: ['autorizados-active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autorizados')
+        .select('id, nome')
+        .eq('ativo', true)
+        .order('nome');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Filtrar portas do tipo "porta_enrolar"
   const portasEnrolar = pedido?.venda?.produtos?.filter(
     (p: any) => p.tipo_produto === 'porta_enrolar'
@@ -858,6 +872,7 @@ export default function PedidoView() {
                   porta={porta}
                   portaIndex={idx}
                   usuarios={usuarios}
+                  autorizados={autorizados}
                   valoresIniciais={getObservacoesPorPorta(porta.id)}
                   onSalvar={salvarObservacao}
                   pedidoId={id || ''}
