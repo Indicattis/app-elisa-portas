@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Plus, Package, Check, X, Search, Zap, AlertCircle } from "lucide-react";
+import { Trash2, Plus, Package, Check, X, Search, Zap, AlertCircle, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { PedidoLinha, PedidoLinhaNova, CategoriaLinha } from "@/hooks/usePedidoLinhas";
@@ -20,10 +20,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEstoque } from "@/hooks/useEstoque";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface PedidoLinhasEditorProps {
   linhas: PedidoLinha[];
@@ -136,6 +145,7 @@ export const PedidoLinhasEditor = ({
   const [novaLinha, setNovaLinha] = useState(false);
   const [buscaSku, setBuscaSku] = useState("");
   const [popoverAberto, setPopoverAberto] = useState(false);
+  const [produtoSelectOpen, setProdutoSelectOpen] = useState(false);
   const [avisoCalculo, setAvisoCalculo] = useState<string | null>(null);
   const [rascunhoLinha, setRascunhoLinha] = useState({
     produto_venda_id: "",
@@ -536,64 +546,53 @@ export const PedidoLinhasEditor = ({
                     </Select>
                   </td>
                   <td className="p-2">
-                    <div className="flex gap-1">
-                      <Select
-                        value={rascunhoLinha.estoque_id}
-                        onValueChange={(value) => 
-                          setRascunhoLinha({...rascunhoLinha, estoque_id: value})
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-xs flex-1">
-                          <SelectValue placeholder="Selecione o produto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {produtos
-                            .filter(p => p.ativo)
-                            .map((produto) => (
-                              <SelectItem key={produto.id} value={produto.id}>
-                                <span className="font-mono text-muted-foreground mr-2">{produto.sku || '-'}</span>
-                                {produto.nome_produto}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Popover open={popoverAberto} onOpenChange={setPopoverAberto}>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
-                            <Search className="h-3 w-3" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 p-2" align="end">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Search className="h-4 w-4 text-muted-foreground" />
-                              <Input
-                                placeholder="Buscar por SKU ou nome..."
-                                value={buscaSku}
-                                onChange={(e) => setBuscaSku(e.target.value)}
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                            <ScrollArea className="h-48">
-                              <div className="space-y-1">
-                                {produtos
-                                  .filter(p => p.ativo)
-                                  .filter(p => 
-                                    !buscaSku || 
-                                    p.sku?.toLowerCase().includes(buscaSku.toLowerCase()) ||
-                                    p.nome_produto.toLowerCase().includes(buscaSku.toLowerCase())
-                                  )
-                                  .map((produto) => (
-                                    <button
-                                      key={produto.id}
-                                      type="button"
-                                      className="w-full text-left p-2 rounded hover:bg-accent text-xs transition-colors"
-                                      onClick={() => {
-                                        setRascunhoLinha({...rascunhoLinha, estoque_id: produto.id});
-                                        setPopoverAberto(false);
-                                        setBuscaSku("");
-                                      }}
-                                    >
+                    <Popover open={produtoSelectOpen} onOpenChange={setProdutoSelectOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={produtoSelectOpen}
+                          className="h-8 w-full justify-between text-xs"
+                        >
+                          {rascunhoLinha.estoque_id
+                            ? (() => {
+                                const produto = produtos.find(p => p.id === rascunhoLinha.estoque_id);
+                                return produto ? (
+                                  <span className="truncate">
+                                    <span className="font-mono text-muted-foreground mr-1">{produto.sku || '-'}</span>
+                                    {produto.nome_produto}
+                                  </span>
+                                ) : "Selecione o produto";
+                              })()
+                            : "Selecione o produto"}
+                          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar por SKU ou nome..." className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              {produtos
+                                .filter(p => p.ativo)
+                                .map((produto) => (
+                                  <CommandItem
+                                    key={produto.id}
+                                    value={`${produto.sku || ''} ${produto.nome_produto}`}
+                                    onSelect={() => {
+                                      setRascunhoLinha({...rascunhoLinha, estoque_id: produto.id});
+                                      setProdutoSelectOpen(false);
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-3 w-3",
+                                        rascunhoLinha.estoque_id === produto.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
                                       <div className="flex items-center gap-2">
                                         <Badge variant="outline" className="font-mono text-[10px]">
                                           {produto.sku || '-'}
@@ -601,27 +600,18 @@ export const PedidoLinhasEditor = ({
                                         <span className="truncate">{produto.nome_produto}</span>
                                       </div>
                                       {produto.descricao_produto && (
-                                        <p className="text-muted-foreground text-[10px] truncate mt-0.5">
+                                        <p className="text-muted-foreground text-[10px] truncate">
                                           {produto.descricao_produto}
                                         </p>
                                       )}
-                                    </button>
-                                  ))}
-                                {produtos.filter(p => p.ativo).filter(p => 
-                                  !buscaSku || 
-                                  p.sku?.toLowerCase().includes(buscaSku.toLowerCase()) ||
-                                  p.nome_produto.toLowerCase().includes(buscaSku.toLowerCase())
-                                ).length === 0 && (
-                                  <p className="text-center text-xs text-muted-foreground py-4">
-                                    Nenhum produto encontrado
-                                  </p>
-                                )}
-                              </div>
-                            </ScrollArea>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </td>
                   <td className="p-2">
                     <Badge variant="outline" className={`text-xs ${getCategoriaBadgeClasses(categoriaAutomatica)}`}>
