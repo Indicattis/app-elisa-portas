@@ -65,6 +65,8 @@ export function usePostagensPorDia(data: string) {
   return useQuery({
     queryKey: ["postagens-dia", data],
     queryFn: async () => {
+      if (!data) return [];
+      
       const { data: postagens, error } = await supabase
         .from("postagens")
         .select("*")
@@ -78,6 +80,7 @@ export function usePostagensPorDia(data: string) {
 
       return postagens as Postagem[];
     },
+    enabled: !!data,
   });
 }
 
