@@ -3488,6 +3488,7 @@ export type Database = {
           produto_venda_id: string
           responsavel_medidas_id: string | null
           retirada_porta: boolean
+          tipo_responsavel: string | null
           tubo_tiras_frontais: string
           updated_at: string
         }
@@ -3504,6 +3505,7 @@ export type Database = {
           produto_venda_id: string
           responsavel_medidas_id?: string | null
           retirada_porta?: boolean
+          tipo_responsavel?: string | null
           tubo_tiras_frontais?: string
           updated_at?: string
         }
@@ -3520,6 +3522,7 @@ export type Database = {
           produto_venda_id?: string
           responsavel_medidas_id?: string | null
           retirada_porta?: boolean
+          tipo_responsavel?: string | null
           tubo_tiras_frontais?: string
           updated_at?: string
         }
