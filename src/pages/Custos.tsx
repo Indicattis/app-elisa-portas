@@ -1,18 +1,18 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Search, Check, X, Coins, Layers, FolderTree, RotateCcw } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Pencil, Trash2, Search, Coins, Layers, RotateCcw, Settings2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTiposCustos, CustoCategoria, CustoSubcategoria, TipoCusto } from "@/hooks/useTiposCustos";
 
 const formatCurrency = (value: number) => {
@@ -39,13 +39,13 @@ export default function Custos() {
     deleteTipoCusto,
   } = useTiposCustos();
 
-  const [activeTab, setActiveTab] = useState("tipos");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategoria, setFilterCategoria] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   // Dialog states
   const [tipoCustoDialog, setTipoCustoDialog] = useState(false);
+  const [categoriasManagerDialog, setCategoriasManagerDialog] = useState(false);
   const [categoriaDialog, setCategoriaDialog] = useState(false);
   const [subcategoriaDialog, setSubcategoriaDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ type: string; id: string } | null>(null);
@@ -91,16 +91,6 @@ export default function Custos() {
       (filterStatus === "ativo" && t.ativo) ||
       (filterStatus === "inativo" && !t.ativo);
     return matchesSearch && matchesCategoria && matchesStatus;
-  });
-
-  const filteredCategorias = categorias.filter(c =>
-    c.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredSubcategorias = subcategorias.filter(s => {
-    const matchesSearch = s.nome.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategoria = filterCategoria === "all" || s.categoria_id === filterCategoria;
-    return matchesSearch && matchesCategoria;
   });
 
   // Handlers
@@ -276,9 +266,9 @@ export default function Custos() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setCategoriaDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Categoria
+          <Button variant="outline" onClick={() => setCategoriasManagerDialog(true)}>
+            <Settings2 className="h-4 w-4 mr-2" />
+            Gerenciar Categorias
           </Button>
           <Button onClick={() => setTipoCustoDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -321,135 +311,137 @@ export default function Custos() {
         </Card>
       </div>
 
-      {/* Main Content */}
+      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="tipos">
-                <Coins className="h-4 w-4 mr-2" />
-                Tipos de Custos ({tiposCustos.length})
-              </TabsTrigger>
-              <TabsTrigger value="categorias">
-                <Layers className="h-4 w-4 mr-2" />
-                Categorias ({categorias.length})
-              </TabsTrigger>
-              <TabsTrigger value="subcategorias">
-                <FolderTree className="h-4 w-4 mr-2" />
-                Subcategorias ({subcategorias.length})
-              </TabsTrigger>
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar tipos de custos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={filterCategoria} onValueChange={setFilterCategoria}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categorias.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>{cat.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ativo">Ativos</SelectItem>
+                <SelectItem value="inativo">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Types Table */}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Subcategoria</TableHead>
+                <TableHead className="text-right">Valor Máximo Mensal</TableHead>
+                <TableHead className="text-center">Recorrente</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTiposCustos.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    Nenhum tipo de custo encontrado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTiposCustos.map((tipo) => (
+                  <TableRow key={tipo.id}>
+                    <TableCell className="font-medium">{tipo.nome}</TableCell>
+                    <TableCell>
+                      {tipo.categoria && (
+                        <Badge
+                          variant="outline"
+                          style={{ borderColor: tipo.categoria.cor, color: tipo.categoria.cor }}
+                        >
+                          {tipo.categoria.nome}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{tipo.subcategoria?.nome || "-"}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(tipo.valor_maximo_mensal)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {tipo.recorrente ? (
+                        <Badge variant="secondary">
+                          <RotateCcw className="h-3 w-3 mr-1" />
+                          Sim
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">Não</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={tipo.ativo}
+                        onCheckedChange={() => toggleTipoCustoStatus(tipo)}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditTipoCusto(tipo)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteDialog({ type: "tipo", id: tipo.id })}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Categorias Manager Dialog */}
+      <Dialog open={categoriasManagerDialog} onOpenChange={setCategoriasManagerDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Categorias e Subcategorias</DialogTitle>
+            <DialogDescription>
+              Organize as categorias e subcategorias de custos
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue="categorias" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="categorias">Categorias ({categorias.length})</TabsTrigger>
+              <TabsTrigger value="subcategorias">Subcategorias ({subcategorias.length})</TabsTrigger>
             </TabsList>
 
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mt-4 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+            <TabsContent value="categorias" className="space-y-4">
+              <div className="flex justify-end">
+                <Button size="sm" onClick={() => setCategoriaDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Categoria
+                </Button>
               </div>
-              {activeTab !== "categorias" && (
-                <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categorias.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="ativo">Ativos</SelectItem>
-                  <SelectItem value="inativo">Inativos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Tipos de Custos Tab */}
-            <TabsContent value="tipos">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Subcategoria</TableHead>
-                    <TableHead className="text-right">Valor Máximo Mensal</TableHead>
-                    <TableHead className="text-center">Recorrente</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTiposCustos.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        Nenhum tipo de custo encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredTiposCustos.map((tipo) => (
-                      <TableRow key={tipo.id}>
-                        <TableCell className="font-medium">{tipo.nome}</TableCell>
-                        <TableCell>
-                          {tipo.categoria && (
-                            <Badge
-                              variant="outline"
-                              style={{ borderColor: tipo.categoria.cor, color: tipo.categoria.cor }}
-                            >
-                              {tipo.categoria.nome}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{tipo.subcategoria?.nome || "-"}</TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(tipo.valor_maximo_mensal)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {tipo.recorrente ? (
-                            <Badge variant="secondary">
-                              <RotateCcw className="h-3 w-3 mr-1" />
-                              Sim
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">Não</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Switch
-                            checked={tipo.ativo}
-                            onCheckedChange={() => toggleTipoCustoStatus(tipo)}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => handleEditTipoCusto(tipo)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeleteDialog({ type: "tipo", id: tipo.id })}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
-            {/* Categorias Tab */}
-            <TabsContent value="categorias">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -461,14 +453,14 @@ export default function Custos() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCategorias.length === 0 ? (
+                  {categorias.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground">
                         Nenhuma categoria encontrada
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredCategorias.map((categoria) => (
+                    categorias.map((categoria) => (
                       <TableRow key={categoria.id}>
                         <TableCell>
                           <div
@@ -477,7 +469,7 @@ export default function Custos() {
                           />
                         </TableCell>
                         <TableCell className="font-medium">{categoria.nome}</TableCell>
-                        <TableCell className="text-muted-foreground">{categoria.descricao || "-"}</TableCell>
+                        <TableCell className="text-muted-foreground max-w-[200px] truncate">{categoria.descricao || "-"}</TableCell>
                         <TableCell className="text-center">
                           <Switch
                             checked={categoria.ativo}
@@ -501,10 +493,9 @@ export default function Custos() {
               </Table>
             </TabsContent>
 
-            {/* Subcategorias Tab */}
-            <TabsContent value="subcategorias">
-              <div className="flex justify-end mb-4">
-                <Button variant="outline" onClick={() => setSubcategoriaDialog(true)}>
+            <TabsContent value="subcategorias" className="space-y-4">
+              <div className="flex justify-end">
+                <Button size="sm" onClick={() => setSubcategoriaDialog(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nova Subcategoria
                 </Button>
@@ -520,14 +511,14 @@ export default function Custos() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSubcategorias.length === 0 ? (
+                  {subcategorias.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground">
                         Nenhuma subcategoria encontrada
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredSubcategorias.map((subcategoria) => {
+                    subcategorias.map((subcategoria) => {
                       const categoria = getCategoriaById(subcategoria.categoria_id);
                       return (
                         <TableRow key={subcategoria.id}>
@@ -542,7 +533,7 @@ export default function Custos() {
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{subcategoria.descricao || "-"}</TableCell>
+                          <TableCell className="text-muted-foreground max-w-[200px] truncate">{subcategoria.descricao || "-"}</TableCell>
                           <TableCell className="text-center">
                             <Switch
                               checked={subcategoria.ativo}
@@ -567,8 +558,8 @@ export default function Custos() {
               </Table>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
 
       {/* Tipo de Custo Dialog */}
       <Dialog open={tipoCustoDialog} onOpenChange={(open) => {
