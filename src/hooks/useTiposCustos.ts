@@ -27,7 +27,7 @@ export interface TipoCusto {
   categoria_id: string | null;
   subcategoria_id: string | null;
   valor_maximo_mensal: number;
-  recorrente: boolean;
+  tipo: 'fixa' | 'variavel';
   ativo: boolean;
   categoria?: CustoCategoria;
   subcategoria?: CustoSubcategoria;
