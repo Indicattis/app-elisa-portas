@@ -1748,6 +1748,133 @@ export type Database = {
           },
         ]
       }
+      folha_pagamento_itens: {
+        Row: {
+          acrescimos: number | null
+          colaborador_id: string
+          colaborador_nome: string
+          conta_pagar_id: string | null
+          created_at: string
+          descontos: number | null
+          descricao_acrescimos: string | null
+          descricao_descontos: string | null
+          folha_id: string
+          horas_adicionais: number | null
+          id: string
+          modalidade_pagamento: string | null
+          salario_base: number
+          total_bruto: number
+          total_horas_adicionais: number | null
+          total_liquido: number
+          updated_at: string
+          valor_hora_adicional: number | null
+        }
+        Insert: {
+          acrescimos?: number | null
+          colaborador_id: string
+          colaborador_nome: string
+          conta_pagar_id?: string | null
+          created_at?: string
+          descontos?: number | null
+          descricao_acrescimos?: string | null
+          descricao_descontos?: string | null
+          folha_id: string
+          horas_adicionais?: number | null
+          id?: string
+          modalidade_pagamento?: string | null
+          salario_base?: number
+          total_bruto?: number
+          total_horas_adicionais?: number | null
+          total_liquido?: number
+          updated_at?: string
+          valor_hora_adicional?: number | null
+        }
+        Update: {
+          acrescimos?: number | null
+          colaborador_id?: string
+          colaborador_nome?: string
+          conta_pagar_id?: string | null
+          created_at?: string
+          descontos?: number | null
+          descricao_acrescimos?: string | null
+          descricao_descontos?: string | null
+          folha_id?: string
+          horas_adicionais?: number | null
+          id?: string
+          modalidade_pagamento?: string | null
+          salario_base?: number
+          total_bruto?: number
+          total_horas_adicionais?: number | null
+          total_liquido?: number
+          updated_at?: string
+          valor_hora_adicional?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folha_pagamento_itens_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folha_pagamento_itens_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folha_pagamento_itens_folha_id_fkey"
+            columns: ["folha_id"]
+            isOneToOne: false
+            referencedRelation: "folhas_pagamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      folhas_pagamento: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_vencimento: string
+          id: string
+          mes_referencia: string
+          observacoes: string | null
+          status: string
+          total_bruto: number
+          total_descontos: number
+          total_liquido: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_vencimento: string
+          id?: string
+          mes_referencia: string
+          observacoes?: string | null
+          status?: string
+          total_bruto?: number
+          total_descontos?: number
+          total_liquido?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_vencimento?: string
+          id?: string
+          mes_referencia?: string
+          observacoes?: string | null
+          status?: string
+          total_bruto?: number
+          total_descontos?: number
+          total_liquido?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fornecedores: {
         Row: {
           ativo: boolean
