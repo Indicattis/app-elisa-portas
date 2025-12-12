@@ -4395,6 +4395,101 @@ export type Database = {
         }
         Relationships: []
       }
+      solicitacoes_mudanca_cadastro: {
+        Row: {
+          aprovador_id: string | null
+          colaborador_id: string
+          cpf_atual: string | null
+          cpf_novo: string | null
+          created_at: string | null
+          data_aprovacao: string | null
+          data_nascimento_atual: string | null
+          data_nascimento_novo: string | null
+          email_atual: string | null
+          email_novo: string | null
+          id: string
+          motivo: string | null
+          nome_atual: string | null
+          nome_novo: string | null
+          observacoes_aprovacao: string | null
+          role_atual: string | null
+          role_novo: string | null
+          salario_atual: number | null
+          salario_novo: number | null
+          setor_atual: string | null
+          setor_novo: string | null
+          solicitante_id: string
+          status: string
+          telefone_atual: string | null
+          telefone_novo: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aprovador_id?: string | null
+          colaborador_id: string
+          cpf_atual?: string | null
+          cpf_novo?: string | null
+          created_at?: string | null
+          data_aprovacao?: string | null
+          data_nascimento_atual?: string | null
+          data_nascimento_novo?: string | null
+          email_atual?: string | null
+          email_novo?: string | null
+          id?: string
+          motivo?: string | null
+          nome_atual?: string | null
+          nome_novo?: string | null
+          observacoes_aprovacao?: string | null
+          role_atual?: string | null
+          role_novo?: string | null
+          salario_atual?: number | null
+          salario_novo?: number | null
+          setor_atual?: string | null
+          setor_novo?: string | null
+          solicitante_id: string
+          status?: string
+          telefone_atual?: string | null
+          telefone_novo?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aprovador_id?: string | null
+          colaborador_id?: string
+          cpf_atual?: string | null
+          cpf_novo?: string | null
+          created_at?: string | null
+          data_aprovacao?: string | null
+          data_nascimento_atual?: string | null
+          data_nascimento_novo?: string | null
+          email_atual?: string | null
+          email_novo?: string | null
+          id?: string
+          motivo?: string | null
+          nome_atual?: string | null
+          nome_novo?: string | null
+          observacoes_aprovacao?: string | null
+          role_atual?: string | null
+          role_novo?: string | null
+          salario_atual?: number | null
+          salario_novo?: number | null
+          setor_atual?: string | null
+          setor_novo?: string | null
+          solicitante_id?: string
+          status?: string
+          telefone_atual?: string | null
+          telefone_novo?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_mudanca_cadastro_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_roles: {
         Row: {
           ativo: boolean

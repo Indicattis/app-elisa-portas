@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, X, Edit, Save, Loader2 } from "lucide-react";
+import { Search, X, Edit, Save, Loader2, FileEdit } from "lucide-react";
 import { ROLE_LABELS } from "@/types/permissions";
 
 interface Colaborador {
@@ -33,6 +34,21 @@ export default function Colaboradores() {
   const [salarioInput, setSalarioInput] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Buscar solicitações pendentes
+  const { data: pendingSolicitacoes = 0 } = useQuery({
+    queryKey: ["solicitacoes-pendentes-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("solicitacoes_mudanca_cadastro")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pendente");
+
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
   // Buscar colaboradores ativos
   const { data: colaboradores = [], isLoading } = useQuery({
@@ -184,12 +200,31 @@ export default function Colaboradores() {
                 {filteredColaboradores.length} de {colaboradores.length} colaboradores
               </CardDescription>
             </div>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs">
-                <X className="w-3 h-3 mr-1" />
-                Limpar filtros
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate("/dashboard/administrativo/rh/colaboradores/solicitacoes")}
+                className="h-7 text-xs relative"
+              >
+                <FileEdit className="w-3 h-3 mr-1" />
+                Solicitações
+                {pendingSolicitacoes > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
+                  >
+                    {pendingSolicitacoes}
+                  </Badge>
+                )}
               </Button>
-            )}
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs">
+                  <X className="w-3 h-3 mr-1" />
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Filtros */}
