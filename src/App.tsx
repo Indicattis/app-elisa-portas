@@ -1417,6 +1417,10 @@ const App = () => (
                 <Route path="/dashboard/financeiro/investimentos" element={<Navigate to="/dashboard/marketing/investimentos" replace />} />
                 <Route path="/dashboard/investimentos" element={<Navigate to="/dashboard/marketing/investimentos" replace />} />
 
+                {/* Redirects Administrativo - Documentos */}
+                <Route path="/dashboard/documentos" element={<Navigate to="/dashboard/administrativo/documentos" replace />} />
+                <Route path="/dashboard/documentos/novo" element={<Navigate to="/dashboard/administrativo/documentos/novo" replace />} />
+
                 {/* Redirects para novas URLs */}
                 <Route path="/tv-dashboard" element={<Navigate to="/paineis/tv-dashboard" replace />} />
                 <Route path="/dashboard/paineis/calendario" element={<Navigate to="/paineis/calendario" replace />} />
