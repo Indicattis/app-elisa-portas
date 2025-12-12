@@ -24,6 +24,8 @@ interface Colaborador {
   salario: number | null;
   foto_perfil_url: string | null;
   ativo: boolean;
+  modalidade_pagamento: "mensal" | "diaria" | null;
+  em_folha: boolean | null;
 }
 
 export default function Colaboradores() {
@@ -56,7 +58,7 @@ export default function Colaboradores() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("id, user_id, nome, email, role, setor, cpf, salario, foto_perfil_url, ativo")
+        .select("id, user_id, nome, email, role, setor, cpf, salario, foto_perfil_url, ativo, modalidade_pagamento, em_folha")
         .eq("ativo", true)
         .eq("eh_colaborador", true)
         .order("nome");
@@ -280,6 +282,8 @@ export default function Colaboradores() {
                   <TableHead className="text-[10px] py-1 px-2">Função</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Setor</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">CPF</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Modalidade</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Folha</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Salário</TableHead>
                   <TableHead className="text-right text-[10px] py-1 px-2">Ações</TableHead>
                 </TableRow>
@@ -287,7 +291,7 @@ export default function Colaboradores() {
               <TableBody>
                 {filteredColaboradores.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground text-sm">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground text-sm">
                       Nenhum colaborador encontrado
                     </TableCell>
                   </TableRow>
@@ -326,6 +330,19 @@ export default function Colaboradores() {
                       </TableCell>
                       <TableCell className="py-1 px-2 text-[10px]">
                         {colaborador.cpf ? formatCPF(colaborador.cpf) : "—"}
+                      </TableCell>
+                      <TableCell className="py-1 px-2">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                          {colaborador.modalidade_pagamento === "diaria" ? "Diária" : "Mensal"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-1 px-2">
+                        <Badge 
+                          variant={colaborador.em_folha ? "default" : "secondary"} 
+                          className="text-[9px] px-1 py-0 h-4"
+                        >
+                          {colaborador.em_folha ? "Sim" : "Não"}
+                        </Badge>
                       </TableCell>
                       <TableCell className="py-1 px-2 text-[10px]">
                         {editingSalario === colaborador.id ? (
