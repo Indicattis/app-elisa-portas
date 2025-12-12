@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Search, X, Edit, Save, Loader2, FileEdit } from "lucide-react";
+import { Search, X, Edit, Loader2, FileEdit } from "lucide-react";
 import { ROLE_LABELS } from "@/types/permissions";
+import { EditColaboradorModal } from "@/components/colaboradores/EditColaboradorModal";
 
 interface Colaborador {
   id: string;
@@ -32,9 +32,8 @@ export default function Colaboradores() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSetor, setFilterSetor] = useState<string>("todos");
   const [filterRole, setFilterRole] = useState<string>("todos");
-  const [editingSalario, setEditingSalario] = useState<string | null>(null);
-  const [salarioInput, setSalarioInput] = useState("");
-  const { toast } = useToast();
+  const [editingColaborador, setEditingColaborador] = useState<Colaborador | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -88,37 +87,6 @@ export default function Colaboradores() {
     return acc;
   }, {} as Record<string, string>);
 
-  // Mutation para atualizar salário
-  const updateSalarioMutation = useMutation({
-    mutationFn: async ({ id, salario }: { id: string; salario: number | null }) => {
-      const { error } = await supabase
-        .from("admin_users")
-        .update({ salario })
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
-      setEditingSalario(null);
-      setSalarioInput("");
-      toast({ title: "Salário atualizado com sucesso" });
-    },
-    onError: () => {
-      toast({ variant: "destructive", title: "Erro ao atualizar salário" });
-    },
-  });
-
-  const handleSaveSalario = (id: string) => {
-    const salarioNumerico = salarioInput ? parseFloat(salarioInput.replace(/\D/g, "")) / 100 : null;
-    updateSalarioMutation.mutate({ id, salario: salarioNumerico });
-  };
-
-  const handleEditSalario = (colaborador: Colaborador) => {
-    setEditingSalario(colaborador.id);
-    setSalarioInput(colaborador.salario ? formatCurrency(colaborador.salario) : "");
-  };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -126,19 +94,9 @@ export default function Colaboradores() {
     }).format(value);
   };
 
-  const handleSalarioInputChange = (value: string) => {
-    // Remove tudo que não é número
-    const numericValue = value.replace(/\D/g, "");
-    // Formata como moeda
-    if (numericValue) {
-      const formatted = (parseInt(numericValue) / 100).toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-      setSalarioInput(formatted);
-    } else {
-      setSalarioInput("");
-    }
+  const handleEditColaborador = (colaborador: Colaborador) => {
+    setEditingColaborador(colaborador);
+    setIsEditModalOpen(true);
   };
 
   const getInitials = (name: string) => {
@@ -345,53 +303,20 @@ export default function Colaboradores() {
                         </Badge>
                       </TableCell>
                       <TableCell className="py-1 px-2 text-[10px]">
-                        {editingSalario === colaborador.id ? (
-                          <div className="flex items-center gap-1">
-                            <Input
-                              value={salarioInput}
-                              onChange={(e) => handleSalarioInputChange(e.target.value)}
-                              className="h-6 w-24 text-[10px] px-1"
-                              placeholder="0,00"
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSaveSalario(colaborador.id)}
-                              disabled={updateSalarioMutation.isPending}
-                              className="h-5 w-5 p-0"
-                            >
-                              <Save className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingSalario(null);
-                                setSalarioInput("");
-                              }}
-                              className="h-5 w-5 p-0"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="font-medium">
-                            {colaborador.salario ? formatCurrency(colaborador.salario) : "—"}
-                          </span>
-                        )}
+                        <span className="font-medium">
+                          {colaborador.salario ? formatCurrency(colaborador.salario) : "—"}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right py-1 px-2">
-                        {editingSalario !== colaborador.id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditSalario(colaborador)}
-                            className="h-5 w-5 p-0"
-                            title="Editar salário"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditColaborador(colaborador)}
+                          className="h-5 w-5 p-0"
+                          title="Editar colaborador"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -401,6 +326,13 @@ export default function Colaboradores() {
           </div>
         </CardContent>
       </Card>
+
+      <EditColaboradorModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        colaborador={editingColaborador}
+        systemRoles={systemRoles}
+      />
     </div>
   );
 }
