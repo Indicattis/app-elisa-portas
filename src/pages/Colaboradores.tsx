@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, X, Edit, Loader2, FileEdit } from "lucide-react";
+import { Search, X, Edit, Loader2, FileEdit, FileText } from "lucide-react";
 import { ROLE_LABELS } from "@/types/permissions";
 import { EditColaboradorModal } from "@/components/colaboradores/EditColaboradorModal";
 
@@ -161,6 +161,15 @@ export default function Colaboradores() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => navigate("/dashboard/administrativo/rh/colaboradores/folha-pagamento")}
+                className="h-7 text-xs"
+              >
+                <FileText className="w-3 h-3 mr-1" />
+                Gerar Folha de Pagamento
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
