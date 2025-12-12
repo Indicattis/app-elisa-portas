@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Search, Coins, Layers, RotateCcw, Settings2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Coins, Layers, Settings2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +62,7 @@ export default function Custos() {
     categoria_id: "",
     subcategoria_id: "",
     valor_maximo_mensal: 0,
-    recorrente: true,
+    tipo: "fixa" as 'fixa' | 'variavel',
   });
 
   const [categoriaForm, setCategoriaForm] = useState({
@@ -171,7 +171,7 @@ export default function Custos() {
       categoria_id: tipo.categoria_id || "",
       subcategoria_id: tipo.subcategoria_id || "",
       valor_maximo_mensal: tipo.valor_maximo_mensal,
-      recorrente: tipo.recorrente,
+      tipo: tipo.tipo,
     });
     setTipoCustoDialog(true);
   };
@@ -217,7 +217,7 @@ export default function Custos() {
       categoria_id: "",
       subcategoria_id: "",
       valor_maximo_mensal: 0,
-      recorrente: true,
+      tipo: "fixa",
     });
   };
 
@@ -355,7 +355,7 @@ export default function Custos() {
                 <TableHead>Categoria</TableHead>
                 <TableHead>Subcategoria</TableHead>
                 <TableHead className="text-right">Valor Máximo Mensal</TableHead>
-                <TableHead className="text-center">Recorrente</TableHead>
+                <TableHead className="text-center">Tipo</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -386,14 +386,9 @@ export default function Custos() {
                       {formatCurrency(tipo.valor_maximo_mensal)}
                     </TableCell>
                     <TableCell className="text-center">
-                      {tipo.recorrente ? (
-                        <Badge variant="secondary">
-                          <RotateCcw className="h-3 w-3 mr-1" />
-                          Sim
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">Não</span>
-                      )}
+                      <Badge variant={tipo.tipo === 'fixa' ? 'default' : 'secondary'}>
+                        {tipo.tipo === 'fixa' ? 'Fixa' : 'Variável'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <Switch
@@ -637,13 +632,20 @@ export default function Custos() {
                 onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, valor_maximo_mensal: parseFloat(e.target.value) || 0 })}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="recorrente">Custo Recorrente</Label>
-              <Switch
-                id="recorrente"
-                checked={tipoCustoForm.recorrente}
-                onCheckedChange={(checked) => setTipoCustoForm({ ...tipoCustoForm, recorrente: checked })}
-              />
+            <div className="space-y-2">
+              <Label htmlFor="tipo">Tipo de Custo</Label>
+              <Select
+                value={tipoCustoForm.tipo}
+                onValueChange={(value: 'fixa' | 'variavel') => setTipoCustoForm({ ...tipoCustoForm, tipo: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixa">Fixa</SelectItem>
+                  <SelectItem value="variavel">Variável</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

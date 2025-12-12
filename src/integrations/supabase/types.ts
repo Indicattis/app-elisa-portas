@@ -4918,8 +4918,8 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
-          recorrente: boolean | null
           subcategoria_id: string | null
+          tipo: string | null
           updated_at: string | null
           valor_maximo_mensal: number
         }
@@ -4931,8 +4931,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
-          recorrente?: boolean | null
           subcategoria_id?: string | null
+          tipo?: string | null
           updated_at?: string | null
           valor_maximo_mensal?: number
         }
@@ -4944,8 +4944,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
-          recorrente?: boolean | null
           subcategoria_id?: string | null
+          tipo?: string | null
           updated_at?: string | null
           valor_maximo_mensal?: number
         }
