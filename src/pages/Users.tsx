@@ -37,6 +37,8 @@ interface AdminUser {
   data_nascimento: string | null;
   ativo: boolean;
   foto_perfil_url: string | null;
+  eh_colaborador: boolean;
+  salario: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,6 +116,7 @@ export default function Users() {
       cpf: user.cpf,
       data_nascimento: user.data_nascimento,
       ativo: user.ativo,
+      eh_colaborador: user.eh_colaborador,
     });
   };
 
@@ -131,6 +134,7 @@ export default function Users() {
           cpf: cpfNumerico,
           data_nascimento: editForm.data_nascimento,
           ativo: editForm.ativo,
+          eh_colaborador: editForm.eh_colaborador,
         })
         .eq("id", userId);
 
@@ -326,13 +330,14 @@ export default function Users() {
             <Table>
               <TableHeader>
                 <TableRow className="h-7">
-                  <TableHead className="text-[10px] py-1 px-2">Foto</TableHead>
+                              <TableHead className="text-[10px] py-1 px-2">Foto</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Nome</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Email</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">CPF</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Aniversário</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Função</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Setor</TableHead>
+                  <TableHead className="text-[10px] py-1 px-2">Colaborador</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Status</TableHead>
                   <TableHead className="text-[10px] py-1 px-2">Data</TableHead>
                   <TableHead className="text-right text-[10px] py-1 px-2">Ações</TableHead>
@@ -479,6 +484,26 @@ export default function Users() {
                            user.setor === "instalacoes" ? "Instalações" :
                            user.setor === "fabrica" ? "Fábrica" :
                            user.setor === "administrativo" ? "Admin" : "—"}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-0 px-2">
+                      {editingUser === user.id ? (
+                        <Select
+                          value={editForm.eh_colaborador ? "true" : "false"}
+                          onValueChange={(value) => setEditForm({ ...editForm, eh_colaborador: value === "true" })}
+                        >
+                          <SelectTrigger className="h-6 text-[10px] px-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true" className="text-[10px]">Sim</SelectItem>
+                            <SelectItem value="false" className="text-[10px]">Não</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant={user.eh_colaborador ? "default" : "outline"} className="text-[9px] px-1 py-0 h-4">
+                          {user.eh_colaborador ? "Sim" : "Não"}
                         </Badge>
                       )}
                     </TableCell>

@@ -116,6 +116,7 @@ import EmitirNfse from "./pages/EmitirNfse";
 import EmitirNfe from "./pages/EmitirNfe";
 import ConfiguracoesFiscais from "./pages/ConfiguracoesFiscais";
 import Vagas from "./pages/Vagas";
+import Colaboradores from "./pages/Colaboradores";
 // Etiquetas removido - funcionalidade movida para página de Ordens
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
 import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
@@ -1266,6 +1267,16 @@ const App = () => (
                     <ProtectedRoute routeKey="vagas">
                       <DashboardLayout>
                         <Vagas />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/administrativo/rh/colaboradores"
+                  element={
+                    <ProtectedRoute routeKey="colaboradores">
+                      <DashboardLayout>
+                        <Colaboradores />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

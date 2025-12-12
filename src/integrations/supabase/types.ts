@@ -80,11 +80,13 @@ export type Database = {
           cpf: string | null
           created_at: string
           data_nascimento: string | null
+          eh_colaborador: boolean | null
           email: string
           foto_perfil_url: string | null
           id: string
           nome: string
           role: string
+          salario: number | null
           setor: Database["public"]["Enums"]["setor_type"] | null
           telefone: string | null
           updated_at: string
@@ -95,11 +97,13 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
+          eh_colaborador?: boolean | null
           email: string
           foto_perfil_url?: string | null
           id?: string
           nome: string
           role: string
+          salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
           updated_at?: string
@@ -110,11 +114,13 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
+          eh_colaborador?: boolean | null
           email?: string
           foto_perfil_url?: string | null
           id?: string
           nome?: string
           role?: string
+          salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
           updated_at?: string

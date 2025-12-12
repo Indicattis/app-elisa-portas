@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase } from "lucide-react";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Briefcase, Users } from "lucide-react";
 
 export default function RHHome() {
   const navigate = useNavigate();
@@ -15,6 +15,19 @@ export default function RHHome() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate("/dashboard/administrativo/rh/colaboradores")}
+        >
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Users className="h-8 w-8 text-green-600" />
+              <CardTitle>Colaboradores</CardTitle>
+            </div>
+            <CardDescription>Visualizar colaboradores da empresa</CardDescription>
+          </CardHeader>
+        </Card>
+
         <Card
           className="cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate("/dashboard/administrativo/rh/vagas")}
