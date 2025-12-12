@@ -110,7 +110,7 @@ import Expedicao from "./pages/Expedicao";
 import VendaView from "./pages/VendaView";
 import PedidoView from "./pages/PedidoView";
 import DRE from "./pages/DRE";
-import Despesas from "./pages/Despesas";
+import Custos from "./pages/Custos";
 import NotasFiscais from "./pages/NotasFiscais";
 import EmitirNfse from "./pages/EmitirNfse";
 import EmitirNfe from "./pages/EmitirNfe";
@@ -1204,14 +1204,19 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/administrativo/financeiro/despesas"
+                  path="/dashboard/administrativo/financeiro/custos"
                   element={
-                    <ProtectedRoute routeKey="financeiro_despesas">
+                    <ProtectedRoute routeKey="financeiro_custos">
                       <DashboardLayout>
-                        <Despesas />
+                        <Custos />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }
+                />
+                {/* Redirect old despesas route to custos */}
+                <Route
+                  path="/dashboard/administrativo/financeiro/despesas"
+                  element={<Navigate to="/dashboard/administrativo/financeiro/custos" replace />}
                 />
                 <Route
                   path="/dashboard/administrativo/financeiro/caixa"
