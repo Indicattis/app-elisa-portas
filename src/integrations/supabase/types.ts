@@ -1000,6 +1000,83 @@ export type Database = {
           },
         ]
       }
+      custos_categorias: {
+        Row: {
+          ativo: boolean
+          cor: string | null
+          created_at: string | null
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      custos_subcategorias: {
+        Row: {
+          ativo: boolean
+          categoria_id: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custos_subcategorias_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "custos_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       depositos_caixa: {
         Row: {
           categoria: string
@@ -4831,6 +4908,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tipos_custos: {
+        Row: {
+          ativo: boolean
+          categoria_id: string | null
+          created_at: string | null
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          recorrente: boolean | null
+          subcategoria_id: string | null
+          updated_at: string | null
+          valor_maximo_mensal: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          recorrente?: boolean | null
+          subcategoria_id?: string | null
+          updated_at?: string | null
+          valor_maximo_mensal?: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          recorrente?: boolean | null
+          subcategoria_id?: string | null
+          updated_at?: string | null
+          valor_maximo_mensal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tipos_custos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "custos_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tipos_custos_subcategoria_id_fkey"
+            columns: ["subcategoria_id"]
+            isOneToOne: false
+            referencedRelation: "custos_subcategorias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
