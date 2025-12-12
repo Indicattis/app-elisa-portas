@@ -81,9 +81,11 @@ export type Database = {
           created_at: string
           data_nascimento: string | null
           eh_colaborador: boolean | null
+          em_folha: boolean | null
           email: string
           foto_perfil_url: string | null
           id: string
+          modalidade_pagamento: string | null
           nome: string
           role: string
           salario: number | null
@@ -98,9 +100,11 @@ export type Database = {
           created_at?: string
           data_nascimento?: string | null
           eh_colaborador?: boolean | null
+          em_folha?: boolean | null
           email: string
           foto_perfil_url?: string | null
           id?: string
+          modalidade_pagamento?: string | null
           nome: string
           role: string
           salario?: number | null
@@ -115,9 +119,11 @@ export type Database = {
           created_at?: string
           data_nascimento?: string | null
           eh_colaborador?: boolean | null
+          em_folha?: boolean | null
           email?: string
           foto_perfil_url?: string | null
           id?: string
+          modalidade_pagamento?: string | null
           nome?: string
           role?: string
           salario?: number | null
