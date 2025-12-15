@@ -116,10 +116,13 @@ export function LinhasAgrupadasPorPorta({
   // Função para adicionar item padrão rapidamente
   const handleAdicionarItemPadrao = async (porta: any, item: ItemPadraoPortaEnrolar) => {
     const tamanhoAuto = calcularTamanhoAutomatico(item, porta.largura, porta.altura);
+    const originalId = porta._originalId || porta.id;
+    const indicePorta = porta._indicePorta ?? 0;
     
     try {
       await onAdicionarLinha({
-        produto_venda_id: porta.id,
+        produto_venda_id: originalId,
+        indice_porta: indicePorta,
         nome_produto: item.nome_produto,
         descricao_produto: item.descricao_produto || "",
         quantidade: 1,
@@ -134,9 +137,10 @@ export function LinhasAgrupadasPorPorta({
   };
 
   // Verificar se um item padrão já foi adicionado para uma porta
-  const itemJaAdicionado = (portaId: string, estoqueId: string) => {
+  const itemJaAdicionado = (portaId: string, indicePorta: number, estoqueId: string) => {
     return linhas.some(
       l => l.produto_venda_id === portaId && 
+           (l.indice_porta ?? 0) === indicePorta &&
            l.categoria_linha === categoria && 
            l.estoque_id === estoqueId
     );
@@ -147,40 +151,51 @@ export function LinhasAgrupadasPorPorta({
     ? portas.find(p => p.id === portaSelecionada) 
     : null;
 
-  return (
-    <div className="space-y-4">
-      {portas.map((porta, idx) => {
-        const linhasDaPorta = linhas.filter(
-          l => l.produto_venda_id === porta.id && l.categoria_linha === categoria
-        );
+    return (
+      <div className="space-y-4">
+        {portas.map((porta, idx) => {
+          const originalId = porta._originalId || porta.id;
+          const indicePorta = porta._indicePorta ?? 0;
+          const virtualKey = porta._virtualKey || porta.id;
+          
+          const linhasDaPorta = linhas.filter(
+            l => l.produto_venda_id === originalId && 
+                 (l.indice_porta ?? 0) === indicePorta &&
+                 l.categoria_linha === categoria
+          );
 
-        // Filtrar itens padrão que ainda não foram adicionados
-        const itensPadraoDisponiveis = itensPadrao.filter(
-          item => !itemJaAdicionado(porta.id, item.id)
-        );
+          // Filtrar itens padrão que ainda não foram adicionados
+          const itensPadraoDisponiveis = itensPadrao.filter(
+            item => !itemJaAdicionado(originalId, indicePorta, item.id)
+          );
+          
+          // Label considerando expansão
+          const portaLabel = porta._totalNoGrupo && porta._totalNoGrupo > 1
+            ? `Porta #${idx + 1} (${indicePorta + 1}/${porta._totalNoGrupo})`
+            : `Porta #${idx + 1}`;
         
-        return (
-          <Collapsible key={porta.id} defaultOpen={false}>
-            <div className="border-l-4 border-primary pl-3">
-              {/* Header da porta - clicável para expandir/colapsar */}
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center justify-between mb-2 hover:bg-muted/50 p-2 rounded-md transition-colors">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=open]]:rotate-180" />
-                    <Badge variant="outline">Porta #{idx + 1}</Badge>
-                    <span className="text-sm font-medium">
-                      {porta.largura}m × {porta.altura}m
-                    </span>
-                    {porta.peso_total && (
-                      <Badge variant="secondary" className="text-xs">
-                        {porta.peso_total.toFixed(2)} kg
-                      </Badge>
-                    )}
-                    {porta.quantidade_tiras && (
-                      <Badge variant="secondary" className="text-xs">
-                        {porta.quantidade_tiras} {porta.quantidade_tiras === 1 ? 'tira' : 'tiras'}
-                      </Badge>
-                    )}
+          return (
+            <Collapsible key={virtualKey} defaultOpen={false}>
+              <div className="border-l-4 border-primary pl-3">
+                {/* Header da porta - clicável para expandir/colapsar */}
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between mb-2 hover:bg-muted/50 p-2 rounded-md transition-colors">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=open]]:rotate-180" />
+                      <Badge variant="outline">{portaLabel}</Badge>
+                      <span className="text-sm font-medium">
+                        {porta.largura}m × {porta.altura}m
+                      </span>
+                      {porta.peso_total && (
+                        <Badge variant="secondary" className="text-xs">
+                          {porta.peso_total.toFixed(2)} kg
+                        </Badge>
+                      )}
+                      {porta.quantidade_tiras && (
+                        <Badge variant="secondary" className="text-xs">
+                          {porta.quantidade_tiras} {porta.quantidade_tiras === 1 ? 'tira' : 'tiras'}
+                        </Badge>
+                      )}
                     {linhasDaPorta.length > 0 && (
                       <Badge variant="secondary" className="text-xs">
                         {linhasDaPorta.length} {linhasDaPorta.length === 1 ? 'linha' : 'linhas'}
@@ -188,16 +203,16 @@ export function LinhasAgrupadasPorPorta({
                     )}
                   </div>
                   
-                  {!isReadOnly && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAbrirModal(porta.id);
-                      }}
-                      className="h-7 text-xs"
-                    >
+                    {!isReadOnly && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAbrirModal(originalId);
+                        }}
+                        className="h-7 text-xs"
+                      >
                       <Plus className="h-3 w-3 mr-1" />
                       Adicionar
                     </Button>

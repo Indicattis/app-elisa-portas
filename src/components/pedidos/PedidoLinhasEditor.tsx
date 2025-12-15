@@ -33,6 +33,7 @@ import { useEstoque } from "@/hooks/useEstoque";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
 
 interface PedidoLinhasEditorProps {
   linhas: PedidoLinha[];
@@ -157,8 +158,8 @@ export const PedidoLinhasEditor = ({
   // Buscar produtos do estoque
   const { produtos } = useEstoque();
 
-  // Buscar portas da venda
-  const { data: portas = [] } = useQuery({
+  // Buscar portas da venda e expandir por quantidade
+  const { data: portasRaw = [] } = useQuery({
     queryKey: ['produtos-venda-portas', vendaId],
     queryFn: async () => {
       if (!vendaId) return [];
@@ -174,6 +175,9 @@ export const PedidoLinhasEditor = ({
     },
     enabled: !!vendaId && !isReadOnly,
   });
+  
+  // Expandir portas por quantidade
+  const portas = expandirPortasPorQuantidade(portasRaw);
 
   // Estado para itens padrão de porta de enrolar
   const [itensPadrao, setItensPadrao] = useState<ItemPadraoPortaEnrolar[]>([]);
@@ -203,9 +207,13 @@ export const PedidoLinhasEditor = ({
     fetchItensPadrao();
   }, [temPortasEnrolar, isReadOnly]);
 
-  // Verificar se um item padrão já foi adicionado para uma porta
-  const itemJaAdicionado = (portaId: string, estoqueId: string) => {
-    return linhas.some(l => l.produto_venda_id === portaId && l.estoque_id === estoqueId);
+  // Verificar se um item padrão já foi adicionado para uma porta (considerando indice)
+  const itemJaAdicionado = (portaOriginalId: string, indicePorta: number, estoqueId: string) => {
+    return linhas.some(l => 
+      l.produto_venda_id === portaOriginalId && 
+      (l.indice_porta ?? 0) === indicePorta &&
+      l.estoque_id === estoqueId
+    );
   };
 
   // Função para adicionar item padrão rapidamente
@@ -215,7 +223,8 @@ export const PedidoLinhasEditor = ({
     
     try {
       await onAdicionarLinha({
-        produto_venda_id: porta.id,
+        produto_venda_id: porta._originalId,
+        indice_porta: porta._indicePorta,
         nome_produto: item.nome_produto,
         descricao_produto: item.descricao_produto || "",
         quantidade: 1,
@@ -304,7 +313,8 @@ export const PedidoLinhasEditor = ({
     if (!produtoEstoque) return;
 
     const novaLinhaCompleta: PedidoLinhaNova = {
-      produto_venda_id: temPortasEnrolar ? rascunhoLinha.produto_venda_id : undefined,
+      produto_venda_id: temPortasEnrolar ? parsePortaVirtualKey(rascunhoLinha.produto_venda_id).originalId : undefined,
+      indice_porta: temPortasEnrolar ? parsePortaVirtualKey(rascunhoLinha.produto_venda_id).indicePorta : 0,
       estoque_id: rascunhoLinha.estoque_id,
       nome_produto: produtoEstoque.nome_produto,
       descricao_produto: produtoEstoque.descricao_produto,
@@ -312,6 +322,15 @@ export const PedidoLinhasEditor = ({
       tamanho: rascunhoLinha.tamanho || null,
       categoria_linha: categoriaAutomatica,
     };
+    
+    // Helper para parsear o _virtualKey
+    function parsePortaVirtualKey(virtualKey: string): { originalId: string; indicePorta: number } {
+      const porta = portas.find(p => p._virtualKey === virtualKey);
+      if (porta) {
+        return { originalId: porta._originalId, indicePorta: porta._indicePorta };
+      }
+      return { originalId: virtualKey, indicePorta: 0 };
+    }
 
     await onAdicionarLinha(novaLinhaCompleta);
     
@@ -356,16 +375,18 @@ export const PedidoLinhasEditor = ({
           </div>
           {portas.map((porta, idx) => {
             const itensPadraoDisponiveis = itensPadrao.filter(
-              item => !itemJaAdicionado(porta.id, item.id)
+              item => !itemJaAdicionado(porta._originalId, porta._indicePorta, item.id)
             );
             
             if (itensPadraoDisponiveis.length === 0) return null;
             
+            const portaLabel = getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta);
+            
             return (
-              <div key={porta.id} className="space-y-1">
+              <div key={porta._virtualKey} className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-xs">
-                    Porta #{idx + 1}
+                    {portaLabel}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {porta.largura}m × {porta.altura}m
@@ -417,8 +438,14 @@ export const PedidoLinhasEditor = ({
             </thead>
             <tbody>
               {linhas.map((linha) => {
-                const portaReferenciada = portas.find(p => p.id === linha.produto_venda_id);
-                const portaIndex = portas.findIndex(p => p.id === linha.produto_venda_id);
+                const portaReferenciada = portas.find(p => 
+                  p._originalId === linha.produto_venda_id && 
+                  p._indicePorta === (linha.indice_porta ?? 0)
+                );
+                const portaIndex = portas.findIndex(p => 
+                  p._originalId === linha.produto_venda_id && 
+                  p._indicePorta === (linha.indice_porta ?? 0)
+                );
                 
                 return (
                   <tr key={linha.id} className="border-b hover:bg-muted/30 transition-colors">
@@ -426,7 +453,7 @@ export const PedidoLinhasEditor = ({
                       <td className="p-2 text-xs text-muted-foreground">
                         {portaReferenciada ? (
                           <span className="font-medium">
-                            Porta #{portaIndex + 1}
+                            {getLabelPortaExpandida(portaIndex, portaReferenciada._totalNoGrupo, portaReferenciada._indicePorta)}
                           </span>
                         ) : '-'}
                       </td>

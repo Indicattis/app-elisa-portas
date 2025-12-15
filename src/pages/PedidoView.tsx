@@ -29,6 +29,7 @@ import { LinhasAgrupadasPorPorta } from "@/components/pedidos/LinhasAgrupadasPor
 import { ObservacoesPortaForm } from "@/components/pedidos/ObservacoesPortaForm";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
+import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
 
 interface Ordem {
   id: string;
@@ -151,10 +152,11 @@ export default function PedidoView() {
     },
   });
 
-  // Filtrar portas do tipo "porta_enrolar"
-  const portasEnrolar = pedido?.venda?.produtos?.filter(
+  // Filtrar e expandir portas do tipo "porta_enrolar" por quantidade
+  const portasEnrolarRaw = pedido?.venda?.produtos?.filter(
     (p: any) => p.tipo_produto === 'porta_enrolar'
   ) || [];
+  const portasEnrolar = expandirPortasPorQuantidade(portasEnrolarRaw);
 
   // Validação de linhas por porta
   const validacao = useValidacaoLinhasPorPorta(portasEnrolar, linhas);
@@ -486,8 +488,8 @@ export default function PedidoView() {
   const prepararDadosPDF = (): PedidoProducaoPDFData | null => {
     if (!pedido) return null;
     
-    const observacoesData = portasEnrolar.map((porta: any) => {
-      const obs = getObservacoesPorPorta(porta.id);
+    const observacoesData = portasEnrolar.map((porta: any, idx: number) => {
+      const obs = getObservacoesPorPorta(porta._originalId, porta._indicePorta);
       const responsavel = usuarios.find((u: any) => u.id === obs?.responsavel_medidas_id);
       
       // Construir descrição das observações baseado nos campos disponíveis
@@ -501,7 +503,7 @@ export default function PedidoView() {
       }
       
       return {
-        porta_descricao: porta.descricao || `Porta ${porta.tamanho}`,
+        porta_descricao: getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta) + ` - ${porta.largura}m × ${porta.altura}m`,
         local_instalacao: obs?.interna_externa === 'porta_interna' ? 'Interna' : obs?.interna_externa === 'porta_externa' ? 'Externa' : '',
         observacoes: detalhes.join(' | '),
         responsavel_nome: responsavel?.nome || '',
@@ -868,12 +870,12 @@ export default function PedidoView() {
             <div className="space-y-4">
               {portasEnrolar.map((porta: any, idx: number) => (
                 <ObservacoesPortaForm
-                  key={porta.id}
+                  key={porta._virtualKey}
                   porta={porta}
                   portaIndex={idx}
                   usuarios={usuarios}
                   autorizados={autorizados}
-                  valoresIniciais={getObservacoesPorPorta(porta.id)}
+                  valoresIniciais={getObservacoesPorPorta(porta._originalId, porta._indicePorta)}
                   onSalvar={salvarObservacao}
                   pedidoId={id || ''}
                   isReadOnly={!isAberto}
