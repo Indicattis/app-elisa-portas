@@ -69,7 +69,7 @@ export function ProducaoSidebar() {
     if (!ordensCount) return 0;
     switch (routeKey) {
       case "producao_solda":
-        return ordensCount.soldagem || 0;
+        return ordensCount.solda || 0;
       case "producao_perfiladeira":
         return ordensCount.perfiladeira || 0;
       case "producao_separacao":
@@ -78,6 +78,8 @@ export function ProducaoSidebar() {
         return ordensCount.pintura || 0;
       case "producao_qualidade":
         return ordensCount.qualidade || 0;
+      case "producao_carregamento":
+        return ordensCount.carregamento || 0;
       default:
         return 0;
     }
