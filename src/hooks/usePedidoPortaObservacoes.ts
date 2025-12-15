@@ -26,14 +26,15 @@ export function usePedidoPortaObservacoes(pedidoId: string) {
   });
 
   const salvarObservacao = useMutation({
-    mutationFn: async (dados: PedidoPortaObservacoesInsert) => {
+    mutationFn: async (dados: PedidoPortaObservacoesInsert & { indice_porta?: number }) => {
       const { data, error } = await supabase
         .from('pedido_porta_observacoes')
         .upsert({
           ...dados,
+          indice_porta: dados.indice_porta ?? 0,
           updated_at: new Date().toISOString(),
         }, {
-          onConflict: 'pedido_id,produto_venda_id'
+          onConflict: 'pedido_id,produto_venda_id,indice_porta'
         })
         .select()
         .single();
@@ -57,8 +58,11 @@ export function usePedidoPortaObservacoes(pedidoId: string) {
     },
   });
 
-  const getObservacoesPorPorta = (produtoVendaId: string) => {
-    return observacoes.find(obs => obs.produto_venda_id === produtoVendaId);
+  const getObservacoesPorPorta = (produtoVendaId: string, indicePorta: number = 0) => {
+    return observacoes.find(
+      obs => obs.produto_venda_id === produtoVendaId && 
+             (obs.indice_porta ?? 0) === indicePorta
+    );
   };
 
   return {

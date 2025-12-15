@@ -8,6 +8,7 @@ export interface PedidoLinha {
   id: string;
   pedido_id: string;
   produto_venda_id: string | null;
+  indice_porta: number;
   estoque_id: string | null;
   nome_produto: string;
   descricao_produto: string | null;
@@ -27,6 +28,7 @@ export interface PedidoLinha {
 
 export interface PedidoLinhaNova {
   produto_venda_id?: string | null;
+  indice_porta?: number;
   nome_produto: string;
   descricao_produto?: string;
   quantidade: number;
@@ -94,6 +96,7 @@ export function usePedidoLinhas(pedidoId: string) {
         .insert({
           pedido_id: pedidoId,
           produto_venda_id: linha.produto_venda_id ?? null,
+          indice_porta: linha.indice_porta ?? 0,
           nome_produto: linha.nome_produto,
           descricao_produto: linha.descricao_produto,
           quantidade: linha.quantidade,

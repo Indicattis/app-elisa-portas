@@ -51,7 +51,8 @@ export function ObservacoesPortaForm({
   const form = useForm<PedidoPortaObservacoesInsert>({
     defaultValues: {
       pedido_id: pedidoId,
-      produto_venda_id: porta.id,
+      produto_venda_id: porta._originalId || porta.id,
+      indice_porta: porta._indicePorta ?? 0,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
       tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
@@ -78,7 +79,8 @@ export function ObservacoesPortaForm({
   const handleCancelar = () => {
     form.reset({
       pedido_id: pedidoId,
-      produto_venda_id: porta.id,
+      produto_venda_id: porta._originalId || porta.id,
+      indice_porta: porta._indicePorta ?? 0,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
       tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
@@ -113,13 +115,18 @@ export function ObservacoesPortaForm({
 
   const responsavelPreenchido = !!form.watch('responsavel_medidas_id');
 
+  // Label da porta considerando se é expandida
+  const portaLabel = porta._totalNoGrupo && porta._totalNoGrupo > 1
+    ? `Porta #${portaIndex + 1} (${porta._indicePorta + 1}/${porta._totalNoGrupo})`
+    : `Porta #${portaIndex + 1}`;
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className={`border rounded-lg ${!responsavelPreenchido ? 'border-destructive/50 bg-destructive/5' : ''}`}>
       <CollapsibleTrigger className="w-full">
         <div className="flex items-center gap-2 p-3 hover:bg-muted/50 transition-colors">
           <Badge variant={responsavelPreenchido ? "outline" : "destructive"}>
             <FileText className="h-3 w-3 mr-1" />
-            Porta #{portaIndex + 1}
+            {portaLabel}
           </Badge>
           <span className="text-sm font-medium">
             {getMedidas()}

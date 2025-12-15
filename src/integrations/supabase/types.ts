@@ -3609,6 +3609,7 @@ export type Database = {
           descricao_produto: string | null
           estoque_id: string | null
           id: string
+          indice_porta: number | null
           largura: number | null
           nome_produto: string
           ordem: number
@@ -3629,6 +3630,7 @@ export type Database = {
           descricao_produto?: string | null
           estoque_id?: string | null
           id?: string
+          indice_porta?: number | null
           largura?: number | null
           nome_produto: string
           ordem?: number
@@ -3649,6 +3651,7 @@ export type Database = {
           descricao_produto?: string | null
           estoque_id?: string | null
           id?: string
+          indice_porta?: number | null
           largura?: number | null
           nome_produto?: string
           ordem?: number
@@ -3694,6 +3697,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          indice_porta: number | null
           interna_externa: string
           lado_motor: string | null
           opcao_guia: string
@@ -3711,6 +3715,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          indice_porta?: number | null
           interna_externa?: string
           lado_motor?: string | null
           opcao_guia?: string
@@ -3728,6 +3733,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          indice_porta?: number | null
           interna_externa?: string
           lado_motor?: string | null
           opcao_guia?: string

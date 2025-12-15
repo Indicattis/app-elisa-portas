@@ -43,6 +43,7 @@ export interface PedidoPortaObservacoes {
   id: string;
   pedido_id: string;
   produto_venda_id: string;
+  indice_porta: number;
   responsavel_medidas_id: string | null;
   tipo_responsavel: 'admin' | 'autorizado';
   opcao_tubo: keyof typeof OPCOES_TUBO;
