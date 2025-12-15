@@ -83,8 +83,8 @@ export default function ProducaoHome() {
   const getRouteCount = (routeKey: string) => {
     if (!ordensCount) return 0;
     switch (routeKey) {
-      case "producao_soldagem":
-        return ordensCount.soldagem;
+      case "producao_solda":
+        return ordensCount.solda;
       case "producao_perfiladeira":
         return ordensCount.perfiladeira;
       case "producao_separacao":
@@ -93,6 +93,8 @@ export default function ProducaoHome() {
         return ordensCount.qualidade;
       case "producao_pintura":
         return ordensCount.pintura;
+      case "producao_carregamento":
+        return ordensCount.carregamento;
       default:
         return 0;
     }

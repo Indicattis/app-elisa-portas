@@ -251,11 +251,12 @@ export function AppSidebar() {
 
   // Mapeamento de keys para counts de ordens
   const ordensCountMap: Record<string, number> = {
-    'producao_solda': ordensCount?.soldagem || 0,
+    'producao_solda': ordensCount?.solda || 0,
     'producao_perfiladeira': ordensCount?.perfiladeira || 0,
     'producao_separacao': ordensCount?.separacao || 0,
     'producao_qualidade': ordensCount?.qualidade || 0,
-    'producao_pintura': ordensCount?.pintura || 0
+    'producao_pintura': ordensCount?.pintura || 0,
+    'producao_carregamento': ordensCount?.carregamento || 0
   };
 
   // Função recursiva para renderizar itens da sidebar
