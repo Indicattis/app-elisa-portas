@@ -12,8 +12,9 @@ export function CoresPortasEnrolar({ produtos = [] }: CoresPortasEnrolarProps) {
   
   produtos.forEach((produto) => {
     const isPortaEnrolar = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta';
+    const isPintura = produto.tipo_produto === 'pintura_epoxi';
     
-    if (isPortaEnrolar) {
+    if (isPortaEnrolar || isPintura) {
       const cor = produto.catalogo_cores || produto.cor;
       if (cor && cor.nome && cor.codigo_hex) {
         coresUnicas.set(cor.nome, cor);
