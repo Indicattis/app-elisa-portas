@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Plus, Package, Check, X, Search, Zap, AlertCircle, ChevronsUpDown } from "lucide-react";
+import { Trash2, Plus, Package, Check, X, Search, Zap, AlertCircle, ChevronsUpDown, Edit, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { PedidoLinha, PedidoLinhaNova, CategoriaLinha } from "@/hooks/usePedidoLinhas";
@@ -536,14 +536,44 @@ export const PedidoLinhasEditor = ({
                   )}
                     {!isReadOnly && (
                       <td className="p-2 text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onRemoverLinha(linha.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1 justify-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              const produto = produtos.find(p => p.id === linha.estoque_id);
+                              const novaLinhaCompleta: PedidoLinhaNova = {
+                                produto_venda_id: linha.produto_venda_id || undefined,
+                                indice_porta: linha.indice_porta ?? 0,
+                                estoque_id: linha.estoque_id || undefined,
+                                nome_produto: linha.nome_produto,
+                                descricao_produto: linha.descricao_produto || '',
+                                quantidade: linha.quantidade,
+                                tamanho: linha.tamanho || undefined,
+                                categoria_linha: linha.categoria_linha,
+                              };
+                              try {
+                                await onAdicionarLinha(novaLinhaCompleta);
+                                toast.success("Linha duplicada com sucesso");
+                              } catch (error) {
+                                toast.error("Erro ao duplicar linha");
+                              }
+                            }}
+                            className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            title="Duplicar linha"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onRemoverLinha(linha.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Remover linha"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     )}
                   </tr>

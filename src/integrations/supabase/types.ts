@@ -3695,6 +3695,7 @@ export type Database = {
       }
       pedido_porta_observacoes: {
         Row: {
+          aparencia_testeira: string | null
           created_at: string
           id: string
           indice_porta: number | null
@@ -3713,6 +3714,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aparencia_testeira?: string | null
           created_at?: string
           id?: string
           indice_porta?: number | null
@@ -3731,6 +3733,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aparencia_testeira?: string | null
           created_at?: string
           id?: string
           indice_porta?: number | null

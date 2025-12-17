@@ -19,6 +19,7 @@ import {
   OPCOES_ROLO,
   OPCOES_TUBO_TIRAS_FRONTAIS,
   OPCOES_LADO_MOTOR,
+  OPCOES_APARENCIA_TESTEIRA,
 } from "@/types/pedidoObservacoes";
 
 interface ObservacoesPortaFormProps {
@@ -63,6 +64,7 @@ export function ObservacoesPortaForm({
       opcao_rolo: valoresIniciais?.opcao_rolo || 'nao_erguer',
       tubo_tiras_frontais: valoresIniciais?.tubo_tiras_frontais || 'sem_tubo_tiras_frontais',
       lado_motor: valoresIniciais?.lado_motor || 'esquerdo',
+      aparencia_testeira: valoresIniciais?.aparencia_testeira || 'fora_do_vao',
     },
   });
 
@@ -91,6 +93,7 @@ export function ObservacoesPortaForm({
       opcao_rolo: valoresIniciais?.opcao_rolo || 'nao_erguer',
       tubo_tiras_frontais: valoresIniciais?.tubo_tiras_frontais || 'sem_tubo_tiras_frontais',
       lado_motor: valoresIniciais?.lado_motor || 'esquerdo',
+      aparencia_testeira: valoresIniciais?.aparencia_testeira || 'fora_do_vao',
     });
     setModoEdicao(false);
   };
@@ -538,6 +541,35 @@ export function ObservacoesPortaForm({
                       </FormControl>
                       <SelectContent>
                         {Object.entries(OPCOES_TUBO_TIRAS_FRONTAIS).map(([key, label]) => (
+                          <SelectItem key={key} value={key} className="text-xs">
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="aparencia_testeira"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">Aparência da Testeira</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={!modoEdicao}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.entries(OPCOES_APARENCIA_TESTEIRA).map(([key, label]) => (
                           <SelectItem key={key} value={key} className="text-xs">
                             {label}
                           </SelectItem>
