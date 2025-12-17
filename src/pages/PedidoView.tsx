@@ -113,7 +113,7 @@ export default function PedidoView() {
   const navigate = useNavigate();
 
   // Hooks para edição (apenas se pedido estiver aberto)
-  const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote } = usePedidoLinhas(id || "");
+  const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote, atualizarLinha } = usePedidoLinhas(id || "");
   const { moverParaProximaEtapa } = usePedidosEtapas();
   const { salvarObservacao, getObservacoesPorPorta } = usePedidoPortaObservacoes(id || "");
 
@@ -849,6 +849,9 @@ export default function PedidoView() {
                   });
                   return novoMapa;
                 });
+              }}
+              onAtualizarLinhaCompleta={async (linhaId, dados) => {
+                await atualizarLinha({ id: linhaId, ...dados });
               }}
             />
           </CardContent>

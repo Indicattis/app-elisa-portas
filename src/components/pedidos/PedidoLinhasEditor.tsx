@@ -35,6 +35,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
 
+interface LinhaEditData {
+  produto_venda_id?: string | null;
+  indice_porta?: number;
+  estoque_id?: string;
+  nome_produto?: string;
+  descricao_produto?: string;
+  quantidade?: number;
+  tamanho?: string;
+  categoria_linha?: CategoriaLinha;
+}
+
 interface PedidoLinhasEditorProps {
   linhas: PedidoLinha[];
   isReadOnly: boolean;
@@ -45,6 +56,7 @@ interface PedidoLinhasEditorProps {
   onRemoverLinha: (linhaId: string) => Promise<void>;
   onAtualizarCheckbox?: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
   onAtualizarLinha?: (linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => void;
+  onAtualizarLinhaCompleta?: (linhaId: string, dados: LinhaEditData) => Promise<void>;
 }
 
 interface ItemPadraoPortaEnrolar {
@@ -118,9 +130,20 @@ export const PedidoLinhasEditor = ({
   onRemoverLinha,
   onAtualizarCheckbox,
   onAtualizarLinha,
+  onAtualizarLinhaCompleta,
 }: PedidoLinhasEditorProps) => {
-  // Estado local para valores editados
+  // Estado local para valores editados (quantidade/tamanho inline)
   const [valoresEditados, setValoresEditados] = useState<Record<string, { quantidade?: number; tamanho?: string }>>({});
+  
+  // Estado para linha em modo de edição completa
+  const [linhaEmEdicao, setLinhaEmEdicao] = useState<string | null>(null);
+  const [dadosEdicao, setDadosEdicao] = useState<{
+    produto_venda_id: string;
+    indice_porta: number;
+    estoque_id: string;
+  } | null>(null);
+  const [buscaEdicao, setBuscaEdicao] = useState("");
+  const [popoverEdicaoAberto, setPopoverEdicaoAberto] = useState(false);
 
   const handleLinhaChange = (linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => {
     setValoresEditados(prev => ({
@@ -143,6 +166,60 @@ export const PedidoLinhasEditor = ({
     }
     return campo === 'quantidade' ? linha.quantidade : linha.tamanho;
   };
+  
+  // Iniciar modo de edição
+  const handleIniciarEdicao = (linha: PedidoLinha) => {
+    const portaVirtual = portas.find(p => 
+      p._originalId === linha.produto_venda_id && 
+      p._indicePorta === (linha.indice_porta ?? 0)
+    );
+    setLinhaEmEdicao(linha.id);
+    setDadosEdicao({
+      produto_venda_id: portaVirtual?._virtualKey || '',
+      indice_porta: linha.indice_porta ?? 0,
+      estoque_id: linha.estoque_id || '',
+    });
+    setBuscaEdicao("");
+  };
+  
+  // Cancelar edição
+  const handleCancelarEdicao = () => {
+    setLinhaEmEdicao(null);
+    setDadosEdicao(null);
+    setBuscaEdicao("");
+    setPopoverEdicaoAberto(false);
+  };
+  
+  // Salvar edição
+  const handleSalvarEdicao = async (linhaId: string) => {
+    if (!dadosEdicao || !onAtualizarLinhaCompleta) return;
+    
+    const produtoEstoque = produtos.find(p => p.id === dadosEdicao.estoque_id);
+    if (!produtoEstoque) {
+      toast.error("Selecione um produto válido");
+      return;
+    }
+    
+    // Parse da porta virtual para obter originalId e indice
+    const portaSelecionada = portas.find(p => p._virtualKey === dadosEdicao.produto_venda_id);
+    const categoria = mapearSetorParaCategoria(produtoEstoque.setor_responsavel_producao);
+    
+    try {
+      await onAtualizarLinhaCompleta(linhaId, {
+        produto_venda_id: portaSelecionada?._originalId || null,
+        indice_porta: portaSelecionada?._indicePorta ?? 0,
+        estoque_id: dadosEdicao.estoque_id,
+        nome_produto: produtoEstoque.nome_produto,
+        descricao_produto: produtoEstoque.descricao_produto || '',
+        categoria_linha: categoria,
+      });
+      toast.success("Linha atualizada com sucesso");
+      handleCancelarEdicao();
+    } catch (error) {
+      toast.error("Erro ao atualizar linha");
+    }
+  };
+  
   const [novaLinha, setNovaLinha] = useState(false);
   const [buscaSku, setBuscaSku] = useState("");
   const [popoverAberto, setPopoverAberto] = useState(false);
@@ -446,19 +523,110 @@ export const PedidoLinhasEditor = ({
                   p._originalId === linha.produto_venda_id && 
                   p._indicePorta === (linha.indice_porta ?? 0)
                 );
+                const estaEmEdicao = linhaEmEdicao === linha.id;
                 
                 return (
-                  <tr key={linha.id} className="border-b hover:bg-muted/30 transition-colors">
+                  <tr key={linha.id} className={cn(
+                    "border-b hover:bg-muted/30 transition-colors",
+                    estaEmEdicao && "bg-primary/5"
+                  )}>
                     {!isReadOnly && (
                       <td className="p-2 text-xs text-muted-foreground">
-                        {portaReferenciada ? (
-                          <span className="font-medium">
-                            {getLabelPortaExpandida(portaIndex, portaReferenciada._totalNoGrupo, portaReferenciada._indicePorta)}
-                          </span>
-                        ) : '-'}
+                        {estaEmEdicao && dadosEdicao ? (
+                          <Select
+                            value={dadosEdicao.produto_venda_id}
+                            onValueChange={(value) => 
+                              setDadosEdicao({...dadosEdicao, produto_venda_id: value})
+                            }
+                          >
+                            <SelectTrigger className="h-8 text-xs w-28">
+                              <SelectValue placeholder="Porta" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">Nenhuma</SelectItem>
+                              {portas.map((porta, idx) => (
+                                <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
+                                  {getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          portaReferenciada ? (
+                            <span className="font-medium">
+                              {getLabelPortaExpandida(portaIndex, portaReferenciada._totalNoGrupo, portaReferenciada._indicePorta)}
+                            </span>
+                          ) : '-'
+                        )}
                       </td>
                     )}
-                    <td className="p-2 text-sm font-medium">{linha.descricao_produto || linha.nome_produto}</td>
+                    <td className="p-2 text-sm font-medium">
+                      {estaEmEdicao && dadosEdicao ? (
+                        <Popover open={popoverEdicaoAberto} onOpenChange={setPopoverEdicaoAberto}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className="h-8 w-full justify-between text-xs"
+                            >
+                              {dadosEdicao.estoque_id
+                                ? produtos.find(p => p.id === dadosEdicao.estoque_id)?.nome_produto || "Selecione..."
+                                : "Selecione um produto"}
+                              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 p-0" align="start">
+                            <Command>
+                              <CommandInput 
+                                placeholder="Buscar produto..." 
+                                value={buscaEdicao}
+                                onValueChange={setBuscaEdicao}
+                                className="text-xs"
+                              />
+                              <CommandList>
+                                <CommandEmpty className="text-xs p-2">Nenhum produto encontrado.</CommandEmpty>
+                                <CommandGroup>
+                                  <ScrollArea className="h-48">
+                                    {produtos
+                                      .filter(p => 
+                                        p.nome_produto.toLowerCase().includes(buscaEdicao.toLowerCase()) ||
+                                        (p.sku && p.sku.toLowerCase().includes(buscaEdicao.toLowerCase()))
+                                      )
+                                      .map((produto) => (
+                                        <CommandItem
+                                          key={produto.id}
+                                          value={produto.id}
+                                          onSelect={() => {
+                                            setDadosEdicao({...dadosEdicao, estoque_id: produto.id});
+                                            setPopoverEdicaoAberto(false);
+                                            setBuscaEdicao("");
+                                          }}
+                                          className="text-xs"
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-3 w-3",
+                                              dadosEdicao.estoque_id === produto.id ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                          <div className="flex flex-col">
+                                            <span>{produto.nome_produto}</span>
+                                            {produto.sku && (
+                                              <span className="text-muted-foreground text-[10px]">SKU: {produto.sku}</span>
+                                            )}
+                                          </div>
+                                        </CommandItem>
+                                      ))}
+                                  </ScrollArea>
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        linha.descricao_produto || linha.nome_produto
+                      )}
+                    </td>
                     <td className="p-2">
                       <Badge variant="outline" className={`text-xs ${getCategoriaBadgeClasses(linha.categoria_linha)}`}>
                         {linha.categoria_linha || '-'}
@@ -537,42 +705,77 @@ export const PedidoLinhasEditor = ({
                     {!isReadOnly && (
                       <td className="p-2 text-center">
                         <div className="flex gap-1 justify-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              const produto = produtos.find(p => p.id === linha.estoque_id);
-                              const novaLinhaCompleta: PedidoLinhaNova = {
-                                produto_venda_id: linha.produto_venda_id || undefined,
-                                indice_porta: linha.indice_porta ?? 0,
-                                estoque_id: linha.estoque_id || undefined,
-                                nome_produto: linha.nome_produto,
-                                descricao_produto: linha.descricao_produto || '',
-                                quantidade: linha.quantidade,
-                                tamanho: linha.tamanho || undefined,
-                                categoria_linha: linha.categoria_linha,
-                              };
-                              try {
-                                await onAdicionarLinha(novaLinhaCompleta);
-                                toast.success("Linha duplicada com sucesso");
-                              } catch (error) {
-                                toast.error("Erro ao duplicar linha");
-                              }
-                            }}
-                            className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            title="Duplicar linha"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onRemoverLinha(linha.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            title="Remover linha"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {estaEmEdicao ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSalvarEdicao(linha.id)}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-500/10"
+                                title="Salvar alterações"
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelarEdicao}
+                                className="text-muted-foreground hover:text-foreground hover:bg-muted"
+                                title="Cancelar edição"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              {onAtualizarLinhaCompleta && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleIniciarEdicao(linha)}
+                                  className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                  title="Editar porta e produto"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={async () => {
+                                  const novaLinhaCompleta: PedidoLinhaNova = {
+                                    produto_venda_id: linha.produto_venda_id || undefined,
+                                    indice_porta: linha.indice_porta ?? 0,
+                                    estoque_id: linha.estoque_id || undefined,
+                                    nome_produto: linha.nome_produto,
+                                    descricao_produto: linha.descricao_produto || '',
+                                    quantidade: linha.quantidade,
+                                    tamanho: linha.tamanho || undefined,
+                                    categoria_linha: linha.categoria_linha,
+                                  };
+                                  try {
+                                    await onAdicionarLinha(novaLinhaCompleta);
+                                    toast.success("Linha duplicada com sucesso");
+                                  } catch (error) {
+                                    toast.error("Erro ao duplicar linha");
+                                  }
+                                }}
+                                className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                title="Duplicar linha"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRemoverLinha(linha.id)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                title="Remover linha"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     )}
