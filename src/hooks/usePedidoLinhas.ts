@@ -41,6 +41,8 @@ export interface PedidoLinhaNova {
 
 export interface PedidoLinhaUpdate {
   id: string;
+  produto_venda_id?: string | null;
+  indice_porta?: number;
   estoque_id?: string;
   nome_produto?: string;
   descricao_produto?: string;
@@ -49,6 +51,7 @@ export interface PedidoLinhaUpdate {
   altura?: number;
   tamanho?: string;
   tipo_ordem?: string;
+  categoria_linha?: CategoriaLinha;
 }
 
 export function usePedidoLinhas(pedidoId: string) {
