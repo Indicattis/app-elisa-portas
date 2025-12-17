@@ -18,6 +18,21 @@ interface LinhaOrdem {
   altura?: number;
 }
 
+interface ObservacaoVisita {
+  id: string;
+  produto_venda_id: string;
+  indice_porta: number;
+  interna_externa: string;
+  lado_motor: string;
+  posicao_guia: string;
+  opcao_guia: string;
+  aparencia_testeira: string;
+  opcao_tubo: string;
+  opcao_rolo: string;
+  tubo_tiras_frontais: string;
+  retirada_porta: boolean;
+}
+
 interface Ordem {
   id: string;
   numero_ordem: string;
@@ -31,6 +46,7 @@ interface Ordem {
   em_backlog?: boolean;
   prioridade?: number;
   linhas?: LinhaOrdem[];
+  observacoesVisita?: ObservacaoVisita[];
   pedido?: {
     id: string;
     numero_pedido: string;
@@ -126,6 +142,28 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           }, {} as Record<string, any>);
         }
       }
+
+      // Buscar observações da visita técnica para cada pedido
+      const pedidoIds = ordensData
+        .map((o: any) => o.pedido?.id)
+        .filter((id: string | undefined) => id);
+      
+      let observacoesMap: Record<string, ObservacaoVisita[]> = {};
+      if (pedidoIds.length > 0) {
+        const { data: observacoesData } = await supabase
+          .from('pedido_porta_observacoes')
+          .select('*')
+          .in('pedido_id', pedidoIds);
+        
+        if (observacoesData) {
+          observacoesData.forEach((obs: any) => {
+            if (!observacoesMap[obs.pedido_id]) {
+              observacoesMap[obs.pedido_id] = [];
+            }
+            observacoesMap[obs.pedido_id].push(obs);
+          });
+        }
+      }
       
       // Mapear linhas para suas ordens
       return ordensData.map((ordem: any) => {
@@ -150,6 +188,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           linhas: (linhasData || []).filter((linha: any) => linha.ordem_id === ordem.id),
           pedido: pedidoProcessado,
           admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
+          observacoesVisita: ordem.pedido?.id ? observacoesMap[ordem.pedido.id] || [] : [],
         };
       }) as Ordem[];
     },

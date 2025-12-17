@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, Clock, UserCheck, Timer, AlertTriangle, FileText, RefreshCw } from "lucide-react";
+import { Package, Clock, UserCheck, Timer, AlertTriangle, FileText, RefreshCw, Wrench } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
@@ -11,6 +11,13 @@ import { useState } from "react";
 import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
 import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import {
+  OPCOES_INTERNA_EXTERNA,
+  OPCOES_LADO_MOTOR,
+  OPCOES_POSICAO_GUIA,
+  OPCOES_GUIA,
+  OPCOES_APARENCIA_TESTEIRA,
+} from "@/types/pedidoObservacoes";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
@@ -21,6 +28,17 @@ interface LinhaOrdem {
   tamanho?: string;
   concluida: boolean;
   cor_nome?: string;
+}
+
+interface ObservacaoVisita {
+  id: string;
+  produto_venda_id: string;
+  indice_porta: number;
+  interna_externa: string;
+  lado_motor: string;
+  posicao_guia: string;
+  opcao_guia: string;
+  aparencia_testeira: string;
 }
 
 interface Ordem {
@@ -36,6 +54,7 @@ interface Ordem {
   em_backlog?: boolean;
   prioridade?: number;
   linhas?: LinhaOrdem[];
+  observacoesVisita?: ObservacaoVisita[];
   pedido?: {
     cliente_nome: string;
     numero_pedido: string;
@@ -190,13 +209,43 @@ function OrdemCard({
               <CoresPortasEnrolar produtos={ordem.pedido?.produtos} />
             </div>
 
+            {ordem.observacoesVisita && ordem.observacoesVisita.length > 0 && (
+              <div className="col-span-1 sm:col-span-2">
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium mb-1">
+                  <Wrench className="h-3 w-3" />
+                  Observações da Visita Técnica
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {ordem.observacoesVisita.map((obs, idx) => (
+                    <div key={obs.id || idx} className="flex flex-wrap gap-1">
+                      <Badge variant="outline" className="text-[9px] h-5 bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                        {OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA] || obs.interna_externa}
+                      </Badge>
+                      <Badge variant="outline" className="text-[9px] h-5 bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300">
+                        Motor: {OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR] || obs.lado_motor}
+                      </Badge>
+                      <Badge variant="outline" className="text-[9px] h-5 bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300">
+                        {OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA] || obs.posicao_guia}
+                      </Badge>
+                      <Badge variant="outline" className="text-[9px] h-5 bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300">
+                        {OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA] || obs.opcao_guia}
+                      </Badge>
+                      <Badge variant="outline" className="text-[9px] h-5 bg-orange-50 dark:bg-orange-950 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300">
+                        Testeira: {OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA] || obs.aparencia_testeira}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {ordem.pedido?.vendas?.observacoes_venda && (
               <div className="col-span-1 sm:col-span-2">
-                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium">
                   <FileText className="h-3 w-3" />
-                  Observações da Visita
+                  Observações Gerais
                 </p>
-                <p className="text-[10px] sm:text-xs line-clamp-2 text-amber-700 dark:text-amber-300">{ordem.pedido.vendas.observacoes_venda}</p>
+                <p className="text-[10px] sm:text-xs line-clamp-2">{ordem.pedido.vendas.observacoes_venda}</p>
               </div>
             )}
 
