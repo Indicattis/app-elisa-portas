@@ -175,7 +175,7 @@ export const PedidoLinhasEditor = ({
     );
     setLinhaEmEdicao(linha.id);
     setDadosEdicao({
-      produto_venda_id: portaVirtual?._virtualKey || '',
+      produto_venda_id: portaVirtual?._virtualKey || '_none',
       indice_porta: linha.indice_porta ?? 0,
       estoque_id: linha.estoque_id || '',
     });
@@ -543,7 +543,7 @@ export const PedidoLinhasEditor = ({
                               <SelectValue placeholder="Porta" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Nenhuma</SelectItem>
+                              <SelectItem value="_none">Nenhuma</SelectItem>
                               {portas.map((porta, idx) => (
                                 <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
                                   {getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta)}
