@@ -39,6 +39,11 @@ export const OPCOES_LADO_MOTOR = {
   direito: 'Direito',
 } as const;
 
+export const OPCOES_APARENCIA_TESTEIRA = {
+  fora_do_vao: 'Fora do vão',
+  dentro_do_vao: 'Dentro do vão',
+} as const;
+
 export interface PedidoPortaObservacoes {
   id: string;
   pedido_id: string;
@@ -54,6 +59,7 @@ export interface PedidoPortaObservacoes {
   opcao_rolo: keyof typeof OPCOES_ROLO;
   tubo_tiras_frontais: keyof typeof OPCOES_TUBO_TIRAS_FRONTAIS;
   lado_motor: keyof typeof OPCOES_LADO_MOTOR;
+  aparencia_testeira: keyof typeof OPCOES_APARENCIA_TESTEIRA;
   created_at: string;
   updated_at: string;
 }
