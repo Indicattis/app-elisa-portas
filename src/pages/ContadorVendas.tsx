@@ -10,7 +10,7 @@ import { useVendasAgregadas, useVendasDoDia, useVendasMesAtual, useVendasSemanaA
 import { Link } from "react-router-dom";
 
 const getRangeStyle = (valor: number, weekend: boolean, isPastDate: boolean = false) => {
-  if (weekend) return { base: "bg-muted text-muted-foreground", star: false, ring: "" };
+  if (weekend) return { base: "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-dashed border-slate-300 dark:border-slate-600", star: false, ring: "" };
   if (valor >= 75001) return { base: "bg-black text-white border-2 border-yellow-400", star: true, ring: "ring-2 ring-yellow-400" };
   if (valor >= 50001) return { base: "bg-green-600 text-white", star: false, ring: "" };
   if (valor >= 20001) return { base: "bg-yellow-500 text-black", star: false, ring: "" };
