@@ -308,10 +308,6 @@ export default function Vendas() {
             <Receipt className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline ml-2">Preços</span>
           </Button>
-          <Button variant="outline" onClick={() => navigate('/dashboard/vendas/forca-vendas')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
-            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline ml-2">Força</span>
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
