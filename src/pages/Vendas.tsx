@@ -14,7 +14,8 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt } from 'lucide-react';
+import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -112,6 +113,51 @@ export default function Vendas() {
       toast({
         title: "Erro ao gerar relatório",
         description: "Ocorreu um erro ao exportar o relatório.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportarExcel = () => {
+    try {
+      const dadosExcel = filteredVendas?.map(venda => ({
+        'Data Venda': format(new Date(venda.data_venda), 'dd/MM/yyyy', { locale: ptBR }),
+        'Cliente': venda.cliente_nome,
+        'CPF': venda.cpf_cliente || '-',
+        'Telefone': venda.cliente_telefone || '-',
+        'Cidade': venda.cidade,
+        'Estado': venda.estado,
+        'Previsão Entrega': venda.data_prevista_entrega 
+          ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
+          : '-',
+        'Qtd Produtos': venda.produtos?.length || 0,
+        'Valor (sem frete)': (venda.valor_venda || 0) - (venda.valor_frete || 0) + (venda.valor_credito || 0),
+        'Valor Total': (venda.valor_venda || 0) + (venda.valor_credito || 0),
+        'Vendedor': venda.atendente?.nome || 'Não informado',
+      })) || [];
+
+      const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Vendas');
+      
+      worksheet['!cols'] = [
+        { wch: 12 }, { wch: 30 }, { wch: 15 }, { wch: 15 },
+        { wch: 15 }, { wch: 8 }, { wch: 15 }, { wch: 12 },
+        { wch: 15 }, { wch: 15 }, { wch: 20 }
+      ];
+      
+      const fileName = `vendas_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      toast({
+        title: "Excel gerado",
+        description: `Arquivo ${fileName} exportado com sucesso.`,
+      });
+    } catch (error) {
+      console.error('Erro ao gerar Excel:', error);
+      toast({
+        title: "Erro ao gerar Excel",
+        description: "Ocorreu um erro ao exportar o arquivo.",
         variant: "destructive",
       });
     }
@@ -263,6 +309,10 @@ export default function Vendas() {
           <Button variant="outline" onClick={handleExportarPDF} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
             <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline ml-2">PDF</span>
+          </Button>
+          <Button variant="outline" onClick={handleExportarExcel} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <FileSpreadsheet className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline ml-2">Excel</span>
           </Button>
           <Button onClick={() => navigate('/dashboard/vendas/nova')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
             <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
