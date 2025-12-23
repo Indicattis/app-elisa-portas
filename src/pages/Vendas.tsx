@@ -15,6 +15,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt, FileSpreadsheet } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import * as XLSX from 'xlsx';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -306,14 +312,24 @@ export default function Vendas() {
             <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline ml-2">Força</span>
           </Button>
-          <Button variant="outline" onClick={handleExportarPDF} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
-            <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline ml-2">PDF</span>
-          </Button>
-          <Button variant="outline" onClick={handleExportarExcel} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
-            <FileSpreadsheet className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline ml-2">Excel</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline ml-2">Exportar</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem onClick={handleExportarPDF}>
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportarExcel}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Exportar Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => navigate('/dashboard/vendas/nova')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
             <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline ml-2">Nova</span>
