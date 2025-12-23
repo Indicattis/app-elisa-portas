@@ -416,87 +416,6 @@ export default function TvDashboard() {
             </div>
           </CarouselItem>
 
-          {/* Slide 3: Metas Individuais Chart */}
-          <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 mt-8">
-              {/* Chart Layout */}
-              <div className="w-full max-w-7xl">
-                <div className="flex justify-center items-end gap-8 h-80 w-full">
-                  {getAllCategories().map((category, index) => {
-                  const vendedoresNaCategoria = vendedores.filter(v => {
-                    if (category.name === 'Orion') return v.total_vendas >= category.minValue;
-                    return v.total_vendas >= category.minValue && v.total_vendas < category.maxValue;
-                  });
-                  return <div key={category.name} className="flex flex-col items-center">
-                        {/* Fotos dos vendedores */}
-                        <div className="flex flex-col gap-2 mb-4 h-48 justify-end">
-                          {vendedoresNaCategoria.map((vendedor, vendedorIndex) => <div key={vendedor.nome} className="flex flex-col items-center">
-                              <div className="relative">
-                                {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-24 h-24 rounded-full object-cover border-3 ${category.border} shadow-md`} onError={e => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
-                          }} /> : null}
-                                <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white font-bold text-lg shadow-md border-3 ${category.border} ${vendedor.foto_perfil_url ? 'hidden' : ''}`}>
-                                  {vendedor.nome.charAt(0).toUpperCase()}
-                                </div>
-                              </div>
-                            </div>)}
-                        </div>
-                        
-                        {/* Imagem da categoria */}
-                        <div className="w-[120px] h-[120px] flex items-center justify-center">
-                          {category.name === 'Orion' && <img src="/lovable-uploads/1.png" alt="Vendedor Orion" className="w-[120px] h-[120px] filter brightness-0 saturate-100 invert-[15%] sepia-[100%] saturate-[5000%] hue-rotate-[350deg] brightness-[95%] contrast-[100%]" />}
-                           {category.name === 'Ômega' && <img src="/lovable-uploads/2.png" alt="Vendedor Ômega" className="w-[120px] h-[120px]" />}
-                           {category.name === 'Omni' && <img src="/lovable-uploads/3.png" alt="Vendedor Omni" className="w-[120px] h-[120px]" />}
-                           {category.name === 'Gama' && <img src="/lovable-uploads/7.png" alt="Vendedor Gama" className="w-[120px] h-[120px]" />}
-                           {category.name === 'Alfa' && <img src="/lovable-uploads/6.png" alt="Vendedor Alfa" className="w-[120px] h-[120px]" />}
-                           {category.name === 'Beta' && <img src="/lovable-uploads/5.png" alt="Vendedor Beta" className="w-[120px] h-[120px]" />}
-                           {category.name === 'Zeta' && <img src="/lovable-uploads/4.png" alt="Vendedor Zeta" className="w-[120px] h-[120px]" />}
-                           {category.name === 'Iniciante' && <div className="w-[120px] h-[120px] bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center">
-                               <div className="w-16 h-16 bg-white/20 rounded-full"></div>
-                             </div>}
-                        </div>
-                        
-                        {/* Nome da categoria e valores das metas */}
-                        <div className="text-center mt-4 space-y-2">
-                          <h3 className={`text-lg font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent`}>
-                            {category.name}
-                          </h3>
-                          <div className="text-sm text-white/80">
-                            {category.name === 'Orion' ? (
-                              <span>
-                                ≥ {new Intl.NumberFormat('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL',
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 0
-                                }).format(category.minValue)}
-                              </span>
-                            ) : (
-                              <span>
-                                {new Intl.NumberFormat('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL',
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 0
-                                }).format(category.minValue)} - {new Intl.NumberFormat('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL',
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 0
-                                }).format(category.maxValue)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        
-                      </div>;
-                })}
-                </div>
-              </div>
-            </div>
-          </CarouselItem>
-
         </CarouselContent>
         
         {/* Navigation arrows with responsive positioning */}
@@ -514,7 +433,7 @@ export default function TvDashboard() {
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1, 2].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
+        {[0, 1].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
     </div>;
 }
