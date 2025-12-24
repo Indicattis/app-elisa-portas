@@ -439,6 +439,7 @@ export function NovoOrcamentoForm({
                 value={formData.forma_pagamento}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
                 required
+                showLabel={false}
               />
             </div>
 
