@@ -234,6 +234,8 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
         id: pdfData.id,
         numeroOrcamento: pdfData.numeroOrcamento,
         observacoes: pdfData.observacoes,
+        valorInstalacao: orcamento.valor_instalacao || 0,
+        modalidadeInstalacao: orcamento.modalidade_instalacao,
         vendedora: pdfData.vendedora
       });
       
