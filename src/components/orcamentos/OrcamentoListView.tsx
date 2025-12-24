@@ -499,16 +499,6 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                         <Download className="w-3 h-3" />
                       </Button>
                       
-                      {canEdit(orcamento) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onEdit?.(orcamento)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                      )}
                       
                       {canChangeStatus(orcamento) && (
                         <Button
@@ -607,16 +597,6 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                       </Button>
                     )}
                     
-                    {canEdit(orcamento) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onEdit?.(orcamento)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                      >
-                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                    )}
                     
                     {canChangeStatus(orcamento) && (
                       <Button
