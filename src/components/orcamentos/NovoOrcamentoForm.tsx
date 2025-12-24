@@ -1,28 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, CalendarIcon, Download, Package, Paintbrush, Wrench, Percent, TrendingUp } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, Download, Package, Paintbrush, Wrench, Percent, TrendingUp } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosOrcamentoTable } from './ProdutosOrcamentoTable';
 import { OrcamentoResumo } from './OrcamentoResumo';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
-import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
+import { ClienteOrcamentoSection } from './ClienteOrcamentoSection';
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { FormaPagamentoSelect } from '@/components/FormaPagamentoSelect';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 import { generateOrcamentoPDF } from '@/utils/orcamentoPDFGenerator';
 import type { OrcamentoFormData } from '@/types/orcamento';
 import type { OrcamentoProduto } from '@/types/produto';
@@ -47,7 +39,6 @@ export function NovoOrcamentoForm({
   isEdit
 }: NovoOrcamentoFormProps) {
   const { toast } = useToast();
-  const { canais } = useCanaisAquisicao();
   
   const [formData, setFormData] = useState<OrcamentoFormData>({
     lead_id: leadId || '',
@@ -74,7 +65,6 @@ export function NovoOrcamentoForm({
   });
 
   const [produtos, setProdutos] = useState<OrcamentoProduto[]>([]);
-  const [dataOrcamento, setDataOrcamento] = useState<Date>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
@@ -131,14 +121,8 @@ export function NovoOrcamentoForm({
       ...prev,
       cliente_nome: dados.cliente_nome ?? prev.cliente_nome,
       cliente_telefone: dados.cliente_telefone ?? prev.cliente_telefone,
-      cliente_email: dados.cliente_email ?? prev.cliente_email,
-      cliente_cpf: dados.cpf_cliente ?? prev.cliente_cpf,
       cliente_estado: dados.estado ?? prev.cliente_estado,
       cliente_cidade: dados.cidade ?? prev.cliente_cidade,
-      cliente_cep: dados.cep ?? prev.cliente_cep,
-      cliente_endereco: dados.endereco ?? prev.cliente_endereco,
-      cliente_bairro: dados.bairro ?? prev.cliente_bairro,
-      canal_aquisicao_id: dados.canal_aquisicao_id ?? prev.canal_aquisicao_id,
     }));
   };
 
@@ -412,14 +396,6 @@ export function NovoOrcamentoForm({
       return;
     }
 
-    if (formData.requer_analise && !formData.motivo_analise.trim()) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Motivo da análise é obrigatório.'
-      });
-      return;
-    }
 
     const valorTotal = calcularValorTotal();
 
@@ -428,29 +404,23 @@ export function NovoOrcamentoForm({
         ...formData,
         valor_credito: valorCredito,
         percentual_credito: percentualCredito,
-        data_orcamento: dataOrcamento ? dataOrcamento.toISOString() : new Date().toISOString()
+        data_orcamento: new Date().toISOString()
       }, produtos, valorTotal);
     }
   };
 
-  // Dados do cliente para o componente ClienteVendaSection
+  // Dados do cliente para o componente ClienteOrcamentoSection
   const dadosCliente = {
     cliente_nome: formData.cliente_nome,
     cliente_telefone: formData.cliente_telefone,
-    cliente_email: formData.cliente_email || '',
-    cpf_cliente: formData.cliente_cpf,
     estado: formData.cliente_estado,
     cidade: formData.cliente_cidade,
-    cep: formData.cliente_cep,
-    endereco: formData.cliente_endereco || '',
-    bairro: formData.cliente_bairro,
-    canal_aquisicao_id: formData.canal_aquisicao_id || '',
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Cliente - usando componente reutilizável */}
-      <ClienteVendaSection
+      {/* Cliente - usando componente simplificado */}
+      <ClienteOrcamentoSection
         dados={dadosCliente}
         onChange={handleClienteChange}
         onClienteSelecionado={handleClienteSelecionado}
@@ -462,70 +432,7 @@ export function NovoOrcamentoForm({
           <CardTitle className="text-base font-semibold">Dados do Orçamento</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs font-medium">Data do Orçamento</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-9 w-full justify-start text-left font-normal",
-                      !dataOrcamento && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dataOrcamento ? format(dataOrcamento, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dataOrcamento}
-                    onSelect={setDataOrcamento}
-                    initialFocus
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="publico_alvo" className="text-xs font-medium">Público Alvo</Label>
-              <Select
-                value={formData.publico_alvo}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, publico_alvo: value }))}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cliente_final">Cliente Final</SelectItem>
-                  <SelectItem value="serralheiro">Serralheiro</SelectItem>
-                  <SelectItem value="empresa">Empresa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="canal_aquisicao" className="text-xs font-medium">Canal de Aquisição</Label>
-              <Select
-                value={formData.canal_aquisicao_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {canais.map((canal) => (
-                    <SelectItem key={canal.id} value={canal.id}>
-                      {canal.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label htmlFor="forma_pagamento" className="text-xs font-medium">Forma de Pagamento *</Label>
               <FormaPagamentoSelect
@@ -534,9 +441,7 @@ export function NovoOrcamentoForm({
                 required
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="valor_frete" className="text-xs font-medium">Valor do Frete</Label>
               <Input
@@ -569,6 +474,7 @@ export function NovoOrcamentoForm({
               </RadioGroup>
             </div>
           </div>
+
 
           <div className="space-y-1">
             <Label htmlFor="observacoes" className="text-xs font-medium">Observações</Label>
@@ -689,48 +595,14 @@ export function NovoOrcamentoForm({
         </CardContent>
       </Card>
 
-      {/* Resumo e Análise */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <OrcamentoResumo 
-          produtos={produtos} 
-          valorFrete={parseFloat(formData.valor_frete || '0')}
-          valorCredito={valorCredito}
-          percentualCredito={percentualCredito}
-          onRemoverCredito={valorCredito > 0 ? handleRemoverCredito : undefined}
-        />
-
-        <Card>
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-base font-semibold">Requer Análise?</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 pb-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="requer_analise"
-                checked={formData.requer_analise}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requer_analise: checked as boolean }))}
-              />
-              <Label htmlFor="requer_analise" className="cursor-pointer">
-                Este orçamento requer análise antes da aprovação
-              </Label>
-            </div>
-
-            {formData.requer_analise && (
-              <div className="space-y-1">
-                <Label htmlFor="motivo_analise" className="text-xs font-medium">Motivo *</Label>
-                <Textarea
-                  id="motivo_analise"
-                  value={formData.motivo_analise}
-                  onChange={(e) => setFormData(prev => ({ ...prev, motivo_analise: e.target.value }))}
-                  placeholder="Descreva o motivo da análise..."
-                  className="min-h-[80px]"
-                  required={formData.requer_analise}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Resumo */}
+      <OrcamentoResumo 
+        produtos={produtos} 
+        valorFrete={parseFloat(formData.valor_frete || '0')}
+        valorCredito={valorCredito}
+        percentualCredito={percentualCredito}
+        onRemoverCredito={valorCredito > 0 ? handleRemoverCredito : undefined}
+      />
 
       {/* Ações */}
       <div className="flex justify-between items-center pt-4">
