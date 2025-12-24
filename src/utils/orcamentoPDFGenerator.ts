@@ -22,6 +22,8 @@ interface GeneratePDFOptions {
   id?: string;
   numeroOrcamento?: string;
   observacoes?: string;
+  valorInstalacao?: number;
+  modalidadeInstalacao?: string;
   vendedora?: {
     nome: string;
     cargo: string;
@@ -36,6 +38,7 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
     produtos: formData.produtos || [],
     calculatedTotal: valorTotal,
     numeroOrcamento: options?.numeroOrcamento,
+    valorInstalacao: options?.valorInstalacao,
     vendedora: options?.vendedora
   };
   const pdf = new jsPDF();
@@ -178,7 +181,16 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
   if (data.produtos.length > 0) {
     // Distribuir custos logísticos entre produtos de porta
     const valorFrete = parseFloat(data.formData.valor_frete) || 0;
-    const produtosComCustosDistribuidos = data.produtos;
+    const valorInstalacao = data.valorInstalacao || 0;
+    const modalidadeInstalacao = (data.formData as any).modalidade_instalacao || 'instalacao_elisa';
+    
+    // Chamar a função para distribuir os custos proporcionalmente nas portas
+    const produtosComCustosDistribuidos = distribuirCustosLogisticos(
+      data.produtos,
+      valorFrete,
+      valorInstalacao,
+      modalidadeInstalacao
+    );
     
     // Preparar dados da tabela com produtos
     const tableData = produtosComCustosDistribuidos.map(produto => {
