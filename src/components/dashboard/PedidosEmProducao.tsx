@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,8 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 }
 
 export function PedidosEmProducao() {
+  const navigate = useNavigate();
+  
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ['pedidos-em-producao-dashboard'],
     queryFn: async () => {
@@ -71,8 +74,7 @@ export function PedidosEmProducao() {
         .from('pedidos_producao')
         .select('id, numero_pedido, cliente_nome, etapa_atual, data_carregamento, created_at, vendas(valor_venda, produtos_vendas(tipo_produto, descricao, quantidade, tamanho))')
         .in('status', ['pendente', 'em_andamento'])
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return (data || []) as unknown as PedidoProducao[];
@@ -136,7 +138,8 @@ export function PedidosEmProducao() {
                   {chunk.map((pedido) => (
                     <Card 
                       key={pedido.id} 
-                      className="border bg-card hover:bg-accent/50 transition-colors"
+                      className="border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/producao/pedidos/${pedido.id}`)}
                     >
                       <CardContent className="p-3 space-y-2">
                         <div className="flex items-center justify-between">
