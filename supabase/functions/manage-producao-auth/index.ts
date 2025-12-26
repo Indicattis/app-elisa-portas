@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('ativo', true)
       .in('setor', ['fabrica', 'instalacoes'])
-      .not('role', 'in', '("administrador","diretor","gerente_comercial","gerente_financeiro")')
+      .not('role', 'in', '("administrador","gerente_comercial","gerente_financeiro")')
 
     console.log('Usuários encontrados:', adminUsers?.length || 0)
 
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
     }
 
     // Validação extra: verificar se não é um cargo protegido
-    const rolesProtegidos = ['administrador', 'diretor', 'gerente_comercial', 'gerente_financeiro']
+    const rolesProtegidos = ['administrador', 'gerente_comercial', 'gerente_financeiro']
     if (rolesProtegidos.includes(adminUser.role)) {
       console.log('Tentativa de login bloqueada para cargo protegido:', adminUser.role)
       return new Response(
