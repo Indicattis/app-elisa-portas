@@ -3173,6 +3173,78 @@ export type Database = {
           },
         ]
       }
+      ordens_porta_social: {
+        Row: {
+          capturada_em: string | null
+          created_at: string | null
+          data_conclusao: string | null
+          delegado_em: string | null
+          delegado_para_id: string | null
+          delegado_por_id: string | null
+          em_backlog: boolean | null
+          historico: boolean
+          id: string
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string
+          prioridade: number | null
+          status: string
+          tempo_conclusao_segundos: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          capturada_em?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          delegado_em?: string | null
+          delegado_para_id?: string | null
+          delegado_por_id?: string | null
+          em_backlog?: boolean | null
+          historico?: boolean
+          id?: string
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id: string
+          prioridade?: number | null
+          status?: string
+          tempo_conclusao_segundos?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          capturada_em?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          delegado_em?: string | null
+          delegado_para_id?: string | null
+          delegado_por_id?: string | null
+          em_backlog?: boolean | null
+          historico?: boolean
+          id?: string
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string
+          prioridade?: number | null
+          status?: string
+          tempo_conclusao_segundos?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordens_porta_social_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: true
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "ordens_porta_social_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: true
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ordens_producao: {
         Row: {
           created_at: string
