@@ -64,7 +64,6 @@ export default function ProducaoTerceirizacao() {
       {/* Modal de Avanço Automático */}
       <ProcessoAvancoAutomaticoModal
         open={modalOpen}
-        onOpenChange={setModalOpen}
         processos={processos}
       />
     </div>
