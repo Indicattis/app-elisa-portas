@@ -122,6 +122,7 @@ import FolhaPagamentoNova from "./pages/FolhaPagamentoNova";
 import SolicitacoesMudancaCadastro from "./pages/SolicitacoesMudancaCadastro";
 // Etiquetas removido - funcionalidade movida para página de Ordens
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
+import ProducaoTerceirizacao from "./pages/ProducaoTerceirizacao";
 import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
 import { ProducaoLayout } from "@/components/ProducaoLayout";
 import { AdminLayout } from "@/components/AdminLayout";
@@ -347,6 +348,16 @@ const App = () => (
                             <ProtectedProducaoRoute>
                               <ProducaoLayout>
                                 <ProducaoControle />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/terceirizacao"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoTerceirizacao />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }
