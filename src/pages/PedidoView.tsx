@@ -24,9 +24,11 @@ import { PedidoLinhasEditor } from "@/components/pedidos/PedidoLinhasEditor";
 import { usePedidoLinhas, type PedidoLinhaUpdate, type PedidoLinha } from "@/hooks/usePedidoLinhas";
 import { useValidacaoLinhasPorPorta } from "@/hooks/useValidacaoLinhasPorPorta";
 import { usePedidoPortaObservacoes } from "@/hooks/usePedidoPortaObservacoes";
+import { usePedidoPortaSocialObservacoes } from "@/hooks/usePedidoPortaSocialObservacoes";
 import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
 import { LinhasAgrupadasPorPorta } from "@/components/pedidos/LinhasAgrupadasPorPorta";
 import { ObservacoesPortaForm } from "@/components/pedidos/ObservacoesPortaForm";
+import { ObservacoesPortaSocialForm } from "@/components/pedidos/ObservacoesPortaSocialForm";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
@@ -116,6 +118,7 @@ export default function PedidoView() {
   const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote, atualizarLinha } = usePedidoLinhas(id || "");
   const { moverParaProximaEtapa } = usePedidosEtapas();
   const { salvarObservacao, getObservacoesPorPorta } = usePedidoPortaObservacoes(id || "");
+  const { salvarObservacao: salvarObservacaoSocial, getObservacoesPorPorta: getObservacoesSocialPorPorta } = usePedidoPortaSocialObservacoes(id || "");
 
   // Sincronizar linhas do hook com o estado local do pedido
   useEffect(() => {
@@ -157,6 +160,12 @@ export default function PedidoView() {
     (p: any) => p.tipo_produto === 'porta_enrolar'
   ) || [];
   const portasEnrolar = expandirPortasPorQuantidade(portasEnrolarRaw);
+
+  // Filtrar e expandir portas do tipo "porta_social" por quantidade
+  const portasSocialRaw = pedido?.venda?.produtos?.filter(
+    (p: any) => p.tipo_produto === 'porta_social'
+  ) || [];
+  const portasSocial = expandirPortasPorQuantidade(portasSocialRaw);
 
   // Validação de linhas por porta
   const validacao = useValidacaoLinhasPorPorta(portasEnrolar, linhas);
@@ -880,6 +889,35 @@ export default function PedidoView() {
                   autorizados={autorizados}
                   valoresIniciais={getObservacoesPorPorta(porta._originalId, porta._indicePorta)}
                   onSalvar={salvarObservacao}
+                  pedidoId={id || ''}
+                  isReadOnly={!isAberto}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Especificações Porta Social */}
+      {portasSocial.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Especificações Porta Social ({portasSocial.length})
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {portasSocial.map((porta: any, idx: number) => (
+                <ObservacoesPortaSocialForm
+                  key={porta._virtualKey}
+                  porta={porta}
+                  portaIndex={idx}
+                  valoresIniciais={getObservacoesSocialPorPorta(porta._originalId, porta._indicePorta)}
+                  onSalvar={salvarObservacaoSocial}
                   pedidoId={id || ''}
                   isReadOnly={!isAberto}
                 />

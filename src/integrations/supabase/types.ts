@@ -3782,6 +3782,91 @@ export type Database = {
           },
         ]
       }
+      pedido_porta_social_observacoes: {
+        Row: {
+          acabamento: string | null
+          altura_menor_porta: number | null
+          altura_painel: number | null
+          created_at: string | null
+          espessura_parede: number | null
+          id: string
+          indice_porta: number
+          lado_abertura: string | null
+          lado_fechadura: string | null
+          largura_1: number | null
+          largura_2: number | null
+          largura_3: number | null
+          largura_menor_porta: number | null
+          largura_painel: number | null
+          pedido_id: string
+          produto_venda_id: string
+          tem_painel: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          acabamento?: string | null
+          altura_menor_porta?: number | null
+          altura_painel?: number | null
+          created_at?: string | null
+          espessura_parede?: number | null
+          id?: string
+          indice_porta?: number
+          lado_abertura?: string | null
+          lado_fechadura?: string | null
+          largura_1?: number | null
+          largura_2?: number | null
+          largura_3?: number | null
+          largura_menor_porta?: number | null
+          largura_painel?: number | null
+          pedido_id: string
+          produto_venda_id: string
+          tem_painel?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          acabamento?: string | null
+          altura_menor_porta?: number | null
+          altura_painel?: number | null
+          created_at?: string | null
+          espessura_parede?: number | null
+          id?: string
+          indice_porta?: number
+          lado_abertura?: string | null
+          lado_fechadura?: string | null
+          largura_1?: number | null
+          largura_2?: number | null
+          largura_3?: number | null
+          largura_menor_porta?: number | null
+          largura_painel?: number | null
+          pedido_id?: string
+          produto_venda_id?: string
+          tem_painel?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_porta_social_observacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pedido_porta_social_observacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_porta_social_observacoes_produto_venda_id_fkey"
+            columns: ["produto_venda_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos_etapas: {
         Row: {
           checkboxes: Json | null
