@@ -362,6 +362,16 @@ const App = () => (
                             </ProtectedProducaoRoute>
                           }
                         />
+                        <Route
+                          path="/pedidos/:id"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <PedidoView />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
                         <Route 
                           path="/" 
                           element={
