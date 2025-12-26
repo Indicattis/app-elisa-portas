@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2 } from "lucide-react";
+import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2, Palette } from "lucide-react";
 import { useVendasCatalogo, ProdutoCatalogoInput } from "@/hooks/useVendasCatalogo";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
@@ -15,6 +16,7 @@ import { useCatalogoUpload } from "@/hooks/useCatalogoUpload";
 import { toast } from "sonner";
 
 export default function VendasCatalogo() {
+  const navigate = useNavigate();
   const [modalAberto, setModalAberto] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<any>(null);
@@ -352,20 +354,29 @@ export default function VendasCatalogo() {
             <p className="text-muted-foreground">Produtos disponíveis para venda avulsa</p>
           </div>
         </div>
-        <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Produto
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Adicionar Produto ao Catálogo</DialogTitle>
-            </DialogHeader>
-            <FormularioProduto />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/dashboard/vendas/vendas-catalogo/cores")}
+          >
+            <Palette className="h-4 w-4 mr-2" />
+            Gerenciar Cores
+          </Button>
+          <Dialog open={modalAberto} onOpenChange={setModalAberto}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Produto
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Adicionar Produto ao Catálogo</DialogTitle>
+              </DialogHeader>
+              <FormularioProduto />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="flex gap-4">
