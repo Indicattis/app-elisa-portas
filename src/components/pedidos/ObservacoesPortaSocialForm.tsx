@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,9 +45,6 @@ export function ObservacoesPortaSocialForm({
       indice_porta: porta._indicePorta ?? 0,
       altura_menor_porta: valoresIniciais?.altura_menor_porta ?? null,
       espessura_parede: valoresIniciais?.espessura_parede ?? null,
-      largura_1: valoresIniciais?.largura_1 ?? null,
-      largura_2: valoresIniciais?.largura_2 ?? null,
-      largura_3: valoresIniciais?.largura_3 ?? null,
       largura_menor_porta: valoresIniciais?.largura_menor_porta ?? null,
       tem_painel: valoresIniciais?.tem_painel ?? false,
       largura_painel: valoresIniciais?.largura_painel ?? null,
@@ -58,23 +55,7 @@ export function ObservacoesPortaSocialForm({
     },
   });
 
-  // Calcular largura menor automaticamente
-  const largura1 = form.watch('largura_1');
-  const largura2 = form.watch('largura_2');
-  const largura3 = form.watch('largura_3');
   const temPainel = form.watch('tem_painel');
-
-  const larguraMenorCalculada = useMemo(() => {
-    const larguras = [largura1, largura2, largura3].filter(l => l !== null && l !== undefined && !isNaN(Number(l)));
-    if (larguras.length === 0) return null;
-    return Math.min(...larguras.map(l => Number(l)));
-  }, [largura1, largura2, largura3]);
-
-  useEffect(() => {
-    if (larguraMenorCalculada !== null) {
-      form.setValue('largura_menor_porta', larguraMenorCalculada);
-    }
-  }, [larguraMenorCalculada, form]);
 
   const handleSalvar = async () => {
     setSalvando(true);
@@ -93,9 +74,6 @@ export function ObservacoesPortaSocialForm({
       indice_porta: porta._indicePorta ?? 0,
       altura_menor_porta: valoresIniciais?.altura_menor_porta ?? null,
       espessura_parede: valoresIniciais?.espessura_parede ?? null,
-      largura_1: valoresIniciais?.largura_1 ?? null,
-      largura_2: valoresIniciais?.largura_2 ?? null,
-      largura_3: valoresIniciais?.largura_3 ?? null,
       largura_menor_porta: valoresIniciais?.largura_menor_porta ?? null,
       tem_painel: valoresIniciais?.tem_painel ?? false,
       largura_painel: valoresIniciais?.largura_painel ?? null,
@@ -255,13 +233,13 @@ export function ObservacoesPortaSocialForm({
                 )}
               />
 
-              {/* Largura 1 */}
+              {/* Largura menor da porta */}
               <FormField
                 control={form.control}
-                name="largura_1"
+                name="largura_menor_porta"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Largura 1 (cm)</FormLabel>
+                    <FormLabel className="text-xs">Largura menor da porta (cm)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -277,63 +255,6 @@ export function ObservacoesPortaSocialForm({
                   </FormItem>
                 )}
               />
-
-              {/* Largura 2 */}
-              <FormField
-                control={form.control}
-                name="largura_2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Largura 2 (cm)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="Ex: 92"
-                        disabled={!modoEdicao}
-                        className="h-9 text-xs"
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Largura 3 */}
-              <FormField
-                control={form.control}
-                name="largura_3"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Largura 3 (cm)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="Ex: 88"
-                        disabled={!modoEdicao}
-                        className="h-9 text-xs"
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Largura menor (calculado) */}
-              <FormItem>
-                <FormLabel className="text-xs">Largura menor (auto)</FormLabel>
-                <Input
-                  type="text"
-                  disabled
-                  className="h-9 text-xs bg-muted"
-                  value={larguraMenorCalculada !== null ? `${larguraMenorCalculada} cm` : '-'}
-                />
-              </FormItem>
 
               {/* Tem painel */}
               <FormField
