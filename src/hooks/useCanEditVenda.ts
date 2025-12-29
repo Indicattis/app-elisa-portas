@@ -60,6 +60,7 @@ export function useCanEditVenda(params?: UseCanEditVendaParams | string) {
     checkFaturamento();
   }, [vendaId]);
 
-  // Nenhum usuário pode editar vendas
-  return { canEdit: false, loading, isFaturada };
+  // Permite edição se: (é admin OU é o atendente responsável) E a venda não está faturada
+  const canEdit = !isFaturada && (isAdmin || user?.id === vendaAtendenteId);
+  return { canEdit, loading, isFaturada };
 }

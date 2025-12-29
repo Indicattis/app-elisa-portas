@@ -879,7 +879,7 @@ export default function VendaView() {
           <CardTitle>Ações Rápidas</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-2">
-          <Button onClick={() => navigate(`/dashboard/vendas/${id}/edit`)}>
+          <Button onClick={() => navigate(`/dashboard/vendas/${id}/editar`)}>
             Editar Venda
           </Button>
           {venda.pedido && (
