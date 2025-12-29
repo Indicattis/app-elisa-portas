@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useVendas, VendaFormData, ProdutoVenda } from '@/hooks/useVendas';
@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -36,6 +36,8 @@ import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 
 export default function VendasNova() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const orcamentoId = searchParams.get('orcamento_id');
   const { toast } = useToast();
   const { createVenda, isCreating } = useVendas();
   const { user } = useAuth();
@@ -110,6 +112,84 @@ export default function VendasNova() {
       return data;
     }
   });
+
+  // Buscar dados do orçamento se vier de conversão
+  const { data: orcamentoData, isLoading: isLoadingOrcamento } = useQuery({
+    queryKey: ['orcamento-para-venda', orcamentoId],
+    queryFn: async () => {
+      if (!orcamentoId) return null;
+      
+      const { data, error } = await supabase
+        .from('orcamentos')
+        .select(`
+          *,
+          orcamento_produtos (*),
+          admin_users (id, nome)
+        `)
+        .eq('id', orcamentoId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orcamentoId
+  });
+
+  // Estado para controlar se os dados vêm do orçamento (bloqueados)
+  const isFromOrcamento = !!orcamentoId && !!orcamentoData;
+
+  // Preencher dados do formulário quando o orçamento for carregado
+  useEffect(() => {
+    if (orcamentoData) {
+      setFormData(prev => ({
+        ...prev,
+        cliente_nome: orcamentoData.cliente_nome || '',
+        cliente_telefone: orcamentoData.cliente_telefone || '',
+        cliente_email: orcamentoData.cliente_email || '',
+        cpf_cliente: orcamentoData.cliente_cpf || '',
+        estado: orcamentoData.cliente_estado || '',
+        cidade: orcamentoData.cliente_cidade || '',
+        cep: orcamentoData.cliente_cep || '',
+        bairro: orcamentoData.cliente_bairro || '',
+        endereco: '',
+        publico_alvo: orcamentoData.publico_alvo || '',
+        canal_aquisicao_id: orcamentoData.canal_aquisicao_id || '',
+        valor_frete: orcamentoData.valor_frete || 0,
+        tipo_entrega: 'instalacao',
+        orcamento_id: orcamentoData.id,
+      }));
+
+      // Converter produtos do orçamento para o formato de venda
+      if (orcamentoData.orcamento_produtos && orcamentoData.orcamento_produtos.length > 0) {
+        const produtosConvertidos: ProdutoVenda[] = orcamentoData.orcamento_produtos.map((p: any) => ({
+          tipo_produto: p.tipo_produto || 'porta_enrolar',
+          largura: p.medidas?.largura || 0,
+          altura: p.medidas?.altura || 0,
+          cor_id: p.cor_id || '',
+          valor_produto: p.valor || 0,
+          valor_pintura: p.preco_producao || 0,
+          valor_instalacao: p.preco_instalacao || 0,
+          valor_frete: 0,
+          quantidade: p.quantidade || 1,
+          descricao: p.descricao || '',
+          desconto_percentual: p.desconto_percentual || 0,
+          desconto_valor: 0,
+          tipo_desconto: 'percentual' as const,
+          valor_credito: 0,
+        }));
+        setPortas(produtosConvertidos);
+      }
+
+      // Definir forma de pagamento
+      const formaPagamento = orcamentoData.forma_pagamento;
+      if (formaPagamento === 'a_vista' || formaPagamento === 'boleto' || formaPagamento === 'cartao_credito' || formaPagamento === 'dinheiro') {
+        setPagamentoData(prev => ({
+          ...prev,
+          metodo_pagamento: formaPagamento
+        }));
+      }
+    }
+  }, [orcamentoData]);
 
   // Função auxiliar para recalcular valor total
   const recalcularValorTotal = (produtos: ProdutoVenda[], credito: number = valorCredito) => {
@@ -405,7 +485,19 @@ export default function VendasNova() {
           Voltar
         </Button>
         <h1 className="text-2xl font-semibold">Nova Venda</h1>
+        {isFromOrcamento && (
+          <Badge variant="secondary" className="gap-1.5">
+            <Lock className="w-3 h-3" />
+            Convertido do Orçamento #{orcamentoData?.numero_orcamento || orcamentoId?.slice(-8).toUpperCase()}
+          </Badge>
+        )}
       </div>
+
+      {isLoadingOrcamento && orcamentoId && (
+        <div className="text-center py-8 text-muted-foreground">
+          Carregando dados do orçamento...
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Cliente - Buscar ou Cadastrar */}
@@ -427,6 +519,7 @@ export default function VendasNova() {
             // Quando um cliente existente é selecionado, armazena o ID
             setFormData(prev => ({ ...prev, cliente_id: cliente?.id }));
           }}
+          disabled={isFromOrcamento}
         />
 
         {/* Dados da Venda */}

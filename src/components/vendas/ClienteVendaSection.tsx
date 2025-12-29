@@ -31,9 +31,10 @@ interface ClienteVendaSectionProps {
   dados: DadosCliente;
   onChange: (dados: Partial<DadosCliente>) => void;
   onClienteSelecionado?: (cliente: Cliente | null) => void;
+  disabled?: boolean;
 }
 
-export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: ClienteVendaSectionProps) {
+export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, disabled = false }: ClienteVendaSectionProps) {
   const [modo, setModo] = useState<'buscar' | 'cadastrar'>('buscar');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -149,28 +150,65 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado }: C
       <CardHeader className="pb-3 pt-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">Cliente</CardTitle>
-          <RadioGroup
-            value={modo}
-            onValueChange={(v) => {
-              setModo(v as 'buscar' | 'cadastrar');
-              if (v === 'buscar') {
-                handleLimparCliente();
-              }
-            }}
-            className="flex gap-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="buscar" id="buscar" />
-              <Label htmlFor="buscar" className="text-sm cursor-pointer">Buscar existente</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="cadastrar" id="cadastrar" />
-              <Label htmlFor="cadastrar" className="text-sm cursor-pointer">Cadastrar novo</Label>
-            </div>
-          </RadioGroup>
+          {!disabled && (
+            <RadioGroup
+              value={modo}
+              onValueChange={(v) => {
+                setModo(v as 'buscar' | 'cadastrar');
+                if (v === 'buscar') {
+                  handleLimparCliente();
+                }
+              }}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="buscar" id="buscar" />
+                <Label htmlFor="buscar" className="text-sm cursor-pointer">Buscar existente</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="cadastrar" id="cadastrar" />
+                <Label htmlFor="cadastrar" className="text-sm cursor-pointer">Cadastrar novo</Label>
+              </div>
+            </RadioGroup>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pb-4">
+        {/* Modo disabled - exibe dados do orçamento */}
+        {disabled && (
+          <div className="border rounded-lg p-4 bg-muted/30">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Nome</Label>
+                <p className="font-medium">{dados.cliente_nome || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Telefone</Label>
+                <p className="font-medium">{dados.cliente_telefone || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">E-mail</Label>
+                <p className="font-medium">{dados.cliente_email || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">CPF/CNPJ</Label>
+                <p className="font-medium">{dados.cpf_cliente || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Localização</Label>
+                <p className="font-medium">
+                  {dados.cidade && dados.estado ? `${dados.cidade}/${dados.estado}` : '-'}
+                  {dados.cep && ` - CEP: ${dados.cep}`}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Bairro</Label>
+                <p className="font-medium">{dados.bairro || '-'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modo Buscar */}
         {modo === 'buscar' && !clienteSelecionado && (
           <div className="space-y-2">
