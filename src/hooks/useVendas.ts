@@ -54,6 +54,7 @@ export interface VendaFormData {
   tipo_entrega?: string;
   venda_presencial?: boolean;
   cliente_id?: string; // ID do cliente existente selecionado
+  orcamento_id?: string; // ID do orçamento se for conversão
 }
 
 export interface AutorizacaoDesconto {

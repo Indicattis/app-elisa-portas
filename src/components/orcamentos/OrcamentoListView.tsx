@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,8 @@ import {
   Wrench,
   Package,
   AlertTriangle,
-  Plus
+  Plus,
+  ShoppingCart
 } from "lucide-react";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { formatarNumeroOrcamento } from "@/utils/numberingService";
@@ -85,10 +87,15 @@ const ORCAMENTO_CLASSES: OrcamentoClasse = {
 export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoListViewProps) {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [selectedOrcamento, setSelectedOrcamento] = useState<any>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
 
   const [loadingPedido, setLoadingPedido] = useState<Record<string, boolean>>({});
+
+  const handleConverterEmVenda = (orcamentoId: string) => {
+    navigate(`/dashboard/vendas/nova?orcamento_id=${orcamentoId}`);
+  };
 
   const handleGerarPedido = async (orcamento: any) => {
     try {
@@ -582,19 +589,32 @@ export function OrcamentoListView({ orcamentos, onEdit, onRefresh }: OrcamentoLi
                     </Button>
                     
                     {(orcamento.status === 'vendido' || getStatusNumber(orcamento.status) === 4) && (
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => handleGerarPedido(orcamento)}
-                        disabled={loadingPedido[orcamento.id]}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                      >
-                        {loadingPedido[orcamento.id] ? (
-                          <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                        )}
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleConverterEmVenda(orcamento.id)}
+                          className="h-7 sm:h-8 px-2 gap-1"
+                          title="Converter em Venda"
+                        >
+                          <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline text-xs">Venda</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleGerarPedido(orcamento)}
+                          disabled={loadingPedido[orcamento.id]}
+                          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                          title="Gerar Pedido"
+                        >
+                          {loadingPedido[orcamento.id] ? (
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                          )}
+                        </Button>
+                      </>
                     )}
                     
                     

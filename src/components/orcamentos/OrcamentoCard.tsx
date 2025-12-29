@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Edit, Star, Trash2, Plus } from "lucide-react";
+import { Download, Edit, Star, Trash2, Plus, ShoppingCart } from "lucide-react";
 import { generateOrcamentoPDF } from "@/utils/orcamentoPDFGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,8 +35,13 @@ const ORCAMENTO_CLASSES: OrcamentoClasse = {
 export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: OrcamentoCardProps) {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const [loadingPedido, setLoadingPedido] = useState(false);
+
+  const handleConverterEmVenda = () => {
+    navigate(`/dashboard/vendas/nova?orcamento_id=${orcamento.id}`);
+  };
 
   const handleGerarPedido = async () => {
     try {
@@ -290,32 +296,43 @@ export function OrcamentoCard({ orcamento, onEdit, onStatusChange, onDelete }: O
           </Badge>
         </div>
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-2 flex-wrap">
           <Button size="sm" variant="outline" onClick={handleGeneratePDF} className="flex-1">
             <Download className="w-3 h-3 mr-1" />
             PDF
           </Button>
           
           {(orcamento.status === 'vendido' || orcamento.status_orcamento === 4) && (
-            <Button 
-              size="sm" 
-              variant="default" 
-              onClick={handleGerarPedido}
-              disabled={loadingPedido}
-              className="flex-1"
-            >
-              {loadingPedido ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Gerando...
-                </>
-              ) : (
-                <>
-                  <Plus className="w-3 h-3 mr-1" />
-                  Gerar Pedido
-                </>
-              )}
-            </Button>
+            <>
+              <Button 
+                size="sm" 
+                variant="default" 
+                onClick={handleConverterEmVenda}
+                className="flex-1"
+              >
+                <ShoppingCart className="w-3 h-3 mr-1" />
+                Venda
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleGerarPedido}
+                disabled={loadingPedido}
+                className="flex-1"
+              >
+                {loadingPedido ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-3 h-3 mr-1" />
+                    Pedido
+                  </>
+                )}
+              </Button>
+            </>
           )}
           
           {canEdit() && onEdit && (
