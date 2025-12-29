@@ -4064,8 +4064,10 @@ export type Database = {
           etapa_origem_backlog: string | null
           forma_pagamento: string | null
           id: string
+          mes_vigencia: string | null
           modalidade_instalacao: string | null
           motivo_backlog: string | null
+          numero_mes: number | null
           numero_parcelas: number | null
           numero_pedido: string
           observacoes: string | null
@@ -4112,8 +4114,10 @@ export type Database = {
           etapa_origem_backlog?: string | null
           forma_pagamento?: string | null
           id?: string
+          mes_vigencia?: string | null
           modalidade_instalacao?: string | null
           motivo_backlog?: string | null
+          numero_mes?: number | null
           numero_parcelas?: number | null
           numero_pedido: string
           observacoes?: string | null
@@ -4160,8 +4164,10 @@ export type Database = {
           etapa_origem_backlog?: string | null
           forma_pagamento?: string | null
           id?: string
+          mes_vigencia?: string | null
           modalidade_instalacao?: string | null
           motivo_backlog?: string | null
+          numero_mes?: number | null
           numero_parcelas?: number | null
           numero_pedido?: string
           observacoes?: string | null
@@ -5925,6 +5931,13 @@ export type Database = {
       gerar_proximo_numero: {
         Args: { tipo_documento: string }
         Returns: number
+      }
+      gerar_proximo_numero_mes: {
+        Args: never
+        Returns: {
+          mes: string
+          numero: number
+        }[]
       }
       get_cores_pintadas_hoje: {
         Args: never

@@ -46,9 +46,14 @@ export const usePedidoCreation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Gerar número do pedido
+      // Gerar número do pedido (sequencial global)
       const numeroSequencial = await gerarProximoNumero('pedido');
       const numeroPedido = formatarNumeroPedido(numeroSequencial);
+
+      // Gerar número mensal (reinicia todo mês)
+      const { data: numeroMesData } = await supabase.rpc('gerar_proximo_numero_mes');
+      const numeroMes = numeroMesData?.[0]?.numero || 1;
+      const mesVigencia = numeroMesData?.[0]?.mes;
 
       // Definir etapa e status inicial baseado no tipo de produto
       const etapaInicial = apenasManutencao ? 'aguardando_instalacao' : 'aberto';
@@ -60,6 +65,8 @@ export const usePedidoCreation = () => {
         .insert({
           venda_id: vendaId as any,
           numero_pedido: numeroPedido,
+          numero_mes: numeroMes,
+          mes_vigencia: mesVigencia,
           cliente_nome: venda.cliente_nome,
           cliente_telefone: venda.cliente_telefone,
           cliente_email: venda.cliente_email,

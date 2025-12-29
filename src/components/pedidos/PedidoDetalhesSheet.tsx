@@ -10,6 +10,7 @@ import { PedidoLinhasEditor } from "./PedidoLinhasEditor";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 
 interface PedidoDetalhesSheetProps {
   pedido: any;
@@ -152,11 +153,11 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
 
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Informações do Pedido */}
-          {pedido.numero_pedido && (
+          {(pedido.numero_mes || pedido.numero_pedido) && (
             <div>
               <h3 className="text-sm font-semibold mb-2">Número do Pedido</h3>
               <Badge variant="outline" className="text-base">
-                {pedido.numero_pedido}
+                {formatarNumeroPedidoMensal(pedido.numero_mes, pedido.mes_vigencia, pedido.numero_pedido)}
               </Badge>
             </div>
           )}
