@@ -174,43 +174,129 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pb-4">
-        {/* Modo disabled - exibe dados do orçamento */}
+        {/* Modo disabled - conversão de orçamento: nome e telefone bloqueados, resto editável */}
         {disabled && (
-          <div className="border rounded-lg p-4 bg-muted/30">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Nome</Label>
-                <p className="font-medium">{dados.cliente_nome || '-'}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Telefone</Label>
-                <p className="font-medium">{dados.cliente_telefone || '-'}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">E-mail</Label>
-                <p className="font-medium">{dados.cliente_email || '-'}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">CPF/CNPJ</Label>
-                <p className="font-medium">{dados.cpf_cliente || '-'}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Localização</Label>
-                <p className="font-medium">
-                  {dados.cidade && dados.estado ? `${dados.cidade}/${dados.estado}` : '-'}
-                  {dados.cep && ` - CEP: ${dados.cep}`}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Bairro</Label>
-                <p className="font-medium">{dados.bairro || '-'}</p>
+          <>
+            {/* Dados bloqueados do orçamento */}
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Nome do Cliente</Label>
+                  <p className="font-medium">{dados.cliente_nome || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Telefone</Label>
+                  <p className="font-medium">{dados.cliente_telefone || '-'}</p>
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* Campos editáveis para complementar dados */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="cpf_cliente_disabled" className="text-xs font-medium">CPF/CNPJ</Label>
+                <Input
+                  id="cpf_cliente_disabled"
+                  value={dados.cpf_cliente}
+                  onChange={(e) => onChange({ cpf_cliente: formatarCpfCnpj(e.target.value) })}
+                  placeholder="CPF ou CNPJ"
+                  className="h-9"
+                  maxLength={18}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="cliente_email_disabled" className="text-xs font-medium">E-mail</Label>
+                <Input
+                  id="cliente_email_disabled"
+                  type="email"
+                  value={dados.cliente_email}
+                  onChange={(e) => onChange({ cliente_email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                  className="h-9"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="cep_disabled" className="text-xs font-medium">CEP</Label>
+                <Input
+                  id="cep_disabled"
+                  value={dados.cep}
+                  onChange={(e) => onChange({ cep: formatarCep(e.target.value) })}
+                  placeholder="00000-000"
+                  className="h-9"
+                  maxLength={9}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="estado_disabled" className="text-xs font-medium">Estado</Label>
+                <Select
+                  value={dados.estado}
+                  onValueChange={(value) => onChange({ estado: value, cidade: '' })}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ESTADOS_BRASIL.map(estado => (
+                      <SelectItem key={estado.sigla} value={estado.sigla}>
+                        {estado.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="cidade_disabled" className="text-xs font-medium">Cidade</Label>
+                <Select
+                  value={dados.cidade}
+                  onValueChange={(value) => onChange({ cidade: value })}
+                  disabled={!dados.estado}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione a cidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cidades.map(cidade => (
+                      <SelectItem key={cidade} value={cidade}>
+                        {cidade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="bairro_disabled" className="text-xs font-medium">Bairro</Label>
+                <Input
+                  id="bairro_disabled"
+                  value={dados.bairro}
+                  onChange={(e) => onChange({ bairro: e.target.value })}
+                  placeholder="Bairro"
+                  className="h-9"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="endereco_disabled" className="text-xs font-medium">Endereço</Label>
+                <Input
+                  id="endereco_disabled"
+                  value={dados.endereco}
+                  onChange={(e) => onChange({ endereco: e.target.value })}
+                  placeholder="Rua, número"
+                  className="h-9"
+                />
+              </div>
+            </div>
+          </>
         )}
 
         {/* Modo Buscar */}
-        {modo === 'buscar' && !clienteSelecionado && (
+        {!disabled && modo === 'buscar' && !clienteSelecionado && (
           <div className="space-y-2">
             <Label className="text-xs font-medium">Buscar por nome ou CPF/CNPJ</Label>
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
@@ -271,7 +357,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
         )}
 
         {/* Cliente Selecionado */}
-        {modo === 'buscar' && clienteSelecionado && (
+        {!disabled && modo === 'buscar' && clienteSelecionado && (
           <div className="border rounded-lg p-4 bg-muted/30">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
@@ -296,7 +382,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
         )}
 
         {/* Modo Cadastrar */}
-        {modo === 'cadastrar' && (
+        {!disabled && modo === 'cadastrar' && (
           <>
             {/* Alerta de CPF/CNPJ duplicado - BLOQUEIA CADASTRO */}
             {clienteDuplicado && (
