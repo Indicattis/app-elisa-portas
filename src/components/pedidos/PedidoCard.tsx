@@ -25,6 +25,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 interface PedidoCardProps {
   pedido: any;
   onMoverEtapa?: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
@@ -671,7 +672,7 @@ export function PedidoCard({
                   navigate(`/dashboard/pedido/${pedido.id}/view`);
                 }}
               >
-                {pedido.numero_pedido || 'S/N'}
+                {formatarNumeroPedidoMensal(pedido.numero_mes, pedido.mes_vigencia, pedido.numero_pedido)}
               </span>
               
               {/* Nome do cliente */}
@@ -916,7 +917,7 @@ export function PedidoCard({
               )}
               
               <span className="text-[10px] font-semibold text-muted-foreground">
-                {pedido.numero_pedido || 'Sem número'}
+                {formatarNumeroPedidoMensal(pedido.numero_mes, pedido.mes_vigencia, pedido.numero_pedido)}
               </span>
             </div>
             
