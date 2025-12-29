@@ -40,6 +40,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
               numero_pedido, 
               cliente_nome,
               venda_id,
+              prioridade_etapa,
+              em_backlog,
               vendas(
                 id,
                 observacoes_venda,
@@ -118,17 +120,20 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
     };
   }, [queryClient]);
 
-  // Filtrar ordens por status e ordenar por backlog e prioridade
+  // Filtrar ordens por status e ordenar pela prioridade do PEDIDO
   const ordensParaPintar = ordens
     .filter((o: any) => o.status === 'pendente')
     .sort((a: any, b: any) => {
-      // Ordens em backlog primeiro
-      if (a.em_backlog && !b.em_backlog) return -1;
-      if (!a.em_backlog && b.em_backlog) return 1;
-      // Depois por prioridade (maior primeiro)
-      const prioDiff = (b.prioridade || 0) - (a.prioridade || 0);
-      if (prioDiff !== 0) return prioDiff;
-      // Desempate por created_at (mais antiga primeiro) para manter ordem estática
+      // Ordens com pedido em backlog primeiro
+      const aBacklog = a.pedido?.em_backlog || a.em_backlog;
+      const bBacklog = b.pedido?.em_backlog || b.em_backlog;
+      if (aBacklog && !bBacklog) return -1;
+      if (!aBacklog && bBacklog) return 1;
+      // Depois por prioridade do PEDIDO (maior primeiro)
+      const aPrio = a.pedido?.prioridade_etapa || 0;
+      const bPrio = b.pedido?.prioridade_etapa || 0;
+      if (bPrio !== aPrio) return bPrio - aPrio;
+      // Desempate por created_at (mais antiga primeiro)
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
   

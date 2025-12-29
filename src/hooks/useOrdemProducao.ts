@@ -94,6 +94,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             numero_pedido,
             cliente_nome,
             venda_id,
+            prioridade_etapa,
+            em_backlog,
             vendas(
               data_prevista_entrega,
               observacoes_venda,
@@ -421,17 +423,20 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
-  // Separar ordens por status e ordenar por backlog e prioridade
+  // Separar ordens por status e ordenar pela prioridade do PEDIDO
   const ordensAFazer = ordens
     .filter(o => o.status === 'pendente')
     .sort((a, b) => {
-      // Ordens em backlog primeiro
-      if (a.em_backlog && !b.em_backlog) return -1;
-      if (!a.em_backlog && b.em_backlog) return 1;
-      // Depois por prioridade (maior primeiro)
-      const prioDiff = (b.prioridade || 0) - (a.prioridade || 0);
-      if (prioDiff !== 0) return prioDiff;
-      // Desempate por created_at (mais antiga primeiro) para manter ordem estática
+      // Ordens com pedido em backlog primeiro
+      const aBacklog = (a.pedido as any)?.em_backlog || a.em_backlog;
+      const bBacklog = (b.pedido as any)?.em_backlog || b.em_backlog;
+      if (aBacklog && !bBacklog) return -1;
+      if (!aBacklog && bBacklog) return 1;
+      // Depois por prioridade do PEDIDO (maior primeiro)
+      const aPrio = (a.pedido as any)?.prioridade_etapa || 0;
+      const bPrio = (b.pedido as any)?.prioridade_etapa || 0;
+      if (bPrio !== aPrio) return bPrio - aPrio;
+      // Desempate por created_at (mais antiga primeiro)
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
 
