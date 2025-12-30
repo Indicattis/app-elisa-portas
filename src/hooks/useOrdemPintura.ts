@@ -124,12 +124,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
   const ordensParaPintar = ordens
     .filter((o: any) => o.status === 'pendente')
     .sort((a: any, b: any) => {
-      // Ordens com pedido em backlog primeiro
-      const aBacklog = a.pedido?.em_backlog || a.em_backlog;
-      const bBacklog = b.pedido?.em_backlog || b.em_backlog;
-      if (aBacklog && !bBacklog) return -1;
-      if (!aBacklog && bBacklog) return 1;
-      // Depois por prioridade do PEDIDO (maior primeiro)
+      // Ordenar por prioridade do PEDIDO (maior primeiro)
       const aPrio = a.pedido?.prioridade_etapa || 0;
       const bPrio = b.pedido?.prioridade_etapa || 0;
       if (bPrio !== aPrio) return bPrio - aPrio;
