@@ -195,9 +195,17 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
         ? 'responsavel_carregamento_id' 
         : 'responsavel_id';
       
+      // Tabelas que possuem o campo capturada_em
+      const tabelasComCapturadaEm = ['soldagem', 'perfiladeira', 'separacao', 'pintura', 'qualidade'];
+      const temCapturadaEm = tabelasComCapturadaEm.includes(ordemToRemoveResponsavel.tipo);
+      
+      const updateData = temCapturadaEm 
+        ? { [fieldName]: null, capturada_em: null }
+        : { [fieldName]: null };
+      
       const { error } = await supabase
         .from(tableName as any)
-        .update({ [fieldName]: null, capturada_em: null })
+        .update(updateData)
         .eq('id', ordemToRemoveResponsavel.id);
       
       if (error) throw error;
