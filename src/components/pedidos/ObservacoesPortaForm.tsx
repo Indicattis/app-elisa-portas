@@ -126,23 +126,23 @@ export function ObservacoesPortaForm({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className={`border rounded-lg ${!responsavelPreenchido ? 'border-destructive/50 bg-destructive/5' : ''}`}>
       <CollapsibleTrigger className="w-full">
-        <div className="flex items-center gap-2 p-3 hover:bg-muted/50 transition-colors">
-          <Badge variant={responsavelPreenchido ? "outline" : "destructive"}>
+        <div className="flex flex-wrap items-center gap-2 p-3 hover:bg-muted/50 transition-colors">
+          <Badge variant={responsavelPreenchido ? "outline" : "destructive"} className="shrink-0">
             <FileText className="h-3 w-3 mr-1" />
             {portaLabel}
           </Badge>
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium shrink-0">
             {getMedidas()}
           </span>
-          <span className="text-xs text-muted-foreground ml-2">
+          <span className="text-xs text-muted-foreground hidden sm:inline">
             {resumo}
           </span>
           {!responsavelPreenchido && (
-            <Badge variant="outline" className="ml-2 text-[10px] border-destructive text-destructive">
+            <Badge variant="outline" className="text-[10px] border-destructive text-destructive shrink-0">
               Pendente
             </Badge>
           )}
-          <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 ml-auto shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </CollapsibleTrigger>
 
