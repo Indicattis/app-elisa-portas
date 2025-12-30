@@ -220,6 +220,33 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     };
   }, [tipoOrdem, queryClient]);
 
+  // Subscribe to realtime updates for the order table itself (priority changes)
+  useEffect(() => {
+    const tabelaOrdem = TABELA_MAP[tipoOrdem];
+    
+    const channel = supabase
+      .channel(`ordens-${tipoOrdem}-prioridade-changes`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: tabelaOrdem,
+        },
+        (payload) => {
+          // Verificar se a prioridade mudou
+          if (payload.old && payload.new && (payload.old as any).prioridade !== (payload.new as any).prioridade) {
+            queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tipoOrdem, queryClient]);
+
   // Capturar ordem (atribuir responsável)
   const capturarOrdem = useMutation({
     mutationFn: async (ordemId: string) => {
