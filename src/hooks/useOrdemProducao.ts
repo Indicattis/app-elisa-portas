@@ -270,6 +270,26 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         throw new Error(`Você já possui a ordem ${ordemExistente.numero_ordem} capturada. Conclua-a antes de capturar outra.`);
       }
       
+      // Verificar se esta ordem é a próxima na fila de prioridade
+      const { data: ordensDisponiveis, error: ordensError } = await supabase
+        .from(tabelaOrdem)
+        .select('id, numero_ordem, prioridade')
+        .eq('historico', false)
+        .is('responsavel_id', null)
+        .order('prioridade', { ascending: false })
+        .order('created_at', { ascending: true }) as { data: { id: string; numero_ordem: string; prioridade: number }[] | null; error: any };
+
+      if (ordensError) throw ordensError;
+
+      // Se há ordens disponíveis e esta não é a primeira (próxima na fila)
+      if (ordensDisponiveis && ordensDisponiveis.length > 0) {
+        const proximaOrdem = ordensDisponiveis[0];
+        
+        if (proximaOrdem.id !== ordemId) {
+          throw new Error(`Você deve capturar a ordem ${proximaOrdem.numero_ordem} primeiro. Siga a ordem de prioridade.`);
+        }
+      }
+      
       // Verificar se a ordem está em backlog
       const { data: ordemAtual } = await supabase
         .from(tabelaOrdem)
