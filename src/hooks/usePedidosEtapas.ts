@@ -774,6 +774,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
       toast({
         title: "Prioridade atualizada",
         description: "A prioridade do pedido foi atualizada"
@@ -806,6 +808,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
       toast({
         title: "Pedidos reorganizados",
         description: "As prioridades foram atualizadas com sucesso"
