@@ -255,6 +255,21 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
+      // Verificar se o usuário já tem uma ordem capturada deste tipo
+      const { data: ordemExistente, error: checkError } = await supabase
+        .from(tabelaOrdem)
+        .select('id, numero_ordem')
+        .eq('responsavel_id', user.id)
+        .eq('historico', false)
+        .eq('status', 'pendente')
+        .maybeSingle() as { data: { id: string; numero_ordem: string } | null; error: any };
+      
+      if (checkError) throw checkError;
+      
+      if (ordemExistente) {
+        throw new Error(`Você já possui a ordem ${ordemExistente.numero_ordem} capturada. Conclua-a antes de capturar outra.`);
+      }
+      
       // Verificar se a ordem está em backlog
       const { data: ordemAtual } = await supabase
         .from(tabelaOrdem)
@@ -287,11 +302,11 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         description: "Você agora é o responsável por esta ordem.",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Erro ao capturar ordem:', error);
       toast({
-        title: "Erro ao capturar",
-        description: "Não foi possível capturar a ordem.",
+        title: "Não foi possível capturar",
+        description: error.message || "Erro ao capturar a ordem.",
         variant: "destructive",
       });
     },
