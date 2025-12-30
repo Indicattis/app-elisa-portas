@@ -11,6 +11,7 @@ import { useState } from "react";
 import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
 import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import { toast } from "sonner";
 import {
   OPCOES_INTERNA_EXTERNA,
   OPCOES_LADO_MOTOR,
@@ -82,6 +83,7 @@ interface OrdemCardProps {
   onOrdemClick: (ordem: Ordem) => void;
   onCapturarOrdem?: (ordemId: string) => void;
   isCapturing?: boolean;
+  currentUserId?: string;
 }
 
 function OrdemCard({
@@ -90,6 +92,7 @@ function OrdemCard({
   onOrdemClick,
   onCapturarOrdem,
   isCapturing = false,
+  currentUserId,
 }: OrdemCardProps) {
   const [backlogModalOpen, setBacklogModalOpen] = useState(false);
   const linhas = ordem.linhas || [];
@@ -110,6 +113,15 @@ function OrdemCard({
     if (!data) return '--/--/----';
     const date = new Date(data);
     return date.toLocaleDateString('pt-BR');
+  };
+
+  const handleCardClick = () => {
+    // Se tem responsável e não é o usuário atual, bloquear
+    if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
+      toast.error(`Esta ordem está sendo executada por ${ordem.admin_users?.nome || 'outro usuário'}`);
+      return;
+    }
+    onOrdemClick(ordem);
   };
 
   return (
@@ -158,7 +170,7 @@ function OrdemCard({
           {/* LATERAL ESQUERDA - Foto do responsável (oculta em mobile pequeno) */}
           <div 
             className="hidden sm:block flex-shrink-0 cursor-pointer"
-            onClick={() => onOrdemClick(ordem)}
+            onClick={handleCardClick}
           >
             {ordem.responsavel_id ? (
               <Avatar className="h-16 w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] ring-2 ring-primary/20">
@@ -180,7 +192,7 @@ function OrdemCard({
           {/* CENTRO - Informações */}
           <div 
             className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 cursor-pointer min-w-0 w-full"
-            onClick={() => onOrdemClick(ordem)}
+            onClick={handleCardClick}
           >
             {/* Data entrega visível apenas em mobile */}
             <div className="sm:hidden">
@@ -276,7 +288,7 @@ function OrdemCard({
             ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' && ordem.responsavel_id ? (
               <div 
                 className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg bg-primary/10 flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-1 border-2 border-primary cursor-pointer hover:bg-primary/20 transition-colors relative overflow-hidden"
-                onClick={() => onOrdemClick(ordem)}
+                onClick={handleCardClick}
               >
                 {deveAnimar && (
                   <div className="absolute inset-0 sm:rounded-full rounded-lg border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
@@ -287,7 +299,7 @@ function OrdemCard({
             ) : (
               <div 
                 className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] rounded-lg bg-muted/30 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => onOrdemClick(ordem)}
+                onClick={handleCardClick}
               >
                 <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50" />
               </div>
@@ -355,6 +367,7 @@ interface ProducaoKanbanProps {
   isCapturing?: boolean;
   tipoOrdem: TipoOrdem;
   onRefresh?: () => void;
+  currentUserId?: string;
 }
 
 export function ProducaoKanban({
@@ -365,6 +378,7 @@ export function ProducaoKanban({
   isCapturing = false,
   tipoOrdem,
   onRefresh,
+  currentUserId,
 }: ProducaoKanbanProps) {
 
   const renderSkeletons = () => (
@@ -416,6 +430,7 @@ export function ProducaoKanban({
               onOrdemClick={onOrdemClick}
               onCapturarOrdem={onCapturarOrdem}
               isCapturing={isCapturing}
+              currentUserId={currentUserId}
             />
           ))
         ) : (
