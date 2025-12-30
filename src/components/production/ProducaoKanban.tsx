@@ -116,11 +116,18 @@ function OrdemCard({
   };
 
   const handleCardClick = () => {
-    // Se tem responsável e não é o usuário atual, bloquear
-    if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
+    // Se NÃO tem responsável, bloquear e informar que precisa capturar
+    if (!ordem.responsavel_id) {
+      toast.error('Capture esta ordem primeiro para acessar os detalhes');
+      return;
+    }
+    
+    // Se tem responsável mas não é o usuário atual, bloquear
+    if (ordem.responsavel_id !== currentUserId) {
       toast.error(`Esta ordem está sendo executada por ${ordem.admin_users?.nome || 'outro usuário'}`);
       return;
     }
+    
     onOrdemClick(ordem);
   };
 
