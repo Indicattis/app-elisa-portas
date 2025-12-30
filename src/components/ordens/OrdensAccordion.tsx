@@ -197,7 +197,7 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
       
       const { error } = await supabase
         .from(tableName as any)
-        .update({ [fieldName]: null, data_captura: null })
+        .update({ [fieldName]: null, capturada_em: null })
         .eq('id', ordemToRemoveResponsavel.id);
       
       if (error) throw error;
