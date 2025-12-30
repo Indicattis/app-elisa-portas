@@ -54,7 +54,8 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
       // Buscar pedidos com campos adicionais
       let pedidosQuery = supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, status, etapa_atual, created_at, data_entrega, data_carregamento, endereco_cidade, endereco_estado, em_backlog')
+        .select('id, numero_pedido, cliente_nome, status, etapa_atual, created_at, data_entrega, data_carregamento, endereco_cidade, endereco_estado, em_backlog, prioridade_etapa')
+        .order('prioridade_etapa', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (search) {
