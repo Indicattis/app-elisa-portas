@@ -570,22 +570,22 @@ export default function PedidoView() {
   const temPendentesSalvamento = linhasEditadas.size > 0;
 
   return (
-    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
+    <div className="container mx-auto p-2 sm:p-4 space-y-3 sm:space-y-4 max-w-7xl">
       {/* Breadcrumbs */}
       <Breadcrumb>
         <BreadcrumbList>
-          <BreadcrumbItem>
+          <BreadcrumbItem className="hidden md:block">
             <BreadcrumbLink asChild>
               <Link to="/dashboard">Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
+          <BreadcrumbSeparator className="hidden md:block" />
+          <BreadcrumbItem className="hidden md:block">
             <BreadcrumbLink asChild>
               <Link to="/dashboard/fabrica">Fábrica</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          <BreadcrumbSeparator className="hidden md:block" />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Link to="/dashboard/fabrica/pedidos">Pedidos</Link>
@@ -599,11 +599,12 @@ export default function PedidoView() {
       </Breadcrumb>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button 
             variant="ghost" 
             size="sm" 
+            className="shrink-0"
             onClick={() => {
               if (window.history.length > 2) {
                 navigate(-1);
@@ -612,16 +613,17 @@ export default function PedidoView() {
               }
             }}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />Voltar
+            <ArrowLeft className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Voltar</span>
           </Button>
-          <div>
-            <h1 className="text-xl font-bold">Pedido #{pedido.numero_pedido}</h1>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold truncate">Pedido #{pedido.numero_pedido}</h1>
             <p className="text-xs text-muted-foreground">
               Cadastrado em {format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <Button
             variant="ghost"
             size="sm"
@@ -647,7 +649,7 @@ export default function PedidoView() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground">Cliente</p>
                   <p className="font-medium">{pedido.venda.cliente_nome}</p>
@@ -742,7 +744,8 @@ export default function PedidoView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Versão Desktop - Tabela */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-xs">
@@ -775,6 +778,47 @@ export default function PedidoView() {
                   })}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Versão Mobile - Cards */}
+            <div className="md:hidden space-y-3">
+              {pedido.venda.produtos.map((produto: any) => {
+                const peso = calcularPeso(produto);
+                const meiaCanas = calcularMeiaCanas(produto);
+                return (
+                  <div key={produto.id} className="p-3 border rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{produto.tipo_produto || '-'}</span>
+                      <Badge variant="secondary" className="text-xs">{produto.quantidade}x</Badge>
+                    </div>
+                    {produto.descricao && (
+                      <p className="text-xs text-muted-foreground">{produto.descricao}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Tamanho: </span>
+                        <span className="font-medium">{produto.tamanho || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Cor: </span>
+                        <span className="font-medium">{produto.cor?.nome || '-'}</span>
+                      </div>
+                      {peso && (
+                        <div>
+                          <span className="text-muted-foreground">Peso: </span>
+                          <span className="font-medium">{peso} kg</span>
+                        </div>
+                      )}
+                      {meiaCanas && (
+                        <div>
+                          <span className="text-muted-foreground">M. Canas: </span>
+                          <span className="font-medium">{meiaCanas}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -953,7 +997,8 @@ export default function PedidoView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Versão Desktop - Tabela */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-xs">
@@ -1057,6 +1102,93 @@ export default function PedidoView() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Versão Mobile - Cards */}
+            <div className="md:hidden space-y-3">
+              {pedido.ordens.map((ordem) => (
+                <div key={ordem.id} className="p-3 border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {ordem.tipo === 'Perfiladeira' && <Hammer className="w-4 h-4 text-muted-foreground" />}
+                      {ordem.tipo === 'Separação' && <Package className="w-4 h-4 text-muted-foreground" />}
+                      {ordem.tipo === 'Soldagem' && <Hammer className="w-4 h-4 text-muted-foreground" />}
+                      {ordem.tipo === 'Pintura' && <Paintbrush className="w-4 h-4 text-muted-foreground" />}
+                      {ordem.tipo === 'Qualidade' && <CheckCircle2 className="w-4 h-4 text-muted-foreground" />}
+                      {ordem.tipo === 'Instalação' && <Truck className="w-4 h-4 text-muted-foreground" />}
+                      <span className="font-medium text-sm">{ordem.tipo}</span>
+                    </div>
+                    {ordem.status !== "N/A" && (
+                      <Badge variant="outline" className={`${getStatusBadgeColor(ordem.status)} text-xs`}>
+                        {ordem.status === "aberto" && "Aberto"}
+                        {ordem.status === "em_andamento" && "Em Andamento"}
+                        {ordem.status === "concluido" && "Concluído"}
+                        {ordem.status === "cancelado" && "Cancelado"}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground">
+                    {ordem.numero_ordem !== "N/A" ? `#${ordem.numero_ordem}` : '-'}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {ordem.capturado_por && (
+                      <div>
+                        <span className="text-muted-foreground block">Capturado por:</span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {ordem.capturado_por.foto_perfil_url ? (
+                            <img 
+                              src={ordem.capturado_por.foto_perfil_url} 
+                              alt={ordem.capturado_por.nome}
+                              className="w-5 h-5 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
+                              <User className="w-2.5 h-2.5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span>{ordem.capturado_por.nome}</span>
+                        </div>
+                      </div>
+                    )}
+                    {ordem.concluido_por && (
+                      <div>
+                        <span className="text-muted-foreground block">Concluído por:</span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {ordem.concluido_por.foto_perfil_url ? (
+                            <img 
+                              src={ordem.concluido_por.foto_perfil_url} 
+                              alt={ordem.concluido_por.nome}
+                              className="w-5 h-5 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
+                              <User className="w-2.5 h-2.5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span>{ordem.concluido_por.nome}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {(ordem.data_conclusao || ordem.tempo_conclusao_segundos) && (
+                    <div className="flex justify-between text-xs pt-1 border-t">
+                      {ordem.data_conclusao && (
+                        <span className="text-muted-foreground">
+                          {format(new Date(ordem.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        </span>
+                      )}
+                      {ordem.tempo_conclusao_segundos && (
+                        <span className="font-medium">
+                          {Math.floor(ordem.tempo_conclusao_segundos / 3600)}h {Math.floor((ordem.tempo_conclusao_segundos % 3600) / 60)}min
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
