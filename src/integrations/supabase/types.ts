@@ -6099,6 +6099,15 @@ export type Database = {
             }
             Returns: Json
           }
+        | {
+            Args: {
+              p_etapa_destino: string
+              p_motivo_backlog?: string
+              p_pedido_id: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       verificar_ordem_pintura_concluida: {
         Args: { p_pedido_id: string }
         Returns: boolean
