@@ -2311,10 +2311,12 @@ export type Database = {
           created_at: string
           estoque_id: string | null
           id: string
+          indice_porta: number | null
           item: string
           largura: number | null
           ordem_id: string | null
           pedido_id: string
+          pedido_linha_id: string | null
           produto_venda_id: string | null
           quantidade: number
           tamanho: string | null
@@ -2331,10 +2333,12 @@ export type Database = {
           created_at?: string
           estoque_id?: string | null
           id?: string
+          indice_porta?: number | null
           item: string
           largura?: number | null
           ordem_id?: string | null
           pedido_id: string
+          pedido_linha_id?: string | null
           produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
@@ -2351,10 +2355,12 @@ export type Database = {
           created_at?: string
           estoque_id?: string | null
           id?: string
+          indice_porta?: number | null
           item?: string
           largura?: number | null
           ordem_id?: string | null
           pedido_id?: string
+          pedido_linha_id?: string | null
           produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
@@ -2389,6 +2395,13 @@ export type Database = {
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "linhas_ordens_pedido_linha_id_fkey"
+            columns: ["pedido_linha_id"]
+            isOneToOne: false
+            referencedRelation: "pedido_linhas"
             referencedColumns: ["id"]
           },
         ]
