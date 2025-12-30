@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { PedidoComOrdens, OrdemBase } from "@/hooks/useOrdensProducao";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck, Printer, Calendar, MapPin, Trash2, Loader2 } from "lucide-react";
+import { Hammer, Layers, Package, Paintbrush, CheckCircle, Wrench, Truck, Printer, Calendar, MapPin, Trash2, Loader2, UserMinus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImprimirEtiquetasModal } from "./ImprimirEtiquetasModal";
 import { formatDuration } from "@/utils/timeFormat";
@@ -75,6 +75,13 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
   const queryClient = useQueryClient();
   const [deletingOrdemId, setDeletingOrdemId] = useState<string | null>(null);
   const [ordemToDelete, setOrdemToDelete] = useState<{ id: string; tipo: string; numero: string } | null>(null);
+  const [ordemToRemoveResponsavel, setOrdemToRemoveResponsavel] = useState<{ 
+    id: string; 
+    tipo: string; 
+    numero: string;
+    responsavelNome: string;
+  } | null>(null);
+  const [removingResponsavelId, setRemovingResponsavelId] = useState<string | null>(null);
   const [etiquetaModal, setEtiquetaModal] = useState<EtiquetaModalState>({
     open: false,
     pedidoId: '',
@@ -160,6 +167,58 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
     } finally {
       setDeletingOrdemId(null);
       setOrdemToDelete(null);
+    }
+  };
+
+  const handleRemoveResponsavel = async () => {
+    if (!ordemToRemoveResponsavel) return;
+    
+    setRemovingResponsavelId(ordemToRemoveResponsavel.id);
+    
+    try {
+      const tableMap: Record<string, string> = {
+        soldagem: 'ordens_soldagem',
+        perfiladeira: 'ordens_perfiladeira',
+        separacao: 'ordens_separacao',
+        pintura: 'ordens_pintura',
+        qualidade: 'ordens_qualidade',
+        instalacao: 'ordens_instalacao',
+        carregamento: 'ordens_carregamento',
+      };
+      
+      const tableName = tableMap[ordemToRemoveResponsavel.tipo];
+      if (!tableName) {
+        throw new Error('Tipo de ordem inválido');
+      }
+      
+      const fieldName = ordemToRemoveResponsavel.tipo === 'carregamento' 
+        ? 'responsavel_carregamento_id' 
+        : 'responsavel_id';
+      
+      const { error } = await supabase
+        .from(tableName as any)
+        .update({ [fieldName]: null, data_captura: null })
+        .eq('id', ordemToRemoveResponsavel.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Responsável removido",
+        description: `${ordemToRemoveResponsavel.responsavelNome} foi removido da ordem ${ordemToRemoveResponsavel.numero}.`,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      
+    } catch (error: any) {
+      console.error('Erro ao remover responsável:', error);
+      toast({
+        title: "Erro ao remover responsável",
+        description: error.message || "Não foi possível remover o responsável.",
+        variant: "destructive",
+      });
+    } finally {
+      setRemovingResponsavelId(null);
+      setOrdemToRemoveResponsavel(null);
     }
   };
 
@@ -279,6 +338,30 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
                           </TableCell>
                           <TableCell className="py-0">
                             <div className="flex items-center gap-1">
+                              {ordem.responsavel_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-100"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOrdemToRemoveResponsavel({ 
+                                      id: ordem.id, 
+                                      tipo: ordem.tipo, 
+                                      numero: ordem.numero_ordem,
+                                      responsavelNome: ordem.responsavel_nome || 'Responsável'
+                                    });
+                                  }}
+                                  disabled={removingResponsavelId === ordem.id}
+                                  title="Remover responsável"
+                                >
+                                  {removingResponsavelId === ordem.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <UserMinus className="h-3.5 w-3.5" />
+                                  )}
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -353,6 +436,32 @@ export function OrdensAccordion({ pedidos }: OrdensAccordionProps) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog 
+        open={!!ordemToRemoveResponsavel} 
+        onOpenChange={(open) => !open && setOrdemToRemoveResponsavel(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover responsável da ordem</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover <strong>{ordemToRemoveResponsavel?.responsavelNome}</strong> como 
+              responsável pela ordem <strong>{ordemToRemoveResponsavel?.numero}</strong>?
+              <br /><br />
+              A ordem ficará disponível para outro colaborador capturá-la.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveResponsavel}
+              className="bg-orange-600 text-white hover:bg-orange-700"
+            >
+              Remover Responsável
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
