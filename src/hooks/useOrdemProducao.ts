@@ -427,12 +427,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
   const ordensAFazer = ordens
     .filter(o => o.status === 'pendente')
     .sort((a, b) => {
-      // Ordens com pedido em backlog primeiro
-      const aBacklog = (a.pedido as any)?.em_backlog || a.em_backlog;
-      const bBacklog = (b.pedido as any)?.em_backlog || b.em_backlog;
-      if (aBacklog && !bBacklog) return -1;
-      if (!aBacklog && bBacklog) return 1;
-      // Depois por prioridade do PEDIDO (maior primeiro)
+      // Ordenar por prioridade do PEDIDO (maior primeiro)
       const aPrio = (a.pedido as any)?.prioridade_etapa || 0;
       const bPrio = (b.pedido as any)?.prioridade_etapa || 0;
       if (bPrio !== aPrio) return bPrio - aPrio;
