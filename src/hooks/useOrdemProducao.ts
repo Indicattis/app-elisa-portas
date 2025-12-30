@@ -450,13 +450,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
-  // Separar ordens por status e ordenar pela prioridade do PEDIDO
+  // Separar ordens por status e ordenar pela prioridade da ORDEM (sincronizada com pedido pelo trigger)
   const ordensAFazer = ordens
     .filter(o => o.status === 'pendente')
     .sort((a, b) => {
-      // Ordenar por prioridade do PEDIDO (maior primeiro)
-      const aPrio = (a.pedido as any)?.prioridade_etapa || 0;
-      const bPrio = (b.pedido as any)?.prioridade_etapa || 0;
+      // Ordenar por prioridade da ORDEM (maior primeiro)
+      const aPrio = a.prioridade || 0;
+      const bPrio = b.prioridade || 0;
       if (bPrio !== aPrio) return bPrio - aPrio;
       // Desempate por created_at (mais antiga primeiro)
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
