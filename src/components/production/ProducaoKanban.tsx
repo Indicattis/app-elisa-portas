@@ -116,18 +116,8 @@ function OrdemCard({
   };
 
   const handleCardClick = () => {
-    // Se NÃO tem responsável, bloquear e informar que precisa capturar
-    if (!ordem.responsavel_id) {
-      toast.error('Capture esta ordem primeiro para acessar os detalhes');
-      return;
-    }
-    
-    // Se tem responsável mas não é o usuário atual, bloquear
-    if (ordem.responsavel_id !== currentUserId) {
-      toast.error(`Esta ordem está sendo executada por ${ordem.admin_users?.nome || 'outro usuário'}`);
-      return;
-    }
-    
+    // Permitir visualização para qualquer usuário
+    // As restrições de ação (marcar linhas, concluir) são tratadas no OrdemDetalhesSheet
     onOrdemClick(ordem);
   };
 
