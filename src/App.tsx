@@ -91,6 +91,7 @@ import EstoqueEdit from "./pages/EstoqueEdit";
 import EstoqueGerenciamento from "./pages/EstoqueGerenciamento";
 import RegrasEtiquetasPage from "./pages/RegrasEtiquetasPage";
 import VendasCatalogo from "./pages/VendasCatalogo";
+import VendasCatalogoNovo from "./pages/VendasCatalogoNovo";
 import CatalogoCores from "./pages/CatalogoCores";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
@@ -1141,6 +1142,16 @@ const App = () => (
                     <ProtectedRoute routeKey="vendas_catalogo">
                       <DashboardLayout>
                         <VendasCatalogo />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vendas/vendas-catalogo/novo"
+                  element={
+                    <ProtectedRoute routeKey="vendas_catalogo">
+                      <DashboardLayout>
+                        <VendasCatalogoNovo />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

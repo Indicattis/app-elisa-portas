@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2, Palette } from "lucide-react";
@@ -17,7 +17,7 @@ import { toast } from "sonner";
 
 export default function VendasCatalogo() {
   const navigate = useNavigate();
-  const [modalAberto, setModalAberto] = useState(false);
+  
   const [editarModal, setEditarModal] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<any>(null);
   const [busca, setBusca] = useState("");
@@ -82,11 +82,6 @@ export default function VendasCatalogo() {
     }
   };
 
-  const handleSubmit = async () => {
-    await adicionarProduto.mutateAsync(formData);
-    resetForm();
-    setModalAberto(false);
-  };
 
   const handleEditar = async () => {
     if (!produtoEditando) return;
@@ -153,7 +148,7 @@ export default function VendasCatalogo() {
     }
   };
 
-  const FormularioProduto = ({ isEdit = false }: { isEdit?: boolean }) => (
+  const FormularioProduto = () => (
     <div className="space-y-4">
       {/* Upload de Imagem */}
       <div>
@@ -356,8 +351,8 @@ export default function VendasCatalogo() {
           Produto em destaque
         </Label>
       </div>
-      <Button onClick={isEdit ? handleEditar : handleSubmit} className="w-full">
-        {isEdit ? "Salvar Alterações" : "Adicionar ao Catálogo"}
+      <Button onClick={handleEditar} className="w-full">
+        Salvar Alterações
       </Button>
     </div>
   );
@@ -380,20 +375,10 @@ export default function VendasCatalogo() {
             <Palette className="h-4 w-4 mr-2" />
             Gerenciar Cores
           </Button>
-          <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Produto
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Adicionar Produto ao Catálogo</DialogTitle>
-              </DialogHeader>
-              <FormularioProduto />
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => navigate("/dashboard/vendas/vendas-catalogo/novo")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Produto
+          </Button>
         </div>
       </div>
 
@@ -511,7 +496,7 @@ export default function VendasCatalogo() {
           <DialogHeader>
             <DialogTitle>Editar Produto</DialogTitle>
           </DialogHeader>
-          <FormularioProduto isEdit />
+          <FormularioProduto />
         </DialogContent>
       </Dialog>
     </div>
