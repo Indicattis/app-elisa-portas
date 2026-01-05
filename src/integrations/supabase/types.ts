@@ -6083,6 +6083,7 @@ export type Database = {
           data_entrega: string
           etapa_atual: string
           nome_cliente: string
+          numero_mes: number
           numero_pedido: string
           ordens: Json
         }[]

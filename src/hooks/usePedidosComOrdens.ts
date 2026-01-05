@@ -10,6 +10,7 @@ interface OrdemStatus {
 
 interface PedidoComOrdens {
   numero_pedido: string;
+  numero_mes: number | null;
   etapa_atual: string;
   nome_cliente: string;
   data_entrega: string | null;

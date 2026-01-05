@@ -113,7 +113,7 @@ export function PedidosStatusOrdens() {
               {currentPedidos.map((pedido) => (
                 <TableRow key={pedido.numero_pedido} className="border-b last:border-0">
                   <TableCell className="font-medium text-[11px] py-1 px-2">
-                    {pedido.numero_pedido}
+                    {pedido.numero_mes ? `#${pedido.numero_mes}` : pedido.numero_pedido}
                   </TableCell>
                   <TableCell className="text-[11px] py-1 px-2">
                     {pedido.nome_cliente}
