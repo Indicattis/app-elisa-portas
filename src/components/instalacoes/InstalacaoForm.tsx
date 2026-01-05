@@ -15,16 +15,15 @@ import { SelecionarVendaModal } from "./SelecionarVendaModal";
 import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 
 const instalacaoSchema = z.object({
-  id_venda: z.string().nullable(),
-  nome_cliente: z.string().min(1, "Nome do cliente é obrigatório"),
+  id_venda: z.string().nullable().optional(),
+  nome_cliente: z.string().optional(),
   data: z.string().min(1, "Data é obrigatória"),
-  hora: z.string().min(1, "Hora é obrigatória"),
+  hora: z.string().optional(),
   equipe_id: z.string().min(1, "Selecione uma equipe"),
-  // Novos campos opcionais
   cep: z.string().optional(),
   endereco: z.string().optional(),
-  estado: z.string().optional(),
-  cidade: z.string().optional(),
+  estado: z.string().min(1, "Estado é obrigatório"),
+  cidade: z.string().min(1, "Cidade é obrigatória"),
   telefone_cliente: z.string().optional(),
   cor_id: z.string().optional(),
   observacoes: z.string().optional(),
@@ -226,7 +225,7 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* Nome do Cliente com busca de venda */}
       <div className="space-y-2">
-        <Label htmlFor="nome_cliente">Nome do Cliente *</Label>
+        <Label htmlFor="nome_cliente">Nome do Cliente</Label>
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <Input
@@ -327,7 +326,7 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
       {/* Estado e Cidade */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="estado">Estado</Label>
+          <Label htmlFor="estado">Estado *</Label>
           <Select
             value={watch("estado") || ""}
             onValueChange={(value) => {
@@ -346,10 +345,14 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
               ))}
             </SelectContent>
           </Select>
+          {errors.estado && (
+            <p className="text-sm text-destructive">{errors.estado.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="cidade">Cidade</Label>
+          <Label htmlFor="cidade">Cidade *</Label>
+          
           <Select
             value={watch("cidade") || ""}
             onValueChange={(value) => setValue("cidade", value)}
@@ -366,6 +369,9 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
               ))}
             </SelectContent>
           </Select>
+          {errors.cidade && (
+            <p className="text-sm text-destructive">{errors.cidade.message}</p>
+          )}
         </div>
       </div>
 
@@ -385,7 +391,7 @@ export const InstalacaoForm = ({ onSubmit, initialData, isLoading }: InstalacaoF
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="hora">Hora *</Label>
+          <Label htmlFor="hora">Hora</Label>
           <Input
             id="hora"
             type="time"
