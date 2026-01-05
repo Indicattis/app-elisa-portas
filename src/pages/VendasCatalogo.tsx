@@ -49,6 +49,7 @@ export default function VendasCatalogo() {
     tags: [],
     sku: "",
     imagem_url: undefined,
+    tipo_fabricacao: "interno",
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,6 +121,7 @@ export default function VendasCatalogo() {
       tags: produto.tags || [],
       sku: produto.sku || "",
       imagem_url: produto.imagem_url,
+      tipo_fabricacao: produto.tipo_fabricacao || "interno",
     });
     const catId = categorias.find(c => c.nome.toLowerCase() === produto.categoria.toLowerCase())?.id;
     setCategoriaSelecionada(catId || null);
@@ -142,6 +144,7 @@ export default function VendasCatalogo() {
       tags: [],
       sku: "",
       imagem_url: undefined,
+      tipo_fabricacao: "interno",
     });
     setCategoriaSelecionada(null);
     setProdutoEditando(null);
@@ -328,6 +331,21 @@ export default function VendasCatalogo() {
           onChange={(e) => setFormData({ ...formData, peso: e.target.value ? parseFloat(e.target.value) : undefined })}
         />
       </div>
+      <div>
+        <Label>Tipo de Fabricação *</Label>
+        <Select
+          value={formData.tipo_fabricacao || "interno"}
+          onValueChange={(value) => setFormData({ ...formData, tipo_fabricacao: value as 'interno' | 'terceirizado' })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="interno">Fabricação Interna</SelectItem>
+            <SelectItem value="terceirizado">Terceirizado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="flex items-center space-x-2">
         <Checkbox
           id="destaque"
@@ -456,6 +474,11 @@ export default function VendasCatalogo() {
                         {produto.quantidade} {produto.unidade}
                       </span>
                     </div>
+                    {produto.tipo_fabricacao === 'terceirizado' && (
+                      <Badge variant="secondary" className="text-xs mt-2 bg-orange-500/10 text-orange-700 dark:text-orange-400">
+                        Terceirizado
+                      </Badge>
+                    )}
                     <div className="flex gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button 
                         size="sm" 

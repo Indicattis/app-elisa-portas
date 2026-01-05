@@ -3566,6 +3566,91 @@ export type Database = {
           },
         ]
       }
+      ordens_terceirizacao: {
+        Row: {
+          capturada_em: string | null
+          created_at: string | null
+          created_by: string | null
+          data_conclusao: string | null
+          descricao_produto: string | null
+          em_backlog: boolean | null
+          historico: boolean | null
+          id: string
+          numero_ordem: string
+          observacoes: string | null
+          pedido_id: string | null
+          prioridade: number | null
+          produto_venda_id: string | null
+          quantidade: number | null
+          responsavel_id: string | null
+          status: string | null
+          tempo_conclusao_segundos: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          capturada_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_conclusao?: string | null
+          descricao_produto?: string | null
+          em_backlog?: boolean | null
+          historico?: boolean | null
+          id?: string
+          numero_ordem: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          prioridade?: number | null
+          produto_venda_id?: string | null
+          quantidade?: number | null
+          responsavel_id?: string | null
+          status?: string | null
+          tempo_conclusao_segundos?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          capturada_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_conclusao?: string | null
+          descricao_produto?: string | null
+          em_backlog?: boolean | null
+          historico?: boolean | null
+          id?: string
+          numero_ordem?: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          prioridade?: number | null
+          produto_venda_id?: string | null
+          quantidade?: number | null
+          responsavel_id?: string | null
+          status?: string | null
+          tempo_conclusao_segundos?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordens_terceirizacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "ordens_terceirizacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_terceirizacao_produto_venda_id_fkey"
+            columns: ["produto_venda_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organograma_connections: {
         Row: {
           created_at: string | null
@@ -4439,6 +4524,7 @@ export type Database = {
           quantidade: number | null
           tamanho: string
           tipo_desconto: string | null
+          tipo_fabricacao: string | null
           tipo_pintura: string | null
           tipo_produto: string
           updated_at: string | null
@@ -4476,6 +4562,7 @@ export type Database = {
           quantidade?: number | null
           tamanho: string
           tipo_desconto?: string | null
+          tipo_fabricacao?: string | null
           tipo_pintura?: string | null
           tipo_produto?: string
           updated_at?: string | null
@@ -4513,6 +4600,7 @@ export type Database = {
           quantidade?: number | null
           tamanho?: string
           tipo_desconto?: string | null
+          tipo_fabricacao?: string | null
           tipo_pintura?: string | null
           tipo_produto?: string
           updated_at?: string | null
@@ -5597,6 +5685,7 @@ export type Database = {
           sku: string | null
           subcategoria_id: string | null
           tags: string[] | null
+          tipo_fabricacao: string | null
           unidade: string | null
           updated_at: string | null
         }
@@ -5618,6 +5707,7 @@ export type Database = {
           sku?: string | null
           subcategoria_id?: string | null
           tags?: string[] | null
+          tipo_fabricacao?: string | null
           unidade?: string | null
           updated_at?: string | null
         }
@@ -5639,6 +5729,7 @@ export type Database = {
           sku?: string | null
           subcategoria_id?: string | null
           tags?: string[] | null
+          tipo_fabricacao?: string | null
           unidade?: string | null
           updated_at?: string | null
         }

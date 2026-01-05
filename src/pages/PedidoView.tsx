@@ -322,6 +322,21 @@ export default function PedidoView() {
           concluido_por:admin_users!ordens_qualidade_responsavel_id_fkey(nome, foto_perfil_url)
         `)
         .eq("pedido_id", id);
+
+      const { data: ordensTerceirizacao } = await supabase
+        .from("ordens_terceirizacao")
+        .select(`
+          id, 
+          numero_ordem, 
+          status,
+          created_by,
+          responsavel_id,
+          capturada_em,
+          data_conclusao,
+          tempo_conclusao_segundos,
+          descricao_produto
+        `)
+        .eq("pedido_id", id);
       
       // Ordens instalacao removidas - agora usa tabela instalacoes diretamente
 
@@ -385,6 +400,19 @@ export default function PedidoView() {
           tipo: "Qualidade",
           capturado_por: o.capturado_por,
           concluido_por: o.concluido_por,
+          capturada_em: o.capturada_em,
+          data_conclusao: o.data_conclusao,
+          tempo_conclusao_segundos: o.tempo_conclusao_segundos
+        }));
+      }
+      if (ordensTerceirizacao) {
+        ordensTerceirizacao.forEach((o: any) => ordens.push({ 
+          id: o.id,
+          numero_ordem: o.numero_ordem,
+          status: o.status,
+          tipo: "Terceirização",
+          capturado_por: null,
+          concluido_por: null,
           capturada_em: o.capturada_em,
           data_conclusao: o.data_conclusao,
           tempo_conclusao_segundos: o.tempo_conclusao_segundos
@@ -753,6 +781,7 @@ export default function PedidoView() {
                     <th className="text-left p-2 font-medium text-muted-foreground">Descrição</th>
                     <th className="text-left p-2 font-medium text-muted-foreground">Tamanho</th>
                     <th className="text-left p-2 font-medium text-muted-foreground">Cor</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">Fabricação</th>
                     <th className="text-right p-2 font-medium text-muted-foreground">Peso (kg)</th>
                     <th className="text-right p-2 font-medium text-muted-foreground">M. Canas</th>
                     <th className="text-center p-2 font-medium text-muted-foreground">Qtd</th>
@@ -768,6 +797,14 @@ export default function PedidoView() {
                         <td className="p-2 text-xs">{produto.descricao || '-'}</td>
                         <td className="p-2 text-xs">{produto.tamanho || '-'}</td>
                         <td className="p-2 text-xs">{produto.cor?.nome || '-'}</td>
+                        <td className="p-2 text-xs">
+                          <Badge 
+                            variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} 
+                            className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/10 text-orange-700 dark:text-orange-400' : ''}`}
+                          >
+                            {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
+                          </Badge>
+                        </td>
                         <td className="p-2 text-xs text-right">{peso || '-'}</td>
                         <td className="p-2 text-xs text-right">{meiaCanas || '-'}</td>
                         <td className="p-2 text-center">
@@ -802,6 +839,15 @@ export default function PedidoView() {
                       <div>
                         <span className="text-muted-foreground">Cor: </span>
                         <span className="font-medium">{produto.cor?.nome || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Fabricação: </span>
+                        <Badge 
+                          variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} 
+                          className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/10 text-orange-700 dark:text-orange-400' : ''}`}
+                        >
+                          {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
+                        </Badge>
                       </div>
                       {peso && (
                         <div>

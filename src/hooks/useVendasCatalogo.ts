@@ -19,6 +19,7 @@ export interface ProdutoCatalogo {
   estoque_minimo: number;
   tags?: string[];
   sku?: string;
+  tipo_fabricacao: 'interno' | 'terceirizado';
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -39,6 +40,7 @@ export interface ProdutoCatalogoInput {
   estoque_minimo?: number;
   tags?: string[];
   sku?: string;
+  tipo_fabricacao?: 'interno' | 'terceirizado';
 }
 
 export function useVendasCatalogo(filtros?: {
