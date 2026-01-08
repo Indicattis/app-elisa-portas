@@ -6085,7 +6085,27 @@ export type Database = {
           nome_cliente: string
           numero_mes: number
           numero_pedido: string
-          ordens: Json
+          perfiladeira_capturada: boolean
+          perfiladeira_capturada_por_foto: string
+          perfiladeira_existe: boolean
+          perfiladeira_status: string
+          pintura_capturada: boolean
+          pintura_capturada_por_foto: string
+          pintura_existe: boolean
+          pintura_status: string
+          prioridade: number
+          qualidade_capturada: boolean
+          qualidade_capturada_por_foto: string
+          qualidade_existe: boolean
+          qualidade_status: string
+          separacao_capturada: boolean
+          separacao_capturada_por_foto: string
+          separacao_existe: boolean
+          separacao_status: string
+          soldagem_capturada: boolean
+          soldagem_capturada_por_foto: string
+          soldagem_existe: boolean
+          soldagem_status: string
         }[]
       }
       get_pedidos_na_fila: { Args: never; Returns: number }

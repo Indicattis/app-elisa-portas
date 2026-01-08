@@ -15,6 +15,7 @@ interface PedidoComOrdens {
   nome_cliente: string;
   data_entrega: string | null;
   data_carregamento: string | null;
+  prioridade: number;
   ordens: {
     soldagem: OrdemStatus;
     perfiladeira: OrdemStatus;
