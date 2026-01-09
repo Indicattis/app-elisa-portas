@@ -6,6 +6,8 @@ interface UseCronometroOrdemParams {
   tempo_conclusao_segundos?: number | null;
   todas_linhas_concluidas?: boolean;
   responsavel_id?: string | null;
+  pausada?: boolean;
+  tempo_acumulado_segundos?: number | null;
 }
 
 interface CronometroResult {
@@ -30,11 +32,25 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
   const responsavelId = typeof params === 'object' && params !== null 
     ? params.responsavel_id 
     : null;
+  const pausada = typeof params === 'object' && params !== null 
+    ? params.pausada 
+    : false;
+  const tempoAcumulado = typeof params === 'object' && params !== null 
+    ? params.tempo_acumulado_segundos 
+    : 0;
 
   useEffect(() => {
     // Se tem tempo de conclusão E está concluída, mostrar tempo parado (sem animação)
     if (tempoConclusao !== null && tempoConclusao !== undefined && todasLinhasConcluidas) {
       const formatado = formatCronometroExtended(tempoConclusao);
+      setTempoDecorrido(formatado);
+      setDeveAnimar(false);
+      return; // Não iniciar intervalo, cronômetro parado
+    }
+
+    // Se está pausada, mostrar tempo acumulado (estático, sem animação)
+    if (pausada) {
+      const formatado = formatCronometroExtended(tempoAcumulado || 0);
       setTempoDecorrido(formatado);
       setDeveAnimar(false);
       return; // Não iniciar intervalo, cronômetro parado
@@ -53,13 +69,15 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
       const diff = agora.getTime() - inicio.getTime();
 
       if (diff < 0) {
-        setTempoDecorrido('00:00:00');
+        setTempoDecorrido(formatCronometroExtended(tempoAcumulado || 0));
         setDeveAnimar(true);
         return;
       }
 
-      const segundos = Math.floor(diff / 1000);
-      const formatado = formatCronometroExtended(segundos);
+      // Tempo atual = tempo acumulado + tempo da sessão atual
+      const segundosSessao = Math.floor(diff / 1000);
+      const segundosTotal = (tempoAcumulado || 0) + segundosSessao;
+      const formatado = formatCronometroExtended(segundosTotal);
       setTempoDecorrido(formatado);
       setDeveAnimar(true);
     };
@@ -71,7 +89,7 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
     const interval = setInterval(calcularTempo, 1000);
 
     return () => clearInterval(interval);
-  }, [capturadaEm, tempoConclusao, todasLinhasConcluidas, responsavelId]);
+  }, [capturadaEm, tempoConclusao, todasLinhasConcluidas, responsavelId, pausada, tempoAcumulado]);
 
   return { tempoDecorrido, deveAnimar };
 }

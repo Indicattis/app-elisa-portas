@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, Clock, UserCheck, Timer, AlertTriangle, FileText, RefreshCw, Wrench } from "lucide-react";
+import { Package, Clock, UserCheck, Timer, AlertTriangle, FileText, RefreshCw, Wrench, PauseCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
@@ -54,6 +54,10 @@ interface Ordem {
   tempo_conclusao_segundos?: number;
   em_backlog?: boolean;
   prioridade?: number;
+  pausada?: boolean;
+  pausada_em?: string;
+  justificativa_pausa?: string;
+  tempo_acumulado_segundos?: number;
   linhas?: LinhaOrdem[];
   observacoesVisita?: ObservacaoVisita[];
   pedido?: {
@@ -107,6 +111,8 @@ function OrdemCard({
     tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
     todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
     responsavel_id: ordem.responsavel_id,
+    pausada: ordem.pausada,
+    tempo_acumulado_segundos: ordem.tempo_acumulado_segundos,
   });
 
   const formatarData = (data?: string) => {
@@ -155,6 +161,12 @@ function OrdemCard({
             {ordem.em_backlog && (
               <Badge className="bg-red-500 text-white text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2">
                 BACKLOG
+              </Badge>
+            )}
+            {ordem.pausada && (
+              <Badge className="bg-yellow-500 text-white text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2">
+                <PauseCircle className="h-3 w-3 mr-1" />
+                PAUSADA
               </Badge>
             )}
           </div>
