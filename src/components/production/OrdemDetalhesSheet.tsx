@@ -6,8 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle, Wrench } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  OPCOES_INTERNA_EXTERNA,
+  OPCOES_LADO_MOTOR,
+  OPCOES_POSICAO_GUIA,
+  OPCOES_GUIA,
+  OPCOES_APARENCIA_TESTEIRA,
+} from "@/types/pedidoObservacoes";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
 import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
 import { toast } from "sonner";
@@ -36,6 +43,17 @@ interface LinhaOrdem {
   estoque_id?: string;
 }
 
+interface ObservacaoVisita {
+  id: string;
+  produto_venda_id: string;
+  indice_porta: number;
+  interna_externa: string;
+  lado_motor: string;
+  posicao_guia: string;
+  opcao_guia: string;
+  aparencia_testeira: string;
+}
+
 interface Ordem {
   id: string;
   numero_ordem: string;
@@ -50,6 +68,7 @@ interface Ordem {
   justificativa_pausa?: string;
   tempo_acumulado_segundos?: number;
   linhas?: LinhaOrdem[];
+  observacoesVisita?: ObservacaoVisita[];
   pedido?: {
     id: string;
     numero_pedido: string;
@@ -487,15 +506,54 @@ export function OrdemDetalhesSheet({
             </>
           )}
 
+          {/* Observações da Visita Técnica - Especificações */}
+          {ordem.observacoesVisita && ordem.observacoesVisita.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                  <Wrench className="h-4 w-4" />
+                  Especificações da Visita Técnica
+                </span>
+                
+                {ordem.observacoesVisita.map((obs, idx) => (
+                  <div key={obs.id || idx} className="space-y-2">
+                    {idx > 0 && <Separator className="my-2" />}
+                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                      Porta {obs.indice_porta + 1}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                        {OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA] || obs.interna_externa}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300">
+                        Motor: {OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR] || obs.lado_motor}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300">
+                        {OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA] || obs.posicao_guia}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300">
+                        {OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA] || obs.opcao_guia}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300">
+                        Testeira: {OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA] || obs.aparencia_testeira}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           {ordem.pedido?.vendas?.observacoes_venda && (
             <>
               <Separator />
-              <div className="space-y-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-300">
+              <div className="space-y-2 p-3 rounded-lg bg-muted/50 border">
+                <span className="text-sm font-medium flex items-center gap-2">
                   <Package className="h-4 w-4" />
-                  Observações da Visita
+                  Observações Gerais da Venda
                 </span>
-                <p className="text-sm text-amber-800 dark:text-amber-200 whitespace-pre-line">
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
                   {ordem.pedido.vendas.observacoes_venda}
                 </p>
               </div>
