@@ -773,35 +773,24 @@ export function OrdemDetalhesSheet({
             </div>
           </div>
 
-          {/* Botões específicos para pintura */}
+          {/* Mensagens informativas para pintura */}
           {tipoOrdem === 'pintura' && ordem.status !== 'pronta' && (
             <>
               <Separator />
-              {podeMarcarLinhas && (
-                <>
-                  <Button
-                    className="w-full"
-                    disabled={!todasConcluidas || isFinalizando}
-                    onClick={onFinalizarPintura}
-                  >
-                    {isFinalizando ? "Concluindo..." : "Concluir Pintura"}
-                  </Button>
-                  {!todasConcluidas && linhas.length > 0 && (
-                    <p className="text-xs text-center text-muted-foreground">
-                      Marque todos os itens como concluídos para concluir a pintura
-                    </p>
-                  )}
-                </>
-              )}
               {!podeMarcarLinhas && (
                 <p className="text-xs text-center text-muted-foreground text-orange-600">
                   Apenas o responsável pode gerenciar esta ordem
                 </p>
               )}
+              {podeMarcarLinhas && !todasConcluidas && linhas.length > 0 && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Marque todos os itens como concluídos para concluir a pintura
+                </p>
+              )}
             </>
           )}
 
-          {/* Botão de concluir ordem (para outras ordens) */}
+          {/* Botões auxiliares e mensagens (para outras ordens) */}
           {tipoOrdem !== 'pintura' && ordem.status !== 'concluido' && (
             <>
               <Separator />
@@ -830,13 +819,6 @@ export function OrdemDetalhesSheet({
                 </Button>
               )}
 
-              <Button
-                className="w-full"
-                disabled={!todasConcluidas || isUpdating || !podeMarcarLinhas}
-                onClick={() => onConcluirOrdem(ordem.id)}
-              >
-                {isUpdating ? "Concluindo..." : "Concluir Ordem"}
-              </Button>
               {!podeMarcarLinhas && (
                 <p className="text-xs text-center text-muted-foreground text-orange-600">
                   Apenas o responsável pode concluir esta ordem
