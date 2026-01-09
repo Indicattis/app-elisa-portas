@@ -255,19 +255,22 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
-      // Verificar se o usuário já tem uma ordem capturada deste tipo
-      const { data: ordemExistente, error: checkError } = await supabase
-        .from(tabelaOrdem)
-        .select('id, numero_ordem')
-        .eq('responsavel_id', user.id)
-        .eq('historico', false)
-        .eq('status', 'pendente')
-        .maybeSingle() as { data: { id: string; numero_ordem: string } | null; error: any };
-      
-      if (checkError) throw checkError;
-      
-      if (ordemExistente) {
-        throw new Error(`Você já possui a ordem ${ordemExistente.numero_ordem} capturada. Conclua-a antes de capturar outra.`);
+      // Para SEPARAÇÃO, permitir múltiplas capturas simultâneas
+      // Para outros tipos, manter a restrição de uma ordem por vez
+      if (tipoOrdem !== 'separacao') {
+        const { data: ordemExistente, error: checkError } = await supabase
+          .from(tabelaOrdem)
+          .select('id, numero_ordem')
+          .eq('responsavel_id', user.id)
+          .eq('historico', false)
+          .eq('status', 'pendente')
+          .maybeSingle() as { data: { id: string; numero_ordem: string } | null; error: any };
+        
+        if (checkError) throw checkError;
+        
+        if (ordemExistente) {
+          throw new Error(`Você já possui a ordem ${ordemExistente.numero_ordem} capturada. Conclua-a antes de capturar outra.`);
+        }
       }
       
       // Verificar se esta ordem é a próxima na fila de prioridade
