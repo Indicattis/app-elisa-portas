@@ -281,8 +281,10 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         .eq('id', ordemId)
         .maybeSingle() as { data: { pausada?: boolean } | null };
 
-      // Se a ordem está pausada, permitir captura direta (fora da ordem de prioridade)
-      if (!ordemParaCapturar?.pausada) {
+      // Permitir captura fora da ordem de prioridade para:
+      // 1. Ordens pausadas (podem ser recapturadas por qualquer operador)
+      // 2. Tipo separação (operador pode escolher qualquer ordem disponível)
+      if (!ordemParaCapturar?.pausada && tipoOrdem !== 'separacao') {
         const { data: ordensDisponiveis, error: ordensError } = await supabase
           .from(tabelaOrdem)
           .select('id, numero_ordem, prioridade, pausada')
