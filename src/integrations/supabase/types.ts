@@ -3423,14 +3423,18 @@ export type Database = {
           em_backlog: boolean | null
           historico: boolean
           id: string
+          justificativa_pausa: string | null
           materiais_separados: Json | null
           numero_ordem: string
           observacoes: string | null
+          pausada: boolean | null
+          pausada_em: string | null
           pedido_id: string
           prioridade: number | null
           produtos: Json | null
           responsavel_id: string | null
           status: string
+          tempo_acumulado_segundos: number | null
           tempo_conclusao_segundos: number | null
           updated_at: string
         }
@@ -3443,14 +3447,18 @@ export type Database = {
           em_backlog?: boolean | null
           historico?: boolean
           id?: string
+          justificativa_pausa?: string | null
           materiais_separados?: Json | null
           numero_ordem: string
           observacoes?: string | null
+          pausada?: boolean | null
+          pausada_em?: string | null
           pedido_id: string
           prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_acumulado_segundos?: number | null
           tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
@@ -3463,14 +3471,18 @@ export type Database = {
           em_backlog?: boolean | null
           historico?: boolean
           id?: string
+          justificativa_pausa?: string | null
           materiais_separados?: Json | null
           numero_ordem?: string
           observacoes?: string | null
+          pausada?: boolean | null
+          pausada_em?: string | null
           pedido_id?: string
           prioridade?: number | null
           produtos?: Json | null
           responsavel_id?: string | null
           status?: string
+          tempo_acumulado_segundos?: number | null
           tempo_conclusao_segundos?: number | null
           updated_at?: string
         }

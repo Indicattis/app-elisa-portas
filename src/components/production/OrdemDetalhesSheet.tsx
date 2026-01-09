@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrdemPDFData } from "@/hooks/useOrdemPDFData";
 import { baixarOrdemProducaoPDF } from "@/utils/ordemProducaoPDFGenerator";
@@ -18,6 +18,7 @@ import { useRegrasEtiquetas } from "@/hooks/useRegrasEtiquetas";
 import { gerarPDFEtiquetaProducao, gerarPDFEtiquetasProducaoMultiplas } from "@/utils/etiquetasPDFGenerator";
 import { RetornarProducaoModal } from "./RetornarProducaoModal";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import { AvisoFaltaModal } from "./AvisoFaltaModal";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -44,6 +45,10 @@ interface Ordem {
   responsavel_id?: string;
   capturada_em?: string;
   tempo_conclusao_segundos?: number;
+  pausada?: boolean;
+  pausada_em?: string;
+  justificativa_pausa?: string;
+  tempo_acumulado_segundos?: number;
   linhas?: LinhaOrdem[];
   pedido?: {
     id: string;
@@ -79,6 +84,8 @@ interface OrdemDetalhesSheetProps {
   isIniciando?: boolean;
   isFinalizando?: boolean;
   onRetornarProducao?: () => void;
+  onPausarOrdem?: (ordemId: string, justificativa: string) => Promise<void>;
+  isPausing?: boolean;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -112,10 +119,13 @@ export function OrdemDetalhesSheet({
   isIniciando = false,
   isFinalizando = false,
   onRetornarProducao,
+  onPausarOrdem,
+  isPausing = false,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
+  const [avisoFaltaModalOpen, setAvisoFaltaModalOpen] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
   const { encontrarRegraAplicavel, encontrarRegraPorNome } = useRegrasEtiquetas();
@@ -130,6 +140,8 @@ export function OrdemDetalhesSheet({
     tempo_conclusao_segundos: ordem?.tempo_conclusao_segundos,
     todas_linhas_concluidas: todasConcluidas && ordem?.status === 'concluido',
     responsavel_id: ordem?.responsavel_id,
+    pausada: ordem?.pausada,
+    tempo_acumulado_segundos: ordem?.tempo_acumulado_segundos,
   });
   
   if (!ordem) return null;
@@ -459,6 +471,22 @@ export function OrdemDetalhesSheet({
             </>
           )}
 
+          {/* Alerta de ordem pausada */}
+          {ordem.pausada && ordem.justificativa_pausa && (
+            <>
+              <Separator />
+              <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800">
+                <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 font-medium mb-1">
+                  <PauseCircle className="h-4 w-4" />
+                  Ordem Pausada - Aviso de Falta
+                </div>
+                <p className="text-sm text-yellow-700 dark:text-yellow-200">
+                  {ordem.justificativa_pausa}
+                </p>
+              </div>
+            </>
+          )}
+
           {ordem.pedido?.vendas?.observacoes_venda && (
             <>
               <Separator />
@@ -732,6 +760,18 @@ export function OrdemDetalhesSheet({
                 </Button>
               )}
 
+              {/* Botão Aviso de Falta - apenas para separação */}
+              {tipoOrdem === 'separacao' && podeMarcarLinhas && !ordem.pausada && onPausarOrdem && (
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => setAvisoFaltaModalOpen(true)}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Aviso de Falta
+                </Button>
+              )}
+
               <Button
                 className="w-full"
                 disabled={!todasConcluidas || isUpdating || !podeMarcarLinhas}
@@ -766,6 +806,20 @@ export function OrdemDetalhesSheet({
               onOpenChange(false);
               onRetornarProducao?.();
             }}
+          />
+        )}
+
+        {/* Modal de Aviso de Falta */}
+        {tipoOrdem === 'separacao' && ordem && onPausarOrdem && (
+          <AvisoFaltaModal
+            open={avisoFaltaModalOpen}
+            onOpenChange={setAvisoFaltaModalOpen}
+            numeroOrdem={ordem.numero_ordem}
+            onConfirm={async (justificativa) => {
+              await onPausarOrdem(ordem.id, justificativa);
+              onOpenChange(false);
+            }}
+            isPausing={isPausing}
           />
         )}
       </SheetContent>

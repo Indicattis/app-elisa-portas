@@ -274,39 +274,56 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       }
       
       // Verificar se esta ordem é a próxima na fila de prioridade
-      const { data: ordensDisponiveis, error: ordensError } = await supabase
+      // Ordens pausadas têm prioridade (podem ser capturadas mesmo fora de ordem)
+      const { data: ordemParaCapturar } = await supabase
         .from(tabelaOrdem)
-        .select('id, numero_ordem, prioridade')
-        .eq('historico', false)
-        .is('responsavel_id', null)
-        .order('prioridade', { ascending: false })
-        .order('created_at', { ascending: true }) as { data: { id: string; numero_ordem: string; prioridade: number }[] | null; error: any };
+        .select('pausada')
+        .eq('id', ordemId)
+        .maybeSingle() as { data: { pausada?: boolean } | null };
 
-      if (ordensError) throw ordensError;
+      // Se a ordem está pausada, permitir captura direta (fora da ordem de prioridade)
+      if (!ordemParaCapturar?.pausada) {
+        const { data: ordensDisponiveis, error: ordensError } = await supabase
+          .from(tabelaOrdem)
+          .select('id, numero_ordem, prioridade, pausada')
+          .eq('historico', false)
+          .is('responsavel_id', null)
+          .eq('pausada', false) // Ignorar ordens pausadas na verificação de prioridade
+          .order('prioridade', { ascending: false })
+          .order('created_at', { ascending: true }) as { data: { id: string; numero_ordem: string; prioridade: number; pausada: boolean }[] | null; error: any };
 
-      // Se há ordens disponíveis e esta não é a primeira (próxima na fila)
-      if (ordensDisponiveis && ordensDisponiveis.length > 0) {
-        const proximaOrdem = ordensDisponiveis[0];
-        
-        if (proximaOrdem.id !== ordemId) {
-          throw new Error(`Você deve capturar a ordem ${proximaOrdem.numero_ordem} primeiro. Siga a ordem de prioridade.`);
+        if (ordensError) throw ordensError;
+
+        // Se há ordens disponíveis e esta não é a primeira (próxima na fila)
+        if (ordensDisponiveis && ordensDisponiveis.length > 0) {
+          const proximaOrdem = ordensDisponiveis[0];
+          
+          if (proximaOrdem.id !== ordemId) {
+            throw new Error(`Você deve capturar a ordem ${proximaOrdem.numero_ordem} primeiro. Siga a ordem de prioridade.`);
+          }
         }
       }
       
-      // Verificar se a ordem está em backlog
+      // Verificar se a ordem está em backlog ou pausada
       const { data: ordemAtual } = await supabase
         .from(tabelaOrdem)
-        .select('em_backlog, capturada_em')
+        .select('em_backlog, capturada_em, pausada')
         .eq('id', ordemId)
-        .maybeSingle() as { data: { em_backlog?: boolean; capturada_em?: string } | null };
+        .maybeSingle() as { data: { em_backlog?: boolean; capturada_em?: string; pausada?: boolean } | null };
       
       // Se está em backlog e já tem capturada_em, manter o tempo original
       const updateData: any = {
         responsavel_id: user.id,
       };
       
-      // Só atualizar capturada_em se NÃO estiver em backlog ou se ainda não tiver sido capturada
-      if (!ordemAtual?.em_backlog || !ordemAtual?.capturada_em) {
+      // Se a ordem estava pausada, resetar os campos de pausa mas manter tempo_acumulado
+      if (ordemAtual?.pausada) {
+        updateData.pausada = false;
+        updateData.pausada_em = null;
+        updateData.justificativa_pausa = null;
+        updateData.capturada_em = new Date().toISOString(); // Nova sessão
+      } else if (!ordemAtual?.em_backlog || !ordemAtual?.capturada_em) {
+        // Só atualizar capturada_em se NÃO estiver em backlog ou se ainda não tiver sido capturada
         updateData.capturada_em = new Date().toISOString();
       }
       
@@ -538,6 +555,68 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
+  // Pausar ordem (Aviso de Falta) - apenas para separação
+  const pausarOrdem = useMutation({
+    mutationFn: async ({ ordemId, justificativa }: { ordemId: string; justificativa: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Buscar ordem para calcular tempo trabalhado até agora
+      const { data: ordem, error: ordemError } = await supabase
+        .from('ordens_separacao')
+        .select('capturada_em, tempo_acumulado_segundos')
+        .eq('id', ordemId)
+        .single();
+
+      if (ordemError) throw ordemError;
+      if (!ordem) throw new Error('Ordem não encontrada');
+
+      // Calcular tempo trabalhado nesta sessão
+      let tempoSessao = 0;
+      if (ordem.capturada_em) {
+        const captura = new Date(ordem.capturada_em);
+        const agora = new Date();
+        tempoSessao = Math.floor((agora.getTime() - captura.getTime()) / 1000);
+      }
+
+      const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
+
+      // Atualizar ordem como pausada
+      const { error } = await supabase
+        .from('ordens_separacao')
+        .update({
+          pausada: true,
+          pausada_em: new Date().toISOString(),
+          justificativa_pausa: justificativa,
+          tempo_acumulado_segundos: tempoTotal,
+          responsavel_id: null, // Liberar a ordem para outro operador
+        })
+        .eq('id', ordemId);
+
+      if (error) throw error;
+      return ordemId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+      toast({
+        title: "Ordem pausada",
+        description: "A ordem foi pausada e está disponível para outro operador.",
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Erro ao pausar ordem:', error);
+      toast({
+        title: "Erro ao pausar",
+        description: error.message || "Não foi possível pausar a ordem.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Modificar capturarOrdem para lidar com ordens pausadas
+  // A lógica já está no capturarOrdem existente, mas precisamos resetar os campos de pausa
+  // Isso é feito automaticamente quando capturada - adicionamos ao update
+
   return {
     ordens,
     ordensAFazer,
@@ -546,5 +625,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     marcarLinhaConcluida,
     concluirOrdem,
     enviarParaHistorico,
+    pausarOrdem,
   };
 }

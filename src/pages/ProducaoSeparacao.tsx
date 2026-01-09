@@ -38,6 +38,7 @@ export default function ProducaoSeparacao() {
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
+    pausarOrdem,
   } = useOrdemProducao('separacao', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -58,6 +59,11 @@ export default function ProducaoSeparacao() {
 
   const handleConcluirOrdem = (ordemId: string) => {
     concluirOrdem.mutate(ordemId);
+    setSheetOpen(false);
+  };
+
+  const handlePausarOrdem = async (ordemId: string, justificativa: string) => {
+    await pausarOrdem.mutateAsync({ ordemId, justificativa });
     setSheetOpen(false);
   };
 
@@ -88,6 +94,8 @@ export default function ProducaoSeparacao() {
         onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
+        onPausarOrdem={handlePausarOrdem}
+        isPausing={pausarOrdem.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
