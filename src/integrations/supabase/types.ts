@@ -6096,7 +6096,7 @@ export type Database = {
           etapa_atual: string
           nome_cliente: string
           numero_mes: number
-          numero_pedido: string
+          numero_pedido: number
           perfiladeira_capturada: boolean
           perfiladeira_capturada_por_foto: string
           perfiladeira_existe: boolean
