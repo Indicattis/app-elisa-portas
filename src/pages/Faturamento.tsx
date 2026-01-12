@@ -29,6 +29,7 @@ import { VendaDetailsModal } from "@/components/vendas/VendaDetailsModal";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { RelatorioProdutos } from "@/components/vendas/RelatorioProdutos";
+import { ConfirmarExclusaoVendaModal } from "@/components/vendas/ConfirmarExclusaoVendaModal";
 
 interface Venda {
   id: string;
@@ -134,6 +135,9 @@ export default function Faturamento() {
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [selectedVenda, setSelectedVenda] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [excluirModalOpen, setExcluirModalOpen] = useState(false);
+  const [vendaParaExcluir, setVendaParaExcluir] = useState<{ id: string; clienteNome: string } | null>(null);
+  const [isDeletingVenda, setIsDeletingVenda] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { createPedidoFromVenda } = usePedidoCreation();
@@ -364,19 +368,22 @@ export default function Faturamento() {
   };
 
   const handleDeleteVenda = async (vendaId: string) => {
+    setIsDeletingVenda(true);
     try {
-      const { error } = await supabase
-        .from("vendas")
-        .delete()
-        .eq("id", vendaId);
+      // Usar a função RPC que exclui em cascata
+      const { error } = await supabase.rpc('delete_venda_completa', {
+        p_venda_id: vendaId
+      });
 
       if (error) throw error;
 
       toast({
         title: "Sucesso",
-        description: "Venda excluída com sucesso",
+        description: "Venda e todos os itens vinculados excluídos com sucesso",
       });
 
+      setExcluirModalOpen(false);
+      setVendaParaExcluir(null);
       fetchVendas();
       fetchStats();
     } catch (error) {
@@ -386,6 +393,8 @@ export default function Faturamento() {
         title: "Erro",
         description: "Erro ao excluir venda",
       });
+    } finally {
+      setIsDeletingVenda(false);
     }
   };
 
@@ -1152,32 +1161,18 @@ export default function Faturamento() {
                             >
                               <Receipt className="w-4 h-4" />
                             </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  title="Excluir venda"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-500" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteVenda(venda.id)}>
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              title="Excluir venda"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setVendaParaExcluir({ id: venda.id, clienteNome: venda.cliente_nome || 'Cliente' });
+                                setExcluirModalOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1203,6 +1198,20 @@ export default function Faturamento() {
         onOpenChange={setIsDetailsModalOpen}
         venda={selectedVenda}
       />
+
+      {vendaParaExcluir && (
+        <ConfirmarExclusaoVendaModal
+          open={excluirModalOpen}
+          onOpenChange={(open) => {
+            setExcluirModalOpen(open);
+            if (!open) setVendaParaExcluir(null);
+          }}
+          vendaId={vendaParaExcluir.id}
+          clienteNome={vendaParaExcluir.clienteNome}
+          onConfirm={() => handleDeleteVenda(vendaParaExcluir.id)}
+          isDeleting={isDeletingVenda}
+        />
+      )}
     </div>
   );
 }

@@ -45,16 +45,19 @@ import { generateVendaPDF } from '@/utils/vendaIndividualPDFGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { ContratosVendaModal } from '@/components/vendas/ContratosVendaModal';
 import { ComprovanteUploadModal } from '@/components/vendas/ComprovanteUploadModal';
+import { ConfirmarExclusaoVendaModal } from '@/components/vendas/ConfirmarExclusaoVendaModal';
 
 export default function Vendas() {
   const navigate = useNavigate();
   const { isAdmin, userRole } = useAuth();
-  const { vendas, isLoading, deleteVenda } = useVendas();
+  const { vendas, isLoading, deleteVenda, isDeleting } = useVendas();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [contratosModalOpen, setContratosModalOpen] = useState(false);
   const [selectedVendaId, setSelectedVendaId] = useState<string>('');
   const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
+  const [excluirModalOpen, setExcluirModalOpen] = useState(false);
+  const [vendaParaExcluir, setVendaParaExcluir] = useState<{ id: string; clienteNome: string } | null>(null);
   const [selectedVendaForComprovante, setSelectedVendaForComprovante] = useState<any>(null);
   
   // Estados para filtros avançados
@@ -692,27 +695,17 @@ export default function Vendas() {
                               <Paperclip className={cn("w-4 h-4", venda.comprovante_url && "text-green-500")} />
                             </Button>
                             {isAdmin && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                    <Trash2 className="w-4 h-4 text-destructive" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => deleteVenda(venda.id)}>
-                                      Excluir
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setVendaParaExcluir({ id: venda.id, clienteNome: venda.cliente_nome || 'Cliente' });
+                                  setExcluirModalOpen(true);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
                             )}
                           </div>
                         </TableCell>
@@ -736,6 +729,24 @@ export default function Vendas() {
         onOpenChange={setComprovanteModalOpen}
         venda={selectedVendaForComprovante}
       />
+
+      {vendaParaExcluir && (
+        <ConfirmarExclusaoVendaModal
+          open={excluirModalOpen}
+          onOpenChange={(open) => {
+            setExcluirModalOpen(open);
+            if (!open) setVendaParaExcluir(null);
+          }}
+          vendaId={vendaParaExcluir.id}
+          clienteNome={vendaParaExcluir.clienteNome}
+          onConfirm={async () => {
+            await deleteVenda(vendaParaExcluir.id);
+            setExcluirModalOpen(false);
+            setVendaParaExcluir(null);
+          }}
+          isDeleting={isDeleting}
+        />
+      )}
     </div>
   );
 }

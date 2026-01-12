@@ -6033,6 +6033,10 @@ export type Database = {
         Args: { pedido_uuid: string }
         Returns: undefined
       }
+      delete_venda_completa: {
+        Args: { p_venda_id: string }
+        Returns: undefined
+      }
       excluir_pedido_em_aberto: {
         Args: { pedido_uuid: string }
         Returns: boolean
@@ -6162,6 +6166,10 @@ export type Database = {
           total_pontos: number
           user_id: string
         }[]
+      }
+      get_venda_itens_vinculados: {
+        Args: { p_venda_id: string }
+        Returns: Json
       }
       has_role:
         | { Args: { _role: string; _user_id: string }; Returns: boolean }

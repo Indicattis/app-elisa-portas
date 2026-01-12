@@ -534,10 +534,10 @@ export function useVendas() {
 
   const deleteVendaMutation = useMutation({
     mutationFn: async (vendaId: string) => {
-      const { error } = await supabase
-        .from('vendas')
-        .delete()
-        .eq('id', vendaId);
+      // Usar a função RPC que exclui em cascata
+      const { error } = await supabase.rpc('delete_venda_completa', {
+        p_venda_id: vendaId
+      });
       
       if (error) throw error;
     },
@@ -545,9 +545,12 @@ export function useVendas() {
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['instalacoes'] });
       queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens'] });
+      queryClient.invalidateQueries({ queryKey: ['pontuacao'] });
       toast({
         title: 'Sucesso',
-        description: 'Venda excluída com sucesso',
+        description: 'Venda e todos os itens vinculados excluídos com sucesso',
       });
     },
     onError: (error: Error) => {
