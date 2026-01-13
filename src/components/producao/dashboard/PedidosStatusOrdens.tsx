@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePedidosComOrdens } from "@/hooks/usePedidosComOrdens";
 import { 
   Hammer, Package, Boxes, Sparkles, CheckSquare, User, AlertCircle, 
-  ChevronLeft, ChevronRight, AlertTriangle, PauseCircle 
+  ChevronLeft, ChevronRight, AlertTriangle, PauseCircle, ShoppingBag 
 } from "lucide-react";
 import {
   Table,
@@ -128,6 +128,7 @@ export function PedidosStatusOrdens() {
                 <TableRow className="border-b">
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Pedido</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Cliente</TableHead>
+                  <TableHead className="h-6 text-[10px] py-0.5 px-2 text-center">Produtos</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Entrega</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Carregamento</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Etapa</TableHead>
@@ -150,6 +151,39 @@ export function PedidosStatusOrdens() {
                       </TableCell>
                       <TableCell className="text-[11px] py-1 px-2">
                         {pedido.nome_cliente}
+                      </TableCell>
+                      <TableCell className="text-center py-1 px-2">
+                        {pedido.produtos && pedido.produtos.length > 0 ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant="secondary" 
+                                className="text-[9px] px-1.5 py-0 cursor-help"
+                              >
+                                <ShoppingBag className="h-2.5 w-2.5 mr-0.5" />
+                                {pedido.produtos.length}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-xs">
+                              <div className="space-y-1">
+                                <p className="font-semibold text-xs mb-1.5">Produtos do Pedido:</p>
+                                {pedido.produtos.map((produto, idx) => (
+                                  <div key={idx} className="text-xs flex items-start gap-1">
+                                    <span className="text-muted-foreground">•</span>
+                                    <span>
+                                      {produto.quantidade}x {produto.descricao || produto.tipo}
+                                      {produto.tamanho && (
+                                        <span className="text-muted-foreground ml-1">({produto.tamanho})</span>
+                                      )}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-gray-300 text-[10px]">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-[11px] py-1 px-2">
                         {pedido.data_entrega ? new Date(pedido.data_entrega).toLocaleDateString('pt-BR') : '-'}
