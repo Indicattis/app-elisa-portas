@@ -93,7 +93,19 @@ serve(async (req) => {
     console.log('Admin verified:', user.id);
 
     // Get request body
-    const { email, password, nome, role, data_nascimento } = await req.json();
+    const { 
+      email, 
+      password, 
+      nome, 
+      role, 
+      data_nascimento,
+      setor,
+      salario,
+      modalidade_pagamento,
+      em_folha,
+      cpf,
+      eh_colaborador
+    } = await req.json();
 
     if (!email || !password || !nome || !role) {
       return new Response(
@@ -137,6 +149,12 @@ serve(async (req) => {
         role,
         data_nascimento: data_nascimento || null,
         ativo: true,
+        setor: setor || null,
+        salario: salario || null,
+        modalidade_pagamento: modalidade_pagamento || 'mensal',
+        em_folha: em_folha !== undefined ? em_folha : true,
+        cpf: cpf || null,
+        eh_colaborador: eh_colaborador !== undefined ? eh_colaborador : false,
       });
 
     if (insertError) {

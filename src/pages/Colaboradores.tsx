@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, X, Edit, Loader2, FileEdit, FileText } from "lucide-react";
 import { ROLE_LABELS } from "@/types/permissions";
 import { EditColaboradorModal } from "@/components/colaboradores/EditColaboradorModal";
+import { AddColaboradorDialog } from "@/components/colaboradores/AddColaboradorDialog";
 
 interface Colaborador {
   id: string;
@@ -161,6 +162,7 @@ export default function Colaboradores() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <AddColaboradorDialog onSuccess={() => queryClient.invalidateQueries({ queryKey: ["colaboradores"] })} />
               <Button 
                 variant="default" 
                 size="sm" 
@@ -168,7 +170,7 @@ export default function Colaboradores() {
                 className="h-7 text-xs"
               >
                 <FileText className="w-3 h-3 mr-1" />
-                Gerar Folha de Pagamento
+                Gerar Folha
               </Button>
               <Button 
                 variant="outline" 
