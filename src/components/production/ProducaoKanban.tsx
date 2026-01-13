@@ -123,9 +123,10 @@ function OrdemCard({
   return (
     <Card 
       className={cn(
-        "hover:shadow-md transition-all overflow-hidden",
+        "hover:shadow-md transition-all overflow-hidden cursor-pointer",
         ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
       )}
+      onClick={handleCardClick}
     >
       {/* HEADER - Mobile First */}
       <CardHeader className="min-h-[40px] py-2 px-3 sm:px-4 border-b bg-muted/30">
@@ -170,10 +171,7 @@ function OrdemCard({
       <CardContent className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
           {/* LATERAL ESQUERDA - Foto do responsável (oculta em mobile pequeno) */}
-          <div 
-            className="hidden sm:block flex-shrink-0 cursor-pointer"
-            onClick={handleCardClick}
-          >
+          <div className="hidden sm:block flex-shrink-0">
             {ordem.responsavel_id ? (
               <Avatar className="h-16 w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] ring-2 ring-primary/20">
                 <AvatarImage 
@@ -192,10 +190,7 @@ function OrdemCard({
           </div>
 
           {/* CENTRO - Informações */}
-          <div 
-            className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 cursor-pointer min-w-0 w-full"
-            onClick={handleCardClick}
-          >
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 min-w-0 w-full">
             {/* Data entrega visível apenas em mobile */}
             <div className="sm:hidden">
               <p className="text-[10px] text-muted-foreground">Entrega</p>
@@ -260,8 +255,7 @@ function OrdemCard({
               </Button>
             ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' && ordem.responsavel_id ? (
               <div 
-                className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg bg-primary/10 flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-1 border-2 border-primary cursor-pointer hover:bg-primary/20 transition-colors relative overflow-hidden"
-                onClick={handleCardClick}
+                className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg bg-primary/10 flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-1 border-2 border-primary relative overflow-hidden"
               >
                 {deveAnimar && (
                   <div className="absolute inset-0 sm:rounded-full rounded-lg border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
@@ -271,8 +265,7 @@ function OrdemCard({
               </div>
             ) : (
               <div 
-                className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] rounded-lg bg-muted/30 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={handleCardClick}
+                className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] rounded-lg bg-muted/30 flex items-center justify-center"
               >
                 <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50" />
               </div>
