@@ -316,8 +316,8 @@ export default function Clientes() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
                     <TableHead className="w-[60px]">Tag</TableHead>
+                    <TableHead>Nome</TableHead>
                     <TableHead>Telefone</TableHead>
                     <TableHead className="hidden md:table-cell">CPF/CNPJ</TableHead>
                     <TableHead className="hidden lg:table-cell">Cidade/UF</TableHead>
@@ -332,14 +332,6 @@ export default function Clientes() {
                   {clientesFiltrados.map((cliente) => (
                     <TableRow key={cliente.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{cliente.nome}</div>
-                          {cliente.email && (
-                            <div className="text-sm text-muted-foreground">{cliente.email}</div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
                         {cliente.tipo_cliente ? (
                           <Badge className={TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente].className}>
                             {TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente].label}
@@ -347,6 +339,14 @@ export default function Clientes() {
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{cliente.nome}</div>
+                          {cliente.email && (
+                            <div className="text-sm text-muted-foreground">{cliente.email}</div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>{cliente.telefone || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">
