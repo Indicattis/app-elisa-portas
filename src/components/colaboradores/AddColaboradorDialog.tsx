@@ -80,8 +80,8 @@ export function AddColaboradorDialog({ onSuccess }: AddColaboradorDialogProps) {
       const result = await (supabase as any)
         .from("system_roles")
         .select("key, label")
-        .eq("active", true)
-        .order("label");
+        .eq("ativo", true)
+        .order("ordem");
 
       if (result.error) throw result.error;
       return result.data as RoleOption[];
