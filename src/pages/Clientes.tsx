@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { Users, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { Users, Plus, Search, Pencil, Trash2, X, UserCheck, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -132,6 +133,17 @@ export default function Clientes() {
 
   const temFiltrosAtivos = busca || filtroEstado !== "todos" || filtroCanal !== "todos" || filtroTipo !== "todos";
 
+  // Métricas para as metas
+  const totalClientes = clientes?.length || 0;
+  const totalClientesCR = useMemo(() => {
+    return clientes?.filter(c => c.tipo_cliente === 'CR').length || 0;
+  }, [clientes]);
+
+  const META_TOTAL = 10000;
+  const META_CR = 1000;
+  const progressoTotal = Math.min((totalClientes / META_TOTAL) * 100, 100);
+  const progressoCR = Math.min((totalClientesCR / META_CR) * 100, 100);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -146,6 +158,47 @@ export default function Clientes() {
           <Plus className="h-4 w-4 mr-2" />
           Novo Cliente
         </Button>
+      </div>
+
+      {/* Cards de Metas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="h-5 w-5 text-primary" />
+              <span className="font-semibold">Meta: 10.000 Clientes Totais</span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-2xl font-bold">{totalClientes.toLocaleString('pt-BR')}</span>
+              <span className="text-sm text-muted-foreground">
+                / {META_TOTAL.toLocaleString('pt-BR')}
+              </span>
+            </div>
+            <Progress value={progressoTotal} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-2">
+              {progressoTotal.toFixed(2)}% concluído
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <UserCheck className="h-5 w-5 text-green-600" />
+              <span className="font-semibold">Meta: 1.000 Clientes Recorrentes (CR)</span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-2xl font-bold">{totalClientesCR.toLocaleString('pt-BR')}</span>
+              <span className="text-sm text-muted-foreground">
+                / {META_CR.toLocaleString('pt-BR')}
+              </span>
+            </div>
+            <Progress value={progressoCR} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-2">
+              {progressoCR.toFixed(2)}% concluído
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
