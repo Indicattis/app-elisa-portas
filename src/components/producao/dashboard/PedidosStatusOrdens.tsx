@@ -116,7 +116,7 @@ export function PedidosStatusOrdens() {
   };
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={100}>
       <Card>
         <CardHeader className="pb-1 px-3 pt-3">
           <CardTitle className="text-sm">Pedidos com Ordens Pendentes</CardTitle>
