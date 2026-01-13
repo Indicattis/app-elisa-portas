@@ -6140,23 +6140,33 @@ export type Database = {
           perfiladeira_capturada: boolean
           perfiladeira_capturada_por_foto: string
           perfiladeira_existe: boolean
+          perfiladeira_justificativa_pausa: string
+          perfiladeira_pausada: boolean
           perfiladeira_status: string
           pintura_capturada: boolean
           pintura_capturada_por_foto: string
           pintura_existe: boolean
+          pintura_justificativa_pausa: string
+          pintura_pausada: boolean
           pintura_status: string
           prioridade: number
           qualidade_capturada: boolean
           qualidade_capturada_por_foto: string
           qualidade_existe: boolean
+          qualidade_justificativa_pausa: string
+          qualidade_pausada: boolean
           qualidade_status: string
           separacao_capturada: boolean
           separacao_capturada_por_foto: string
           separacao_existe: boolean
+          separacao_justificativa_pausa: string
+          separacao_pausada: boolean
           separacao_status: string
           soldagem_capturada: boolean
           soldagem_capturada_por_foto: string
           soldagem_existe: boolean
+          soldagem_justificativa_pausa: string
+          soldagem_pausada: boolean
           soldagem_status: string
         }[]
       }
