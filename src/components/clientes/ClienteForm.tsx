@@ -31,6 +31,11 @@ const ESTADOS_BR = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
+const TIPOS_CLIENTE = [
+  { value: 'CE', label: 'CE - Cliente Esporádico' },
+  { value: 'CR', label: 'CR - Cliente Recorrente' },
+] as const;
+
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   telefone: z.string().optional(),
@@ -43,6 +48,7 @@ const formSchema = z.object({
   bairro: z.string().optional(),
   canal_aquisicao_id: z.string().optional(),
   observacoes: z.string().optional(),
+  tipo_cliente: z.enum(['CE', 'CR']).optional(),
 });
 
 interface ClienteFormProps {
@@ -69,6 +75,7 @@ export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) 
       bairro: cliente?.bairro || "",
       canal_aquisicao_id: cliente?.canal_aquisicao_id || "",
       observacoes: cliente?.observacoes || "",
+      tipo_cliente: cliente?.tipo_cliente || undefined,
     },
   });
 
@@ -278,30 +285,57 @@ export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) 
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="canal_aquisicao_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Canal de Aquisição</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Como conheceu a empresa?" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {canais.map((canal) => (
-                    <SelectItem key={canal.id} value={canal.id}>
-                      {canal.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="tipo_cliente"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de Cliente</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {TIPOS_CLIENTE.map((tipo) => (
+                      <SelectItem key={tipo.value} value={tipo.value}>
+                        {tipo.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="canal_aquisicao_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Canal de Aquisição</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Como conheceu a empresa?" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {canais.map((canal) => (
+                      <SelectItem key={canal.id} value={canal.id}>
+                        {canal.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
