@@ -6150,6 +6150,7 @@ export type Database = {
           pintura_pausada: boolean
           pintura_status: string
           prioridade: number
+          produtos_lista: Json
           qualidade_capturada: boolean
           qualidade_capturada_por_foto: string
           qualidade_existe: boolean

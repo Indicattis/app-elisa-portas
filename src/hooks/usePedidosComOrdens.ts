@@ -10,6 +10,13 @@ interface OrdemStatus {
   justificativa_pausa?: string | null;
 }
 
+interface ProdutoInfo {
+  tipo: string;
+  descricao: string | null;
+  tamanho: string | null;
+  quantidade: number;
+}
+
 interface PedidoComOrdens {
   numero_pedido: string;
   numero_mes: number | null;
@@ -18,6 +25,7 @@ interface PedidoComOrdens {
   data_entrega: string | null;
   data_carregamento: string | null;
   prioridade: number;
+  produtos: ProdutoInfo[];
   ordens: {
     soldagem: OrdemStatus;
     perfiladeira: OrdemStatus;
@@ -47,6 +55,7 @@ export function usePedidosComOrdens() {
         data_entrega: row.data_entrega,
         data_carregamento: row.data_carregamento,
         prioridade: row.prioridade,
+        produtos: row.produtos_lista || [],
         ordens: {
           soldagem: {
             existe: row.soldagem_existe,
