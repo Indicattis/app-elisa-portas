@@ -3,6 +3,7 @@ import { Users, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -43,9 +44,15 @@ import {
   useDeleteCliente,
   Cliente,
   ClienteFormData,
+  TipoCliente,
 } from "@/hooks/useClientes";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const TIPOS_CLIENTE_CONFIG: Record<TipoCliente, { label: string; variant: "secondary" | "default" }> = {
+  CE: { label: "CE", variant: "secondary" },
+  CR: { label: "CR", variant: "default" },
+};
 
 const ESTADOS_BR = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -63,6 +70,7 @@ export default function Clientes() {
   const [busca, setBusca] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [filtroCanal, setFiltroCanal] = useState<string>("todos");
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
   const [clienteExcluir, setClienteExcluir] = useState<Cliente | null>(null);
@@ -82,10 +90,11 @@ export default function Clientes() {
 
       const matchEstado = filtroEstado === "todos" || cliente.estado === filtroEstado;
       const matchCanal = filtroCanal === "todos" || cliente.canal_aquisicao_id === filtroCanal;
+      const matchTipo = filtroTipo === "todos" || cliente.tipo_cliente === filtroTipo;
 
-      return matchBusca && matchEstado && matchCanal;
+      return matchBusca && matchEstado && matchCanal && matchTipo;
     });
-  }, [clientes, busca, filtroEstado, filtroCanal]);
+  }, [clientes, busca, filtroEstado, filtroCanal, filtroTipo]);
 
   const handleNovoCliente = () => {
     setClienteEditando(null);
@@ -118,9 +127,10 @@ export default function Clientes() {
     setBusca("");
     setFiltroEstado("todos");
     setFiltroCanal("todos");
+    setFiltroTipo("todos");
   };
 
-  const temFiltrosAtivos = busca || filtroEstado !== "todos" || filtroCanal !== "todos";
+  const temFiltrosAtivos = busca || filtroEstado !== "todos" || filtroCanal !== "todos" || filtroTipo !== "todos";
 
   return (
     <div className="space-y-6">
@@ -182,6 +192,17 @@ export default function Clientes() {
               </SelectContent>
             </Select>
 
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos Tipos</SelectItem>
+                <SelectItem value="CE">CE - Esporádico</SelectItem>
+                <SelectItem value="CR">CR - Recorrente</SelectItem>
+              </SelectContent>
+            </Select>
+
             {temFiltrosAtivos && (
               <Button variant="ghost" size="sm" onClick={limparFiltros}>
                 <X className="h-4 w-4 mr-1" />
@@ -222,6 +243,7 @@ export default function Clientes() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
+                    <TableHead className="w-[60px]">Tag</TableHead>
                     <TableHead>Telefone</TableHead>
                     <TableHead className="hidden md:table-cell">CPF/CNPJ</TableHead>
                     <TableHead className="hidden lg:table-cell">Cidade/UF</TableHead>
@@ -241,6 +263,18 @@ export default function Clientes() {
                             <div className="text-sm text-muted-foreground">{cliente.email}</div>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {cliente.tipo_cliente ? (
+                          <Badge 
+                            variant={TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente].variant}
+                            className={cliente.tipo_cliente === 'CR' ? 'bg-green-600 hover:bg-green-700' : ''}
+                          >
+                            {TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente].label}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>{cliente.telefone || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">

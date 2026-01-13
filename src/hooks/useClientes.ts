@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export type TipoCliente = 'CE' | 'CR';
+
 export interface Cliente {
   id: string;
   nome: string;
@@ -16,6 +18,7 @@ export interface Cliente {
   canal_aquisicao_id?: string | null;
   canal_aquisicao?: { id: string; nome: string } | null;
   observacoes?: string | null;
+  tipo_cliente?: TipoCliente | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -35,6 +38,7 @@ export interface ClienteFormData {
   bairro?: string;
   canal_aquisicao_id?: string;
   observacoes?: string;
+  tipo_cliente?: TipoCliente;
 }
 
 export function useClientes() {
