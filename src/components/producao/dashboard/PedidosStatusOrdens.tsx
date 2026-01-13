@@ -130,10 +130,10 @@ export function PedidosStatusOrdens() {
                     </Badge>
                   </TableCell>
                   {Object.entries(ordemIcons).map(([key]) => {
-                    const ordem = pedido.ordens[key as keyof typeof pedido.ordens];
+                    const ordem = pedido.ordens?.[key as keyof typeof pedido.ordens];
                     return (
                       <TableCell key={key} className="text-center py-1 px-1">
-                        {ordem.existe ? (
+                        {ordem?.existe ? (
                           <div className="flex flex-col items-center">
                             {ordem.capturada && ordem.capturada_por_foto ? (
                               <Avatar className={`h-5 w-5 ${getStatusBorder(ordem.status)}`}>
