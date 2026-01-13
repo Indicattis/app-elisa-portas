@@ -156,13 +156,15 @@ export function PedidosStatusOrdens() {
                         {pedido.produtos && pedido.produtos.length > 0 ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Badge 
-                                variant="secondary" 
-                                className="text-[9px] px-1.5 py-0 cursor-help"
-                              >
-                                <ShoppingBag className="h-2.5 w-2.5 mr-0.5" />
-                                {pedido.produtos.length}
-                              </Badge>
+                              <span className="inline-flex">
+                                <Badge 
+                                  variant="secondary" 
+                                  className="text-[9px] px-1.5 py-0 cursor-help"
+                                >
+                                  <ShoppingBag className="h-2.5 w-2.5 mr-0.5" />
+                                  {pedido.produtos.length}
+                                </Badge>
+                              </span>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-xs">
                               <div className="space-y-1">
@@ -200,13 +202,15 @@ export function PedidosStatusOrdens() {
                         {warnings.length > 0 ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Badge 
-                                variant="destructive" 
-                                className="text-[9px] px-1.5 py-0 cursor-help bg-orange-500 hover:bg-orange-600"
-                              >
-                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                                {warnings.length}
-                              </Badge>
+                              <span className="inline-flex">
+                                <Badge 
+                                  variant="destructive" 
+                                  className="text-[9px] px-1.5 py-0 cursor-help bg-orange-500 hover:bg-orange-600"
+                                >
+                                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                                  {warnings.length}
+                                </Badge>
+                              </span>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-xs">
                               <div className="space-y-1.5">
