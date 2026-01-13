@@ -61,6 +61,27 @@ const ESTADOS_BR = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
+// Função para formatar tempo desde a última compra
+function formatarTempoDesdeUltimaCompra(dataUltimaCompra: string | null | undefined): string {
+  if (!dataUltimaCompra) return "-";
+  
+  const hoje = new Date();
+  const dataCompra = new Date(dataUltimaCompra);
+  const diffMs = hoje.getTime() - dataCompra.getTime();
+  const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffDias < 0) return "-";
+  if (diffDias === 0) return "Hoje";
+  if (diffDias === 1) return "1 dia";
+  if (diffDias < 7) return `${diffDias} dias`;
+  if (diffDias < 14) return "1 semana";
+  if (diffDias < 30) return `${Math.floor(diffDias / 7)} semanas`;
+  if (diffDias < 60) return "1 mês";
+  if (diffDias < 365) return `${Math.floor(diffDias / 30)} meses`;
+  if (diffDias < 730) return "1 ano";
+  return `${Math.floor(diffDias / 365)} anos`;
+}
+
 export default function Clientes() {
   const { data: clientes, isLoading } = useClientes();
   const { canais } = useCanaisAquisicao();
@@ -303,6 +324,7 @@ export default function Clientes() {
                     <TableHead className="hidden xl:table-cell">Canal</TableHead>
                     <TableHead className="hidden sm:table-cell text-center">Nº Vendas</TableHead>
                     <TableHead className="hidden sm:table-cell text-right">Total Vendas</TableHead>
+                    <TableHead className="hidden md:table-cell">Última Compra</TableHead>
                     <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -350,6 +372,9 @@ export default function Clientes() {
                         {cliente.total_vendas && cliente.total_vendas > 0
                           ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cliente.total_vendas)
                           : "-"}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {formatarTempoDesdeUltimaCompra(cliente.ultima_compra)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">

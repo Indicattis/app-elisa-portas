@@ -24,6 +24,7 @@ export interface Cliente {
   updated_at: string;
   total_vendas?: number;
   numero_vendas?: number;
+  ultima_compra?: string | null;
 }
 
 export interface ClienteFormData {
@@ -60,17 +61,24 @@ export function useClientes() {
       // Buscar totais de vendas por cliente
       const { data: vendasData } = await supabase
         .from("vendas")
-        .select("cliente_id, valor_venda");
+        .select("cliente_id, valor_venda, data_venda");
       
-      // Calcular total de vendas e número de vendas por cliente
+      // Calcular total de vendas, número de vendas e última compra por cliente
       const totaisVendas = new Map<string, number>();
       const numeroVendas = new Map<string, number>();
+      const ultimaCompra = new Map<string, string>();
       (vendasData || []).forEach((venda: any) => {
         if (venda.cliente_id) {
           const atualTotal = totaisVendas.get(venda.cliente_id) || 0;
           totaisVendas.set(venda.cliente_id, atualTotal + (venda.valor_venda || 0));
           const atualNumero = numeroVendas.get(venda.cliente_id) || 0;
           numeroVendas.set(venda.cliente_id, atualNumero + 1);
+          
+          // Atualizar última compra se for mais recente
+          const ultimaAtual = ultimaCompra.get(venda.cliente_id);
+          if (!ultimaAtual || (venda.data_venda && venda.data_venda > ultimaAtual)) {
+            ultimaCompra.set(venda.cliente_id, venda.data_venda);
+          }
         }
       });
       
@@ -82,7 +90,8 @@ export function useClientes() {
           ? canaisMap.get(cliente.canal_aquisicao_id) || null 
           : null,
         total_vendas: totaisVendas.get(cliente.id) || 0,
-        numero_vendas: numeroVendas.get(cliente.id) || 0
+        numero_vendas: numeroVendas.get(cliente.id) || 0,
+        ultima_compra: ultimaCompra.get(cliente.id) || null
       }));
 
       return clientes as Cliente[];
