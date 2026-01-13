@@ -50,9 +50,9 @@ import {
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const TIPOS_CLIENTE_CONFIG: Record<TipoCliente, { label: string; variant: "secondary" | "default" }> = {
-  CE: { label: "CE", variant: "secondary" },
-  CR: { label: "CR", variant: "default" },
+const TIPOS_CLIENTE_CONFIG: Record<TipoCliente, { label: string; className: string }> = {
+  CE: { label: "CE", className: "bg-orange-500 hover:bg-orange-600 text-white" },
+  CR: { label: "CR", className: "bg-blue-500 hover:bg-blue-600 text-white" },
 };
 
 const ESTADOS_BR = [
@@ -341,10 +341,7 @@ export default function Clientes() {
                       </TableCell>
                       <TableCell>
                         {cliente.tipo_cliente ? (
-                          <Badge 
-                            variant={TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente].variant}
-                            className={cliente.tipo_cliente === 'CR' ? 'bg-green-600 hover:bg-green-700' : ''}
-                          >
+                          <Badge className={TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente].className}>
                             {TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente].label}
                           </Badge>
                         ) : (
