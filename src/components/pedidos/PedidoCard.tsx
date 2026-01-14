@@ -707,17 +707,6 @@ export function PedidoCard({
                 </Tooltip>
               </div>
               
-              {/* Data de Entrega */}
-              <div className="text-[10px] text-muted-foreground text-center">
-                {venda?.data_prevista_entrega ? (
-                  <span title="Data prevista de entrega">
-                    {format(new Date(venda.data_prevista_entrega), "dd/MM/yyyy")}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground/50">-</span>
-                )}
-              </div>
-              
               {/* Data de Carregamento */}
               <div className="text-[10px] text-muted-foreground text-center">
                 {dataCarregamento ? (
