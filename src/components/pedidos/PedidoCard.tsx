@@ -315,12 +315,13 @@ export function PedidoCard({
   // Componente para renderizar círculo de cor
   const CorCirculo = ({ cor, size = 'sm' }: { cor: { nome: string; codigo_hex: string }; size?: 'sm' | 'md' }) => {
     const isAco = isAcoGalvanizado(cor.nome);
-    const sizeClass = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5';
+    const heightClass = size === 'sm' ? 'h-3' : 'h-3.5';
     
     if (isAco) {
       return (
         <div 
-          className={`${sizeClass} rounded-full border-2 border-border relative bg-transparent`}
+          className={`${heightClass} border-2 border-border relative bg-transparent`}
+          style={{ width: '80px', borderRadius: '20px' }}
           title={cor.nome}
         >
           <div 
@@ -337,8 +338,8 @@ export function PedidoCard({
     
     return (
       <div 
-        className={`${sizeClass} rounded-full border border-border`}
-        style={{ backgroundColor: cor.codigo_hex }} 
+        className={`${heightClass} border border-border`}
+        style={{ backgroundColor: cor.codigo_hex, width: '80px', borderRadius: '20px' }} 
         title={cor.nome} 
       />
     );
