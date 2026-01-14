@@ -5,7 +5,7 @@ import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 
 interface Ordem {
   id: string;
@@ -27,7 +27,7 @@ export default function ProducaoSeparacao() {
   const [ordemSelecionadaId, setOrdemSelecionadaId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useProducaoAuth();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
 
@@ -81,7 +81,7 @@ export default function ProducaoSeparacao() {
         isCapturing={capturarOrdem.isPending}
         tipoOrdem="separacao"
         onRefresh={handleRefresh}
-        currentUserId={user?.id}
+        currentUserId={user?.user_id}
       />
 
       <OrdemDetalhesSheet

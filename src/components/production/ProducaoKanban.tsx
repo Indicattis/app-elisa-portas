@@ -115,8 +115,17 @@ function OrdemCard({
   };
 
   const handleCardClick = () => {
-    // Permitir visualização para qualquer usuário
-    // As restrições de ação (marcar linhas, concluir) são tratadas no OrdemDetalhesSheet
+    // Somente o responsável pode abrir a downbar
+    if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
+      toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
+      return;
+    }
+    
+    if (!ordem.responsavel_id) {
+      toast.info("Capture a ordem primeiro para acessar os detalhes");
+      return;
+    }
+    
     onOrdemClick(ordem);
   };
 
