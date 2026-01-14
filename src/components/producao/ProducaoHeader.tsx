@@ -35,6 +35,15 @@ export function ProducaoHeader() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/hub-fabrica')}
+            className="gap-2"
+          >
+            <Factory className="h-4 w-4" />
+            <span className="hidden sm:inline">Hub</span>
+          </Button>
           <span className="text-sm text-muted-foreground hidden sm:block">
             {user.nome}
           </span>
