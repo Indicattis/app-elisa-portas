@@ -1,8 +1,14 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { Factory, Wrench, Package, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+
+interface ProducaoUser {
+  user_id: string;
+  nome: string;
+  foto_perfil_url?: string;
+}
 
 const menuItems = [
   {
@@ -10,30 +16,109 @@ const menuItems = [
     description: "Interface de produção",
     icon: Factory,
     path: "/producao",
-    color: "bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30",
-    iconColor: "text-blue-500",
   },
   {
     title: "Instalações",
     description: "Gerenciar instalações",
     icon: Wrench,
     path: "/instalacoes",
-    color: "bg-green-500/10 hover:bg-green-500/20 border-green-500/30",
-    iconColor: "text-green-500",
   },
   {
     title: "Pedidos",
     description: "Gestão de pedidos",
     icon: Package,
     path: "/pedidos",
-    color: "bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30",
-    iconColor: "text-orange-500",
   },
 ];
 
 export default function HubFabrica() {
   const navigate = useNavigate();
-  const { signOut, userRole } = useAuth();
+  const [user, setUser] = useState<ProducaoUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (session?.user) {
+          const { data: adminUser, error } = await supabase
+            .from("admin_users")
+            .select("user_id, nome, foto_perfil_url")
+            .eq("user_id", session.user.id)
+            .eq("ativo", true)
+            .maybeSingle();
+
+          if (!mounted) return;
+
+          if (adminUser && !error) {
+            setUser({
+              user_id: adminUser.user_id,
+              nome: adminUser.nome,
+              foto_perfil_url: adminUser.foto_perfil_url,
+            });
+          } else {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+        if (mounted) {
+          setUser(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      navigate("/producao/login", { replace: true });
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      navigate("/producao/login", { replace: true });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/producao/login" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -45,12 +130,12 @@ export default function HubFabrica() {
             <span className="font-semibold text-lg">Hub de Operações</span>
           </div>
           <div className="flex items-center gap-3">
-            {userRole && (
+            {user && (
               <span className="text-sm text-muted-foreground hidden sm:block">
-                {userRole.nome}
+                {user.nome}
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -59,37 +144,32 @@ export default function HubFabrica() {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-md">
           {/* Title Section */}
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               Selecione o Módulo
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Escolha a área que deseja acessar
             </p>
           </div>
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          {/* Buttons List */}
+          <div className="flex flex-col items-center gap-3">
             {menuItems.map((item) => (
-              <Card
+              <Button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`cursor-pointer transition-all duration-200 border-2 ${item.color} hover:scale-105 hover:shadow-lg`}
+                className="w-[300px] h-14 text-base font-medium justify-start gap-3"
+                variant="default"
               >
-                <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center">
-                  <div className={`p-4 rounded-full ${item.color} mb-4`}>
-                    <item.icon className={`h-10 w-10 sm:h-12 sm:w-12 ${item.iconColor}`} />
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-semibold mb-1">
-                    {item.title}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {item.description}
-                  </p>
-                </CardContent>
-              </Card>
+                <item.icon className="h-5 w-5" />
+                <div className="flex flex-col items-start">
+                  <span>{item.title}</span>
+                  <span className="text-xs font-normal opacity-80">{item.description}</span>
+                </div>
+              </Button>
             ))}
           </div>
         </div>
