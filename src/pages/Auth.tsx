@@ -158,15 +158,15 @@ export default function Auth() {
             </CardContent>
           </Card>
 
-          {/* Botão para acessar produção */}
+          {/* Botão para acessar hub da fábrica */}
           <div className="mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button 
-              onClick={() => navigate('/producao/login')}
+              onClick={() => navigate('/hub-fabrica')}
               variant="outline"
               className="w-full group border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
             >
               <Factory className="h-4 w-4 mr-2 text-primary" />
-              <span>Acesso para Produção</span>
+              <span>Acesso para Hub da Fábrica</span>
               <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
             </Button>
           </div>
