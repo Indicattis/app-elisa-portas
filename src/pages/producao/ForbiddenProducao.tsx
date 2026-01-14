@@ -35,7 +35,7 @@ export default function ForbiddenProducao() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar à Página Anterior
             </Button>
-            <Button variant="outline" onClick={() => navigate('/producao/login')} className="w-full">
+            <Button variant="outline" onClick={() => navigate('/hub-fabrica/login')} className="w-full">
               <KeyRound className="h-4 w-4 mr-2" />
               Fazer Login com CPF
             </Button>

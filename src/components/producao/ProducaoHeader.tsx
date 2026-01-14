@@ -9,7 +9,7 @@ export function ProducaoHeader() {
   const navigate = useNavigate();
   
   // Verifica se está na home de produção
-  const isProducaoHome = location.pathname === '/producao' || location.pathname === '/producao/';
+  const isProducaoHome = location.pathname === '/hub-fabrica/producao' || location.pathname === '/hub-fabrica/producao/';
 
   if (!user) return null;
 
