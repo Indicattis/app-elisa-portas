@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePedidosComOrdens } from "@/hooks/usePedidosComOrdens";
 import { 
   Hammer, Package, Boxes, Sparkles, CheckSquare, User, AlertCircle, 
-  ChevronLeft, ChevronRight, AlertTriangle, PauseCircle, ShoppingBag 
+  ChevronLeft, ChevronRight, AlertTriangle, PauseCircle, ShoppingBag, RefreshCw 
 } from "lucide-react";
 import {
   Table,
@@ -42,7 +42,7 @@ const ordemLabels = {
 };
 
 export function PedidosStatusOrdens() {
-  const { data: pedidos = [], isLoading } = usePedidosComOrdens();
+  const { data: pedidos = [], isLoading, refetch, isFetching } = usePedidosComOrdens();
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalPages = Math.ceil(pedidos.length / ITEMS_PER_PAGE);
@@ -118,8 +118,24 @@ export function PedidosStatusOrdens() {
   return (
     <TooltipProvider delayDuration={100}>
       <Card>
-        <CardHeader className="pb-1 px-3 pt-3">
+        <CardHeader className="pb-1 px-3 pt-3 flex flex-row items-center justify-between">
           <CardTitle className="text-sm">Pedidos com Ordens Pendentes</CardTitle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="h-7 w-7 p-0"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Atualizar listagem</p>
+            </TooltipContent>
+          </Tooltip>
         </CardHeader>
         <CardContent className="pb-2 px-3">
           <div className="rounded-md border">
