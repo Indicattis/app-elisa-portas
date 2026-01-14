@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Wrench, ArrowLeft } from "lucide-react";
 import { 
@@ -16,12 +16,12 @@ interface InstalacoesLayoutProps {
 }
 
 export function InstalacoesLayout({ children, title = "Instalações" }: InstalacoesLayoutProps) {
-  const { userRole, signOut } = useAuth();
+  const { user, signOut } = useProducaoAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/auth");
+    navigate("/hub-fabrica/login");
   };
 
   return (
@@ -46,9 +46,9 @@ export function InstalacoesLayout({ children, title = "Instalações" }: Instala
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {userRole && (
+                {user && (
                   <span className="text-sm text-muted-foreground hidden sm:block">
-                    {userRole.nome}
+                    {user.nome}
                   </span>
                 )}
                 <Button variant="ghost" size="sm" onClick={handleLogout}>

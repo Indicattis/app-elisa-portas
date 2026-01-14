@@ -15,19 +15,19 @@ const menuItems = [
     title: "Fábrica",
     description: "Interface de produção",
     icon: Factory,
-    path: "/producao",
+    path: "/hub-fabrica/producao",
   },
   {
     title: "Instalações",
     description: "Gerenciar instalações",
     icon: Wrench,
-    path: "/instalacoes",
+    path: "/hub-fabrica/instalacoes",
   },
   {
     title: "Pedidos",
     description: "Gestão de pedidos",
     icon: Package,
-    path: "/pedidos",
+    path: "/hub-fabrica/pedidos",
   },
 ];
 

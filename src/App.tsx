@@ -281,27 +281,31 @@ const App = () => (
 
                 {/* Hub da Fábrica - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
+                <Route path="/hub-fabrica/login" element={<ProducaoLogin />} />
+                <Route path="/hub-fabrica/forbidden" element={<ForbiddenProducao />} />
+                
+                {/* Rota de Pedidos do Hub */}
                 <Route
-                  path="/pedidos"
+                  path="/hub-fabrica/pedidos"
                   element={
-                    <ProtectedRoute>
-                      <PedidosStandalone />
-                    </ProtectedRoute>
+                    <ProducaoAuthProvider>
+                      <ProtectedProducaoRoute routeKey="pedidos">
+                        <PedidosStandalone />
+                      </ProtectedProducaoRoute>
+                    </ProducaoAuthProvider>
                   }
                 />
 
-                {/* Rotas de Produção */}
-                <Route path="/hub-fabrica/login" element={<ProducaoLogin />} />
-                <Route path="/hub-fabrica/forbidden" element={<ForbiddenProducao />} />
+                {/* Rotas de Produção do Hub */}
                 <Route
-                  path="/producao/*"
+                  path="/hub-fabrica/producao/*"
                   element={
                     <ProducaoAuthProvider>
                       <Routes>
                         <Route
                           path="/solda"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_solda">
                               <ProducaoLayout>
                                 <ProducaoSolda />
                               </ProducaoLayout>
@@ -311,7 +315,7 @@ const App = () => (
                         <Route
                           path="/perfiladeira"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_perfiladeira">
                               <ProducaoLayout>
                                 <ProducaoPerfiladeira />
                               </ProducaoLayout>
@@ -321,7 +325,7 @@ const App = () => (
                         <Route
                           path="/separacao"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_separacao">
                               <ProducaoLayout>
                                 <ProducaoSeparacao />
                               </ProducaoLayout>
@@ -331,7 +335,7 @@ const App = () => (
                         <Route
                           path="/pintura"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_pintura">
                               <ProducaoLayout>
                                 <ProducaoPintura />
                               </ProducaoLayout>
@@ -341,7 +345,7 @@ const App = () => (
                         <Route
                           path="/qualidade"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_qualidade">
                               <ProducaoLayout>
                                 <ProducaoQualidade />
                               </ProducaoLayout>
@@ -351,7 +355,7 @@ const App = () => (
                         <Route
                           path="/carregamento"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_carregamento">
                               <ProducaoLayout>
                                 <ProducaoCarregamento />
                               </ProducaoLayout>
@@ -361,7 +365,7 @@ const App = () => (
                         <Route
                           path="/controle"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_controle">
                               <ProducaoLayout>
                                 <ProducaoControle />
                               </ProducaoLayout>
@@ -371,7 +375,7 @@ const App = () => (
                         <Route
                           path="/terceirizacao"
                           element={
-                            <ProtectedProducaoRoute>
+                            <ProtectedProducaoRoute routeKey="producao_terceirizacao">
                               <ProducaoLayout>
                                 <ProducaoTerceirizacao />
                               </ProducaoLayout>
@@ -402,6 +406,78 @@ const App = () => (
                     </ProducaoAuthProvider>
                   }
                 />
+                
+                {/* Rotas de Instalações do Hub */}
+                <Route
+                  path="/hub-fabrica/instalacoes/*"
+                  element={
+                    <ProducaoAuthProvider>
+                      <Routes>
+                        <Route
+                          path="/"
+                          element={
+                            <ProtectedProducaoRoute routeKey="instalacoes_calendario">
+                              <InstalacoesLayout title="Calendário">
+                                <Instalacoes />
+                              </InstalacoesLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/controle"
+                          element={
+                            <ProtectedProducaoRoute routeKey="instalacoes_controle">
+                              <InstalacoesLayout title="Controle de Instalações">
+                                <InstalacoesControle />
+                              </InstalacoesLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/cronograma"
+                          element={
+                            <ProtectedProducaoRoute routeKey="instalacoes_cronograma">
+                              <InstalacoesLayout title="Cronograma">
+                                <InstalacoesCronograma />
+                              </InstalacoesLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/nova"
+                          element={
+                            <ProtectedProducaoRoute routeKey="instalacoes_nova">
+                              <InstalacoesNovas />
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/:id/editar"
+                          element={
+                            <ProtectedProducaoRoute routeKey="instalacoes_nova">
+                              <InstalacoesEditar />
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/equipes"
+                          element={
+                            <ProtectedProducaoRoute routeKey="instalacoes_equipes">
+                              <EquipesInstalacao />
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                      </Routes>
+                    </ProducaoAuthProvider>
+                  }
+                />
+                
+                {/* Redirects das rotas antigas para as novas */}
+                <Route path="/producao" element={<Navigate to="/hub-fabrica/producao" replace />} />
+                <Route path="/producao/*" element={<Navigate to="/hub-fabrica/producao" replace />} />
+                <Route path="/instalacoes" element={<Navigate to="/hub-fabrica/instalacoes" replace />} />
+                <Route path="/instalacoes/*" element={<Navigate to="/hub-fabrica/instalacoes" replace />} />
+                <Route path="/pedidos" element={<Navigate to="/hub-fabrica/pedidos" replace />} />
                 <Route
                   path="/dashboard"
                   element={
@@ -724,63 +800,9 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                {/* Rotas antigas de instalações - redirecionamento para Logística */}
+                {/* Rotas antigas de instalações - redirecionamento para Logística do Dashboard */}
                 <Route path="/dashboard/instalacoes" element={<Navigate to="/dashboard/logistica" replace />} />
                 <Route path="/dashboard/instalacoes/listagem" element={<Navigate to="/dashboard/logistica" replace />} />
-                <Route
-                  path="/instalacoes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_calendario">
-                      <InstalacoesLayout title="Calendário">
-                        <Instalacoes />
-                      </InstalacoesLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instalacoes/controle"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_controle">
-                      <InstalacoesLayout title="Controle de Instalações">
-                        <InstalacoesControle />
-                      </InstalacoesLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instalacoes/cronograma"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_cronograma">
-                      <InstalacoesLayout title="Cronograma">
-                        <InstalacoesCronograma />
-                      </InstalacoesLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instalacoes/nova"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_nova">
-                      <InstalacoesNovas />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instalacoes/:id/editar"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_nova">
-                      <InstalacoesEditar />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instalacoes/equipes"
-                  element={
-                    <ProtectedRoute routeKey="instalacoes_equipes">
-                      <EquipesInstalacao />
-                    </ProtectedRoute>
-                  }
-                />
                 {/* Redirects para as novas rotas de Logística */}
                 <Route path="/dashboard/instalacoes/expedicao" element={<Navigate to="/dashboard/logistica/agendamento" replace />} />
                 <Route path="/expedicao" element={<Navigate to="/dashboard/logistica/agendamento" replace />} />

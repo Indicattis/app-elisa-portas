@@ -17,19 +17,19 @@ import {
 const menuItems = [
   {
     key: 'calendario',
-    path: '/instalacoes',
+    path: '/hub-fabrica/instalacoes',
     label: 'Calendário',
     icon: CalendarCheck,
   },
   {
     key: 'cronograma',
-    path: '/instalacoes/cronograma',
+    path: '/hub-fabrica/instalacoes/cronograma',
     label: 'Cronograma',
     icon: LayoutGrid,
   },
   {
     key: 'controle',
-    path: '/instalacoes/controle',
+    path: '/hub-fabrica/instalacoes/controle',
     label: 'Controle',
     icon: ClipboardList,
   },
@@ -40,9 +40,9 @@ export function InstalacoesSidebar() {
   const { open } = useSidebar();
 
   const isActive = (path: string) => {
-    // Para a rota raiz /instalacoes, só ativa se for exatamente essa rota
-    if (path === '/instalacoes') {
-      return location.pathname === '/instalacoes';
+    // Para a rota raiz /hub-fabrica/instalacoes, só ativa se for exatamente essa rota
+    if (path === '/hub-fabrica/instalacoes') {
+      return location.pathname === '/hub-fabrica/instalacoes';
     }
     // Para outras rotas, verifica match exato ou subrotas
     return location.pathname === path || location.pathname.startsWith(path + '/');
