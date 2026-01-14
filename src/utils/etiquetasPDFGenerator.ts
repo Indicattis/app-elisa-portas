@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { EtiquetaCalculo, TagIndividual, TagProducao } from '@/types/etiqueta';
 import logoEtiqueta from '@/assets/logo-etiqueta.png';
+import logoEtiquetaLateral from '@/assets/logo-etiqueta-lateral.svg';
 
 interface TagData {
   nomeProduto: string;
@@ -209,31 +210,18 @@ export function getTotalEtiquetas(calculos: EtiquetaCalculo[]): number {
 
 // Função auxiliar para desenhar uma etiqueta de produção em formato de tabela
 function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: number, pageHeight: number): void {
-  // Configurações da tabela
+  // Configurações da tabela - com espaço reservado para logo lateral
   const tableMargin = 30;
-  const tableWidth = pageWidth - (tableMargin * 2);
-  const labelColWidth = 200;
+  const logoAreaWidth = 150; // Espaço para a logo na lateral direita
+  const tableWidth = pageWidth - (tableMargin * 2) - logoAreaWidth - 20;
+  const labelColWidth = 220;
   const valueColWidth = tableWidth - labelColWidth;
-  const rowHeight = 38;
-  const fontSize = 42;
-  const headerFontSize = 48;
+  const rowHeight = 48; // Altura maior para fonte maior
+  const fontSize = 54; // Fonte maior
+  const headerFontSize = 60; // Fonte de cabeçalho maior
   
-  // Logo no topo
-  const logoHeight = 80;
-  try {
-    const logoWidth = 280;
-    const logoX = (pageWidth - logoWidth) / 2;
-    const logoY = 10;
-    doc.addImage(logoEtiqueta, 'PNG', logoX, logoY, logoWidth, logoHeight);
-  } catch (error) {
-    doc.setFontSize(60);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('ELISA PORTAS', pageWidth / 2, 55, { align: 'center' });
-  }
-  
-  // Início da tabela após o logo
-  let tableY = logoHeight + 25;
+  // Início da tabela (sem logo no topo)
+  let tableY = 30;
   const tableX = tableMargin;
   
   // Função para desenhar uma linha da tabela
@@ -256,13 +244,13 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     doc.setFontSize(isHeader ? headerFontSize : fontSize);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(60, 60, 60);
-    doc.text(label, tableX + 10, tableY + (rowHeight / 2) + (fontSize / 3));
+    doc.text(label, tableX + 12, tableY + (rowHeight / 2) + (fontSize / 3));
     
     // Texto do valor
     doc.setFont('helvetica', isHeader ? 'bold' : 'normal');
     doc.setTextColor(0, 0, 0);
-    const truncatedValue = truncateText(value, 55);
-    doc.text(truncatedValue, tableX + labelColWidth + 10, tableY + (rowHeight / 2) + (fontSize / 3));
+    const truncatedValue = truncateText(value, 45);
+    doc.text(truncatedValue, tableX + labelColWidth + 12, tableY + (rowHeight / 2) + (fontSize / 3));
     
     tableY += rowHeight;
   };
@@ -272,11 +260,11 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     drawTableRow('CLIENTE', tag.clienteNome, true);
   }
   
-  drawTableRow('PRODUTO', tag.nomeProduto, true);
-  
-  if (tag.tamanho) {
-    drawTableRow('TAMANHO', `${tag.tamanho}m`);
-  }
+  // Produto e tamanho unificados em uma única linha
+  const produtoComTamanho = tag.tamanho 
+    ? `${tag.nomeProduto} - ${tag.tamanho}m` 
+    : tag.nomeProduto;
+  drawTableRow('PRODUTO', produtoComTamanho, true);
   
   if (tag.largura && tag.altura) {
     drawTableRow('DIMENSÕES', `${tag.largura}m x ${tag.altura}m`);
@@ -289,20 +277,38 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   
   drawTableRow('QUANTIDADE', `${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`);
   
-  drawTableRow('PEDIDO', tag.numeroPedido);
-  
-  // Responsável (novo campo)
+  // Responsável
   if (tag.responsavelNome) {
     drawTableRow('RESPONSÁVEL', tag.responsavelNome);
   }
   
+  // Logo na lateral direita - centralizada verticalmente
+  const tableEndY = tableY;
+  const tableHeight = tableEndY - 30;
+  const logoSize = Math.min(logoAreaWidth - 20, tableHeight - 40);
+  const logoX = tableX + tableWidth + 35;
+  const logoY = 30 + (tableHeight - logoSize) / 2;
+  
+  try {
+    doc.addImage(logoEtiquetaLateral, 'SVG', logoX, logoY, logoSize, logoSize);
+  } catch (error) {
+    // Fallback: desenhar um retângulo com texto se a logo não carregar
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(2);
+    doc.rect(logoX, logoY, logoSize, logoSize, 'S');
+    doc.setFontSize(32);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(150, 150, 150);
+    doc.text('ELISA', logoX + logoSize / 2, logoY + logoSize / 2 - 10, { align: 'center' });
+    doc.text('PORTAS', logoX + logoSize / 2, logoY + logoSize / 2 + 25, { align: 'center' });
+  }
+  
   // Rodapé com origem da ordem
   if (tag.origemOrdem) {
-    tableY += 15;
     doc.setFontSize(36);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(120, 120, 120);
-    doc.text(`Impresso em: ${tag.origemOrdem}`, pageWidth / 2, tableY, { align: 'center' });
+    doc.text(`Impresso em: ${tag.origemOrdem}`, (tableX + tableWidth / 2), tableEndY + 20, { align: 'center' });
   }
 }
 
