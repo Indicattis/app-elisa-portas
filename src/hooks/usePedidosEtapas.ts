@@ -87,7 +87,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               id,
               tipo_produto,
               valor_pintura,
-              cor:catalogo_cores (nome)
+              cor:catalogo_cores (nome, codigo_hex)
             )
           ),
           pedidos_etapas (*)
