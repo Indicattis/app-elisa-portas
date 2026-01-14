@@ -12,9 +12,8 @@ interface CronometroEtapaResult {
   cor: 'green' | 'yellow' | 'red';
 }
 
-// Limites de tempo em segundos
-const LIMITE_VERDE = 4 * 60 * 60; // 4 horas
-const LIMITE_AMARELO = 24 * 60 * 60; // 24 horas
+// Limite de tempo em segundos (10 dias)
+const LIMITE_VERDE = 10 * 24 * 60 * 60; // 10 dias
 
 export function useCronometroEtapa(params: UseCronometroEtapaParams | string | null | undefined): CronometroEtapaResult {
   const [segundos, setSegundos] = useState<number>(0);
@@ -52,10 +51,9 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
     return () => clearInterval(interval);
   }, [dataEntrada]);
 
-  // Determinar cor baseado no tempo
+  // Determinar cor baseado no tempo (verde < 10 dias, vermelho >= 10 dias)
   const cor = useMemo((): 'green' | 'yellow' | 'red' => {
     if (segundos < LIMITE_VERDE) return 'green';
-    if (segundos < LIMITE_AMARELO) return 'yellow';
     return 'red';
   }, [segundos]);
 
