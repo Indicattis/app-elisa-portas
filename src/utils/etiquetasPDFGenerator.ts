@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { EtiquetaCalculo, TagIndividual, TagProducao } from '@/types/etiqueta';
 import logoEtiqueta from '@/assets/logo-etiqueta.png';
-import logoEtiquetaLateral from '@/assets/logo-etiqueta-lateral.svg';
+import logoEtiquetaLateral from '@/assets/logo-etiqueta-lateral.png';
 
 interface TagData {
   nomeProduto: string;
@@ -290,7 +290,7 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   const logoY = 30 + (tableHeight - logoSize) / 2;
   
   try {
-    doc.addImage(logoEtiquetaLateral, 'SVG', logoX, logoY, logoSize, logoSize);
+    doc.addImage(logoEtiquetaLateral, 'PNG', logoX, logoY, logoSize, logoSize);
   } catch (error) {
     // Fallback: desenhar um retângulo com texto se a logo não carregar
     doc.setDrawColor(200, 200, 200);
