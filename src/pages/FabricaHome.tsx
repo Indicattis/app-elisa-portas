@@ -2,6 +2,7 @@ import { MateriaisRanking } from "@/components/producao/dashboard/MateriaisRanki
 import { PedidosStatusOrdens } from "@/components/producao/dashboard/PedidosStatusOrdens";
 import { IndicadoresProducao } from "@/components/producao/dashboard/IndicadoresProducao";
 import { CoresPintadasHoje } from "@/components/producao/dashboard/CoresPintadasHoje";
+import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
 
 export default function FabricaHome() {
   return (
@@ -15,6 +16,9 @@ export default function FabricaHome() {
 
       {/* Indicadores */}
       <IndicadoresProducao />
+
+      {/* Portas por Etapa (Hoje) */}
+      <PortasPorEtapa />
 
       {/* Pedidos com Ordens Pendentes */}
       <PedidosStatusOrdens />
