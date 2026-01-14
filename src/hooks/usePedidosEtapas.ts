@@ -84,7 +84,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             created_at,
             tipo_entrega,
             atendente_id,
-            atendente:admin_users!vendas_atendente_id_fkey (
+            atendente:admin_users!fk_vendas_atendente (
               nome,
               foto_perfil_url
             ),
