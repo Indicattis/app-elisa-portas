@@ -644,23 +644,12 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_70px_minmax(150px,1fr)_80px_60px_90px_90px_100px_auto] items-center gap-3 h-full px-4">
+            <div className="grid grid-cols-[24px_minmax(150px,1fr)_80px_60px_90px_90px_100px_auto] items-center gap-3 h-full px-4">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>}
               
-              
-              {/* Número do pedido */}
-              <span 
-                className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/dashboard/pedido/${pedido.id}/view`);
-                }}
-              >
-                {formatarNumeroPedidoMensal(pedido.numero_mes, pedido.mes_vigencia, pedido.numero_pedido)}
-              </span>
               
               {/* Nome do cliente */}
               <h3 
@@ -675,10 +664,6 @@ export function PedidoCard({
               
               {/* Tags/Badges */}
               <div className="flex items-center gap-1">
-                {temPintura && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
-                    <Paintbrush className="h-2.5 w-2.5" />
-                  </Badge>}
-                
                 {isInstalacao && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5" />
                   </Badge>}
