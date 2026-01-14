@@ -8,12 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2, Palette } from "lucide-react";
+import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2, Palette, TrendingUp } from "lucide-react";
 import { useVendasCatalogo, ProdutoCatalogoInput } from "@/hooks/useVendasCatalogo";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useCatalogoUpload } from "@/hooks/useCatalogoUpload";
+import { TabelaProdutosVendidos } from "@/components/vendas/TabelaProdutosVendidos";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function VendasCatalogo() {
   const navigate = useNavigate();
@@ -404,6 +407,22 @@ export default function VendasCatalogo() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Seção de Produtos Mais Vendidos no Mês */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Produtos Mais Vendidos - {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
+          </CardTitle>
+          <CardDescription>
+            Ranking de produtos por quantidade vendida no mês atual
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TabelaProdutosVendidos />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
