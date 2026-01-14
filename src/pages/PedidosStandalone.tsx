@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, LayoutGrid, List, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, ArrowLeft, LogOut } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, ArrowLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
@@ -35,7 +35,7 @@ export default function PedidosStandalone() {
   
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const viewMode = 'list';
   const [tipoEntrega, setTipoEntrega] = useState('todos');
   const [corPintura, setCorPintura] = useState('todas');
   const [mostrarProntos, setMostrarProntos] = useState(false);
@@ -211,16 +211,6 @@ export default function PedidosStandalone() {
               <Factory className="h-4 w-4" />
               <span className="hidden lg:inline">Interface de Produção</span>
               <span className="lg:hidden hidden sm:inline">Produção</span>
-            </Button>
-          </div>
-
-          {/* Controles de visualização */}
-          <div className="flex items-center gap-1 border rounded-md p-1">
-            <Button size="icon" variant={viewMode === 'grid' ? 'default' : 'ghost'} onClick={() => setViewMode('grid')} title="Visualização em grade" className="h-8 w-8">
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant={viewMode === 'list' ? 'default' : 'ghost'} onClick={() => setViewMode('list')} title="Visualização em lista" className="h-8 w-8">
-              <List className="h-4 w-4" />
             </Button>
           </div>
         </div>
