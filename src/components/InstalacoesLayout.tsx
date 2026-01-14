@@ -1,11 +1,14 @@
 import { ReactNode } from "react";
-import { InstalacoesSidebar } from "./InstalacoesSidebar";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
-import { LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate, useLocation } from "react-router-dom";
+import { LogOut, Wrench, ArrowLeft } from "lucide-react";
+import { 
+  SidebarProvider, 
+  SidebarInset, 
+  SidebarTrigger
+} from "@/components/ui/sidebar";
+import { InstalacoesSidebar } from "@/components/InstalacoesSidebar";
 
 interface InstalacoesLayoutProps {
   children: ReactNode;
@@ -13,17 +16,17 @@ interface InstalacoesLayoutProps {
 }
 
 export function InstalacoesLayout({ children, title = "Instalações" }: InstalacoesLayoutProps) {
-  const { user, userRole, signOut } = useAuth();
+  const { userRole, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await signOut();
     navigate("/auth");
   };
 
-  const getUserInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase();
-  };
+  // Verifica se está na home de instalações
+  const isInstalacoesHome = location.pathname === '/instalacoes' || location.pathname === '/instalacoes/';
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -31,42 +34,40 @@ export function InstalacoesLayout({ children, title = "Instalações" }: Instala
         <InstalacoesSidebar />
 
         <SidebarInset className="flex-1 flex flex-col">
-          <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
-            <div className="h-12 flex items-center justify-between px-4 w-full">
-              <div className="flex items-center">
+          <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
+            <div className="flex items-center justify-between px-4 h-14">
+              <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
-                <div className="h-4 w-px bg-border mx-3" />
-                <h1 className="text-lg font-semibold">{title}</h1>
+                <div className="h-4 w-px bg-border mx-1" />
+                {!isInstalacoesHome ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/instalacoes')}
+                    className="gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">Voltar</span>
+                  </Button>
+                ) : (
+                  <>
+                    <Wrench className="h-5 w-5 text-primary" />
+                    <span className="font-semibold text-lg">{title}</span>
+                  </>
+                )}
               </div>
-              
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={userRole?.foto_perfil_url} alt="Foto de perfil" />
-                    <AvatarFallback className="text-xs">
-                      {getUserInitials(user?.email || '')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden md:flex flex-col text-sm">
-                    <span className="font-medium leading-none">{user?.email}</span>
-                    <span className="text-xs text-muted-foreground capitalize leading-none mt-1">
-                      {userRole?.role?.replace("_", " ")}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button variant="ghost" size="sm" onClick={handleLogout}>
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
+                {userRole && (
+                  <span className="text-sm text-muted-foreground hidden sm:block">
+                    {userRole.nome}
+                  </span>
+                )}
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-          </div>
+          </header>
 
           <main className="flex-1 p-4 sm:p-6">
             {children}
