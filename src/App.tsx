@@ -125,6 +125,7 @@ import FolhaPagamentoNova from "./pages/FolhaPagamentoNova";
 import SolicitacoesMudancaCadastro from "./pages/SolicitacoesMudancaCadastro";
 // Etiquetas removido - funcionalidade movida para página de Ordens
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
+import ForbiddenProducao from "./pages/producao/ForbiddenProducao";
 import ProducaoTerceirizacao from "./pages/ProducaoTerceirizacao";
 import { ProducaoAuthProvider } from "@/hooks/useProducaoAuth";
 import { ProducaoLayout } from "@/components/ProducaoLayout";
@@ -291,6 +292,7 @@ const App = () => (
 
                 {/* Rotas de Produção */}
                 <Route path="/hub-fabrica/login" element={<ProducaoLogin />} />
+                <Route path="/hub-fabrica/forbidden" element={<ForbiddenProducao />} />
                 <Route
                   path="/producao/*"
                   element={
