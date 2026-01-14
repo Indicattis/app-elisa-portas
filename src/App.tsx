@@ -69,6 +69,8 @@ import MapaAutorizados from "./pages/MapaAutorizados";
 import ContadorVendas from "./pages/ContadorVendas";
 import Forbidden from "./pages/Forbidden";
 import Pedidos from "./pages/Pedidos";
+import HubFabrica from "./pages/HubFabrica";
+import PedidosStandalone from "./pages/PedidosStandalone";
 import PedidoPreparacao from "./pages/PedidoPreparacao";
 import TvDashboard from "./pages/TvDashboard";
 import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
@@ -275,6 +277,24 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
+
+                {/* Hub da Fábrica */}
+                <Route
+                  path="/hub-fabrica"
+                  element={
+                    <ProtectedRoute>
+                      <HubFabrica />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pedidos"
+                  element={
+                    <ProtectedRoute>
+                      <PedidosStandalone />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Rotas de Produção */}
                 <Route path="/producao/login" element={<ProducaoLogin />} />
