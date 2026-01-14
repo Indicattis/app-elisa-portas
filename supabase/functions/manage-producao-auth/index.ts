@@ -153,7 +153,40 @@ Deno.serve(async (req) => {
     let authUser
 
     if (existingUser) {
-      // Atualizar senha e confirmar email
+      // Verificar se é um administrador (role admin, gestor, atendente, gerente)
+      // Administradores devem usar o login padrão em /auth para não ter senha sobrescrita
+      const rolesAdmin = ['admin', 'gestor', 'atendente', 'gerente']
+      const isAdmin = rolesAdmin.includes(adminUser.role)
+
+      if (isAdmin) {
+        console.log('[AUDIT] Usuário administrativo detectado, redirecionando para login padrão:', email)
+        
+        // Apenas atualizar metadados, NÃO alterar senha
+        await supabaseAdmin.auth.admin.updateUserById(
+          existingUser.id,
+          {
+            email_confirm: true,
+            user_metadata: {
+              nome: adminUser.nome,
+              cpf_ultimos_4: cpf_ultimos_4,
+              setor: adminUser.setor || 'fabrica'
+            }
+          }
+        )
+
+        // Retornar indicando que admin deve usar login normal
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            isAdmin: true,
+            email: email,
+            message: 'Usuários administrativos devem usar o login padrão',
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Para usuários da fábrica, manter comportamento atual (atualizar senha)
       const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
         existingUser.id,
         {
