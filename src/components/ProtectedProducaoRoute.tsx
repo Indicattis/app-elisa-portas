@@ -18,7 +18,7 @@ export function ProtectedProducaoRoute({ children }: ProtectedProducaoRouteProps
   }
 
   if (!user) {
-    return <Navigate to="/producao/login" state={{ from: location }} replace />;
+    return <Navigate to="/hub-fabrica/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

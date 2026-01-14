@@ -207,7 +207,7 @@ export default function PedidosStandalone() {
               <span className="hidden sm:inline">Atualizar</span>
             </Button>
             
-            <Button variant="outline" onClick={() => navigate('/producao/login')} className="gap-2" size="sm">
+            <Button variant="outline" onClick={() => navigate('/hub-fabrica/login')} className="gap-2" size="sm">
               <Factory className="h-4 w-4" />
               <span className="hidden lg:inline">Interface de Produção</span>
               <span className="lg:hidden hidden sm:inline">Produção</span>

@@ -101,10 +101,10 @@ export default function HubFabrica() {
     try {
       await supabase.auth.signOut();
       setUser(null);
-      navigate("/producao/login", { replace: true });
+      navigate("/hub-fabrica/login", { replace: true });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      navigate("/producao/login", { replace: true });
+      navigate("/hub-fabrica/login", { replace: true });
     }
   };
 
@@ -117,7 +117,7 @@ export default function HubFabrica() {
   }
 
   if (!user) {
-    return <Navigate to="/producao/login" replace />;
+    return <Navigate to="/hub-fabrica/login" replace />;
   }
 
   return (
