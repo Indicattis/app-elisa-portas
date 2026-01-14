@@ -10,26 +10,39 @@ export interface ProdutoVendidoMes {
   valor_total: number;
 }
 
-export function useProdutosVendidosMes() {
+export interface UseProdutosVendidosMesParams {
+  dataInicio?: Date;
+  dataFim?: Date;
+  atendenteId?: string;
+}
+
+export function useProdutosVendidosMes(params: UseProdutosVendidosMesParams = {}) {
   const hoje = new Date();
-  const inicioMes = startOfMonth(hoje).toISOString();
-  const fimMes = endOfMonth(hoje).toISOString();
+  const inicioMes = params.dataInicio ? params.dataInicio.toISOString() : startOfMonth(hoje).toISOString();
+  const fimMes = params.dataFim ? params.dataFim.toISOString() : endOfMonth(hoje).toISOString();
+  const atendenteId = params.atendenteId;
 
   return useQuery({
-    queryKey: ["produtos-catalogo-vendidos-mes", inicioMes],
+    queryKey: ["produtos-catalogo-vendidos-mes", inicioMes, fimMes, atendenteId],
     queryFn: async () => {
-      // Buscar produtos vendidos no mês atual que têm vínculo com o catálogo
-      const { data: produtosVendas, error } = await supabase
+      // Buscar produtos vendidos no período que têm vínculo com o catálogo
+      let query = supabase
         .from("produtos_vendas")
         .select(`
           vendas_catalogo_id,
           quantidade,
           valor_total,
-          vendas!inner(data_venda)
+          vendas!inner(data_venda, atendente_id)
         `)
         .not("vendas_catalogo_id", "is", null)
         .gte("vendas.data_venda", inicioMes)
         .lte("vendas.data_venda", fimMes);
+
+      if (atendenteId && atendenteId !== "todos") {
+        query = query.eq("vendas.atendente_id", atendenteId);
+      }
+
+      const { data: produtosVendas, error } = await query;
 
       if (error) throw error;
 

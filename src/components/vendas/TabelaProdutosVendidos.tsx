@@ -11,6 +11,12 @@ import { useProdutosVendidosMes } from "@/hooks/useProdutosVendidosMes";
 import { Trophy, Medal, Award, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+interface TabelaProdutosVendidosProps {
+  dataInicio?: Date;
+  dataFim?: Date;
+  atendenteId?: string;
+}
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -31,8 +37,8 @@ function RankingIcon({ position }: { position: number }) {
   return <span className="text-muted-foreground text-sm">{position}</span>;
 }
 
-export function TabelaProdutosVendidos() {
-  const { data: produtos, isLoading } = useProdutosVendidosMes();
+export function TabelaProdutosVendidos({ dataInicio, dataFim, atendenteId }: TabelaProdutosVendidosProps) {
+  const { data: produtos, isLoading } = useProdutosVendidosMes({ dataInicio, dataFim, atendenteId });
 
   if (isLoading) {
     return (

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2, Palette, TrendingUp } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { ShoppingCart, Plus, Pencil, Trash2, Star, Package, Upload, X, Loader2, Palette, TrendingUp, CalendarIcon, RotateCcw } from "lucide-react";
 import { useVendasCatalogo, ProdutoCatalogoInput } from "@/hooks/useVendasCatalogo";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useCatalogoUpload } from "@/hooks/useCatalogoUpload";
 import { TabelaProdutosVendidos } from "@/components/vendas/TabelaProdutosVendidos";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 export default function VendasCatalogo() {
   const navigate = useNavigate();
@@ -28,6 +33,14 @@ export default function VendasCatalogo() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Filtros para produtos mais vendidos
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
+  const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
+  const [atendentes, setAtendentes] = useState<{ user_id: string; nome: string }[]>([]);
+  
   const { produtos, isLoading, adicionarProduto, editarProduto, inativarProduto } = useVendasCatalogo({
     busca: busca || undefined,
     categoria: categoriaFiltro || undefined,
@@ -36,6 +49,18 @@ export default function VendasCatalogo() {
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias(categoriaSelecionada || undefined);
   const uploadMutation = useCatalogoUpload();
+
+  useEffect(() => {
+    const fetchAtendentes = async () => {
+      const { data } = await supabase
+        .from('admin_users')
+        .select('user_id, nome')
+        .eq('ativo', true)
+        .order('nome');
+      if (data) setAtendentes(data);
+    };
+    fetchAtendentes();
+  }, []);
 
   const [formData, setFormData] = useState<ProdutoCatalogoInput>({
     nome_produto: "",
@@ -411,16 +436,93 @@ export default function VendasCatalogo() {
       {/* Seção de Produtos Mais Vendidos no Mês */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Produtos Mais Vendidos - {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
-          </CardTitle>
-          <CardDescription>
-            Ranking de produtos por quantidade vendida no mês atual
-          </CardDescription>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Produtos Mais Vendidos
+              </CardTitle>
+              <CardDescription>
+                Ranking de produtos por quantidade vendida no período selecionado
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Date Range Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "justify-start text-left font-normal min-w-[240px]",
+                      !dateRange && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "dd/MM/yyyy")
+                      )
+                    ) : (
+                      <span>Selecione o período</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {/* Seller Select */}
+              <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os vendedores</SelectItem>
+                  {atendentes.map((atendente) => (
+                    <SelectItem key={atendente.user_id} value={atendente.user_id}>
+                      {atendente.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Reset Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setDateRange({
+                    from: startOfMonth(new Date()),
+                    to: endOfMonth(new Date())
+                  });
+                  setSelectedAtendente("todos");
+                }}
+                title="Limpar filtros"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <TabelaProdutosVendidos />
+          <TabelaProdutosVendidos
+            dataInicio={dateRange?.from}
+            dataFim={dateRange?.to}
+            atendenteId={selectedAtendente}
+          />
         </CardContent>
       </Card>
 
