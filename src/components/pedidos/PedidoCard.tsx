@@ -640,29 +640,16 @@ export function PedidoCard({
   if (viewMode === 'list') {
     return <>
         <Card 
-          className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing", (emBacklog || temHistoricoBacklog) && "border-l-4 border-l-red-500")} 
+          className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing")}
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_16px_70px_minmax(150px,1fr)_80px_60px_90px_90px_100px_auto] items-center gap-3 h-full px-4">
+            <div className="grid grid-cols-[24px_70px_minmax(150px,1fr)_80px_60px_90px_90px_100px_auto] items-center gap-3 h-full px-4">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>}
               
-              {/* Backlog indicator */}
-              <div className="w-4">
-                {(emBacklog || temHistoricoBacklog) && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{emBacklog ? 'Pedido está em backlog' : 'Pedido teve registro de backlog no histórico'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
               
               {/* Número do pedido */}
               <span 
