@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { LogOut, Wrench, ArrowLeft } from "lucide-react";
 import { 
   SidebarProvider, 
@@ -18,15 +18,11 @@ interface InstalacoesLayoutProps {
 export function InstalacoesLayout({ children, title = "Instalações" }: InstalacoesLayoutProps) {
   const { userRole, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLogout = async () => {
     await signOut();
     navigate("/auth");
   };
-
-  // Verifica se está na home de instalações
-  const isInstalacoesHome = location.pathname === '/instalacoes' || location.pathname === '/instalacoes/';
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -36,25 +32,18 @@ export function InstalacoesLayout({ children, title = "Instalações" }: Instala
         <SidebarInset className="flex-1 flex flex-col">
           <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
             <div className="flex items-center justify-between px-4 h-14">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <SidebarTrigger className="-ml-1" />
-                <div className="h-4 w-px bg-border mx-1" />
-                {!isInstalacoesHome ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/instalacoes')}
-                    className="gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline">Voltar</span>
-                  </Button>
-                ) : (
-                  <>
-                    <Wrench className="h-5 w-5 text-primary" />
-                    <span className="font-semibold text-lg">{title}</span>
-                  </>
-                )}
+                <div className="h-4 w-px bg-border" />
+                <Button variant="ghost" size="sm" onClick={() => navigate('/hub-fabrica')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar
+                </Button>
+                <div className="h-4 w-px bg-border" />
+                <div className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5 text-primary" />
+                  <span className="font-semibold hidden sm:block">{title}</span>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 {userRole && (
