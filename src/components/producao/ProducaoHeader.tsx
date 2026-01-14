@@ -42,7 +42,8 @@ export function ProducaoHeader() {
             className="gap-2"
           >
             <Factory className="h-4 w-4" />
-            <span className="hidden sm:inline">Hub</span>
+            <span className="hidden lg:inline">Hub da Fábrica</span>
+            <span className="lg:hidden hidden sm:inline">Hub</span>
           </Button>
           <span className="text-sm text-muted-foreground hidden sm:block">
             {user.nome}
