@@ -290,7 +290,7 @@ const App = () => (
                 />
 
                 {/* Rotas de Produção */}
-                <Route path="/producao/login" element={<ProducaoLogin />} />
+                <Route path="/hub-fabrica/login" element={<ProducaoLogin />} />
                 <Route
                   path="/producao/*"
                   element={
