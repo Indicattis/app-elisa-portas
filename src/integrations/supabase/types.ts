@@ -6177,6 +6177,14 @@ export type Database = {
       get_pedidos_na_fila: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_hoje: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_mes: { Args: never; Returns: number }
+      get_portas_por_etapa_hoje: {
+        Args: never
+        Returns: {
+          portas_perfiladas: number
+          portas_separadas: number
+          portas_soldadas: number
+        }[]
+      }
       get_ranking_perfiladeira_mes: {
         Args: never
         Returns: {
