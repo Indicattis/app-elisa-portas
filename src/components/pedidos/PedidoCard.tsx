@@ -2,6 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -296,7 +297,16 @@ export function PedidoCard({
   });
   const coresUnicas = Array.from(coresUnicasMap.values());
 
-  // Função para verificar se é aço galvanizado
+  // Extrair dados do atendente/criador da venda
+  const atendente = venda?.atendente;
+  const atendenteNome = atendente?.nome || 'Desconhecido';
+  const atendenteFoto = atendente?.foto_perfil_url;
+  const atendenteIniciais = atendenteNome
+    .split(' ')
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
   const isAcoGalvanizado = (corNome: string) => {
     const normalized = corNome.toLowerCase().trim();
     return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
@@ -677,6 +687,23 @@ export function PedidoCard({
                     )}
                   </>
                 )}
+              </div>
+              
+              {/* Vendedor */}
+              <div className="flex items-center justify-center">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={atendenteFoto} alt={atendenteNome} />
+                      <AvatarFallback className="text-[10px] bg-muted">
+                        {atendenteIniciais}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Vendedor: {atendenteNome}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               
               {/* Data de Entrega */}
