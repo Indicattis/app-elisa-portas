@@ -7,8 +7,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProdutosVendidosMes, getTipoProdutoLabel } from "@/hooks/useProdutosVendidosMes";
+import { useProdutosVendidosMes } from "@/hooks/useProdutosVendidosMes";
 import { Trophy, Medal, Award, Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
@@ -47,7 +48,7 @@ export function TabelaProdutosVendidos() {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <Package className="h-12 w-12 mb-2 opacity-50" />
-        <p>Nenhuma venda registrada este mês</p>
+        <p>Nenhum produto do catálogo vendido este mês</p>
       </div>
     );
   }
@@ -59,22 +60,28 @@ export function TabelaProdutosVendidos() {
           <TableRow>
             <TableHead className="w-[50px]">#</TableHead>
             <TableHead>Produto</TableHead>
-            <TableHead>Tipo</TableHead>
+            <TableHead>Categoria</TableHead>
             <TableHead className="text-right">Qtd</TableHead>
             <TableHead className="text-right">Valor Total</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {produtos.map((produto, index) => (
-            <TableRow key={`${produto.nome_produto}-${produto.tipo_produto}`}>
+            <TableRow key={produto.catalogo_id}>
               <TableCell className="font-medium">
                 <div className="flex items-center justify-center w-6">
                   <RankingIcon position={index + 1} />
                 </div>
               </TableCell>
               <TableCell className="font-medium">{produto.nome_produto}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {getTipoProdutoLabel(produto.tipo_produto)}
+              <TableCell>
+                {produto.categoria ? (
+                  <Badge variant="outline" className="text-xs">
+                    {produto.categoria}
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground text-sm">-</span>
+                )}
               </TableCell>
               <TableCell className="text-right font-semibold">
                 {produto.quantidade_total}
