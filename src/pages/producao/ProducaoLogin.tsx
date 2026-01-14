@@ -53,7 +53,7 @@ export default function ProducaoLogin() {
         toast({
           title: "Erro de autenticação",
           description: errorMessage === 'Usuário não encontrado' 
-            ? "CPF não encontrado ou usuário inativo/não pertence à produção"
+            ? "CPF não encontrado ou usuário inativo"
             : "Não foi possível configurar credenciais. Tente novamente.",
           variant: "destructive",
         });
@@ -105,7 +105,7 @@ export default function ProducaoLogin() {
             <img src={logoDark} alt="Logo" className="h-16" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">Interface de Produção</CardTitle>
+            <CardTitle className="text-2xl font-bold">Hub da Fábrica</CardTitle>
             <CardDescription className="text-base mt-2">
               Informe os últimos 4 dígitos do seu CPF para acessar
             </CardDescription>

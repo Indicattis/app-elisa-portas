@@ -92,15 +92,13 @@ Deno.serve(async (req) => {
       }
     )
 
-    // Buscar apenas usuários da fábrica/instalações (NÃO administradores)
+    // Buscar todos os usuários ativos com CPF cadastrado
     console.log('Buscando usuário com CPF terminando em:', cpf_ultimos_4)
     
     const { data: adminUsers, error: adminError } = await supabaseAdmin
       .from('admin_users')
       .select('*')
       .eq('ativo', true)
-      .in('setor', ['fabrica', 'instalacoes'])
-      .not('role', 'in', '("administrador","gerente_comercial","gerente_financeiro")')
 
     console.log('Usuários encontrados:', adminUsers?.length || 0)
 
@@ -125,22 +123,9 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'Usuário não encontrado', 
-          message: 'CPF não encontrado ou usuário inativo/não pertence à produção' 
+          message: 'CPF não encontrado ou usuário inativo' 
         }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Validação extra: verificar se não é um cargo protegido
-    const rolesProtegidos = ['administrador', 'gerente_comercial', 'gerente_financeiro']
-    if (rolesProtegidos.includes(adminUser.role)) {
-      console.log('Tentativa de login bloqueada para cargo protegido:', adminUser.role)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Acesso negado', 
-          message: 'Este usuário deve acessar pelo login principal em /auth' 
-        }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
