@@ -278,15 +278,8 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
 
-                {/* Hub da Fábrica */}
-                <Route
-                  path="/hub-fabrica"
-                  element={
-                    <ProtectedRoute>
-                      <HubFabrica />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Hub da Fábrica - usa autenticação própria com CPF */}
+                <Route path="/hub-fabrica" element={<HubFabrica />} />
                 <Route
                   path="/pedidos"
                   element={
