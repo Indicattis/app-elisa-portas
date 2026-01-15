@@ -134,6 +134,7 @@ import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import ProducaoHome from "./pages/ProducaoHome";
+import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
 import Ordens from "./pages/Ordens";
 import AdminHome from "./pages/admin/AdminHome";
@@ -388,6 +389,16 @@ const App = () => (
                             <ProtectedProducaoRoute>
                               <ProducaoLayout>
                                 <PedidoView />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/meu-historico"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoMeuHistorico />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }
