@@ -82,6 +82,7 @@ export default function ProducaoPerfiladeira() {
         tipoOrdem="perfiladeira"
         onRefresh={handleRefresh}
         currentUserId={user?.user_id}
+        currentUserRole={user?.role}
       />
 
       <OrdemDetalhesSheet

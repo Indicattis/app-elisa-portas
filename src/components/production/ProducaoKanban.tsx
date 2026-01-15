@@ -81,6 +81,7 @@ interface OrdemCardProps {
   onCapturarOrdem?: (ordemId: string) => void;
   isCapturing?: boolean;
   currentUserId?: string;
+  currentUserRole?: string;
 }
 
 function OrdemCard({
@@ -90,6 +91,7 @@ function OrdemCard({
   onCapturarOrdem,
   isCapturing = false,
   currentUserId,
+  currentUserRole,
 }: OrdemCardProps) {
   const [backlogModalOpen, setBacklogModalOpen] = useState(false);
   const linhas = ordem.linhas || [];
@@ -115,15 +117,20 @@ function OrdemCard({
   };
 
   const handleCardClick = () => {
-    // Somente o responsável pode abrir a downbar
-    if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
-      toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
-      return;
-    }
+    const isAdmin = currentUserRole === 'administrador';
     
-    if (!ordem.responsavel_id) {
-      toast.info("Capture a ordem primeiro para acessar os detalhes");
-      return;
+    // Administradores podem abrir qualquer ordem
+    if (!isAdmin) {
+      // Somente o responsável pode abrir a downbar
+      if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
+        toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
+        return;
+      }
+      
+      if (!ordem.responsavel_id) {
+        toast.info("Capture a ordem primeiro para acessar os detalhes");
+        return;
+      }
     }
     
     onOrdemClick(ordem);
@@ -343,6 +350,7 @@ interface ProducaoKanbanProps {
   tipoOrdem: TipoOrdem;
   onRefresh?: () => void;
   currentUserId?: string;
+  currentUserRole?: string;
 }
 
 export function ProducaoKanban({
@@ -354,6 +362,7 @@ export function ProducaoKanban({
   tipoOrdem,
   onRefresh,
   currentUserId,
+  currentUserRole,
 }: ProducaoKanbanProps) {
 
   const renderSkeletons = () => (
@@ -406,6 +415,7 @@ export function ProducaoKanban({
               onCapturarOrdem={onCapturarOrdem}
               isCapturing={isCapturing}
               currentUserId={currentUserId}
+              currentUserRole={currentUserRole}
             />
           ))
         ) : (
