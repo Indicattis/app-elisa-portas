@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus } from "lucide-react";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,9 +20,10 @@ import { VisualizarBacklogModal } from "./VisualizarBacklogModal";
 import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
 import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
 import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
+import { RemoverResponsavelModal } from "./RemoverResponsavelModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -63,6 +64,8 @@ export function PedidoCard({
   const [showArquivar, setShowArquivar] = useState(false);
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
   const [showConfirmarExpedicao, setShowConfirmarExpedicao] = useState(false);
+  const [showRemoverResponsavel, setShowRemoverResponsavel] = useState(false);
+  const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
     isAdmin
@@ -72,6 +75,65 @@ export function PedidoCard({
   } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Mutation para remover responsável
+  const removerResponsavelMutation = useMutation({
+    mutationFn: async ({ ordemId, tipoOrdem }: { ordemId: string; tipoOrdem: string }) => {
+      const tabelaMap: Record<string, string> = {
+        soldagem: 'ordens_soldagem',
+        perfiladeira: 'ordens_perfiladeira',
+        separacao: 'ordens_separacao',
+        qualidade: 'ordens_qualidade',
+        pintura: 'ordens_pintura',
+      };
+
+      const tabela = tabelaMap[tipoOrdem];
+      if (!tabela) throw new Error('Tipo de ordem inválido');
+
+      const { error } = await supabase
+        .from(tabela as any)
+        .update({ 
+          responsavel_id: null,
+          status: 'pendente',
+          data_inicio: null,
+        })
+        .eq('id', ordemId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      toast({
+        title: "Responsável removido",
+        description: "O responsável foi removido da ordem com sucesso"
+      });
+      setShowRemoverResponsavel(false);
+      setOrdemParaRemover(null);
+    },
+    onError: (error: any) => {
+      console.error('Erro ao remover responsável:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível remover o responsável",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleRemoverResponsavel = (ordem: any, nomeSetor: string) => {
+    setOrdemParaRemover({ ordem, nomeSetor });
+    setShowRemoverResponsavel(true);
+  };
+
+  const confirmarRemoverResponsavel = () => {
+    if (ordemParaRemover?.ordem?.ordem_id && ordemParaRemover?.ordem?.tipo_ordem) {
+      removerResponsavelMutation.mutate({
+        ordemId: ordemParaRemover.ordem.ordem_id,
+        tipoOrdem: ordemParaRemover.ordem.tipo_ordem,
+      });
+    }
+  };
 
   // Helper component for buttons with tooltips
   const ButtonWithTooltip = ({ 
@@ -401,17 +463,33 @@ export function PedidoCard({
             {avatarContent}
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-[280px] p-3">
-            <div className="flex items-center gap-2 mb-2">
-              {ordem.capturada_por_foto && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={ordem.capturada_por_foto} />
-                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                </Avatar>
-              )}
-              <div>
-                <p className="text-xs font-semibold">{ordem.capturada_por_nome || 'Responsável'}</p>
-                <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                {ordem.capturada_por_foto && (
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={ordem.capturada_por_foto} />
+                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                  </Avatar>
+                )}
+                <div>
+                  <p className="text-xs font-semibold">{ordem.capturada_por_nome || 'Responsável'}</p>
+                  <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
+                </div>
               </div>
+              {isAdmin && ordem.ordem_id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoverResponsavel(ordem, nomeSetor);
+                  }}
+                  title="Remover responsável"
+                >
+                  <UserMinus className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
             
             {temLinhasConcluidas ? (
@@ -1366,6 +1444,16 @@ export function PedidoCard({
         onConfirmar={handleConfirmarExpedicao} 
         pedido={pedido} 
         etapaAtual={config?.label || ''} 
+      />
+
+      <RemoverResponsavelModal
+        open={showRemoverResponsavel}
+        onOpenChange={setShowRemoverResponsavel}
+        onConfirm={confirmarRemoverResponsavel}
+        responsavelNome={ordemParaRemover?.ordem?.capturada_por_nome}
+        responsavelFoto={ordemParaRemover?.ordem?.capturada_por_foto}
+        nomeSetor={ordemParaRemover?.nomeSetor || ''}
+        isLoading={removerResponsavelMutation.isPending}
       />
     </>;
 }

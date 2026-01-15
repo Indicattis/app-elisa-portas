@@ -201,6 +201,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             
             return {
               existe: !!result.data,
+              ordem_id: ordemId,
+              tipo_ordem: tipoOrdem,
               status: result.data?.status || null,
               capturada: !!responsavelId,
               capturada_por_foto: responsavelInfo.foto,
@@ -1069,6 +1071,54 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     }
   });
 
+  // Remover responsável de uma ordem
+  const removerResponsavelOrdem = useMutation({
+    mutationFn: async ({ ordemId, tipoOrdem }: { ordemId: string; tipoOrdem: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Mapear tipo de ordem para tabela
+      const tabelaMap: Record<string, string> = {
+        soldagem: 'ordens_soldagem',
+        perfiladeira: 'ordens_perfiladeira',
+        separacao: 'ordens_separacao',
+        qualidade: 'ordens_qualidade',
+        pintura: 'ordens_pintura',
+      };
+
+      const tabela = tabelaMap[tipoOrdem];
+      if (!tabela) throw new Error('Tipo de ordem inválido');
+
+      // Atualizar a ordem removendo o responsável e voltando status para pendente
+      const { error } = await supabase
+        .from(tabela as any)
+        .update({ 
+          responsavel_id: null,
+          status: 'pendente',
+          data_inicio: null,
+        })
+        .eq('id', ordemId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      toast({
+        title: "Responsável removido",
+        description: "O responsável foi removido da ordem com sucesso"
+      });
+    },
+    onError: (error: any) => {
+      console.error('Erro ao remover responsável:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível remover o responsável",
+        variant: "destructive"
+      });
+    }
+  });
+
   return {
     pedidos,
     isLoading,
@@ -1080,5 +1130,6 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     reorganizarPedidos,
     arquivarPedido,
     deletarPedido,
+    removerResponsavelOrdem,
   };
 }
