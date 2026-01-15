@@ -92,6 +92,9 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               id,
               tipo_produto,
               valor_pintura,
+              largura,
+              altura,
+              quantidade,
               cor:catalogo_cores (nome, codigo_hex)
             )
           ),
@@ -105,9 +108,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       if (pedidosError) throw pedidosError;
       if (!pedidosData) return [];
 
-      // Buscar informações de backlog para cada pedido
+      // Buscar informações de backlog e ordens para cada pedido
       const pedidosComBacklog = await Promise.all(
         pedidosData.map(async (pedido) => {
+          // Buscar backlog
           const { data: backlogData } = await supabase
             .from('pedidos_backlog_ativo')
             .select('*')
@@ -123,10 +127,55 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .limit(1)
             .maybeSingle();
 
+          // Buscar status das ordens de produção
+          const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
+            supabase
+              .from('ordens_soldagem')
+              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_soldagem_capturada_por_fkey(foto_perfil_url)')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_perfiladeira')
+              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_perfiladeira_capturada_por_fkey(foto_perfil_url)')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_separacao')
+              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_separacao_capturada_por_fkey(foto_perfil_url)')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_qualidade')
+              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_qualidade_capturada_por_fkey(foto_perfil_url)')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_pintura')
+              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_pintura_capturada_por_fkey(foto_perfil_url)')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+          ]);
+
+          const buildOrdemStatus = (result: any) => ({
+            existe: !!result.data,
+            status: result.data?.status || null,
+            capturada: !!result.data?.capturada_por,
+            capturada_por_foto: result.data?.capturada_por_usuario?.foto_perfil_url || null,
+            pausada: result.data?.pausada || false,
+            justificativa_pausa: result.data?.justificativa_pausa || null,
+          });
+
           return {
             ...pedido,
             backlog: backlogData ? [backlogData] : [],
-            tem_historico_backlog: !!historicoBacklog
+            tem_historico_backlog: !!historicoBacklog,
+            ordens: {
+              soldagem: buildOrdemStatus(soldagem),
+              perfiladeira: buildOrdemStatus(perfiladeira),
+              separacao: buildOrdemStatus(separacao),
+              qualidade: buildOrdemStatus(qualidade),
+              pintura: buildOrdemStatus(pintura),
+            }
           };
         })
       );

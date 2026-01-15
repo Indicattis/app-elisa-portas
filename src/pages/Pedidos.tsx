@@ -146,6 +146,16 @@ export default function Pedidos() {
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
 
+  // Calcular total de portas de enrolar na etapa
+  const totalPortasEtapa = useMemo(() => {
+    return pedidosFiltrados.reduce((total, pedido: any) => {
+      const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+      const produtos = vendaData?.produtos_vendas || [];
+      const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
+      return total + portasEnrolar.reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
+    }, 0);
+  }, [pedidosFiltrados]);
+
   // Resetar página quando filtros mudarem
   useEffect(() => {
     setPaginaAtual(1);
@@ -267,6 +277,11 @@ export default function Pedidos() {
                       {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
                       {totalPaginas > 1 && ` (Página ${paginaAtual} de ${totalPaginas})`}
                     </span>
+                    {totalPortasEtapa > 0 && (
+                      <Badge variant="secondary" className="text-xs ml-2">
+                        🚪 {totalPortasEtapa} {totalPortasEtapa === 1 ? 'porta' : 'portas'}
+                      </Badge>
+                    )}
                   </CardTitle>
                   
                   {/* Filtros minimalistas */}

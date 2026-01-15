@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles } from "lucide-react";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -310,6 +310,99 @@ export function PedidoCard({
   const isAcoGalvanizado = (corNome: string) => {
     const normalized = corNome.toLowerCase().trim();
     return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
+  };
+
+  // Calcular quantidade de portas P (pequenas ≤25m²) e G (grandes >25m²)
+  const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
+  const portasPequenas = portasEnrolar.reduce((acc: number, p: any) => {
+    const area = ((p.largura || 0) * (p.altura || 0)) / 1000000; // converter mm² para m²
+    if (area <= 25) {
+      return acc + (p.quantidade || 1);
+    }
+    return acc;
+  }, 0);
+  const portasGrandes = portasEnrolar.reduce((acc: number, p: any) => {
+    const area = ((p.largura || 0) * (p.altura || 0)) / 1000000; // converter mm² para m²
+    if (area > 25) {
+      return acc + (p.quantidade || 1);
+    }
+    return acc;
+  }, 0);
+
+  // Status das ordens de produção
+  const ordens = pedido.ordens || {
+    soldagem: { existe: false, status: null, capturada: false, pausada: false },
+    perfiladeira: { existe: false, status: null, capturada: false, pausada: false },
+    separacao: { existe: false, status: null, capturada: false, pausada: false },
+    qualidade: { existe: false, status: null, capturada: false, pausada: false },
+    pintura: { existe: false, status: null, capturada: false, pausada: false },
+  };
+
+  // Helper para renderizar status de uma ordem
+  const getStatusBorder = (status: string | null, pausada: boolean) => {
+    if (pausada) {
+      return "border-2 border-orange-500";
+    }
+    switch (status) {
+      case "concluido":
+      case "pronta":
+        return "border border-green-500";
+      case "em_andamento":
+        return "border-2 border-yellow-500";
+      case "pendente":
+        return "border-2 border-gray-400";
+      default:
+        return "border-2 border-gray-300";
+    }
+  };
+
+  const renderOrdemStatus = (ordem: any) => {
+    if (!ordem?.existe) {
+      return <span className="text-gray-300 text-[10px]">—</span>;
+    }
+
+    if (ordem.pausada) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`h-5 w-5 rounded-full ${getStatusBorder(ordem.status, ordem.pausada)} bg-orange-500/10 flex items-center justify-center cursor-help`}>
+              <PauseCircle className="h-3 w-3 text-orange-600" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs font-medium">Pausada</p>
+            {ordem.justificativa_pausa && (
+              <p className="text-xs text-muted-foreground">{ordem.justificativa_pausa}</p>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    if (ordem.capturada && ordem.capturada_por_foto) {
+      return (
+        <Avatar className={`h-5 w-5 ${getStatusBorder(ordem.status, false)}`}>
+          <AvatarImage src={ordem.capturada_por_foto} />
+          <AvatarFallback className="text-[8px]">
+            <User className="h-2.5 w-2.5" />
+          </AvatarFallback>
+        </Avatar>
+      );
+    }
+
+    if (ordem.capturada) {
+      return (
+        <div className={`h-5 w-5 rounded-full ${getStatusBorder(ordem.status, false)} bg-secondary flex items-center justify-center`}>
+          <User className="h-2.5 w-2.5" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="h-5 w-5 rounded-full bg-yellow-500/10 flex items-center justify-center">
+        <AlertCircle className="h-3.5 w-3.5 text-yellow-600" />
+      </div>
+    );
   };
 
   // Componente para renderizar círculo de cor
@@ -647,75 +740,123 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_minmax(150px,1fr)_80px_60px_90px_90px_100px_auto] items-center gap-3 h-full px-4">
+            <div className="grid grid-cols-[24px_minmax(100px,120px)_50px_60px_60px_60px_28px_28px_28px_28px_28px_60px_auto] items-center gap-2 h-full px-3">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>}
               
               
-              {/* Nome do cliente */}
-              <h3 
-                className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/dashboard/pedido/${pedido.id}/view`);
-                }}
-              >
-                {venda?.cliente_nome}
-              </h3>
+              {/* Nome do cliente - limitado a 15 caracteres */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h3 
+                    className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/dashboard/pedido/${pedido.id}/view`);
+                    }}
+                  >
+                    {venda?.cliente_nome?.length > 15 
+                      ? `${venda.cliente_nome.substring(0, 15)}...` 
+                      : venda?.cliente_nome}
+                  </h3>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{venda?.cliente_nome}</p>
+                </TooltipContent>
+              </Tooltip>
               
               {/* Tags/Badges */}
               <div className="flex items-center gap-1">
-                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5" />
                   </Badge>}
                 
-                {isEntrega && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                {isEntrega && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                     <Truck className="h-2.5 w-2.5" />
                   </Badge>}
+              </div>
+              
+              {/* Portas P/G */}
+              <div className="flex items-center gap-0.5">
+                {(portasPequenas > 0 || portasGrandes > 0) ? (
+                  <>
+                    {portasPequenas > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30">
+                            P:{portasPequenas}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{portasPequenas} porta(s) pequena(s) (≤25m²)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {portasGrandes > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30">
+                            G:{portasGrandes}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{portasGrandes} porta(s) grande(s) (&gt;25m²)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-gray-300 text-[10px]">—</span>
+                )}
               </div>
               
               {/* Cores */}
               <div className="flex items-center gap-1">
                 {coresUnicas.length > 0 && (
                   <>
-                    {coresUnicas.slice(0, 3).map((cor, idx) => (
-                      <CorCirculo key={idx} cor={cor} size="md" />
+                    {coresUnicas.slice(0, 2).map((cor, idx) => (
+                      <div 
+                        key={idx}
+                        className="h-3 w-3 rounded-full border border-border"
+                        style={{ backgroundColor: isAcoGalvanizado(cor.nome) ? 'transparent' : cor.codigo_hex }}
+                        title={cor.nome}
+                      />
                     ))}
-                    {coresUnicas.length > 3 && (
-                      <span className="text-[9px] text-muted-foreground">+{coresUnicas.length - 3}</span>
+                    {coresUnicas.length > 2 && (
+                      <span className="text-[9px] text-muted-foreground">+{coresUnicas.length - 2}</span>
                     )}
                   </>
                 )}
               </div>
               
-              {/* Vendedor */}
-              <div className="flex items-center justify-center">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={atendenteFoto} alt={atendenteNome} />
-                      <AvatarFallback className="text-[10px] bg-muted">
-                        {atendenteIniciais}
-                      </AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Vendedor: {atendenteNome}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              
               {/* Data de Carregamento */}
-              <div className="text-[10px] text-muted-foreground text-center">
+              <div className="text-[9px] text-muted-foreground text-center">
                 {dataCarregamento ? (
                   <span title="Data de carregamento">
-                    {format(new Date(dataCarregamento), "dd/MM/yyyy")}
+                    {format(new Date(dataCarregamento), "dd/MM")}
                   </span>
                 ) : (
                   <span className="text-muted-foreground/50">-</span>
                 )}
+              </div>
+
+              {/* Colunas de Status das Ordens */}
+              <div className="flex items-center justify-center" title="Soldagem">
+                {renderOrdemStatus(ordens.soldagem)}
+              </div>
+              <div className="flex items-center justify-center" title="Perfiladeira">
+                {renderOrdemStatus(ordens.perfiladeira)}
+              </div>
+              <div className="flex items-center justify-center" title="Separação">
+                {renderOrdemStatus(ordens.separacao)}
+              </div>
+              <div className="flex items-center justify-center" title="Qualidade">
+                {renderOrdemStatus(ordens.qualidade)}
+              </div>
+              <div className="flex items-center justify-center" title="Pintura">
+                {renderOrdemStatus(ordens.pintura)}
               </div>
               
               {/* Tempo na Etapa */}
