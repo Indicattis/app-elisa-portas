@@ -7,6 +7,7 @@ export interface EtiquetaCalculo {
   explicacao: string;
   largura?: number;
   altura?: number;
+  divisor?: number;  // Divisor usado na regra para distribuição de quantidade
 }
 
 export interface PedidoResumo {
@@ -47,4 +48,8 @@ export interface TagProducao extends TagIndividual {
   tipoPintura?: string;
   origemOrdem?: string;
   responsavelNome?: string;
+  // Campos para distribuição de quantidade
+  quantidadeParcial?: number;  // Quantidade específica desta etiqueta
+  quantidadeTotal?: number;    // Quantidade total da linha
+  divisor?: number;            // Divisor usado na regra
 }
