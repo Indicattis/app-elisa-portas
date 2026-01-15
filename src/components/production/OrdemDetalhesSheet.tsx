@@ -824,7 +824,7 @@ export function OrdemDetalhesSheet({
               )}
 
               {/* Botão Aviso de Falta - apenas para separação */}
-              {tipoOrdem === 'separacao' && podeMarcarLinhas && !ordem.pausada && onPausarOrdem && (
+              {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira') && podeMarcarLinhas && !ordem.pausada && onPausarOrdem && (
                 <Button
                   variant="destructive"
                   className="w-full"
@@ -866,18 +866,18 @@ export function OrdemDetalhesSheet({
         )}
 
         {/* Modal de Aviso de Falta */}
-        {tipoOrdem === 'separacao' && ordem && onPausarOrdem && (
-          <AvisoFaltaModal
-            open={avisoFaltaModalOpen}
-            onOpenChange={setAvisoFaltaModalOpen}
-            numeroOrdem={ordem.numero_ordem}
-            onConfirm={async (justificativa) => {
-              await onPausarOrdem(ordem.id, justificativa);
-              onOpenChange(false);
-            }}
-            isPausing={isPausing}
-          />
-        )}
+      {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira') && ordem && onPausarOrdem && (
+        <AvisoFaltaModal
+          open={avisoFaltaModalOpen}
+          onOpenChange={setAvisoFaltaModalOpen}
+          numeroOrdem={ordem.numero_ordem}
+          onConfirm={async (justificativa) => {
+            await onPausarOrdem(ordem.id, justificativa);
+            onOpenChange(false);
+          }}
+          isPausing={isPausing}
+        />
+      )}
       </SheetContent>
     </Sheet>
   );

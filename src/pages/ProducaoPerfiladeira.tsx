@@ -38,6 +38,7 @@ export default function ProducaoPerfiladeira() {
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
+    pausarOrdem,
   } = useOrdemProducao('perfiladeira', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -58,6 +59,11 @@ export default function ProducaoPerfiladeira() {
 
   const handleConcluirOrdem = (ordemId: string) => {
     concluirOrdem.mutate(ordemId);
+    setSheetOpen(false);
+  };
+
+  const handlePausarOrdem = async (ordemId: string, justificativa: string) => {
+    await pausarOrdem.mutateAsync({ ordemId, justificativa });
     setSheetOpen(false);
   };
 
@@ -86,6 +92,8 @@ export default function ProducaoPerfiladeira() {
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
         onCapturarOrdem={handleCapturarOrdem}
+        onPausarOrdem={handlePausarOrdem}
+        isPausing={pausarOrdem.isPending}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
       />

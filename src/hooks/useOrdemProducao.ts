@@ -566,15 +566,17 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
-  // Pausar ordem (Aviso de Falta) - apenas para separação
+  // Pausar ordem (Aviso de Falta) - para separação e perfiladeira
   const pausarOrdem = useMutation({
     mutationFn: async ({ ordemId, justificativa }: { ordemId: string; justificativa: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira';
+
       // Buscar ordem para calcular tempo trabalhado até agora
       const { data: ordem, error: ordemError } = await supabase
-        .from('ordens_separacao')
+        .from(tabelaOrdem)
         .select('capturada_em, tempo_acumulado_segundos')
         .eq('id', ordemId)
         .single();
@@ -594,7 +596,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
       // Atualizar ordem como pausada
       const { error } = await supabase
-        .from('ordens_separacao')
+        .from(tabelaOrdem)
         .update({
           pausada: true,
           pausada_em: new Date().toISOString(),
