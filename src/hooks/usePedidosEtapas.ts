@@ -131,50 +131,76 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
             supabase
               .from('ordens_soldagem')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_soldagem_responsavel_id_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_perfiladeira')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_perfiladeira_responsavel_id_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_separacao')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_separacao_responsavel_id_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_qualidade')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_qualidade_responsavel_id_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_pintura')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_pintura_responsavel_id_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
           ]);
 
-          const buildOrdemStatus = (result: any) => ({
-            existe: !!result.data,
-            status: result.data?.status || null,
-            capturada: !!result.data?.responsavel_id,
-            capturada_por_foto: result.data?.responsavel?.foto_perfil_url || null,
-            pausada: result.data?.pausada || false,
-            justificativa_pausa: result.data?.justificativa_pausa || null,
-          });
+          // Função auxiliar para buscar foto do responsável pelo user_id
+          const fetchResponsavelFoto = async (responsavelId: string | null): Promise<string | null> => {
+            if (!responsavelId) return null;
+            
+            const { data } = await supabase
+              .from('admin_users')
+              .select('foto_perfil_url')
+              .eq('user_id', responsavelId)
+              .maybeSingle();
+            
+            return data?.foto_perfil_url || null;
+          };
+
+          const buildOrdemStatus = async (result: any) => {
+            const responsavelId = result.data?.responsavel_id || null;
+            const foto = await fetchResponsavelFoto(responsavelId);
+            
+            return {
+              existe: !!result.data,
+              status: result.data?.status || null,
+              capturada: !!responsavelId,
+              capturada_por_foto: foto,
+              pausada: result.data?.pausada || false,
+              justificativa_pausa: result.data?.justificativa_pausa || null,
+            };
+          };
+
+          const [ordemSoldagem, ordemPerfiladeira, ordemSeparacao, ordemQualidade, ordemPintura] = await Promise.all([
+            buildOrdemStatus(soldagem),
+            buildOrdemStatus(perfiladeira),
+            buildOrdemStatus(separacao),
+            buildOrdemStatus(qualidade),
+            buildOrdemStatus(pintura),
+          ]);
 
           return {
             ...pedido,
             backlog: backlogData ? [backlogData] : [],
             tem_historico_backlog: !!historicoBacklog,
             ordens: {
-              soldagem: buildOrdemStatus(soldagem),
-              perfiladeira: buildOrdemStatus(perfiladeira),
-              separacao: buildOrdemStatus(separacao),
-              qualidade: buildOrdemStatus(qualidade),
-              pintura: buildOrdemStatus(pintura),
+              soldagem: ordemSoldagem,
+              perfiladeira: ordemPerfiladeira,
+              separacao: ordemSeparacao,
+              qualidade: ordemQualidade,
+              pintura: ordemPintura,
             }
           };
         })
