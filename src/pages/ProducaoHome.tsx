@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, Trophy, Medal, History } from "lucide-react";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { RankingPorSetor } from "@/components/producao/RankingPorSetor";
-
 interface ProducaoRoute {
   key: string;
   path: string;
@@ -17,7 +16,6 @@ interface ProducaoRoute {
   description?: string;
   sort_order: number;
 }
-
 const iconMap: Record<string, any> = {
   Hammer,
   Boxes,
@@ -27,60 +25,59 @@ const iconMap: Record<string, any> = {
   Truck,
   BarChart3,
   Trophy,
-  Medal,
+  Medal
 };
-
 export default function ProducaoHome() {
   const navigate = useNavigate();
-  const { user } = useProducaoAuth();
-  const { data: ordensCount } = useOrdensCount();
+  const {
+    user
+  } = useProducaoAuth();
+  const {
+    data: ordensCount
+  } = useOrdensCount();
 
   // Buscar rotas da interface producao que o usuário tem acesso
-  const { data: routes = [], isLoading } = useQuery({
+  const {
+    data: routes = [],
+    isLoading
+  } = useQuery({
     queryKey: ['producao-routes', user?.user_id],
     queryFn: async () => {
       if (!user?.user_id) return [];
-      
-      const { data: routesData, error } = await supabase
-        .from('app_routes')
-        .select('*')
-        .eq('active', true)
-        .eq('interface', 'producao')
-        .order('sort_order', { ascending: true });
-
+      const {
+        data: routesData,
+        error
+      } = await supabase.from('app_routes').select('*').eq('active', true).eq('interface', 'producao').order('sort_order', {
+        ascending: true
+      });
       if (error) throw error;
 
       // Verificar acesso para cada rota
       const accessibleRoutes = [];
       for (const route of routesData || []) {
-        const { data: hasAccess } = await supabase.rpc('has_route_access', {
+        const {
+          data: hasAccess
+        } = await supabase.rpc('has_route_access', {
           _user_id: user.user_id,
           _route_key: route.key
         });
-        
         if (hasAccess) {
           accessibleRoutes.push(route);
         }
       }
-
       return accessibleRoutes as ProducaoRoute[];
     },
-    enabled: !!user?.user_id,
+    enabled: !!user?.user_id
   });
-
   const getIcon = (iconName?: string) => {
     if (!iconName) return Hammer;
     return iconMap[iconName] || Hammer;
   };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
+    return <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>;
   }
-
   const getRouteCount = (routeKey: string) => {
     if (!ordensCount) return 0;
     switch (routeKey) {
@@ -100,9 +97,7 @@ export default function ProducaoHome() {
         return 0;
     }
   };
-
-  return (
-    <div className="container mx-auto p-6 space-y-6">
+  return <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard de Produção</h1>
@@ -110,33 +105,23 @@ export default function ProducaoHome() {
             Acompanhe as ordens de produção e acesse os diferentes painéis
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/hub-fabrica/producao/meu-historico')}
-          className="shrink-0"
-        >
+        <Button variant="outline" onClick={() => navigate('/hub-fabrica/producao/meu-historico')} className="shrink-0">
           <History className="h-4 w-4 mr-2" />
           Meu Histórico
         </Button>
       </div>
 
       {/* Rankings de Produção por Setor */}
-      <RankingPorSetor />
+      
 
       {/* Acesso aos Painéis */}
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Acesso aos Painéis</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {routes.map((route) => {
-            const Icon = getIcon(route.icon);
-            const count = getRouteCount(route.key);
-            
-            return (
-              <Card
-                key={route.key}
-                className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50 group"
-                onClick={() => navigate(route.path)}
-              >
+          {routes.map(route => {
+          const Icon = getIcon(route.icon);
+          const count = getRouteCount(route.key);
+          return <Card key={route.key} className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50 group" onClick={() => navigate(route.path)}>
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3 flex-1">
                     <div className="p-2 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
@@ -146,20 +131,16 @@ export default function ProducaoHome() {
                       {route.label.replace(/^Produção\s*-\s*/i, '')}
                     </span>
                   </div>
-                  {count > 0 && (
-                    <Badge variant="secondary" className="ml-2">
+                  {count > 0 && <Badge variant="secondary" className="ml-2">
                       {count}
-                    </Badge>
-                  )}
+                    </Badge>}
                 </div>
-              </Card>
-            );
-          })}
+              </Card>;
+        })}
         </div>
       </div>
 
-      {routes.length === 0 && !isLoading && (
-        <Card>
+      {routes.length === 0 && !isLoading && <Card>
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-muted-foreground mb-2">
               Você não tem acesso a nenhuma área de produção.
@@ -168,8 +149,6 @@ export default function ProducaoHome() {
               Entre em contato com o administrador para solicitar permissões.
             </p>
           </div>
-        </Card>
-      )}
-    </div>
-  );
+        </Card>}
+    </div>;
 }
