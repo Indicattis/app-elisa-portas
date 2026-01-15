@@ -137,15 +137,24 @@ export const useOrdemPDFData = () => {
     
     if (produtosError) throw produtosError;
     
-    // 5. Buscar linhas específicas desta ordem
-    const { data: linhas, error: linhasError } = await supabase
+    // 5. Buscar linhas específicas desta ordem com nome atualizado do estoque
+    const { data: linhasRaw, error: linhasError } = await supabase
       .from('linhas_ordens')
-      .select('item, quantidade, tamanho, concluida')
+      .select(`
+        item, quantidade, tamanho, concluida, estoque_id,
+        estoque:estoque_id (nome_produto)
+      `)
       .eq('ordem_id', ordemId)
       .eq('tipo_ordem', tipoOrdem)
       .order('created_at', { ascending: true });
     
     if (linhasError) throw linhasError;
+    
+    // Processar linhas para usar nome atualizado do estoque
+    const linhas = linhasRaw?.map((linha: any) => ({
+      ...linha,
+      item: linha.estoque?.nome_produto || linha.item
+    })) || [];
     
     return {
       ordem: {
