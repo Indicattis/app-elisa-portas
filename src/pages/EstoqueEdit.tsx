@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Loader2, Trash2, History } from "lucide-react";
+import { RegrasEtiquetasEditor } from "@/components/estoque/RegrasEtiquetasEditor";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCategorias } from "@/hooks/useCategorias";
@@ -504,6 +505,14 @@ export default function EstoqueEdit() {
                 </Label>
               </div>
             </div>
+
+            {/* Seção de Regras de Etiquetas */}
+            {id && (
+              <RegrasEtiquetasEditor 
+                estoqueId={id} 
+                nomeProduto={formData.nome_produto} 
+              />
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="descricao_produto">Descrição</Label>
