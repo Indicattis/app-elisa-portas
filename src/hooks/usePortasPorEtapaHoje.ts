@@ -5,6 +5,7 @@ interface PortasPorEtapa {
   portas_perfiladas: number;
   portas_soldadas: number;
   portas_separadas: number;
+  metragem_perfilada: number;
 }
 
 export function usePortasPorEtapaHoje() {
@@ -19,6 +20,7 @@ export function usePortasPorEtapaHoje() {
           portas_perfiladas: 0,
           portas_soldadas: 0,
           portas_separadas: 0,
+          metragem_perfilada: 0,
         };
       }
       
@@ -26,6 +28,7 @@ export function usePortasPorEtapaHoje() {
         portas_perfiladas: 0,
         portas_soldadas: 0,
         portas_separadas: 0,
+        metragem_perfilada: 0,
       };
       
       return result;

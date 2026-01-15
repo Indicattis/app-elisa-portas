@@ -6,10 +6,15 @@ import { Cog, Flame, Package } from "lucide-react";
 export function PortasPorEtapa() {
   const { data, isLoading } = usePortasPorEtapaHoje();
 
+  const metragemFormatada = data?.metragem_perfilada 
+    ? `${data.metragem_perfilada.toFixed(1).replace('.', ',')}m`
+    : "0m";
+
   const etapas = [
     {
       label: "Perfiladas",
       value: data?.portas_perfiladas ?? 0,
+      extra: metragemFormatada,
       icon: Cog,
       bgColor: "bg-blue-500/10",
       iconColor: "text-blue-500",
@@ -17,6 +22,7 @@ export function PortasPorEtapa() {
     {
       label: "Soldadas",
       value: data?.portas_soldadas ?? 0,
+      extra: null,
       icon: Flame,
       bgColor: "bg-orange-500/10",
       iconColor: "text-orange-500",
@@ -24,6 +30,7 @@ export function PortasPorEtapa() {
     {
       label: "Separadas",
       value: data?.portas_separadas ?? 0,
+      extra: null,
       icon: Package,
       bgColor: "bg-green-500/10",
       iconColor: "text-green-500",
@@ -51,7 +58,14 @@ export function PortasPorEtapa() {
                 {isLoading ? (
                   <Skeleton className="h-6 w-8 mt-1" />
                 ) : (
-                  <p className="text-xl font-bold">{etapa.value}</p>
+                  <p className="text-xl font-bold">
+                    {etapa.value}
+                    {etapa.extra && (
+                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                        ({etapa.extra})
+                      </span>
+                    )}
+                  </p>
                 )}
               </div>
             </div>
