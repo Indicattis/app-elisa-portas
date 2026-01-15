@@ -1,17 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, Target, Clock, AlertCircle, DoorOpen } from "lucide-react";
+import { Package, Clock, DoorOpen } from "lucide-react";
 import { usePortasEnrolarProduzidasMes } from "@/hooks/usePortasEnrolarProduzidasMes";
-import { useMetaProducaoMes } from "@/hooks/useMetaProducaoMes";
 import { usePedidosNaFila } from "@/hooks/usePedidosNaFila";
-import { useOrdensParadas } from "@/hooks/useOrdensParadas";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export function IndicadoresProducao() {
   const { data: portasMes = 0, isLoading: loadingPortas } = usePortasEnrolarProduzidasMes();
-  const { data: metaMes = 0, isLoading: loadingMeta } = useMetaProducaoMes();
   const { data: pedidosFila = 0, isLoading: loadingFila } = usePedidosNaFila();
-  const { data: ordensParadas = 0, isLoading: loadingParadas } = useOrdensParadas();
   
   const { data: portasHoje = 0, isLoading: loadingPortasHoje } = useQuery({
     queryKey: ["portas-enrolar-hoje"],
@@ -41,33 +37,17 @@ export function IndicadoresProducao() {
       bgColor: "bg-blue-500/10",
     },
     {
-      titulo: "Meta de Produção do Mês",
-      valor: metaMes,
-      icon: Target,
-      loading: loadingMeta,
-      color: "text-green-600",
-      bgColor: "bg-green-500/10",
-    },
-    {
-      titulo: "Pedidos na Fila",
+      titulo: "Pedidos que ainda não entraram em produção",
       valor: pedidosFila,
       icon: Clock,
       loading: loadingFila,
       color: "text-amber-600",
       bgColor: "bg-amber-500/10",
     },
-    {
-      titulo: "Ordens Paradas",
-      valor: ordensParadas,
-      icon: AlertCircle,
-      loading: loadingParadas,
-      color: "text-red-600",
-      bgColor: "bg-red-500/10",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {indicadores.map((indicador) => {
         const Icon = indicador.icon;
         return (
