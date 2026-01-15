@@ -213,16 +213,16 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   // Configurações da tabela
   const tableMargin = 30;
   const tableWidth = pageWidth - (tableMargin * 2);
-  const labelColWidth = 250;
+  const labelColWidth = 280;
   const valueColWidth = tableWidth - labelColWidth;
-  const rowHeight = 55; // Altura maior para fonte maior
-  const fontSize = 64; // Fonte maior
-  const headerFontSize = 72; // Fonte de cabeçalho maior
+  const rowHeight = 65; // Altura maior para fonte maior
+  const fontSize = 80; // Fonte bem maior
+  const headerFontSize = 88; // Fonte de cabeçalho bem maior
   
-  // Logo no topo - centralizada
-  const logoSize = 120;
+  // Logo no topo - centralizada e menor
+  const logoSize = 70;
   const logoX = (pageWidth - logoSize) / 2;
-  const logoY = 20;
+  const logoY = 15;
   
   try {
     doc.addImage(logoEtiquetaLateral, 'PNG', logoX, logoY, logoSize, logoSize);
