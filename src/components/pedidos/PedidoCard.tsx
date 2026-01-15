@@ -374,9 +374,9 @@ export function PedidoCard({
     return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
   };
 
-  // Calcular lista de portas P (pequenas <25m²) e G (grandes >25m²)
+  // Calcular lista de portas P (pequenas <25m²) e G (grandes >25m²) com dimensões
   const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
-  const listaPortasTamanho: ('P' | 'G')[] = [];
+  const listaPortasInfo: { tamanho: 'P' | 'G'; largura: number; altura: number; area: number }[] = [];
   portasEnrolar.forEach((p: any) => {
     const largura = p.largura || 0; // já em metros
     const altura = p.altura || 0; // já em metros
@@ -384,11 +384,11 @@ export function PedidoCard({
     const quantidade = p.quantidade || 1;
     const tamanho = area > 25 ? 'G' : 'P';
     for (let i = 0; i < quantidade; i++) {
-      listaPortasTamanho.push(tamanho);
+      listaPortasInfo.push({ tamanho, largura, altura, area });
     }
   });
-  const portasPequenas = listaPortasTamanho.filter(t => t === 'P').length;
-  const portasGrandes = listaPortasTamanho.filter(t => t === 'G').length;
+  const portasPequenas = listaPortasInfo.filter(p => p.tamanho === 'P').length;
+  const portasGrandes = listaPortasInfo.filter(p => p.tamanho === 'G').length;
 
   // Status das ordens de produção
   const ordens = pedido.ordens || {
@@ -891,36 +891,43 @@ export function PedidoCard({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Portas P/G - exibir cada porta individualmente */}
+              {/* Portas P/G - exibir cada porta individualmente com tooltip de dimensões */}
               <div className="flex items-center gap-0.5 overflow-hidden">
-                {listaPortasTamanho.length > 0 ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-0.5">
-                        {listaPortasTamanho.slice(0, 6).map((tamanho, idx) => (
+                {listaPortasInfo.length > 0 ? (
+                  <>
+                    {listaPortasInfo.slice(0, 6).map((porta, idx) => (
+                      <Tooltip key={idx}>
+                        <TooltipTrigger asChild>
                           <Badge 
-                            key={idx}
                             variant="outline" 
                             className={cn(
-                              "text-[9px] px-1 py-0 h-4 text-white",
-                              tamanho === 'P' 
+                              "text-[9px] px-1 py-0 h-4 text-white cursor-default",
+                              porta.tamanho === 'P' 
                                 ? "bg-blue-500 border-blue-500"
                                 : "bg-orange-500 border-orange-500"
                             )}
                           >
-                            {tamanho}
+                            {porta.tamanho}
                           </Badge>
-                        ))}
-                        {listaPortasTamanho.length > 6 && (
-                          <span className="text-[9px] text-muted-foreground">+{listaPortasTamanho.length - 6}</span>
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{portasPequenas} porta(s) pequena(s) (≤25m²)</p>
-                      <p>{portasGrandes} porta(s) grande(s) (&gt;25m²)</p>
-                    </TooltipContent>
-                  </Tooltip>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="font-medium">{porta.largura.toFixed(2)}m × {porta.altura.toFixed(2)}m</p>
+                          <p className="text-xs text-muted-foreground">{porta.area.toFixed(2)} m²</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                    {listaPortasInfo.length > 6 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-[9px] text-muted-foreground cursor-default">+{listaPortasInfo.length - 6}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{portasPequenas} porta(s) pequena(s) (≤25m²)</p>
+                          <p>{portasGrandes} porta(s) grande(s) (&gt;25m²)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </>
                 ) : (
                   <span className="text-gray-300 text-[10px]">—</span>
                 )}
