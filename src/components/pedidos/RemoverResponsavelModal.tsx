@@ -67,7 +67,10 @@ export function RemoverResponsavelModal({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onConfirm} 
+            onClick={(e) => {
+              e.preventDefault();
+              onConfirm();
+            }} 
             disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
