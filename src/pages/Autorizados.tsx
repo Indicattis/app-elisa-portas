@@ -1,21 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AutorizadosKanban } from "@/components/AutorizadosKanban";
 import { AutorizadosIndicadores } from "@/components/AutorizadosIndicadores";
 import { AutorizadosFiltros, FiltrosAutorizados } from "@/components/AutorizadosFiltros";
-import { AutorizadosGrid } from "@/components/AutorizadosGrid";
 import { AutorizadosList } from "@/components/AutorizadosList";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Edit, Trash2, MapPin, Phone, Mail, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard, LayoutGrid } from "lucide-react";
+import { Plus, Loader2, RefreshCw, Download, Table as TableIcon, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import jsPDF from 'jspdf';
@@ -40,7 +34,7 @@ export default function Autorizados() {
   const [geocoding, setGeocoding] = useState<string | null>(null);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'kanban'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   
   const [filtros, setFiltros] = useState<FiltrosAutorizados>({
     busca: '',
@@ -313,14 +307,6 @@ export default function Autorizados() {
                 Lista
               </Button>
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <LayoutGrid className="h-4 w-4 mr-2" />
-                Grid
-              </Button>
-              <Button
                 variant={viewMode === 'kanban' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('kanban')}
@@ -364,16 +350,7 @@ export default function Autorizados() {
               autorizados={filteredAutorizados}
               onEdit={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
               onDelete={handleDelete}
-              onView={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
-              onGeocode={handleGeocode}
-              geocodingId={geocoding}
-            />
-          ) : viewMode === 'grid' ? (
-            <AutorizadosGrid 
-              autorizados={filteredAutorizados}
-              onEdit={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
-              onDelete={handleDelete}
-              onView={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
+              onView={(id) => navigate(`/dashboard/parceiros/${id}/negociacao`)}
               onGeocode={handleGeocode}
               geocodingId={geocoding}
             />
@@ -385,7 +362,7 @@ export default function Autorizados() {
                 queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
               }} 
               onShowHistory={() => {}}
-              onDoubleClick={(autorizado) => navigate(`/dashboard/parceiros/${autorizado.id}/edit/autorizado`)}
+              onDoubleClick={(autorizado) => navigate(`/dashboard/parceiros/${autorizado.id}/negociacao`)}
             />
           )}
         </CardContent>

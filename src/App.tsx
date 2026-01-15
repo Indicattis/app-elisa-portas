@@ -63,6 +63,7 @@ import AdministrativoHome from "./pages/AdministrativoHome";
 import Investimentos from "./pages/Investimentos";
 import Calendario from "./pages/Calendario";
 import Autorizados from "./pages/Autorizados";
+import AutorizadoNegociacao from "./pages/AutorizadoNegociacao";
 import ParceiroNovo from "./pages/ParceiroNovo";
 import ParceiroEdit from "./pages/ParceiroEdit";
 import MapaAutorizados from "./pages/MapaAutorizados";
@@ -998,6 +999,16 @@ const App = () => (
                     <ProtectedRoute routeKey="autorizados">
                       <DashboardLayout>
                         <ParceiroEdit />
+                      </DashboardLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/parceiros/:id/negociacao"
+                  element={
+                    <ProtectedRoute routeKey="autorizados">
+                      <DashboardLayout>
+                        <AutorizadoNegociacao />
                       </DashboardLayout>
                     </ProtectedRoute>
                   }

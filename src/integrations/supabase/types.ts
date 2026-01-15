@@ -284,6 +284,7 @@ export type Database = {
           logo_url: string | null
           longitude: number | null
           nome: string
+          observacoes_negociacao: string | null
           regiao: string | null
           representante_etapa:
             | Database["public"]["Enums"]["representante_etapa"]
@@ -318,6 +319,7 @@ export type Database = {
           logo_url?: string | null
           longitude?: number | null
           nome: string
+          observacoes_negociacao?: string | null
           regiao?: string | null
           representante_etapa?:
             | Database["public"]["Enums"]["representante_etapa"]
@@ -352,6 +354,7 @@ export type Database = {
           logo_url?: string | null
           longitude?: number | null
           nome?: string
+          observacoes_negociacao?: string | null
           regiao?: string | null
           representante_etapa?:
             | Database["public"]["Enums"]["representante_etapa"]
@@ -999,6 +1002,44 @@ export type Database = {
             columns: ["venda_id"]
             isOneToOne: false
             referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      criterios_negociacao_autorizados: {
+        Row: {
+          autorizado_id: string
+          created_at: string | null
+          criterio: string
+          id: string
+          ordem: number | null
+          updated_at: string | null
+          valor: string
+        }
+        Insert: {
+          autorizado_id: string
+          created_at?: string | null
+          criterio: string
+          id?: string
+          ordem?: number | null
+          updated_at?: string | null
+          valor: string
+        }
+        Update: {
+          autorizado_id?: string
+          created_at?: string | null
+          criterio?: string
+          id?: string
+          ordem?: number | null
+          updated_at?: string | null
+          valor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "criterios_negociacao_autorizados_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
             referencedColumns: ["id"]
           },
         ]
