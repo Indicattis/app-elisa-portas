@@ -3,6 +3,7 @@ import { PedidosStatusOrdens } from "@/components/producao/dashboard/PedidosStat
 import { IndicadoresProducao } from "@/components/producao/dashboard/IndicadoresProducao";
 import { CoresPintadasHoje } from "@/components/producao/dashboard/CoresPintadasHoje";
 import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
+import { MateriaisNecessariosProducao } from "@/components/producao/dashboard/MateriaisNecessariosProducao";
 
 export default function FabricaHome() {
   return (
@@ -22,6 +23,9 @@ export default function FabricaHome() {
 
       {/* Pedidos com Ordens Pendentes */}
       <PedidosStatusOrdens />
+
+      {/* Materiais Necessários para Produção */}
+      <MateriaisNecessariosProducao />
 
       {/* Grid de Métricas - Rankings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
