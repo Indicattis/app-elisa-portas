@@ -6225,6 +6225,7 @@ export type Database = {
       get_portas_por_etapa_hoje: {
         Args: never
         Returns: {
+          metragem_perfilada: number
           portas_perfiladas: number
           portas_separadas: number
           portas_soldadas: number
