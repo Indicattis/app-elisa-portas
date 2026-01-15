@@ -476,7 +476,7 @@ export function PedidoCard({
                   <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
                 </div>
               </div>
-              {isAdmin && ordem.ordem_id && (
+              {isAdmin && ordem.ordem_id && ordem.status !== 'concluido' && (
                 <Button
                   variant="ghost"
                   size="icon"
