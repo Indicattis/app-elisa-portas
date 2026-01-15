@@ -312,22 +312,21 @@ export function PedidoCard({
     return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
   };
 
-  // Calcular quantidade de portas P (pequenas ≤25m²) e G (grandes >25m²)
+  // Calcular lista de portas P (pequenas ≤25m²) e G (grandes >25m²)
   const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
-  const portasPequenas = portasEnrolar.reduce((acc: number, p: any) => {
-    const area = ((p.largura || 0) * (p.altura || 0)) / 1000000; // converter mm² para m²
-    if (area <= 25) {
-      return acc + (p.quantidade || 1);
+  const listaPortasTamanho: ('P' | 'G')[] = [];
+  portasEnrolar.forEach((p: any) => {
+    const larguraM = (p.largura || 0) / 1000; // converter mm para m
+    const alturaM = (p.altura || 0) / 1000; // converter mm para m
+    const area = larguraM * alturaM; // área em m²
+    const quantidade = p.quantidade || 1;
+    const tamanho = area <= 25 ? 'P' : 'G';
+    for (let i = 0; i < quantidade; i++) {
+      listaPortasTamanho.push(tamanho);
     }
-    return acc;
-  }, 0);
-  const portasGrandes = portasEnrolar.reduce((acc: number, p: any) => {
-    const area = ((p.largura || 0) * (p.altura || 0)) / 1000000; // converter mm² para m²
-    if (area > 25) {
-      return acc + (p.quantidade || 1);
-    }
-    return acc;
-  }, 0);
+  });
+  const portasPequenas = listaPortasTamanho.filter(t => t === 'P').length;
+  const portasGrandes = listaPortasTamanho.filter(t => t === 'G').length;
 
   // Status das ordens de produção
   const ordens = pedido.ordens || {
@@ -740,7 +739,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_1fr_50px_60px_60px_60px_28px_28px_28px_28px_28px_60px_50px] items-center gap-2 h-full px-3 w-full">
+            <div className="grid grid-cols-[24px_1fr_50px_80px_28px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
@@ -778,35 +777,36 @@ export function PedidoCard({
                   </Badge>}
               </div>
               
-              {/* Portas P/G */}
-              <div className="flex items-center gap-0.5">
-                {(portasPequenas > 0 || portasGrandes > 0) ? (
-                  <>
-                    {portasPequenas > 0 && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30">
-                            P:{portasPequenas}
+              {/* Portas P/G - exibir cada porta individualmente */}
+              <div className="flex items-center gap-0.5 overflow-hidden">
+                {listaPortasTamanho.length > 0 ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-0.5">
+                        {listaPortasTamanho.slice(0, 6).map((tamanho, idx) => (
+                          <Badge 
+                            key={idx}
+                            variant="outline" 
+                            className={cn(
+                              "text-[9px] px-1 py-0 h-4",
+                              tamanho === 'P' 
+                                ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                : "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30"
+                            )}
+                          >
+                            {tamanho}
                           </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{portasPequenas} porta(s) pequena(s) (≤25m²)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                    {portasGrandes > 0 && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30">
-                            G:{portasGrandes}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{portasGrandes} porta(s) grande(s) (&gt;25m²)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </>
+                        ))}
+                        {listaPortasTamanho.length > 6 && (
+                          <span className="text-[9px] text-muted-foreground">+{listaPortasTamanho.length - 6}</span>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{portasPequenas} porta(s) pequena(s) (≤25m²)</p>
+                      <p>{portasGrandes} porta(s) grande(s) (&gt;25m²)</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ) : (
                   <span className="text-gray-300 text-[10px]">—</span>
                 )}
