@@ -739,7 +739,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_1fr_50px_80px_100px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
+            <div className="grid grid-cols-[24px_1fr_80px_50px_100px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
@@ -765,17 +765,6 @@ export function PedidoCard({
                   <p>{venda?.cliente_nome}</p>
                 </TooltipContent>
               </Tooltip>
-              
-              {/* Tags/Badges */}
-              <div className="flex items-center gap-1">
-                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
-                    <Hammer className="h-2.5 w-2.5" />
-                  </Badge>}
-                
-                {isEntrega && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
-                    <Truck className="h-2.5 w-2.5" />
-                  </Badge>}
-              </div>
               
               {/* Portas P/G - exibir cada porta individualmente */}
               <div className="flex items-center gap-0.5 overflow-hidden">
@@ -810,6 +799,17 @@ export function PedidoCard({
                 ) : (
                   <span className="text-gray-300 text-[10px]">—</span>
                 )}
+              </div>
+
+              {/* Tags/Badges */}
+              <div className="flex items-center gap-1">
+                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                    <Hammer className="h-2.5 w-2.5" />
+                  </Badge>}
+                
+                {isEntrega && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
+                    <Truck className="h-2.5 w-2.5" />
+                  </Badge>}
               </div>
               
               {/* Cores - 100px de largura */}
