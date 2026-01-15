@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { usePedidosComOrdens } from "@/hooks/usePedidosComOrdens";
+import { usePedidosComOrdens, PedidoComOrdens } from "@/hooks/usePedidosComOrdens";
 import { 
   Hammer, Package, Boxes, Sparkles, CheckSquare, User, AlertCircle, 
   ChevronLeft, ChevronRight, AlertTriangle, PauseCircle, ShoppingBag, RefreshCw 
@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PedidoOrdensModal } from "./PedidoOrdensModal";
 
 const ITEMS_PER_PAGE = 11;
 
@@ -44,6 +45,7 @@ const ordemLabels = {
 export function PedidosStatusOrdens() {
   const { data: pedidos = [], isLoading, refetch, isFetching } = usePedidosComOrdens();
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPedido, setSelectedPedido] = useState<PedidoComOrdens | null>(null);
 
   const totalPages = Math.ceil(pedidos.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -161,7 +163,11 @@ export function PedidosStatusOrdens() {
                   const warnings = getPauseWarnings(pedido.ordens);
                   
                   return (
-                    <TableRow key={pedido.numero_pedido} className="border-b last:border-0">
+                    <TableRow 
+                      key={pedido.numero_pedido} 
+                      className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => setSelectedPedido(pedido)}
+                    >
                       <TableCell className="font-medium text-[11px] py-1 px-2">
                         {pedido.numero_mes ? `#${pedido.numero_mes}` : pedido.numero_pedido}
                       </TableCell>
@@ -330,6 +336,12 @@ export function PedidosStatusOrdens() {
           )}
         </CardContent>
       </Card>
+
+      <PedidoOrdensModal
+        pedido={selectedPedido}
+        open={!!selectedPedido}
+        onOpenChange={(open) => !open && setSelectedPedido(null)}
+      />
     </TooltipProvider>
   );
 }
