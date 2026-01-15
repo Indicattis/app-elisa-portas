@@ -312,15 +312,15 @@ export function PedidoCard({
     return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
   };
 
-  // Calcular lista de portas P (pequenas ≤25m²) e G (grandes >25m²)
+  // Calcular lista de portas P (pequenas <25m²) e G (grandes >25m²)
   const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
   const listaPortasTamanho: ('P' | 'G')[] = [];
   portasEnrolar.forEach((p: any) => {
-    const larguraM = (p.largura || 0) / 1000; // converter mm para m
-    const alturaM = (p.altura || 0) / 1000; // converter mm para m
-    const area = larguraM * alturaM; // área em m²
+    const largura = p.largura || 0; // já em metros
+    const altura = p.altura || 0; // já em metros
+    const area = largura * altura; // área em m²
     const quantidade = p.quantidade || 1;
-    const tamanho = area <= 25 ? 'P' : 'G';
+    const tamanho = area > 25 ? 'G' : 'P';
     for (let i = 0; i < quantidade; i++) {
       listaPortasTamanho.push(tamanho);
     }
@@ -739,7 +739,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_1fr_50px_80px_28px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
+            <div className="grid grid-cols-[24px_1fr_50px_80px_100px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
@@ -788,10 +788,10 @@ export function PedidoCard({
                             key={idx}
                             variant="outline" 
                             className={cn(
-                              "text-[9px] px-1 py-0 h-4",
+                              "text-[9px] px-1 py-0 h-4 text-white",
                               tamanho === 'P' 
-                                ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"
-                                : "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30"
+                                ? "bg-blue-500 border-blue-500"
+                                : "bg-orange-500 border-orange-500"
                             )}
                           >
                             {tamanho}
@@ -812,15 +812,18 @@ export function PedidoCard({
                 )}
               </div>
               
-              {/* Cores */}
-              <div className="flex items-center gap-1">
-                {coresUnicas.length > 0 && (
+              {/* Cores - 100px de largura */}
+              <div className="flex items-center gap-1 w-[100px]">
+                {coresUnicas.length > 0 ? (
                   <>
                     {coresUnicas.slice(0, 2).map((cor, idx) => (
                       <div 
                         key={idx}
-                        className="h-3 w-3 rounded-full border border-border"
-                        style={{ backgroundColor: isAcoGalvanizado(cor.nome) ? 'transparent' : cor.codigo_hex }}
+                        className="h-5 flex-1 border border-border"
+                        style={{ 
+                          backgroundColor: isAcoGalvanizado(cor.nome) ? 'transparent' : cor.codigo_hex,
+                          borderRadius: '20px'
+                        }}
                         title={cor.nome}
                       />
                     ))}
@@ -828,6 +831,8 @@ export function PedidoCard({
                       <span className="text-[9px] text-muted-foreground">+{coresUnicas.length - 2}</span>
                     )}
                   </>
+                ) : (
+                  <span className="text-gray-300 text-[10px]">—</span>
                 )}
               </div>
               
