@@ -82,6 +82,7 @@ export default function ProducaoSeparacao() {
         tipoOrdem="separacao"
         onRefresh={handleRefresh}
         currentUserId={user?.user_id}
+        currentUserRole={user?.role}
       />
 
       <OrdemDetalhesSheet

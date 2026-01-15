@@ -76,6 +76,7 @@ export default function ProducaoSolda() {
         tipoOrdem="soldagem"
         onRefresh={handleRefresh}
         currentUserId={user?.user_id}
+        currentUserRole={user?.role}
       />
 
       <OrdemDetalhesSheet

@@ -89,6 +89,7 @@ export default function ProducaoQualidade() {
         tipoOrdem="qualidade"
         onRefresh={handleRefresh}
         currentUserId={user?.user_id}
+        currentUserRole={user?.role}
       />
 
       <OrdemDetalhesSheet
