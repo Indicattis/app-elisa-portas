@@ -295,14 +295,30 @@ export function OrdemDetalhesSheet({
       
       linhas.forEach((linha) => {
         const calculo = calcularEtiquetasLinha(linha);
+        const divisor = calculo.divisor || 1;
+        const quantidadeTotal = calculo.quantidade;
         
         for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
+          const isUltimaEtiqueta = i === calculo.etiquetasNecessarias;
+          const resto = quantidadeTotal % divisor;
+          
+          // Se tem divisor > 1, calcular a quantidade parcial
+          let quantidadeParcial: number;
+          if (divisor > 1) {
+            quantidadeParcial = isUltimaEtiqueta && resto > 0 ? resto : divisor;
+          } else {
+            quantidadeParcial = quantidadeTotal;
+          }
+          
           todasTags.push({
             tagNumero: i,
             totalTags: calculo.etiquetasNecessarias,
             nomeProduto: calculo.nomeProduto,
             numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
-            quantidade: calculo.quantidade,
+            quantidade: quantidadeParcial,
+            quantidadeParcial,
+            quantidadeTotal,
+            divisor,
             largura: calculo.largura,
             altura: calculo.altura,
             clienteNome: ordem?.pedido?.cliente_nome,

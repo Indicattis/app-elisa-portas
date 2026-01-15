@@ -293,7 +293,11 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     drawTableRow('PINTURA', pinturaTexto || 'Sem pintura');
   }
   
-  drawTableRow('QUANTIDADE', `${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`);
+  // Quantidade - usar formato "parcial - total" se disponível
+  const quantidadeTexto = tag.quantidadeParcial !== undefined && tag.quantidadeTotal !== undefined && tag.divisor && tag.divisor > 1
+    ? `${tag.quantidadeParcial} - ${tag.quantidadeTotal} unidades`
+    : `${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`;
+  drawTableRow('QUANTIDADE', quantidadeTexto);
   
   // Responsável
   if (tag.responsavelNome) {

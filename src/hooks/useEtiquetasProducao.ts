@@ -38,6 +38,7 @@ export const useEtiquetasProducao = () => {
           explicacao: `Regra "${regra.nome_regra}": ${linha.quantidade} ÷ ${regra.divisor} = ${etiquetas} etiqueta(s).`,
           largura: largura || undefined,
           altura: altura || undefined,
+          divisor: regra.divisor,
         };
       }
     }
@@ -56,6 +57,7 @@ export const useEtiquetasProducao = () => {
           explicacao: `Regra "${regraPorNome.nome_regra}": ${linha.quantidade} ÷ ${regraPorNome.divisor} = ${etiquetas} etiqueta(s).`,
           largura: largura || undefined,
           altura: altura || undefined,
+          divisor: regraPorNome.divisor,
         };
       }
     }
@@ -90,6 +92,7 @@ export const useEtiquetasProducao = () => {
         explicacao: `Porta grande (largura ${largura}m ou altura ${altura}m > 6.5m). Quantidade de meia canas (${linha.quantidade}) ÷ 5 = ${etiquetas} etiqueta(s).`,
         largura,
         altura,
+        divisor: 5,
       };
     } else {
       const etiquetas = Math.ceil(linha.quantidade / 10);
@@ -102,6 +105,7 @@ export const useEtiquetasProducao = () => {
         explicacao: `Porta pequena (largura ${largura}m e altura ${altura}m ≤ 6.5m). Quantidade de meia canas (${linha.quantidade}) ÷ 10 = ${etiquetas} etiqueta(s).`,
         largura,
         altura,
+        divisor: 10,
       };
     }
   };
