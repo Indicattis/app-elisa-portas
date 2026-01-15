@@ -379,7 +379,8 @@ export function PedidoCard({
     if (!tamanhoStr) return { largura: 0, altura: 0 };
     
     // Tenta fazer parse de formatos como "5.19x4.93" ou "5,19x4,93"
-    const normalizado = tamanhoStr.replace(',', '.');
+    // Usa regex global para substituir TODAS as vírgulas por pontos
+    const normalizado = tamanhoStr.replace(/,/g, '.');
     const partes = normalizado.toLowerCase().split('x');
     
     if (partes.length === 2) {
