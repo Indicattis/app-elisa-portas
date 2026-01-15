@@ -10,6 +10,15 @@ export function ProducaoHeader() {
   
   // Verifica se está na home de produção
   const isProducaoHome = location.pathname === '/hub-fabrica/producao' || location.pathname === '/hub-fabrica/producao/';
+  
+  // Define o destino do botão voltar baseado na rota atual
+  const handleVoltar = () => {
+    if (isProducaoHome) {
+      navigate('/hub-fabrica');
+    } else {
+      navigate('/hub-fabrica/producao');
+    }
+  };
 
   if (!user) return null;
 
@@ -17,7 +26,7 @@ export function ProducaoHeader() {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
       <div className="flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/hub-fabrica')}>
+          <Button variant="ghost" size="sm" onClick={handleVoltar}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
