@@ -215,7 +215,7 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   const tableWidth = pageWidth - (tableMargin * 2);
   const labelColWidth = 280;
   const valueColWidth = tableWidth - labelColWidth;
-  const rowHeight = 65; // Altura maior para fonte maior
+  const rowHeight = 52; // Altura reduzida para menos espaçamento
   const fontSize = 80; // Fonte bem maior
   const headerFontSize = 88; // Fonte de cabeçalho bem maior
   
