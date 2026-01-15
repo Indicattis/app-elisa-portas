@@ -2,6 +2,8 @@ import { MateriaisRanking } from "@/components/producao/dashboard/MateriaisRanki
 import { PedidosStatusOrdens } from "@/components/producao/dashboard/PedidosStatusOrdens";
 import { IndicadoresProducao } from "@/components/producao/dashboard/IndicadoresProducao";
 import { CoresPintadasHoje } from "@/components/producao/dashboard/CoresPintadasHoje";
+import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
+import { MateriaisNecessariosProducao } from "@/components/producao/dashboard/MateriaisNecessariosProducao";
 
 export default function ProducaoControle() {
   return (
@@ -16,8 +18,14 @@ export default function ProducaoControle() {
       {/* Indicadores */}
       <IndicadoresProducao />
 
+      {/* Portas por Etapa (Hoje) */}
+      <PortasPorEtapa />
+
       {/* Pedidos com Ordens Pendentes */}
       <PedidosStatusOrdens />
+
+      {/* Materiais Necessários para Produção */}
+      <MateriaisNecessariosProducao />
 
       {/* Grid de Métricas - Rankings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
