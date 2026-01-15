@@ -374,17 +374,44 @@ export function PedidoCard({
     return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
   };
 
-  // Calcular lista de portas P (pequenas <25m²) e G (grandes >25m²) com dimensões
+  // Função para extrair dimensões do campo tamanho (string como "5.19x4.93")
+  const parseTamanhoString = (tamanhoStr: string | null): { largura: number; altura: number } => {
+    if (!tamanhoStr) return { largura: 0, altura: 0 };
+    
+    // Tenta fazer parse de formatos como "5.19x4.93" ou "5,19x4,93"
+    const normalizado = tamanhoStr.replace(',', '.');
+    const partes = normalizado.toLowerCase().split('x');
+    
+    if (partes.length === 2) {
+      const largura = parseFloat(partes[0]) || 0;
+      const altura = parseFloat(partes[1]) || 0;
+      return { largura, altura };
+    }
+    
+    return { largura: 0, altura: 0 };
+  };
+
+  // Calcular lista de portas P (pequenas ≤25m²) e G (grandes >25m²) com dimensões
   const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
   const listaPortasInfo: { tamanho: 'P' | 'G'; largura: number; altura: number; area: number }[] = [];
   portasEnrolar.forEach((p: any) => {
-    const largura = p.largura || 0; // já em metros
-    const altura = p.altura || 0; // já em metros
+    // Primeiro tenta usar os campos numéricos, senão faz parse do campo tamanho
+    let largura = p.largura || 0;
+    let altura = p.altura || 0;
+    
+    // Se ambos são 0, tenta extrair do campo tamanho (string)
+    if (largura === 0 && altura === 0 && p.tamanho) {
+      const parsed = parseTamanhoString(p.tamanho);
+      largura = parsed.largura;
+      altura = parsed.altura;
+    }
+    
     const area = largura * altura; // área em m²
     const quantidade = p.quantidade || 1;
-    const tamanho = area > 25 ? 'G' : 'P';
+    const tamanhoCategoria = area > 25 ? 'G' : 'P';
+    
     for (let i = 0; i < quantidade; i++) {
-      listaPortasInfo.push({ tamanho, largura, altura, area });
+      listaPortasInfo.push({ tamanho: tamanhoCategoria, largura, altura, area });
     }
   });
   const portasPequenas = listaPortasInfo.filter(p => p.tamanho === 'P').length;
