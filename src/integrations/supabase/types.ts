@@ -3994,13 +3994,6 @@ export type Database = {
             referencedRelation: "produtos_vendas"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "pedido_porta_observacoes_responsavel_medidas_id_fkey"
-            columns: ["responsavel_medidas_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       pedido_porta_social_observacoes: {

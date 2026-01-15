@@ -11,12 +11,10 @@ export function usePedidoPortaObservacoes(pedidoId: string) {
   const { data: observacoes = [], isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
+      // Buscar observações sem JOIN de FK (FK foi removida para permitir autorizados)
       const { data, error } = await supabase
         .from('pedido_porta_observacoes')
-        .select(`
-          *,
-          responsavel:admin_users(id, nome, email)
-        `)
+        .select('*')
         .eq('pedido_id', pedidoId);
 
       if (error) throw error;
