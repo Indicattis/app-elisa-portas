@@ -740,7 +740,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_minmax(100px,120px)_50px_60px_60px_60px_28px_28px_28px_28px_28px_60px_auto] items-center gap-2 h-full px-3">
+            <div className="grid grid-cols-[24px_minmax(100px,120px)_50px_60px_60px_60px_28px_28px_28px_28px_28px_60px_1fr_50px] items-center gap-2 h-full px-3">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
@@ -864,9 +864,12 @@ export function PedidoCard({
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
               </div>
               
-              {/* Botões de ação */}
+              {/* Espaço flexível */}
+              <div />
+              
+              {/* Botões de ação - 50px fixo à direita */}
               <TooltipProvider>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-end gap-0.5 w-[50px]">
                   {(() => {
                     const actionButtons = [];
 
