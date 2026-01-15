@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, Trophy, Medal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, Trophy, Medal, History } from "lucide-react";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 import { RankingPorSetor } from "@/components/producao/RankingPorSetor";
 
@@ -102,11 +103,21 @@ export default function ProducaoHome() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard de Produção</h1>
-        <p className="text-muted-foreground">
-          Acompanhe as ordens de produção e acesse os diferentes painéis
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard de Produção</h1>
+          <p className="text-muted-foreground">
+            Acompanhe as ordens de produção e acesse os diferentes painéis
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/hub-fabrica/producao/meu-historico')}
+          className="shrink-0"
+        >
+          <History className="h-4 w-4 mr-2" />
+          Meu Histórico
+        </Button>
       </div>
 
       {/* Rankings de Produção por Setor */}
