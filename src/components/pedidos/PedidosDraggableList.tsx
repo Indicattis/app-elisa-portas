@@ -189,6 +189,7 @@ export function PedidosDraggableList({
               isAberto={isAberto}
               onMoverEtapa={onMoverEtapa}
               isDragging
+              viewMode={viewMode}
             />
           </div>
         ) : null}
