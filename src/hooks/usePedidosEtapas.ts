@@ -131,27 +131,27 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
             supabase
               .from('ordens_soldagem')
-              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_soldagem_capturada_por_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_soldagem_responsavel_id_fkey(foto_perfil_url)')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_perfiladeira')
-              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_perfiladeira_capturada_por_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_perfiladeira_responsavel_id_fkey(foto_perfil_url)')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_separacao')
-              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_separacao_capturada_por_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_separacao_responsavel_id_fkey(foto_perfil_url)')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_qualidade')
-              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_qualidade_capturada_por_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_qualidade_responsavel_id_fkey(foto_perfil_url)')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_pintura')
-              .select('id, status, capturada_por, pausada, justificativa_pausa, capturada_por_usuario:admin_users!ordens_pintura_capturada_por_fkey(foto_perfil_url)')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, responsavel:admin_users!ordens_pintura_responsavel_id_fkey(foto_perfil_url)')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
           ]);
@@ -159,8 +159,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           const buildOrdemStatus = (result: any) => ({
             existe: !!result.data,
             status: result.data?.status || null,
-            capturada: !!result.data?.capturada_por,
-            capturada_por_foto: result.data?.capturada_por_usuario?.foto_perfil_url || null,
+            capturada: !!result.data?.responsavel_id,
+            capturada_por_foto: result.data?.responsavel?.foto_perfil_url || null,
             pausada: result.data?.pausada || false,
             justificativa_pausa: result.data?.justificativa_pausa || null,
           });
