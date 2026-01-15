@@ -10,6 +10,7 @@ import { AutorizadosKanban } from "@/components/AutorizadosKanban";
 import { AutorizadosIndicadores } from "@/components/AutorizadosIndicadores";
 import { AutorizadosFiltros, FiltrosAutorizados } from "@/components/AutorizadosFiltros";
 import { AutorizadosGrid } from "@/components/AutorizadosGrid";
+import { AutorizadosList } from "@/components/AutorizadosList";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +40,7 @@ export default function Autorizados() {
   const [geocoding, setGeocoding] = useState<string | null>(null);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'kanban'>('grid');
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'kanban'>('list');
   
   const [filtros, setFiltros] = useState<FiltrosAutorizados>({
     busca: '',
@@ -304,6 +305,14 @@ export default function Autorizados() {
             </div>
             <div className="flex items-center gap-2">
               <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <TableIcon className="h-4 w-4 mr-2" />
+                Lista
+              </Button>
+              <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
@@ -350,7 +359,16 @@ export default function Autorizados() {
           />
         </CardHeader>
         <CardContent>
-          {viewMode === 'grid' ? (
+          {viewMode === 'list' ? (
+            <AutorizadosList 
+              autorizados={filteredAutorizados}
+              onEdit={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
+              onDelete={handleDelete}
+              onView={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
+              onGeocode={handleGeocode}
+              geocodingId={geocoding}
+            />
+          ) : viewMode === 'grid' ? (
             <AutorizadosGrid 
               autorizados={filteredAutorizados}
               onEdit={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
