@@ -8,6 +8,8 @@ interface OrdemStatus {
   capturada_por_foto?: string | null;
   pausada: boolean;
   justificativa_pausa?: string | null;
+  ordem_id?: string | null;
+  numero_ordem?: string | null;
 }
 
 interface ProdutoInfo {
@@ -17,7 +19,8 @@ interface ProdutoInfo {
   quantidade: number;
 }
 
-interface PedidoComOrdens {
+export interface PedidoComOrdens {
+  pedido_id: string;
   numero_pedido: string;
   numero_mes: number | null;
   etapa_atual: string;
@@ -48,6 +51,7 @@ export function usePedidosComOrdens() {
       
       // Transform the flat RPC response into nested structure
       return (data || []).map((row: any) => ({
+        pedido_id: row.pedido_id,
         numero_pedido: row.numero_pedido,
         numero_mes: row.numero_mes,
         etapa_atual: row.etapa_atual,
@@ -64,6 +68,8 @@ export function usePedidosComOrdens() {
             capturada_por_foto: row.soldagem_capturada_por_foto,
             pausada: row.soldagem_pausada || false,
             justificativa_pausa: row.soldagem_justificativa_pausa,
+            ordem_id: row.soldagem_ordem_id,
+            numero_ordem: row.soldagem_numero_ordem,
           },
           perfiladeira: {
             existe: row.perfiladeira_existe,
@@ -72,6 +78,8 @@ export function usePedidosComOrdens() {
             capturada_por_foto: row.perfiladeira_capturada_por_foto,
             pausada: row.perfiladeira_pausada || false,
             justificativa_pausa: row.perfiladeira_justificativa_pausa,
+            ordem_id: row.perfiladeira_ordem_id,
+            numero_ordem: row.perfiladeira_numero_ordem,
           },
           separacao: {
             existe: row.separacao_existe,
@@ -80,6 +88,8 @@ export function usePedidosComOrdens() {
             capturada_por_foto: row.separacao_capturada_por_foto,
             pausada: row.separacao_pausada || false,
             justificativa_pausa: row.separacao_justificativa_pausa,
+            ordem_id: row.separacao_ordem_id,
+            numero_ordem: row.separacao_numero_ordem,
           },
           qualidade: {
             existe: row.qualidade_existe,
@@ -88,6 +98,8 @@ export function usePedidosComOrdens() {
             capturada_por_foto: row.qualidade_capturada_por_foto,
             pausada: row.qualidade_pausada || false,
             justificativa_pausa: row.qualidade_justificativa_pausa,
+            ordem_id: row.qualidade_ordem_id,
+            numero_ordem: row.qualidade_numero_ordem,
           },
           pintura: {
             existe: row.pintura_existe,
@@ -96,6 +108,8 @@ export function usePedidosComOrdens() {
             capturada_por_foto: row.pintura_capturada_por_foto,
             pausada: row.pintura_pausada || false,
             justificativa_pausa: row.pintura_justificativa_pausa,
+            ordem_id: row.pintura_ordem_id,
+            numero_ordem: row.pintura_numero_ordem,
           },
         },
       })) as PedidoComOrdens[];
