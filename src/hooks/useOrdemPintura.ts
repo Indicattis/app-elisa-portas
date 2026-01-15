@@ -67,12 +67,21 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             responsavel = data;
           }
 
-          // Buscar linhas
-          const { data: linhas } = await supabase
+          // Buscar linhas com nome atualizado do estoque
+          const { data: linhasRaw } = await supabase
             .from('linhas_ordens')
-            .select('id, item, quantidade, tamanho, concluida, largura, altura, estoque_id, produto_venda_id, cor_nome, tipo_pintura')
+            .select(`
+              id, item, quantidade, tamanho, concluida, largura, altura, estoque_id, produto_venda_id, cor_nome, tipo_pintura,
+              estoque:estoque_id (nome_produto)
+            `)
             .eq('ordem_id', ordem.id)
             .eq('tipo_ordem', 'pintura');
+          
+          // Processar linhas para usar nome atualizado do estoque
+          const linhas = linhasRaw?.map((linha: any) => ({
+            ...linha,
+            item: linha.estoque?.nome_produto || linha.item
+          })) || [];
 
           // Processar produtos da venda
           const vendasArray = Array.isArray(pedido?.vendas) ? pedido.vendas : [pedido?.vendas];

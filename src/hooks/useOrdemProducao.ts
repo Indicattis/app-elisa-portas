@@ -115,15 +115,24 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       if (ordensError) throw ordensError;
       if (!ordensData || ordensData.length === 0) return [];
       
-      // Buscar linhas para todas as ordens de uma vez
+      // Buscar linhas para todas as ordens de uma vez, incluindo nome atualizado do estoque
       const ordemIds = ordensData.map((o: any) => o.id);
       const { data: linhasData, error: linhasError } = await supabase
         .from('linhas_ordens')
-        .select('*')
+        .select(`
+          *,
+          estoque:estoque_id (nome_produto)
+        `)
         .in('ordem_id', ordemIds)
         .eq('tipo_ordem', tipoOrdem);
       
       if (linhasError) throw linhasError;
+      
+      // Processar linhas para usar nome atualizado do estoque
+      const linhasProcessadas = linhasData?.map((linha: any) => ({
+        ...linha,
+        item: linha.estoque?.nome_produto || linha.item
+      })) || [];
       
       // Buscar dados dos responsáveis se houver
       const responsavelIds = ordensData
@@ -187,7 +196,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
         return {
           ...ordem,
-          linhas: (linhasData || []).filter((linha: any) => linha.ordem_id === ordem.id),
+          linhas: linhasProcessadas.filter((linha: any) => linha.ordem_id === ordem.id),
           pedido: pedidoProcessado,
           admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
           observacoesVisita: ordem.pedido?.id ? observacoesMap[ordem.pedido.id] || [] : [],
