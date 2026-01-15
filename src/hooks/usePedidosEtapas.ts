@@ -156,39 +156,67 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               .maybeSingle(),
           ]);
 
-          // Função auxiliar para buscar foto do responsável pelo user_id
-          const fetchResponsavelFoto = async (responsavelId: string | null): Promise<string | null> => {
-            if (!responsavelId) return null;
+          // Função auxiliar para buscar foto e nome do responsável pelo user_id
+          const fetchResponsavelInfo = async (responsavelId: string | null): Promise<{ foto: string | null; nome: string | null }> => {
+            if (!responsavelId) return { foto: null, nome: null };
             
             const { data } = await supabase
               .from('admin_users')
-              .select('foto_perfil_url')
+              .select('foto_perfil_url, nome')
               .eq('user_id', responsavelId)
               .maybeSingle();
             
-            return data?.foto_perfil_url || null;
+            return {
+              foto: data?.foto_perfil_url || null,
+              nome: data?.nome || null,
+            };
           };
 
-          const buildOrdemStatus = async (result: any) => {
+          // Função auxiliar para buscar linhas concluídas de uma ordem
+          const fetchLinhasConcluidas = async (
+            ordemId: string | null, 
+            tipoOrdem: string
+          ): Promise<Array<{ item: string; quantidade: number; tamanho: string | null }>> => {
+            if (!ordemId) return [];
+            
+            const { data } = await supabase
+              .from('linhas_ordens')
+              .select('item, quantidade, tamanho')
+              .eq('ordem_id', ordemId)
+              .eq('tipo_ordem', tipoOrdem)
+              .eq('concluida', true)
+              .order('concluida_em', { ascending: true });
+            
+            return data || [];
+          };
+
+          const buildOrdemStatus = async (result: any, tipoOrdem: string) => {
             const responsavelId = result.data?.responsavel_id || null;
-            const foto = await fetchResponsavelFoto(responsavelId);
+            const ordemId = result.data?.id || null;
+            
+            const [responsavelInfo, linhasConcluidas] = await Promise.all([
+              fetchResponsavelInfo(responsavelId),
+              fetchLinhasConcluidas(ordemId, tipoOrdem),
+            ]);
             
             return {
               existe: !!result.data,
               status: result.data?.status || null,
               capturada: !!responsavelId,
-              capturada_por_foto: foto,
+              capturada_por_foto: responsavelInfo.foto,
+              capturada_por_nome: responsavelInfo.nome,
+              linhas_concluidas: linhasConcluidas,
               pausada: result.data?.pausada || false,
               justificativa_pausa: result.data?.justificativa_pausa || null,
             };
           };
 
           const [ordemSoldagem, ordemPerfiladeira, ordemSeparacao, ordemQualidade, ordemPintura] = await Promise.all([
-            buildOrdemStatus(soldagem),
-            buildOrdemStatus(perfiladeira),
-            buildOrdemStatus(separacao),
-            buildOrdemStatus(qualidade),
-            buildOrdemStatus(pintura),
+            buildOrdemStatus(soldagem, 'soldagem'),
+            buildOrdemStatus(perfiladeira, 'perfiladeira'),
+            buildOrdemStatus(separacao, 'separacao'),
+            buildOrdemStatus(qualidade, 'qualidade'),
+            buildOrdemStatus(pintura, 'pintura'),
           ]);
 
           return {

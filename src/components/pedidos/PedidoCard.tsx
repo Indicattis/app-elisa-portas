@@ -355,7 +355,7 @@ export function PedidoCard({
     }
   };
 
-  const renderOrdemStatus = (ordem: any) => {
+  const renderOrdemStatus = (ordem: any, nomeSetor: string) => {
     if (!ordem?.existe) {
       return <span className="text-gray-300 text-[10px]">—</span>;
     }
@@ -378,22 +378,69 @@ export function PedidoCard({
       );
     }
 
-    if (ordem.capturada && ordem.capturada_por_foto) {
-      return (
-        <Avatar className={`h-5 w-5 ${getStatusBorder(ordem.status, false)}`}>
+    // Tooltip com responsável e linhas concluídas para ordens capturadas
+    if (ordem.capturada) {
+      const temLinhasConcluidas = ordem.linhas_concluidas?.length > 0;
+      
+      const avatarContent = ordem.capturada_por_foto ? (
+        <Avatar className={`h-5 w-5 ${getStatusBorder(ordem.status, false)} cursor-help`}>
           <AvatarImage src={ordem.capturada_por_foto} />
           <AvatarFallback className="text-[8px]">
             <User className="h-2.5 w-2.5" />
           </AvatarFallback>
         </Avatar>
-      );
-    }
-
-    if (ordem.capturada) {
-      return (
-        <div className={`h-5 w-5 rounded-full ${getStatusBorder(ordem.status, false)} bg-secondary flex items-center justify-center`}>
+      ) : (
+        <div className={`h-5 w-5 rounded-full ${getStatusBorder(ordem.status, false)} bg-secondary flex items-center justify-center cursor-help`}>
           <User className="h-2.5 w-2.5" />
         </div>
+      );
+
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {avatarContent}
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[280px] p-3">
+            <div className="flex items-center gap-2 mb-2">
+              {ordem.capturada_por_foto && (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={ordem.capturada_por_foto} />
+                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                </Avatar>
+              )}
+              <div>
+                <p className="text-xs font-semibold">{ordem.capturada_por_nome || 'Responsável'}</p>
+                <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
+              </div>
+            </div>
+            
+            {temLinhasConcluidas ? (
+              <div className="space-y-1 border-t pt-2">
+                <p className="text-[10px] font-medium text-muted-foreground">
+                  Linhas concluídas ({ordem.linhas_concluidas.length}):
+                </p>
+                {ordem.linhas_concluidas.slice(0, 5).map((linha: any, idx: number) => (
+                  <div key={idx} className="flex items-center gap-1 text-[10px]">
+                    <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                    <span className="truncate">
+                      {linha.quantidade}x {linha.item}
+                      {linha.tamanho && ` (${linha.tamanho})`}
+                    </span>
+                  </div>
+                ))}
+                {ordem.linhas_concluidas.length > 5 && (
+                  <p className="text-[10px] text-muted-foreground">
+                    +{ordem.linhas_concluidas.length - 5} mais...
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground border-t pt-2">
+                Nenhuma linha concluída ainda
+              </p>
+            )}
+          </TooltipContent>
+        </Tooltip>
       );
     }
 
@@ -849,19 +896,19 @@ export function PedidoCard({
 
               {/* Colunas de Status das Ordens */}
               <div className="flex items-center justify-center" title="Soldagem">
-                {renderOrdemStatus(ordens.soldagem)}
+                {renderOrdemStatus(ordens.soldagem, 'Soldagem')}
               </div>
               <div className="flex items-center justify-center" title="Perfiladeira">
-                {renderOrdemStatus(ordens.perfiladeira)}
+                {renderOrdemStatus(ordens.perfiladeira, 'Perfiladeira')}
               </div>
               <div className="flex items-center justify-center" title="Separação">
-                {renderOrdemStatus(ordens.separacao)}
+                {renderOrdemStatus(ordens.separacao, 'Separação')}
               </div>
               <div className="flex items-center justify-center" title="Qualidade">
-                {renderOrdemStatus(ordens.qualidade)}
+                {renderOrdemStatus(ordens.qualidade, 'Qualidade')}
               </div>
               <div className="flex items-center justify-center" title="Pintura">
-                {renderOrdemStatus(ordens.pintura)}
+                {renderOrdemStatus(ordens.pintura, 'Pintura')}
               </div>
               
               {/* Tempo na Etapa */}
