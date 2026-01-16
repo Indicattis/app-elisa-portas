@@ -12,7 +12,7 @@ interface ProducaoUser {
 
 const menuItems = [
   {
-    title: "Fábrica",
+    title: "Colaboradores",
     description: "Interface de produção",
     icon: Factory,
     path: "/hub-fabrica/producao",
