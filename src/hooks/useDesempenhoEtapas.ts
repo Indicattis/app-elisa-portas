@@ -17,8 +17,8 @@ export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
     queryKey: ["desempenho-etapas", dataInicio, dataFim],
     queryFn: async (): Promise<DesempenhoColaborador[]> => {
       const { data, error } = await supabase.rpc("get_desempenho_etapas", {
-        data_inicio: dataInicio,
-        data_fim: dataFim
+        p_data_inicio: dataInicio,
+        p_data_fim: dataFim
       });
       
       if (error) {
