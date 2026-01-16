@@ -153,13 +153,20 @@ Deno.serve(async (req) => {
     let authUser
 
     if (existingUser) {
-      // Verificar se é um administrador (role admin, gestor, atendente, gerente)
-      // Administradores devem usar o login padrão em /auth para não ter senha sobrescrita
-      const rolesAdmin = ['admin', 'gestor', 'atendente', 'gerente']
-      const isAdmin = rolesAdmin.includes(adminUser.role)
+      // Roles da fábrica que usam login simplificado via CPF (podem ter senha resetada)
+      // Qualquer role NÃO listado aqui será considerado administrativo
+      const rolesFabrica = [
+        'soldador',
+        'pintor',
+        'instalador',
+        'aux_instalador',
+        'aux_geral',
+        'aux_pintura'
+      ]
+      const isFabrica = rolesFabrica.includes(adminUser.role)
 
-      if (isAdmin) {
-        console.log('[AUDIT] Usuário administrativo detectado, redirecionando para login padrão:', email)
+      if (!isFabrica) {
+        console.log('[AUDIT] Usuário NÃO é da fábrica (role:', adminUser.role, '), redirecionando para login padrão:', email)
         
         // Apenas atualizar metadados, NÃO alterar senha
         await supabaseAdmin.auth.admin.updateUserById(
@@ -174,17 +181,19 @@ Deno.serve(async (req) => {
           }
         )
 
-        // Retornar indicando que admin deve usar login normal
+        // Retornar indicando que não é da fábrica e deve usar login normal
         return new Response(
           JSON.stringify({ 
             success: false,
             isAdmin: true,
             email: email,
-            message: 'Usuários administrativos devem usar o login padrão',
+            message: 'Este usuário deve usar o login padrão em /auth',
           }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
+      
+      console.log('[AUDIT] Usuário da fábrica detectado (role:', adminUser.role, '), atualizando senha:', email)
 
       // Para usuários da fábrica, manter comportamento atual (atualizar senha)
       const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
