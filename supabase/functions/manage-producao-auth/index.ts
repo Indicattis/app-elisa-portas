@@ -153,49 +153,9 @@ Deno.serve(async (req) => {
     let authUser
 
     if (existingUser) {
-      // Roles da fábrica que usam login simplificado via CPF (podem ter senha resetada)
-      // Qualquer role NÃO listado aqui será considerado administrativo
-      const rolesFabrica = [
-        'soldador',
-        'pintor',
-        'instalador',
-        'aux_instalador',
-        'aux_geral',
-        'aux_pintura'
-      ]
-      const isFabrica = rolesFabrica.includes(adminUser.role)
+      console.log('[AUDIT] Atualizando senha para usuário via CPF:', email, 'role:', adminUser.role)
 
-      if (!isFabrica) {
-        console.log('[AUDIT] Usuário NÃO é da fábrica (role:', adminUser.role, '), redirecionando para login padrão:', email)
-        
-        // Apenas atualizar metadados, NÃO alterar senha
-        await supabaseAdmin.auth.admin.updateUserById(
-          existingUser.id,
-          {
-            email_confirm: true,
-            user_metadata: {
-              nome: adminUser.nome,
-              cpf_ultimos_4: cpf_ultimos_4,
-              setor: adminUser.setor || 'fabrica'
-            }
-          }
-        )
-
-        // Retornar indicando que não é da fábrica e deve usar login normal
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            isAdmin: true,
-            email: email,
-            message: 'Este usuário deve usar o login padrão em /auth',
-          }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-      
-      console.log('[AUDIT] Usuário da fábrica detectado (role:', adminUser.role, '), atualizando senha:', email)
-
-      // Para usuários da fábrica, manter comportamento atual (atualizar senha)
+      // Atualizar senha para TODOS os usuários que logam via CPF
       const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
         existingUser.id,
         {
