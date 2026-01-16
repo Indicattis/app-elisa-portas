@@ -6197,6 +6197,18 @@ export type Database = {
           solda_qtd: number
         }[]
       }
+      get_desempenho_producao_geral: {
+        Args: { p_data_fim: string; p_data_inicio: string }
+        Returns: {
+          data: string
+          dia_semana: string
+          portas_carregadas: number
+          portas_perfiladas: number
+          portas_pintadas: number
+          portas_separadas: number
+          portas_soldadas: number
+        }[]
+      }
       get_materiais_ranking_completo: {
         Args: never
         Returns: {
@@ -6294,6 +6306,7 @@ export type Database = {
       get_pedidos_na_fila: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_hoje: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_mes: { Args: never; Returns: number }
+      get_portas_enrolar_produzidas_semana: { Args: never; Returns: number }
       get_portas_por_etapa_hoje: {
         Args: never
         Returns: {

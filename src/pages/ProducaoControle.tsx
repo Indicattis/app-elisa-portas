@@ -4,6 +4,7 @@ import { IndicadoresProducao } from "@/components/producao/dashboard/Indicadores
 import { CoresPintadasHoje } from "@/components/producao/dashboard/CoresPintadasHoje";
 import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
 import { MateriaisNecessariosProducao } from "@/components/producao/dashboard/MateriaisNecessariosProducao";
+import { DesempenhoSetoresProducao } from "@/components/producao/dashboard/DesempenhoSetoresProducao";
 
 export default function ProducaoControle() {
   return (
@@ -20,6 +21,9 @@ export default function ProducaoControle() {
 
       {/* Portas por Etapa (Hoje) */}
       <PortasPorEtapa />
+
+      {/* Desempenho por Setor com Gráfico */}
+      <DesempenhoSetoresProducao />
 
       {/* Pedidos em Produção (read-only) */}
       <PedidosEmProducaoReadOnly />

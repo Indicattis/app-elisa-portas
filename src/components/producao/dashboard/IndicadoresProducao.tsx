@@ -1,12 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, Clock, DoorOpen } from "lucide-react";
+import { Package, Clock, DoorOpen, Calendar } from "lucide-react";
 import { usePortasEnrolarProduzidasMes } from "@/hooks/usePortasEnrolarProduzidasMes";
+import { usePortasEnrolarProduzidasSemana } from "@/hooks/usePortasEnrolarProduzidasSemana";
 import { usePedidosNaFila } from "@/hooks/usePedidosNaFila";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export function IndicadoresProducao() {
   const { data: portasMes = 0, isLoading: loadingPortas } = usePortasEnrolarProduzidasMes();
+  const { data: portasSemana = 0, isLoading: loadingSemana } = usePortasEnrolarProduzidasSemana();
   const { data: pedidosFila = 0, isLoading: loadingFila } = usePedidosNaFila();
   
   const { data: portasHoje = 0, isLoading: loadingPortasHoje } = useQuery({
@@ -29,7 +31,15 @@ export function IndicadoresProducao() {
       bgColor: "bg-purple-500/10",
     },
     {
-      titulo: "Portas Produzidas no Mês",
+      titulo: "Portas Produzidas (Semana)",
+      valor: portasSemana,
+      icon: Calendar,
+      loading: loadingSemana,
+      color: "text-green-600",
+      bgColor: "bg-green-500/10",
+    },
+    {
+      titulo: "Portas Produzidas (Mês)",
       valor: portasMes,
       icon: Package,
       loading: loadingPortas,
@@ -37,7 +47,7 @@ export function IndicadoresProducao() {
       bgColor: "bg-blue-500/10",
     },
     {
-      titulo: "Pedidos que ainda não entraram em produção",
+      titulo: "Pedidos aguardando produção",
       valor: pedidosFila,
       icon: Clock,
       loading: loadingFila,
@@ -47,7 +57,7 @@ export function IndicadoresProducao() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {indicadores.map((indicador) => {
         const Icon = indicador.icon;
         return (
