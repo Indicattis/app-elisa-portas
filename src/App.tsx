@@ -293,7 +293,7 @@ const App = () => (
                   path="/hub-fabrica/pedidos"
                   element={
                     <ProducaoAuthProvider>
-                      <ProtectedProducaoRoute routeKey="pedidos">
+                      <ProtectedProducaoRoute routeKey="hub_fabrica_pedidos">
                         <PedidosStandalone />
                       </ProtectedProducaoRoute>
                     </ProducaoAuthProvider>
