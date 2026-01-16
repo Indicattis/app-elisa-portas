@@ -1,5 +1,5 @@
 import { useNavigate, Navigate } from "react-router-dom";
-import { Factory, Wrench, Package, LogOut } from "lucide-react";
+import { Factory, Wrench, Package, LogOut, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -28,6 +28,12 @@ const menuItems = [
     description: "Gestão de pedidos",
     icon: Package,
     path: "/hub-fabrica/pedidos",
+  },
+  {
+    title: "Metas",
+    description: "Desempenho dos colaboradores",
+    icon: Target,
+    path: "/hub-fabrica/metas",
   },
 ];
 

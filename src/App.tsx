@@ -146,6 +146,7 @@ import CompanyList from "./pages/admin/CompanyList";
 import CompanyEdit from "./pages/admin/CompanyEdit";
 import ParceiroHome from "./pages/ParceiroHome";
 import ComprasHome from "./pages/ComprasHome";
+import MetasColaboradores from "./pages/MetasColaboradores";
 import FinanceiroHome from "./pages/FinanceiroHome";
 import RHHome from "./pages/RHHome";
 import PaineisHome from "./pages/PaineisHome";
@@ -293,6 +294,18 @@ const App = () => (
                     <ProducaoAuthProvider>
                       <ProtectedProducaoRoute routeKey="pedidos">
                         <PedidosStandalone />
+                      </ProtectedProducaoRoute>
+                    </ProducaoAuthProvider>
+                  }
+                />
+
+                {/* Rota de Metas do Hub */}
+                <Route
+                  path="/hub-fabrica/metas"
+                  element={
+                    <ProducaoAuthProvider>
+                      <ProtectedProducaoRoute routeKey="metas">
+                        <MetasColaboradores />
                       </ProtectedProducaoRoute>
                     </ProducaoAuthProvider>
                   }

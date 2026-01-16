@@ -6164,6 +6164,20 @@ export type Database = {
         }[]
       }
       get_meta_producao_mes: { Args: never; Returns: number }
+      get_metas_colaboradores_mes: {
+        Args: never
+        Returns: {
+          carregamento_qtd: number
+          foto_perfil_url: string
+          nome: string
+          perfiladeira_metros: number
+          pintura_m2: number
+          qualidade_qtd: number
+          separacao_qtd: number
+          solda_qtd: number
+          user_id: string
+        }[]
+      }
       get_ordens_paradas: { Args: never; Returns: number }
       get_pedidos_com_status_ordens: {
         Args: never
