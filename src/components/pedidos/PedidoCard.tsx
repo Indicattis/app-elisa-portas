@@ -892,16 +892,22 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="flex items-center gap-2 h-full px-3 w-full">
-              {/* Drag Handle */}
-              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>}
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 120px 50px 80px 50px 28px 28px 28px 28px 28px 70px 60px' }}>
+              {/* Col 1: Drag Handle */}
+              <div>
+                {dragHandleProps ? (
+                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                ) : (
+                  <span />
+                )}
+              </div>
               
-              {/* Foto do vendedor/criador */}
+              {/* Col 2: Foto do vendedor/criador */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Avatar className="h-5 w-5 flex-shrink-0">
+                  <Avatar className="h-5 w-5">
                     <AvatarImage src={atendenteFoto || undefined} alt={atendenteNome} />
                     <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
                       {atendenteIniciais}
@@ -913,11 +919,11 @@ export function PedidoCard({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Nome do cliente - ocupa espaço disponível */}
+              {/* Col 3: Nome do cliente - flex grow */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <h3 
-                    className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors min-w-[120px] max-w-[200px]"
+                    className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/dashboard/pedido/${pedido.id}/view`);
@@ -931,8 +937,8 @@ export function PedidoCard({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Portas P/G - exibir cada porta individualmente com tooltip de dimensões */}
-              <div className="flex items-center gap-0.5 overflow-hidden flex-shrink-0">
+              {/* Col 4: Portas P/G */}
+              <div className="flex items-center gap-0.5 overflow-hidden">
                 {listaPortasInfo.length > 0 ? (
                   <>
                     {listaPortasInfo.slice(0, 6).map((porta, idx) => (
@@ -973,8 +979,8 @@ export function PedidoCard({
                 )}
               </div>
 
-              {/* Tags/Badges */}
-              <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Col 5: Tags/Badges (Instalação/Entrega) */}
+              <div className="flex items-center justify-center gap-1">
                 {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5" />
                   </Badge>}
@@ -982,10 +988,12 @@ export function PedidoCard({
                 {isEntrega && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                     <Truck className="h-2.5 w-2.5" />
                   </Badge>}
+                  
+                {!isInstalacao && !isEntrega && <span className="text-gray-300 text-[10px]">—</span>}
               </div>
               
-              {/* Cores - 100px de largura */}
-              <div className="flex items-center gap-1 w-[100px] flex-shrink-0">
+              {/* Col 6: Cores */}
+              <div className="flex items-center gap-1">
                 {coresUnicas.length > 0 ? (
                   <>
                     {coresUnicas.slice(0, 2).map((cor, idx) => (
@@ -1008,45 +1016,42 @@ export function PedidoCard({
                 )}
               </div>
               
-              {/* Data de Carregamento */}
-              <div className="text-[9px] text-muted-foreground text-center flex-shrink-0 w-[50px]">
+              {/* Col 7: Data de Carregamento */}
+              <div className="text-[9px] text-muted-foreground text-center">
                 {dataCarregamento ? (
                   <span title="Data de carregamento">
                     {format(new Date(dataCarregamento), "dd/MM")}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground/50">-</span>
+                  <span className="text-muted-foreground/50">—</span>
                 )}
               </div>
 
-              {/* Colunas de Status das Ordens */}
-              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Soldagem">
+              {/* Col 8-12: Status das Ordens */}
+              <div className="flex items-center justify-center" title="Soldagem">
                 {renderOrdemStatus(ordens.soldagem, 'Soldagem')}
               </div>
-              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Perfiladeira">
+              <div className="flex items-center justify-center" title="Perfiladeira">
                 {renderOrdemStatus(ordens.perfiladeira, 'Perfiladeira')}
               </div>
-              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Separação">
+              <div className="flex items-center justify-center" title="Separação">
                 {renderOrdemStatus(ordens.separacao, 'Separação')}
               </div>
-              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Qualidade">
+              <div className="flex items-center justify-center" title="Qualidade">
                 {renderOrdemStatus(ordens.qualidade, 'Qualidade')}
               </div>
-              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Pintura">
+              <div className="flex items-center justify-center" title="Pintura">
                 {renderOrdemStatus(ordens.pintura, 'Pintura')}
               </div>
               
-              {/* Tempo na Etapa */}
-              <div className="text-center flex-shrink-0">
+              {/* Col 13: Tempo na Etapa */}
+              <div className="text-center">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
               </div>
               
-              {/* Espaçador para empurrar botões para a direita */}
-              <div className="flex-1" />
-              
-              {/* Botões de ação - fixo à direita */}
+              {/* Col 14: Botões de ação */}
               <TooltipProvider>
-                <div className="flex items-center justify-end gap-0.5 flex-shrink-0">
+                <div className="flex items-center justify-end gap-0.5">
                   {(() => {
                     const actionButtons = [];
 
