@@ -57,7 +57,7 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
         const primeiroNome = c.nome.split(" ")[0];
 
         return (
-          <div key={c.user_id} className="flex items-center gap-1.5 text-[10px]">
+          <div key={c.user_id} className="flex items-center gap-2 text-[10px] pl-2">
             <span className="w-3 text-muted-foreground font-medium">{i + 1}.</span>
             <Avatar className="h-4 w-4">
               <AvatarImage src={c.foto_perfil_url || undefined} alt={c.nome} />
