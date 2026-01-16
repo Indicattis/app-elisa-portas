@@ -6193,14 +6193,13 @@ export type Database = {
           solda_qtd: number
         }[]
       }
-      get_desempenho_etapas_hoje: {
-        Args: never
+      get_desempenho_etapas: {
+        Args: { data_fim: string; data_inicio: string }
         Returns: {
           carregamentos: number
           foto_perfil_url: string
           nome: string
-          perfiladas: number
-          perfiladeira_metros: number
+          perfiladas_metros: number
           pintura_m2: number
           separadas: number
           soldadas: number
@@ -6317,14 +6316,13 @@ export type Database = {
       get_portas_enrolar_produzidas_hoje: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_mes: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_semana: { Args: never; Returns: number }
-      get_portas_por_etapa_hoje: {
-        Args: never
+      get_portas_por_etapa: {
+        Args: { data_fim: string; data_inicio: string }
         Returns: {
-          carregamentos_hoje: number
-          metragem_perfilada: number
-          pintura_m2_hoje: number
-          portas_perfiladas: number
-          portas_separadas: number
+          carregamentos: number
+          metros_perfilados: number
+          pedidos_separados: number
+          pintura_m2: number
           portas_soldadas: number
         }[]
       }

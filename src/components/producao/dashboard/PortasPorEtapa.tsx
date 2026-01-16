@@ -1,14 +1,17 @@
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { usePortasPorEtapaHoje } from "@/hooks/usePortasPorEtapaHoje";
-import { useDesempenhoEtapasHoje, DesempenhoColaboradorHoje } from "@/hooks/useDesempenhoEtapasHoje";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePortasPorEtapa } from "@/hooks/usePortasPorEtapa";
+import { useDesempenhoEtapas, DesempenhoColaborador } from "@/hooks/useDesempenhoEtapas";
 import { Cog, Flame, Package, Paintbrush, Truck } from "lucide-react";
+import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 
-type CampoDesempenho = keyof Pick<DesempenhoColaboradorHoje, 'perfiladas' | 'soldadas' | 'separadas' | 'pintura_m2' | 'carregamentos'>;
+type CampoDesempenho = keyof Pick<DesempenhoColaborador, 'perfiladas_metros' | 'soldadas' | 'separadas' | 'pintura_m2' | 'carregamentos'>;
 
 interface MiniRankingProps {
-  colaboradores: DesempenhoColaboradorHoje[];
+  colaboradores: DesempenhoColaborador[];
   campo: CampoDesempenho;
   unidade?: string;
   isLoading: boolean;
@@ -33,7 +36,7 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
   if (top3.length === 0) {
     return (
       <div className="mt-2 pt-2 border-t border-border/50">
-        <p className="text-[10px] text-muted-foreground italic">Sem produção hoje</p>
+        <p className="text-[10px] text-muted-foreground italic">Sem produção</p>
       </div>
     );
   }
@@ -41,9 +44,10 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
   return (
     <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
       {top3.map((c, i) => {
-        const valor = campo === 'pintura_m2' 
-          ? c[campo].toFixed(1).replace('.', ',')
-          : c[campo];
+        const valorRaw = c[campo];
+        const valor = (campo === 'pintura_m2' || campo === 'perfiladas_metros')
+          ? valorRaw.toFixed(1).replace('.', ',')
+          : valorRaw;
         const iniciais = c.nome
           .split(" ")
           .map((n) => n[0])
@@ -70,16 +74,46 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
   );
 }
 
-export function PortasPorEtapa() {
-  const { data, isLoading } = usePortasPorEtapaHoje();
-  const { data: desempenho = [], isLoading: isLoadingDesempenho } = useDesempenhoEtapasHoje();
+type Periodo = 'hoje' | 'semana' | 'mes' | 'ano';
 
-  const metragemFormatada = data?.metragem_perfilada 
-    ? `${data.metragem_perfilada.toFixed(1).replace('.', ',')}m`
+export function PortasPorEtapa() {
+  const [periodo, setPeriodo] = useState<Periodo>('hoje');
+
+  const { dataInicio, dataFim } = useMemo(() => {
+    const hoje = new Date();
+    switch (periodo) {
+      case 'hoje':
+        return { 
+          dataInicio: format(hoje, 'yyyy-MM-dd'), 
+          dataFim: format(hoje, 'yyyy-MM-dd') 
+        };
+      case 'semana':
+        return { 
+          dataInicio: format(startOfWeek(hoje, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+          dataFim: format(hoje, 'yyyy-MM-dd') 
+        };
+      case 'mes':
+        return { 
+          dataInicio: format(startOfMonth(hoje), 'yyyy-MM-dd'),
+          dataFim: format(hoje, 'yyyy-MM-dd') 
+        };
+      case 'ano':
+        return { 
+          dataInicio: format(startOfYear(hoje), 'yyyy-MM-dd'),
+          dataFim: format(hoje, 'yyyy-MM-dd') 
+        };
+    }
+  }, [periodo]);
+
+  const { data, isLoading } = usePortasPorEtapa(dataInicio, dataFim);
+  const { data: desempenho = [], isLoading: isLoadingDesempenho } = useDesempenhoEtapas(dataInicio, dataFim);
+
+  const metrosFormatados = data?.metros_perfilados 
+    ? `${data.metros_perfilados.toFixed(2).replace('.', ',')}m`
     : "0m";
 
-  const pinturaFormatada = data?.pintura_m2_hoje 
-    ? `${data.pintura_m2_hoje.toFixed(1).replace('.', ',')} m²`
+  const pinturaFormatada = data?.pintura_m2 
+    ? `${data.pintura_m2.toFixed(1).replace('.', ',')} m²`
     : "0 m²";
 
   const etapas: {
@@ -94,18 +128,18 @@ export function PortasPorEtapa() {
   }[] = [
     {
       label: "Perfiladas",
-      value: data?.portas_perfiladas ?? 0,
-      extra: metragemFormatada,
+      value: metrosFormatados,
+      extra: null,
       icon: Cog,
       bgColor: "bg-blue-500/10",
       iconColor: "text-blue-500",
-      campoRanking: "perfiladas",
-      unidadeRanking: "",
+      campoRanking: "perfiladas_metros",
+      unidadeRanking: "m",
     },
     {
       label: "Soldadas",
       value: data?.portas_soldadas ?? 0,
-      extra: null,
+      extra: "portas",
       icon: Flame,
       bgColor: "bg-orange-500/10",
       iconColor: "text-orange-500",
@@ -114,8 +148,8 @@ export function PortasPorEtapa() {
     },
     {
       label: "Separadas",
-      value: data?.portas_separadas ?? 0,
-      extra: null,
+      value: data?.pedidos_separados ?? 0,
+      extra: "pedidos",
       icon: Package,
       bgColor: "bg-green-500/10",
       iconColor: "text-green-500",
@@ -134,7 +168,7 @@ export function PortasPorEtapa() {
     },
     {
       label: "Carregamentos",
-      value: data?.carregamentos_hoje ?? 0,
+      value: data?.carregamentos ?? 0,
       extra: null,
       icon: Truck,
       bgColor: "bg-emerald-600/10",
@@ -144,11 +178,31 @@ export function PortasPorEtapa() {
     },
   ];
 
+  const periodoLabel = {
+    hoje: 'Hoje',
+    semana: 'Esta Semana',
+    mes: 'Este Mês',
+    ano: 'Este Ano'
+  };
+
   return (
     <Card className="p-4">
-      <h3 className="text-sm font-medium text-muted-foreground mb-3">
-        Desempenho por Etapa (Hoje)
-      </h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-muted-foreground">
+          Desempenho por Etapa ({periodoLabel[periodo]})
+        </h3>
+        <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
+          <SelectTrigger className="w-[130px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="hoje">Hoje</SelectItem>
+            <SelectItem value="semana">Semana</SelectItem>
+            <SelectItem value="mes">Mês</SelectItem>
+            <SelectItem value="ano">Ano</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {etapas.map((etapa) => {
           const Icon = etapa.icon;
@@ -170,7 +224,7 @@ export function PortasPorEtapa() {
                       {etapa.value}
                       {etapa.extra && (
                         <span className="text-sm font-normal text-muted-foreground ml-1">
-                          ({etapa.extra})
+                          {etapa.extra}
                         </span>
                       )}
                     </p>
