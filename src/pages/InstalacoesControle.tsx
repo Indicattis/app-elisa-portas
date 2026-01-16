@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useInstalacoesListagem } from "@/hooks/useInstalacoesListagem";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, MapPin, Calendar, Clock, Trash2, Plus, RefreshCw } from "lucide-react";
+import { CheckCircle2, MapPin, Calendar, Clock, Trash2, Plus, RefreshCw, ArrowLeft, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,7 @@ type FilterType = "pendentes" | "todos" | "concluidas";
 export default function InstalacoesControle() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user, signOut } = useProducaoAuth();
   const { instalacoes: instalacoesBrutas, isLoading, concluirInstalacao, deleteInstalacao, isConcluindo, isDeleting } = useInstalacoesListagem();
   const [filter, setFilter] = useState<FilterType>("pendentes");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -105,15 +107,56 @@ export default function InstalacoesControle() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Carregando instalações...</p>
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/hub-fabrica/instalacoes")}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-lg font-semibold">Controle de Instalações</h1>
+                <p className="text-xs text-muted-foreground">Gerenciar instalações</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-muted-foreground">Carregando instalações...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 overflow-hidden">
-      {/* Header com ações */}
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/hub-fabrica/instalacoes")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-lg font-semibold">Controle de Instalações</h1>
+              <p className="text-xs text-muted-foreground">Gerenciar instalações</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {user && (
+              <span className="text-sm text-muted-foreground hidden sm:block">
+                {user.nome}
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => signOut()}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Conteúdo */}
+      <main className="p-4 space-y-4 overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold">Controle</h2>
@@ -277,6 +320,7 @@ export default function InstalacoesControle() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </main>
     </div>
   );
 }
