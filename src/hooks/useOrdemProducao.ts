@@ -103,6 +103,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
                 id,
                 tipo_produto,
                 cor_id,
+                quantidade,
                 catalogo_cores(nome, codigo_hex)
               )
             )
