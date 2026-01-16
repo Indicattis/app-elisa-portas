@@ -3,10 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { usePortasPorEtapa } from "@/hooks/usePortasPorEtapa";
 import { useDesempenhoEtapas, DesempenhoColaborador } from "@/hooks/useDesempenhoEtapas";
-import { Cog, Flame, Package, Paintbrush, Truck } from "lucide-react";
+import { Cog, Flame, Package, Paintbrush, Truck, CalendarIcon } from "lucide-react";
 import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 type CampoDesempenho = keyof Pick<DesempenhoColaborador, 'perfiladas_metros' | 'soldadas' | 'separadas' | 'pintura_m2' | 'carregamentos'>;
 
@@ -74,10 +79,12 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
   );
 }
 
-type Periodo = 'hoje' | 'semana' | 'mes' | 'ano';
+type Periodo = 'hoje' | 'semana' | 'mes' | 'ano' | 'dia' | 'personalizado';
 
 export function PortasPorEtapa() {
   const [periodo, setPeriodo] = useState<Periodo>('hoje');
+  const [dataInicioCustom, setDataInicioCustom] = useState<Date | undefined>();
+  const [dataFimCustom, setDataFimCustom] = useState<Date | undefined>();
 
   const { dataInicio, dataFim } = useMemo(() => {
     const hoje = new Date();
@@ -102,11 +109,37 @@ export function PortasPorEtapa() {
           dataInicio: format(startOfYear(hoje), 'yyyy-MM-dd'),
           dataFim: format(hoje, 'yyyy-MM-dd') 
         };
+      case 'dia':
+        return { 
+          dataInicio: dataInicioCustom ? format(dataInicioCustom, 'yyyy-MM-dd') : format(hoje, 'yyyy-MM-dd'),
+          dataFim: dataInicioCustom ? format(dataInicioCustom, 'yyyy-MM-dd') : format(hoje, 'yyyy-MM-dd')
+        };
+      case 'personalizado':
+        return {
+          dataInicio: dataInicioCustom ? format(dataInicioCustom, 'yyyy-MM-dd') : format(startOfMonth(hoje), 'yyyy-MM-dd'),
+          dataFim: dataFimCustom ? format(dataFimCustom, 'yyyy-MM-dd') : format(hoje, 'yyyy-MM-dd')
+        };
     }
-  }, [periodo]);
+  }, [periodo, dataInicioCustom, dataFimCustom]);
 
   const { data, isLoading } = usePortasPorEtapa(dataInicio, dataFim);
   const { data: desempenho = [], isLoading: isLoadingDesempenho } = useDesempenhoEtapas(dataInicio, dataFim);
+
+  const getPeriodoLabel = () => {
+    switch (periodo) {
+      case 'hoje': return 'Hoje';
+      case 'semana': return 'Esta Semana';
+      case 'mes': return 'Este Mês';
+      case 'ano': return 'Este Ano';
+      case 'dia': 
+        return dataInicioCustom ? format(dataInicioCustom, "dd/MM/yyyy") : 'Dia Específico';
+      case 'personalizado':
+        if (dataInicioCustom && dataFimCustom) {
+          return `${format(dataInicioCustom, "dd/MM")} - ${format(dataFimCustom, "dd/MM")}`;
+        }
+        return 'Personalizado';
+    }
+  };
 
   const metrosFormatados = data?.metros_perfilados 
     ? `${data.metros_perfilados.toFixed(2).replace('.', ',')}m`
@@ -178,30 +211,93 @@ export function PortasPorEtapa() {
     },
   ];
 
-  const periodoLabel = {
-    hoje: 'Hoje',
-    semana: 'Esta Semana',
-    mes: 'Este Mês',
-    ano: 'Este Ano'
-  };
-
   return (
     <Card className="p-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
         <h3 className="text-sm font-medium text-muted-foreground">
-          Desempenho por Etapa ({periodoLabel[periodo]})
+          Desempenho por Etapa ({getPeriodoLabel()})
         </h3>
-        <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
-          <SelectTrigger className="w-[130px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="hoje">Hoje</SelectItem>
-            <SelectItem value="semana">Semana</SelectItem>
-            <SelectItem value="mes">Mês</SelectItem>
-            <SelectItem value="ano">Ano</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
+            <SelectTrigger className="w-[140px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hoje">Hoje</SelectItem>
+              <SelectItem value="semana">Semana</SelectItem>
+              <SelectItem value="mes">Mês</SelectItem>
+              <SelectItem value="ano">Ano</SelectItem>
+              <SelectItem value="dia">Dia Específico</SelectItem>
+              <SelectItem value="personalizado">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {periodo === 'dia' && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  {dataInicioCustom ? format(dataInicioCustom, "dd/MM/yyyy") : "Escolher"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  selected={dataInicioCustom}
+                  onSelect={(date) => {
+                    setDataInicioCustom(date);
+                    setDataFimCustom(date);
+                  }}
+                  locale={ptBR}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {periodo === 'personalizado' && (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dataInicioCustom ? format(dataInicioCustom, "dd/MM/yy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={dataInicioCustom}
+                    onSelect={setDataInicioCustom}
+                    locale={ptBR}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dataFimCustom ? format(dataFimCustom, "dd/MM/yy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={dataFimCustom}
+                    onSelect={setDataFimCustom}
+                    locale={ptBR}
+                    initialFocus
+                    disabled={(date) => dataInicioCustom ? date < dataInicioCustom : false}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
+        </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {etapas.map((etapa) => {
