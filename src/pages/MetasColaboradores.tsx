@@ -157,7 +157,7 @@ export default function MetasColaboradores() {
                   {colaborador.solda_qtd}
                 </div>
                 <div className="text-center font-medium">
-                  {formatNumber(colaborador.perfiladeira_metros, 1)}
+                  {formatNumber(colaborador.perfiladeira_metros, 1)}m
                 </div>
                 <div className="text-center font-medium">
                   {colaborador.separacao_qtd}
