@@ -1023,7 +1023,7 @@ export function PedidoCard({
               </div>
               
               {/* Col 7: Data de Carregamento */}
-              <div className="text-[9px] text-center">
+              <div className="text-center">
                 {dataCarregamento ? (
                   (() => {
                     const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao';
@@ -1037,20 +1037,20 @@ export function PedidoCard({
                       return (
                         <span 
                           title="Data de carregamento"
-                          className={atrasado ? "text-destructive font-medium" : "text-green-600 font-medium"}
+                          className={`text-xs font-bold ${atrasado ? "text-destructive" : "text-green-600"}`}
                         >
                           {format(new Date(dataCarregamento), "dd/MM")}
                         </span>
                       );
                     }
                     return (
-                      <span title="Data de carregamento" className="text-muted-foreground">
+                      <span title="Data de carregamento" className="text-[10px] font-medium text-muted-foreground">
                         {format(new Date(dataCarregamento), "dd/MM")}
                       </span>
                     );
                   })()
                 ) : (
-                  <span className="text-muted-foreground/50">—</span>
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
                 )}
               </div>
 
