@@ -399,6 +399,16 @@ const App = () => (
                           }
                         />
                         <Route
+                          path="/controle/pedido/:id/view"
+                          element={
+                            <ProtectedProducaoRoute routeKey="producao_controle">
+                              <ProducaoLayout>
+                                <PedidoView />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
                           path="/terceirizacao"
                           element={
                             <ProtectedProducaoRoute routeKey="producao_terceirizacao">
