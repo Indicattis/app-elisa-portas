@@ -480,9 +480,7 @@ const App = () => (
                           path="/controle"
                           element={
                             <ProtectedProducaoRoute routeKey="instalacoes_controle">
-                              <InstalacoesLayout title="Controle de Instalações">
-                                <InstalacoesControle />
-                              </InstalacoesLayout>
+                              <InstalacoesControle />
                             </ProtectedProducaoRoute>
                           }
                         />
@@ -490,9 +488,7 @@ const App = () => (
                           path="/cronograma"
                           element={
                             <ProtectedProducaoRoute routeKey="instalacoes_cronograma">
-                              <InstalacoesLayout title="Cronograma">
-                                <InstalacoesCronograma />
-                              </InstalacoesLayout>
+                              <InstalacoesCronograma />
                             </ProtectedProducaoRoute>
                           }
                         />
