@@ -115,30 +115,42 @@ export default function MetasColaboradores() {
                   <span className="font-medium">{colaborador.nome}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Flame className="h-3.5 w-3.5" />
-                    <span>{colaborador.solda_qtd}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Ruler className="h-3.5 w-3.5" />
-                    <span>{formatNumber(colaborador.perfiladeira_metros, 1)}m</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Package className="h-3.5 w-3.5" />
-                    <span>{colaborador.separacao_qtd}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    <span>{colaborador.qualidade_qtd}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Paintbrush className="h-3.5 w-3.5" />
-                    <span>{formatNumber(colaborador.pintura_m2, 1)}m²</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Truck className="h-3.5 w-3.5" />
-                    <span>{colaborador.carregamento_qtd}</span>
-                  </div>
+                  {colaborador.solda_qtd > 0 && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Flame className="h-3.5 w-3.5" />
+                      <span>{colaborador.solda_qtd}</span>
+                    </div>
+                  )}
+                  {colaborador.perfiladeira_metros > 0 && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Ruler className="h-3.5 w-3.5" />
+                      <span>{formatNumber(colaborador.perfiladeira_metros, 1)}m</span>
+                    </div>
+                  )}
+                  {colaborador.separacao_qtd > 0 && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Package className="h-3.5 w-3.5" />
+                      <span>{colaborador.separacao_qtd}</span>
+                    </div>
+                  )}
+                  {colaborador.qualidade_qtd > 0 && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span>{colaborador.qualidade_qtd}</span>
+                    </div>
+                  )}
+                  {colaborador.pintura_m2 > 0 && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Paintbrush className="h-3.5 w-3.5" />
+                      <span>{formatNumber(colaborador.pintura_m2, 1)}m²</span>
+                    </div>
+                  )}
+                  {colaborador.carregamento_qtd > 0 && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Truck className="h-3.5 w-3.5" />
+                      <span>{colaborador.carregamento_qtd}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -154,22 +166,22 @@ export default function MetasColaboradores() {
                   <span className="font-medium">{colaborador.nome}</span>
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.solda_qtd}
+                  {colaborador.solda_qtd > 0 ? colaborador.solda_qtd : '-'}
                 </div>
                 <div className="text-center font-medium">
-                  {formatNumber(colaborador.perfiladeira_metros, 1)}m
+                  {colaborador.perfiladeira_metros > 0 ? `${formatNumber(colaborador.perfiladeira_metros, 1)}m` : '-'}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.separacao_qtd}
+                  {colaborador.separacao_qtd > 0 ? colaborador.separacao_qtd : '-'}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.qualidade_qtd}
+                  {colaborador.qualidade_qtd > 0 ? colaborador.qualidade_qtd : '-'}
                 </div>
                 <div className="text-center font-medium">
-                  {formatNumber(colaborador.pintura_m2, 1)}
+                  {colaborador.pintura_m2 > 0 ? formatNumber(colaborador.pintura_m2, 1) : '-'}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.carregamento_qtd}
+                  {colaborador.carregamento_qtd > 0 ? colaborador.carregamento_qtd : '-'}
                 </div>
               </div>
             </div>
