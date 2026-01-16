@@ -17,6 +17,8 @@ interface ProdutoInfo {
   descricao: string | null;
   tamanho: string | null;
   quantidade: number;
+  largura: number | null;
+  altura: number | null;
 }
 
 export interface PedidoComOrdens {
