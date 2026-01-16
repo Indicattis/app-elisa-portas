@@ -44,8 +44,9 @@ import ProducaoSeparacao from "./pages/ProducaoSeparacao";
 import ProducaoQualidade from "./pages/ProducaoQualidade";
 import ProducaoPintura from "./pages/ProducaoPintura";
 import InstalacoesAdmin from "./pages/InstalacoesAdmin";
-import Instalacoes from "./pages/Instalacoes";
 import InstalacoesControle from "./pages/InstalacoesControle";
+import HubInstalacoes from "./pages/HubInstalacoes";
+import AgendamentoExpedicaoFabrica from "./pages/AgendamentoExpedicaoFabrica";
 import InstalacoesCronograma from "./pages/InstalacoesCronograma";
 import InstalacoesNovas from "./pages/InstalacoesNovas";
 import InstalacoesEditar from "./pages/InstalacoesEditar";
@@ -463,8 +464,16 @@ const App = () => (
                           path="/"
                           element={
                             <ProtectedProducaoRoute routeKey="instalacoes_calendario">
-                              <InstalacoesLayout title="Calendário">
-                                <Instalacoes />
+                              <HubInstalacoes />
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/agendamento"
+                          element={
+                            <ProtectedProducaoRoute routeKey="instalacoes_calendario">
+                              <InstalacoesLayout title="Calendário Expedição">
+                                <AgendamentoExpedicaoFabrica />
                               </InstalacoesLayout>
                             </ProtectedProducaoRoute>
                           }
