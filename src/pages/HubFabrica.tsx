@@ -24,7 +24,7 @@ const menuItems = [
     path: "/hub-fabrica/instalacoes",
   },
   {
-    title: "Pedidos",
+    title: "Gerente",
     description: "Gestão de pedidos",
     icon: Package,
     path: "/hub-fabrica/pedidos",
