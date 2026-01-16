@@ -202,13 +202,18 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                           </td>
                           <td className="p-2">
                             <TooltipProvider>
-                              <div className="flex items-center gap-1">
+                              <div className="flex flex-col gap-1">
                                 {coresVisiveis.map((cor, idx) => (
                                   <Tooltip key={idx}>
                                     <TooltipTrigger asChild>
                                       <div
-                                        className="h-5 w-5 rounded-full border border-border cursor-help flex-shrink-0"
-                                        style={{ backgroundColor: cor.codigo_hex }}
+                                        className="border border-border cursor-help flex-shrink-0"
+                                        style={{ 
+                                          backgroundColor: cor.codigo_hex,
+                                          height: '15px',
+                                          width: '80px',
+                                          borderRadius: '20px'
+                                        }}
                                       />
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -220,8 +225,15 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                                 {coresRestantes > 0 && (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div className="h-5 w-5 rounded-full bg-muted border border-border flex items-center justify-center text-[10px] font-medium cursor-help flex-shrink-0">
-                                        +{coresRestantes}
+                                      <div 
+                                        className="bg-muted border border-border flex items-center justify-center text-[10px] font-medium cursor-help flex-shrink-0"
+                                        style={{ 
+                                          height: '15px',
+                                          width: '80px',
+                                          borderRadius: '20px'
+                                        }}
+                                      >
+                                        +{coresRestantes} cores
                                       </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -229,8 +241,13 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                                         {cores.slice(maxCoresVisiveis).map((cor, idx) => (
                                           <div key={idx} className="flex items-center gap-2">
                                             <div
-                                              className="h-3 w-3 rounded-full border"
-                                              style={{ backgroundColor: cor.codigo_hex }}
+                                              className="border"
+                                              style={{ 
+                                                backgroundColor: cor.codigo_hex,
+                                                height: '10px',
+                                                width: '40px',
+                                                borderRadius: '10px'
+                                              }}
                                             />
                                             <span className="text-xs">{cor.nome}</span>
                                           </div>
