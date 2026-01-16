@@ -118,7 +118,9 @@ export default function ProducaoHome() {
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Acesso aos Painéis</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {routes.map(route => {
+        {routes
+          .filter(route => !['hub_fabrica_pedidos', 'metas'].includes(route.key))
+          .map(route => {
           const Icon = getIcon(route.icon);
           const count = getRouteCount(route.key);
           return <Card key={route.key} className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50 group" onClick={() => navigate(route.path)}>
