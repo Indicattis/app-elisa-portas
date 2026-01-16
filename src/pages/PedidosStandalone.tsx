@@ -27,13 +27,16 @@ const ETAPA_ICONS = {
   aguardando_instalacao: Wrench,
   finalizado: CheckCircle2
 };
-
 export default function PedidosStandalone() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { signOut, userRole } = useAuth();
-  
+  const {
+    toast
+  } = useToast();
+  const {
+    signOut,
+    userRole
+  } = useAuth();
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
   const [searchTerm, setSearchTerm] = useState('');
   const viewMode = 'list';
@@ -42,7 +45,6 @@ export default function PedidosStandalone() {
   const [mostrarProntos, setMostrarProntos] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const ITENS_POR_PAGINA = 25;
-
   const contadores = usePedidosContadores();
   const {
     pedidos,
@@ -53,7 +55,6 @@ export default function PedidosStandalone() {
     reorganizarPedidos,
     arquivarPedido
   } = usePedidosEtapas(etapaAtiva);
-
   const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
     await moverParaProximaEtapa.mutateAsync({
       pedidoId,
@@ -61,7 +62,6 @@ export default function PedidosStandalone() {
       onProgress
     });
   };
-
   const handleRetrocederEtapa = (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => {
     retrocederEtapa.mutate({
       pedidoId,
@@ -69,16 +69,16 @@ export default function PedidosStandalone() {
       motivo
     });
   };
-
-  const handleReorganizar = async (atualizacoes: { id: string; prioridade: number; }[]) => {
+  const handleReorganizar = async (atualizacoes: {
+    id: string;
+    prioridade: number;
+  }[]) => {
     await reorganizarPedidos.mutateAsync(atualizacoes);
   };
-
   const handleMoverPrioridade = async (pedidoId: string, direcao: DirecaoPrioridade) => {
     const index = pedidos.findIndex(p => p.id === pedidoId);
     if (index === -1) return;
     const pedidoAtual = pedidos[index];
-
     if (!('numero_pedido' in pedidoAtual)) return;
     let novaPrioridade: number;
     if (direcao === 'frente' && index > 0) {
@@ -95,10 +95,8 @@ export default function PedidosStandalone() {
       novaPrioridade
     });
   };
-
   const pedidosFiltrados = useMemo(() => {
     let filtered = pedidos;
-
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase();
       filtered = filtered.filter((pedido: any) => {
@@ -107,14 +105,12 @@ export default function PedidosStandalone() {
         return clienteNome.includes(termo);
       });
     }
-
     if (tipoEntrega !== 'todos') {
       filtered = filtered.filter((pedido: any) => {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
         return vendaData?.tipo_entrega === tipoEntrega;
       });
     }
-
     if (corPintura !== 'todas') {
       filtered = filtered.filter((pedido: any) => {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
@@ -125,7 +121,6 @@ export default function PedidosStandalone() {
         });
       });
     }
-
     if (mostrarProntos) {
       filtered = filtered.filter((pedido: any) => {
         const etapaAtual = pedido.pedidos_etapas?.find((e: any) => e.etapa === etapaAtiva);
@@ -136,31 +131,29 @@ export default function PedidosStandalone() {
     }
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
-
   useEffect(() => {
     setPaginaAtual(1);
   }, [searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
-
   const totalPaginas = Math.ceil(pedidosFiltrados.length / ITENS_POR_PAGINA);
   const indiceInicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
   const indiceFim = indiceInicio + ITENS_POR_PAGINA;
   const pedidosPaginados = pedidosFiltrados.slice(indiceInicio, indiceFim);
-
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
-    queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    queryClient.invalidateQueries({
+      queryKey: ['pedidos-etapas']
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['pedidos-contadores']
+    });
     toast({
       title: "Atualizado",
       description: "Lista de pedidos atualizada com sucesso"
     });
   };
-
   const handleArquivar = async (pedidoId: string) => {
     await arquivarPedido.mutateAsync(pedidoId);
   };
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
+  return <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center justify-between px-4 h-14">
@@ -176,11 +169,9 @@ export default function PedidosStandalone() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {userRole && (
-              <span className="text-sm text-muted-foreground hidden sm:block">
+            {userRole && <span className="text-sm text-muted-foreground hidden sm:block">
                 {userRole.nome}
-              </span>
-            )}
+              </span>}
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
@@ -202,18 +193,7 @@ export default function PedidosStandalone() {
             </div>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={handleRefresh} className="gap-2" size="sm">
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline">Atualizar</span>
-            </Button>
-            
-            <Button variant="outline" onClick={() => navigate('/hub-fabrica/login')} className="gap-2" size="sm">
-              <Factory className="h-4 w-4" />
-              <span className="hidden lg:inline">Interface de Produção</span>
-              <span className="lg:hidden hidden sm:inline">Produção</span>
-            </Button>
-          </div>
+          
         </div>
 
         {/* Portas por Etapa (Hoje) */}
@@ -227,28 +207,25 @@ export default function PedidosStandalone() {
               <SelectTrigger className="w-full h-12">
                 <SelectValue>
                   {(() => {
-                    const config = ETAPAS_CONFIG[etapaAtiva];
-                    const count = contadores[etapaAtiva] || 0;
-                    const IconComponent = ETAPA_ICONS[etapaAtiva];
-                    return (
-                      <div className="flex items-center gap-2">
+                  const config = ETAPAS_CONFIG[etapaAtiva];
+                  const count = contadores[etapaAtiva] || 0;
+                  const IconComponent = ETAPA_ICONS[etapaAtiva];
+                  return <div className="flex items-center gap-2">
                         <IconComponent className="h-5 w-5" />
                         <span className="font-medium">{config.label}</span>
                         <Badge variant="secondary" className="ml-auto">
                           {count}
                         </Badge>
-                      </div>
-                    );
-                  })()}
+                      </div>;
+                })()}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
                 {ORDEM_ETAPAS.map(etapa => {
-                  const config = ETAPAS_CONFIG[etapa];
-                  const count = contadores[etapa] || 0;
-                  const IconComponent = ETAPA_ICONS[etapa];
-                  return (
-                    <SelectItem key={etapa} value={etapa} className="cursor-pointer">
+                const config = ETAPAS_CONFIG[etapa];
+                const count = contadores[etapa] || 0;
+                const IconComponent = ETAPA_ICONS[etapa];
+                return <SelectItem key={etapa} value={etapa} className="cursor-pointer">
                       <div className="flex items-center gap-2 w-full">
                         <IconComponent className="h-4 w-4 flex-shrink-0" />
                         <span className="flex-1">{config.label}</span>
@@ -256,9 +233,8 @@ export default function PedidosStandalone() {
                           {count}
                         </Badge>
                       </div>
-                    </SelectItem>
-                  );
-                })}
+                    </SelectItem>;
+              })}
               </SelectContent>
             </Select>
           </div>
@@ -266,23 +242,20 @@ export default function PedidosStandalone() {
           {/* Tabs - Desktop */}
           <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 scrollbar-hide">
             {ORDEM_ETAPAS.map(etapa => {
-              const config = ETAPAS_CONFIG[etapa];
-              const count = contadores[etapa] || 0;
-              const IconComponent = ETAPA_ICONS[etapa];
-              return (
-                <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2">
+            const config = ETAPAS_CONFIG[etapa];
+            const count = contadores[etapa] || 0;
+            const IconComponent = ETAPA_ICONS[etapa];
+            return <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2">
                   <IconComponent className="h-4 w-4 flex-shrink-0" />
                   <span className="text-xs">{config.label}</span>
                   <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
                     {count}
                   </span>
-                </TabsTrigger>
-              );
-            })}
+                </TabsTrigger>;
+          })}
           </TabsList>
 
-          {ORDEM_ETAPAS.map(etapa => (
-            <TabsContent key={etapa} value={etapa} className="mt-3 sm:mt-6">
+          {ORDEM_ETAPAS.map(etapa => <TabsContent key={etapa} value={etapa} className="mt-3 sm:mt-6">
               <Card>
                 <CardHeader className="pb-3 px-[5px] py-2 sm:px-6 sm:pb-4 sm:py-6">
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -294,102 +267,54 @@ export default function PedidosStandalone() {
                       </span>
                     </CardTitle>
                     
-                    <PedidosFiltrosMinimalista
-                      searchTerm={searchTerm}
-                      onSearchChange={setSearchTerm}
-                      tipoEntrega={tipoEntrega}
-                      onTipoEntregaChange={setTipoEntrega}
-                      corPintura={corPintura}
-                      onCorPinturaChange={setCorPintura}
-                      mostrarProntos={mostrarProntos}
-                      onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
-                    />
+                    <PedidosFiltrosMinimalista searchTerm={searchTerm} onSearchChange={setSearchTerm} tipoEntrega={tipoEntrega} onTipoEntregaChange={setTipoEntrega} corPintura={corPintura} onCorPinturaChange={setCorPintura} mostrarProntos={mostrarProntos} onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} />
                   </div>
                 </CardHeader>
                 <CardContent className="px-[5px] py-2 sm:px-6 sm:py-6">
-                  {isLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">
+                  {isLoading ? <div className="text-center py-8 text-muted-foreground">
                       Carregando...
-                    </div>
-                  ) : pedidosFiltrados.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
+                    </div> : pedidosFiltrados.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                       {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
-                    </div>
-                  ) : (
-                    <>
-                      <PedidosDraggableList
-                        pedidos={pedidosPaginados}
-                        etapa={etapa}
-                        isAberto={etapa === 'aberto'}
-                        viewMode={viewMode}
-                        onMoverEtapa={handleMoverEtapa}
-                        onRetrocederEtapa={handleRetrocederEtapa}
-                        onReorganizar={handleReorganizar}
-                        onMoverPrioridade={handleMoverPrioridade}
-                        onArquivar={handleArquivar}
-                      />
+                    </div> : <>
+                      <PedidosDraggableList pedidos={pedidosPaginados} etapa={etapa} isAberto={etapa === 'aberto'} viewMode={viewMode} onMoverEtapa={handleMoverEtapa} onRetrocederEtapa={handleRetrocederEtapa} onReorganizar={handleReorganizar} onMoverPrioridade={handleMoverPrioridade} onArquivar={handleArquivar} />
                       
-                      {totalPaginas > 1 && (
-                        <div className="mt-6 flex justify-center">
+                      {totalPaginas > 1 && <div className="mt-6 flex justify-center">
                           <Pagination>
                             <PaginationContent>
                               <PaginationItem>
-                                <PaginationPrevious
-                                  onClick={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
-                                  className={paginaAtual === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                                />
+                                <PaginationPrevious onClick={() => setPaginaAtual(prev => Math.max(1, prev - 1))} className={paginaAtual === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
                               </PaginationItem>
                               
-                              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((pagina) => {
-                                const mostrarPagina =
-                                  pagina === 1 ||
-                                  pagina === totalPaginas ||
-                                  (pagina >= paginaAtual - 1 && pagina <= paginaAtual + 1);
-                                
-                                const mostrarEllipsisAntes = pagina === paginaAtual - 2 && paginaAtual > 3;
-                                const mostrarEllipsisDepois = pagina === paginaAtual + 2 && paginaAtual < totalPaginas - 2;
-                                
-                                if (mostrarEllipsisAntes || mostrarEllipsisDepois) {
-                                  return (
-                                    <PaginationItem key={pagina}>
+                              {Array.from({
+                        length: totalPaginas
+                      }, (_, i) => i + 1).map(pagina => {
+                        const mostrarPagina = pagina === 1 || pagina === totalPaginas || pagina >= paginaAtual - 1 && pagina <= paginaAtual + 1;
+                        const mostrarEllipsisAntes = pagina === paginaAtual - 2 && paginaAtual > 3;
+                        const mostrarEllipsisDepois = pagina === paginaAtual + 2 && paginaAtual < totalPaginas - 2;
+                        if (mostrarEllipsisAntes || mostrarEllipsisDepois) {
+                          return <PaginationItem key={pagina}>
                                       <PaginationEllipsis />
-                                    </PaginationItem>
-                                  );
-                                }
-                                
-                                if (!mostrarPagina) return null;
-                                
-                                return (
-                                  <PaginationItem key={pagina}>
-                                    <PaginationLink
-                                      onClick={() => setPaginaAtual(pagina)}
-                                      isActive={paginaAtual === pagina}
-                                      className="cursor-pointer"
-                                    >
+                                    </PaginationItem>;
+                        }
+                        if (!mostrarPagina) return null;
+                        return <PaginationItem key={pagina}>
+                                    <PaginationLink onClick={() => setPaginaAtual(pagina)} isActive={paginaAtual === pagina} className="cursor-pointer">
                                       {pagina}
                                     </PaginationLink>
-                                  </PaginationItem>
-                                );
-                              })}
+                                  </PaginationItem>;
+                      })}
                               
                               <PaginationItem>
-                                <PaginationNext
-                                  onClick={() => setPaginaAtual(prev => Math.min(totalPaginas, prev + 1))}
-                                  className={paginaAtual === totalPaginas ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                                />
+                                <PaginationNext onClick={() => setPaginaAtual(prev => Math.min(totalPaginas, prev + 1))} className={paginaAtual === totalPaginas ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
                               </PaginationItem>
                             </PaginationContent>
                           </Pagination>
-                        </div>
-                      )}
-                    </>
-                  )}
+                        </div>}
+                    </>}
                 </CardContent>
               </Card>
-            </TabsContent>
-          ))}
+            </TabsContent>)}
         </Tabs>
       </main>
-    </div>
-  );
+    </div>;
 }
