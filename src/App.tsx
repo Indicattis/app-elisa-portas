@@ -472,9 +472,7 @@ const App = () => (
                           path="/agendamento"
                           element={
                             <ProtectedProducaoRoute routeKey="instalacoes_calendario">
-                              <InstalacoesLayout title="Calendário Expedição">
-                                <AgendamentoExpedicaoFabrica />
-                              </InstalacoesLayout>
+                              <AgendamentoExpedicaoFabrica />
                             </ProtectedProducaoRoute>
                           }
                         />
