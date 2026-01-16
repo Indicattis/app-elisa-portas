@@ -6,6 +6,8 @@ interface PortasPorEtapa {
   portas_soldadas: number;
   portas_separadas: number;
   metragem_perfilada: number;
+  pintura_m2_hoje: number;
+  carregamentos_hoje: number;
 }
 
 export function usePortasPorEtapaHoje() {
@@ -21,6 +23,8 @@ export function usePortasPorEtapaHoje() {
           portas_soldadas: 0,
           portas_separadas: 0,
           metragem_perfilada: 0,
+          pintura_m2_hoje: 0,
+          carregamentos_hoje: 0,
         };
       }
       
@@ -29,6 +33,8 @@ export function usePortasPorEtapaHoje() {
         portas_soldadas: 0,
         portas_separadas: 0,
         metragem_perfilada: 0,
+        pintura_m2_hoje: 0,
+        carregamentos_hoje: 0,
       };
       
       return result;

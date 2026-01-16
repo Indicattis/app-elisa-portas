@@ -6193,6 +6193,20 @@ export type Database = {
           solda_qtd: number
         }[]
       }
+      get_desempenho_etapas_hoje: {
+        Args: never
+        Returns: {
+          carregamentos: number
+          foto_perfil_url: string
+          nome: string
+          perfiladas: number
+          perfiladeira_metros: number
+          pintura_m2: number
+          separadas: number
+          soldadas: number
+          user_id: string
+        }[]
+      }
       get_desempenho_producao_geral: {
         Args: { p_data_fim: string; p_data_inicio: string }
         Returns: {
@@ -6306,7 +6320,9 @@ export type Database = {
       get_portas_por_etapa_hoje: {
         Args: never
         Returns: {
+          carregamentos_hoje: number
           metragem_perfilada: number
+          pintura_m2_hoje: number
           portas_perfiladas: number
           portas_separadas: number
           portas_soldadas: number
