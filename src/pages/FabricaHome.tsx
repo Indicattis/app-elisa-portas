@@ -1,5 +1,5 @@
 import { MateriaisRanking } from "@/components/producao/dashboard/MateriaisRanking";
-import { PedidosStatusOrdens } from "@/components/producao/dashboard/PedidosStatusOrdens";
+import { PedidosEmProducaoReadOnly } from "@/components/producao/dashboard/PedidosEmProducaoReadOnly";
 import { IndicadoresProducao } from "@/components/producao/dashboard/IndicadoresProducao";
 import { CoresPintadasHoje } from "@/components/producao/dashboard/CoresPintadasHoje";
 import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
@@ -21,8 +21,8 @@ export default function FabricaHome() {
       {/* Portas por Etapa (Hoje) */}
       <PortasPorEtapa />
 
-      {/* Pedidos com Ordens Pendentes */}
-      <PedidosStatusOrdens />
+      {/* Pedidos em Produção (read-only) */}
+      <PedidosEmProducaoReadOnly />
 
       {/* Materiais Necessários para Produção */}
       <MateriaisNecessariosProducao />
