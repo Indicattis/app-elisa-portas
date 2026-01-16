@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -113,6 +113,8 @@ export default function PedidoView() {
   const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHubFabrica = location.pathname.startsWith('/hub-fabrica');
 
   // Hooks para edição (apenas se pedido estiver aberto)
   const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote, atualizarLinha } = usePedidoLinhas(id || "");
@@ -637,7 +639,7 @@ export default function PedidoView() {
               if (window.history.length > 2) {
                 navigate(-1);
               } else {
-                navigate('/dashboard/fabrica/pedidos');
+                navigate(isHubFabrica ? '/hub-fabrica/producao/controle' : '/dashboard/fabrica/pedidos');
               }
             }}
           >

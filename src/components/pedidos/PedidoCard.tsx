@@ -9,7 +9,7 @@ import { ptBR } from "date-fns/locale";
 import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus } from "lucide-react";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AcaoEtapaModal } from "./AcaoEtapaModal";
 import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
@@ -75,6 +75,8 @@ export function PedidoCard({
   } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHubFabrica = location.pathname.startsWith('/hub-fabrica');
 
   // Mutation para remover responsável
   const removerResponsavelMutation = useMutation({
@@ -926,7 +928,11 @@ export function PedidoCard({
                     className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/dashboard/pedido/${pedido.id}/view`);
+                      if (isHubFabrica) {
+                        navigate(`/hub-fabrica/producao/controle/pedido/${pedido.id}/view`);
+                      } else {
+                        navigate(`/dashboard/pedido/${pedido.id}/view`);
+                      }
                     }}
                   >
                     {venda?.cliente_nome}
