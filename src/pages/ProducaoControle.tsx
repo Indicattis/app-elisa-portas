@@ -22,11 +22,11 @@ export default function ProducaoControle() {
       {/* Portas por Etapa (Hoje) */}
       <PortasPorEtapa />
 
-      {/* Desempenho por Setor com Gráfico */}
-      <DesempenhoSetoresProducao />
-
       {/* Pedidos em Produção (read-only) */}
       <PedidosEmProducaoReadOnly />
+
+      {/* Desempenho por Setor com Gráfico */}
+      <DesempenhoSetoresProducao />
 
       {/* Materiais Necessários para Produção */}
       <MateriaisNecessariosProducao />
