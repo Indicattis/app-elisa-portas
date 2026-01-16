@@ -42,11 +42,18 @@ export function MateriaisNecessariosProducao() {
               <div
                 key={material.estoque_id}
                 className="h-[100px] w-[100px] p-2 rounded-md border border-border/50 bg-muted/30 flex flex-col justify-between overflow-hidden hover:bg-muted/50 transition-colors cursor-default"
-                title={`${material.nome_produto}\nQtd: ${material.quantidade_necessaria}\nMetragem: ${material.metragem_total > 0 ? material.metragem_total.toFixed(2) + " m²" : "—"}`}
+                title={`${material.nome_produto}${material.descricao_produto ? "\n" + material.descricao_produto : ""}\nQtd: ${material.quantidade_necessaria}\nMetragem: ${material.metragem_total > 0 ? material.metragem_total.toFixed(2) + " m²" : "—"}`}
               >
-                <p className="text-[10px] font-medium leading-tight line-clamp-3 text-foreground">
-                  {material.nome_produto}
-                </p>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[10px] font-medium leading-tight line-clamp-2 text-foreground">
+                    {material.nome_produto}
+                  </p>
+                  {material.descricao_produto && (
+                    <p className="text-[8px] leading-tight line-clamp-2 text-muted-foreground">
+                      {material.descricao_produto}
+                    </p>
+                  )}
+                </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-bold text-primary leading-none">
                     {material.quantidade_necessaria}

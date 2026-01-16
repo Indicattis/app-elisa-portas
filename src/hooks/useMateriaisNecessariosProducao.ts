@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface MaterialNecessario {
   estoque_id: string;
   nome_produto: string;
+  descricao_produto: string | null;
   unidade: string | null;
   quantidade_necessaria: number;
   metragem_total: number;
@@ -38,6 +39,7 @@ export function useMateriaisNecessariosProducao() {
           estoque:estoque_id (
             id,
             nome_produto,
+            descricao_produto,
             unidade,
             quantidade
           )
@@ -77,6 +79,7 @@ export function useMateriaisNecessariosProducao() {
           materiaisMap.set(estoqueId, {
             estoque_id: estoqueId,
             nome_produto: linha.estoque.nome_produto,
+            descricao_produto: linha.estoque.descricao_produto,
             unidade: linha.estoque.unidade,
             quantidade_necessaria: quantidade,
             metragem_total: metragem,
