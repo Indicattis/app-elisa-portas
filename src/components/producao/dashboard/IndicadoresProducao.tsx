@@ -47,7 +47,7 @@ export function IndicadoresProducao() {
       bgColor: "bg-blue-500/10",
     },
     {
-      titulo: "Pedidos aguardando produção",
+      titulo: "Pedidos que vão entrar para produção",
       valor: pedidosFila,
       icon: Clock,
       loading: loadingFila,
