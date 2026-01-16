@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePedidosComOrdens, PedidoComOrdens } from "@/hooks/usePedidosComOrdens";
 import { 
   Hammer, Package, Boxes, Sparkles, CheckSquare, User, AlertCircle, 
-  ChevronLeft, ChevronRight, AlertTriangle, PauseCircle, ShoppingBag, RefreshCw 
+  ChevronLeft, ChevronRight, AlertTriangle, PauseCircle, RefreshCw 
 } from "lucide-react";
 import {
   Table,
@@ -23,6 +23,27 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PedidoOrdensModal } from "./PedidoOrdensModal";
+import { cn } from "@/lib/utils";
+
+// Parse tamanho string like "3,50x2,80" into numbers
+const parseTamanhoString = (tamanhoStr: string | null): { largura: number; altura: number } => {
+  if (!tamanhoStr) return { largura: 0, altura: 0 };
+  const normalizado = tamanhoStr.replace(/,/g, '.');
+  const partes = normalizado.toLowerCase().split('x');
+  if (partes.length === 2) {
+    const largura = parseFloat(partes[0]) || 0;
+    const altura = parseFloat(partes[1]) || 0;
+    return { largura, altura };
+  }
+  return { largura: 0, altura: 0 };
+};
+
+interface PortaInfo {
+  tamanho: 'P' | 'G';
+  largura: number;
+  altura: number;
+  area: number;
+}
 
 const ITEMS_PER_PAGE = 11;
 
@@ -146,7 +167,7 @@ export function PedidosStatusOrdens() {
                 <TableRow className="border-b">
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Pedido</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Cliente</TableHead>
-                  <TableHead className="h-6 text-[10px] py-0.5 px-2 text-center">Produtos</TableHead>
+                  <TableHead className="h-6 text-[10px] py-0.5 px-2 text-center">Portas</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Entrega</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Carregamento</TableHead>
                   <TableHead className="h-6 text-[10px] py-0.5 px-2">Etapa</TableHead>
@@ -162,6 +183,33 @@ export function PedidosStatusOrdens() {
                 {currentPedidos.map((pedido) => {
                   const warnings = getPauseWarnings(pedido.ordens);
                   
+                  // Build list of doors with P/G classification
+                  const portasEnrolar = pedido.produtos?.filter(p => p.tipo === 'porta_enrolar') || [];
+                  const listaPortasInfo: PortaInfo[] = [];
+                  
+                  portasEnrolar.forEach(p => {
+                    let largura = p.largura || 0;
+                    let altura = p.altura || 0;
+                    
+                    // Fallback: try to extract from tamanho field
+                    if (largura === 0 && altura === 0 && p.tamanho) {
+                      const parsed = parseTamanhoString(p.tamanho);
+                      largura = parsed.largura;
+                      altura = parsed.altura;
+                    }
+                    
+                    const area = largura * altura;
+                    const categoria: 'P' | 'G' = area > 25 ? 'G' : 'P';
+                    const quantidade = p.quantidade || 1;
+                    
+                    for (let i = 0; i < quantidade; i++) {
+                      listaPortasInfo.push({ tamanho: categoria, largura, altura, area });
+                    }
+                  });
+                  
+                  const portasPequenas = listaPortasInfo.filter(p => p.tamanho === 'P').length;
+                  const portasGrandes = listaPortasInfo.filter(p => p.tamanho === 'G').length;
+                  
                   return (
                     <TableRow 
                       key={pedido.numero_pedido} 
@@ -175,39 +223,48 @@ export function PedidosStatusOrdens() {
                         {pedido.nome_cliente}
                       </TableCell>
                       <TableCell className="text-center py-1 px-2">
-                        {pedido.produtos && pedido.produtos.length > 0 ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex">
-                                <Badge 
-                                  variant="secondary" 
-                                  className="text-[9px] px-1.5 py-0 cursor-help"
-                                >
-                                  <ShoppingBag className="h-2.5 w-2.5 mr-0.5" />
-                                  {pedido.produtos.length}
-                                </Badge>
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-xs">
-                              <div className="space-y-1">
-                                <p className="font-semibold text-xs mb-1.5">Produtos do Pedido:</p>
-                                {pedido.produtos.map((produto, idx) => (
-                                  <div key={idx} className="text-xs flex items-start gap-1">
-                                    <span className="text-muted-foreground">•</span>
+                        <div className="flex items-center justify-center gap-0.5">
+                          {listaPortasInfo.length > 0 ? (
+                            <>
+                              {listaPortasInfo.slice(0, 6).map((porta, idx) => (
+                                <Tooltip key={idx}>
+                                  <TooltipTrigger asChild>
                                     <span>
-                                      {produto.quantidade}x {produto.descricao || produto.tipo}
-                                      {produto.tamanho && (
-                                        <span className="text-muted-foreground ml-1">({produto.tamanho})</span>
-                                      )}
+                                      <Badge 
+                                        variant="outline" 
+                                        className={cn(
+                                          "text-[9px] px-1 py-0 h-4 text-white cursor-default",
+                                          porta.tamanho === 'P' 
+                                            ? "bg-blue-500 border-blue-500"
+                                            : "bg-orange-500 border-orange-500"
+                                        )}
+                                      >
+                                        {porta.tamanho}
+                                      </Badge>
                                     </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <span className="text-gray-300 text-[10px]">—</span>
-                        )}
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="font-medium">{porta.largura.toFixed(2)}m × {porta.altura.toFixed(2)}m</p>
+                                    <p className="text-xs text-muted-foreground">{porta.area.toFixed(2)} m²</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ))}
+                              {listaPortasInfo.length > 6 && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-[9px] text-muted-foreground cursor-help">+{listaPortasInfo.length - 6}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{portasPequenas} porta(s) pequena(s) (≤25m²)</p>
+                                    <p>{portasGrandes} porta(s) grande(s) (&gt;25m²)</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-gray-300 text-[10px]">—</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-[11px] py-1 px-2">
                         {pedido.data_entrega ? new Date(pedido.data_entrega).toLocaleDateString('pt-BR') : '-'}
