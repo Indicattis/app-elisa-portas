@@ -27,32 +27,24 @@ export function IndicadoresProducao() {
       valor: portasHoje,
       icon: DoorOpen,
       loading: loadingPortasHoje,
-      color: "text-purple-600",
-      bgColor: "bg-purple-500/10",
     },
     {
       titulo: "Portas Produzidas (Semana)",
       valor: portasSemana,
       icon: Calendar,
       loading: loadingSemana,
-      color: "text-green-600",
-      bgColor: "bg-green-500/10",
     },
     {
       titulo: "Portas Produzidas (Mês)",
       valor: portasMes,
       icon: Package,
       loading: loadingPortas,
-      color: "text-blue-600",
-      bgColor: "bg-blue-500/10",
     },
     {
       titulo: "Pedidos que vão entrar para produção",
       valor: pedidosFila,
       icon: Clock,
       loading: loadingFila,
-      color: "text-amber-600",
-      bgColor: "bg-amber-500/10",
     },
   ];
 
@@ -61,20 +53,20 @@ export function IndicadoresProducao() {
       {indicadores.map((indicador) => {
         const Icon = indicador.icon;
         return (
-          <Card key={indicador.titulo} className="border-border/50">
+          <Card key={indicador.titulo} className="border-blue-200 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-background dark:border-blue-800/50">
             <CardContent className="p-3">
               <div className="flex items-center gap-2">
-                <div className={`p-2 rounded-lg ${indicador.bgColor}`}>
-                  <Icon className={`h-4 w-4 ${indicador.color}`} />
+                <div className="p-2 rounded-lg bg-blue-500/15">
+                  <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] text-muted-foreground font-medium">
+                  <p className="text-[10px] text-blue-600/80 dark:text-blue-400/80 font-medium">
                     {indicador.titulo}
                   </p>
                   {indicador.loading ? (
-                    <div className="h-6 w-14 bg-muted animate-pulse rounded mt-0.5" />
+                    <div className="h-6 w-14 bg-blue-100 dark:bg-blue-900/30 animate-pulse rounded mt-0.5" />
                   ) : (
-                    <p className="text-xl font-bold mt-0.5">{indicador.valor}</p>
+                    <p className="text-xl font-bold mt-0.5 text-blue-700 dark:text-blue-300">{indicador.valor}</p>
                   )}
                 </div>
               </div>
