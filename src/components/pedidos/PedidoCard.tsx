@@ -1023,11 +1023,32 @@ export function PedidoCard({
               </div>
               
               {/* Col 7: Data de Carregamento */}
-              <div className="text-[9px] text-muted-foreground text-center">
+              <div className="text-[9px] text-center">
                 {dataCarregamento ? (
-                  <span title="Data de carregamento">
-                    {format(new Date(dataCarregamento), "dd/MM")}
-                  </span>
+                  (() => {
+                    const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao';
+                    const dataCarreg = new Date(dataCarregamento);
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0);
+                    dataCarreg.setHours(0, 0, 0, 0);
+                    const atrasado = dataCarreg < hoje;
+                    
+                    if (isExpedicao) {
+                      return (
+                        <span 
+                          title="Data de carregamento"
+                          className={atrasado ? "text-destructive font-medium" : "text-green-600 font-medium"}
+                        >
+                          {format(new Date(dataCarregamento), "dd/MM")}
+                        </span>
+                      );
+                    }
+                    return (
+                      <span title="Data de carregamento" className="text-muted-foreground">
+                        {format(new Date(dataCarregamento), "dd/MM")}
+                      </span>
+                    );
+                  })()
                 ) : (
                   <span className="text-muted-foreground/50">—</span>
                 )}
