@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
+import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState, useMemo, useEffect } from "react";
@@ -210,6 +211,9 @@ export default function Pedidos() {
         </div>
       </div>
 
+
+      {/* Portas por Etapa (Hoje) */}
+      <PortasPorEtapa />
 
       {/* Tabs de Etapas */}
       <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
