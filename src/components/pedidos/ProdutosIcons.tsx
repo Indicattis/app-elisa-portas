@@ -10,10 +10,11 @@ export function ProdutosIcons({ produtos }: ProdutosIconsProps) {
     return <span className="text-xs text-muted-foreground">-</span>;
   }
 
-  // Contar tipos de produtos
+  // Contar tipos de produtos considerando a quantidade real
   const tiposCounts = produtos.reduce((acc, produto) => {
     const tipo = produto.tipo_produto?.toLowerCase() || "";
-    acc[tipo] = (acc[tipo] || 0) + 1;
+    const quantidade = produto.quantidade || 1;
+    acc[tipo] = (acc[tipo] || 0) + quantidade;
     return acc;
   }, {} as Record<string, number>);
 
