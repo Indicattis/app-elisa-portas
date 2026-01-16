@@ -14,8 +14,8 @@ export function usePortasPorEtapa(dataInicio: string, dataFim: string) {
     queryKey: ["portas-por-etapa", dataInicio, dataFim],
     queryFn: async (): Promise<PortasPorEtapa> => {
       const { data, error } = await supabase.rpc("get_portas_por_etapa", {
-        data_inicio: dataInicio,
-        data_fim: dataFim
+        p_data_inicio: dataInicio,
+        p_data_fim: dataFim
       });
       
       if (error) {

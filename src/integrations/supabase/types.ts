@@ -6194,7 +6194,7 @@ export type Database = {
         }[]
       }
       get_desempenho_etapas: {
-        Args: { data_fim: string; data_inicio: string }
+        Args: { p_data_fim: string; p_data_inicio: string }
         Returns: {
           carregamentos: number
           foto_perfil_url: string
@@ -6317,7 +6317,7 @@ export type Database = {
       get_portas_enrolar_produzidas_mes: { Args: never; Returns: number }
       get_portas_enrolar_produzidas_semana: { Args: never; Returns: number }
       get_portas_por_etapa: {
-        Args: { data_fim: string; data_inicio: string }
+        Args: { p_data_fim: string; p_data_inicio: string }
         Returns: {
           carregamentos: number
           metros_perfilados: number
