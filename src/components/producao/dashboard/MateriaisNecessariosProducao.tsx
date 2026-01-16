@@ -27,9 +27,9 @@ export function MateriaisNecessariosProducao() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
-            {[...Array(12)].map((_, i) => (
-              <Skeleton key={i} className="h-[60px] w-[60px]" />
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+            {[...Array(10)].map((_, i) => (
+              <Skeleton key={i} className="h-[100px] w-[100px]" />
             ))}
           </div>
         ) : !materiais || materiais.length === 0 ? (
@@ -37,22 +37,22 @@ export function MateriaisNecessariosProducao() {
             Nenhum material vinculado aos pedidos em produção
           </div>
         ) : (
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
             {materiais.map((material) => (
               <div
                 key={material.estoque_id}
-                className="h-[60px] w-[60px] p-1.5 rounded-md border border-border/50 bg-muted/30 flex flex-col justify-between overflow-hidden hover:bg-muted/50 transition-colors cursor-default"
+                className="h-[100px] w-[100px] p-2 rounded-md border border-border/50 bg-muted/30 flex flex-col justify-between overflow-hidden hover:bg-muted/50 transition-colors cursor-default"
                 title={`${material.nome_produto}\nQtd: ${material.quantidade_necessaria}\nMetragem: ${material.metragem_total > 0 ? material.metragem_total.toFixed(2) + " m²" : "—"}`}
               >
-                <p className="text-[8px] font-medium leading-tight line-clamp-2 text-foreground">
+                <p className="text-[10px] font-medium leading-tight line-clamp-3 text-foreground">
                   {material.nome_produto}
                 </p>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold text-primary leading-none">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-bold text-primary leading-none">
                     {material.quantidade_necessaria}
                   </span>
                   {material.metragem_total > 0 && (
-                    <span className="text-[7px] text-muted-foreground leading-none">
+                    <span className="text-[9px] text-muted-foreground leading-none">
                       {material.metragem_total.toFixed(1)}m²
                     </span>
                   )}
