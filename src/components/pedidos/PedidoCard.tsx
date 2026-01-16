@@ -892,9 +892,9 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_24px_1fr_150px_50px_100px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
+            <div className="flex items-center gap-2 h-full px-3 w-full">
               {/* Drag Handle */}
-              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
+              {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>}
               
@@ -913,19 +913,17 @@ export function PedidoCard({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Nome do cliente - limitado a 15 caracteres */}
+              {/* Nome do cliente - ocupa espaço disponível */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <h3 
-                    className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
+                    className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors min-w-[120px] max-w-[200px]"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/dashboard/pedido/${pedido.id}/view`);
                     }}
                   >
-                    {venda?.cliente_nome?.length > 15 
-                      ? `${venda.cliente_nome.substring(0, 15)}...` 
-                      : venda?.cliente_nome}
+                    {venda?.cliente_nome}
                   </h3>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -934,7 +932,7 @@ export function PedidoCard({
               </Tooltip>
               
               {/* Portas P/G - exibir cada porta individualmente com tooltip de dimensões */}
-              <div className="flex items-center gap-0.5 overflow-hidden">
+              <div className="flex items-center gap-0.5 overflow-hidden flex-shrink-0">
                 {listaPortasInfo.length > 0 ? (
                   <>
                     {listaPortasInfo.slice(0, 6).map((porta, idx) => (
@@ -976,7 +974,7 @@ export function PedidoCard({
               </div>
 
               {/* Tags/Badges */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-shrink-0">
                 {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5" />
                   </Badge>}
@@ -987,7 +985,7 @@ export function PedidoCard({
               </div>
               
               {/* Cores - 100px de largura */}
-              <div className="flex items-center gap-1 w-[100px]">
+              <div className="flex items-center gap-1 w-[100px] flex-shrink-0">
                 {coresUnicas.length > 0 ? (
                   <>
                     {coresUnicas.slice(0, 2).map((cor, idx) => (
@@ -1011,7 +1009,7 @@ export function PedidoCard({
               </div>
               
               {/* Data de Carregamento */}
-              <div className="text-[9px] text-muted-foreground text-center">
+              <div className="text-[9px] text-muted-foreground text-center flex-shrink-0 w-[50px]">
                 {dataCarregamento ? (
                   <span title="Data de carregamento">
                     {format(new Date(dataCarregamento), "dd/MM")}
@@ -1022,30 +1020,33 @@ export function PedidoCard({
               </div>
 
               {/* Colunas de Status das Ordens */}
-              <div className="flex items-center justify-center" title="Soldagem">
+              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Soldagem">
                 {renderOrdemStatus(ordens.soldagem, 'Soldagem')}
               </div>
-              <div className="flex items-center justify-center" title="Perfiladeira">
+              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Perfiladeira">
                 {renderOrdemStatus(ordens.perfiladeira, 'Perfiladeira')}
               </div>
-              <div className="flex items-center justify-center" title="Separação">
+              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Separação">
                 {renderOrdemStatus(ordens.separacao, 'Separação')}
               </div>
-              <div className="flex items-center justify-center" title="Qualidade">
+              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Qualidade">
                 {renderOrdemStatus(ordens.qualidade, 'Qualidade')}
               </div>
-              <div className="flex items-center justify-center" title="Pintura">
+              <div className="flex items-center justify-center flex-shrink-0 w-7" title="Pintura">
                 {renderOrdemStatus(ordens.pintura, 'Pintura')}
               </div>
               
               {/* Tempo na Etapa */}
-              <div className="text-center">
+              <div className="text-center flex-shrink-0">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
               </div>
               
-              {/* Botões de ação - 50px fixo à direita */}
+              {/* Espaçador para empurrar botões para a direita */}
+              <div className="flex-1" />
+              
+              {/* Botões de ação - fixo à direita */}
               <TooltipProvider>
-                <div className="flex items-center justify-end gap-0.5 w-[50px]">
+                <div className="flex items-center justify-end gap-0.5 flex-shrink-0">
                   {(() => {
                     const actionButtons = [];
 
