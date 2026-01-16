@@ -166,22 +166,22 @@ export default function MetasColaboradores() {
                   <span className="font-medium">{colaborador.nome}</span>
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.solda_qtd > 0 ? colaborador.solda_qtd : '-'}
+                  {colaborador.solda_qtd > 0 ? colaborador.solda_qtd : ''}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.perfiladeira_metros > 0 ? `${formatNumber(colaborador.perfiladeira_metros, 1)}m` : '-'}
+                  {colaborador.perfiladeira_metros > 0 ? `${formatNumber(colaborador.perfiladeira_metros, 1)}m` : ''}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.separacao_qtd > 0 ? colaborador.separacao_qtd : '-'}
+                  {colaborador.separacao_qtd > 0 ? colaborador.separacao_qtd : ''}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.qualidade_qtd > 0 ? colaborador.qualidade_qtd : '-'}
+                  {colaborador.qualidade_qtd > 0 ? colaborador.qualidade_qtd : ''}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.pintura_m2 > 0 ? formatNumber(colaborador.pintura_m2, 1) : '-'}
+                  {colaborador.pintura_m2 > 0 ? formatNumber(colaborador.pintura_m2, 1) : ''}
                 </div>
                 <div className="text-center font-medium">
-                  {colaborador.carregamento_qtd > 0 ? colaborador.carregamento_qtd : '-'}
+                  {colaborador.carregamento_qtd > 0 ? colaborador.carregamento_qtd : ''}
                 </div>
               </div>
             </div>
