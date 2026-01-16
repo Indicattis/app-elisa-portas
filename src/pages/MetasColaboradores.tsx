@@ -100,7 +100,8 @@ export default function MetasColaboradores() {
           {colaboradores?.map((colaborador) => (
             <div
               key={colaborador.user_id}
-              className="bg-card border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+              className="bg-card border rounded-lg p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+              onClick={() => navigate(`/hub-fabrica/metas/${colaborador.user_id}`)}
             >
               {/* Mobile Layout */}
               <div className="md:hidden space-y-3">

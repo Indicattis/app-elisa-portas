@@ -2492,6 +2492,51 @@ export type Database = {
         }
         Relationships: []
       }
+      metas_colaboradores: {
+        Row: {
+          concluida: boolean | null
+          concluida_em: string | null
+          created_at: string | null
+          created_by: string | null
+          data_inicio: string
+          data_termino: string
+          id: string
+          recompensa_valor: number
+          tipo_meta: string
+          updated_at: string | null
+          user_id: string
+          valor_meta: number
+        }
+        Insert: {
+          concluida?: boolean | null
+          concluida_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_inicio?: string
+          data_termino: string
+          id?: string
+          recompensa_valor?: number
+          tipo_meta: string
+          updated_at?: string | null
+          user_id: string
+          valor_meta: number
+        }
+        Update: {
+          concluida?: boolean | null
+          concluida_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_inicio?: string
+          data_termino?: string
+          id?: string
+          recompensa_valor?: number
+          tipo_meta?: string
+          updated_at?: string | null
+          user_id?: string
+          valor_meta?: number
+        }
+        Relationships: []
+      }
       naturezas_operacao: {
         Row: {
           ativo: boolean
@@ -6137,6 +6182,19 @@ export type Database = {
         Returns: {
           cor_nome: string
           quantidade_pecas: number
+        }[]
+      }
+      get_desempenho_diario_colaborador: {
+        Args: { p_data_fim: string; p_data_inicio: string; p_user_id: string }
+        Returns: {
+          carregamento_qtd: number
+          data: string
+          dia_semana: string
+          perfiladeira_metros: number
+          pintura_m2: number
+          qualidade_qtd: number
+          separacao_qtd: number
+          solda_qtd: number
         }[]
       }
       get_materiais_ranking_completo: {
