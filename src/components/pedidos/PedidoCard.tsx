@@ -892,12 +892,26 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid grid-cols-[24px_1fr_150px_50px_100px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
+            <div className="grid grid-cols-[24px_24px_1fr_150px_50px_100px_60px_28px_28px_28px_28px_28px_100px_50px] items-center gap-2 h-full px-3 w-full">
               {/* Drag Handle */}
               {dragHandleProps && <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>}
               
+              {/* Foto do vendedor/criador */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Avatar className="h-5 w-5 flex-shrink-0">
+                    <AvatarImage src={atendenteFoto || undefined} alt={atendenteNome} />
+                    <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                      {atendenteIniciais}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Vendedor: {atendenteNome}</p>
+                </TooltipContent>
+              </Tooltip>
               
               {/* Nome do cliente - limitado a 15 caracteres */}
               <Tooltip>
@@ -1247,9 +1261,21 @@ export function PedidoCard({
           {/* Informações do cliente com background */}
           <div className="bg-muted/30 rounded-md p-2 -mx-2">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="h-6 w-6 flex-shrink-0">
+                      <AvatarImage src={atendenteFoto || undefined} alt={atendenteNome} />
+                      <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                        {atendenteIniciais}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Vendedor: {atendenteNome}</p>
+                  </TooltipContent>
+                </Tooltip>
                 <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
-                
               </div>
               
               {/* Círculos de cores à direita */}
