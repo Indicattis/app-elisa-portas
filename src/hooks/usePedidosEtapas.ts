@@ -94,6 +94,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               valor_pintura,
               largura,
               altura,
+              tamanho,
               quantidade,
               cor:catalogo_cores (nome, codigo_hex)
             )
