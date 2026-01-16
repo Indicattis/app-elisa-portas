@@ -41,6 +41,7 @@ interface LinhaOrdem {
   largura?: number;
   altura?: number;
   estoque_id?: string;
+  requer_pintura?: boolean;
 }
 
 interface ObservacaoVisita {
@@ -618,8 +619,11 @@ export function OrdemDetalhesSheet({
               {tipoOrdem === 'pintura' ? (
                 // Agrupamento por porta para pintura
                 (() => {
+                  // Filtrar linhas que requerem pintura (exclui itens com requer_pintura = false)
+                  const linhasQuePrecisaPintura = linhas.filter(l => l.requer_pintura !== false);
+                  
                   // Agrupar linhas por produto_venda_id
-                  const linhasPorPorta = linhas.reduce((grupos, linha) => {
+                  const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
                     const key = linha.produto_venda_id || 'sem_porta';
                     if (!grupos[key]) {
                       grupos[key] = [];
