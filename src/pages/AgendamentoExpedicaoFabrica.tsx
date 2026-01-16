@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, ArrowLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
@@ -13,10 +14,12 @@ import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
-
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 export default function AgendamentoExpedicaoFabrica() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user, signOut } = useProducaoAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tipoVisualizacao, setTipoVisualizacao] = useState<'semanal' | 'mensal'>('mensal');
   const { ordens, isLoading, deleteOrdem, updateOrdem, isUpdating } = useOrdensCarregamentoCalendario(
@@ -131,6 +134,14 @@ export default function AgendamentoExpedicaoFabrica() {
       <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/hub-fabrica/instalacoes")}
+              className="h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <div>
               <h1 className="text-lg font-semibold">Calendário Expedição</h1>
               <p className="text-xs text-muted-foreground">Gerenciar carregamentos</p>
@@ -167,6 +178,15 @@ export default function AgendamentoExpedicaoFabrica() {
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">PDF</span>
             </Button>
+            
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {user?.nome}
+              </span>
+              <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
