@@ -1257,6 +1257,14 @@ export function PedidoCard({
           pedido={pedido} 
           etapaAtual={config?.label || ''} 
         />
+
+        <ExcluirPedidoModal
+          open={showExcluirPedido}
+          onOpenChange={setShowExcluirPedido}
+          onConfirmar={handleConfirmarExclusao}
+          pedido={pedido}
+          isLoading={isExcluindo}
+        />
       </>;
   }
 
