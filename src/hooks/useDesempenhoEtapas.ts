@@ -7,6 +7,8 @@ export interface DesempenhoColaborador {
   foto_perfil_url: string | null;
   perfiladas_metros: number;
   soldadas: number;
+  soldadas_p: number;
+  soldadas_g: number;
   separadas: number;
   pintura_m2: number;
   carregamentos: number;
@@ -36,6 +38,8 @@ export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
         foto_perfil_url: item.foto_perfil_url ? String(item.foto_perfil_url) : null,
         perfiladas_metros: Number(item.perfiladas_metros) || 0,
         soldadas: Number(item.soldadas) || 0,
+        soldadas_p: Number(item.soldadas_p) || 0,
+        soldadas_g: Number(item.soldadas_g) || 0,
         separadas: Number(item.separadas) || 0,
         pintura_m2: Number(item.pintura_m2) || 0,
         carregamentos: Number(item.carregamentos) || 0,
