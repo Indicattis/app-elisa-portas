@@ -1,14 +1,36 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Target, Flame, Ruler, Package, CheckCircle, Paintbrush, Truck, User } from "lucide-react";
+import { ArrowLeft, Target, Flame, Ruler, Package, CheckCircle, Paintbrush, Truck, User, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useMetasColaboradores } from "@/hooks/useMetasColaboradores";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function MetasColaboradores() {
   const navigate = useNavigate();
   const { data: colaboradores, isLoading } = useMetasColaboradores();
+
+  // Buscar user_ids que têm metas individuais ativas
+  const { data: usersComMetas } = useQuery({
+    queryKey: ["users-com-metas-individuais"],
+    queryFn: async () => {
+      const hoje = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("metas_colaboradores")
+        .select("user_id")
+        .gte("data_termino", hoje)
+        .eq("concluida", false);
+
+      if (error) {
+        console.error("Erro ao buscar metas individuais:", error);
+        return new Set<string>();
+      }
+
+      return new Set(data?.map((m) => m.user_id) || []);
+    },
+  });
 
   const mesAtual = format(new Date(), "MMMM 'de' yyyy", { locale: ptBR });
 
@@ -50,8 +72,12 @@ export default function MetasColaboradores() {
         </div>
 
         {/* Column Headers */}
-        <div className="hidden md:grid md:grid-cols-[1fr,repeat(6,80px)] gap-2 px-4 py-2 mb-2 text-xs font-medium text-muted-foreground">
+        <div className="hidden md:grid md:grid-cols-[1fr,60px,repeat(6,80px)] gap-2 px-4 py-2 mb-2 text-xs font-medium text-muted-foreground">
           <div>Colaborador</div>
+          <div className="text-center flex flex-col items-center gap-1">
+            <Trophy className="h-4 w-4" />
+            <span>Metas</span>
+          </div>
           <div className="text-center flex flex-col items-center gap-1">
             <Flame className="h-4 w-4" />
             <span>Solda</span>
@@ -113,6 +139,9 @@ export default function MetasColaboradores() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="font-medium">{colaborador.nome}</span>
+                  {usersComMetas?.has(colaborador.user_id) && (
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                  )}
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   {colaborador.solda_qtd > 0 && (
@@ -155,7 +184,7 @@ export default function MetasColaboradores() {
               </div>
 
               {/* Desktop Layout */}
-              <div className="hidden md:grid md:grid-cols-[1fr,repeat(6,80px)] gap-2 items-center">
+              <div className="hidden md:grid md:grid-cols-[1fr,60px,repeat(6,80px)] gap-2 items-center">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={colaborador.foto_perfil_url || undefined} />
@@ -164,6 +193,13 @@ export default function MetasColaboradores() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="font-medium">{colaborador.nome}</span>
+                </div>
+                <div className="text-center">
+                  {usersComMetas?.has(colaborador.user_id) ? (
+                    <Trophy className="h-5 w-5 text-amber-500 mx-auto" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground/50">—</span>
+                  )}
                 </div>
                 <div className="text-center font-medium">
                   {colaborador.solda_qtd > 0 ? colaborador.solda_qtd : ''}
