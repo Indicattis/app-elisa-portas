@@ -134,7 +134,6 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
         data: {
           responsavel_carregamento_id: equipId,
           responsavel_carregamento_nome: equipe?.nome || null,
-          responsavel_carregamento_tipo: 'equipe_interna',
           data_carregamento: format(novaData, 'yyyy-MM-dd')
         }
       });
