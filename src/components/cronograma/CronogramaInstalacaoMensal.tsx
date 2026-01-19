@@ -1,15 +1,12 @@
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, isSameDay, isSameMonth } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, isSameDay, isSameMonth } from "date-fns";
 import { useState } from "react";
-import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
+import { useOrdensCarregamentoInstalacao, OrdemCarregamentoInstalacao } from "@/hooks/useOrdensCarregamentoInstalacao";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
-import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
-import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 interface CronogramaInstalacaoMensalProps {
   currentMonth: Date;
-  onEditPonto: (instalacao: any) => void;
+  onEditPonto: (ordem: any) => void;
   equipesFiltradas?: any[];
 }
 
@@ -17,10 +14,9 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   
-  const { instalacoes } = useOrdensInstalacaoCalendario(currentMonth, 'month');
+  const { ordens } = useOrdensCarregamentoInstalacao(currentMonth, 'month');
   const { equipes } = useEquipesInstalacao();
-  const [selectedInstalacao, setSelectedInstalacao] = useState<any>(null);
-  const { toast } = useToast();
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamentoInstalacao | null>(null);
 
   // Pegar o primeiro dia da primeira semana (pode ser do mês anterior)
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -33,11 +29,14 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
     { weekStartsOn: 0 }
   );
 
-  const handleDayClick = (dia: Date, instalacoesDoDia: any[]) => {
-    if (instalacoesDoDia.length === 1) {
-      setSelectedInstalacao(instalacoesDoDia[0]);
+  const handleDayClick = (dia: Date, ordensNoDia: OrdemCarregamentoInstalacao[]) => {
+    if (ordensNoDia.length === 1) {
+      setSelectedOrdem(ordensNoDia[0]);
     }
   };
+
+  // Map de equipes por ID para buscar cores
+  const equipesMap = new Map(equipes.map(e => [e.id, e]));
 
   return (
     <div className="w-full">
@@ -70,18 +69,18 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
                 const isToday = isSameDay(dia, new Date());
                 const isCurrentMonth = isSameMonth(dia, currentMonth);
                 
-                // Filtrar instalações do dia (aplicando filtro de equipes se existir)
-                const instalacoesNoDia = instalacoes.filter(i => {
-                  const matchData = i.data_instalacao && isSameDay(new Date(i.data_instalacao), dia);
+                // Filtrar ordens do dia (aplicando filtro de equipes se existir)
+                const ordensNoDia = ordens.filter(o => {
+                  const matchData = o.data_carregamento && isSameDay(new Date(o.data_carregamento), dia);
                   const matchEquipe = !equipesFiltradas || equipesFiltradas.length === 0 || 
-                    equipesFiltradas.some(eq => eq.id === i.responsavel_instalacao_id);
+                    equipesFiltradas.some(eq => eq.id === o.responsavel_carregamento_id);
                   return matchData && matchEquipe;
                 });
 
                 return (
                   <div
                     key={dia.toISOString()}
-                    onClick={() => handleDayClick(dia, instalacoesNoDia)}
+                    onClick={() => handleDayClick(dia, ordensNoDia)}
                     className={`min-h-[100px] p-2 border-r last:border-r-0 cursor-pointer hover:bg-muted/20 transition-colors ${
                       isWeekend ? 'bg-muted/10' : ''
                     } ${isToday ? 'bg-primary/5' : ''} ${!isCurrentMonth ? 'opacity-40' : ''}`}
@@ -93,15 +92,18 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
                         {dia.getDate()}
                       </div>
                       
-                      {instalacoesNoDia.length > 0 && (
+                      {ordensNoDia.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-auto">
-                          {instalacoesNoDia.slice(0, 3).map((instalacao) => {
+                          {ordensNoDia.slice(0, 3).map((ordem) => {
                             // Pegar cor da equipe (se for equipe interna) ou usar cor padrão
-                            const cor = instalacao.equipe?.cor || '#888';
+                            const equipe = ordem.responsavel_carregamento_id 
+                              ? equipesMap.get(ordem.responsavel_carregamento_id) 
+                              : null;
+                            const cor = equipe?.cor || '#888';
                             
                             return (
                               <Badge
-                                key={instalacao.id}
+                                key={ordem.id}
                                 variant="secondary"
                                 className="w-2 h-2 p-0 rounded-full"
                                 style={{ 
@@ -110,9 +112,9 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
                               />
                             );
                           })}
-                          {instalacoesNoDia.length > 3 && (
+                          {ordensNoDia.length > 3 && (
                             <span className="text-xs text-muted-foreground">
-                              +{instalacoesNoDia.length - 3}
+                              +{ordensNoDia.length - 3}
                             </span>
                           )}
                         </div>
@@ -126,13 +128,84 @@ export function CronogramaInstalacaoMensal({ currentMonth, onEditPonto, equipesF
         })}
       </div>
 
-      {selectedInstalacao && (
-        <DetalhesInstalacaoDialog
-          instalacao={selectedInstalacao}
-          open={!!selectedInstalacao}
-          onOpenChange={(open) => !open && setSelectedInstalacao(null)}
+      {selectedOrdem && (
+        <OrdemDetalheDialog 
+          ordem={selectedOrdem} 
+          open={!!selectedOrdem} 
+          onOpenChange={(open) => !open && setSelectedOrdem(null)} 
         />
       )}
+    </div>
+  );
+}
+
+// Componente simples para exibir detalhes da ordem no calendário mensal
+function OrdemDetalheDialog({ 
+  ordem, 
+  open, 
+  onOpenChange 
+}: { 
+  ordem: OrdemCarregamentoInstalacao; 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!open) return null;
+  
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={() => onOpenChange(false)}
+    >
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" />
+      <div 
+        className="relative bg-background border shadow-lg rounded-lg p-6 w-[400px] max-h-[80vh] overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Detalhes da Ordem</h2>
+            <button 
+              onClick={() => onOpenChange(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm text-muted-foreground">Cliente</label>
+              <p className="font-medium">{ordem.nome_cliente}</p>
+            </div>
+            
+            <div>
+              <label className="text-sm text-muted-foreground">Data Carregamento</label>
+              <p className="font-medium">{ordem.data_carregamento || '-'}</p>
+            </div>
+            
+            <div>
+              <label className="text-sm text-muted-foreground">Responsável</label>
+              <p className="font-medium">{ordem.responsavel_carregamento_nome || '-'}</p>
+            </div>
+            
+            {ordem.venda && (
+              <div>
+                <label className="text-sm text-muted-foreground">Localização</label>
+                <p className="font-medium">
+                  {ordem.venda.cidade}{ordem.venda.estado ? `, ${ordem.venda.estado}` : ''}
+                </p>
+              </div>
+            )}
+            
+            {ordem.pedido && (
+              <div>
+                <label className="text-sm text-muted-foreground">Pedido</label>
+                <p className="font-medium">#{ordem.pedido.numero_pedido}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
