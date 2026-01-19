@@ -117,6 +117,7 @@ import NotasFiscais from "./pages/NotasFiscais";
 import EmitirNfse from "./pages/EmitirNfse";
 import EmitirNfe from "./pages/EmitirNfe";
 import ConfiguracoesFiscais from "./pages/ConfiguracoesFiscais";
+import ColaboradorDetalhes from "./pages/ColaboradorDetalhes";
 import Vagas from "./pages/Vagas";
 import Colaboradores from "./pages/Colaboradores";
 import FolhaPagamentoNova from "./pages/FolhaPagamentoNova";
@@ -314,9 +315,21 @@ const App = () => (
                     <ProducaoAuthProvider>
                       <ProtectedProducaoRoute routeKey="metas">
                         <MetasColaboradorIndividual />
-                      </ProtectedProducaoRoute>
-                    </ProducaoAuthProvider>
-                  }
+      </ProtectedProducaoRoute>
+    </ProducaoAuthProvider>
+  }
+/>
+
+{/* Rota de Detalhes do Colaborador */}
+<Route
+  path="/hub-fabrica/colaborador/:id"
+  element={
+    <ProducaoAuthProvider>
+      <ProtectedProducaoRoute routeKey="hub_fabrica_pedidos">
+        <ColaboradorDetalhes />
+      </ProtectedProducaoRoute>
+    </ProducaoAuthProvider>
+  }
                 />
 
                 {/* Rotas de Produção do Hub */}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,9 +13,10 @@ interface RankingListProps {
   ranking: RankingColaborador[];
   isLoading: boolean;
   unidade: string;
+  onColaboradorClick?: (userId: string) => void;
 }
 
-function RankingList({ ranking, isLoading, unidade }: RankingListProps) {
+function RankingList({ ranking, isLoading, unidade, onColaboradorClick }: RankingListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   
   const totalPages = Math.ceil(ranking.length / ITEMS_PER_PAGE);
@@ -45,9 +47,10 @@ function RankingList({ ranking, isLoading, unidade }: RankingListProps) {
           return (
             <div 
               key={colaborador.user_id}
-              className={`flex items-center gap-2 p-1.5 px-2 rounded-lg transition-colors h-[35px] ${
-                globalIndex < 3 ? 'bg-accent/50' : 'hover:bg-accent/30'
+              className={`flex items-center gap-2 p-1.5 px-2 rounded-lg transition-colors h-[35px] cursor-pointer ${
+                globalIndex < 3 ? 'bg-accent/50 hover:bg-accent/70' : 'hover:bg-accent/30'
               }`}
+              onClick={() => onColaboradorClick?.(colaborador.user_id)}
             >
               <div className="flex items-center justify-center w-6">
                 {globalIndex === 0 && <Medal className="h-4 w-4 text-yellow-500" />}
@@ -102,9 +105,14 @@ function RankingList({ ranking, isLoading, unidade }: RankingListProps) {
 }
 
 export function RankingPorSetor() {
+  const navigate = useNavigate();
   const { data: rankingPintura = [], isLoading: loadingPintura } = useRankingPintura();
   const { data: rankingPerfiladeira = [], isLoading: loadingPerfiladeira } = useRankingPerfiladeira();
   const { data: rankingSolda = [], isLoading: loadingSolda } = useRankingSolda();
+
+  const handleColaboradorClick = (userId: string) => {
+    navigate(`/hub-fabrica/colaborador/${userId}`);
+  };
 
   return (
     <div className="space-y-3">
@@ -123,7 +131,7 @@ export function RankingPorSetor() {
           <div className="text-[10px] text-muted-foreground mb-2">
             Pontuação por m² de portas pintadas
           </div>
-          <RankingList ranking={rankingPintura} isLoading={loadingPintura} unidade="m²" />
+          <RankingList ranking={rankingPintura} isLoading={loadingPintura} unidade="m²" onColaboradorClick={handleColaboradorClick} />
         </Card>
 
         {/* Ranking Perfiladeira */}
@@ -135,7 +143,7 @@ export function RankingPorSetor() {
           <div className="text-[10px] text-muted-foreground mb-2">
             Pontuação por metro de linhas concluídas
           </div>
-          <RankingList ranking={rankingPerfiladeira} isLoading={loadingPerfiladeira} unidade="m" />
+          <RankingList ranking={rankingPerfiladeira} isLoading={loadingPerfiladeira} unidade="m" onColaboradorClick={handleColaboradorClick} />
         </Card>
 
         {/* Ranking Solda */}
@@ -147,7 +155,7 @@ export function RankingPorSetor() {
           <div className="text-[10px] text-muted-foreground mb-2">
             Pontuação por item (definida no estoque)
           </div>
-          <RankingList ranking={rankingSolda} isLoading={loadingSolda} unidade="pts" />
+          <RankingList ranking={rankingSolda} isLoading={loadingSolda} unidade="pts" onColaboradorClick={handleColaboradorClick} />
         </Card>
       </div>
     </div>
