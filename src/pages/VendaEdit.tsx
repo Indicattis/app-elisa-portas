@@ -3,26 +3,22 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Plus, ShoppingCart, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
 import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
-import { FormaPagamentoSelect } from "@/components/FormaPagamentoSelect";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Lead {
   id: string;
@@ -36,31 +32,9 @@ export default function VendaEdit() {
   const { id } = useParams<{ id: string }>();
   const [venda, setVenda] = useState<Tables<"vendas"> | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(false);
   const [showProdutoForm, setShowProdutoForm] = useState(false);
   const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
-  const [formData, setFormData] = useState({
-    data_venda: "",
-    publico_alvo: "cliente_final",
-    canal_aquisicao_id: "",
-    forma_pagamento: "",
-    valor_entrada: "",
-    numero_parcelas: "",
-    data_prevista_entrega: "",
-    tipo_entrega: "instalacao",
-    cliente_nome: "",
-    cliente_telefone: "",
-    cliente_email: "",
-    cpf_cliente: "",
-    estado: "",
-    cidade: "",
-    bairro: "",
-    cep: "",
-    observacoes_venda: "",
-    valor_frete: "",
-    venda_presencial: false,
-  });
 
   const { user, isAdmin } = useAuth();
   const { canEdit, loading: loadingPermission, isFaturada } = useCanEditVenda({
@@ -90,29 +64,6 @@ export default function VendaEdit() {
       if (vendaError) throw vendaError;
       
       setVenda(vendaData);
-      setFormData({
-        data_venda: new Date(vendaData.data_venda).toISOString().slice(0, 16),
-        publico_alvo: vendaData.publico_alvo || "cliente_final",
-        canal_aquisicao_id: vendaData.canal_aquisicao_id || "",
-        forma_pagamento: vendaData.forma_pagamento || "",
-        valor_entrada: (vendaData.valor_entrada ? vendaData.valor_entrada * 100 : 0).toString(),
-        numero_parcelas: vendaData.numero_parcelas?.toString() || "",
-        data_prevista_entrega: vendaData.data_prevista_entrega || "",
-        tipo_entrega: vendaData.tipo_entrega || "instalacao",
-        cliente_nome: vendaData.cliente_nome || "",
-        cliente_telefone: vendaData.cliente_telefone || "",
-        cliente_email: vendaData.cliente_email || "",
-        cpf_cliente: vendaData.cpf_cliente || "",
-        estado: vendaData.estado || "",
-        cidade: vendaData.cidade || "",
-        bairro: vendaData.bairro || "",
-        cep: vendaData.cep || "",
-        observacoes_venda: vendaData.observacoes_venda || "",
-        valor_frete: (vendaData.valor_frete ? vendaData.valor_frete * 100 : 0).toString(),
-        venda_presencial: vendaData.venda_presencial || false,
-      });
-
-      // Vendas table doesn't have lead_id, so skip lead lookup
     } catch (error) {
       console.error("Erro ao buscar venda:", error);
       toast({
@@ -169,89 +120,59 @@ export default function VendaEdit() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!id) return;
-
-    if (!canEdit) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Você não tem permissão para editar esta venda",
-      });
-      return;
-    }
-    
-    setLoading(true);
-
-    try {
-      const valorEntrada = parseFloat(formData.valor_entrada) / 100;
-      const valorFrete = parseFloat(formData.valor_frete) / 100;
-
-      const updateData: any = {
-        publico_alvo: formData.publico_alvo,
-        canal_aquisicao_id: formData.canal_aquisicao_id || null,
-        forma_pagamento: formData.forma_pagamento || null,
-        valor_entrada: valorEntrada,
-        numero_parcelas: formData.numero_parcelas ? parseInt(formData.numero_parcelas) : null,
-        data_prevista_entrega: formData.data_prevista_entrega || null,
-        tipo_entrega: formData.tipo_entrega,
-        cliente_nome: formData.cliente_nome || null,
-        cliente_telefone: formData.cliente_telefone || null,
-        cliente_email: formData.cliente_email || null,
-        cpf_cliente: formData.cpf_cliente || null,
-        estado: formData.estado || null,
-        cidade: formData.cidade || null,
-        bairro: formData.bairro || null,
-        cep: formData.cep || null,
-        observacoes_venda: formData.observacoes_venda || null,
-        valor_frete: valorFrete,
-        venda_presencial: formData.venda_presencial,
-      };
-
-      // Apenas admins podem editar a data da venda
-      if (isAdmin) {
-        updateData.data_venda = new Date(formData.data_venda).toISOString();
-      }
-
-      const { error } = await supabase
-        .from("vendas")
-        .update(updateData)
-        .eq("id", id);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Sucesso",
-        description: "Venda atualizada com sucesso",
-      });
-
-      navigate("/dashboard/vendas");
-    } catch (error) {
-      console.error("Erro ao atualizar venda:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: `Erro ao atualizar venda: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatCurrency = (value: string) => {
-    const numbers = value.replace(/\D/g, "");
-    const amount = parseFloat(numbers) / 100;
-    return amount.toLocaleString("pt-BR", {
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value == null) return "R$ 0,00";
+    return value.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
     });
   };
 
-  if (!canEdit && !loading && !loadingPermission) {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "-";
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    } catch {
+      return "-";
+    }
+  };
+
+  const formatDateOnly = (dateString: string | null | undefined) => {
+    if (!dateString) return "-";
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
+    } catch {
+      return "-";
+    }
+  };
+
+  const getPublicoAlvoLabel = (value: string | null | undefined) => {
+    const labels: Record<string, string> = {
+      'cliente_final': 'Cliente Final',
+      'serralheiro': 'Serralheiro',
+      'empresa': 'Empresa',
+    };
+    return value ? labels[value] || value : "-";
+  };
+
+  const getTipoEntregaLabel = (value: string | null | undefined) => {
+    const labels: Record<string, string> = {
+      'instalacao': 'Instalação',
+      'retirada': 'Retirada',
+      'entrega': 'Entrega',
+      'correcao': 'Correção',
+      'servico': 'Serviço',
+    };
+    return value ? labels[value] || value : "-";
+  };
+
+  const getCanalNome = (canalId: string | null | undefined) => {
+    if (!canalId) return "-";
+    const canal = canais.find(c => c.id === canalId);
+    return canal?.nome || "-";
+  };
+
+  if (!canEdit && !loadingPermission) {
     return (
       <div className="container mx-auto py-6">
         <Card>
@@ -263,6 +184,18 @@ export default function VendaEdit() {
                 : "Você não tem permissão para editar esta venda."}
             </CardDescription>
           </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!venda) {
+    return (
+      <div className="container mx-auto py-6">
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            Carregando dados da venda...
+          </CardContent>
         </Card>
       </div>
     );
@@ -281,7 +214,7 @@ export default function VendaEdit() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-foreground">Editar Venda</h1>
-          <p className="text-muted-foreground">Editar dados da venda</p>
+          <p className="text-muted-foreground">Gerencie os produtos desta venda</p>
         </div>
       </div>
 
@@ -301,269 +234,126 @@ export default function VendaEdit() {
         </Card>
       )}
 
+      {/* Dados da Venda - Somente Visualização */}
       <Card>
         <CardHeader>
           <CardTitle>Dados da Venda</CardTitle>
+          <CardDescription>
+            Informações da venda (somente visualização)
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="data_venda">
-                  Data da Venda * {!isAdmin && <span className="text-xs text-muted-foreground">(Somente admin pode editar)</span>}
-                </Label>
-                <Input
-                  id="data_venda"
-                  type="datetime-local"
-                  value={formData.data_venda}
-                  onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
-                  disabled={!isAdmin}
-                  required
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Cliente */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <User className="h-4 w-4" />
+                Cliente
               </div>
+              <p className="font-medium">{venda.cliente_nome || "-"}</p>
+              <p className="text-sm text-muted-foreground">{venda.cliente_telefone || "-"}</p>
+              {venda.cliente_email && (
+                <p className="text-sm text-muted-foreground">{venda.cliente_email}</p>
+              )}
+              {venda.cpf_cliente && (
+                <p className="text-sm text-muted-foreground">CPF: {venda.cpf_cliente}</p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="publico_alvo">Público Alvo *</Label>
-                <Select
-                  value={formData.publico_alvo}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, publico_alvo: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cliente_final">Cliente Final</SelectItem>
-                    <SelectItem value="serralheiro">Serralheiro</SelectItem>
-                    <SelectItem value="empresa">Empresa</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Data e Público */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                Data da Venda
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="canal_aquisicao_id">Canal de Aquisição *</Label>
-                <Select
-                  value={formData.canal_aquisicao_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, canal_aquisicao_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {canais.map((canal) => (
-                      <SelectItem key={canal.id} value={canal.id}>
-                        {canal.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <FormaPagamentoSelect
-                value={formData.forma_pagamento}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, forma_pagamento: value }))}
-                showLabel={true}
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="valor_entrada">Valor de Entrada</Label>
-                <Input
-                  id="valor_entrada"
-                  placeholder="R$ 0,00"
-                  value={formatCurrency(formData.valor_entrada)}
-                  onChange={(e) => {
-                    const numbers = e.target.value.replace(/\D/g, "");
-                    setFormData(prev => ({ ...prev, valor_entrada: numbers }));
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="numero_parcelas">Número de Parcelas</Label>
-                <Input
-                  id="numero_parcelas"
-                  type="number"
-                  placeholder="Ex: 3"
-                  value={formData.numero_parcelas}
-                  onChange={(e) => setFormData(prev => ({ ...prev, numero_parcelas: e.target.value }))}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="valor_frete">Valor do Frete Total</Label>
-                <Input
-                  id="valor_frete"
-                  placeholder="R$ 0,00"
-                  value={formatCurrency(formData.valor_frete)}
-                  onChange={(e) => {
-                    const numbers = e.target.value.replace(/\D/g, "");
-                    setFormData(prev => ({ ...prev, valor_frete: numbers }));
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="data_prevista_entrega">Data Prevista de Entrega</Label>
-                <Input
-                  id="data_prevista_entrega"
-                  type="date"
-                  value={formData.data_prevista_entrega}
-                  onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tipo_entrega">Tipo de Entrega</Label>
-                <Select
-                  value={formData.tipo_entrega}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo de entrega" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="instalacao">Instalação</SelectItem>
-                    <SelectItem value="retirada">Retirada</SelectItem>
-                    <SelectItem value="entrega">Entrega</SelectItem>
-                    <SelectItem value="correcao">Correção</SelectItem>
-                    <SelectItem value="servico">Serviço</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-start space-x-3 p-4 border-2 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 hover:from-muted/50 hover:to-muted/80 transition-all hover:shadow-md">
-                  <Checkbox
-                    id="venda_presencial"
-                    checked={formData.venda_presencial}
-                    onCheckedChange={(checked) => 
-                      setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))
-                    }
-                    className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <Label htmlFor="venda_presencial" className="cursor-pointer flex-1">
-                    <span className="font-medium">Venda Presencial</span>
-                    <p className="text-sm text-muted-foreground font-normal mt-1">
-                      Esta venda foi realizada presencialmente na loja
-                    </p>
-                  </Label>
-                </div>
+              <p className="font-medium">{formatDate(venda.data_venda)}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="secondary">{getPublicoAlvoLabel(venda.publico_alvo)}</Badge>
+                {venda.venda_presencial && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Store className="h-3 w-3" />
+                    Presencial
+                  </Badge>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Dados do Cliente</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cliente_nome">Nome do Cliente *</Label>
-                  <Input
-                    id="cliente_nome"
-                    placeholder="Nome completo"
-                    value={formData.cliente_nome}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cliente_telefone">Telefone do Cliente *</Label>
-                  <Input
-                    id="cliente_telefone"
-                    placeholder="(11) 99999-9999"
-                    value={formData.cliente_telefone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cliente_email">E-mail do Cliente</Label>
-                  <Input
-                    id="cliente_email"
-                    type="email"
-                    placeholder="cliente@email.com"
-                    value={formData.cliente_email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cliente_email: e.target.value }))}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cpf_cliente">CPF do Cliente</Label>
-                  <Input
-                    id="cpf_cliente"
-                    placeholder="000.000.000-00"
-                    value={formData.cpf_cliente}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cpf_cliente: e.target.value }))}
-                  />
-                </div>
+            {/* Pagamento */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <CreditCard className="h-4 w-4" />
+                Pagamento
               </div>
+              <p className="font-medium">{venda.forma_pagamento || "-"}</p>
+              {venda.valor_entrada != null && venda.valor_entrada > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Entrada: {formatCurrency(venda.valor_entrada)}
+                </p>
+              )}
+              {venda.numero_parcelas && (
+                <p className="text-sm text-muted-foreground">
+                  {venda.numero_parcelas}x parcelas
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="estado">Estado</Label>
-                <Input
-                  id="estado"
-                  placeholder="Ex: SP"
-                  value={formData.estado}
-                  onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value }))}
-                />
+            {/* Entrega */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Truck className="h-4 w-4" />
+                Entrega
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade</Label>
-                <Input
-                  id="cidade"
-                  placeholder="Nome da cidade"
-                  value={formData.cidade}
-                  onChange={(e) => setFormData(prev => ({ ...prev, cidade: e.target.value }))}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro</Label>
-                <Input
-                  id="bairro"
-                  placeholder="Nome do bairro"
-                  value={formData.bairro}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cep">CEP</Label>
-                <Input
-                  id="cep"
-                  placeholder="00000-000"
-                  value={formData.cep}
-                  onChange={(e) => setFormData(prev => ({ ...prev, cep: e.target.value }))}
-                />
-              </div>
+              <p className="font-medium">{getTipoEntregaLabel(venda.tipo_entrega)}</p>
+              {venda.valor_frete != null && venda.valor_frete > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Frete: {formatCurrency(venda.valor_frete)}
+                </p>
+              )}
+              {venda.data_prevista_entrega && (
+                <p className="text-sm text-muted-foreground">
+                  Previsão: {formatDateOnly(venda.data_prevista_entrega)}
+                </p>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="observacoes_venda">Observações</Label>
-              <Textarea
-                id="observacoes_venda"
-                placeholder="Observações sobre a venda..."
-                value={formData.observacoes_venda}
-                onChange={(e) => setFormData(prev => ({ ...prev, observacoes_venda: e.target.value }))}
-                rows={3}
-              />
+            {/* Endereço */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                Endereço
+              </div>
+              <p className="font-medium">
+                {venda.cidade && venda.estado 
+                  ? `${venda.cidade} - ${venda.estado}` 
+                  : venda.cidade || venda.estado || "-"}
+              </p>
+              {venda.bairro && (
+                <p className="text-sm text-muted-foreground">{venda.bairro}</p>
+              )}
+              {venda.cep && (
+                <p className="text-sm text-muted-foreground">CEP: {venda.cep}</p>
+              )}
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={loading}>
-                {loading ? "Salvando..." : "Atualizar Venda"}
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate(-1)}
-              >
-                Cancelar
-              </Button>
+            {/* Canal de Aquisição */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                Canal de Aquisição
+              </div>
+              <p className="font-medium">{getCanalNome(venda.canal_aquisicao_id)}</p>
             </div>
-          </form>
+          </div>
+
+          {/* Observações */}
+          {venda.observacoes_venda && (
+            <div className="mt-6 pt-4 border-t">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                <MessageSquare className="h-4 w-4" />
+                Observações
+              </div>
+              <p className="text-sm bg-muted/50 p-3 rounded-md">{venda.observacoes_venda}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
