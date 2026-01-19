@@ -3,14 +3,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, Percent, Package } from "lucide-react";
+import { DollarSign, TrendingUp, Percent, Package, Undo2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
+import { useFaturamento } from "@/hooks/useFaturamento";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { FaturamentoProdutosTable } from "@/components/vendas/FaturamentoProdutosTable";
 import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
+import { Badge } from "@/components/ui/badge";
 
 interface Venda {
   id: string;
@@ -32,9 +34,11 @@ export default function FaturamentoEdit() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showPedidoDialog, setShowPedidoDialog] = useState(false);
   const [showPedidoDuplicadoDialog, setShowPedidoDuplicadoDialog] = useState(false);
+  const [showRemoverFaturamentoDialog, setShowRemoverFaturamentoDialog] = useState(false);
   const [pedidoExistenteId, setPedidoExistenteId] = useState<string | null>(null);
   const [checkingPedido, setCheckingPedido] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
+  const { removerFaturamento, isRemovendo, verificarFaturamento } = useFaturamento();
 
   const {
     produtos,
@@ -50,7 +54,6 @@ export default function FaturamentoEdit() {
       fetchVenda();
     }
   }, [id]);
-
 
   const fetchVenda = async () => {
     try {
@@ -133,8 +136,45 @@ export default function FaturamentoEdit() {
     }
   };
 
+  const handleRemoverFaturamento = async () => {
+    if (!venda || !id) return;
+
+    try {
+      // Verificar se existe pedido
+      const pedido = await checkExistingPedido(venda.id);
+      if (pedido) {
+        toast({
+          variant: "destructive",
+          title: "Não é possível remover o faturamento",
+          description: "Existe um pedido de produção vinculado a esta venda. Exclua o pedido primeiro.",
+        });
+        setShowRemoverFaturamentoDialog(false);
+        return;
+      }
+
+      await removerFaturamento(id);
+      setShowRemoverFaturamentoDialog(false);
+      
+      // Recarregar dados da venda
+      await fetchVenda();
+      
+      toast({
+        title: "Faturamento removido",
+        description: "O faturamento foi removido com sucesso. A venda pode ser editada novamente.",
+      });
+    } catch (error: any) {
+      console.error('Erro ao remover faturamento:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover faturamento",
+        description: error.message || "Ocorreu um erro ao remover o faturamento.",
+      });
+    }
+  };
+
   // Cálculos
-  const todosProdutosFaturados = produtos?.every(p => p.lucro_item !== null && p.lucro_item !== undefined) || false;
+  const todosProdutosFaturados = produtos?.every(p => p.faturamento === true) || false;
+  const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
   const totalLucro = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
   const totalCusto = produtos?.reduce((acc, p) => acc + ((p.custo_producao || 0) * p.quantidade), 0) || 0;
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
@@ -159,11 +199,30 @@ export default function FaturamentoEdit() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold">Faturamento - Venda {venda.numero_venda ? `#${venda.numero_venda}` : ''}</h1>
-        <p className="text-muted-foreground">
-          Cliente: {venda.cliente_nome}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">Faturamento - Venda {venda.numero_venda ? `#${venda.numero_venda}` : ''}</h1>
+            {vendaFaturada && (
+              <Badge variant="default" className="bg-green-600">Faturada</Badge>
+            )}
+          </div>
+          <p className="text-muted-foreground">
+            Cliente: {venda.cliente_nome}
+          </p>
+        </div>
+        
+        {/* Botão de Remover Faturamento */}
+        {vendaFaturada && (
+          <Button
+            variant="outline"
+            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+            onClick={() => setShowRemoverFaturamentoDialog(true)}
+          >
+            <Undo2 className="h-4 w-4 mr-2" />
+            Remover Faturamento
+          </Button>
+        )}
       </div>
 
       {/* Cards de Resumo */}
@@ -239,13 +298,15 @@ export default function FaturamentoEdit() {
         >
           Voltar
         </Button>
-        <Button
-          size="lg"
-          onClick={handleFaturar}
-          disabled={isFinalizandoFaturamento}
-        >
-          {isFinalizandoFaturamento ? "Faturando..." : "Faturar"}
-        </Button>
+        {!vendaFaturada && (
+          <Button
+            size="lg"
+            onClick={handleFaturar}
+            disabled={isFinalizandoFaturamento}
+          >
+            {isFinalizandoFaturamento ? "Faturando..." : "Faturar"}
+          </Button>
+        )}
       </div>
 
       {/* Modal de Lucro */}
@@ -342,6 +403,45 @@ export default function FaturamentoEdit() {
               }
             }}>
               Acessar Pedido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de Remover Faturamento */}
+      <AlertDialog open={showRemoverFaturamentoDialog} onOpenChange={setShowRemoverFaturamentoDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-orange-600">
+              Remover Faturamento
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Você está prestes a <strong>remover o faturamento</strong> desta venda.
+              </p>
+              <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm">
+                <p className="font-medium text-orange-800 mb-2">Isso irá:</p>
+                <ul className="list-disc list-inside text-orange-700 space-y-1">
+                  <li>Resetar todos os valores de lucro dos produtos</li>
+                  <li>Resetar os custos de produção</li>
+                  <li>Permitir que a venda seja editada novamente</li>
+                </ul>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Esta ação não pode ser desfeita automaticamente. Você precisará faturar a venda novamente.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemovendo}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRemoverFaturamento}
+              disabled={isRemovendo}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {isRemovendo ? "Removendo..." : "Sim, Remover Faturamento"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
