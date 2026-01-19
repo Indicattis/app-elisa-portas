@@ -3359,75 +3359,6 @@ export type Database = {
           },
         ]
       }
-      ordens_producao: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          data_conclusao: string | null
-          data_inicio: string | null
-          id: string
-          observacoes: string | null
-          ordem_perfiladeira_concluida: boolean | null
-          ordem_pintura_concluida: boolean | null
-          ordem_separacao_concluida: boolean | null
-          ordem_soldagem_concluida: boolean | null
-          pedido_id: string
-          responsavel_id: string | null
-          status: string
-          tipo_ordem: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          data_conclusao?: string | null
-          data_inicio?: string | null
-          id?: string
-          observacoes?: string | null
-          ordem_perfiladeira_concluida?: boolean | null
-          ordem_pintura_concluida?: boolean | null
-          ordem_separacao_concluida?: boolean | null
-          ordem_soldagem_concluida?: boolean | null
-          pedido_id: string
-          responsavel_id?: string | null
-          status?: string
-          tipo_ordem: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          data_conclusao?: string | null
-          data_inicio?: string | null
-          id?: string
-          observacoes?: string | null
-          ordem_perfiladeira_concluida?: boolean | null
-          ordem_pintura_concluida?: boolean | null
-          ordem_separacao_concluida?: boolean | null
-          ordem_soldagem_concluida?: boolean | null
-          pedido_id?: string
-          responsavel_id?: string | null
-          status?: string
-          tipo_ordem?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ordens_producao_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_backlog_ativo"
-            referencedColumns: ["pedido_id"]
-          },
-          {
-            foreignKeyName: "ordens_producao_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_producao"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ordens_qualidade: {
         Row: {
           capturada_em: string | null
@@ -3787,60 +3718,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      organograma_connections: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          id: string
-          source_user_id: string
-          target_user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          source_user_id: string
-          target_user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          source_user_id?: string
-          target_user_id?: string
-        }
-        Relationships: []
-      }
-      organograma_positions: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          id: string
-          position_x: number
-          position_y: number
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          position_x: number
-          position_y: number
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          position_x?: number
-          position_y?: number
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
       }
       parceiro_tag_assignments: {
         Row: {
@@ -4467,50 +4344,6 @@ export type Database = {
             columns: ["recarga_realizada_por"]
             isOneToOne: false
             referencedRelation: "admin_users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pontos_instalacao: {
-        Row: {
-          cidade: string
-          created_at: string | null
-          created_by: string | null
-          dia_semana: number
-          equipe_id: string
-          id: string
-          observacoes: string | null
-          semana_inicio: string
-          updated_at: string | null
-        }
-        Insert: {
-          cidade: string
-          created_at?: string | null
-          created_by?: string | null
-          dia_semana: number
-          equipe_id: string
-          id?: string
-          observacoes?: string | null
-          semana_inicio: string
-          updated_at?: string | null
-        }
-        Update: {
-          cidade?: string
-          created_at?: string | null
-          created_by?: string | null
-          dia_semana?: number
-          equipe_id?: string
-          id?: string
-          observacoes?: string | null
-          semana_inicio?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pontos_instalacao_equipe_id_fkey"
-            columns: ["equipe_id"]
-            isOneToOne: false
-            referencedRelation: "equipes_instalacao"
             referencedColumns: ["id"]
           },
         ]

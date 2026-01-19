@@ -116,9 +116,9 @@ export default function AdministrativoHome() {
         </div>
       </div>
 
-      {/* Metrics Cards - Organograma */}
+      {/* Metrics Cards - Equipe */}
       <div>
-        <h2 className="text-base sm:text-lg font-semibold mb-3">Organograma</h2>
+        <h2 className="text-base sm:text-lg font-semibold mb-3">Equipe</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
