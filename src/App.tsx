@@ -75,11 +75,7 @@ import HubFabrica from "./pages/HubFabrica";
 import PedidosStandalone from "./pages/PedidosStandalone";
 import PedidoPreparacao from "./pages/PedidoPreparacao";
 import TvDashboard from "./pages/TvDashboard";
-import OrdemSoldaEdit from "./pages/OrdemSoldaEdit";
-import OrdemPinturaEdit from "./pages/OrdemPinturaEdit";
-import OrdemSeparacaoEdit from "./pages/OrdemSeparacaoEdit";
-import OrdemPerfiladeiraEdit from "./pages/OrdemPerfiladeiraEdit";
-import OrdemInstalacaoEdit from "./pages/OrdemInstalacaoEdit";
+// Páginas de edição de ordens removidas - tabela ordens_producao excluída
 import Documentos from "./pages/Documentos";
 import DocumentoNovo from "./pages/DocumentoNovo";
 import Vendas from "./pages/Vendas";
@@ -1092,56 +1088,7 @@ const App = () => (
                   path="/dashboard/pedidos/:id/preparacao"
                   element={<Navigate to="/dashboard/pedido/:id/view" replace />}
                 />
-                <Route
-                  path="/dashboard/ordens/solda/:ordemId"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <OrdemSoldaEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/ordens/pintura/:ordemId"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <OrdemPinturaEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/ordens/separacao/:ordemId"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <OrdemSeparacaoEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/ordens/perfiladeira/:ordemId"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <OrdemPerfiladeiraEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/ordens/instalacao/:ordemId"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout>
-                        <OrdemInstalacaoEdit />
-                      </DashboardLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Rotas de edição de ordens removidas - tabela ordens_producao excluída */}
                 <Route
                   path="/dashboard/administrativo/documentos"
                   element={

@@ -5,12 +5,15 @@ import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useEquipesMembros } from "@/hooks/useEquipesMembros";
-import { PontoInstalacao } from "./PontoInstalacao";
 import { CelulaDia } from "./CelulaDia";
 import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
 import { SelecionarPedidoInstalacaoModal } from "@/components/instalacoes/SelecionarPedidoInstalacaoModal";
 import { EquipeMembrosList } from "./EquipeMembrosList";
 import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CronogramaInstalacaoProps {
   currentWeek: Date;
@@ -27,6 +30,69 @@ const DIAS_SEMANA = [
   { label: "Sábado", value: 6 },
   { label: "Domingo", value: 0 },
 ];
+
+// Componente inline para exibir ponto de instalação (substituindo o arquivo excluído)
+function InstalacaoCard({ 
+  instalacao, 
+  cor, 
+  onDragStart, 
+  onDragEnd, 
+  onEdit 
+}: { 
+  instalacao: any; 
+  cor: string; 
+  onDragStart: (item: any) => void; 
+  onDragEnd: () => void; 
+  onEdit: () => void;
+}) {
+  const handleDragStart = (e: React.DragEvent) => {
+    onDragStart({
+      id: instalacao.id,
+      equipId: instalacao.responsavel_instalacao_id,
+      tipo: 'instalacao'
+    });
+  };
+
+  const getResponsavelNome = () => {
+    if (instalacao.responsavel_instalacao_nome) {
+      return instalacao.responsavel_instalacao_nome;
+    }
+    return 'Sem responsável';
+  };
+
+  return (
+    <Card
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={onDragEnd}
+      onDoubleClick={onEdit}
+      className="p-2 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+      style={{ 
+        backgroundColor: `${cor}15`,
+        borderLeft: `3px solid ${cor}`
+      }}
+    >
+      <div className="space-y-1">
+        <p className="text-xs font-medium truncate">{instalacao.nome_cliente}</p>
+        <Badge variant="outline" className="text-[10px]">
+          {getResponsavelNome()}
+        </Badge>
+        {instalacao.cidade && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3 w-3 text-muted-foreground inline-block ml-1" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{instalacao.cidade}{instalacao.estado ? `, ${instalacao.estado}` : ''}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltradas }: CronogramaInstalacaoProps) {
   const { equipes } = useEquipesInstalacao();
@@ -97,14 +163,6 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
             const diaNumero = dataAtual.getDate();
             const mesNumero = dataAtual.getMonth() + 1;
             
-            console.log(`Header dia ${dia.label}:`, {
-              index,
-              dataAtual,
-              dia: diaNumero,
-              mes: mesNumero,
-              formatado: `${String(diaNumero).padStart(2, '0')}/${String(mesNumero).padStart(2, '0')}`
-            });
-            
             return (
               <div key={dia.value} className="p-4 text-center border-r last:border-r-0">
                 <div className="font-medium">{dia.label}</div>
@@ -152,7 +210,7 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
                     draggedItem={draggedItem}
                   >
                     {instalacoesNoDia.map((instalacao) => (
-                      <PontoInstalacao
+                      <InstalacaoCard
                         key={instalacao.id}
                         instalacao={instalacao}
                         cor={equipe.cor}
