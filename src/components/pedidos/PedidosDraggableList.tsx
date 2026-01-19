@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PedidoCard } from "./PedidoCard";
+import { PedidosTotalRow } from "./PedidosTotalRow";
 import type { EtapaPedido, DirecaoPrioridade, PrioridadeUpdate } from "@/types/pedidoEtapa";
 
 interface PedidosDraggableListProps {
@@ -185,6 +186,9 @@ export function PedidosDraggableList({
             />
           ))}
         </div>
+        
+        {/* Linha de totais - apenas no modo lista */}
+        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidos} />}
       </SortableContext>
 
       <DragOverlay>
