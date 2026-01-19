@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2 } from "lucide-react";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -21,6 +21,7 @@ import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
 import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
 import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
 import { RemoverResponsavelModal } from "./RemoverResponsavelModal";
+import { ExcluirPedidoModal } from "./ExcluirPedidoModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -40,6 +41,7 @@ interface PedidoCardProps {
   total?: number;
   viewMode?: 'grid' | 'list';
   onArquivar?: (pedidoId: string) => Promise<void>;
+  onDeletar?: (pedidoId: string) => Promise<void>;
 }
 export function PedidoCard({
   pedido,
@@ -52,7 +54,8 @@ export function PedidoCard({
   posicao,
   total,
   viewMode = 'grid',
-  onArquivar
+  onArquivar,
+  onDeletar
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -65,6 +68,8 @@ export function PedidoCard({
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
   const [showConfirmarExpedicao, setShowConfirmarExpedicao] = useState(false);
   const [showRemoverResponsavel, setShowRemoverResponsavel] = useState(false);
+  const [showExcluirPedido, setShowExcluirPedido] = useState(false);
+  const [isExcluindo, setIsExcluindo] = useState(false);
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
@@ -134,6 +139,18 @@ export function PedidoCard({
         ordemId: ordemParaRemover.ordem.ordem_id,
         tipoOrdem: ordemParaRemover.ordem.tipo_ordem,
       });
+    }
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (onDeletar) {
+      setIsExcluindo(true);
+      try {
+        await onDeletar(pedido.id);
+        setShowExcluirPedido(false);
+      } finally {
+        setIsExcluindo(false);
+      }
     }
   };
 
@@ -1179,6 +1196,22 @@ export function PedidoCard({
                           <ArrowLeft className="h-3 w-3" />
                         </Button>);
                     }
+
+                    // Botão de excluir (apenas admins em pedidos abertos)
+                    if (isAberto && isAdmin && onDeletar) {
+                      actionButtons.push(
+                        <Button 
+                          key="excluir" 
+                          size="icon" 
+                          variant="outline" 
+                          onClick={(e) => { e.stopPropagation(); setShowExcluirPedido(true); }} 
+                          title="Excluir Pedido" 
+                          className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      );
+                    }
                     
                     return actionButtons;
                   })()}
@@ -1493,6 +1526,25 @@ export function PedidoCard({
                       <ArrowLeft className="h-3.5 w-3.5" />
                     </Button>);
               }
+
+              // Botão de excluir (apenas admins em pedidos abertos)
+              if (isAberto && isAdmin && onDeletar) {
+                actionButtons.push(
+                  <Button 
+                    key="excluir" 
+                    size="icon" 
+                    variant="outline"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setShowExcluirPedido(true); 
+                    }} 
+                    title="Excluir Pedido" 
+                    className="flex w-full h-[35px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              }
               return <div className="w-full">
                     {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                         {actionButtons}
@@ -1560,6 +1612,14 @@ export function PedidoCard({
         responsavelFoto={ordemParaRemover?.ordem?.capturada_por_foto}
         nomeSetor={ordemParaRemover?.nomeSetor || ''}
         isLoading={removerResponsavelMutation.isPending}
+      />
+
+      <ExcluirPedidoModal
+        open={showExcluirPedido}
+        onOpenChange={setShowExcluirPedido}
+        onConfirmar={handleConfirmarExclusao}
+        pedido={pedido}
+        isLoading={isExcluindo}
       />
     </>;
 }

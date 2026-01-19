@@ -49,7 +49,8 @@ export default function Pedidos() {
     retrocederEtapa,
     atualizarPrioridade,
     reorganizarPedidos,
-    arquivarPedido
+    arquivarPedido,
+    deletarPedido
   } = usePedidosEtapas(etapaAtiva);
   const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
     await moverParaProximaEtapa.mutateAsync({
@@ -183,6 +184,10 @@ export default function Pedidos() {
   const handleArquivar = async (pedidoId: string) => {
     await arquivarPedido.mutateAsync(pedidoId);
   };
+
+  const handleDeletarPedido = async (pedidoId: string) => {
+    await deletarPedido.mutateAsync(pedidoId);
+  };
   return <div className="container mx-auto py-2 px-[5px] sm:py-6 sm:px-4 space-y-3 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -309,6 +314,7 @@ export default function Pedidos() {
                         onReorganizar={handleReorganizar} 
                         onMoverPrioridade={handleMoverPrioridade}
                         onArquivar={handleArquivar}
+                        onDeletar={handleDeletarPedido}
                       />
                       
                       {totalPaginas > 1 && (
