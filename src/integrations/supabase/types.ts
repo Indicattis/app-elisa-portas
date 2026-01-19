@@ -6203,6 +6203,8 @@ export type Database = {
           pintura_m2: number
           separadas: number
           soldadas: number
+          soldadas_g: number
+          soldadas_p: number
           user_id: string
         }[]
       }

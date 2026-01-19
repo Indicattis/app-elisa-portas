@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { usePortasPorEtapa } from "@/hooks/usePortasPorEtapa";
 import { useDesempenhoEtapas, DesempenhoColaborador } from "@/hooks/useDesempenhoEtapas";
 import { Cog, Flame, Package, Paintbrush, Truck, CalendarIcon } from "lucide-react";
@@ -25,9 +26,9 @@ interface MiniRankingProps {
 function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRankingProps) {
   if (isLoading) {
     return (
-      <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+      <div className="mt-2 pt-2 border-t border-border/50 space-y-2 flex flex-col items-center">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-4 w-full" />
+          <Skeleton key={i} className="h-5 w-[180px]" />
         ))}
       </div>
     );
@@ -40,14 +41,14 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
 
   if (top3.length === 0) {
     return (
-      <div className="mt-2 pt-2 border-t border-border/50">
+      <div className="mt-2 pt-2 border-t border-border/50 flex justify-center">
         <p className="text-[10px] text-muted-foreground italic">Sem produção</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+    <div className="mt-2 pt-2 border-t border-border/50 space-y-2 flex flex-col items-center">
       {top3.map((c, i) => {
         const valorRaw = c[campo];
         const valor = (campo === 'pintura_m2' || campo === 'perfiladas_metros')
@@ -61,17 +62,36 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
           .toUpperCase();
         const primeiroNome = c.nome.split(" ")[0];
 
+        // Renderização especial para soldadas com P/G
+        const isSoldadas = campo === 'soldadas';
+        const temPG = isSoldadas && (c.soldadas_p > 0 || c.soldadas_g > 0);
+
         return (
-          <div key={c.user_id} className="flex items-center gap-2 text-[10px] pl-2">
-            <span className="w-3 text-muted-foreground font-medium">{i + 1}.</span>
-            <Avatar className="h-4 w-4">
+          <div key={c.user_id} className="flex items-center justify-center gap-2 text-[11px] max-w-[200px] w-full">
+            <span className="w-4 text-muted-foreground font-medium">{i + 1}.</span>
+            <Avatar className="h-6 w-6">
               <AvatarImage src={c.foto_perfil_url || undefined} alt={c.nome} />
-              <AvatarFallback className="text-[6px]">{iniciais}</AvatarFallback>
+              <AvatarFallback className="text-[8px]">{iniciais}</AvatarFallback>
             </Avatar>
             <span className="truncate flex-1 text-foreground">{primeiroNome}</span>
-            <span className="font-semibold text-foreground">
-              {valor}{unidade}
-            </span>
+            {isSoldadas && temPG ? (
+              <span className="font-semibold text-foreground flex items-center gap-1">
+                {c.soldadas_p > 0 && (
+                  <Badge className="bg-blue-500 hover:bg-blue-500 text-white text-[9px] px-1.5 py-0 h-4 font-bold">
+                    {c.soldadas_p}P
+                  </Badge>
+                )}
+                {c.soldadas_g > 0 && (
+                  <Badge className="bg-orange-500 hover:bg-orange-500 text-white text-[9px] px-1.5 py-0 h-4 font-bold">
+                    {c.soldadas_g}G
+                  </Badge>
+                )}
+              </span>
+            ) : (
+              <span className="font-semibold text-foreground">
+                {valor}{unidade}
+              </span>
+            )}
           </div>
         );
       })}
