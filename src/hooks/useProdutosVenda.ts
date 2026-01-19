@@ -119,6 +119,43 @@ export const useProdutosVenda = (vendaId?: string) => {
     },
   });
 
+  // Atualizar produto (desconto, crédito, etc.)
+  const updateProdutoMutation = useMutation({
+    mutationFn: async ({ 
+      produtoId, 
+      updates 
+    }: { 
+      produtoId: string; 
+      updates: Partial<{
+        tipo_desconto: 'percentual' | 'valor';
+        desconto_percentual: number;
+        desconto_valor: number;
+        valor_produto: number;
+        valor_pintura: number;
+        valor_instalacao: number;
+        quantidade: number;
+      }>;
+    }) => {
+      const { data, error } = await supabase
+        .from('produtos_vendas')
+        .update(updates)
+        .eq('id', produtoId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+    },
+    onError: (error: any) => {
+      console.error('Erro ao atualizar produto:', error);
+      toast.error("Erro ao atualizar produto");
+    },
+  });
+
   // Mutation para finalizar faturamento da venda
   const finalizarFaturamentoMutation = useMutation({
     mutationFn: async ({ 
@@ -171,6 +208,8 @@ export const useProdutosVenda = (vendaId?: string) => {
     isAdding: addProdutoMutation.isPending,
     deleteProduto: deleteProdutoMutation.mutate,
     isDeleting: deleteProdutoMutation.isPending,
+    updateProduto: updateProdutoMutation.mutateAsync,
+    isUpdating: updateProdutoMutation.isPending,
     updateLucroItem: updateLucroItemMutation.mutate,
     isUpdatingLucro: updateLucroItemMutation.isPending,
     finalizarFaturamento: finalizarFaturamentoMutation.mutateAsync,
