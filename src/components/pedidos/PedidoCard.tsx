@@ -977,7 +977,7 @@ export function PedidoCard({
                       <div className="flex flex-col items-center leading-tight">
                         <span className="text-[9px] font-medium text-green-600">Agendado</span>
                         <span className="text-xs font-bold text-green-600">
-                          {format(new Date(dataCarregamento), "dd/MM")}
+                          {format(new Date(dataCarregamento), "dd/MM/yy")}
                         </span>
                       </div>
                     );
@@ -987,7 +987,7 @@ export function PedidoCard({
                   if (dataCarregamento) {
                     return (
                       <span title="Data de carregamento" className="text-[10px] font-medium text-muted-foreground">
-                        {format(new Date(dataCarregamento), "dd/MM")}
+                        {format(new Date(dataCarregamento), "dd/MM/yy")}
                       </span>
                     );
                   }
