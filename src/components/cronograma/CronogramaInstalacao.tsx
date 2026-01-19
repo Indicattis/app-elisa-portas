@@ -1,12 +1,10 @@
-import { format, addDays, startOfWeek, isSameDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format, addDays, isSameDay } from "date-fns";
 import { useState } from "react";
 import { useDragAndDrop } from "@/hooks/useDragAndDrop";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
-import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
+import { useOrdensCarregamentoInstalacao } from "@/hooks/useOrdensCarregamentoInstalacao";
 import { useEquipesMembros } from "@/hooks/useEquipesMembros";
 import { CelulaDia } from "./CelulaDia";
-import { DetalhesInstalacaoDialog } from "@/components/cadastro-instalacao/DetalhesInstalacaoDialog";
 import { SelecionarPedidoInstalacaoModal } from "@/components/instalacoes/SelecionarPedidoInstalacaoModal";
 import { EquipeMembrosList } from "./EquipeMembrosList";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { OrdemCarregamentoInstalacao } from "@/hooks/useOrdensCarregamentoInstalacao";
 
 interface CronogramaInstalacaoProps {
   currentWeek: Date;
@@ -31,41 +30,47 @@ const DIAS_SEMANA = [
   { label: "Domingo", value: 0 },
 ];
 
-// Componente inline para exibir ponto de instalação (substituindo o arquivo excluído)
-function InstalacaoCard({ 
-  instalacao, 
+// Componente para exibir ordem de carregamento de instalação
+function OrdemCarregamentoCard({ 
+  ordem, 
   cor, 
   onDragStart, 
   onDragEnd, 
-  onEdit 
+  onClick 
 }: { 
-  instalacao: any; 
+  ordem: OrdemCarregamentoInstalacao; 
   cor: string; 
   onDragStart: (item: any) => void; 
   onDragEnd: () => void; 
-  onEdit: () => void;
+  onClick: () => void;
 }) {
   const handleDragStart = (e: React.DragEvent) => {
     onDragStart({
-      id: instalacao.id,
-      equipId: instalacao.responsavel_instalacao_id,
-      tipo: 'instalacao'
+      id: ordem.id,
+      equipId: ordem.responsavel_carregamento_id,
+      tipo: 'ordem_carregamento'
     });
   };
 
   const getResponsavelNome = () => {
-    if (instalacao.responsavel_instalacao_nome) {
-      return instalacao.responsavel_instalacao_nome;
+    if (ordem.responsavel_carregamento_nome) {
+      return ordem.responsavel_carregamento_nome;
+    }
+    if (ordem.equipe?.nome) {
+      return ordem.equipe.nome;
     }
     return 'Sem responsável';
   };
+
+  const cidade = ordem.venda?.cidade;
+  const estado = ordem.venda?.estado;
 
   return (
     <Card
       draggable
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
-      onDoubleClick={onEdit}
+      onClick={onClick}
       className="p-2 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
       style={{ 
         backgroundColor: `${cor}15`,
@@ -73,18 +78,18 @@ function InstalacaoCard({
       }}
     >
       <div className="space-y-1">
-        <p className="text-xs font-medium truncate">{instalacao.nome_cliente}</p>
+        <p className="text-xs font-medium truncate">{ordem.nome_cliente}</p>
         <Badge variant="outline" className="text-[10px]">
           {getResponsavelNome()}
         </Badge>
-        {instalacao.cidade && (
+        {cidade && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Info className="h-3 w-3 text-muted-foreground inline-block ml-1" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>{instalacao.cidade}{instalacao.estado ? `, ${instalacao.estado}` : ''}</p>
+                <p>{cidade}{estado ? `, ${estado}` : ''}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -96,9 +101,9 @@ function InstalacaoCard({
 
 export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltradas }: CronogramaInstalacaoProps) {
   const { equipes } = useEquipesInstalacao();
-  const { instalacoes, updateInstalacao } = useOrdensInstalacaoCalendario(currentWeek, 'week');
+  const { ordens, updateOrdem } = useOrdensCarregamentoInstalacao(currentWeek, 'week');
   const { draggedItem, handleDragStart, handleDragEnd } = useDragAndDrop();
-  const [selectedInstalacao, setSelectedInstalacao] = useState<any>(null);
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamentoInstalacao | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<{
     equipId: string;
@@ -120,16 +125,23 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
   const handleDrop = async (equipId: string, diaSemana: number) => {
     if (draggedItem && draggedItem.equipId !== equipId) {
       // Calcular a nova data baseada no dia da semana
-      // Como currentWeek já é a segunda-feira, usamos o index direto
       const index = DIAS_SEMANA.findIndex(d => d.value === diaSemana);
       const novaData = addDays(currentWeek, index);
+      const equipe = equipesParaExibir.find(e => e.id === equipId);
       
-      await updateInstalacao({
+      await updateOrdem({
         id: draggedItem.id,
         data: {
-          responsavel_instalacao_id: equipId,
-          data_instalacao: format(novaData, 'yyyy-MM-dd')
+          responsavel_carregamento_id: equipId,
+          responsavel_carregamento_nome: equipe?.nome || null,
+          responsavel_carregamento_tipo: 'equipe_interna',
+          data_carregamento: format(novaData, 'yyyy-MM-dd')
         }
+      });
+      
+      toast({
+        title: "Ordem atualizada",
+        description: "A ordem foi movida para a nova data/equipe."
       });
     }
   };
@@ -193,10 +205,10 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
               {/* Colunas dos dias */}
               {DIAS_SEMANA.map((dia, index) => {
                 const dataAtual = addDays(currentWeek, index);
-                const instalacoesNoDia = instalacoes.filter(
-                  i => i.responsavel_instalacao_id === equipe.id && 
-                       i.data_instalacao && 
-                       isSameDay(new Date(i.data_instalacao), dataAtual)
+                const ordensNoDia = ordens.filter(
+                  o => o.responsavel_carregamento_id === equipe.id && 
+                       o.data_carregamento && 
+                       isSameDay(new Date(o.data_carregamento), dataAtual)
                 );
 
                 return (
@@ -209,14 +221,14 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
                     onDoubleClick={handleCellDoubleClick}
                     draggedItem={draggedItem}
                   >
-                    {instalacoesNoDia.map((instalacao) => (
-                      <InstalacaoCard
-                        key={instalacao.id}
-                        instalacao={instalacao}
-                        cor={equipe.cor}
+                    {ordensNoDia.map((ordem) => (
+                      <OrdemCarregamentoCard
+                        key={ordem.id}
+                        ordem={ordem}
+                        cor={equipe.cor || '#888'}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
-                        onEdit={() => setSelectedInstalacao(instalacao)}
+                        onClick={() => setSelectedOrdem(ordem)}
                       />
                     ))}
                   </CelulaDia>
@@ -227,11 +239,11 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
         </div>
       </div>
 
-      {selectedInstalacao && (
-        <DetalhesInstalacaoDialog
-          instalacao={selectedInstalacao}
-          open={!!selectedInstalacao}
-          onOpenChange={(open) => !open && setSelectedInstalacao(null)}
+      {selectedOrdem && (
+        <OrdemDetalheSheet 
+          ordem={selectedOrdem} 
+          open={!!selectedOrdem} 
+          onOpenChange={(open) => !open && setSelectedOrdem(null)} 
         />
       )}
 
@@ -243,6 +255,91 @@ export function CronogramaInstalacao({ currentWeek, onEditPonto, equipesFiltrada
           onPedidoSelecionado={handleSelectPedido}
         />
       )}
+    </div>
+  );
+}
+
+// Componente simples para exibir detalhes da ordem
+function OrdemDetalheSheet({ 
+  ordem, 
+  open, 
+  onOpenChange 
+}: { 
+  ordem: OrdemCarregamentoInstalacao; 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <div 
+      className={`fixed inset-0 z-50 ${open ? 'block' : 'hidden'}`}
+      onClick={() => onOpenChange(false)}
+    >
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" />
+      <div 
+        className="fixed right-0 top-0 h-full w-[400px] bg-background border-l shadow-lg p-6 overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Detalhes da Ordem</h2>
+            <button 
+              onClick={() => onOpenChange(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm text-muted-foreground">Cliente</label>
+              <p className="font-medium">{ordem.nome_cliente}</p>
+            </div>
+            
+            <div>
+              <label className="text-sm text-muted-foreground">Data Carregamento</label>
+              <p className="font-medium">{ordem.data_carregamento || '-'}</p>
+            </div>
+            
+            <div>
+              <label className="text-sm text-muted-foreground">Responsável</label>
+              <p className="font-medium">{ordem.responsavel_carregamento_nome || ordem.equipe?.nome || '-'}</p>
+            </div>
+            
+            {ordem.venda && (
+              <>
+                <div>
+                  <label className="text-sm text-muted-foreground">Localização</label>
+                  <p className="font-medium">
+                    {ordem.venda.cidade}{ordem.venda.estado ? `, ${ordem.venda.estado}` : ''}
+                  </p>
+                </div>
+                
+                {ordem.venda.endereco_completo && (
+                  <div>
+                    <label className="text-sm text-muted-foreground">Endereço</label>
+                    <p className="font-medium">{ordem.venda.endereco_completo}</p>
+                  </div>
+                )}
+              </>
+            )}
+            
+            {ordem.pedido && (
+              <div>
+                <label className="text-sm text-muted-foreground">Pedido</label>
+                <p className="font-medium">#{ordem.pedido.numero_pedido}</p>
+              </div>
+            )}
+            
+            {ordem.observacoes && (
+              <div>
+                <label className="text-sm text-muted-foreground">Observações</label>
+                <p className="font-medium">{ordem.observacoes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
