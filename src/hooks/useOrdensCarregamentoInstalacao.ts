@@ -12,7 +12,6 @@ export interface OrdemCarregamentoInstalacao {
   status: string;
   responsavel_carregamento_id: string | null;
   responsavel_carregamento_nome: string | null;
-  responsavel_carregamento_tipo: string | null;
   venda_id: string | null;
   pedido_id: string | null;
   observacoes: string | null;
@@ -52,8 +51,8 @@ export const useOrdensCarregamentoInstalacao = (
   const getDateRange = () => {
     if (periodo === 'week') {
       return {
-        inicio: format(startOfWeek(currentDate, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
-        fim: format(endOfWeek(currentDate, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
+        inicio: format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+        fim: format(endOfWeek(currentDate, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
       };
     } else {
       return {
@@ -115,7 +114,7 @@ export const useOrdensCarregamentoInstalacao = (
         .map((ordem: any) => {
           const venda = ordem.venda_id ? vendasMap.get(ordem.venda_id) : null;
           const pedido = ordem.pedido_id ? pedidosMap.get(ordem.pedido_id) : null;
-          const equipe = ordem.responsavel_carregamento_id && ordem.responsavel_carregamento_tipo === 'equipe_interna'
+          const equipe = ordem.responsavel_carregamento_id
             ? equipesMap.get(ordem.responsavel_carregamento_id)
             : null;
 
