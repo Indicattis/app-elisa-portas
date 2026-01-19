@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt, FileSpreadsheet } from 'lucide-react';
+import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt, FileSpreadsheet, Pencil } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,10 +46,13 @@ import { useToast } from '@/hooks/use-toast';
 import { ContratosVendaModal } from '@/components/vendas/ContratosVendaModal';
 import { ComprovanteUploadModal } from '@/components/vendas/ComprovanteUploadModal';
 import { ConfirmarExclusaoVendaModal } from '@/components/vendas/ConfirmarExclusaoVendaModal';
+import { VendaBloqueadaDialog } from '@/components/vendas/VendaBloqueadaDialog';
+import { BlockReason } from '@/hooks/useCanEditVenda';
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 export default function Vendas() {
   const navigate = useNavigate();
-  const { isAdmin, userRole } = useAuth();
+  const { isAdmin, userRole, user } = useAuth();
   const { vendas, isLoading, deleteVenda, isDeleting } = useVendas();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +62,11 @@ export default function Vendas() {
   const [excluirModalOpen, setExcluirModalOpen] = useState(false);
   const [vendaParaExcluir, setVendaParaExcluir] = useState<{ id: string; clienteNome: string } | null>(null);
   const [selectedVendaForComprovante, setSelectedVendaForComprovante] = useState<any>(null);
+  
+  // Estados para bloqueio de edição
+  const [bloqueioDialogOpen, setBloqueioDialogOpen] = useState(false);
+  const [blockReason, setBlockReason] = useState<BlockReason>(null);
+  const [blockedPedidoId, setBlockedPedidoId] = useState<string | null>(null);
   
   // Estados para filtros avançados
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -219,6 +227,71 @@ export default function Vendas() {
       toast({
         title: "Erro ao gerar PDF",
         description: "Ocorreu um erro ao gerar o comprovante.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para verificar se pode editar e navegar
+  const handleEditVenda = async (venda: any) => {
+    try {
+      // Verificar se é o proprietário ou admin
+      const isOwner = venda.atendente_id === user?.id;
+      if (!isOwner && !isAdmin) {
+        setBlockReason('nao_proprietario');
+        setBloqueioDialogOpen(true);
+        return;
+      }
+
+      // Verificar se está faturada
+      const { data: vendaData, error: vendaError } = await supabaseClient
+        .from('vendas')
+        .select('*, produtos_vendas(faturamento), frete_aprovado')
+        .eq('id', venda.id)
+        .single();
+
+      if (vendaError) throw vendaError;
+
+      const produtos = vendaData.produtos_vendas || [];
+      const todosProdutosFaturados = Array.isArray(produtos) && 
+        produtos.length > 0 && 
+        produtos.every((p: any) => p.faturamento === true);
+      const freteAprovado = vendaData.frete_aprovado === true;
+      const isFaturada = todosProdutosFaturados && freteAprovado;
+
+      // Verificar se existe pedido vinculado
+      const { data: pedido } = await supabaseClient
+        .from('pedidos_producao')
+        .select('id')
+        .eq('venda_id', venda.id)
+        .maybeSingle();
+
+      const hasPedido = !!pedido;
+
+      // Determinar razão do bloqueio
+      if (isFaturada && hasPedido) {
+        setBlockReason('ambos');
+        setBlockedPedidoId(pedido?.id || null);
+        setBloqueioDialogOpen(true);
+        return;
+      } else if (isFaturada) {
+        setBlockReason('faturada');
+        setBloqueioDialogOpen(true);
+        return;
+      } else if (hasPedido) {
+        setBlockReason('com_pedido');
+        setBlockedPedidoId(pedido?.id || null);
+        setBloqueioDialogOpen(true);
+        return;
+      }
+
+      // Se passou todas as verificações, navegar para edição
+      navigate(`/dashboard/vendas/${venda.id}/editar`);
+    } catch (error) {
+      console.error('Erro ao verificar permissões:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar as permissões de edição.",
         variant: "destructive",
       });
     }
@@ -589,6 +662,14 @@ export default function Vendas() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={(e) => { e.stopPropagation(); handleEditVenda(venda); }}
+                                className="h-7 w-7"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={(e) => { e.stopPropagation(); handleDownloadVendaPDF(venda); }}
                                 className="h-7 w-7"
                               >
@@ -662,6 +743,14 @@ export default function Vendas() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-right py-1">
                           <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); handleEditVenda(venda); }}
+                              title="Editar Venda"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -747,6 +836,13 @@ export default function Vendas() {
           isDeleting={isDeleting}
         />
       )}
+
+      <VendaBloqueadaDialog
+        open={bloqueioDialogOpen}
+        onOpenChange={setBloqueioDialogOpen}
+        blockReason={blockReason}
+        pedidoId={blockedPedidoId}
+      />
     </div>
   );
 }
