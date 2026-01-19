@@ -873,91 +873,89 @@ export default function PedidoView() {
       )}
 
       {/* Itens do Pedido */}
-      {isAberto && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Itens do Pedido {pedido.linhas.length > 0 && `(${pedido.linhas.length})`}
-              </CardTitle>
-              {isAberto && (
-                <div className="flex items-center gap-2">
-                  {!modoEdicao ? (
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Itens do Pedido {pedido.linhas.length > 0 && `(${pedido.linhas.length})`}
+            </CardTitle>
+            {isAberto && (
+              <div className="flex items-center gap-2">
+                {!modoEdicao ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setModoEdicao(true)}
+                  >
+                    <Edit className="w-3 h-3 mr-2" />
+                    Editar
+                  </Button>
+                ) : (
+                  <>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => setModoEdicao(true)}
+                      onClick={() => {
+                        setModoEdicao(false);
+                        setLinhasEditadas(new Map());
+                      }}
                     >
-                      <Edit className="w-3 h-3 mr-2" />
-                      Editar
+                      Cancelar
                     </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setModoEdicao(false);
-                          setLinhasEditadas(new Map());
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={handleSalvarAlteracoes}
-                        disabled={!temPendentesSalvamento || salvando}
-                      >
-                        {salvando ? (
-                          <>
-                            <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
-                            Salvando...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-3 h-3 mr-2" />
-                            Salvar
-                          </>
-                        )}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <PedidoLinhasEditor
-              linhas={pedido.linhas}
-              isReadOnly={!modoEdicao}
-              todasOrdensConcluidas={todasOrdensConcluidas}
-              vendaId={pedido.venda_id}
-              temPortasEnrolar={portasEnrolar.length > 0}
-              onAdicionarLinha={adicionarLinha}
-              onRemoverLinha={removerLinha}
-              onAtualizarCheckbox={async (linhaId: string, campo: string, valor: boolean) => {
-                await atualizarCheckbox({ linhaId, campo, valor });
-              }}
-              onAtualizarLinha={(linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => {
-                setLinhasEditadas(prev => {
-                  const novoMapa = new Map(prev);
-                  const linhaExistente = novoMapa.get(linhaId) || { id: linhaId };
-                  novoMapa.set(linhaId, {
-                    ...linhaExistente,
-                    [campo]: valor,
-                  });
-                  return novoMapa;
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSalvarAlteracoes}
+                      disabled={!temPendentesSalvamento || salvando}
+                    >
+                      {salvando ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3 h-3 mr-2" />
+                          Salvar
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <PedidoLinhasEditor
+            linhas={pedido.linhas}
+            isReadOnly={!isAberto || !modoEdicao}
+            todasOrdensConcluidas={todasOrdensConcluidas}
+            vendaId={pedido.venda_id}
+            temPortasEnrolar={portasEnrolar.length > 0}
+            onAdicionarLinha={adicionarLinha}
+            onRemoverLinha={removerLinha}
+            onAtualizarCheckbox={async (linhaId: string, campo: string, valor: boolean) => {
+              await atualizarCheckbox({ linhaId, campo, valor });
+            }}
+            onAtualizarLinha={(linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => {
+              setLinhasEditadas(prev => {
+                const novoMapa = new Map(prev);
+                const linhaExistente = novoMapa.get(linhaId) || { id: linhaId };
+                novoMapa.set(linhaId, {
+                  ...linhaExistente,
+                  [campo]: valor,
                 });
-              }}
-              onAtualizarLinhaCompleta={async (linhaId, dados) => {
-                await atualizarLinha({ id: linhaId, ...dados });
-              }}
-            />
-          </CardContent>
-        </Card>
-      )}
+                return novoMapa;
+              });
+            }}
+            onAtualizarLinhaCompleta={async (linhaId, dados) => {
+              await atualizarLinha({ id: linhaId, ...dados });
+            }}
+          />
+        </CardContent>
+      </Card>
 
       {/* Observações da Visita Técnica */}
       {portasEnrolar.length > 0 && (
