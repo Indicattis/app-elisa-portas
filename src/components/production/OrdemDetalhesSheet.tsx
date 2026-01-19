@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle, Wrench } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle, Wrench, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   OPCOES_INTERNA_EXTERNA,
@@ -523,42 +524,53 @@ export function OrdemDetalhesSheet({
             </>
           )}
 
-          {/* Observações da Visita Técnica - Especificações */}
+          {/* Observações da Visita Técnica - Especificações (Recolhível) */}
           {ordem.observacoesVisita && ordem.observacoesVisita.length > 0 && (
             <>
               <Separator />
-              <div className="space-y-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                  <Wrench className="h-4 w-4" />
-                  Especificações da Visita Técnica
-                </span>
-                
-                {ordem.observacoesVisita.map((obs, idx) => (
-                  <div key={obs.id || idx} className="space-y-2">
-                    {idx > 0 && <Separator className="my-2" />}
-                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                      Porta {obs.indice_porta + 1}
+              <Collapsible>
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-pointer">
+                    <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                      <Wrench className="h-4 w-4" />
+                      Especificações da Visita Técnica
+                      <Badge variant="secondary" className="text-xs">
+                        {ordem.observacoesVisita.length} {ordem.observacoesVisita.length === 1 ? 'porta' : 'portas'}
+                      </Badge>
                     </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
-                        {OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA] || obs.interna_externa}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300">
-                        Motor: {OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR] || obs.lado_motor}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300">
-                        {OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA] || obs.posicao_guia}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300">
-                        {OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA] || obs.opcao_guia}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300">
-                        Testeira: {OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA] || obs.aparencia_testeira}
-                      </Badge>
-                    </div>
+                    <ChevronDown className="h-4 w-4 text-amber-600 dark:text-amber-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </div>
-                ))}
-              </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-3 p-3 rounded-b-lg bg-amber-50/50 dark:bg-amber-950/20 border-x border-b border-amber-200 dark:border-amber-800 -mt-1">
+                    {ordem.observacoesVisita.map((obs, idx) => (
+                      <div key={obs.id || idx} className="space-y-2">
+                        {idx > 0 && <Separator className="my-2" />}
+                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                          Porta {obs.indice_porta + 1}
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                            {OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA] || obs.interna_externa}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300">
+                            Motor: {OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR] || obs.lado_motor}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300">
+                            {OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA] || obs.posicao_guia}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300">
+                            {OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA] || obs.opcao_guia}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300">
+                            Testeira: {OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA] || obs.aparencia_testeira}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </>
           )}
 
