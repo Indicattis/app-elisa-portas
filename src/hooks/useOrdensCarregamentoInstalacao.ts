@@ -68,54 +68,67 @@ export const useOrdensCarregamentoInstalacao = (
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ["ordens_carregamento_instalacao", inicio, fim],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Buscar ordens de carregamento
+      const { data: ordensData, error: ordensError } = await supabase
         .from("ordens_carregamento")
-        .select(`
-          *,
-          venda:vendas!ordens_carregamento_venda_id_fkey(
-            id,
-            cliente_nome,
-            cliente_telefone,
-            cliente_email,
-            estado,
-            cidade,
-            cep,
-            bairro,
-            endereco_completo,
-            tipo_entrega
-          ),
-          pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
-            id,
-            numero_pedido,
-            etapa_atual
-          )
-        `)
+        .select("*")
         .gte("data_carregamento", inicio)
         .lte("data_carregamento", fim)
         .neq("status", "concluida")
         .order("data_carregamento", { ascending: true });
 
-      if (error) throw error;
+      if (ordensError) throw ordensError;
 
-      // Filtrar apenas ordens de vendas do tipo instalação
-      const ordensInstalacao = (data || []).filter((ordem: any) => {
-        return ordem.venda?.tipo_entrega === 'instalacao';
-      });
+      if (!ordensData || ordensData.length === 0) return [];
 
-      // Buscar cores das equipes separadamente
+      // Buscar vendas relacionadas
+      const vendaIds = [...new Set(ordensData.map(o => o.venda_id).filter(Boolean))];
+      const { data: vendas } = vendaIds.length > 0 
+        ? await supabase
+            .from("vendas")
+            .select("id, cliente_nome, cliente_telefone, cliente_email, estado, cidade, cep, bairro, endereco_completo, tipo_entrega")
+            .in("id", vendaIds)
+        : { data: [] };
+
+      // Buscar pedidos relacionados
+      const pedidoIds = [...new Set(ordensData.map(o => o.pedido_id).filter(Boolean))];
+      const { data: pedidos } = pedidoIds.length > 0
+        ? await supabase
+            .from("pedidos_producao")
+            .select("id, numero_pedido, etapa_atual")
+            .in("id", pedidoIds)
+        : { data: [] };
+
+      // Buscar equipes
       const { data: equipes } = await supabase
         .from("equipes_instalacao")
         .select("id, nome, cor")
         .eq("ativa", true);
 
-      const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+      // Criar mapas para lookup rápido
+      const vendasMap = new Map<string, any>(vendas?.map(v => [v.id, v] as [string, any]) || []);
+      const pedidosMap = new Map<string, any>(pedidos?.map(p => [p.id, p] as [string, any]) || []);
+      const equipesMap = new Map<string, any>(equipes?.map(e => [e.id, e] as [string, any]) || []);
 
-      return ordensInstalacao.map((item: any) => ({
-        ...item,
-        equipe: item.responsavel_carregamento_id && item.responsavel_carregamento_tipo === 'equipe_interna'
-          ? equipesMap.get(item.responsavel_carregamento_id) || null
-          : null
-      })) as OrdemCarregamentoInstalacao[];
+      // Juntar dados e filtrar apenas instalações
+      const ordensCompletas = ordensData
+        .map((ordem: any) => {
+          const venda = ordem.venda_id ? vendasMap.get(ordem.venda_id) : null;
+          const pedido = ordem.pedido_id ? pedidosMap.get(ordem.pedido_id) : null;
+          const equipe = ordem.responsavel_carregamento_id && ordem.responsavel_carregamento_tipo === 'equipe_interna'
+            ? equipesMap.get(ordem.responsavel_carregamento_id)
+            : null;
+
+          return {
+            ...ordem,
+            venda,
+            pedido,
+            equipe
+          };
+        })
+        .filter((ordem: any) => ordem.venda?.tipo_entrega === 'instalacao');
+
+      return ordensCompletas as OrdemCarregamentoInstalacao[];
     },
   });
 
