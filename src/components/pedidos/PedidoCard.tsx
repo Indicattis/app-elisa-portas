@@ -894,7 +894,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 120px 50px 80px 50px 28px 28px 28px 28px 28px 70px 60px' }}>
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
               {/* Col 1: Drag Handle */}
               <div>
                 {dragHandleProps ? (
@@ -943,7 +943,43 @@ export function PedidoCard({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Col 4: Portas P/G */}
+              {/* Col 4: Data de Carregamento */}
+              <div className="text-center">
+                {(() => {
+                  const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao';
+                  
+                  if (isExpedicao) {
+                    if (!dataCarregamento) {
+                      return (
+                        <span className="text-[10px] font-bold text-destructive">
+                          Não agendado
+                        </span>
+                      );
+                    }
+                    return (
+                      <div className="flex flex-col items-center leading-tight">
+                        <span className="text-[9px] font-medium text-green-600">Agendado</span>
+                        <span className="text-xs font-bold text-green-600">
+                          {format(new Date(dataCarregamento), "dd/MM")}
+                        </span>
+                      </div>
+                    );
+                  }
+                  
+                  // Para outras etapas
+                  if (dataCarregamento) {
+                    return (
+                      <span title="Data de carregamento" className="text-[10px] font-medium text-muted-foreground">
+                        {format(new Date(dataCarregamento), "dd/MM")}
+                      </span>
+                    );
+                  }
+                  
+                  return <span className="text-[9px] text-muted-foreground/50">—</span>;
+                })()}
+              </div>
+              
+              {/* Col 5: Portas P/G */}
               <div className="flex items-center gap-0.5 overflow-hidden">
                 {listaPortasInfo.length > 0 ? (
                   <>
@@ -993,7 +1029,7 @@ export function PedidoCard({
                 )}
               </div>
 
-              {/* Col 5: Tags/Badges (Instalação/Entrega) */}
+              {/* Col 6: Tags/Badges (Instalação/Entrega) */}
               <div className="flex items-center justify-center gap-1">
                 {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5" />
@@ -1006,7 +1042,7 @@ export function PedidoCard({
                 {!isInstalacao && !isEntrega && <span className="text-gray-300 text-[10px]">—</span>}
               </div>
               
-              {/* Col 6: Cores */}
+              {/* Col 7: Cores */}
               <div className="flex items-center gap-1">
                 {coresUnicas.length > 0 ? (
                   <>
@@ -1027,38 +1063,6 @@ export function PedidoCard({
                   </>
                 ) : (
                   <span className="text-gray-300 text-[10px]">—</span>
-                )}
-              </div>
-              
-              {/* Col 7: Data de Carregamento */}
-              <div className="text-center">
-                {dataCarregamento ? (
-                  (() => {
-                    const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao';
-                    const dataCarreg = new Date(dataCarregamento);
-                    const hoje = new Date();
-                    hoje.setHours(0, 0, 0, 0);
-                    dataCarreg.setHours(0, 0, 0, 0);
-                    const atrasado = dataCarreg < hoje;
-                    
-                    if (isExpedicao) {
-                      return (
-                        <span 
-                          title="Data de carregamento"
-                          className={`text-xs font-bold ${atrasado ? "text-destructive" : "text-green-600"}`}
-                        >
-                          {format(new Date(dataCarregamento), "dd/MM")}
-                        </span>
-                      );
-                    }
-                    return (
-                      <span title="Data de carregamento" className="text-[10px] font-medium text-muted-foreground">
-                        {format(new Date(dataCarregamento), "dd/MM")}
-                      </span>
-                    );
-                  })()
-                ) : (
-                  <span className="text-[9px] text-muted-foreground/50">—</span>
                 )}
               </div>
 
