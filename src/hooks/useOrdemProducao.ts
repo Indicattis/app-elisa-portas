@@ -573,7 +573,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira';
+      const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira' | 'ordens_soldagem';
 
       // Buscar ordem para calcular tempo trabalhado até agora
       const { data: ordem, error: ordemError } = await supabase

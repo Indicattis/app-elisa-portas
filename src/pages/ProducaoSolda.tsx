@@ -38,6 +38,7 @@ export default function ProducaoSolda() {
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
+    pausarOrdem,
   } = useOrdemProducao('soldagem', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -87,6 +88,11 @@ export default function ProducaoSolda() {
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
         onCapturarOrdem={handleCapturarOrdem}
+        onPausarOrdem={async (ordemId, justificativa) => {
+          await pausarOrdem.mutateAsync({ ordemId, justificativa });
+          setSheetOpen(false);
+        }}
+        isPausing={pausarOrdem.isPending}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
       />
