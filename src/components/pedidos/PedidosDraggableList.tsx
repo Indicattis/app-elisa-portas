@@ -28,6 +28,7 @@ interface PedidosDraggableListProps {
   onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
   onArquivar?: (pedidoId: string) => Promise<void>;
+  onDeletar?: (pedidoId: string) => Promise<void>;
 }
 
 interface SortableItemProps {
@@ -41,6 +42,7 @@ interface SortableItemProps {
   onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
   onArquivar?: (pedidoId: string) => Promise<void>;
+  onDeletar?: (pedidoId: string) => Promise<void>;
 }
 
 function SortableItem({
@@ -54,6 +56,7 @@ function SortableItem({
   onRetrocederEtapa,
   onMoverPrioridade,
   onArquivar,
+  onDeletar,
 }: SortableItemProps) {
   const {
     attributes,
@@ -80,6 +83,7 @@ function SortableItem({
         onRetrocederEtapa={onRetrocederEtapa}
         onMoverPrioridade={onMoverPrioridade}
         onArquivar={onArquivar}
+        onDeletar={onDeletar}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
@@ -99,6 +103,7 @@ export function PedidosDraggableList({
   onReorganizar,
   onMoverPrioridade,
   onArquivar,
+  onDeletar,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   
@@ -176,6 +181,7 @@ export function PedidosDraggableList({
               onRetrocederEtapa={onRetrocederEtapa}
               onMoverPrioridade={onMoverPrioridade}
               onArquivar={onArquivar}
+              onDeletar={onDeletar}
             />
           ))}
         </div>
