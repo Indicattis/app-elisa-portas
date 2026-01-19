@@ -8,11 +8,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, ShoppingCart, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store } from "lucide-react";
+import { ArrowLeft, Plus, ShoppingCart, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
 import { SelecionarAcessoriosModal } from "@/components/vendas/SelecionarAcessoriosModal";
+import { DescontoVendaModal } from "@/components/vendas/DescontoVendaModal";
+import { CreditoVendaModal } from "@/components/vendas/CreditoVendaModal";
 import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
@@ -37,7 +39,10 @@ export default function VendaEdit() {
   const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao'>('porta_enrolar');
   const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
-  const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto } = useProdutosVenda(id);
+  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
+  const [creditoModalOpen, setCreditoModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto, updateProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
 
   const { user, isAdmin } = useAuth();
@@ -174,6 +179,156 @@ export default function VendaEdit() {
     if (!canalId) return "-";
     const canal = canais.find(c => c.id === canalId);
     return canal?.nome || "-";
+  };
+
+  // Converter produtos do banco para formato ProdutoVenda
+  const produtosFormatados: ProdutoVenda[] = (produtos || []).map(p => ({
+    tipo_produto: p.tipo_produto as 'porta' | 'acessorio' | 'adicional',
+    tamanho: p.tamanho || '',
+    largura: p.largura || undefined,
+    altura: p.altura || undefined,
+    cor_id: p.cor_id || '',
+    acessorio_id: p.acessorio_id || '',
+    adicional_id: p.adicional_id || '',
+    valor_produto: p.valor_produto,
+    valor_pintura: p.valor_pintura,
+    valor_instalacao: p.valor_instalacao,
+    valor_frete: p.valor_frete,
+    tipo_desconto: p.tipo_desconto as 'percentual' | 'valor',
+    desconto_percentual: p.desconto_percentual,
+    desconto_valor: p.desconto_valor,
+    quantidade: p.quantidade,
+    descricao: p.descricao || ''
+  }));
+
+  // Calcular valores para o modal de crédito
+  const calcularValorTotalProdutos = () => {
+    return produtosFormatados.reduce((acc, p) => {
+      const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+      const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+      return acc + valorBase - desconto;
+    }, 0);
+  };
+
+  const temDesconto = produtosFormatados.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0);
+  const valorCreditoAtual = venda?.valor_credito || 0;
+  const percentualCreditoAtual = venda?.percentual_credito || 0;
+
+  // Handler para aplicar desconto
+  const handleAplicarDesconto = async (produtosAtualizados: ProdutoVenda[]) => {
+    if (!id || !produtos) return;
+    
+    setIsSaving(true);
+    try {
+      for (let i = 0; i < produtosAtualizados.length; i++) {
+        const produtoOriginal = produtos[i];
+        const produtoAtualizado = produtosAtualizados[i];
+        
+        if (produtoOriginal?.id) {
+          await updateProduto({
+            produtoId: produtoOriginal.id,
+            updates: {
+              tipo_desconto: produtoAtualizado.tipo_desconto,
+              desconto_percentual: produtoAtualizado.desconto_percentual,
+              desconto_valor: produtoAtualizado.desconto_valor
+            }
+          });
+        }
+      }
+      
+      // Remover crédito ao aplicar desconto
+      await supabase
+        .from('vendas')
+        .update({ valor_credito: 0, percentual_credito: 0 })
+        .eq('id', id);
+      
+      // Atualizar estado local
+      setVenda(prev => prev ? { ...prev, valor_credito: 0, percentual_credito: 0 } : null);
+      
+      toast({
+        title: "Desconto aplicado",
+        description: "Os descontos foram aplicados aos produtos"
+      });
+      
+      setDescontoModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao aplicar desconto:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível aplicar o desconto"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handler para aplicar crédito
+  const handleAplicarCredito = async (novoValorCredito: number, novoPercentualCredito: number) => {
+    if (!id) return;
+    
+    setIsSaving(true);
+    try {
+      await supabase
+        .from('vendas')
+        .update({ 
+          valor_credito: novoValorCredito, 
+          percentual_credito: novoPercentualCredito 
+        })
+        .eq('id', id);
+      
+      // Atualizar estado local
+      setVenda(prev => prev ? { ...prev, valor_credito: novoValorCredito, percentual_credito: novoPercentualCredito } : null);
+      
+      toast({
+        title: "Crédito aplicado",
+        description: `Crédito de R$ ${novoValorCredito.toFixed(2)} aplicado com sucesso`
+      });
+      
+      setCreditoModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao aplicar crédito:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível aplicar o crédito"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handler para remover desconto de um produto
+  const handleRemoverDesconto = async (index: number) => {
+    const produto = produtos?.[index];
+    if (!produto?.id) return;
+    
+    try {
+      await updateProduto({
+        produtoId: produto.id,
+        updates: {
+          tipo_desconto: 'percentual',
+          desconto_percentual: 0,
+          desconto_valor: 0
+        }
+      });
+      
+      toast({
+        title: "Desconto removido",
+        description: "O desconto foi removido do produto"
+      });
+    } catch (error) {
+      console.error('Erro ao remover desconto:', error);
+    }
+  };
+
+  // Handler para salvar (navegar de volta)
+  const handleSalvar = () => {
+    toast({
+      title: "Alterações salvas",
+      description: "As alterações foram salvas automaticamente"
+    });
+    navigate(-1);
   };
 
   if (!canEdit && !loadingPermission) {
@@ -452,6 +607,25 @@ export default function VendaEdit() {
               setAcessoriosModalOpen(false);
             }}
           />
+
+          <DescontoVendaModal
+            open={descontoModalOpen}
+            onOpenChange={setDescontoModalOpen}
+            produtos={produtosFormatados}
+            onAplicarDesconto={handleAplicarDesconto}
+            formaPagamento={venda.forma_pagamento || ''}
+            vendaPresencial={venda.venda_presencial || false}
+          />
+
+          <CreditoVendaModal
+            open={creditoModalOpen}
+            onOpenChange={setCreditoModalOpen}
+            valorTotalVenda={calcularValorTotalProdutos()}
+            temDesconto={temDesconto}
+            valorCreditoAtual={valorCreditoAtual}
+            percentualCreditoAtual={percentualCreditoAtual}
+            onAplicarCredito={handleAplicarCredito}
+          />
           
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Produtos Adicionados</h3>
@@ -461,30 +635,54 @@ export default function VendaEdit() {
               </div>
             ) : (
               <ProdutosVendaTable 
-                produtos={(produtos || []).map(p => ({
-                  tipo_produto: p.tipo_produto as 'porta' | 'acessorio' | 'adicional',
-                  tamanho: p.tamanho || '',
-                  cor_id: p.cor_id || '',
-                  acessorio_id: p.acessorio_id || '',
-                  adicional_id: p.adicional_id || '',
-                  valor_produto: p.valor_produto,
-                  valor_pintura: p.valor_pintura,
-                  valor_instalacao: p.valor_instalacao,
-                  valor_frete: p.valor_frete,
-                  tipo_desconto: p.tipo_desconto as 'percentual' | 'valor',
-                  desconto_percentual: p.desconto_percentual,
-                  desconto_valor: p.desconto_valor,
-                  quantidade: p.quantidade,
-                  descricao: p.descricao || ''
-                }))} 
+                produtos={produtosFormatados} 
                 onRemoveProduto={async (index: number) => {
                   const produto = produtos?.[index];
                   if (produto?.id) {
                     await deleteProduto(produto.id);
                   }
                 }}
+                onRemoverDesconto={handleRemoverDesconto}
               />
             )}
+          </div>
+
+          {/* Botões de Desconto, Crédito e Salvar */}
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            {produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
+              <Button 
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setDescontoModalOpen(true)}
+                disabled={isSaving}
+              >
+                <Percent className="w-3.5 h-3.5 mr-1.5" />
+                Adicionar Desconto
+              </Button>
+            )}
+            {produtosFormatados.length > 0 && !temDesconto && (
+              <Button 
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                onClick={() => setCreditoModalOpen(true)}
+                disabled={isSaving}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                {valorCreditoAtual > 0 ? 'Editar Crédito' : 'Adicionar Crédito'}
+              </Button>
+            )}
+            <Button 
+              type="button"
+              size="sm"
+              onClick={handleSalvar}
+              disabled={isSaving}
+            >
+              <Save className="w-3.5 h-3.5 mr-1.5" />
+              {isSaving ? 'Salvando...' : 'Salvar'}
+            </Button>
           </div>
         </CardContent>
       </Card>
