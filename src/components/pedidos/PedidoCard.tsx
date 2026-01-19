@@ -958,11 +958,13 @@ export function PedidoCard({
                                 ? "bg-blue-500 border-blue-500"
                                 : "bg-orange-500 border-orange-500"
                             )}
+                            onMouseEnter={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {porta.tamanho}
                           </Badge>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent side="top" className="z-[100]">
                           <p className="font-medium">{porta.largura.toFixed(2)}m × {porta.altura.toFixed(2)}m</p>
                           <p className="text-xs text-muted-foreground">{porta.area.toFixed(2)} m²</p>
                         </TooltipContent>
@@ -971,9 +973,15 @@ export function PedidoCard({
                     {listaPortasInfo.length > 6 && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="text-[9px] text-muted-foreground cursor-default">+{listaPortasInfo.length - 6}</span>
+                          <span 
+                            className="text-[9px] text-muted-foreground cursor-default"
+                            onMouseEnter={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            +{listaPortasInfo.length - 6}
+                          </span>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent side="top" className="z-[100]">
                           <p>{portasPequenas} porta(s) pequena(s) (≤25m²)</p>
                           <p>{portasGrandes} porta(s) grande(s) (&gt;25m²)</p>
                         </TooltipContent>

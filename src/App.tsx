@@ -274,7 +274,7 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <TooltipProvider>
+        <TooltipProvider delayDuration={200}>
           <AuthProvider>
             <Toaster />
             <Sonner />
