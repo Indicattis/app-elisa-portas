@@ -67,7 +67,7 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
         const temPG = isSoldadas && (c.soldadas_p > 0 || c.soldadas_g > 0);
 
         return (
-          <div key={c.user_id} className="flex items-center justify-center gap-2 text-[11px] max-w-[200px] w-full">
+          <div key={c.user_id} className="flex items-center justify-center gap-2 text-[11px] max-w-[200px] w-full bg-blue-500/10 border border-blue-500/30 rounded-lg px-2 py-1.5">
             <span className="w-4 text-muted-foreground font-medium">{i + 1}.</span>
             <Avatar className="h-6 w-6">
               <AvatarImage src={c.foto_perfil_url || undefined} alt={c.nome} />
