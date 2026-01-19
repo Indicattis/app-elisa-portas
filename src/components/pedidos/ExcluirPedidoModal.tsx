@@ -46,8 +46,11 @@ export function ExcluirPedidoModal({
             </p>
             <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 text-destructive text-sm">
               <strong>⚠️ Esta ação é irreversível!</strong>
-              <br />
-              O pedido e todas as suas ordens de produção serão excluídos permanentemente.
+              <ul className="mt-2 list-disc list-inside space-y-1">
+                <li>O pedido será excluído permanentemente</li>
+                <li>Todas as linhas do pedido serão apagadas</li>
+                <li>Todas as ordens de produção relacionadas serão removidas</li>
+              </ul>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
