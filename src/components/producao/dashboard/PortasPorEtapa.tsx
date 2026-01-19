@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,9 +22,10 @@ interface MiniRankingProps {
   campo: CampoDesempenho;
   unidade?: string;
   isLoading: boolean;
+  onColaboradorClick?: (userId: string) => void;
 }
 
-function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRankingProps) {
+function MiniRanking({ colaboradores, campo, unidade = "", isLoading, onColaboradorClick }: MiniRankingProps) {
   if (isLoading) {
     return (
       <div className="mt-2 pt-2 border-t border-border/50 space-y-2 flex flex-col items-center">
@@ -67,7 +69,11 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
         const temPG = isSoldadas && (c.soldadas_p > 0 || c.soldadas_g > 0);
 
         return (
-          <div key={c.user_id} className="flex items-center justify-center gap-2 text-[11px] max-w-[200px] w-full bg-blue-500/10 border border-blue-500/30 rounded-lg px-2 py-1.5">
+          <div 
+            key={c.user_id} 
+            className="flex items-center justify-center gap-2 text-[11px] max-w-[200px] w-full bg-blue-500/10 border border-blue-500/30 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-blue-500/20 transition-colors"
+            onClick={() => onColaboradorClick?.(c.user_id)}
+          >
             <Avatar className="h-6 w-6">
               <AvatarImage src={c.foto_perfil_url || undefined} alt={c.nome} />
               <AvatarFallback className="text-[8px]">{iniciais}</AvatarFallback>
@@ -101,9 +107,14 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading }: MiniRank
 type Periodo = 'hoje' | 'semana' | 'mes' | 'ano' | 'dia' | 'personalizado';
 
 export function PortasPorEtapa() {
+  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState<Periodo>('hoje');
   const [dataInicioCustom, setDataInicioCustom] = useState<Date | undefined>();
   const [dataFimCustom, setDataFimCustom] = useState<Date | undefined>();
+
+  const handleColaboradorClick = (userId: string) => {
+    navigate(`/hub-fabrica/colaborador/${userId}`);
+  };
 
   const { dataInicio, dataFim } = useMemo(() => {
     const hoje = new Date();
@@ -351,6 +362,7 @@ export function PortasPorEtapa() {
                 campo={etapa.campoRanking}
                 unidade={etapa.unidadeRanking}
                 isLoading={isLoadingDesempenho}
+                onColaboradorClick={handleColaboradorClick}
               />
             </div>
           );
