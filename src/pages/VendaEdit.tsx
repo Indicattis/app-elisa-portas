@@ -12,6 +12,7 @@ import { ArrowLeft, Plus, ShoppingCart, Calendar, User, MapPin, CreditCard, Truc
 import type { Tables } from "@/integrations/supabase/types";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
+import { SelecionarAcessoriosModal } from "@/components/vendas/SelecionarAcessoriosModal";
 import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
@@ -33,6 +34,9 @@ export default function VendaEdit() {
   const [venda, setVenda] = useState<Tables<"vendas"> | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
   const [showProdutoForm, setShowProdutoForm] = useState(false);
+  const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao'>('porta_enrolar');
+  const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
+  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
 
@@ -362,9 +366,68 @@ export default function VendaEdit() {
           <CardTitle>Produtos da Venda</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Button onClick={() => setShowProdutoForm(true)}>
-            Adicionar Produto
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              type="button"
+              size="sm"
+              onClick={() => {
+                setTipoInicial('porta_enrolar');
+                setPermitirTrocaTipo(false);
+                setShowProdutoForm(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Porta de Enrolar
+            </Button>
+            <Button 
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setTipoInicial('porta_social');
+                setPermitirTrocaTipo(false);
+                setShowProdutoForm(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Porta Social
+            </Button>
+            <Button 
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setTipoInicial('pintura_epoxi');
+                setPermitirTrocaTipo(false);
+                setShowProdutoForm(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Pintura Eletrostática
+            </Button>
+            <Button 
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setTipoInicial('manutencao');
+                setPermitirTrocaTipo(false);
+                setShowProdutoForm(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Serviço
+            </Button>
+            <Button 
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setAcessoriosModalOpen(true)}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Catálogo
+            </Button>
+          </div>
 
           <ProdutoVendaForm 
             open={showProdutoForm}
@@ -373,6 +436,20 @@ export default function VendaEdit() {
               if (!id) return;
               await addProduto({ ...produto, venda_id: id });
               setShowProdutoForm(false);
+            }}
+            tipoInicial={tipoInicial}
+            permitirTrocaTipo={permitirTrocaTipo}
+          />
+
+          <SelecionarAcessoriosModal
+            open={acessoriosModalOpen}
+            onOpenChange={setAcessoriosModalOpen}
+            onConfirm={async (produtosSelecionados) => {
+              if (!id) return;
+              for (const produto of produtosSelecionados) {
+                await addProduto({ ...produto, venda_id: id });
+              }
+              setAcessoriosModalOpen(false);
             }}
           />
           
