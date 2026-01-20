@@ -42,6 +42,7 @@ interface PedidoCardProps {
   viewMode?: 'grid' | 'list';
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
+  basePath?: string;
 }
 export function PedidoCard({
   pedido,
@@ -82,6 +83,7 @@ export function PedidoCard({
   const navigate = useNavigate();
   const location = useLocation();
   const isHubFabrica = location.pathname.startsWith('/hub-fabrica');
+  const isAdministrativo = location.pathname.startsWith('/administrativo');
 
   // Mutation para remover responsável
   const removerResponsavelMutation = useMutation({
@@ -987,7 +989,9 @@ export function PedidoCard({
                     className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (isHubFabrica) {
+                      if (isAdministrativo) {
+                        navigate(`/administrativo/pedidos/${pedido.id}`);
+                      } else if (isHubFabrica) {
                         navigate(`/hub-fabrica/producao/controle/pedido/${pedido.id}/view`);
                       } else {
                         navigate(`/dashboard/pedido/${pedido.id}/view`);
