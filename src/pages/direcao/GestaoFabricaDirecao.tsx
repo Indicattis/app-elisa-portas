@@ -162,7 +162,7 @@ export default function GestaoFabricaDirecao() {
   };
 
   const headerActions = (
-    <Button variant="outline" onClick={handleRefresh} size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+    <Button variant="outline" onClick={handleRefresh} size="sm" className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10">
       <RefreshCw className="h-4 w-4" />
     </Button>
   );
@@ -184,7 +184,7 @@ export default function GestaoFabricaDirecao() {
         {/* Seletor mobile */}
         <div className="md:hidden mb-4">
           <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
-            <SelectTrigger className="w-full h-12 bg-white/5 border-white/10 text-white">
+            <SelectTrigger className="w-full h-12 bg-primary/5 border-primary/10 text-white">
               <SelectValue>
                 {(() => {
                   const config = ETAPAS_CONFIG[etapaAtiva];
@@ -194,7 +194,7 @@ export default function GestaoFabricaDirecao() {
                     <div className="flex items-center gap-2">
                       <IconComponent className="h-5 w-5" />
                       <span className="font-medium">{config.label}</span>
-                      <Badge variant="secondary" className="ml-auto bg-white/10">
+                      <Badge variant="secondary" className="ml-auto bg-primary/10">
                         {count}
                       </Badge>
                     </div>
@@ -202,7 +202,7 @@ export default function GestaoFabricaDirecao() {
                 })()}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-white/10">
+            <SelectContent className="bg-zinc-900 border-primary/10">
               {ORDEM_ETAPAS.map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
@@ -212,7 +212,7 @@ export default function GestaoFabricaDirecao() {
                     <div className="flex items-center gap-2 w-full">
                       <IconComponent className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1">{config.label}</span>
-                      <Badge variant="secondary" className="text-xs bg-white/10">
+                      <Badge variant="secondary" className="text-xs bg-primary/10">
                         {count}
                       </Badge>
                     </div>
@@ -224,7 +224,7 @@ export default function GestaoFabricaDirecao() {
         </div>
 
         {/* Tabs - Desktop */}
-        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 bg-white/5 border border-white/10">
+        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 bg-primary/5 border border-primary/10">
           {ORDEM_ETAPAS.map(etapa => {
             const config = ETAPAS_CONFIG[etapa];
             const count = contadores[etapa] || 0;
@@ -233,7 +233,7 @@ export default function GestaoFabricaDirecao() {
               <TabsTrigger 
                 key={etapa} 
                 value={etapa} 
-                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-white/10 data-[state=active]:text-white"
+                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
               >
                 <IconComponent className="h-4 w-4 flex-shrink-0" />
                 <span className="text-xs">{config.label}</span>
@@ -247,7 +247,7 @@ export default function GestaoFabricaDirecao() {
 
         {ORDEM_ETAPAS.map(etapa => (
           <TabsContent key={etapa} value={etapa} className="mt-4">
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
               <CardHeader className="pb-3 px-4 py-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <CardTitle className="text-lg flex items-center gap-2 text-white">
@@ -257,7 +257,7 @@ export default function GestaoFabricaDirecao() {
                       {totalPaginas > 1 && ` (Página ${paginaAtual} de ${totalPaginas})`}
                     </span>
                     {totalPortasEtapa > 0 && (
-                      <Badge variant="secondary" className="text-xs ml-2 bg-white/10 text-white">
+                      <Badge variant="secondary" className="text-xs ml-2 bg-primary/10 text-white">
                         🚪 {totalPortasEtapa} {totalPortasEtapa === 1 ? 'porta' : 'portas'}
                       </Badge>
                     )}

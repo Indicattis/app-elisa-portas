@@ -32,11 +32,11 @@ export default function GestaoInstalacaoDirecao() {
       
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-20 px-4 py-4 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <header className="sticky top-0 z-20 px-4 py-4 bg-black/80 backdrop-blur-md border-b border-primary/10">
           <div className="max-w-7xl mx-auto flex items-center gap-4">
             <button
               onClick={() => navigate('/direcao')}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-white/80" />
             </button>

@@ -279,8 +279,8 @@ export default function ControleEstoqueMinimalista() {
 
                 {/* Categoria */}
                 {item.categoria && (
-                  <div className="mt-3 pt-3 border-t border-white/10">
-                    <span className="text-xs text-white/40 bg-white/5 px-2 py-1 rounded">
+                  <div className="mt-3 pt-3 border-t border-primary/10">
+                    <span className="text-xs text-white/40 bg-primary/5 px-2 py-1 rounded">
                       {item.categoria}
                     </span>
                   </div>
