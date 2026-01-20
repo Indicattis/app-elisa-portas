@@ -448,6 +448,33 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           }
         }
 
+        // Validar ordens de produção concluídas antes de sair de em_producao
+        if (etapaAtualNome === 'em_producao') {
+          const { data: linhasProducao } = await supabase
+            .from('linhas_ordens')
+            .select('concluida, tipo_ordem')
+            .eq('pedido_id', pedidoId)
+            .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao']);
+          
+          if (linhasProducao && linhasProducao.length > 0) {
+            const linhasNaoConcluidas = linhasProducao.filter(l => !l.concluida);
+            
+            if (linhasNaoConcluidas.length > 0) {
+              // Contar por tipo para mensagem detalhada
+              const pendentes: Record<string, number> = {};
+              linhasNaoConcluidas.forEach(l => {
+                pendentes[l.tipo_ordem] = (pendentes[l.tipo_ordem] || 0) + 1;
+              });
+              
+              const detalhes = Object.entries(pendentes)
+                .map(([tipo, qtd]) => `${tipo}: ${qtd}`)
+                .join(', ');
+              
+              throw new Error(`Todas as ordens de produção devem estar concluídas antes de avançar. Pendentes: ${detalhes}`);
+            }
+          }
+        }
+
       // Fechar etapa atual
         if (onProgress) onProgress('fechar_etapa_atual', 'in_progress');
         await executarComDelay(async () => {
