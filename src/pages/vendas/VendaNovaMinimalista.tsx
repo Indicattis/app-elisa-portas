@@ -439,7 +439,7 @@ export default function VendaNovaMinimalista() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="valor_entrada" className={labelClasses}>Valor da Entrada (R$)</Label>
+                  <Label htmlFor="valor_entrada" className={labelClasses}>Valor de Entrada</Label>
                   <Input
                     id="valor_entrada"
                     type="number"
@@ -465,75 +465,110 @@ export default function VendaNovaMinimalista() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-6">
-              <div className="flex items-center space-x-2">
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3 p-4 border border-primary/10 rounded-lg bg-primary/5 hover:bg-primary/10 transition-all">
                 <Checkbox
                   id="venda_presencial"
                   checked={formData.venda_presencial}
                   onCheckedChange={(checked) => 
                     setFormData({ ...formData, venda_presencial: checked as boolean })
                   }
-                  className="border-primary/30 data-[state=checked]:bg-blue-600"
+                  className="mt-1 border-primary/30 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                 />
-                <Label htmlFor="venda_presencial" className={labelClasses}>
-                  Venda Presencial
+                <Label htmlFor="venda_presencial" className="cursor-pointer flex-1">
+                  <span className="font-medium text-white">Venda Presencial</span>
+                  <p className="text-sm text-white/60 font-normal mt-1">
+                    Esta venda foi realizada presencialmente na loja
+                  </p>
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-start space-x-3 p-4 border border-primary/10 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors">
                 <Checkbox
                   id="pagamento_na_entrega"
                   checked={formData.pagamento_na_entrega}
                   onCheckedChange={(checked) => 
                     setFormData({ ...formData, pagamento_na_entrega: checked as boolean })
                   }
-                  className="border-primary/30 data-[state=checked]:bg-blue-600"
+                  className="mt-1 border-primary/30 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                 />
-                <Label htmlFor="pagamento_na_entrega" className={labelClasses}>
-                  Pagamento na Entrega
+                <Label htmlFor="pagamento_na_entrega" className="cursor-pointer flex-1">
+                  <span className="font-medium text-white">Pagamento na Entrega</span>
+                  <p className="text-sm text-white/60 font-normal mt-1">
+                    O valor a receber será cobrado no momento da instalação/entrega
+                  </p>
                 </Label>
               </div>
             </div>
           </div>
 
           {/* Produtos Avulsos */}
-          {produtosAvulsos.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Adicionar Produtos Avulsos</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Adicionar Produtos Avulsos
+            </h3>
+            
+            {produtosAvulsos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {produtosAvulsos.map((produto: any) => (
                   <div
                     key={produto.id}
-                    className="bg-primary/5 border border-primary/10 rounded-lg p-3 hover:bg-primary/10 
-                               transition-colors cursor-pointer"
-                    onClick={() => {
-                      toast({
-                        title: "Produto disponível",
-                        description: `${produto.nome_produto} pode ser adicionado após criar a venda na edição.`,
-                      });
-                    }}
+                    className="bg-primary/5 border border-primary/10 rounded-lg p-4 hover:border-primary/30 transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <ShoppingCart className="w-4 h-4 text-blue-400" />
-                      {produto.destaque && (
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
-                          Destaque
-                        </Badge>
-                      )}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-white truncate">
+                          {produto.nome_produto}
+                        </p>
+                        {produto.descricao_produto && (
+                          <p className="text-xs text-white/60 truncate">
+                            {produto.descricao_produto}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs border-primary/30 text-blue-400">
+                            R$ {produto.preco_venda.toFixed(2)}
+                          </Badge>
+                          <Badge className="text-xs bg-primary/10 text-white/70 border-primary/20">
+                            {produto.quantidade} {produto.unidade || 'un'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button 
+                        type="button"
+                        size="sm" 
+                        variant="ghost"
+                        className="text-white/60 hover:text-white hover:bg-white/10"
+                        onClick={() => {
+                          toast({
+                            title: "Disponível após criar a venda",
+                            description: "Produtos avulsos podem ser adicionados na edição da venda"
+                          });
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <h4 className="font-medium text-white text-sm truncate">{produto.nome_produto}</h4>
-                    <p className="text-xs text-white/60">Qtd: {produto.quantidade}</p>
-                    <p className="text-sm font-semibold text-blue-400 mt-1">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(produto.preco_venda)}
-                    </p>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-white/60">
+                Nenhum produto configurado para venda avulsa. Configure produtos no módulo de Estoque.
+              </p>
+            )}
+          </div>
 
           {/* Botões */}
           <div className="flex gap-4 pt-4">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {loading ? "Criando..." : "Criar Venda"}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -541,18 +576,6 @@ export default function VendaNovaMinimalista() {
               className="border-white/20 text-white hover:bg-white/10"
             >
               Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-            >
-              {loading ? "Criando..." : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Criar Venda
-                </>
-              )}
             </Button>
           </div>
         </form>
