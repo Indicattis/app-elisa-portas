@@ -4179,6 +4179,8 @@ export type Database = {
           endereco_rua: string | null
           etapa_atual: string | null
           etapa_origem_backlog: string | null
+          ficha_visita_nome: string | null
+          ficha_visita_url: string | null
           forma_pagamento: string | null
           id: string
           mes_vigencia: string | null
@@ -4229,6 +4231,8 @@ export type Database = {
           endereco_rua?: string | null
           etapa_atual?: string | null
           etapa_origem_backlog?: string | null
+          ficha_visita_nome?: string | null
+          ficha_visita_url?: string | null
           forma_pagamento?: string | null
           id?: string
           mes_vigencia?: string | null
@@ -4279,6 +4283,8 @@ export type Database = {
           endereco_rua?: string | null
           etapa_atual?: string | null
           etapa_origem_backlog?: string | null
+          ficha_visita_nome?: string | null
+          ficha_visita_url?: string | null
           forma_pagamento?: string | null
           id?: string
           mes_vigencia?: string | null
