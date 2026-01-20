@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import logoEmpresa from "@/assets/logo-empresa.png";
 import { ShoppingCart, Factory, Shield, Truck, Building2 } from "lucide-react";
+import { SpaceParticles } from "@/components/SpaceParticles";
 
 const menuItems = [
   { label: "Vendas", icon: ShoppingCart, path: "/dashboard/vendas", angle: 0 },
@@ -29,9 +30,12 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Partículas espaciais de fundo */}
+      <SpaceParticles />
+      
       {/* Container central */}
-      <div className="relative w-[600px] h-[600px] flex items-center justify-center">
+      <div className="relative z-10 w-[600px] h-[600px] flex items-center justify-center">
         
         {/* Anel decorativo da órbita */}
         <div 
@@ -74,7 +78,6 @@ export default function Home() {
           const delay = 200 + index * 120;
           
           return (
-            // Wrapper para posicionamento orbital
             <div
               key={item.label}
               className="absolute"
@@ -88,7 +91,6 @@ export default function Home() {
                   : 'translate(-50%, -50%) scale(0.2)',
               }}
             >
-              {/* Botão com animação de flutuação */}
               <button
                 onClick={() => navigate(item.path)}
                 className="w-24 h-24 rounded-full 
@@ -104,7 +106,7 @@ export default function Home() {
                            transition-all duration-300
                            animate-float"
                 style={{
-                  animationDelay: `${index * 0.8}s`
+                  animationDelay: `${index * 2}s`
                 }}
               >
                 <Icon className="w-7 h-7" strokeWidth={1.5} />
