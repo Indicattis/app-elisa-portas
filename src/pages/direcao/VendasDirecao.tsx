@@ -361,7 +361,7 @@ export default function VendasDirecao() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <ProductIconsSummary produtos={venda.produtos || []} />
+                    <ProductIconsSummary venda={venda} />
                   </TableCell>
                   <TableCell className="text-right text-white font-medium">
                     {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
