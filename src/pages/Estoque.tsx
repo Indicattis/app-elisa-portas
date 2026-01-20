@@ -40,7 +40,6 @@ export default function Estoque() {
     setor_responsavel_producao: "",
     fornecedor_id: "",
     requer_pintura: false,
-    pontuacao_producao: 0,
     // Novos campos de cálculo automático
     modulo_calculo: "",
     valor_calculo: 0,
@@ -74,7 +73,6 @@ export default function Estoque() {
         setor_responsavel_producao: formData.setor_responsavel_producao ? formData.setor_responsavel_producao as any : null,
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
-        pontuacao_producao: formData.pontuacao_producao,
         modulo_calculo: formData.modulo_calculo ? formData.modulo_calculo as any : null,
         valor_calculo: formData.valor_calculo || null,
         eixo_calculo: formData.eixo_calculo ? formData.eixo_calculo as any : null,
@@ -93,7 +91,6 @@ export default function Estoque() {
         setor_responsavel_producao: "",
         fornecedor_id: "",
         requer_pintura: false,
-        pontuacao_producao: 0,
         modulo_calculo: "",
         valor_calculo: 0,
         eixo_calculo: "",
@@ -392,19 +389,6 @@ export default function Estoque() {
                   <Label htmlFor="requer_pintura" className="cursor-pointer">
                     Este item requer pintura
                   </Label>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pontuacao_producao">Pontuação por Unidade</Label>
-                    <Input
-                      id="pontuacao_producao"
-                      type="number"
-                      step="0.01"
-                      value={formData.pontuacao_producao}
-                      onChange={(e) => setFormData({ ...formData, pontuacao_producao: Number(e.target.value) })}
-                    />
-                  </div>
                 </div>
 
                 {/* Seção de Cálculo Automático */}

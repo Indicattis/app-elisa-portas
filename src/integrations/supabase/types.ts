@@ -5995,8 +5995,8 @@ export type Database = {
         Returns: string
       }
       deletar_pedido_completo: {
-        Args: { pedido_uuid: string }
-        Returns: undefined
+        Args: { p_pedido_id: string }
+        Returns: boolean
       }
       delete_venda_completa: {
         Args: { p_venda_id: string }

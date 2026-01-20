@@ -53,7 +53,6 @@ export default function EstoqueEdit() {
     setor_responsavel_producao: string;
     fornecedor_id: string;
     requer_pintura: boolean;
-    pontuacao_producao: number;
     modulo_calculo: string;
     valor_calculo: number;
     eixo_calculo: string;
@@ -71,7 +70,6 @@ export default function EstoqueEdit() {
     setor_responsavel_producao: "",
     fornecedor_id: "",
     requer_pintura: false,
-    pontuacao_producao: 0,
     modulo_calculo: "",
     valor_calculo: 0,
     eixo_calculo: "",
@@ -124,7 +122,6 @@ export default function EstoqueEdit() {
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
         fornecedor_id: produto.fornecedor_id || "",
         requer_pintura: produto.requer_pintura === true,
-        pontuacao_producao: Number(produto.pontuacao_producao) || 0,
         modulo_calculo: produto.modulo_calculo || "",
         valor_calculo: Number(produto.valor_calculo) || 0,
         eixo_calculo: produto.eixo_calculo || "",
@@ -163,7 +160,6 @@ export default function EstoqueEdit() {
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
-        pontuacao_producao: formData.pontuacao_producao,
         modulo_calculo: (formData.modulo_calculo || null) as 'acrescimo' | 'desconto' | null,
         valor_calculo: formData.valor_calculo || null,
         eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
@@ -409,19 +405,6 @@ export default function EstoqueEdit() {
                     <SelectItem value="pintura">Pintura</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="pontuacao_producao">Pontuação por Unidade</Label>
-                <Input
-                  id="pontuacao_producao"
-                  type="number"
-                  step="0.01"
-                  value={formData.pontuacao_producao}
-                  onChange={(e) =>
-                    setFormData({ ...formData, pontuacao_producao: parseFloat(e.target.value) || 0 })
-                  }
-                />
               </div>
 
             </div>

@@ -547,7 +547,6 @@ export function useVendas() {
       queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['ordens'] });
-      queryClient.invalidateQueries({ queryKey: ['pontuacao'] });
       toast({
         title: 'Sucesso',
         description: 'Venda e todos os itens vinculados excluídos com sucesso',
