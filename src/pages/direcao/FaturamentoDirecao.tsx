@@ -349,7 +349,7 @@ export default function FaturamentoDirecao() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <ProductIconsSummary produtos={venda.portas || []} />
+                    <ProductIconsSummary venda={venda} />
                   </TableCell>
                   <TableCell>
                     {isFaturada(venda) ? (
