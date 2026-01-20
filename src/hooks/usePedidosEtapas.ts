@@ -191,6 +191,21 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             return data || [];
           };
 
+          // Função auxiliar para buscar TODAS as linhas de perfiladeira (para cálculo de metragem)
+          const fetchLinhasPerfiladeira = async (
+            ordemId: string | null
+          ): Promise<Array<{ quantidade: number; tamanho: string | null }>> => {
+            if (!ordemId) return [];
+            
+            const { data } = await supabase
+              .from('linhas_ordens')
+              .select('quantidade, tamanho')
+              .eq('ordem_id', ordemId)
+              .eq('tipo_ordem', 'perfiladeira');
+            
+            return data || [];
+          };
+
           const buildOrdemStatus = async (result: any, tipoOrdem: string) => {
             const responsavelId = result.data?.responsavel_id || null;
             const ordemId = result.data?.id || null;
@@ -222,10 +237,14 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             buildOrdemStatus(pintura, 'pintura'),
           ]);
 
+          // Buscar linhas de perfiladeira para cálculo de metragem linear
+          const linhasPerfiladeira = await fetchLinhasPerfiladeira(perfiladeira.data?.id || null);
+
           return {
             ...pedido,
             backlog: backlogData ? [backlogData] : [],
             tem_historico_backlog: !!historicoBacklog,
+            linhas_perfiladeira: linhasPerfiladeira,
             ordens: {
               soldagem: ordemSoldagem,
               perfiladeira: ordemPerfiladeira,

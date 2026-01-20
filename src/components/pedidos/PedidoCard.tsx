@@ -437,6 +437,51 @@ export function PedidoCard({
   const portasPequenas = listaPortasInfo.filter(p => p.tamanho === 'P').length;
   const portasGrandes = listaPortasInfo.filter(p => p.tamanho === 'G').length;
 
+  // Calcular metragem linear (soma dos tamanhos das linhas de perfiladeira)
+  const calcularMetragemLinear = (): number => {
+    const linhas = pedido.linhas_perfiladeira || [];
+    let total = 0;
+    
+    linhas.forEach((linha: any) => {
+      const tamanho = linha.tamanho || '0';
+      // Parse "3,30" ou "3.30" para número
+      const metros = parseFloat(tamanho.replace(',', '.')) || 0;
+      const quantidade = linha.quantidade || 1;
+      total += metros * quantidade;
+    });
+    
+    return total;
+  };
+
+  // Calcular metragem quadrada (área total das portas de enrolar)
+  const calcularMetragemQuadrada = (): number => {
+    let total = 0;
+    
+    portasEnrolar.forEach((p: any) => {
+      let largura = p.largura || 0;
+      let altura = p.altura || 0;
+      
+      // Se ambos são 0, tenta extrair do campo tamanho (string)
+      if (largura === 0 && altura === 0 && p.tamanho) {
+        const parsed = parseTamanhoString(p.tamanho);
+        largura = parsed.largura;
+        altura = parsed.altura;
+      }
+      
+      // Converter cm para m se necessário (valores > 100 provavelmente são cm)
+      if (largura > 100) largura = largura / 100;
+      if (altura > 100) altura = altura / 100;
+      
+      const quantidade = p.quantidade || 1;
+      total += largura * altura * quantidade;
+    });
+    
+    return total;
+  };
+
+  const metragemLinear = calcularMetragemLinear();
+  const metragemQuadrada = calcularMetragemQuadrada();
+
   // Status das ordens de produção
   const ordens = pedido.ordens || {
     soldagem: { existe: false, status: null, capturada: false, pausada: false },
@@ -911,7 +956,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
               {/* Col 1: Drag Handle */}
               <div>
                 {dragHandleProps ? (
@@ -959,8 +1004,36 @@ export function PedidoCard({
                   <p>{venda?.cliente_nome}</p>
                 </TooltipContent>
               </Tooltip>
+
+              {/* Col 4: Metragem Linear (m) */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-center">
+                    <span className="text-[10px] font-medium text-blue-600">
+                      {metragemLinear > 0 ? `${metragemLinear.toFixed(0)}m` : '—'}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Metragem linear (perfiladeira)</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Col 5: Metragem Quadrada (m²) */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-center">
+                    <span className="text-[10px] font-medium text-green-600">
+                      {metragemQuadrada > 0 ? `${metragemQuadrada.toFixed(1)}m²` : '—'}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Área total das portas</p>
+                </TooltipContent>
+              </Tooltip>
               
-              {/* Col 4: Data de Carregamento */}
+              {/* Col 6: Data de Carregamento */}
               <div className="text-center">
                 {(() => {
                   const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao';
