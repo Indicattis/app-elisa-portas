@@ -55,13 +55,8 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirecionar para primeira rota acessível
-  if (firstRoute) {
-    return <Navigate to={firstRoute.path} replace />;
-  }
-
-  // Se não houver nenhuma rota acessível, redirecionar para forbidden
-  return <Navigate to="/forbidden" replace />;
+  // Redirecionar para /home (hub principal)
+  return <Navigate to="/home" replace />;
 };
 
 export default Index;
