@@ -671,8 +671,8 @@ export default function VendaView() {
                             variant="outline" 
                             className="text-[10px] px-1.5 py-0"
                             style={{
-                              borderColor: produto.tipo_produto === 'pintura_epoxi' ? 'hsl(var(--muted-foreground))' : produto.cor.codigo_hex,
-                              color: produto.tipo_produto === 'pintura_epoxi' ? 'hsl(var(--muted-foreground))' : produto.cor.codigo_hex
+                              borderColor: produto.cor.codigo_hex,
+                              color: produto.cor.codigo_hex
                             }}
                           >
                             {produto.cor.nome}
