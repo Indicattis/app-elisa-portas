@@ -202,7 +202,7 @@ export default function FaturamentoDirecao() {
     >
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
           <CardContent className="p-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Faturamento</p>
@@ -211,7 +211,7 @@ export default function FaturamentoDirecao() {
             <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
           </CardContent>
         </Card>
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
           <CardContent className="p-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Faturadas</p>
@@ -220,7 +220,7 @@ export default function FaturamentoDirecao() {
             <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-400/60" />
           </CardContent>
         </Card>
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
           <CardContent className="p-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Pendentes</p>
@@ -233,14 +233,14 @@ export default function FaturamentoDirecao() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mb-6">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="todas" className="data-[state=active]:bg-white/10 text-white">
+        <TabsList className="bg-primary/5 border border-primary/10">
+          <TabsTrigger value="todas" className="data-[state=active]:bg-primary/10 text-white">
             Todas
           </TabsTrigger>
-          <TabsTrigger value="faturadas" className="data-[state=active]:bg-white/10 text-white">
+          <TabsTrigger value="faturadas" className="data-[state=active]:bg-primary/10 text-white">
             Faturadas
           </TabsTrigger>
-          <TabsTrigger value="nao_faturadas" className="data-[state=active]:bg-white/10 text-white">
+          <TabsTrigger value="nao_faturadas" className="data-[state=active]:bg-primary/10 text-white">
             Não Faturadas
           </TabsTrigger>
         </TabsList>
@@ -254,13 +254,13 @@ export default function FaturamentoDirecao() {
             placeholder="Buscar cliente, vendedor, cidade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            className="pl-9 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
           />
         </div>
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+            <Button variant="outline" className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10">
               <CalendarIcon className="mr-2 h-4 w-4" />
               {dateRange?.from ? (
                 dateRange.to ? (
@@ -275,7 +275,7 @@ export default function FaturamentoDirecao() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="end">
+          <PopoverContent className="w-auto p-0 bg-zinc-900 border-primary/10" align="end">
             <Calendar
               initialFocus
               mode="range"
@@ -290,10 +290,10 @@ export default function FaturamentoDirecao() {
         </Popover>
 
         <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-          <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-white">
+          <SelectTrigger className="w-[180px] bg-primary/5 border-primary/10 text-white">
             <SelectValue placeholder="Vendedor" />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-white/10">
+          <SelectContent className="bg-zinc-900 border-primary/10">
             <SelectItem value="todos" className="text-white">Todos</SelectItem>
             {atendentes.map(atendente => (
               <SelectItem key={atendente.user_id} value={atendente.user_id} className="text-white">
@@ -305,10 +305,10 @@ export default function FaturamentoDirecao() {
       </div>
 
       {/* Tabela */}
-      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
+            <TableRow className="border-primary/10 hover:bg-transparent">
               <TableHead className="text-white/60">Data</TableHead>
               <TableHead className="text-white/60">Cliente</TableHead>
               <TableHead className="text-white/60 hidden md:table-cell">Vendedor</TableHead>
@@ -328,7 +328,7 @@ export default function FaturamentoDirecao() {
               filteredVendas.map((venda) => (
                 <TableRow 
                   key={venda.id} 
-                  className="border-white/10 hover:bg-white/5 cursor-pointer"
+                  className="border-primary/10 hover:bg-primary/5 cursor-pointer"
                   onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
                 >
                   <TableCell className="text-white/80">

@@ -35,8 +35,8 @@ export default function VendasHub() {
       {/* Botão de voltar */}
       <button
         onClick={() => navigate('/home')}
-        className="absolute top-6 left-6 z-20 p-3 rounded-lg bg-white/5 hover:bg-white/10 
-                   border border-white/10 transition-all duration-300"
+        className="absolute top-6 left-6 z-20 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 
+                   border border-primary/10 transition-all duration-300"
         style={{
           opacity: mounted ? 1 : 0,
           transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
