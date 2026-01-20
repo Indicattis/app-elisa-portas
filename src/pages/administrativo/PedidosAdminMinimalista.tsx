@@ -1,146 +1,246 @@
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Package, RefreshCw, Search } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { usePedidosEtapas } from "@/hooks/usePedidosEtapas";
+import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Calendar, ChevronRight, Truck, Wrench } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 
-interface PedidoAberto {
-  id: string;
-  numero_pedido: string;
-  etapa_atual: string;
-  created_at: string;
-  vendas: {
-    cliente_nome: string;
-    cidade?: string;
-    estado?: string;
-    valor_venda?: number;
-    tipo_entrega?: string;
-  } | null;
-}
+const ITEMS_PER_PAGE = 25;
 
 export default function PedidosAdminMinimalista() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [tipoEntrega, setTipoEntrega] = useState<string>("todos");
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const { pedidos, isLoading } = usePedidosEtapas("aberto");
 
-  const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pedidos-abertos-admin'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pedidos_producao')
-        .select(`
-          id,
-          numero_pedido,
-          etapa_atual,
-          created_at,
-          vendas:venda_id (
-            cliente_nome,
-            cidade,
-            estado,
-            valor_venda,
-            tipo_entrega
-          )
-        `)
-        .eq('etapa_atual', 'aberto')
-        .eq('arquivado', false)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return (data || []) as PedidoAberto[];
+  // Filtrar pedidos
+  const pedidosFiltrados = useMemo(() => {
+    let filtrados = pedidos;
+
+    // Filtro por termo de busca
+    if (searchTerm.trim()) {
+      const termo = searchTerm.toLowerCase();
+      filtrados = filtrados.filter(
+        (p) =>
+          p.numero_pedido?.toLowerCase().includes(termo) ||
+          p.vendas?.cliente_nome?.toLowerCase().includes(termo)
+      );
     }
-  });
+
+    // Filtro por tipo de entrega
+    if (tipoEntrega !== "todos") {
+      filtrados = filtrados.filter((p) => p.vendas?.tipo_entrega === tipoEntrega);
+    }
+
+    return filtrados;
+  }, [pedidos, searchTerm, tipoEntrega]);
+
+  // Calcular total de portas para a etapa atual
+  const totalPortasEtapa = useMemo(() => {
+    return pedidosFiltrados.reduce((total, pedido) => {
+      const produtos = (pedido.vendas as any)?.produtos_vendas as any[] | undefined;
+      if (!produtos) return total;
+      
+      const portasEnrolar = produtos.filter((p: any) => 
+        p.categoria_produto === "porta_enrolar"
+      );
+      
+      return total + portasEnrolar.reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
+    }, 0);
+  }, [pedidosFiltrados]);
+
+  // Paginação
+  const totalPages = Math.ceil(pedidosFiltrados.length / ITEMS_PER_PAGE);
+  const pedidosPaginados = pedidosFiltrados.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+    toast({
+      title: "Atualizado",
+      description: "Dados atualizados com sucesso",
+    });
+  };
+
+  const handlePedidoClick = (pedidoId: string) => {
+    navigate(`/administrativo/pedidos/${pedidoId}`);
+  };
+
+  // Gerar páginas para paginação
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        pages.push('ellipsis');
+      }
+      
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('ellipsis');
+      }
+      
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
 
   return (
-    <MinimalistLayout
-      title="Pedidos"
-      subtitle={`${pedidos.length} pedido${pedidos.length !== 1 ? 's' : ''} em aberto`}
+    <MinimalistLayout 
+      title="Pedidos" 
+      subtitle={`${pedidosFiltrados.length} pedidos em aberto`}
       backPath="/administrativo"
     >
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : pedidos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Package className="w-12 h-12 text-white/30 mb-4" />
-          <p className="text-white/60">Nenhum pedido em aberto</p>
-        </div>
-      ) : (
-        <div className="grid gap-3">
-          {pedidos.map((pedido) => (
-            <Card 
-              key={pedido.id}
-              className="bg-primary/5 border-primary/10 backdrop-blur-xl cursor-pointer hover:bg-primary/10 transition-colors"
-              onClick={() => navigate(`/administrativo/pedidos/${pedido.id}`)}
+      {/* Header com botão de refresh */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-white">Pedidos em Aberto</h2>
+        <button
+          onClick={handleRefresh}
+          className="p-2 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all"
+        >
+          <RefreshCw className="w-4 h-4 text-white/70" />
+        </button>
+      </div>
+
+      <Card className="bg-primary/5 border-primary/10">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-blue-400" />
+              <span>Aberto</span>
+              <span className="text-sm font-normal text-white/60">
+                ({pedidosFiltrados.length} pedidos • {totalPortasEtapa} portas)
+              </span>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Filtros */}
+          <div className="flex flex-wrap gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Input
+                placeholder="Buscar por cliente ou número..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
+              />
+            </div>
+            <Select 
+              value={tipoEntrega} 
+              onValueChange={(value) => {
+                setTipoEntrega(value);
+                setCurrentPage(1);
+              }}
             >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    {/* Número do pedido e badge */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-white font-semibold">
-                        #{pedido.numero_pedido}
-                      </span>
-                      <Badge 
-                        variant="outline" 
-                        className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-xs"
-                      >
-                        Aberto
-                      </Badge>
-                    </div>
-                    
-                    {/* Nome do cliente */}
-                    <p className="text-white/80 font-medium truncate">
-                      {pedido.vendas?.cliente_nome || 'Cliente não informado'}
-                    </p>
-                    
-                    {/* Informações adicionais */}
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-white/50">
-                      {pedido.vendas?.cidade && pedido.vendas?.estado && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>{pedido.vendas.cidade}, {pedido.vendas.estado}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
-                      </div>
-                      
-                      {pedido.vendas?.tipo_entrega && (
-                        <div className="flex items-center gap-1">
-                          {pedido.vendas.tipo_entrega === 'instalacao' ? (
-                            <Wrench className="w-3 h-3" />
-                          ) : (
-                            <Truck className="w-3 h-3" />
-                          )}
-                          <span className="capitalize">{pedido.vendas.tipo_entrega}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Valor e seta */}
-                  <div className="flex items-center gap-3 shrink-0">
-                    {pedido.vendas?.valor_venda && (
-                      <div className="text-right">
-                        <p className="text-xs text-white/50">Valor</p>
-                        <p className="text-white font-semibold">
-                          R$ {Number(pedido.vendas.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    )}
-                    <ChevronRight className="w-5 h-5 text-white/30" />
-                  </div>
+              <SelectTrigger className="w-[160px] bg-primary/5 border-primary/10 text-white">
+                <SelectValue placeholder="Tipo de entrega" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="instalacao">Instalação</SelectItem>
+                <SelectItem value="entrega">Entrega</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Lista de pedidos */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400" />
+            </div>
+          ) : pedidosPaginados.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-white/60">
+              <Package className="w-12 h-12 mb-4 opacity-50" />
+              <p>Nenhum pedido encontrado</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {pedidosPaginados.map((pedido) => (
+                <div
+                  key={pedido.id}
+                  onClick={() => handlePedidoClick(pedido.id)}
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <PedidoCard
+                    pedido={pedido}
+                    isAberto={true}
+                    viewMode="list"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              ))}
+            </div>
+          )}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {getPageNumbers().map((page, index) => (
+                    <PaginationItem key={index}>
+                      {page === 'ellipsis' ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </MinimalistLayout>
   );
 }
