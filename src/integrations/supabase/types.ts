@@ -3127,6 +3127,7 @@ export type Database = {
           historico: boolean
           id: string
           justificativa_pausa: string | null
+          metragem_linear: number | null
           numero_ordem: string
           observacoes: string | null
           pausada: boolean | null
@@ -3151,6 +3152,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          metragem_linear?: number | null
           numero_ordem: string
           observacoes?: string | null
           pausada?: boolean | null
@@ -3175,6 +3177,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          metragem_linear?: number | null
           numero_ordem?: string
           observacoes?: string | null
           pausada?: boolean | null
@@ -3217,6 +3220,7 @@ export type Database = {
           em_backlog: boolean | null
           historico: boolean
           id: string
+          metragem_quadrada: number | null
           numero_ordem: string
           observacoes: string | null
           pedido_id: string
@@ -3238,6 +3242,7 @@ export type Database = {
           em_backlog?: boolean | null
           historico?: boolean
           id?: string
+          metragem_quadrada?: number | null
           numero_ordem: string
           observacoes?: string | null
           pedido_id: string
@@ -3259,6 +3264,7 @@ export type Database = {
           em_backlog?: boolean | null
           historico?: boolean
           id?: string
+          metragem_quadrada?: number | null
           numero_ordem?: string
           observacoes?: string | null
           pedido_id?: string
@@ -3565,6 +3571,8 @@ export type Database = {
           pedido_id: string
           prioridade: number | null
           produtos: Json | null
+          qtd_portas_g: number | null
+          qtd_portas_p: number | null
           responsavel_id: string | null
           status: string
           tempo_acumulado_segundos: number | null
@@ -3588,6 +3596,8 @@ export type Database = {
           pedido_id: string
           prioridade?: number | null
           produtos?: Json | null
+          qtd_portas_g?: number | null
+          qtd_portas_p?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3611,6 +3621,8 @@ export type Database = {
           pedido_id?: string
           prioridade?: number | null
           produtos?: Json | null
+          qtd_portas_g?: number | null
+          qtd_portas_p?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
