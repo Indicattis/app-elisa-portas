@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList } from "lucide-react";
+import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare } from "lucide-react";
 import { FichaVisitaUpload } from "@/components/pedidos/FichaVisitaUpload";
 import { toast as sonnerToast } from "sonner";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
@@ -48,6 +49,7 @@ interface Pedido {
   ordens: Ordem[];
   ficha_visita_url?: string | null;
   ficha_visita_nome?: string | null;
+  observacoes?: string | null;
   venda?: {
     id: string;
     cliente_nome: string;
@@ -98,6 +100,8 @@ export default function PedidoViewMinimalista() {
   const [linhasEditadas, setLinhasEditadas] = useState<Map<string, PedidoLinhaUpdate>>(new Map());
   const [salvando, setSalvando] = useState(false);
   const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
+  const [observacoesTexto, setObservacoesTexto] = useState("");
+  const [salvandoObservacoes, setSalvandoObservacoes] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -139,6 +143,12 @@ export default function PedidoViewMinimalista() {
   useEffect(() => {
     if (id) fetchPedidoDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (pedido?.observacoes !== undefined) {
+      setObservacoesTexto(pedido.observacoes || "");
+    }
+  }, [pedido?.observacoes]);
 
   const fetchPedidoDetails = async () => {
     if (!id) return;
@@ -228,6 +238,28 @@ export default function PedidoViewMinimalista() {
       console.error("Erro ao salvar:", error);
     } finally {
       setSalvando(false);
+    }
+  };
+
+  const handleSalvarObservacoes = async () => {
+    if (!pedido) return;
+    
+    setSalvandoObservacoes(true);
+    try {
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ observacoes: observacoesTexto.trim() || null })
+        .eq('id', pedido.id);
+      
+      if (error) throw error;
+      
+      setPedido(prev => prev ? { ...prev, observacoes: observacoesTexto.trim() || null } : null);
+      sonnerToast.success('Observação salva com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar observação:', error);
+      sonnerToast.error('Erro ao salvar observação');
+    } finally {
+      setSalvandoObservacoes(false);
     }
   };
 
@@ -458,6 +490,46 @@ export default function PedidoViewMinimalista() {
                 sonnerToast.success('Ficha de visita removida');
               }}
             />
+          </CardContent>
+        </Card>
+
+        {/* Observações do Pedido */}
+        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-white">
+              <MessageSquare className="w-4 h-4" />
+              Observações do Pedido
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Adicione observações sobre este pedido..."
+                value={observacoesTexto}
+                onChange={(e) => setObservacoesTexto(e.target.value)}
+                className="min-h-[100px] bg-primary/5 border-primary/10 text-white placeholder:text-white/40 resize-none"
+              />
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSalvarObservacoes}
+                  disabled={salvandoObservacoes || observacoesTexto === (pedido.observacoes || "")}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {salvandoObservacoes ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar Observação
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
