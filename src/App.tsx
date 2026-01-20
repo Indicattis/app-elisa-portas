@@ -171,6 +171,14 @@ import FabricaHub from "./pages/fabrica/FabricaHub";
 import PedidosProducaoMinimalista from "./pages/fabrica/PedidosProducaoMinimalista";
 import ControleEstoqueMinimalista from "./pages/fabrica/ControleEstoqueMinimalista";
 
+// Hub da Direção Minimalista
+import DirecaoHub from "./pages/direcao/DirecaoHub";
+import VendasDirecao from "./pages/direcao/VendasDirecao";
+import FaturamentoDirecao from "./pages/direcao/FaturamentoDirecao";
+import GestaoFabricaDirecao from "./pages/direcao/GestaoFabricaDirecao";
+import GestaoInstalacaoDirecao from "./pages/direcao/GestaoInstalacaoDirecao";
+import MetasDirecao from "./pages/direcao/MetasDirecao";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -308,6 +316,14 @@ const App = () => (
                 <Route path="/fabrica" element={<ProtectedRoute><FabricaHub /></ProtectedRoute>} />
                 <Route path="/fabrica/pedidos-producao" element={<ProtectedRoute><PedidosProducaoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/controle-estoque" element={<ProtectedRoute><ControleEstoqueMinimalista /></ProtectedRoute>} />
+
+                {/* Hub da Direção Minimalista */}
+                <Route path="/direcao" element={<ProtectedRoute><DirecaoHub /></ProtectedRoute>} />
+                <Route path="/direcao/vendas" element={<ProtectedRoute><VendasDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/faturamento" element={<ProtectedRoute><FaturamentoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-fabrica" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-instalacao" element={<ProtectedRoute><GestaoInstalacaoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/metas" element={<ProtectedRoute><MetasDirecao /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
