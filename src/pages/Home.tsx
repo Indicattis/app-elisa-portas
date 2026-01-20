@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import logoEmpresa from "@/assets/logo-empresa.png";
 import { ShoppingCart, Factory, Shield, Truck, Building2 } from "lucide-react";
 
@@ -20,6 +21,13 @@ const getOrbitPosition = (angle: number, radius: number) => {
 
 export default function Home() {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // Trigger animations after mount
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden">
@@ -27,13 +35,31 @@ export default function Home() {
       <div className="relative w-[600px] h-[600px] flex items-center justify-center">
         
         {/* Anel decorativo da órbita */}
-        <div className="absolute w-[420px] h-[420px] rounded-full border border-blue-500/20 animate-fade-in" />
-        <div className="absolute w-[380px] h-[380px] rounded-full border border-blue-500/10 animate-fade-in" />
+        <div 
+          className="absolute w-[420px] h-[420px] rounded-full border border-blue-500/20 transition-all duration-1000"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'scale(1)' : 'scale(0.5)'
+          }}
+        />
+        <div 
+          className="absolute w-[380px] h-[380px] rounded-full border border-blue-500/10 transition-all duration-1000 delay-100"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'scale(1)' : 'scale(0.5)'
+          }}
+        />
         
         {/* Logo central */}
-        <div className="absolute z-10 animate-fade-in">
+        <div 
+          className="absolute z-10 transition-all duration-700"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'scale(1)' : 'scale(0.8)'
+          }}
+        >
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full animate-pulse-glow" />
+            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full animate-pulse" />
             <img 
               src={logoEmpresa} 
               alt="Logo" 
@@ -46,6 +72,7 @@ export default function Home() {
         {menuItems.map((item, index) => {
           const pos = getOrbitPosition(item.angle, 190);
           const Icon = item.icon;
+          const delay = 200 + index * 120;
           
           return (
             <button
@@ -60,16 +87,16 @@ export default function Home() {
                          shadow-lg shadow-blue-500/30
                          hover:shadow-xl hover:shadow-blue-500/50
                          hover:scale-110 
-                         transition-all duration-300 ease-out
                          cursor-pointer
-                         border border-blue-400/30"
+                         border border-blue-400/30
+                         animate-float"
               style={{
-                animation: `orbit-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.12}s forwards, 
-                           float 5s ease-in-out ${index * 0.8}s infinite,
-                           pulse-glow 4s ease-in-out ${index * 0.5}s infinite`,
-                ['--orbit-x' as string]: `calc(-50% + ${pos.x}px)`,
-                ['--orbit-y' as string]: `calc(-50% + ${pos.y}px)`,
-                opacity: 0
+                transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
+                opacity: mounted ? 1 : 0,
+                transform: mounted 
+                  ? `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(1)`
+                  : 'translate(-50%, -50%) scale(0.2)',
+                animationDelay: `${index * 0.5}s`
               }}
             >
               <Icon className="w-7 h-7" strokeWidth={1.5} />
