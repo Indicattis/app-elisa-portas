@@ -21,6 +21,7 @@ import type { EtapaPedido, DirecaoPrioridade, PrioridadeUpdate } from "@/types/p
 
 interface PedidosDraggableListProps {
   pedidos: any[];
+  pedidosParaTotais?: any[]; // Todos os pedidos filtrados para cálculo de totais
   etapa: EtapaPedido;
   isAberto: boolean;
   viewMode?: 'grid' | 'list';
@@ -96,6 +97,7 @@ function SortableItem({
 
 export function PedidosDraggableList({
   pedidos,
+  pedidosParaTotais,
   etapa,
   isAberto,
   viewMode = 'grid',
@@ -187,8 +189,8 @@ export function PedidosDraggableList({
           ))}
         </div>
         
-        {/* Linha de totais - apenas no modo lista */}
-        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidos} />}
+        {/* Linha de totais - usa todos os pedidos filtrados se disponível */}
+        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} />}
       </SortableContext>
 
       <DragOverlay>
