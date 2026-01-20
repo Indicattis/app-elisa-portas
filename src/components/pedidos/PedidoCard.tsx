@@ -1182,13 +1182,41 @@ export function PedidoCard({
               <TooltipProvider>
                 <div className="flex items-center justify-end gap-0.5">
                   {(() => {
-                    const actionButtons = [];
+                    // Arrays separados para ordenação: retroceder à esquerda, outros no meio, avançar à direita
+                    const retrocederButtons: React.ReactNode[] = [];
+                    const middleButtons: React.ReactNode[] = [];
+                    const avancarButtons: React.ReactNode[] = [];
 
-                    // Build action buttons array
-                    // Botão de preparar pedido removido - funcionalidade movida para PedidoView
+                    // Botão de retroceder (vai para a esquerda)
+                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
+                    if (podeRetroceder) {
+                      retrocederButtons.push(
+                        <Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+                          <ArrowLeft className="h-3 w-3" />
+                        </Button>
+                      );
+                    }
+
+                    // Botão de excluir (vai no meio)
+                    if (isAberto && isAdmin && onDeletar) {
+                      middleButtons.push(
+                        <Button 
+                          key="excluir" 
+                          size="icon" 
+                          variant="outline" 
+                          onClick={(e) => { e.stopPropagation(); setShowExcluirPedido(true); }} 
+                          title="Excluir Pedido" 
+                          className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      );
+                    }
+
+                    // Botões de avançar (vão para a direita)
                     if (isAberto && onMoverEtapa) {
                       const validacao = getValidacaoAvancoEtapa('aberto');
-                      actionButtons.push(
+                      avancarButtons.push(
                         <ButtonWithTooltip key="iniciar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
                           <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
@@ -1197,7 +1225,7 @@ export function PedidoCard({
                       );
                     } else if (etapaAtual === 'em_producao') {
                       const validacao = getValidacaoAvancoEtapa('em_producao');
-                      actionButtons.push(
+                      avancarButtons.push(
                         <ButtonWithTooltip key="avançar-qualidade" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
                           <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowAvancarQualidade(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
@@ -1206,7 +1234,7 @@ export function PedidoCard({
                       );
                     } else if (etapaAtual === 'inspecao_qualidade') {
                       const validacao = getValidacaoAvancoEtapa('inspecao_qualidade');
-                      actionButtons.push(
+                      avancarButtons.push(
                         <ButtonWithTooltip key="avançar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
                           <Button size="icon" onClick={async (e) => {
                             e.stopPropagation();
@@ -1230,63 +1258,40 @@ export function PedidoCard({
                       );
                     } else if (etapaAtual === 'aguardando_pintura') {
                       const validacao = getValidacaoAvancoEtapa('aguardando_pintura');
-                      actionButtons.push(
+                      avancarButtons.push(
                         <ButtonWithTooltip key="avançar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
                           <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
                           </Button>
-                      </ButtonWithTooltip>
-                    );
-                  } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
-                    const validacao = getValidacaoAvancoEtapa(etapaAtual);
-                    actionButtons.push(
-                      <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
-                        <Button 
-                          size="icon" 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setShowConfirmarExpedicao(true); 
-                          }} 
-                          disabled={!validacao.podeAvancar} 
-                          className="flex h-[20px] w-[20px] rounded-[3px]"
-                        >
+                        </ButtonWithTooltip>
+                      );
+                    } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                      const validacao = getValidacaoAvancoEtapa(etapaAtual);
+                      avancarButtons.push(
+                        <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
+                          <Button 
+                            size="icon" 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setShowConfirmarExpedicao(true); 
+                            }} 
+                            disabled={!validacao.podeAvancar} 
+                            className="flex h-[20px] w-[20px] rounded-[3px]"
+                          >
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </ButtonWithTooltip>
+                      );
+                    } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+                      avancarButtons.push(
+                        <Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex h-[20px] w-[20px] rounded-[3px]">
                           <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      </ButtonWithTooltip>
-                    );
-                  } else if (proximaEtapa && etapaAtual !== 'finalizado') {
-                      actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex h-[20px] w-[20px] rounded-[3px]">
-                          <ArrowRight className="h-3 w-3" />
-                        </Button>);
-                    }
-
-                    // Backlog button removed - users should view order details page
-
-                    // Add retroceder button (para todos a partir de em_producao)
-                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
-                    if (podeRetroceder) {
-                      actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
-                          <ArrowLeft className="h-3 w-3" />
-                        </Button>);
-                    }
-
-                    // Botão de excluir (apenas admins em pedidos abertos)
-                    if (isAberto && isAdmin && onDeletar) {
-                      actionButtons.push(
-                        <Button 
-                          key="excluir" 
-                          size="icon" 
-                          variant="outline" 
-                          onClick={(e) => { e.stopPropagation(); setShowExcluirPedido(true); }} 
-                          title="Excluir Pedido" 
-                          className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
-                        >
-                          <Trash2 className="h-3 w-3" />
                         </Button>
                       );
                     }
-                    
-                    return actionButtons;
+
+                    // Retorna na ordem: retroceder (esquerda) + outros (meio) + avançar (direita)
+                    return [...retrocederButtons, ...middleButtons, ...avancarButtons];
                   })()}
                 </div>
               </TooltipProvider>
