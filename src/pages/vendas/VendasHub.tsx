@@ -9,7 +9,6 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { SpaceParticles } from '@/components/SpaceParticles';
-import logoEmpresa from '@/assets/logo-empresa.png';
 
 const menuItems = [
   { label: 'Minhas Vendas', icon: ShoppingCart, path: '/vendas/minhas-vendas' },
@@ -48,26 +47,7 @@ export default function VendasHub() {
       </button>
 
       {/* ========== VERSÃO MOBILE ========== */}
-      <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
-        {/* Logo */}
-        <div 
-          className="mb-8 transition-all duration-700"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(-20px)'
-          }}
-        >
-          <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full animate-pulse" />
-            <img 
-              src={logoEmpresa} 
-              alt="Logo" 
-              className="w-24 h-24 object-contain relative z-10 drop-shadow-2xl" 
-            />
-          </div>
-        </div>
-
-
+      <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
         {/* Lista de botões */}
         <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
@@ -102,27 +82,7 @@ export default function VendasHub() {
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
-      <div className="hidden md:flex relative z-10 flex-col items-center">
-        {/* Logo central */}
-        <div 
-          className="mb-8"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'scale(1)' : 'scale(0.8)',
-            transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
-          }}
-        >
-          <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/30 blur-3xl rounded-full animate-pulse" />
-            <img 
-              src={logoEmpresa} 
-              alt="Logo" 
-              className="w-32 h-32 object-contain relative z-10 drop-shadow-2xl" 
-            />
-          </div>
-        </div>
-
-
+      <div className="hidden md:flex relative z-10 flex-col items-center justify-center">
         {/* Grid de botões */}
         <div className="grid grid-cols-3 gap-4 max-w-2xl">
           {menuItems.map((item, index) => {
@@ -133,26 +93,24 @@ export default function VendasHub() {
               <button
                 key={item.label}
                 onClick={() => navigate(item.path)}
-                className="group w-44 h-32 rounded-xl
-                           bg-gradient-to-br from-blue-500/20 to-blue-700/20
-                           hover:from-blue-500/40 hover:to-blue-700/40
-                           active:scale-[0.98]
-                           flex flex-col items-center justify-center gap-3
+                className="w-44 h-28 rounded-xl
+                           bg-gradient-to-br from-blue-500 to-blue-700
+                           hover:from-blue-400 hover:to-blue-600
+                           flex flex-col items-center justify-center gap-2
                            text-white font-medium 
-                           shadow-lg shadow-blue-500/10
-                           border border-blue-400/20 hover:border-blue-400/40
-                           backdrop-blur-sm
+                           shadow-lg shadow-blue-500/30
+                           hover:shadow-xl hover:shadow-blue-500/50
+                           hover:scale-105
+                           border border-blue-400/30
                            transition-all duration-300"
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
-                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
+                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <div className="p-3 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors">
-                  <Icon className="w-7 h-7" strokeWidth={1.5} />
-                </div>
-                <span className="text-sm font-medium">{item.label}</span>
+                <Icon className="w-8 h-8" strokeWidth={1.5} />
+                <span className="text-sm font-medium text-center px-2">{item.label}</span>
               </button>
             );
           })}
