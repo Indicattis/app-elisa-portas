@@ -32,49 +32,24 @@ export default function DirecaoHub() {
         </header>
 
         {/* Conteúdo */}
-        <main className="flex-1 flex items-center justify-center p-4">
-          {/* Mobile: Lista vertical */}
-          <div className="md:hidden flex flex-col gap-3 w-full max-w-xs">
+        <main className="flex-1 p-4">
+          <div className="max-w-md mx-auto flex flex-col gap-3">
             {menuItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className="w-full h-14 rounded-xl
-                           bg-gradient-to-br from-blue-500 to-blue-700
-                           hover:from-blue-400 hover:to-blue-600
-                           flex items-center justify-center gap-3
+                className="w-full py-4 px-5 rounded-xl
+                           bg-primary/5 border border-primary/10
+                           hover:bg-primary/10
+                           flex items-center gap-4
                            text-white font-medium 
-                           shadow-lg shadow-blue-500/30
-                           hover:shadow-xl hover:shadow-blue-500/50
-                           hover:scale-105
-                           border border-blue-400/30
+                           backdrop-blur-xl
                            transition-all duration-300"
               >
-                <item.icon className="w-5 h-5" />
+                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700">
+                  <item.icon className="w-5 h-5" />
+                </div>
                 <span>{item.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Desktop: Grid */}
-          <div className="hidden md:grid md:grid-cols-3 gap-4 max-w-2xl">
-            {menuItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className="w-44 h-28 rounded-xl
-                           bg-gradient-to-br from-blue-500 to-blue-700
-                           hover:from-blue-400 hover:to-blue-600
-                           flex flex-col items-center justify-center gap-2
-                           text-white font-medium 
-                           shadow-lg shadow-blue-500/30
-                           hover:shadow-xl hover:shadow-blue-500/50
-                           hover:scale-105
-                           border border-blue-400/30
-                           transition-all duration-300"
-              >
-                <item.icon className="w-6 h-6" />
-                <span className="text-sm text-center px-2">{item.label}</span>
               </button>
             ))}
           </div>
