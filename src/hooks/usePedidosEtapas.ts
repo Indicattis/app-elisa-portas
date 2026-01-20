@@ -152,7 +152,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               .maybeSingle(),
             supabase
               .from('ordens_pintura')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, metragem_quadrada')
+              .select('id, status, responsavel_id, metragem_quadrada')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
           ]);
