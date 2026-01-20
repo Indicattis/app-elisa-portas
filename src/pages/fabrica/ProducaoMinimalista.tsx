@@ -91,7 +91,7 @@ export default function ProducaoMinimalista() {
     <Button 
       variant="ghost" 
       size="sm"
-      onClick={() => navigate('/hub-fabrica/producao/meu-historico')} 
+      onClick={() => navigate('/fabrica/producao/meu-historico')} 
       className="text-white/70 hover:text-white hover:bg-white/10"
     >
       <History className="h-4 w-4 mr-2" />
@@ -130,7 +130,11 @@ export default function ProducaoMinimalista() {
           return (
             <div
               key={route.key}
-              onClick={() => navigate(route.path)}
+              onClick={() => {
+                // Mapear paths da tabela para paths minimalistas
+                const minimalPath = route.path.replace('/hub-fabrica/producao/', '/fabrica/producao/');
+                navigate(minimalPath);
+              }}
               className="group cursor-pointer rounded-xl p-5
                          bg-white/5 border border-white/10
                          backdrop-blur-xl
