@@ -17,11 +17,23 @@ export default function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get the intended destination from state, default to home
-  const from = location.state?.from?.pathname || "/home";
+  // Get the intended destination: priority state > sessionStorage > /home
+  const getRedirectPath = () => {
+    if (location.state?.from?.pathname) {
+      return location.state.from.pathname;
+    }
+    const savedPath = sessionStorage.getItem('redirectAfterLogin');
+    if (savedPath && savedPath !== '/auth') {
+      return savedPath;
+    }
+    return '/home';
+  };
+
+  const from = getRedirectPath();
 
   // Redirect if already authenticated
   if (user && !loading) {
+    sessionStorage.removeItem('redirectAfterLogin');
     return <Navigate to={from} replace />;
   }
 
@@ -77,6 +89,7 @@ export default function Auth() {
       }
 
       toast.success(`Bem-vindo, ${data.user.nome}!`);
+      sessionStorage.removeItem('redirectAfterLogin');
       navigate(from);
     } catch (error) {
       console.error('Erro no login:', error);

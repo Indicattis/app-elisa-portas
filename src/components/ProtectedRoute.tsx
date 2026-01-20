@@ -22,6 +22,8 @@ export function ProtectedRoute({ children, routeKey, requireAdmin = false }: Pro
   }
 
   if (!user) {
+    // Salvar rota pretendida no sessionStorage como fallback
+    sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search);
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
