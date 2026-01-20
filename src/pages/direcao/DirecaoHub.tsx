@@ -32,7 +32,7 @@ export default function DirecaoHub() {
         </header>
 
         {/* Conteúdo */}
-        <main className="flex-1 p-4">
+        <main className="flex-1 flex items-center justify-center p-4">
           <div className="max-w-md mx-auto flex flex-col gap-3">
             {menuItems.map((item) => (
               <button
