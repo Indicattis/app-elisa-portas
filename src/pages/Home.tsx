@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import logoEmpresa from "@/assets/logo-empresa.png";
+import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
 import { ShoppingCart, Factory, Shield, Truck, Building2 } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 
@@ -46,12 +46,13 @@ export default function Home() {
           }}
         >
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full animate-pulse" />
-            <img 
-              src={logoEmpresa} 
-              alt="Logo" 
-              className="w-24 h-24 object-contain relative z-10 drop-shadow-2xl" 
-            />
+            <div className="w-28 h-28 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <img 
+                src={logoPortasEnrolar} 
+                alt="Logo" 
+                className="w-20 h-20 object-contain drop-shadow-2xl" 
+              />
+            </div>
           </div>
         </div>
 
@@ -124,12 +125,13 @@ export default function Home() {
           }}
         >
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full animate-pulse" />
-            <img 
-              src={logoEmpresa} 
-              alt="Logo" 
-              className="w-32 h-32 object-contain relative z-10 drop-shadow-2xl" 
-            />
+            <div className="w-36 h-36 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <img 
+                src={logoPortasEnrolar} 
+                alt="Logo" 
+                className="w-24 h-24 object-contain drop-shadow-2xl" 
+              />
+            </div>
           </div>
         </div>
         
