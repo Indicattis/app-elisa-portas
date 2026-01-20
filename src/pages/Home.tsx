@@ -24,7 +24,6 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Trigger animations after mount
     const timer = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -75,33 +74,43 @@ export default function Home() {
           const delay = 200 + index * 120;
           
           return (
-            <button
+            // Wrapper para posicionamento orbital
+            <div
               key={item.label}
-              onClick={() => navigate(item.path)}
-              className="absolute left-1/2 top-1/2 
-                         w-24 h-24 rounded-full 
-                         bg-gradient-to-br from-blue-500 to-blue-700
-                         hover:from-blue-400 hover:to-blue-600
-                         flex flex-col items-center justify-center gap-1.5
-                         text-white font-medium 
-                         shadow-lg shadow-blue-500/30
-                         hover:shadow-xl hover:shadow-blue-500/50
-                         hover:scale-110 
-                         cursor-pointer
-                         border border-blue-400/30
-                         animate-float"
+              className="absolute"
               style={{
+                left: '50%',
+                top: '50%',
                 transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
                 opacity: mounted ? 1 : 0,
                 transform: mounted 
-                  ? `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(1)`
+                  ? `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`
                   : 'translate(-50%, -50%) scale(0.2)',
-                animationDelay: `${index * 0.5}s`
               }}
             >
-              <Icon className="w-7 h-7" strokeWidth={1.5} />
-              <span className="text-xs font-medium tracking-wide">{item.label}</span>
-            </button>
+              {/* Botão com animação de flutuação */}
+              <button
+                onClick={() => navigate(item.path)}
+                className="w-24 h-24 rounded-full 
+                           bg-gradient-to-br from-blue-500 to-blue-700
+                           hover:from-blue-400 hover:to-blue-600
+                           flex flex-col items-center justify-center gap-1.5
+                           text-white font-medium 
+                           shadow-lg shadow-blue-500/30
+                           hover:shadow-xl hover:shadow-blue-500/50
+                           hover:scale-110 
+                           cursor-pointer
+                           border border-blue-400/30
+                           transition-all duration-300
+                           animate-float"
+                style={{
+                  animationDelay: `${index * 0.8}s`
+                }}
+              >
+                <Icon className="w-7 h-7" strokeWidth={1.5} />
+                <span className="text-xs font-medium tracking-wide">{item.label}</span>
+              </button>
+            </div>
           );
         })}
         
