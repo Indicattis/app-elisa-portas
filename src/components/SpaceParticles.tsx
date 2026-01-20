@@ -9,7 +9,12 @@ interface Particle {
   opacity: number;
 }
 
-export function SpaceParticles() {
+interface SpaceParticlesProps {
+  slowMode?: boolean;
+}
+
+export function SpaceParticles({ slowMode = false }: SpaceParticlesProps) {
+  const slowModeRef = useRef(slowMode);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -87,9 +92,11 @@ export function SpaceParticles() {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      const speedMultiplier = slowModeRef.current ? 0.15 : 1;
+
       particles.forEach((particle) => {
-        // Move towards viewer
-        particle.z -= particle.speed;
+        // Move towards viewer with speed multiplier
+        particle.z -= particle.speed * speedMultiplier;
 
         // Reset particle when it passes the viewer
         if (particle.z < 1) {
@@ -124,6 +131,11 @@ export function SpaceParticles() {
       window.removeEventListener('resize', resizeCanvas);
     };
   }, []);
+
+  // Update ref when prop changes
+  useEffect(() => {
+    slowModeRef.current = slowMode;
+  }, [slowMode]);
 
   return (
     <canvas

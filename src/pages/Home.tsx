@@ -33,7 +33,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
       {/* Partículas espaciais de fundo */}
-      <SpaceParticles />
+      <SpaceParticles slowMode={hoveredIndex !== null} />
       
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
