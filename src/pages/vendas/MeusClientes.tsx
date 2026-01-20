@@ -86,7 +86,7 @@ export default function MeusClientes() {
             <div
               key={cliente.id}
               onClick={() => navigate(`/dashboard/clientes`)}
-              className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm
+              className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl
                          hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <div className="flex items-start gap-3">

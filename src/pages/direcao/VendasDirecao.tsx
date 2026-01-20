@@ -226,7 +226,7 @@ export default function VendasDirecao() {
     >
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
           <CardContent className="p-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Vendas</p>
@@ -235,7 +235,7 @@ export default function VendasDirecao() {
             <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
           </CardContent>
         </Card>
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
           <CardContent className="p-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Valor</p>
@@ -244,7 +244,7 @@ export default function VendasDirecao() {
             <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
           </CardContent>
         </Card>
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
           <CardContent className="p-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Itens</p>
@@ -314,7 +314,7 @@ export default function VendasDirecao() {
       </div>
 
       {/* Tabela */}
-      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-xl">
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
