@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { cpf_ultimos_4, new_password, action } = body
+    const { cpf_ultimos_4, cpf_completo, new_password, action } = body
 
     // Se a ação foi atualizar senha
     if (action === 'update_password') {
@@ -64,20 +64,35 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Fluxo de login: validar últimos 4 dígitos do CPF
-    if (!cpf_ultimos_4) {
+    // Fluxo de login: validar CPF (completo ou últimos 4 dígitos)
+    const cpfParaBuscar = cpf_completo || cpf_ultimos_4
+    const usandoCpfCompleto = !!cpf_completo
+
+    if (!cpfParaBuscar) {
       return new Response(
-        JSON.stringify({ error: 'CPF (últimos 4 dígitos) é obrigatório' }),
+        JSON.stringify({ error: 'CPF é obrigatório' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Validar formato: exatamente 4 dígitos
-    if (!/^\d{4}$/.test(cpf_ultimos_4)) {
-      return new Response(
-        JSON.stringify({ error: 'CPF deve conter exatamente 4 dígitos' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // Limpar CPF (remover formatação)
+    const cpfLimpo = cpfParaBuscar.replace(/\D/g, '')
+
+    // Validar formato
+    if (usandoCpfCompleto) {
+      if (cpfLimpo.length !== 11) {
+        return new Response(
+          JSON.stringify({ error: 'CPF deve conter 11 dígitos' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    } else {
+      if (!/^\d{4}$/.test(cpf_ultimos_4)) {
+        return new Response(
+          JSON.stringify({ error: 'CPF deve conter exatamente 4 dígitos' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     // Criar cliente Supabase com service_role (admin)
@@ -93,7 +108,7 @@ Deno.serve(async (req) => {
     )
 
     // Buscar todos os usuários ativos com CPF cadastrado
-    console.log('Buscando usuário com CPF terminando em:', cpf_ultimos_4)
+    console.log('Buscando usuário com CPF:', usandoCpfCompleto ? 'completo' : 'últimos 4 dígitos', cpfLimpo)
     
     const { data: adminUsers, error: adminError } = await supabaseAdmin
       .from('admin_users')
@@ -110,16 +125,23 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Filtrar usuário pelos últimos 4 dígitos do CPF
+    // Filtrar usuário pelo CPF (completo ou últimos 4 dígitos)
     const adminUser = adminUsers?.find(u => {
       if (!u.cpf) return false
-      // Remover qualquer formatação e pegar últimos 4 dígitos
-      const cpfLimpo = u.cpf.replace(/\D/g, '')
-      return cpfLimpo.slice(-4) === cpf_ultimos_4
+      // Remover qualquer formatação
+      const cpfUsuario = u.cpf.replace(/\D/g, '')
+      
+      if (usandoCpfCompleto) {
+        // Match exato do CPF completo
+        return cpfUsuario === cpfLimpo
+      } else {
+        // Match pelos últimos 4 dígitos
+        return cpfUsuario.slice(-4) === cpfLimpo
+      }
     })
 
     if (!adminUser) {
-      console.log('Nenhum usuário encontrado com CPF terminando em:', cpf_ultimos_4)
+      console.log('Nenhum usuário encontrado com CPF:', cpfLimpo)
       return new Response(
         JSON.stringify({ 
           error: 'Usuário não encontrado', 
@@ -151,6 +173,7 @@ Deno.serve(async (req) => {
     const existingUser = usersData?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase())
 
     let authUser
+    const cpfUltimos4 = cpfLimpo.slice(-4)
 
     if (existingUser) {
       console.log('[AUDIT] Atualizando senha para usuário via CPF:', email, 'role:', adminUser.role)
@@ -163,7 +186,7 @@ Deno.serve(async (req) => {
           email_confirm: true,
           user_metadata: {
             nome: adminUser.nome,
-            cpf_ultimos_4: cpf_ultimos_4,
+            cpf_ultimos_4: cpfUltimos4,
             setor: adminUser.setor || 'fabrica'
           }
         }
@@ -186,7 +209,7 @@ Deno.serve(async (req) => {
         email_confirm: true,
         user_metadata: {
           nome: adminUser.nome,
-          cpf_ultimos_4: cpf_ultimos_4,
+          cpf_ultimos_4: cpfUltimos4,
           setor: adminUser.setor || 'fabrica'
         }
       })
@@ -218,7 +241,7 @@ Deno.serve(async (req) => {
         user: {
           id: adminUser.id,
           nome: adminUser.nome,
-          cpf_ultimos_4: cpf_ultimos_4
+          cpf_ultimos_4: cpfUltimos4
         }
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
