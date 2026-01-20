@@ -67,16 +67,6 @@ export default function VendasHub() {
           </div>
         </div>
 
-        {/* Título */}
-        <h1 
-          className="text-2xl font-bold text-white mb-6 text-center"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transition: 'opacity 0.5s ease 200ms'
-          }}
-        >
-          Vendas
-        </h1>
 
         {/* Lista de botões */}
         <div className="w-full flex flex-col gap-3">
@@ -132,16 +122,6 @@ export default function VendasHub() {
           </div>
         </div>
 
-        {/* Título */}
-        <h1 
-          className="text-3xl font-bold text-white mb-10"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transition: 'opacity 0.5s ease 200ms'
-          }}
-        >
-          Vendas
-        </h1>
 
         {/* Grid de botões */}
         <div className="grid grid-cols-3 gap-4 max-w-2xl">
